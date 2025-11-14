@@ -1,4 +1,4 @@
-import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, Repeat, MessageSquare, History, Settings, Shield } from "lucide-react";
+import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, Repeat, MessageSquare, History, Settings, Shield, Scan } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -59,6 +59,12 @@ const navItems = [
     title: "Speech-to-Text",
     url: "/speech-to-text",
     icon: FileText,
+    adminOnly: false,
+  },
+  {
+    title: "Image Analysis",
+    url: "/analyze-image",
+    icon: Scan,
     adminOnly: false,
   },
   {
