@@ -17,6 +17,7 @@ import { analyzeImageWithVision } from "./openaiVision";
 import { saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
+import { combineVideos } from "./videoProcessor";
 import { 
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
@@ -27,7 +28,8 @@ import {
   generateSTTRequestSchema,
   generateAvatarRequestSchema,
   analyzeImageRequestSchema,
-  convertAudioRequestSchema
+  convertAudioRequestSchema,
+  combineVideosRequestSchema
 } from "@shared/schema";
 
 // Helper to get pricing from database by model name
@@ -1670,6 +1672,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== VIDEO COMBINATION ROUTES ====================
+
+  // Combine multiple videos into one
+  app.post('/api/combine-videos', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      // Validate request
+      const validationResult = combineVideosRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: "Invalid request",
+          errors: validationResult.error.errors
+        });
+      }
+
+      const { videoIds } = validationResult.data;
+
+      // Fetch source videos from generations table
+      const sourceVideos = await Promise.all(
+        videoIds.map(id => storage.getUserGenerations(userId).then(gens => gens.find(g => g.id === id)))
+      );
+
+      // Validate all videos exist, belong to user, and are completed
+      const missingVideos: string[] = [];
+      const notCompletedVideos: string[] = [];
+      const videoUrls: string[] = [];
+
+      for (let i = 0; i < videoIds.length; i++) {
+        const video = sourceVideos[i];
+        if (!video) {
+          missingVideos.push(videoIds[i]);
+        } else if (video.status !== 'completed' || !video.resultUrl) {
+          notCompletedVideos.push(videoIds[i]);
+        } else if (video.type !== 'video') {
+          return res.status(400).json({ message: `Generation ${videoIds[i]} is not a video` });
+        } else {
+          videoUrls.push(video.resultUrl);
+        }
+      }
+
+      if (missingVideos.length > 0) {
+        return res.status(404).json({
+          message: "Some videos not found",
+          missingIds: missingVideos
+        });
+      }
+
+      if (notCompletedVideos.length > 0) {
+        return res.status(400).json({
+          message: "Some videos are not completed yet",
+          notCompletedIds: notCompletedVideos
+        });
+      }
+
+      // Get pricing for video combination
+      const cost = await getModelCost('video-combiner');
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Create combination record
+      const combination = await storage.createVideoCombination({
+        userId,
+        sourceVideoIds: videoIds,
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      // Log event
+      await storage.createVideoCombinationEvent({
+        combinationId: combination.id,
+        eventType: 'status_change',
+        message: 'Combination job created',
+      });
+
+      // Start combination in background
+      combineVideosInBackground(combination.id, videoUrls);
+
+      res.json({
+        combinationId: combination.id,
+        message: "Video combination started"
+      });
+
+    } catch (error: any) {
+      console.error('Video combination error:', error);
+      res.status(500).json({ message: error.message || "Failed to start video combination" });
+    }
+  });
+
+  // Get user's video combinations
+  app.get('/api/video-combinations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const combinations = await storage.getUserVideoCombinations(userId);
+      res.json(combinations);
+    } catch (error) {
+      console.error('Error fetching video combinations:', error);
+      res.status(500).json({ message: "Failed to fetch video combinations" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Background video combination processor
+async function combineVideosInBackground(combinationId: string, videoUrls: string[]) {
+  try {
+    // Update status to processing
+    await storage.updateVideoCombination(combinationId, {
+      status: 'processing',
+    });
+
+    await storage.createVideoCombinationEvent({
+      combinationId,
+      eventType: 'status_change',
+      message: 'Started processing',
+    });
+
+    // Combine videos with progress tracking
+    const result = await combineVideos({
+      videoUrls,
+      onProgress: async (stage, message) => {
+        console.log(`[Combination ${combinationId}] ${stage}: ${message}`);
+        await storage.createVideoCombinationEvent({
+          combinationId,
+          eventType: stage === 'error' ? 'error' : 'ffmpeg_start',
+          message,
+          metadata: { stage },
+        });
+      },
+    });
+
+    // Update with successful result
+    await storage.updateVideoCombination(combinationId, {
+      status: 'completed',
+      outputPath: result.outputPath,
+      durationSeconds: result.durationSeconds,
+      completedAt: new Date(),
+    });
+
+    await storage.createVideoCombinationEvent({
+      combinationId,
+      eventType: 'ffmpeg_complete',
+      message: 'Video combination completed successfully',
+      metadata: {
+        outputPath: result.outputPath,
+        durationSeconds: result.durationSeconds,
+      },
+    });
+
+    console.log(`Video combination ${combinationId} completed: ${result.outputPath}`);
+
+  } catch (error: any) {
+    console.error(`Video combination ${combinationId} failed:`, error);
+
+    // Update with error
+    await storage.updateVideoCombination(combinationId, {
+      status: 'failed',
+      errorMessage: error.message,
+      completedAt: new Date(),
+    });
+
+    await storage.createVideoCombinationEvent({
+      combinationId,
+      eventType: 'error',
+      message: `Combination failed: ${error.message}`,
+      metadata: { error: error.stack },
+    });
+
+    // Refund credits on failure
+    try {
+      const combination = await storage.getVideoCombinationById(combinationId);
+      if (combination) {
+        await storage.addCreditsAtomic(combination.userId, combination.creditsCost);
+        console.log(`Refunded ${combination.creditsCost} credits for failed combination ${combinationId}`);
+      }
+    } catch (refundError) {
+      console.error(`CRITICAL: Failed to refund credits for combination ${combinationId}:`, refundError);
+    }
+  }
 }
