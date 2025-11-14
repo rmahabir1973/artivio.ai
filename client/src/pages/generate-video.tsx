@@ -490,7 +490,12 @@ export default function GenerateVideo() {
           <h2 className="text-2xl font-semibold">Available Models</h2>
           <div className="space-y-4">
             {VIDEO_MODELS.map((m) => (
-              <Card key={m.value} className={model === m.value ? "border-primary" : ""}>
+              <Card 
+                key={m.value} 
+                className={`hover-elevate active-elevate-2 cursor-pointer transition-colors ${model === m.value ? "border-primary" : ""}`}
+                onClick={() => setModel(m.value)}
+                data-testid={`card-model-${m.value}`}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
                     <div>
