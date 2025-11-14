@@ -87,15 +87,22 @@ export async function generateVideo(params: {
   prompt: string;
   parameters: any;
 }): Promise<{ result: any; keyName: string }> {
-  const endpoint = params.model.includes('veo') 
-    ? '/api/v1/video/veo3/generate'
-    : '/api/v1/video/runway/generate';
-
   const parameters = params.parameters || {};
-  return await callKieApi(endpoint, {
+  
+  // Map frontend model names to Kie.ai API model names
+  let kieModel = 'veo3';
+  if (params.model.includes('fast')) {
+    kieModel = 'veo3_fast';
+  } else if (params.model.includes('runway')) {
+    kieModel = 'runway';
+  }
+  
+  return await callKieApi('/api/v1/veo/generate', {
     prompt: params.prompt,
-    model: params.model,
-    ...parameters,
+    model: kieModel,
+    aspectRatio: parameters.aspectRatio || '16:9',
+    seeds: parameters.seeds,
+    watermark: parameters.watermark,
   });
 }
 
@@ -105,19 +112,13 @@ export async function generateImage(params: {
   prompt: string;
   parameters: any;
 }): Promise<{ result: any; keyName: string }> {
-  let endpoint = '/api/v1/gpt4o-image/generate';
-  
-  if (params.model === 'flux-kontext') {
-    endpoint = '/api/v1/flux-kontext/generate';
-  } else if (params.model === 'nano-banana') {
-    endpoint = '/api/v1/nano-banana/generate';
-  }
-
   const parameters = params.parameters || {};
-  return await callKieApi(endpoint, {
+  
+  return await callKieApi('/api/v1/gpt4o-image/generate', {
     prompt: params.prompt,
-    aspectRatio: parameters.aspectRatio || '1:1',
-    style: parameters.style,
+    size: parameters.size || '1:1',
+    nVariants: parameters.nVariants || 1,
+    isEnhance: parameters.isEnhance || false,
   });
 }
 
@@ -128,11 +129,22 @@ export async function generateMusic(params: {
   parameters: any;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
-  return await callKieApi('/api/v1/music/suno/generate', {
+  
+  // Map frontend model names to Kie.ai API model names
+  let kieModel = 'V3_5';
+  if (params.model.includes('v4.5') || params.model.includes('v4-5')) {
+    kieModel = 'V4_5';
+  } else if (params.model.includes('v4')) {
+    kieModel = 'V4';
+  } else if (params.model.includes('v3.5') || params.model.includes('v3-5')) {
+    kieModel = 'V3_5';
+  }
+  
+  return await callKieApi('/api/v1/generate', {
     prompt: params.prompt,
-    model: params.model,
-    lyrics: parameters.lyrics,
-    duration: parameters.duration,
-    genre: parameters.genre,
+    model: kieModel,
+    customMode: false, // Use simple mode for now
+    instrumental: parameters.instrumental || false,
+    callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid', // Required by API
   });
 }

@@ -28,18 +28,31 @@ async function generateVideoInBackground(generationId: string, model: string, pr
     
     const { result, keyName } = await generateVideo({ model, prompt, parameters: parameters || {} });
     
-    // Extract result URL from API response
-    const resultUrl = result?.url || result?.videoUrl;
-    if (!resultUrl) {
-      throw new Error('API response missing video URL');
+    // Kie.ai returns a taskId for async processing
+    const taskId = result?.data?.taskId;
+    if (!taskId) {
+      // If we got direct URL (older API format), use it
+      const resultUrl = result?.url || result?.videoUrl || result?.data?.url;
+      if (resultUrl) {
+        await storage.updateGeneration(generationId, {
+          status: 'completed',
+          resultUrl,
+          apiKeyUsed: keyName,
+          completedAt: new Date(),
+        });
+        return;
+      }
+      throw new Error('API response missing taskId or video URL');
     }
     
+    // Store taskId and mark as processing (will be completed via polling or webhook)
     await storage.updateGeneration(generationId, {
-      status: 'completed',
-      resultUrl,
+      status: 'processing',
       apiKeyUsed: keyName,
-      completedAt: new Date(),
+      resultUrl: taskId, // Temporarily store taskId in resultUrl field
     });
+    
+    console.log(`Video generation task started: ${taskId}`);
   } catch (error: any) {
     console.error('Background video generation failed:', error);
     await storage.updateGeneration(generationId, {
@@ -55,18 +68,31 @@ async function generateImageInBackground(generationId: string, model: string, pr
     
     const { result, keyName } = await generateImage({ model, prompt, parameters: parameters || {} });
     
-    // Extract result URL from API response
-    const resultUrl = result?.url || result?.imageUrl;
-    if (!resultUrl) {
-      throw new Error('API response missing image URL');
+    // Kie.ai may return taskId or direct URL depending on API
+    const taskId = result?.data?.taskId;
+    const directUrl = result?.url || result?.imageUrl || result?.data?.url || result?.data?.imageUrl;
+    
+    if (directUrl) {
+      await storage.updateGeneration(generationId, {
+        status: 'completed',
+        resultUrl: directUrl,
+        apiKeyUsed: keyName,
+        completedAt: new Date(),
+      });
+      return;
     }
     
-    await storage.updateGeneration(generationId, {
-      status: 'completed',
-      resultUrl,
-      apiKeyUsed: keyName,
-      completedAt: new Date(),
-    });
+    if (taskId) {
+      await storage.updateGeneration(generationId, {
+        status: 'processing',
+        apiKeyUsed: keyName,
+        resultUrl: taskId,
+      });
+      console.log(`Image generation task started: ${taskId}`);
+      return;
+    }
+    
+    throw new Error('API response missing taskId or image URL');
   } catch (error: any) {
     console.error('Background image generation failed:', error);
     await storage.updateGeneration(generationId, {
@@ -82,18 +108,31 @@ async function generateMusicInBackground(generationId: string, model: string, pr
     
     const { result, keyName } = await generateMusic({ model, prompt, parameters: parameters || {} });
     
-    // Extract result URL from API response
-    const resultUrl = result?.url || result?.audioUrl;
-    if (!resultUrl) {
-      throw new Error('API response missing audio URL');
+    // Kie.ai music API returns taskId
+    const taskId = result?.data?.taskId;
+    const directUrl = result?.url || result?.audioUrl || result?.data?.url || result?.data?.audioUrl;
+    
+    if (directUrl) {
+      await storage.updateGeneration(generationId, {
+        status: 'completed',
+        resultUrl: directUrl,
+        apiKeyUsed: keyName,
+        completedAt: new Date(),
+      });
+      return;
     }
     
-    await storage.updateGeneration(generationId, {
-      status: 'completed',
-      resultUrl,
-      apiKeyUsed: keyName,
-      completedAt: new Date(),
-    });
+    if (taskId) {
+      await storage.updateGeneration(generationId, {
+        status: 'processing',
+        apiKeyUsed: keyName,
+        resultUrl: taskId,
+      });
+      console.log(`Music generation task started: ${taskId}`);
+      return;
+    }
+    
+    throw new Error('API response missing taskId or audio URL');
   } catch (error: any) {
     console.error('Background music generation failed:', error);
     await storage.updateGeneration(generationId, {
