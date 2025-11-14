@@ -1625,6 +1625,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const userId = req.user.claims.sub;
+      console.log(`[Image Analysis] Request received from user ${userId}`);
+      console.log(`[Image Analysis] Request body keys:`, Object.keys(req.body));
 
       // Validate request
       const validationResult = analyzeImageRequestSchema.safeParse(req.body);

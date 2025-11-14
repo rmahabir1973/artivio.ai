@@ -32,7 +32,15 @@ export default function AnalyzeImage() {
       image: string;
       prompt?: string;
       model: string;
+      idempotencyKey: string;
     }) => {
+      console.log('[Image Analysis] Starting analysis request...');
+      console.log('[Image Analysis] Params:', {
+        imageLength: params.image?.length,
+        prompt: params.prompt,
+        model: params.model,
+        idempotencyKey: params.idempotencyKey,
+      });
       return await apiRequest("POST", "/api/image-analysis/analyze", params);
     },
     onSuccess: () => {
