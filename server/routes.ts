@@ -1688,7 +1688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { videoIds } = validationResult.data;
+      const { videoIds, enhancements } = validationResult.data;
 
       // Fetch source videos from generations table
       const sourceVideos = await Promise.all(
@@ -1727,8 +1727,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get pricing for video combination
-      const cost = await getModelCost('video-combiner');
+      // Calculate pricing with enhancements
+      let cost = await getModelCost('video-combiner'); // Base cost: 75 credits
+
+      // Calculate enhancement costs
+      const hasTransitions = enhancements?.transitions?.mode === 'crossfade';
+      const hasBackgroundMusic = !!enhancements?.backgroundMusic;
+      const hasTextOverlays = (enhancements?.textOverlays?.length || 0) > 0;
+      const hasSpeedAdjustment = enhancements?.speed?.mode !== 'none' && enhancements?.speed?.mode !== undefined;
+
+      // Add surcharges for enhancements (Quick Polish Pack pricing)
+      if (hasTransitions) cost += 25; // Crossfade transitions
+      if (hasBackgroundMusic) cost += 25; // Background music
+      if (hasTextOverlays) cost += 30; // Text overlays
+      if (hasSpeedAdjustment) cost += 20; // Speed control
 
       // Deduct credits atomically
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -1736,12 +1748,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Insufficient credits" });
       }
 
-      // Create combination record
+      // Create combination record with enhancements
       const combination = await storage.createVideoCombination({
         userId,
         sourceVideoIds: videoIds,
         status: 'pending',
         creditsCost: cost,
+        enhancements: enhancements || {},
+        hasTransitions,
+        hasBackgroundMusic,
+        hasTextOverlays,
+        hasSpeedAdjustment,
       });
 
       // Log event
@@ -1751,8 +1768,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Combination job created',
       });
 
-      // Start combination in background
-      combineVideosInBackground(combination.id, videoUrls);
+      // Start combination in background with enhancements
+      combineVideosInBackground(combination.id, videoUrls, enhancements);
 
       res.json({
         combinationId: combination.id,
@@ -1782,7 +1799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }
 
 // Background video combination processor
-async function combineVideosInBackground(combinationId: string, videoUrls: string[]) {
+async function combineVideosInBackground(combinationId: string, videoUrls: string[], enhancements?: any) {
   try {
     // Update status to processing
     await storage.updateVideoCombination(combinationId, {
@@ -1798,6 +1815,7 @@ async function combineVideosInBackground(combinationId: string, videoUrls: strin
     // Combine videos with progress tracking
     const result = await combineVideos({
       videoUrls,
+      enhancements,
       onProgress: async (stage, message) => {
         console.log(`[Combination ${combinationId}] ${stage}: ${message}`);
         await storage.createVideoCombinationEvent({
