@@ -11,6 +11,7 @@ import {
   transcribeAudio,
   generateKlingAvatar,
   analyzeImage,
+  convertAudio,
   initializeApiKeys 
 } from "./kieai";
 import { saveBase64Images } from "./imageHosting";
@@ -25,7 +26,8 @@ import {
   generateTTSRequestSchema,
   generateSTTRequestSchema,
   generateAvatarRequestSchema,
-  analyzeImageRequestSchema
+  analyzeImageRequestSchema,
+  convertAudioRequestSchema
 } from "@shared/schema";
 
 // Helper to get pricing from database by model name
@@ -989,7 +991,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           audioUrl,
           model,
           language: language || null,
-          parameters: parameters || null,
           transcription: null,
           status: 'processing',
           errorMessage: null,
@@ -1123,7 +1124,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               script,
               voiceId,
               provider,
-              parameters: { ...parameters, callBackUrl: callbackUrl },
+              parameters: parameters || undefined,
+              callBackUrl: callbackUrl,
             });
 
             const taskId = result?.data?.taskId || result?.taskId;
@@ -1214,7 +1216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const { result } = await convertAudio({
               sourceUrl: audioUrl,
               operation,
-              parameters: { ...parameters, callBackUrl: callbackUrl },
+              parameters: parameters || undefined,
+              callBackUrl: callbackUrl,
             });
 
             const taskId = result?.data?.taskId || result?.taskId;
@@ -1548,7 +1551,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           analysisResult: null,
           model: model || 'gpt-4o',
           provider: 'kie-ai',
-          status: 'processing',
           errorMessage: null,
           creditsCost: cost,
         });
