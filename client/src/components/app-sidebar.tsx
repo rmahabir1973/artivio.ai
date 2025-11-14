@@ -1,4 +1,4 @@
-import { Home, Video, Image, Music, Mic, Volume2, MessageSquare, History, Settings, Shield } from "lucide-react";
+import { Home, Video, Image, Music, Mic, Volume2, FileText, MessageSquare, History, Settings, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -53,6 +53,12 @@ const navItems = [
     title: "Text-to-Speech",
     url: "/text-to-speech",
     icon: Volume2,
+    adminOnly: false,
+  },
+  {
+    title: "Speech-to-Text",
+    url: "/speech-to-text",
+    icon: FileText,
     adminOnly: false,
   },
   {

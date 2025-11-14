@@ -481,7 +481,7 @@ export type GenerateTTSRequest = z.infer<typeof generateTTSRequestSchema>;
 
 // Speech-to-Text Request
 export const generateSTTRequestSchema = z.object({
-  audioUrl: z.string().url(),
+  audioFile: z.string(), // Base64 data URI (validated and hosted server-side)
   model: z.enum(['scribe-v1']).default('scribe-v1'),
   language: z.string().optional(), // ISO 639-1 code
   parameters: z.object({
