@@ -235,10 +235,232 @@ export const sendMessageRequestSchema = z.object({
 
 export type SendMessageRequest = z.infer<typeof sendMessageRequestSchema>;
 
+// Voice Clones table for storing cloned voices from ElevenLabs
+export const voiceClones = pgTable("voice_clones", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar("name").notNull(), // User-friendly name for the voice
+  voiceId: varchar("voice_id").notNull(), // ElevenLabs voice ID
+  description: text("description"),
+  provider: varchar("provider").notNull().default('elevenlabs'), // For future providers
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertVoiceCloneSchema = createInsertSchema(voiceClones).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertVoiceClone = z.infer<typeof insertVoiceCloneSchema>;
+export type VoiceClone = typeof voiceClones.$inferSelect;
+
+// Text-to-Speech generations table
+export const ttsGenerations = pgTable("tts_generations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  text: text("text").notNull(),
+  voiceId: varchar("voice_id").notNull(), // Can be pre-made or cloned voice
+  voiceName: varchar("voice_name"), // Display name
+  model: varchar("model").notNull(), // e.g., 'eleven_multilingual_v2'
+  parameters: jsonb("parameters"), // stability, similarity_boost, style, speed
+  status: varchar("status").notNull().default('pending'),
+  resultUrl: text("result_url"),
+  errorMessage: text("error_message"),
+  creditsCost: integer("credits_cost").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertTtsGenerationSchema = createInsertSchema(ttsGenerations).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertTtsGeneration = z.infer<typeof insertTtsGenerationSchema>;
+export type TtsGeneration = typeof ttsGenerations.$inferSelect;
+
+// Speech-to-Text generations table
+export const sttGenerations = pgTable("stt_generations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  audioUrl: text("audio_url").notNull(), // Uploaded audio file
+  model: varchar("model").notNull().default('whisper-1'), // OpenAI Whisper
+  language: varchar("language"), // Optional language hint
+  transcription: text("transcription"),
+  status: varchar("status").notNull().default('pending'),
+  errorMessage: text("error_message"),
+  creditsCost: integer("credits_cost").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertSttGenerationSchema = createInsertSchema(sttGenerations).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertSttGeneration = z.infer<typeof insertSttGenerationSchema>;
+export type SttGeneration = typeof sttGenerations.$inferSelect;
+
+// AI Talking Avatar generations table
+export const avatarGenerations = pgTable("avatar_generations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sourceImageUrl: text("source_image_url").notNull(), // Avatar image
+  script: text("script").notNull(), // What the avatar says
+  voiceId: varchar("voice_id"), // Optional: use cloned voice
+  provider: varchar("provider").notNull().default('d-id'), // 'd-id', 'heygen', etc.
+  parameters: jsonb("parameters"), // Provider-specific settings
+  status: varchar("status").notNull().default('pending'),
+  resultUrl: text("result_url"),
+  errorMessage: text("error_message"),
+  creditsCost: integer("credits_cost").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertAvatarGenerationSchema = createInsertSchema(avatarGenerations).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertAvatarGeneration = z.infer<typeof insertAvatarGenerationSchema>;
+export type AvatarGeneration = typeof avatarGenerations.$inferSelect;
+
+// Audio Conversions table
+export const audioConversions = pgTable("audio_conversions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sourceUrl: text("source_url").notNull(), // Original audio file
+  sourceFormat: varchar("source_format").notNull(), // e.g., 'm4a'
+  targetFormat: varchar("target_format").notNull(), // e.g., 'mp3', 'wav'
+  compressionLevel: varchar("compression_level"), // 'low', 'medium', 'high'
+  status: varchar("status").notNull().default('pending'),
+  resultUrl: text("result_url"),
+  errorMessage: text("error_message"),
+  creditsCost: integer("credits_cost").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertAudioConversionSchema = createInsertSchema(audioConversions).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertAudioConversion = z.infer<typeof insertAudioConversionSchema>;
+export type AudioConversion = typeof audioConversions.$inferSelect;
+
+// Subscription Plans table
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull().unique(), // 'Free Trial', 'Starter', 'Pro', etc.
+  displayName: varchar("display_name").notNull(), // For UI
+  description: text("description"),
+  price: integer("price").notNull(), // Price in cents (e.g., 1999 for $19.99)
+  billingPeriod: varchar("billing_period").notNull().default('monthly'), // 'monthly', 'annual', 'trial'
+  trialDays: integer("trial_days").default(0), // Days for trial period
+  features: jsonb("features"), // List of features/limits
+  creditsPerMonth: integer("credits_per_month").notNull(), // Monthly credit allocation
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0), // For display ordering
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+
+// User Subscriptions table
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  planId: varchar("plan_id").notNull().references(() => subscriptionPlans.id),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  status: varchar("status").notNull().default('active'), // 'active', 'cancelled', 'expired', 'trial'
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+
+// Announcements table
+export const announcements = pgTable("announcements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  message: text("message").notNull(),
+  type: varchar("type").notNull().default('info'), // 'info', 'warning', 'success', 'promo'
+  targetPlans: text("target_plans").array(), // Plan names to show to, null = all
+  isActive: boolean("is_active").notNull().default(true),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
+export type Announcement = typeof announcements.$inferSelect;
+
+// Feature Pricing table (configurable costs for each feature)
+export const featurePricing = pgTable("feature_pricing", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  featureKey: varchar("feature_key").notNull().unique(), // e.g., 'video-veo-3.1', 'chat-gpt-4o'
+  featureName: varchar("feature_name").notNull(), // Display name
+  featureCategory: varchar("feature_category").notNull(), // 'video', 'image', 'music', 'chat', 'tts', 'stt', 'avatar', 'conversion'
+  creditsCost: integer("credits_cost").notNull(), // Current cost in credits
+  isActive: boolean("is_active").notNull().default(true),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertFeaturePricingSchema = createInsertSchema(featurePricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertFeaturePricing = z.infer<typeof insertFeaturePricingSchema>;
+export type FeaturePricing = typeof featurePricing.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   generations: many(generations),
   conversations: many(conversations),
+  voiceClones: many(voiceClones),
+  ttsGenerations: many(ttsGenerations),
+  sttGenerations: many(sttGenerations),
+  avatarGenerations: many(avatarGenerations),
+  audioConversions: many(audioConversions),
+  subscriptions: many(userSubscriptions),
 }));
 
 export const generationsRelations = relations(generations, ({ one }) => ({
@@ -261,4 +483,54 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     fields: [messages.conversationId],
     references: [conversations.id],
   }),
+}));
+
+export const voiceClonesRelations = relations(voiceClones, ({ one }) => ({
+  user: one(users, {
+    fields: [voiceClones.userId],
+    references: [users.id],
+  }),
+}));
+
+export const ttsGenerationsRelations = relations(ttsGenerations, ({ one }) => ({
+  user: one(users, {
+    fields: [ttsGenerations.userId],
+    references: [users.id],
+  }),
+}));
+
+export const sttGenerationsRelations = relations(sttGenerations, ({ one }) => ({
+  user: one(users, {
+    fields: [sttGenerations.userId],
+    references: [users.id],
+  }),
+}));
+
+export const avatarGenerationsRelations = relations(avatarGenerations, ({ one }) => ({
+  user: one(users, {
+    fields: [avatarGenerations.userId],
+    references: [users.id],
+  }),
+}));
+
+export const audioConversionsRelations = relations(audioConversions, ({ one }) => ({
+  user: one(users, {
+    fields: [audioConversions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userSubscriptionsRelations = relations(userSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSubscriptions.userId],
+    references: [users.id],
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [userSubscriptions.planId],
+    references: [subscriptionPlans.id],
+  }),
+}));
+
+export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
+  subscriptions: many(userSubscriptions),
 }));
