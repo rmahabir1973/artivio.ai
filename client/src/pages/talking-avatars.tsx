@@ -215,7 +215,7 @@ export default function TalkingAvatars() {
                   <SelectValue placeholder="Select a voice (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {voices.filter(v => v.isActive).map((voice) => (
+                  {voices.filter(v => v.isActive && v.voiceId && v.voiceId.trim() !== '').map((voice) => (
                     <SelectItem key={voice.id} value={voice.voiceId!}>
                       {voice.name}
                     </SelectItem>
