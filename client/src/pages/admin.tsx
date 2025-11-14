@@ -12,9 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import type { User, ApiKey } from "@shared/schema";
+import type { User, ApiKey, Pricing } from "@shared/schema";
 
 interface AnalyticsData {
   totalUsers: number;
@@ -31,6 +31,10 @@ export default function Admin() {
   const [editCredits, setEditCredits] = useState("");
   const [addingApiKey, setAddingApiKey] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
+  const [editingPricingId, setEditingPricingId] = useState<string | null>(null);
+  const [editPricingCost, setEditPricingCost] = useState("");
+  const [addingPricing, setAddingPricing] = useState(false);
+  const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "" });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -66,6 +70,11 @@ export default function Admin() {
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
     queryKey: ["/api/admin/analytics"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const { data: pricingList = [], isLoading: pricingLoading } = useQuery<Pricing[]>({
+    queryKey: ["/api/admin/pricing"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
@@ -118,6 +127,42 @@ export default function Admin() {
         description: error.message || "Failed to update API key",
         variant: "destructive",
       });
+    },
+  });
+
+  const updatePricingMutation = useMutation({
+    mutationFn: async ({ id, creditCost }: { id: string; creditCost: number }) => {
+      return await apiRequest("PATCH", `/api/admin/pricing/${id}`, { creditCost });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pricing"] });
+      setEditingPricingId(null);
+      setEditPricingCost("");
+      toast({ title: "Success", description: "Pricing updated successfully" });
+    },
+    onError: (error: Error) => {
+      setEditingPricingId(null);
+      setEditPricingCost("");
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to update pricing", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const addPricingMutation = useMutation({
+    mutationFn: async (data: { feature: string; model: string; category: string; creditCost: number }) => {
+      return await apiRequest("POST", "/api/admin/pricing", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pricing"] });
+      setAddingPricing(false);
+      setNewPricing({ feature: "", model: "", category: "", creditCost: "" });
+      toast({ title: "Success", description: "Pricing entry added successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to add pricing", variant: "destructive" });
     },
   });
 
@@ -188,6 +233,10 @@ export default function Admin() {
           <TabsTrigger value="analytics" data-testid="tab-analytics">
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger value="pricing" data-testid="tab-pricing">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Pricing
           </TabsTrigger>
         </TabsList>
 
@@ -507,6 +556,134 @@ export default function Admin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="pricing">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Pricing Management</CardTitle>
+                <CardDescription>Configure credit costs for all AI features and models</CardDescription>
+              </div>
+              <Button onClick={() => setAddingPricing(true)} data-testid="button-add-pricing">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Pricing
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {pricingLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : pricingList.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No pricing entries found
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead data-testid="text-pricing-header-feature">Feature</TableHead>
+                      <TableHead data-testid="text-pricing-header-model">Model</TableHead>
+                      <TableHead data-testid="text-pricing-header-category">Category</TableHead>
+                      <TableHead className="text-right" data-testid="text-pricing-header-cost">Credit Cost</TableHead>
+                      <TableHead className="text-right" data-testid="text-pricing-header-actions">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pricingList.map((pricing) => (
+                      <TableRow key={pricing.id} data-testid={`pricing-row-${pricing.model}`}>
+                        <TableCell className="font-medium capitalize" data-testid={`text-pricing-feature-${pricing.id}`}>
+                          {pricing.feature.replace(/-/g, ' ')}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm" data-testid={`text-pricing-model-${pricing.id}`}>
+                          {pricing.model}
+                        </TableCell>
+                        <TableCell data-testid={`text-pricing-category-${pricing.id}`}>
+                          <Badge variant="outline" className="capitalize">
+                            {pricing.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {editingPricingId === pricing.id ? (
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={editPricingCost}
+                              onChange={(e) => setEditPricingCost(e.target.value)}
+                              className="w-24 text-right"
+                              data-testid={`input-pricing-cost-${pricing.id}`}
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="font-semibold" data-testid={`text-pricing-cost-value-${pricing.id}`}>
+                              {pricing.creditCost.toLocaleString()}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {editingPricingId === pricing.id ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => {
+                                  const trimmed = editPricingCost.trim();
+                                  if (trimmed === '') {
+                                    toast({ title: "Error", description: "Cost cannot be empty", variant: "destructive" });
+                                    return;
+                                  }
+                                  const cost = Number(trimmed);
+                                  if (!Number.isFinite(cost) || !Number.isInteger(cost) || cost < 0) {
+                                    toast({ title: "Error", description: "Please enter a valid whole number (0 or greater)", variant: "destructive" });
+                                    return;
+                                  }
+                                  updatePricingMutation.mutate({ id: pricing.id, creditCost: cost });
+                                }}
+                                disabled={updatePricingMutation.isPending}
+                                data-testid={`button-save-pricing-${pricing.id}`}
+                              >
+                                {updatePricingMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Save className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingPricingId(null);
+                                  setEditPricingCost("");
+                                }}
+                                disabled={updatePricingMutation.isPending}
+                                data-testid={`button-cancel-pricing-${pricing.id}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingPricingId(pricing.id);
+                                setEditPricingCost(pricing.creditCost.toString());
+                              }}
+                              data-testid={`button-edit-pricing-${pricing.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Add API Key Dialog */}
@@ -547,6 +724,103 @@ export default function Admin() {
                 </>
               ) : (
                 "Add Key"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Pricing Dialog */}
+      <Dialog open={addingPricing} onOpenChange={setAddingPricing}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Pricing Entry</DialogTitle>
+            <DialogDescription>
+              Add a new pricing configuration for an AI model or feature
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="feature">Feature</Label>
+              <Input
+                id="feature"
+                placeholder="e.g., video, image, music, chat"
+                value={newPricing.feature}
+                onChange={(e) => setNewPricing({ ...newPricing, feature: e.target.value })}
+                data-testid="input-new-pricing-feature"
+              />
+            </div>
+            <div>
+              <Label htmlFor="model">Model Name</Label>
+              <Input
+                id="model"
+                placeholder="e.g., veo-3.1, gpt-4o"
+                value={newPricing.model}
+                onChange={(e) => setNewPricing({ ...newPricing, model: e.target.value })}
+                data-testid="input-new-pricing-model"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                placeholder="e.g., generation, chat, voice, audio"
+                value={newPricing.category}
+                onChange={(e) => setNewPricing({ ...newPricing, category: e.target.value })}
+                data-testid="input-new-pricing-category"
+              />
+            </div>
+            <div>
+              <Label htmlFor="creditCost">Credit Cost</Label>
+              <Input
+                id="creditCost"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g., 100"
+                value={newPricing.creditCost}
+                onChange={(e) => setNewPricing({ ...newPricing, creditCost: e.target.value })}
+                data-testid="input-new-pricing-cost"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                const { feature, model, category, creditCost } = newPricing;
+                const trimmedFeature = feature.trim();
+                const trimmedModel = model.trim();
+                const trimmedCategory = category.trim();
+                const trimmedCost = creditCost.trim();
+                
+                if (!trimmedFeature || !trimmedModel || !trimmedCategory || !trimmedCost) {
+                  toast({ title: "Error", description: "All fields are required and cannot be empty", variant: "destructive" });
+                  return;
+                }
+                
+                const cost = Number(trimmedCost);
+                if (!Number.isFinite(cost) || !Number.isInteger(cost) || cost < 0) {
+                  toast({ title: "Error", description: "Please enter a valid whole number for cost", variant: "destructive" });
+                  return;
+                }
+                
+                addPricingMutation.mutate({
+                  feature: trimmedFeature,
+                  model: trimmedModel,
+                  category: trimmedCategory,
+                  creditCost: cost,
+                });
+              }}
+              disabled={addPricingMutation.isPending}
+              data-testid="button-submit-new-pricing"
+            >
+              {addPricingMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Pricing"
               )}
             </Button>
           </DialogFooter>

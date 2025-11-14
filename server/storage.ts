@@ -58,8 +58,9 @@ export interface IStorage {
   // Pricing operations
   getAllPricing(): Promise<Pricing[]>;
   getPricingByModel(model: string): Promise<Pricing | undefined>;
+  getPricingById(id: string): Promise<Pricing | undefined>;
   createPricing(pricing: InsertPricing): Promise<Pricing>;
-  updatePricing(model: string, updates: UpdatePricing): Promise<Pricing | undefined>;
+  updatePricing(id: string, updates: UpdatePricing): Promise<Pricing | undefined>;
 
   // Generation operations
   getAllGenerations(): Promise<Generation[]>;
@@ -245,6 +246,14 @@ export class DatabaseStorage implements IStorage {
     return price;
   }
 
+  async getPricingById(id: string): Promise<Pricing | undefined> {
+    const [price] = await db
+      .select()
+      .from(pricing)
+      .where(eq(pricing.id, id));
+    return price;
+  }
+
   async createPricing(pricingData: InsertPricing): Promise<Pricing> {
     const normalizedData = {
       ...pricingData,
@@ -259,12 +268,11 @@ export class DatabaseStorage implements IStorage {
     return price;
   }
 
-  async updatePricing(model: string, updates: UpdatePricing): Promise<Pricing | undefined> {
-    const normalizedModel = model.toLowerCase().trim();
+  async updatePricing(id: string, updates: UpdatePricing): Promise<Pricing | undefined> {
     const [price] = await db
       .update(pricing)
       .set(updates)
-      .where(eq(pricing.model, normalizedModel))
+      .where(eq(pricing.id, id))
       .returning();
     return price;
   }

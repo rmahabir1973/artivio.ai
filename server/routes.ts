@@ -1418,6 +1418,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Pricing Management Routes
+  app.get('/api/admin/pricing', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const pricing = await storage.getAllPricing();
+      res.json(pricing);
+    } catch (error) {
+      console.error('Error fetching pricing:', error);
+      res.status(500).json({ message: "Failed to fetch pricing" });
+    }
+  });
+
+  app.patch('/api/admin/pricing/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { id } = req.params;
+      const updates = req.body;
+
+      const { updatePricingSchema } = await import("@shared/schema");
+      const validatedUpdates = updatePricingSchema.parse(updates);
+
+      const updated = await storage.updatePricing(id, validatedUpdates);
+      if (!updated) {
+        return res.status(404).json({ message: 'Pricing entry not found' });
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating pricing:', error);
+      res.status(400).json({ message: 'Failed to update pricing', error: error.message });
+    }
+  });
+
+  app.post('/api/admin/pricing', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { insertPricingSchema } = await import("@shared/schema");
+      const validatedData = insertPricingSchema.parse(req.body);
+
+      const newPricing = await storage.createPricing(validatedData);
+      res.status(201).json(newPricing);
+    } catch (error: any) {
+      console.error('Error creating pricing:', error);
+      res.status(400).json({ message: 'Failed to create pricing', error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
