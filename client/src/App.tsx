@@ -18,6 +18,7 @@ import GenerateVideo from "@/pages/generate-video";
 import GenerateImage from "@/pages/generate-image";
 import GenerateMusic from "@/pages/generate-music";
 import VoiceClone from "@/pages/voice-clone";
+import TextToSpeech from "@/pages/text-to-speech";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Admin from "@/pages/admin";
@@ -48,6 +49,7 @@ function Router() {
           <Route path="/generate/image" component={GenerateImage} />
           <Route path="/generate/music" component={GenerateMusic} />
           <Route path="/voice-clone" component={VoiceClone} />
+          <Route path="/text-to-speech" component={TextToSpeech} />
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
           <Route path="/admin" component={Admin} />

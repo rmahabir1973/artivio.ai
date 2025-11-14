@@ -7,6 +7,7 @@ import {
   generateImage, 
   generateMusic, 
   cloneVoice,
+  generateTTS,
   initializeApiKeys 
 } from "./kieai";
 import { saveBase64Images } from "./imageHosting";
@@ -17,7 +18,8 @@ import {
   generateImageRequestSchema, 
   generateMusicRequestSchema,
   sendMessageRequestSchema,
-  cloneVoiceRequestSchema
+  cloneVoiceRequestSchema,
+  generateTTSRequestSchema
 } from "@shared/schema";
 
 const MODEL_COSTS = {
@@ -35,6 +37,9 @@ const MODEL_COSTS = {
   'suno-v3.5': 200,
   'suno-v4': 250,
   'suno-v4.5': 300,
+  // TTS Models
+  'eleven_multilingual_v2': 20,
+  'eleven_turbo_v2.5': 15,
 };
 
 // Helper to get callback URL
@@ -818,6 +823,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting voice clone:', error);
       res.status(500).json({ message: "Failed to delete voice clone" });
+    }
+  });
+
+  // ========== TEXT-TO-SPEECH ROUTES ==========
+
+  // Generate TTS
+  app.post('/api/tts/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      // Validate request
+      const validationResult = generateTTSRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { text, voiceId, voiceName, model, parameters } = validationResult.data;
+      const cost = MODEL_COSTS[model] || 20;
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Create TTS generation record
+      const ttsGeneration = await storage.createTtsGeneration({
+        userId,
+        text,
+        voiceId,
+        voiceName: voiceName || voiceId,
+        model,
+        parameters: parameters || null,
+        status: 'processing',
+        resultUrl: null,
+        errorMessage: null,
+        creditsCost: cost,
+      });
+
+      // Generate TTS in background
+      (async () => {
+        try {
+          const { result } = await generateTTS({
+            text,
+            voiceId,
+            voiceName,
+            model,
+            parameters,
+          });
+
+          // Extract audio URL from result
+          const audioUrl = result?.data?.audioUrl || result?.audioUrl || result?.url;
+          if (!audioUrl) {
+            throw new Error('TTS generation failed - no audio URL returned');
+          }
+
+          await storage.updateTtsGeneration(ttsGeneration.id, {
+            status: 'completed',
+            resultUrl: audioUrl,
+            completedAt: new Date(),
+          });
+        } catch (error: any) {
+          console.error('TTS generation error:', error);
+          
+          // Refund credits on failure
+          const currentUser = await storage.getUser(userId);
+          if (currentUser) {
+            await storage.updateUserCredits(userId, currentUser.credits + cost);
+          }
+
+          await storage.updateTtsGeneration(ttsGeneration.id, {
+            status: 'failed',
+            errorMessage: error.message || 'TTS generation failed',
+            completedAt: new Date(),
+          });
+        }
+      })();
+
+      res.json({ 
+        success: true, 
+        generationId: ttsGeneration.id,
+        message: "TTS generation started" 
+      });
+    } catch (error: any) {
+      console.error('TTS generation error:', error);
+      res.status(500).json({ message: error.message || "Failed to generate TTS" });
+    }
+  });
+
+  // Get user's TTS generations
+  app.get('/api/tts/generations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const generations = await storage.getUserTtsGenerations(userId);
+      res.json(generations);
+    } catch (error) {
+      console.error('Error fetching TTS generations:', error);
+      res.status(500).json({ message: "Failed to fetch TTS generations" });
     }
   });
 
