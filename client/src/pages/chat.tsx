@@ -107,17 +107,23 @@ export default function Chat() {
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
 
+      const requestBody: any = {
+        message: userMessage,
+        provider,
+        model,
+      };
+      
+      // Only include conversationId if it exists
+      if (selectedConversationId) {
+        requestBody.conversationId = selectedConversationId;
+      }
+
       const response = await fetch('/api/chat/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          conversationId: selectedConversationId,
-          message: userMessage,
-          provider,
-          model,
-        }),
+        body: JSON.stringify(requestBody),
         signal: abortController.signal,
         credentials: 'include',
       });

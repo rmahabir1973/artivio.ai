@@ -553,9 +553,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
 
+      console.log('📨 Chat request body:', JSON.stringify(req.body, null, 2));
+
       // Validate request
       const validationResult = sendMessageRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
+        console.error('❌ Validation failed:', JSON.stringify(validationResult.error.errors, null, 2));
         return res.status(400).json({ 
           message: "Invalid request", 
           errors: validationResult.error.errors 
