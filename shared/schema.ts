@@ -165,6 +165,12 @@ export const videoCombinations = pgTable("video_combinations", {
   creditsCost: integer("credits_cost").notNull(),
   durationSeconds: integer("duration_seconds"), // Total duration of combined video
   taskId: varchar("task_id"), // Background job queue task identifier
+  // Enhancement settings
+  enhancements: jsonb("enhancements").default(sql`'{}'::jsonb`).notNull(), // Structured enhancement configuration
+  hasTransitions: boolean("has_transitions").default(false).notNull(), // Quick pricing lookup
+  hasBackgroundMusic: boolean("has_background_music").default(false).notNull(),
+  hasTextOverlays: boolean("has_text_overlays").default(false).notNull(),
+  hasSpeedAdjustment: boolean("has_speed_adjustment").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 }, (table) => [
@@ -211,9 +217,62 @@ export const analyzeImageRequestSchema = z.object({
 
 export type AnalyzeImageRequest = z.infer<typeof analyzeImageRequestSchema>;
 
+// Video Enhancement Schemas
+export const transitionsEnhancementSchema = z.object({
+  mode: z.enum(['none', 'crossfade']).default('none'),
+  durationSeconds: z.number().min(0.5).max(3.0).optional(), // Only for crossfade
+}).default({ mode: 'none' });
+
+export const backgroundMusicEnhancementSchema = z.object({
+  audioUrl: z.string().url(),
+  volume: z.number().min(0.0).max(1.0).default(0.3),
+  fadeInSeconds: z.number().min(0).max(10).optional(),
+  fadeOutSeconds: z.number().min(0).max(10).optional(),
+}).optional();
+
+export const textOverlaySchema = z.object({
+  id: z.string().default(() => Math.random().toString(36).substring(7)),
+  text: z.string().min(1).max(200),
+  position: z.enum(['top', 'center', 'bottom', 'custom']).default('center'),
+  customPosition: z.object({
+    xPercent: z.number().min(0).max(100),
+    yPercent: z.number().min(0).max(100),
+  }).optional(),
+  timing: z.enum(['intro', 'outro', 'all']).default('all'),
+  displaySeconds: z.number().min(1).max(30).optional(), // For intro/outro
+  fontSize: z.number().min(8).max(120).default(48),
+  colorHex: z.string().regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/).default('#FFFFFF'),
+  fontFamily: z.string().optional(),
+});
+
+export const textOverlaysEnhancementSchema = z.array(textOverlaySchema).max(5).default([]);
+
+export const speedEnhancementSchema = z.object({
+  mode: z.enum(['none', 'global', 'perClip']).default('none'),
+  globalFactor: z.number().min(0.25).max(4.0).optional(), // For global mode
+  perClip: z.array(z.object({
+    clipIndex: z.number().int().min(0),
+    factor: z.number().min(0.25).max(4.0),
+  })).optional(), // For perClip mode
+}).default({ mode: 'none' });
+
+export const videoEnhancementsSchema = z.object({
+  transitions: transitionsEnhancementSchema,
+  backgroundMusic: backgroundMusicEnhancementSchema,
+  textOverlays: textOverlaysEnhancementSchema,
+  speed: speedEnhancementSchema,
+}).default({});
+
+export type VideoEnhancements = z.infer<typeof videoEnhancementsSchema>;
+export type TransitionsEnhancement = z.infer<typeof transitionsEnhancementSchema>;
+export type BackgroundMusicEnhancement = z.infer<typeof backgroundMusicEnhancementSchema>;
+export type TextOverlay = z.infer<typeof textOverlaySchema>;
+export type SpeedEnhancement = z.infer<typeof speedEnhancementSchema>;
+
 // Video Combination Request Schema
 export const combineVideosRequestSchema = z.object({
   videoIds: z.array(z.string().uuid()).min(2, "Must select at least 2 videos").max(20, "Cannot combine more than 20 videos"),
+  enhancements: videoEnhancementsSchema.optional(),
 });
 
 export type CombineVideosRequest = z.infer<typeof combineVideosRequestSchema>;
