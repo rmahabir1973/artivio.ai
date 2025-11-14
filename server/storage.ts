@@ -139,13 +139,18 @@ export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    console.log('🔍 DEBUG getUser - Raw result from DB:', JSON.stringify(user, null, 2));
     return user;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    console.log('🔍 DEBUG upsertUser - Input userData:', JSON.stringify(userData, null, 2));
+    
     // Try to insert, and on conflict with either id or email, update the existing record
     // IMPORTANT: Do NOT overwrite isAdmin or stripeCustomerId - these are managed separately
-    const { isAdmin, stripeCustomerId, ...updateData } = userData as any;
+    const { isAdmin, stripeCustomerId, id, ...updateData } = userData as any;
+    
+    console.log('🔍 DEBUG upsertUser - updateData (without id/isAdmin/stripeCustomerId):', JSON.stringify(updateData, null, 2));
     
     const [user] = await db
       .insert(users)
@@ -158,6 +163,8 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+    
+    console.log('🔍 DEBUG upsertUser - Returned user:', JSON.stringify(user, null, 2));
     return user;
   }
 
