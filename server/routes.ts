@@ -1379,8 +1379,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const { keyName } = req.body;
-      const key = await storage.addApiKey({ keyName, isActive: true });
+      const { keyName, keyValue } = req.body;
+      
+      if (!keyValue || keyValue.trim().length === 0) {
+        return res.status(400).json({ message: "API key value is required" });
+      }
+      
+      const key = await storage.addApiKey({ keyName, keyValue, isActive: true });
       res.json(key);
     } catch (error) {
       console.error('Error adding API key:', error);
@@ -1406,6 +1411,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error toggling API key:', error);
       res.status(500).json({ message: "Failed to update API key" });
+    }
+  });
+
+  // Admin: Delete API key
+  app.delete('/api/admin/api-keys/:keyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { keyId } = req.params;
+      await storage.deleteApiKey(keyId);
+      res.json({ message: "API key deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      res.status(500).json({ message: "Failed to delete API key" });
     }
   });
 

@@ -63,6 +63,7 @@ export interface IStorage {
   updateApiKeyUsage(keyId: string): Promise<void>;
   addApiKey(key: InsertApiKey): Promise<ApiKey>;
   toggleApiKey(keyId: string, isActive: boolean): Promise<ApiKey | undefined>;
+  deleteApiKey(keyId: string): Promise<void>;
 
   // Pricing operations
   getAllPricing(): Promise<Pricing[]>;
@@ -258,6 +259,10 @@ export class DatabaseStorage implements IStorage {
       .values(key)
       .returning();
     return apiKey;
+  }
+
+  async deleteApiKey(keyId: string): Promise<void> {
+    await db.delete(apiKeys).where(eq(apiKeys.id, keyId));
   }
 
   async toggleApiKey(keyId: string, isActive: boolean): Promise<ApiKey | undefined> {

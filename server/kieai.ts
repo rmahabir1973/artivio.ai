@@ -25,11 +25,15 @@ export async function initializeApiKeys() {
   for (const keyName of availableKeys) {
     const exists = existingKeys.some(k => k.keyName === keyName);
     if (!exists) {
-      await storage.addApiKey({
-        keyName,
-        isActive: true,
-      });
-      console.log(`Added API key: ${keyName}`);
+      const keyValue = process.env[keyName];
+      if (keyValue) {
+        await storage.addApiKey({
+          keyName,
+          keyValue,
+          isActive: true,
+        });
+        console.log(`Added API key: ${keyName}`);
+      }
     }
   }
 }
@@ -44,10 +48,10 @@ async function getApiKey(): Promise<{ keyValue: string; keyName: string }> {
   // Update usage count
   await storage.updateApiKeyUsage(key.id);
 
-  // Get the actual key value from environment
-  const keyValue = process.env[key.keyName];
+  // Get the actual key value from database
+  const keyValue = key.keyValue;
   if (!keyValue) {
-    throw new Error(`API key ${key.keyName} is configured but not found in environment variables.`);
+    throw new Error(`API key ${key.keyName} has no value configured.`);
   }
 
   return { keyValue, keyName: key.keyName };

@@ -31,6 +31,7 @@ export default function Admin() {
   const [editCredits, setEditCredits] = useState("");
   const [addingApiKey, setAddingApiKey] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
+  const [newKeyValue, setNewKeyValue] = useState("");
   const [editingPricingId, setEditingPricingId] = useState<string | null>(null);
   const [editPricingCost, setEditPricingCost] = useState("");
   const [addingPricing, setAddingPricing] = useState(false);
@@ -167,19 +168,37 @@ export default function Admin() {
   });
 
   const addApiKeyMutation = useMutation({
-    mutationFn: async (keyName: string) => {
-      return await apiRequest("POST", "/api/admin/api-keys", { keyName });
+    mutationFn: async ({ keyName, keyValue }: { keyName: string; keyValue: string }) => {
+      return await apiRequest("POST", "/api/admin/api-keys", { keyName, keyValue });
     },
     onSuccess: () => {
       toast({ title: "Success", description: "API key added successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/api-keys"] });
       setAddingApiKey(false);
       setNewKeyName("");
+      setNewKeyValue("");
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to add API key",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteApiKeyMutation = useMutation({
+    mutationFn: async (keyId: string) => {
+      return await apiRequest("DELETE", `/api/admin/api-keys/${keyId}`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "API key deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/api-keys"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete API key",
         variant: "destructive",
       });
     },
@@ -432,29 +451,43 @@ export default function Admin() {
                             <p>{formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}</p>
                           </div>
                         )}
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            toggleApiKeyMutation.mutate({
-                              keyId: key.id,
-                              isActive: !key.isActive,
-                            });
-                          }}
-                          data-testid={`button-toggle-${key.id}`}
-                        >
-                          {key.isActive ? (
-                            <>
-                              <ToggleRight className="h-4 w-4 mr-2" />
-                              Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <ToggleLeft className="h-4 w-4 mr-2" />
-                              Activate
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                              toggleApiKeyMutation.mutate({
+                                keyId: key.id,
+                                isActive: !key.isActive,
+                              });
+                            }}
+                            data-testid={`button-toggle-${key.id}`}
+                          >
+                            {key.isActive ? (
+                              <>
+                                <ToggleRight className="h-4 w-4 mr-2" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <ToggleLeft className="h-4 w-4 mr-2" />
+                                Activate
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete the API key "${key.keyName}"?`)) {
+                                deleteApiKeyMutation.mutate(key.id);
+                              }
+                            }}
+                            data-testid={`button-delete-key-${key.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -700,21 +733,35 @@ export default function Admin() {
               <Label htmlFor="keyName">Key Name</Label>
               <Input
                 id="keyName"
-                placeholder="e.g., KIE_API_KEY_1"
+                placeholder="e.g., My Kie.ai Key #1"
                 value={newKeyName}
                 onChange={(e) => setNewKeyName(e.target.value)}
                 data-testid="input-new-key-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="keyValue">API Key Value</Label>
+              <Input
+                id="keyValue"
+                type="password"
+                placeholder="Paste your Kie.ai API key here"
+                value={newKeyValue}
+                onChange={(e) => setNewKeyValue(e.target.value)}
+                data-testid="input-new-key-value"
               />
             </div>
           </div>
           <DialogFooter>
             <Button
               onClick={() => {
-                if (newKeyName.trim()) {
-                  addApiKeyMutation.mutate(newKeyName.trim());
+                if (newKeyName.trim() && newKeyValue.trim()) {
+                  addApiKeyMutation.mutate({ 
+                    keyName: newKeyName.trim(), 
+                    keyValue: newKeyValue.trim() 
+                  });
                 }
               }}
-              disabled={!newKeyName.trim() || addApiKeyMutation.isPending}
+              disabled={!newKeyName.trim() || !newKeyValue.trim() || addApiKeyMutation.isPending}
               data-testid="button-submit-new-key"
             >
               {addApiKeyMutation.isPending ? (
