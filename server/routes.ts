@@ -9,6 +9,7 @@ import {
   cloneVoice,
   generateTTS,
   transcribeAudio,
+  generateKlingAvatar,
   initializeApiKeys 
 } from "./kieai";
 import { saveBase64Images } from "./imageHosting";
@@ -21,7 +22,8 @@ import {
   sendMessageRequestSchema,
   cloneVoiceRequestSchema,
   generateTTSRequestSchema,
-  generateSTTRequestSchema
+  generateSTTRequestSchema,
+  generateAvatarRequestSchema
 } from "@shared/schema";
 
 const MODEL_COSTS = {
@@ -44,6 +46,9 @@ const MODEL_COSTS = {
   'eleven_turbo_v2.5': 15,
   // STT Models
   'scribe-v1': 25,
+  // Avatar Models
+  'kling-ai': 350,
+  'infinite-talk': 300,
 };
 
 // Helper to get callback URL
@@ -933,9 +938,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ========== SPEECH-TO-TEXT ROUTES ==========
 
-  // Transcribe audio (STT)
+  // Transcribe audio (STT) - SYNCHRONOUS processing
   app.post('/api/stt/transcribe', isAuthenticated, async (req: any, res) => {
     let hostedAudioUrl: string[] | undefined;
+    let sttGeneration: any = undefined; // Hoist to outer scope for error handling
     
     try {
       const userId = req.user.claims.sub;
@@ -966,7 +972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✓ Audio hosted at: ${audioUrl}`);
 
         // Create STT generation record
-        const sttGeneration = await storage.createSttGeneration({
+        sttGeneration = await storage.createSttGeneration({
           userId,
           audioUrl,
           model,
@@ -978,60 +984,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
           creditsCost: cost,
         });
 
-        // Transcribe audio in background
-        (async () => {
+        // Transcribe audio SYNCHRONOUSLY (wait for result before responding)
+        const { result } = await transcribeAudio({
+          audioUrl,
+          model,
+          language,
+          parameters,
+        });
+
+        // Extract transcription from result
+        const transcription = result?.data?.transcription || result?.transcription || result?.text;
+        if (!transcription) {
+          throw new Error('Transcription failed - no text returned');
+        }
+
+        // Update with completed transcription
+        await storage.updateSttGeneration(sttGeneration.id, {
+          status: 'completed',
+          transcription: typeof transcription === 'string' ? transcription : JSON.stringify(transcription),
+          completedAt: new Date(),
+        });
+
+        // Return success with transcription immediately and EXIT
+        return res.json({ 
+          success: true, 
+          generationId: sttGeneration.id,
+          transcription,
+          message: "Transcription completed" 
+        });
+      } catch (error: any) {
+        console.error('STT transcription/processing error:', error);
+        
+        // Refund credits atomically on failure
+        try {
+          await storage.addCreditsAtomic(userId, cost);
+        } catch (refundError) {
+          console.error('Credit refund failed:', refundError);
+          // Continue even if refund fails - error will be logged
+        }
+        
+        // Mark as failed in database if generation record exists
+        if (sttGeneration) {
           try {
-            const { result } = await transcribeAudio({
-              audioUrl,
-              model,
-              language,
-              parameters,
-            });
-
-            // Extract transcription from result
-            const transcription = result?.data?.transcription || result?.transcription || result?.text;
-            if (!transcription) {
-              throw new Error('Transcription failed - no text returned');
-            }
-
-            await storage.updateSttGeneration(sttGeneration.id, {
-              status: 'completed',
-              transcription: typeof transcription === 'string' ? transcription : JSON.stringify(transcription),
-              completedAt: new Date(),
-            });
-          } catch (error: any) {
-            console.error('STT transcription error:', error);
-            
-            // Refund credits on failure
-            const currentUser = await storage.getUser(userId);
-            if (currentUser) {
-              await storage.updateUserCredits(userId, currentUser.credits + cost);
-            }
-
             await storage.updateSttGeneration(sttGeneration.id, {
               status: 'failed',
               errorMessage: error.message || 'Transcription failed',
               completedAt: new Date(),
             });
+          } catch (dbError) {
+            console.error('Failed to update STT generation status:', dbError);
+            // Continue - error will be logged
           }
-        })();
-
-        res.json({ 
-          success: true, 
-          generationId: sttGeneration.id,
-          message: "Transcription started" 
-        });
-      } catch (error: any) {
-        // Refund credits if upload/setup failed
-        const currentUser = await storage.getUser(userId);
-        if (currentUser) {
-          await storage.updateUserCredits(userId, currentUser.credits + cost);
         }
-        throw error;
+        
+        // Send error response and return (don't rethrow)
+        if (!res.headersSent) {
+          return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
+        }
+        return; // Exit if headers already sent
       }
     } catch (error: any) {
       console.error('STT transcription error:', error);
-      res.status(500).json({ message: error.message || "Failed to transcribe audio" });
+      // Only send response if not already sent
+      if (!res.headersSent) {
+        return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
+      }
+      return; // Exit if headers already sent
     }
   });
 
@@ -1044,6 +1062,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching STT transcriptions:', error);
       res.status(500).json({ message: "Failed to fetch transcriptions" });
+    }
+  });
+
+  // ========== AI TALKING AVATAR ROUTES ==========
+
+  // Generate talking avatar
+  app.post('/api/avatar/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const validationResult = generateAvatarRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ message: "Invalid request", errors: validationResult.error.errors });
+      }
+
+      const { sourceImage, script, voiceId, provider, parameters } = validationResult.data;
+      const cost = MODEL_COSTS[provider] || 350;
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        // Host image
+        const [imageUrl] = await saveBase64Images([sourceImage]);
+
+        const avatarGeneration = await storage.createAvatarGeneration({
+          userId,
+          sourceImageUrl: imageUrl,
+          script,
+          voiceId: voiceId || null,
+          provider,
+          parameters: parameters || null,
+          status: 'pending',
+          resultUrl: null,
+          errorMessage: null,
+          creditsCost: cost,
+        });
+
+        // Background processing
+        (async () => {
+          try {
+            const callbackUrl = getCallbackUrl(avatarGeneration.id);
+            const { result } = await generateKlingAvatar({
+              sourceImageUrl: imageUrl,
+              script,
+              voiceId,
+              provider,
+              parameters: { ...parameters, callBackUrl: callbackUrl },
+            });
+
+            const taskId = result?.data?.taskId || result?.taskId;
+            const directUrl = result?.url || result?.videoUrl || result?.data?.url;
+
+            if (directUrl) {
+              await storage.updateAvatarGeneration(avatarGeneration.id, {
+                status: 'completed',
+                resultUrl: directUrl,
+                completedAt: new Date(),
+              });
+            } else if (taskId) {
+              await storage.updateAvatarGeneration(avatarGeneration.id, {
+                status: 'processing',
+                resultUrl: taskId,
+              });
+            } else {
+              throw new Error('No taskId or URL returned');
+            }
+          } catch (error: any) {
+            await storage.addCreditsAtomic(userId, cost);
+            await storage.updateAvatarGeneration(avatarGeneration.id, {
+              status: 'failed',
+              errorMessage: error.message,
+            });
+          }
+        })();
+
+        res.json({ generationId: avatarGeneration.id, message: "Avatar generation started" });
+      } catch (error: any) {
+        await storage.addCreditsAtomic(userId, cost);
+        throw error;
+      }
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to generate avatar" });
+    }
+  });
+
+  // Get user's avatar generations
+  app.get('/api/avatar/generations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const avatars = await storage.getUserAvatarGenerations(userId);
+      res.json(avatars);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch avatar generations" });
     }
   });
 

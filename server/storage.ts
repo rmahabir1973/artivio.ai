@@ -40,6 +40,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUserCredits(userId: string, credits: number): Promise<User | undefined>;
   deductCreditsAtomic(userId: string, cost: number): Promise<User | null>;
+  addCreditsAtomic(userId: string, amount: number): Promise<User | undefined>;
   deleteUser(userId: string): Promise<void>;
 
   // API Key operations (round-robin system)
@@ -149,6 +150,19 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return user || null;
+  }
+
+  // Atomically add credits (e.g., for refunds) - always succeeds
+  async addCreditsAtomic(userId: string, amount: number): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        credits: sql`credits + ${amount}`,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 
   async deleteUser(userId: string): Promise<void> {

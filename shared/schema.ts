@@ -494,8 +494,8 @@ export type GenerateSTTRequest = z.infer<typeof generateSTTRequestSchema>;
 
 // AI Talking Avatar Request
 export const generateAvatarRequestSchema = z.object({
-  sourceImageUrl: z.string().url(),
-  script: z.string().min(1).max(3000),
+  sourceImage: z.string(), // Base64 data URI (uploaded image, hosted server-side)
+  script: z.string().min(1).max(3000), // What the avatar says
   voiceId: z.string().optional(), // Use cloned voice or pre-made
   provider: z.enum(['kling-ai', 'infinite-talk']).default('kling-ai'),
   parameters: z.object({

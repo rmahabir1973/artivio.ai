@@ -20,6 +20,7 @@ import GenerateMusic from "@/pages/generate-music";
 import VoiceClone from "@/pages/voice-clone";
 import TextToSpeech from "@/pages/text-to-speech";
 import SpeechToText from "@/pages/speech-to-text";
+import TalkingAvatars from "@/pages/talking-avatars";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Admin from "@/pages/admin";
@@ -52,6 +53,7 @@ function Router() {
           <Route path="/voice-clone" component={VoiceClone} />
           <Route path="/text-to-speech" component={TextToSpeech} />
           <Route path="/speech-to-text" component={SpeechToText} />
+          <Route path="/talking-avatars" component={TalkingAvatars} />
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
           <Route path="/admin" component={Admin} />
