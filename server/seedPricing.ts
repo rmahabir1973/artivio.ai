@@ -9,6 +9,12 @@ const INITIAL_PRICING = [
   { feature: 'video', model: 'runway-gen3-alpha-turbo', creditCost: 350, category: 'generation', description: 'Runway Gen3 Alpha Turbo' },
   { feature: 'video', model: 'runway-aleph', creditCost: 400, category: 'generation', description: 'Runway Aleph video generation' },
   
+  // Video Enhancements (Video Combiner)
+  { feature: 'video-enhancement', model: 'crossfade-transitions', creditCost: 25, category: 'editing', description: 'Crossfade transitions between clips' },
+  { feature: 'video-enhancement', model: 'background-music', creditCost: 25, category: 'editing', description: 'Add background music with fade' },
+  { feature: 'video-enhancement', model: 'text-overlay', creditCost: 25, category: 'editing', description: 'Text overlay per instance' },
+  { feature: 'video-enhancement', model: 'speed-control', creditCost: 25, category: 'editing', description: 'Custom speed control per clip' },
+  
   // Image Models
   { feature: 'image', model: '4o-image', creditCost: 100, category: 'generation', description: 'GPT-4o image generation' },
   { feature: 'image', model: 'flux-kontext', creditCost: 150, category: 'generation', description: 'Flux Kontext image generation' },
