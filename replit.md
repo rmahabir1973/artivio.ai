@@ -27,12 +27,15 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, ensur
 - **AI Image Generation**: Integrates 4o Image API, Flux Kontext, and Nano Banana. Offers both text-to-image generation and advanced image editing with multi-image uploads (up to 10 images) and customizable output settings.
 - **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and up to 8 minutes of duration.
 - **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis, including object detection, scene description, OCR, mood detection, and artistic style analysis. Supports optional custom prompts for targeted analysis. *Note: This is an architectural exception - uses OpenAI directly because Kie.ai does not offer image analysis/vision capabilities.*
+- **Video Editor/Combiner**: Server-side FFmpeg-based video concatenation allowing users to combine 2-20 AI-generated videos into longer-form content. Features drag-and-drop interface for arranging videos, background processing with status tracking, and automatic credit deduction (75 credits per combination). Perfect for creating YouTube Shorts, TikTok videos, or longer compilations from individual AI-generated clips.
 - **AI Chat**: Features dual provider support (Deepseek and OpenAI), streaming responses via SSE, model selection, and persistent conversation history.
 - **Voice Cloning**: Integrates ElevenLabs via Kie.ai for voice cloning, supporting audio uploads and management of cloned voices.
 - **Admin Panel**: Provides comprehensive user management (credit editing, deletion) and API key management (activation/deactivation, usage tracking).
 
 ### System Design Choices
-The project adopts a modular structure, separating client, server, and shared components for maintainability and scalability. The database schema includes `users`, `sessions`, `api_keys`, `generations`, `conversations`, `messages`, and `voice_clones` tables to support all core functionalities.
+The project adopts a modular structure, separating client, server, and shared components for maintainability and scalability. The database schema includes `users`, `sessions`, `api_keys`, `generations`, `conversations`, `messages`, `voice_clones`, `video_combinations`, and `video_combination_events` tables to support all core functionalities.
+
+**Video Processing Architecture**: The video combiner uses server-side FFmpeg processing for reliability and performance. Videos are downloaded to a temporary directory, validated with ffprobe, concatenated using FFmpeg's concat demuxer, and stored in `public/video-combinations`. Background job processing follows the same asynchronous pattern as other generation features, with real-time status updates tracked in the database.
 
 ## External Dependencies
 
@@ -42,3 +45,4 @@ The project adopts a modular structure, separating client, server, and shared co
 -   **Neon (PostgreSQL)**: Managed PostgreSQL database service.
 -   **Replit Auth**: For user authentication and identity management (OpenID Connect compatible).
 -   **ElevenLabs**: Integrated via Kie.ai API for voice cloning capabilities.
+-   **FFmpeg 6.1.1**: System package for server-side video processing (concatenation, validation, and format conversion).
