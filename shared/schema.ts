@@ -122,6 +122,45 @@ export const insertGenerationSchema = createInsertSchema(generations).omit({
 export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type Generation = typeof generations.$inferSelect;
 
+// Image Analysis table for AI-powered image understanding
+export const imageAnalyses = pgTable("image_analyses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  imageUrl: text("image_url").notNull(), // Hosted image URL
+  analysisPrompt: text("analysis_prompt"), // Optional user-provided prompt/question
+  analysisResult: jsonb("analysis_result"), // Structured AI analysis (supports rich formatting)
+  model: varchar("model").notNull().default('gpt-4o'), // AI model used
+  provider: varchar("provider").notNull().default('kie-ai'), // AI provider
+  status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
+  errorMessage: text("error_message"),
+  creditsCost: integer("credits_cost").notNull(),
+  apiKeyUsed: varchar("api_key_used"), // Which API key was used
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("image_analyses_user_created_idx").on(table.userId, table.createdAt),
+]);
+
+export const insertImageAnalysisSchema = createInsertSchema(imageAnalyses).omit({
+  id: true,
+  status: true,
+  apiKeyUsed: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertImageAnalysis = z.infer<typeof insertImageAnalysisSchema>;
+export type ImageAnalysis = typeof imageAnalyses.$inferSelect;
+
+// Image Analysis Request Schema
+export const analyzeImageRequestSchema = z.object({
+  image: z.string(), // Base64 data URI
+  prompt: z.string().max(500).optional(), // Optional custom question/prompt
+  model: z.enum(['gpt-4o']).default('gpt-4o'),
+});
+
+export type AnalyzeImageRequest = z.infer<typeof analyzeImageRequestSchema>;
+
 // Request validation schemas for generation endpoints
 export const generateVideoRequestSchema = z.object({
   model: z.enum([

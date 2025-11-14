@@ -10,6 +10,7 @@ import {
   sttGenerations,
   avatarGenerations,
   audioConversions,
+  imageAnalyses,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -33,6 +34,8 @@ import {
   type InsertAvatarGeneration,
   type AudioConversion,
   type InsertAudioConversion,
+  type ImageAnalysis,
+  type InsertImageAnalysis,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -110,6 +113,11 @@ export interface IStorage {
   createAudioConversion(conversion: InsertAudioConversion): Promise<AudioConversion>;
   updateAudioConversion(id: string, updates: Partial<AudioConversion>): Promise<AudioConversion | undefined>;
   getUserAudioConversions(userId: string): Promise<AudioConversion[]>;
+
+  // Image Analysis operations
+  createImageAnalysis(analysis: InsertImageAnalysis): Promise<ImageAnalysis>;
+  updateImageAnalysis(id: string, updates: Partial<ImageAnalysis>): Promise<ImageAnalysis | undefined>;
+  getUserImageAnalyses(userId: string): Promise<ImageAnalysis[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -546,6 +554,32 @@ export class DatabaseStorage implements IStorage {
       .from(audioConversions)
       .where(eq(audioConversions.userId, userId))
       .orderBy(desc(audioConversions.createdAt));
+  }
+
+  // Image Analysis operations
+  async createImageAnalysis(analysis: InsertImageAnalysis): Promise<ImageAnalysis> {
+    const [result] = await db
+      .insert(imageAnalyses)
+      .values(analysis)
+      .returning();
+    return result;
+  }
+
+  async updateImageAnalysis(id: string, updates: Partial<ImageAnalysis>): Promise<ImageAnalysis | undefined> {
+    const [analysis] = await db
+      .update(imageAnalyses)
+      .set(updates)
+      .where(eq(imageAnalyses.id, id))
+      .returning();
+    return analysis;
+  }
+
+  async getUserImageAnalyses(userId: string): Promise<ImageAnalysis[]> {
+    return await db
+      .select()
+      .from(imageAnalyses)
+      .where(eq(imageAnalyses.userId, userId))
+      .orderBy(desc(imageAnalyses.createdAt));
   }
 }
 
