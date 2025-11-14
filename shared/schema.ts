@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -59,6 +60,36 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
 
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
+
+// Pricing table for configurable feature costs
+export const pricing = pgTable("pricing", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  feature: varchar("feature").notNull(), // 'video', 'image', 'music', 'chat', 'voice-cloning', 'stt', 'tts', 'avatar', 'audio-converter'
+  model: varchar("model").notNull(), // 'veo-3.1', 'flux-kontext', 'suno-v4', 'gpt-4o'
+  creditCost: integer("credit_cost").notNull(),
+  category: varchar("category").notNull(), // 'generation', 'chat', 'voice', 'audio'
+  description: text("description"), // Optional human-readable description
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  uniqueIndex("feature_model_idx").on(table.feature, table.model),
+]);
+
+export const insertPricingSchema = createInsertSchema(pricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updatePricingSchema = z.object({
+  creditCost: z.number().int().min(0).optional(),
+  category: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export type InsertPricing = z.infer<typeof insertPricingSchema>;
+export type UpdatePricing = z.infer<typeof updatePricingSchema>;
+export type Pricing = typeof pricing.$inferSelect;
 
 // Generations table for tracking all AI generations
 export const generations = pgTable("generations", {

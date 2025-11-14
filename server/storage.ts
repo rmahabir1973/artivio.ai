@@ -1,6 +1,7 @@
 import {
   users,
   apiKeys,
+  pricing,
   generations,
   conversations,
   messages,
@@ -13,6 +14,9 @@ import {
   type UpsertUser,
   type ApiKey,
   type InsertApiKey,
+  type Pricing,
+  type InsertPricing,
+  type UpdatePricing,
   type Generation,
   type InsertGeneration,
   type Conversation,
@@ -50,6 +54,12 @@ export interface IStorage {
   updateApiKeyUsage(keyId: string): Promise<void>;
   addApiKey(key: InsertApiKey): Promise<ApiKey>;
   toggleApiKey(keyId: string, isActive: boolean): Promise<ApiKey | undefined>;
+
+  // Pricing operations
+  getAllPricing(): Promise<Pricing[]>;
+  getPricingByModel(model: string): Promise<Pricing | undefined>;
+  createPricing(pricing: InsertPricing): Promise<Pricing>;
+  updatePricing(model: string, updates: UpdatePricing): Promise<Pricing | undefined>;
 
   // Generation operations
   getAllGenerations(): Promise<Generation[]>;
@@ -219,6 +229,44 @@ export class DatabaseStorage implements IStorage {
       .where(eq(apiKeys.id, keyId))
       .returning();
     return key;
+  }
+
+  // Pricing operations
+  async getAllPricing(): Promise<Pricing[]> {
+    return await db.select().from(pricing).orderBy(pricing.category, pricing.feature);
+  }
+
+  async getPricingByModel(model: string): Promise<Pricing | undefined> {
+    const normalizedModel = model.toLowerCase().trim();
+    const [price] = await db
+      .select()
+      .from(pricing)
+      .where(eq(pricing.model, normalizedModel));
+    return price;
+  }
+
+  async createPricing(pricingData: InsertPricing): Promise<Pricing> {
+    const normalizedData = {
+      ...pricingData,
+      feature: pricingData.feature.toLowerCase().trim(),
+      model: pricingData.model.toLowerCase().trim(),
+    };
+    
+    const [price] = await db
+      .insert(pricing)
+      .values(normalizedData)
+      .returning();
+    return price;
+  }
+
+  async updatePricing(model: string, updates: UpdatePricing): Promise<Pricing | undefined> {
+    const normalizedModel = model.toLowerCase().trim();
+    const [price] = await db
+      .update(pricing)
+      .set(updates)
+      .where(eq(pricing.model, normalizedModel))
+      .returning();
+    return price;
   }
 
   // Generation operations
