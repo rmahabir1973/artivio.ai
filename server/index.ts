@@ -2,6 +2,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Validate critical environment variables at startup
+const requiredEnvVars = ['DATABASE_URL', 'SESSION_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error('FATAL: Missing required environment variables:', missingEnvVars.join(', '));
+  console.error('Please configure these variables before starting the server.');
+  process.exit(1);
+}
+
 const app = express();
 
 declare module 'http' {
