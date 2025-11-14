@@ -1,14 +1,16 @@
 # Artivio AI - Complete AI Content Generation Platform
 
 ## Overview
-Artivio AI is a comprehensive platform for generating AI-powered videos, images, and music using Kie.ai's powerful API models. The platform features user authentication, credit-based usage, admin panel with user management, round-robin API key rotation for load balancing, image-to-video capabilities with reference image support, and comprehensive image editing with multi-image uploads.
+Artivio AI is a comprehensive platform for generating AI-powered videos, images, music, and AI chatbot conversations using Kie.ai's powerful API models. The platform features user authentication, credit-based usage, admin panel with user management, round-robin API key rotation for load balancing, image-to-video capabilities with reference image support, comprehensive image editing with multi-image uploads, and AI chatbot with streaming responses supporting Deepseek and OpenAI models.
 
 ## Tech Stack
 - **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI, Wouter (routing), TanStack Query
 - **Backend**: Express.js, Node.js, TypeScript
 - **Database**: PostgreSQL (Neon) with Drizzle ORM
 - **Authentication**: Replit Auth (OpenID Connect)
-- **AI API**: Kie.ai (video, image, music generation)
+- **AI APIs**: 
+  - Kie.ai (video, image, music generation)
+  - Deepseek & OpenAI (chat/conversation)
 
 ## Features Implemented
 
@@ -31,10 +33,16 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
    - Suno V3.5, V4, V4.5
    - Custom lyrics support
    - Up to 8 minutes duration
-5. **Credit System**: Track and manage user credits with transparent cost display
-6. **Generation History**: View, download, and manage all generated content
-7. **Dashboard**: Statistics and recent generations overview
-8. **Dark Mode**: Full light/dark theme support
+5. **AI Chat**:
+   - **Dual Provider Support**: Deepseek and OpenAI
+   - **Streaming Responses**: Real-time message streaming via Server-Sent Events
+   - **Model Selection**: Choose from multiple models (Deepseek Chat/Reasoner, GPT-4o/4o-mini, o1/o1-mini)
+   - **Conversation Management**: Persistent conversation history with sidebar navigation
+   - **Credit Integration**: Transparent per-message costs (5-50 credits)
+6. **Credit System**: Track and manage user credits with transparent cost display
+7. **Generation History**: View, download, and manage all generated content
+8. **Dashboard**: Statistics and recent generations overview
+9. **Dark Mode**: Full light/dark theme support
 
 ### Admin Features
 1. **User Management**: View all users, edit credits, delete users
@@ -52,6 +60,8 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 - **sessions**: Secure session storage for authentication
 - **api_keys**: Round-robin API key management with usage tracking
 - **generations**: Complete history of all AI generations with status tracking
+- **conversations**: Chat conversation metadata (userId, title, provider, model)
+- **messages**: Individual chat messages (conversationId, role, content, creditsCost)
 
 ## API Endpoints
 
@@ -75,6 +85,13 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
   - Extracts result URLs from callback data (resultUrls[], videoUrl, imageUrl, audioUrl)
   - No authentication required (webhook endpoint)
 
+### Chat
+- `GET /api/chat/conversations` - List all user conversations
+- `GET /api/chat/conversations/:id` - Get messages for a conversation
+- `POST /api/chat/send` - Send message with streaming response (SSE)
+- `DELETE /api/chat/conversations/:id` - Delete a conversation
+- `PATCH /api/chat/conversations/:id/title` - Update conversation title
+
 ### Admin
 - `GET /api/admin/users` - Get all users
 - `PATCH /api/admin/users/:userId/credits` - Update user credits
@@ -87,6 +104,10 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 
 ### Kie.ai API Keys (minimum 1, maximum 20)
 - `KIE_API_KEY_1` through `KIE_API_KEY_20`
+
+### Chat API Keys
+- `DEEPSEEK_API_KEY` - For Deepseek chat models
+- `OPENAI_API_KEY` - For OpenAI chat models
 
 ### Database (automatically provided)
 - `DATABASE_URL`
@@ -157,6 +178,7 @@ The callback handler checks multiple fields for result URLs (Kie.ai format varie
 │   │   │   ├── generate-video.tsx
 │   │   │   ├── generate-image.tsx
 │   │   │   ├── generate-music.tsx
+│   │   │   ├── chat.tsx
 │   │   │   ├── history.tsx
 │   │   │   └── admin.tsx
 │   │   ├── lib/
@@ -171,6 +193,7 @@ The callback handler checks multiple fields for result URLs (Kie.ai format varie
 │   ├── storage.ts (Data access layer)
 │   ├── replitAuth.ts (Authentication middleware)
 │   ├── kieai.ts (Kie.ai API integration)
+│   ├── chatService.ts (Deepseek & OpenAI chat integration)
 │   ├── imageHosting.ts (Image hosting & cleanup)
 │   ├── routes.ts (API endpoints)
 │   └── index.ts (Server entry point)
@@ -203,6 +226,14 @@ The callback handler checks multiple fields for result URLs (Kie.ai format varie
 - Suno V3.5: 200 credits
 - Suno V4: 250 credits
 - Suno V4.5: 300 credits
+
+### Chat (per message)
+- Deepseek Chat: 5 credits
+- Deepseek Reasoner: 15 credits
+- GPT-4o: 50 credits
+- GPT-4o Mini: 10 credits
+- o1: 30 credits
+- o1 Mini: 20 credits
 
 ## Image Hosting System
 
@@ -271,6 +302,42 @@ The platform implements a temporary file hosting system to solve Kie.ai's requir
 - Image uploads are validated at client, schema, and server levels
 - Temporary files auto-cleanup after 1 hour via scheduled job
 
+## Chat Implementation Details
+
+### Streaming Architecture
+The chat feature uses Server-Sent Events (SSE) for real-time streaming responses:
+
+1. **Client Request**: POST /api/chat/send with message, provider, model
+2. **Server Processing**: 
+   - Validates request and deducts credits atomically
+   - Creates/retrieves conversation
+   - Saves user message to database
+   - Initiates streaming response via OpenAI SDK
+3. **Streaming Flow**:
+   - Server sends chunks as `data: {"content": "..."}\n\n`
+   - Client accumulates chunks in streaming message display
+   - Final chunk: `data: {"done": true, "conversationId": "..."}\n\n`
+4. **Client Completion**:
+   - Invalidates conversation and message queries
+   - 100ms delay before clearing streaming buffer (ensures query refresh completes)
+   - Persisted messages display from server
+
+### Optimistic Updates
+- User message displays immediately as optimistic state
+- Streaming assistant message accumulates in real-time
+- Both clear after query refresh completes
+
+### Provider Models
+**Deepseek**:
+- deepseek-chat (5 credits/message)
+- deepseek-reasoner (15 credits/message)
+
+**OpenAI**:
+- gpt-4o (50 credits/message)
+- gpt-4o-mini (10 credits/message)
+- o1 (30 credits/message)
+- o1-mini (20 credits/message)
+
 ## Future Enhancements (Agreed Next Phase)
 
 1. Batch generation capabilities
@@ -278,5 +345,7 @@ The platform implements a temporary file hosting system to solve Kie.ai's requir
 3. Credit purchase and billing integration (Stripe)
 4. Generation favorites and collections
 5. API usage analytics dashboard
+6. Chat conversation export/import
+7. Chat context window management for long conversations
 
 Last Updated: 2024-11-14
