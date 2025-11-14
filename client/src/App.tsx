@@ -28,6 +28,9 @@ import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
+import Billing from "@/pages/billing";
+import BillingSuccess from "@/pages/billing-success";
+import BillingCanceled from "@/pages/billing-canceled";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -65,6 +68,9 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/profile" component={Profile} />
           <Route path="/admin" component={Admin} />
+          <Route path="/billing" component={Billing} />
+          <Route path="/billing/success" component={BillingSuccess} />
+          <Route path="/billing/canceled" component={BillingCanceled} />
         </>
       )}
       <Route component={NotFound} />

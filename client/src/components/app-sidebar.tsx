@@ -1,4 +1,4 @@
-import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, Repeat, MessageSquare, History, Settings, Shield, Scan, Combine } from "lucide-react";
+import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, Repeat, MessageSquare, History, Settings, Shield, Scan, Combine, CreditCard } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -95,6 +95,12 @@ const navItems = [
     title: "Profile",
     url: "/profile",
     icon: Settings,
+    adminOnly: false,
+  },
+  {
+    title: "Billing",
+    url: "/billing",
+    icon: CreditCard,
     adminOnly: false,
   },
   {

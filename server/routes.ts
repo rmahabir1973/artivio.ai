@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -18,6 +19,16 @@ import { saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
 import { combineVideos } from "./videoProcessor";
+import { 
+  createCheckoutSession, 
+  createCustomerPortalSession,
+  verifyWebhookSignature,
+  handleCheckoutCompleted,
+  handleInvoicePaid,
+  handleInvoicePaymentFailed,
+  handleSubscriptionUpdated,
+  handleSubscriptionDeleted,
+} from "./stripe";
 import { 
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
@@ -1899,6 +1910,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching video combinations:', error);
       res.status(500).json({ message: "Failed to fetch video combinations" });
+    }
+  });
+
+  // Stripe Billing Routes
+  
+  // Stripe Webhook Handler - MUST use express.raw() for signature verification
+  app.post('/api/webhooks/stripe', 
+    express.raw({ type: 'application/json' }),
+    async (req: any, res) => {
+      try {
+        const signature = req.headers['stripe-signature'];
+        if (!signature) {
+          console.error('[Stripe Webhook] Missing signature');
+          return res.status(400).send('Missing signature');
+        }
+
+        const event = verifyWebhookSignature(req.body, signature);
+        
+        console.log(`[Stripe Webhook] Received event: ${event.type}`);
+
+        // Handle the event
+        switch (event.type) {
+          case 'checkout.session.completed':
+            await handleCheckoutCompleted(event.data.object as any);
+            break;
+          case 'invoice.paid':
+            await handleInvoicePaid(event.data.object as any);
+            break;
+          case 'invoice.payment_failed':
+            await handleInvoicePaymentFailed(event.data.object as any);
+            break;
+          case 'customer.subscription.updated':
+            await handleSubscriptionUpdated(event.data.object as any);
+            break;
+          case 'customer.subscription.deleted':
+            await handleSubscriptionDeleted(event.data.object as any);
+            break;
+          default:
+            console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+        }
+
+        res.json({ received: true });
+      } catch (error: any) {
+        console.error('[Stripe Webhook] Error:', error);
+        res.status(400).send(`Webhook Error: ${error.message}`);
+      }
+    }
+  );
+
+  // Create Checkout Session for subscription purchase
+  app.post('/api/billing/checkout', isAuthenticated, async (req, res) => {
+    try {
+      const { planId } = req.body;
+      
+      if (!planId) {
+        return res.status(400).json({ error: 'planId is required' });
+      }
+
+      const user = req.user!;
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : 'http://localhost:5000';
+
+      const session = await createCheckoutSession({
+        userId: user.id,
+        userEmail: user.email || '',
+        planId,
+        successUrl: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${baseUrl}/billing/canceled`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error('[Billing] Checkout error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create Customer Portal Session for managing subscription
+  app.post('/api/billing/portal', isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ error: 'No Stripe customer found' });
+      }
+
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : 'http://localhost:5000';
+
+      const session = await createCustomerPortalSession({
+        customerId: user.stripeCustomerId,
+        returnUrl: `${baseUrl}/billing`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error('[Billing] Portal error:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
