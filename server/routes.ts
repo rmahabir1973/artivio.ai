@@ -1317,7 +1317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminId = req.user.claims.sub;
       const admin = await storage.getUser(adminId);
       
-      if (!admin?.isAdmin) {
+      if (!isUserAdmin(admin)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1338,7 +1338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminId = req.user.claims.sub;
       const admin = await storage.getUser(adminId);
       
-      if (!admin?.isAdmin) {
+      if (!isUserAdmin(admin)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
