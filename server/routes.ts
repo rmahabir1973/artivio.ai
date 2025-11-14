@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateVideo, generateImage, generateMusic, initializeApiKeys } from "./kieai";
+import { saveBase64Images } from "./imageHosting";
 import { 
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
@@ -47,6 +48,14 @@ async function generateVideoInBackground(
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
+    // Convert base64 images to hosted URLs
+    let hostedImageUrls: string[] | undefined;
+    if (referenceImages && referenceImages.length > 0) {
+      console.log(`Converting ${referenceImages.length} base64 images to hosted URLs...`);
+      hostedImageUrls = await saveBase64Images(referenceImages);
+      console.log(`✓ Images hosted successfully:`, hostedImageUrls);
+    }
+    
     const callbackUrl = getCallbackUrl(generationId);
     console.log(`📞 Sending callback URL to Kie.ai for video ${generationId}: ${callbackUrl}`);
     
@@ -54,7 +63,7 @@ async function generateVideoInBackground(
       model, 
       prompt,
       generationType,
-      referenceImages,
+      referenceImages: hostedImageUrls,
       veoSubtype,
       parameters: { ...parameters, callBackUrl: callbackUrl } 
     });

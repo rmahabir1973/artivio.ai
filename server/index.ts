@@ -14,6 +14,9 @@ if (missingEnvVars.length > 0) {
 
 const app = express();
 
+// Serve uploaded images statically from public/uploads
+app.use('/uploads', express.static('public/uploads'));
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
