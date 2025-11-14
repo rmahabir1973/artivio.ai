@@ -1,7 +1,7 @@
 # Artivio AI - Complete AI Content Generation Platform
 
 ## Overview
-Artivio AI is a comprehensive platform for generating AI-powered videos, images, and music using Kie.ai's powerful API models. The platform features user authentication, credit-based usage, admin panel with user management, and round-robin API key rotation for load balancing.
+Artivio AI is a comprehensive platform for generating AI-powered videos, images, and music using Kie.ai's powerful API models. The platform features user authentication, credit-based usage, admin panel with user management, round-robin API key rotation for load balancing, image-to-video capabilities with reference image support, and comprehensive image editing with multi-image uploads.
 
 ## Tech Stack
 - **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI, Wouter (routing), TanStack Query
@@ -18,10 +18,15 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
    - Veo 3.1 (1080p with synchronized audio)
    - Veo 3.1 Fast (faster, lower-cost rendering)
    - Runway Aleph (advanced scene reasoning)
+   - **Image-to-Video**: Upload up to 3 reference images for Veo models
 3. **AI Image Generation**:
    - 4o Image API (high-fidelity visuals)
    - Flux Kontext (vivid, coherent scenes)
    - Nano Banana (fast, precise generation)
+   - **Two Modes**:
+     - Text-to-Image: Generate images from text prompts
+     - Image Editing: Upload up to 10 images with editing prompts
+   - **Advanced Options**: Output format (PNG/JPEG/WebP), quality (standard/HD), aspect ratio
 4. **AI Music Generation**:
    - Suno V3.5, V4, V4.5
    - Custom lyrics support
@@ -166,6 +171,7 @@ The callback handler checks multiple fields for result URLs (Kie.ai format varie
 │   ├── storage.ts (Data access layer)
 │   ├── replitAuth.ts (Authentication middleware)
 │   ├── kieai.ts (Kie.ai API integration)
+│   ├── imageHosting.ts (Image hosting & cleanup)
 │   ├── routes.ts (API endpoints)
 │   └── index.ts (Server entry point)
 ├── shared/
@@ -198,6 +204,63 @@ The callback handler checks multiple fields for result URLs (Kie.ai format varie
 - Suno V4: 250 credits
 - Suno V4.5: 300 credits
 
+## Image Hosting System
+
+### Overview
+The platform implements a temporary file hosting system to solve Kie.ai's requirement for public HTTPS URLs (base64 not supported):
+
+### Architecture
+1. **Upload Endpoint**: `POST /api/upload/images` receives base64 data URIs
+2. **Storage**: Files saved to `/uploads` directory with unique filenames
+3. **Public Access**: Express static middleware serves files at `/uploads/:filename`
+4. **Security**: Comprehensive validation at multiple layers
+5. **Cleanup**: Automatic file removal after use
+
+### Security Layers
+
+#### Client-Side (generate-image.tsx)
+- Max 10MB per file validation
+- MIME type checking (JPEG/PNG/WebP/GIF)
+- File count limits (3 for video, 10 for image editing)
+- User feedback for validation errors
+
+#### Schema-Level (shared/schema.ts)
+- Custom `base64ImageSchema` validator with:
+  - Data URI format validation: `data:image/(jpeg|jpg|png|webp|gif);base64,`
+  - Whitespace normalization (per RFC 2397)
+  - Encoded size cap: 13.5MB (early DoS prevention)
+  - Accurate decoded size calculation: `(len * 3) / 4 - paddingCount`
+  - Decoded size limit: 10MB max
+- Mode isolation enforcement:
+  - `text-to-image` mode rejects any referenceImages
+  - `image-editing` mode requires at least one referenceImage
+
+#### Server-Side (server/imageHosting.ts)
+- Double validation of size and MIME type
+- Atomic operations with rollback on partial failures
+- Error handling with automatic cleanup
+- Logging for debugging and monitoring
+
+#### Express Configuration
+- Body size limit: 50MB (accommodates up to 10 validated images)
+- Request timeout protection
+- CORS headers for security
+
+### File Cleanup Strategy
+
+1. **On Error**: Immediate cleanup of uploaded files when generation fails
+2. **Periodic**: Scheduled cleanup every 24 hours removes files older than 1 hour
+3. **On Startup**: Cleanup runs immediately when server starts
+4. **Manual**: Admin can trigger cleanup if needed
+
+### Size Limits
+
+- **Per Image**: 10MB decoded / 13.5MB encoded
+- **Total Request**: 50MB Express body limit
+- **Image Count**: 
+  - Video (image-to-video): 3 images max
+  - Image Editing: 10 images max
+
 ## Development Notes
 
 - All users start with 1000 credits
@@ -205,6 +268,8 @@ The callback handler checks multiple fields for result URLs (Kie.ai format varie
 - Generation happens asynchronously in the background
 - Failed generations do not refund credits (future enhancement)
 - Admin panel requires `isAdmin` flag on user record
+- Image uploads are validated at client, schema, and server levels
+- Temporary files auto-cleanup after 1 hour via scheduled job
 
 ## Future Enhancements (Agreed Next Phase)
 
