@@ -4,6 +4,11 @@ import {
   generations,
   conversations,
   messages,
+  voiceClones,
+  ttsGenerations,
+  sttGenerations,
+  avatarGenerations,
+  audioConversions,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -14,6 +19,16 @@ import {
   type InsertConversation,
   type Message,
   type InsertMessage,
+  type VoiceClone,
+  type InsertVoiceClone,
+  type TtsGeneration,
+  type InsertTtsGeneration,
+  type SttGeneration,
+  type InsertSttGeneration,
+  type AvatarGeneration,
+  type InsertAvatarGeneration,
+  type AudioConversion,
+  type InsertAudioConversion,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -55,6 +70,33 @@ export interface IStorage {
   
   createMessage(message: InsertMessage): Promise<Message>;
   getConversationMessages(conversationId: string): Promise<Message[]>;
+
+  // Voice Clone operations
+  createVoiceClone(voiceClone: InsertVoiceClone): Promise<VoiceClone>;
+  getUserVoiceClones(userId: string): Promise<VoiceClone[]>;
+  getVoiceClone(id: string): Promise<VoiceClone | undefined>;
+  toggleVoiceClone(id: string, isActive: boolean): Promise<VoiceClone | undefined>;
+  deleteVoiceClone(id: string): Promise<void>;
+
+  // TTS Generation operations
+  createTtsGeneration(generation: InsertTtsGeneration): Promise<TtsGeneration>;
+  updateTtsGeneration(id: string, updates: Partial<TtsGeneration>): Promise<TtsGeneration | undefined>;
+  getUserTtsGenerations(userId: string): Promise<TtsGeneration[]>;
+
+  // STT Generation operations
+  createSttGeneration(generation: InsertSttGeneration): Promise<SttGeneration>;
+  updateSttGeneration(id: string, updates: Partial<SttGeneration>): Promise<SttGeneration | undefined>;
+  getUserSttGenerations(userId: string): Promise<SttGeneration[]>;
+
+  // Avatar Generation operations
+  createAvatarGeneration(generation: InsertAvatarGeneration): Promise<AvatarGeneration>;
+  updateAvatarGeneration(id: string, updates: Partial<AvatarGeneration>): Promise<AvatarGeneration | undefined>;
+  getUserAvatarGenerations(userId: string): Promise<AvatarGeneration[]>;
+
+  // Audio Conversion operations
+  createAudioConversion(conversion: InsertAudioConversion): Promise<AudioConversion>;
+  updateAudioConversion(id: string, updates: Partial<AudioConversion>): Promise<AudioConversion | undefined>;
+  getUserAudioConversions(userId: string): Promise<AudioConversion[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -287,6 +329,148 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
       .orderBy(messages.createdAt);
+  }
+
+  // Voice Clone operations
+  async createVoiceClone(voiceClone: InsertVoiceClone): Promise<VoiceClone> {
+    const [clone] = await db
+      .insert(voiceClones)
+      .values(voiceClone)
+      .returning();
+    return clone;
+  }
+
+  async getUserVoiceClones(userId: string): Promise<VoiceClone[]> {
+    return await db
+      .select()
+      .from(voiceClones)
+      .where(eq(voiceClones.userId, userId))
+      .orderBy(desc(voiceClones.createdAt));
+  }
+
+  async getVoiceClone(id: string): Promise<VoiceClone | undefined> {
+    const [clone] = await db
+      .select()
+      .from(voiceClones)
+      .where(eq(voiceClones.id, id));
+    return clone;
+  }
+
+  async toggleVoiceClone(id: string, isActive: boolean): Promise<VoiceClone | undefined> {
+    const [clone] = await db
+      .update(voiceClones)
+      .set({ isActive })
+      .where(eq(voiceClones.id, id))
+      .returning();
+    return clone;
+  }
+
+  async deleteVoiceClone(id: string): Promise<void> {
+    await db.delete(voiceClones).where(eq(voiceClones.id, id));
+  }
+
+  // TTS Generation operations
+  async createTtsGeneration(generation: InsertTtsGeneration): Promise<TtsGeneration> {
+    const [gen] = await db
+      .insert(ttsGenerations)
+      .values(generation)
+      .returning();
+    return gen;
+  }
+
+  async updateTtsGeneration(id: string, updates: Partial<TtsGeneration>): Promise<TtsGeneration | undefined> {
+    const [generation] = await db
+      .update(ttsGenerations)
+      .set(updates)
+      .where(eq(ttsGenerations.id, id))
+      .returning();
+    return generation;
+  }
+
+  async getUserTtsGenerations(userId: string): Promise<TtsGeneration[]> {
+    return await db
+      .select()
+      .from(ttsGenerations)
+      .where(eq(ttsGenerations.userId, userId))
+      .orderBy(desc(ttsGenerations.createdAt));
+  }
+
+  // STT Generation operations
+  async createSttGeneration(generation: InsertSttGeneration): Promise<SttGeneration> {
+    const [gen] = await db
+      .insert(sttGenerations)
+      .values(generation)
+      .returning();
+    return gen;
+  }
+
+  async updateSttGeneration(id: string, updates: Partial<SttGeneration>): Promise<SttGeneration | undefined> {
+    const [generation] = await db
+      .update(sttGenerations)
+      .set(updates)
+      .where(eq(sttGenerations.id, id))
+      .returning();
+    return generation;
+  }
+
+  async getUserSttGenerations(userId: string): Promise<SttGeneration[]> {
+    return await db
+      .select()
+      .from(sttGenerations)
+      .where(eq(sttGenerations.userId, userId))
+      .orderBy(desc(sttGenerations.createdAt));
+  }
+
+  // Avatar Generation operations
+  async createAvatarGeneration(generation: InsertAvatarGeneration): Promise<AvatarGeneration> {
+    const [gen] = await db
+      .insert(avatarGenerations)
+      .values(generation)
+      .returning();
+    return gen;
+  }
+
+  async updateAvatarGeneration(id: string, updates: Partial<AvatarGeneration>): Promise<AvatarGeneration | undefined> {
+    const [generation] = await db
+      .update(avatarGenerations)
+      .set(updates)
+      .where(eq(avatarGenerations.id, id))
+      .returning();
+    return generation;
+  }
+
+  async getUserAvatarGenerations(userId: string): Promise<AvatarGeneration[]> {
+    return await db
+      .select()
+      .from(avatarGenerations)
+      .where(eq(avatarGenerations.userId, userId))
+      .orderBy(desc(avatarGenerations.createdAt));
+  }
+
+  // Audio Conversion operations
+  async createAudioConversion(conversion: InsertAudioConversion): Promise<AudioConversion> {
+    const [conv] = await db
+      .insert(audioConversions)
+      .values(conversion)
+      .returning();
+    return conv;
+  }
+
+  async updateAudioConversion(id: string, updates: Partial<AudioConversion>): Promise<AudioConversion | undefined> {
+    const [conversion] = await db
+      .update(audioConversions)
+      .set(updates)
+      .where(eq(audioConversions.id, id))
+      .returning();
+    return conversion;
+  }
+
+  async getUserAudioConversions(userId: string): Promise<AudioConversion[]> {
+    return await db
+      .select()
+      .from(audioConversions)
+      .where(eq(audioConversions.userId, userId))
+      .orderBy(desc(audioConversions.createdAt));
   }
 }
 

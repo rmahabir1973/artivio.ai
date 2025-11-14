@@ -457,7 +457,7 @@ export type FeaturePricing = typeof featurePricing.$inferSelect;
 export const cloneVoiceRequestSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
-  audioFiles: z.array(z.string().url()).min(1).max(5), // URLs to uploaded audio files
+  audioFiles: z.array(z.string()).min(1).max(3), // Base64 data URIs (1-3 files max, 10MB each, validated server-side)
 });
 
 export type CloneVoiceRequest = z.infer<typeof cloneVoiceRequestSchema>;

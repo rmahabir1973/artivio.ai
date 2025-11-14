@@ -1,4 +1,4 @@
-import { Home, Video, Image, Music, MessageSquare, History, Settings, Shield } from "lucide-react";
+import { Home, Video, Image, Music, Mic, MessageSquare, History, Settings, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -41,6 +41,12 @@ const navItems = [
     title: "Music Generation",
     url: "/generate/music",
     icon: Music,
+    adminOnly: false,
+  },
+  {
+    title: "Voice Cloning",
+    url: "/voice-clone",
+    icon: Mic,
     adminOnly: false,
   },
   {

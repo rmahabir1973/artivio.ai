@@ -2,14 +2,22 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { generateVideo, generateImage, generateMusic, initializeApiKeys } from "./kieai";
+import { 
+  generateVideo, 
+  generateImage, 
+  generateMusic, 
+  cloneVoice,
+  initializeApiKeys 
+} from "./kieai";
 import { saveBase64Images } from "./imageHosting";
+import { saveBase64AudioFiles } from "./audioHosting";
 import { chatService, CHAT_COSTS } from "./chatService";
 import { 
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
   generateMusicRequestSchema,
-  sendMessageRequestSchema 
+  sendMessageRequestSchema,
+  cloneVoiceRequestSchema
 } from "@shared/schema";
 
 const MODEL_COSTS = {
@@ -678,6 +686,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update conversation title" });
     }
   });
+
+  // ========== VOICE CLONING ROUTES ==========
+
+  // Clone a voice
+  app.post('/api/voice-clone', isAuthenticated, async (req: any, res) => {
+    let hostedAudioUrls: string[] | undefined;
+    
+    try {
+      const userId = req.user.claims.sub;
+
+      // Validate request
+      const validationResult = cloneVoiceRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { name, description, audioFiles } = validationResult.data;
+      const cost = 100; // Voice cloning cost
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        // Convert base64 audio files to hosted URLs with validation
+        console.log(`Converting ${audioFiles.length} base64 audio files to hosted URLs...`);
+        hostedAudioUrls = await saveBase64AudioFiles(audioFiles);
+        console.log(`✓ Audio files hosted successfully:`, hostedAudioUrls);
+
+        // Call Kie.ai voice cloning API
+        const { result, keyName } = await cloneVoice({
+          name,
+          description,
+          audioFiles: hostedAudioUrls,
+        });
+
+        // Extract voice ID from result
+        const voiceId = result?.data?.voiceId || result?.voiceId || result?.id;
+        if (!voiceId) {
+          throw new Error('Voice cloning failed - no voice ID returned');
+        }
+
+        // Save voice clone to database
+        const voiceClone = await storage.createVoiceClone({
+          userId,
+          name,
+          voiceId,
+          description: description || '',
+          provider: 'elevenlabs',
+          isActive: true,
+        });
+
+        res.json({ 
+          success: true, 
+          voiceClone,
+          message: "Voice cloned successfully" 
+        });
+      } catch (error: any) {
+        // Refund credits atomically if voice cloning failed
+        const currentUser = await storage.getUser(userId);
+        if (currentUser) {
+          await storage.updateUserCredits(userId, currentUser.credits + cost);
+        }
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('Voice cloning error:', error);
+      res.status(500).json({ message: error.message || "Failed to clone voice" });
+    }
+  });
+
+  // Get user's cloned voices
+  app.get('/api/voice-clones', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const voices = await storage.getUserVoiceClones(userId);
+      res.json(voices);
+    } catch (error) {
+      console.error('Error fetching voice clones:', error);
+      res.status(500).json({ message: "Failed to fetch voice clones" });
+    }
+  });
+
+  // Toggle voice clone active status
+  app.patch('/api/voice-clones/:voiceId/toggle', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { voiceId } = req.params;
+      const { isActive } = req.body;
+
+      // Verify ownership
+      const existingVoice = await storage.getVoiceClone(voiceId);
+      if (!existingVoice) {
+        return res.status(404).json({ message: "Voice clone not found" });
+      }
+      if (existingVoice.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden - not your voice clone" });
+      }
+
+      const voice = await storage.toggleVoiceClone(voiceId, isActive);
+      res.json(voice);
+    } catch (error) {
+      console.error('Error toggling voice clone:', error);
+      res.status(500).json({ message: "Failed to toggle voice clone" });
+    }
+  });
+
+  // Delete voice clone
+  app.delete('/api/voice-clones/:voiceId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { voiceId } = req.params;
+
+      // Verify ownership
+      const existingVoice = await storage.getVoiceClone(voiceId);
+      if (!existingVoice) {
+        return res.status(404).json({ message: "Voice clone not found" });
+      }
+      if (existingVoice.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden - not your voice clone" });
+      }
+
+      await storage.deleteVoiceClone(voiceId);
+      res.json({ success: true, message: "Voice clone deleted" });
+    } catch (error) {
+      console.error('Error deleting voice clone:', error);
+      res.status(500).json({ message: "Failed to delete voice clone" });
+    }
+  });
+
+  // ========== ADMIN ROUTES ==========
 
   // Admin: Get all users
   app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
