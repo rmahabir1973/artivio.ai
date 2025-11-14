@@ -2,12 +2,18 @@ import {
   users,
   apiKeys,
   generations,
+  conversations,
+  messages,
   type User,
   type UpsertUser,
   type ApiKey,
   type InsertApiKey,
   type Generation,
   type InsertGeneration,
+  type Conversation,
+  type InsertConversation,
+  type Message,
+  type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -39,6 +45,16 @@ export interface IStorage {
     todayGenerations: number;
     successRate: number;
   }>;
+
+  // Chat operations
+  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  getUserConversations(userId: string): Promise<Conversation[]>;
+  getConversation(id: string): Promise<Conversation | undefined>;
+  updateConversationTitle(id: string, title: string): Promise<Conversation | undefined>;
+  deleteConversation(id: string): Promise<void>;
+  
+  createMessage(message: InsertMessage): Promise<Message>;
+  getConversationMessages(conversationId: string): Promise<Message[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -210,6 +226,67 @@ export class DatabaseStorage implements IStorage {
       todayGenerations: todayGens.length,
       successRate,
     };
+  }
+
+  // Chat operations
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    const [conv] = await db
+      .insert(conversations)
+      .values(conversation)
+      .returning();
+    return conv;
+  }
+
+  async getUserConversations(userId: string): Promise<Conversation[]> {
+    return await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.userId, userId))
+      .orderBy(desc(conversations.updatedAt));
+  }
+
+  async getConversation(id: string): Promise<Conversation | undefined> {
+    const [conv] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, id));
+    return conv;
+  }
+
+  async updateConversationTitle(id: string, title: string): Promise<Conversation | undefined> {
+    const [conv] = await db
+      .update(conversations)
+      .set({ title, updatedAt: new Date() })
+      .where(eq(conversations.id, id))
+      .returning();
+    return conv;
+  }
+
+  async deleteConversation(id: string): Promise<void> {
+    await db.delete(conversations).where(eq(conversations.id, id));
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [msg] = await db
+      .insert(messages)
+      .values(message)
+      .returning();
+    
+    // Update conversation's updatedAt timestamp
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, message.conversationId));
+    
+    return msg;
+  }
+
+  async getConversationMessages(conversationId: string): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(messages.createdAt);
   }
 }
 

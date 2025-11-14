@@ -187,14 +187,78 @@ export type GenerateVideoRequest = z.infer<typeof generateVideoRequestSchema>;
 export type GenerateImageRequest = z.infer<typeof generateImageRequestSchema>;
 export type GenerateMusicRequest = z.infer<typeof generateMusicRequestSchema>;
 
+// Conversations table for AI chat
+export const conversations = pgTable("conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar("title").notNull().default('New Chat'),
+  provider: varchar("provider").notNull(), // 'deepseek' or 'openai'
+  model: varchar("model").notNull(), // e.g., 'deepseek-chat', 'gpt-4o', 'gpt-4o-mini'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+
+// Messages table for chat history
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull().references(() => conversations.id, { onDelete: 'cascade' }),
+  role: varchar("role").notNull(), // 'user' or 'assistant'
+  content: text("content").notNull(),
+  creditsCost: integer("credits_cost").notNull().default(0), // Cost for this message
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+
+// Chat request schemas
+export const sendMessageRequestSchema = z.object({
+  conversationId: z.string().optional(), // Optional for new conversations
+  message: z.string().min(1).max(4000),
+  provider: z.enum(['deepseek', 'openai']),
+  model: z.string(), // Will validate per provider
+});
+
+export type SendMessageRequest = z.infer<typeof sendMessageRequestSchema>;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   generations: many(generations),
+  conversations: many(conversations),
 }));
 
 export const generationsRelations = relations(generations, ({ one }) => ({
   user: one(users, {
     fields: [generations.userId],
     references: [users.id],
+  }),
+}));
+
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+  user: one(users, {
+    fields: [conversations.userId],
+    references: [users.id],
+  }),
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id],
   }),
 }));
