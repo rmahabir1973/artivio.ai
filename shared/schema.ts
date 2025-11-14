@@ -261,7 +261,7 @@ export const videoEnhancementsSchema = z.object({
   backgroundMusic: backgroundMusicEnhancementSchema,
   textOverlays: textOverlaysEnhancementSchema,
   speed: speedEnhancementSchema,
-}).default({});
+}).partial().default({});
 
 export type VideoEnhancements = z.infer<typeof videoEnhancementsSchema>;
 export type TransitionsEnhancement = z.infer<typeof transitionsEnhancementSchema>;

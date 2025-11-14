@@ -61,9 +61,16 @@ interface Transitions {
   durationSeconds?: number;
 }
 
+interface BackgroundMusic {
+  audioUrl: string;
+  volume?: number;
+  fadeInSeconds?: number;
+  fadeOutSeconds?: number;
+}
+
 interface Enhancements {
   transitions?: Transitions;
-  backgroundMusicUrl?: string;
+  backgroundMusic?: BackgroundMusic;
   textOverlays?: TextOverlay[];
   speed?: SpeedState; // Internal state uses Record
 }
@@ -76,6 +83,29 @@ export default function VideoEditor() {
   const [currentStep, setCurrentStep] = useState<EditorStep>('select');
   const [enhancements, setEnhancements] = useState<Enhancements>({});
   const [musicFile, setMusicFile] = useState<File | null>(null);
+
+  // Synchronize speed values with selectedVideoIds to prevent orphaned entries
+  useEffect(() => {
+    if (enhancements.speed?.mode === 'custom' && enhancements.speed.values) {
+      const currentValues = enhancements.speed.values;
+      const validVideoIds = new Set(selectedVideoIds);
+      
+      // Check if any videoId in values is not in selectedVideoIds
+      const valueKeys = Object.keys(currentValues);
+      const hasOrphans = valueKeys.some(id => !validVideoIds.has(id));
+      
+      if (hasOrphans) {
+        // Remove orphaned entries while preserving valid ones
+        const cleanedValues = Object.fromEntries(
+          Object.entries(currentValues).filter(([id]) => validVideoIds.has(id))
+        );
+        setEnhancements(prev => ({
+          ...prev,
+          speed: { mode: 'custom', values: cleanedValues }
+        }));
+      }
+    }
+  }, [selectedVideoIds]);
 
   // Fetch user's completed video generations
   const { data: generations = [], isLoading: loadingGenerations } = useQuery<Generation[]>({
@@ -124,8 +154,10 @@ export default function VideoEditor() {
     let cost = 75; // Base cost
     if (enhancements.transitions?.mode === 'crossfade') cost += 25;
     if (musicFile) cost += 25;
-    if (enhancements.textOverlays && enhancements.textOverlays.length > 0) cost += 30;
-    if (enhancements.speed?.mode === 'custom') cost += 20;
+    if (enhancements.textOverlays && enhancements.textOverlays.length > 0) {
+      cost += 25 * enhancements.textOverlays.length; // 25 credits per overlay
+    }
+    if (enhancements.speed?.mode === 'custom') cost += 25;
     return cost;
   };
 
@@ -251,12 +283,15 @@ export default function VideoEditor() {
     }
 
     // Construct enhancements payload - ONLY include enabled features (omit disabled)
-    // Backend API expects Speed (with multipliers array), not SpeedState (with values Record)
+    // Backend API expects mode: 'perClip' with perClip array, not 'custom' with multipliers
     const enhancementsData: {
       transitions?: Transitions;
-      backgroundMusicUrl?: string;
+      backgroundMusic?: BackgroundMusic;
       textOverlays?: TextOverlay[];
-      speed?: Speed;
+      speed?: {
+        mode: 'perClip';
+        perClip: Array<{ clipIndex: number; factor: number }>;
+      };
     } = {};
 
     if (enhancements.transitions?.mode === 'crossfade') {
@@ -264,7 +299,11 @@ export default function VideoEditor() {
     }
 
     if (musicUrl) {
-      enhancementsData.backgroundMusicUrl = musicUrl;
+      enhancementsData.backgroundMusic = {
+        audioUrl: musicUrl,
+        volume: 0.3
+        // fadeInSeconds and fadeOutSeconds are optional - omit to use backend defaults
+      };
     }
 
     if (enhancements.textOverlays && enhancements.textOverlays.length > 0) {
@@ -273,8 +312,11 @@ export default function VideoEditor() {
 
     if (enhancements.speed?.mode === 'custom') {
       const speedMap = getSpeedMap();
-      const multipliers = selectedVideoIds.map(id => speedMap[id] ?? 1.0);
-      enhancementsData.speed = { mode: 'custom', multipliers };
+      const perClip = selectedVideoIds.map((id, index) => ({
+        clipIndex: index,
+        factor: speedMap[id] ?? 1.0
+      }));
+      enhancementsData.speed = { mode: 'perClip', perClip };
     }
 
     // Only send enhancements if at least one feature is enabled
@@ -721,7 +763,7 @@ export default function VideoEditor() {
                 <div className="flex items-center gap-2">
                   <Zap className="w-5 h-5 text-primary" />
                   <Label className="text-base font-semibold">Speed Control</Label>
-                  <Badge variant="outline">+20 credits</Badge>
+                  <Badge variant="outline">+25 credits</Badge>
                 </div>
                 <Switch
                   checked={enhancements.speed?.mode === 'custom'}
