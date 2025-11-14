@@ -9,8 +9,94 @@ I prefer simple language and detailed explanations. I want an iterative developm
 ## Admin Authentication
 Admin access is controlled via a hardcoded email whitelist in `server/routes.ts`. The `/api/auth/user` endpoint checks if the logged-in user's email matches the `ADMIN_EMAILS` array and overrides the `isAdmin` flag accordingly. Current admin emails: `ryan.mahabir@outlook.com` and `admin@artivio.ai`. This approach ensures admin status persists regardless of database state and cannot be overwritten by OAuth login processes. The frontend uses React Query with `staleTime: 0` to always fetch fresh authentication data without caching.
 
-## Subscription Plans
-The admin panel includes subscription plan management allowing admins to manually assign plans to users. Three default plans are seeded on server startup: **Free** (1,000 credits/month), **Starter** (2,500 credits/month at $19.99), and **Pro** (5,000 credits/month at $49.99). Plans are stored in the `subscriptionPlans` table and user assignments in `userSubscriptions`. When admins assign a plan, the system atomically grants plan credits and tracks `creditsGrantedThisPeriod` to prevent double-granting. Credit adjustments calculate the difference between new and previously granted credits, ensuring upgrades grant additional credits and reassignments grant zero. Manual plan assignments set `stripeSubscriptionId` to null and `currentPeriodEnd` to null (open-ended grants). **Credit Policy**: Removing a plan does NOT claw back credits, as credits represent consumed resources and are non-refundable in manual admin operations.
+## Subscription Plans & Stripe Integration
+
+### Overview
+The platform supports both **manual plan assignments** (admin-controlled) and **Stripe-powered automated subscriptions** (user self-service). Three default plans are seeded on server startup: **Free** (1,000 credits/month), **Starter** (2,500 credits/month at $19.99), and **Pro** (5,000 credits/month at $49.99). Plans are stored in the `subscriptionPlans` table and user assignments in `userSubscriptions`.
+
+### Manual Plan Assignment (Admin)
+Admins can manually assign plans to users through the admin panel. When assigning a plan, the system atomically grants plan credits and tracks `creditsGrantedThisPeriod` to prevent double-granting. Credit adjustments calculate the difference between new and previously granted credits, ensuring upgrades grant additional credits and reassignments grant zero. Manual plan assignments set `stripeSubscriptionId` to null and `currentPeriodEnd` to null (open-ended grants). **Credit Policy**: Removing a plan does NOT claw back credits, as credits represent consumed resources and are non-refundable in manual admin operations.
+
+### Stripe Integration (Automated Subscriptions)
+Users can purchase subscriptions through the `/billing` page using Stripe Checkout. The integration includes:
+
+**Architecture:**
+- `server/stripe.ts`: Stripe client initialization, checkout session creation, customer portal access, and webhook event handlers
+- `/api/billing/checkout`: Creates Stripe Checkout Session for subscription purchase
+- `/api/billing/portal`: Opens Stripe Customer Portal for subscription management
+- `/api/webhooks/stripe`: Handles Stripe webhook events for subscription lifecycle management
+
+**Webhook Events Handled:**
+- `checkout.session.completed`: Initial subscription activation and credit grant
+- `invoice.paid`: Recurring payment success and credit renewal
+- `invoice.payment_failed`: Payment failure handling (marks subscription as `past_due`)
+- `customer.subscription.updated`: Subscription changes (plan upgrades/downgrades, cancellations)
+- `customer.subscription.deleted`: Subscription termination
+
+**Credit Granting Logic:**
+- Credits are granted on `checkout.session.completed` (first payment) and `invoice.paid` with `billing_reason: 'subscription_cycle'` (renewals)
+- Idempotency is ensured by checking billing reason to prevent duplicate credit grants
+- Failed payments do not claw back credits; subscription is marked `past_due` to allow recovery
+
+**Setup Instructions (Required for Production):**
+
+1. **Create Stripe Products & Prices:**
+   - Log into Stripe Dashboard: https://dashboard.stripe.com/products
+   - Create products for each plan:
+     - **Starter Plan**: Create a product with recurring price of $19.99/month
+     - **Pro Plan**: Create a product with recurring price of $49.99/month
+   - Note the Price IDs (format: `price_xxxxxxxxxxxxx`)
+
+2. **Update Database with Stripe IDs:**
+   - Connect to your production database
+   - Update the `subscription_plans` table with the Stripe Price IDs:
+     ```sql
+     UPDATE subscription_plans SET stripe_price_id = 'price_xxxxxxxxxxxxx' WHERE name = 'Starter';
+     UPDATE subscription_plans SET stripe_price_id = 'price_xxxxxxxxxxxxx' WHERE name = 'Pro';
+     ```
+   - Optionally, add Stripe Product IDs for reference:
+     ```sql
+     UPDATE subscription_plans SET stripe_product_id = 'prod_xxxxxxxxxxxxx' WHERE name = 'Starter';
+     UPDATE subscription_plans SET stripe_product_id = 'prod_xxxxxxxxxxxxx' WHERE name = 'Pro';
+     ```
+
+3. **Configure Stripe Webhook:**
+   - In Stripe Dashboard, go to: https://dashboard.stripe.com/webhooks
+   - Click "Add endpoint"
+   - Enter webhook URL: `https://artivio.ai/api/webhooks/stripe` (or your production domain)
+   - Select events to listen for:
+     - `checkout.session.completed`
+     - `invoice.paid`
+     - `invoice.payment_failed`
+     - `customer.subscription.updated`
+     - `customer.subscription.deleted`
+   - Copy the Signing Secret and update the `STRIPE_WEBHOOK_SECRET` environment variable
+
+4. **Verify Secrets:**
+   Ensure all Stripe secrets are configured in Replit Secrets:
+   - `VITE_STRIPE_PUBLIC_KEY` (starts with `pk_`)
+   - `STRIPE_SECRET_KEY` (starts with `sk_`)
+   - `STRIPE_WEBHOOK_SECRET` (starts with `whsec_`)
+
+**Testing:**
+- Use Stripe Test Mode for development/testing
+- Test card numbers: https://stripe.com/docs/testing
+- Use `stripe listen --forward-to localhost:5000/api/webhooks/stripe` for local webhook testing
+
+**Subscription Flow:**
+1. User clicks "Subscribe" on `/billing` page
+2. Backend creates Stripe Checkout Session with user metadata
+3. User completes payment on Stripe-hosted checkout page
+4. Stripe sends `checkout.session.completed` webhook
+5. Backend grants credits and activates subscription
+6. User is redirected to `/billing/success`
+7. On each billing cycle, `invoice.paid` webhook renews credits automatically
+
+**Customer Portal:**
+Users with active Stripe subscriptions can access the Stripe Customer Portal to:
+- Update payment methods
+- View invoices and billing history
+- Cancel or change subscription plans
 
 ## System Architecture
 
