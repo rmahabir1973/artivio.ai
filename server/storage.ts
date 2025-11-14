@@ -52,6 +52,7 @@ export interface IStorage {
   toggleApiKey(keyId: string, isActive: boolean): Promise<ApiKey | undefined>;
 
   // Generation operations
+  getAllGenerations(): Promise<Generation[]>;
   createGeneration(generation: InsertGeneration): Promise<Generation>;
   updateGeneration(id: string, updates: Partial<Generation>): Promise<Generation | undefined>;
   getUserGenerations(userId: string): Promise<Generation[]>;
@@ -221,6 +222,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Generation operations
+  async getAllGenerations(): Promise<Generation[]> {
+    return await db.select().from(generations).orderBy(desc(generations.createdAt));
+  }
+
   async createGeneration(generation: InsertGeneration): Promise<Generation> {
     const [gen] = await db
       .insert(generations)

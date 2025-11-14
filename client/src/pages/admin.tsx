@@ -12,9 +12,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { User, ApiKey } from "@shared/schema";
+
+interface AnalyticsData {
+  totalUsers: number;
+  totalCreditsSpent: number;
+  totalGenerations: number;
+  popularFeatures: Array<{ feature: string; count: number; credits: number }>;
+}
 
 export default function Admin() {
   const { toast } = useToast();
@@ -54,6 +61,11 @@ export default function Admin() {
 
   const { data: apiKeys = [], isLoading: keysLoading } = useQuery<ApiKey[]>({
     queryKey: ["/api/admin/api-keys"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const { data: analytics, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
+    queryKey: ["/api/admin/analytics"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
@@ -173,6 +185,10 @@ export default function Admin() {
             <Key className="h-4 w-4 mr-2" />
             API Keys
           </TabsTrigger>
+          <TabsTrigger value="analytics" data-testid="tab-analytics">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -279,6 +295,53 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="api-keys">
+          <div className="grid gap-6 md:grid-cols-3 mb-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total API Calls</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {apiKeys.reduce((sum, key) => sum + (key.usageCount || 0), 0).toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Across all {apiKeys.length} keys
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Keys</CardTitle>
+                <Key className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {apiKeys.filter(k => k.isActive).length} / {apiKeys.length}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {((apiKeys.filter(k => k.isActive).length / Math.max(apiKeys.length, 1)) * 100).toFixed(0)}% active
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Avg Usage/Key</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {Math.round(apiKeys.reduce((sum, key) => sum + (key.usageCount || 0), 0) / Math.max(apiKeys.length, 1)).toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Calls per key
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -352,6 +415,93 @@ export default function Admin() {
                       No API keys configured. Add your first key to get started.
                     </div>
                   )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analytics?.totalUsers?.toLocaleString() ?? 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Generations</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analytics?.totalGenerations?.toLocaleString() ?? 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Credits Spent</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{analytics?.totalCreditsSpent?.toLocaleString() ?? 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active API Keys</CardTitle>
+                <Key className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {keysLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : (
+                  <div className="text-2xl font-bold">{apiKeys?.filter(k => k.isActive).length ?? 0}</div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Popular Features</CardTitle>
+              <CardDescription>Most used AI generation features</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analyticsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : analytics?.popularFeatures && analytics.popularFeatures.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Feature</TableHead>
+                      <TableHead className="text-right">Generations</TableHead>
+                      <TableHead className="text-right">Credits Used</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {analytics.popularFeatures.map((feature, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium capitalize">
+                          {feature.feature.replace(/-/g, ' ')}
+                        </TableCell>
+                        <TableCell className="text-right">{feature.count.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{feature.credits.toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No generation data available yet
                 </div>
               )}
             </CardContent>

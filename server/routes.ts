@@ -1371,6 +1371,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get analytics dashboard data
+  app.get('/api/admin/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const [users, generations] = await Promise.all([
+        storage.getAllUsers(),
+        storage.getAllGenerations(),
+      ]);
+
+      const totalUsers = users.length;
+      const totalCreditsSpent = generations.reduce((sum, g) => sum + (g.creditsCost || 0), 0);
+      const totalGenerations = generations.length;
+
+      const featureStats = generations.reduce((acc: any, g) => {
+        const type = g.type || 'unknown';
+        if (!acc[type]) acc[type] = { count: 0, credits: 0 };
+        acc[type].count += 1;
+        acc[type].credits += g.creditsCost || 0;
+        return acc;
+      }, {});
+
+      const popularFeatures = Object.entries(featureStats)
+        .map(([type, stats]: [string, any]) => ({
+          feature: type,
+          count: stats.count,
+          credits: stats.credits,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      res.json({
+        totalUsers,
+        totalCreditsSpent,
+        totalGenerations,
+        popularFeatures,
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
