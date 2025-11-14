@@ -14,7 +14,17 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import type { User, ApiKey, Pricing } from "@shared/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { User, ApiKey, Pricing, SubscriptionPlan } from "@shared/schema";
+
+interface UserWithSubscription extends User {
+  subscription: {
+    id: string;
+    planId: string;
+    status: string;
+    plan: SubscriptionPlan;
+  } | null;
+}
 
 interface AnalyticsData {
   totalUsers: number;
@@ -59,8 +69,13 @@ export default function Admin() {
     }
   }, [isAuthenticated, authLoading, user, toast]);
 
-  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading: usersLoading } = useQuery<UserWithSubscription[]>({
     queryKey: ["/api/admin/users"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const { data: plans = [], isLoading: plansLoading } = useQuery<SubscriptionPlan[]>({
+    queryKey: ["/api/admin/plans"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
@@ -109,6 +124,23 @@ export default function Admin() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateSubscriptionMutation = useMutation({
+    mutationFn: async ({ userId, planId }: { userId: string; planId: string | null }) => {
+      return await apiRequest("PATCH", `/api/admin/users/${userId}/subscription`, { planId });
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "User plan updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update plan",
         variant: "destructive",
       });
     },
@@ -277,6 +309,7 @@ export default function Admin() {
                       <TableHead>Email</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Credits</TableHead>
+                      <TableHead>Plan</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -316,6 +349,39 @@ export default function Admin() {
                             </div>
                           ) : (
                             <span>{u.credits?.toLocaleString() ?? 0}</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {plansLoading ? (
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm text-muted-foreground">Loading...</span>
+                            </div>
+                          ) : (
+                            <Select
+                              value={u.subscription?.planId || 'none'}
+                              onValueChange={(value) => {
+                                updateSubscriptionMutation.mutate({
+                                  userId: u.id,
+                                  planId: value === 'none' ? null : value,
+                                });
+                              }}
+                              disabled={updateSubscriptionMutation.isPending}
+                            >
+                              <SelectTrigger className="w-32" data-testid={`select-plan-${u.id}`}>
+                                <SelectValue>
+                                  {u.subscription?.plan?.name || 'No Plan'}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">No Plan</SelectItem>
+                                {plans.map((plan) => (
+                                  <SelectItem key={plan.id} value={plan.id}>
+                                    {plan.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )}
                         </TableCell>
                         <TableCell>

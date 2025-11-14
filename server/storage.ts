@@ -13,6 +13,8 @@ import {
   imageAnalyses,
   videoCombinations,
   videoCombinationEvents,
+  subscriptionPlans,
+  userSubscriptions,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -42,6 +44,9 @@ import {
   type InsertVideoCombination,
   type VideoCombinationEvent,
   type InsertVideoCombinationEvent,
+  type SubscriptionPlan,
+  type UserSubscription,
+  type InsertUserSubscription,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -134,6 +139,15 @@ export interface IStorage {
   getVideoCombinationById(id: string): Promise<VideoCombination | undefined>;
   createVideoCombinationEvent(event: InsertVideoCombinationEvent): Promise<VideoCombinationEvent>;
   getVideoCombinationEvents(combinationId: string): Promise<VideoCombinationEvent[]>;
+
+  // Subscription Plan operations
+  getAllPlans(): Promise<SubscriptionPlan[]>;
+  getPlanById(id: string): Promise<SubscriptionPlan | undefined>;
+  getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined>;
+  getUsersWithSubscriptions(): Promise<Array<User & { subscription: (UserSubscription & { plan: SubscriptionPlan }) | null }>>;
+  upsertUserSubscription(data: InsertUserSubscription): Promise<UserSubscription>;
+  removeUserSubscription(userId: string): Promise<void>;
+  assignPlanToUser(userId: string, planId: string): Promise<{ subscription: UserSubscription; creditsGranted: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -675,6 +689,180 @@ export class DatabaseStorage implements IStorage {
       .from(videoCombinationEvents)
       .where(eq(videoCombinationEvents.combinationId, combinationId))
       .orderBy(desc(videoCombinationEvents.createdAt));
+  }
+
+  // Subscription Plan operations
+  async getAllPlans(): Promise<SubscriptionPlan[]> {
+    return await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.isActive, true))
+      .orderBy(subscriptionPlans.sortOrder);
+  }
+
+  async getPlanById(id: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.id, id));
+    return plan;
+  }
+
+  async getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined> {
+    const result = await db
+      .select()
+      .from(userSubscriptions)
+      .leftJoin(subscriptionPlans, eq(userSubscriptions.planId, subscriptionPlans.id))
+      .where(eq(userSubscriptions.userId, userId));
+    
+    if (!result || result.length === 0 || !result[0].user_subscriptions || !result[0].subscription_plans) {
+      return undefined;
+    }
+
+    return {
+      ...result[0].user_subscriptions,
+      plan: result[0].subscription_plans,
+    };
+  }
+
+  async getUsersWithSubscriptions(): Promise<Array<User & { subscription: (UserSubscription & { plan: SubscriptionPlan }) | null }>> {
+    const result = await db
+      .select()
+      .from(users)
+      .leftJoin(userSubscriptions, eq(users.id, userSubscriptions.userId))
+      .leftJoin(subscriptionPlans, eq(userSubscriptions.planId, subscriptionPlans.id))
+      .orderBy(desc(users.createdAt));
+
+    return result.map(row => ({
+      ...row.users,
+      subscription: row.user_subscriptions && row.subscription_plans 
+        ? {
+            ...row.user_subscriptions,
+            plan: row.subscription_plans,
+          }
+        : null,
+    }));
+  }
+
+  async upsertUserSubscription(data: InsertUserSubscription): Promise<UserSubscription> {
+    // Check if user already has a subscription
+    const existing = await db
+      .select()
+      .from(userSubscriptions)
+      .where(eq(userSubscriptions.userId, data.userId));
+
+    if (existing && existing.length > 0) {
+      // Update existing subscription
+      const [updated] = await db
+        .update(userSubscriptions)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(userSubscriptions.userId, data.userId))
+        .returning();
+      return updated;
+    } else {
+      // Create new subscription
+      const [created] = await db
+        .insert(userSubscriptions)
+        .values(data)
+        .returning();
+      return created;
+    }
+  }
+
+  async removeUserSubscription(userId: string): Promise<void> {
+    await db
+      .delete(userSubscriptions)
+      .where(eq(userSubscriptions.userId, userId));
+  }
+
+  async assignPlanToUser(userId: string, planId: string): Promise<{ subscription: UserSubscription; creditsGranted: number }> {
+    return await db.transaction(async (tx) => {
+      // All queries must use tx handle for transaction isolation
+      
+      // Get plan details using tx
+      const [plan] = await tx
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.id, planId));
+      
+      if (!plan) {
+        throw new Error('Plan not found');
+      }
+
+      // Get current user using tx
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Get existing subscription using tx
+      const [existingSub] = await tx
+        .select()
+        .from(userSubscriptions)
+        .where(eq(userSubscriptions.userId, userId));
+
+      // Calculate credit adjustment
+      const previouslyGranted = existingSub?.creditsGrantedThisPeriod || 0;
+      const creditAdjustment = plan.creditsPerMonth - previouslyGranted;
+
+      // Update or create subscription
+      let subscription: UserSubscription;
+      if (existingSub) {
+        const [updated] = await tx
+          .update(userSubscriptions)
+          .set({
+            planId,
+            stripeSubscriptionId: null,
+            stripeCustomerId: null,
+            status: 'active',
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: null,
+            cancelAtPeriodEnd: false,
+            creditsGrantedThisPeriod: plan.creditsPerMonth,
+            updatedAt: new Date(),
+          })
+          .where(eq(userSubscriptions.userId, userId))
+          .returning();
+        subscription = updated;
+      } else {
+        const [created] = await tx
+          .insert(userSubscriptions)
+          .values({
+            userId,
+            planId,
+            stripeSubscriptionId: null,
+            stripeCustomerId: null,
+            status: 'active',
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: null,
+            cancelAtPeriodEnd: false,
+            creditsGrantedThisPeriod: plan.creditsPerMonth,
+          })
+          .returning();
+        subscription = created;
+      }
+
+      // Update user credits atomically with proper parameterization
+      if (creditAdjustment !== 0) {
+        // Fetch current credits within transaction
+        const currentCredits = user.credits || 0;
+        const newCredits = Math.max(0, currentCredits + creditAdjustment);
+        
+        await tx
+          .update(users)
+          .set({ credits: newCredits })
+          .where(eq(users.id, userId));
+      }
+
+      return { subscription, creditsGranted: creditAdjustment };
+    });
   }
 }
 

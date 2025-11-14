@@ -296,6 +296,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.warn('API keys can be configured later via the admin panel.');
   }
 
+  // Initialize subscription plans
+  try {
+    const { initializePlans } = await import('./seedPlans');
+    await initializePlans();
+  } catch (error) {
+    console.warn('Warning: Failed to initialize subscription plans:', error);
+  }
+
   // Hardcoded admin emails for access control
   const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai'];
   
@@ -1303,8 +1311,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const users = await storage.getAllUsers();
-      res.json(users);
+      const usersWithSubscriptions = await storage.getUsersWithSubscriptions();
+      res.json(usersWithSubscriptions);
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ message: "Failed to fetch users" });
@@ -1553,6 +1561,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error creating pricing:', error);
       res.status(400).json({ message: 'Failed to create pricing', error: error.message });
+    }
+  });
+
+  // ========== SUBSCRIPTION PLAN ROUTES ==========
+
+  // Admin: Get all subscription plans
+  app.get('/api/admin/plans', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const plans = await storage.getAllPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      res.status(500).json({ message: "Failed to fetch plans" });
+    }
+  });
+
+  // Admin: Update user subscription (assign plan)
+  app.patch('/api/admin/users/:userId/subscription', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { userId } = req.params;
+      const { planId } = req.body;
+
+      // If planId is null, remove subscription
+      if (!planId || planId === 'none') {
+        await storage.removeUserSubscription(userId);
+        return res.json({ message: "Subscription removed successfully" });
+      }
+
+      // Use atomic transaction to assign plan and grant credits
+      const result = await storage.assignPlanToUser(userId, planId);
+
+      res.json({
+        ...result.subscription,
+        creditsGranted: result.creditsGranted,
+      });
+    } catch (error) {
+      console.error('Error updating user subscription:', error);
+      res.status(500).json({ message: "Failed to update subscription" });
     }
   });
 

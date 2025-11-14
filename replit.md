@@ -9,6 +9,9 @@ I prefer simple language and detailed explanations. I want an iterative developm
 ## Admin Authentication
 Admin access is controlled via a hardcoded email whitelist in `server/routes.ts`. The `/api/auth/user` endpoint checks if the logged-in user's email matches the `ADMIN_EMAILS` array and overrides the `isAdmin` flag accordingly. Current admin emails: `ryan.mahabir@outlook.com` and `admin@artivio.ai`. This approach ensures admin status persists regardless of database state and cannot be overwritten by OAuth login processes. The frontend uses React Query with `staleTime: 0` to always fetch fresh authentication data without caching.
 
+## Subscription Plans
+The admin panel includes subscription plan management allowing admins to manually assign plans to users. Three default plans are seeded on server startup: **Free** (1,000 credits/month), **Starter** (2,500 credits/month at $19.99), and **Pro** (5,000 credits/month at $49.99). Plans are stored in the `subscriptionPlans` table and user assignments in `userSubscriptions`. When admins assign a plan, the system atomically grants plan credits and tracks `creditsGrantedThisPeriod` to prevent double-granting. Credit adjustments calculate the difference between new and previously granted credits, ensuring upgrades grant additional credits and reassignments grant zero. Manual plan assignments set `stripeSubscriptionId` to null and `currentPeriodEnd` to null (open-ended grants). **Credit Policy**: Removing a plan does NOT claw back credits, as credits represent consumed resources and are non-refundable in manual admin operations.
+
 ## System Architecture
 
 ### UI/UX Decisions
