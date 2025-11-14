@@ -1,4 +1,4 @@
-import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, Repeat, MessageSquare, History, Settings, Shield, Scan } from "lucide-react";
+import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, Repeat, MessageSquare, History, Settings, Shield, Scan, Combine } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -77,6 +77,12 @@ const navItems = [
     title: "Audio Converter",
     url: "/audio-converter",
     icon: Repeat,
+    adminOnly: false,
+  },
+  {
+    title: "Video Editor",
+    url: "/video-editor",
+    icon: Combine,
     adminOnly: false,
   },
   {

@@ -23,6 +23,7 @@ import SpeechToText from "@/pages/speech-to-text";
 import AnalyzeImage from "@/pages/analyze-image";
 import TalkingAvatars from "@/pages/talking-avatars";
 import AudioConverter from "@/pages/audio-converter";
+import VideoEditor from "@/pages/video-editor";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Admin from "@/pages/admin";
@@ -58,6 +59,7 @@ function Router() {
           <Route path="/analyze-image" component={AnalyzeImage} />
           <Route path="/talking-avatars" component={TalkingAvatars} />
           <Route path="/audio-converter" component={AudioConverter} />
+          <Route path="/video-editor" component={VideoEditor} />
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
           <Route path="/admin" component={Admin} />
