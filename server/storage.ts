@@ -146,26 +146,37 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     console.log('🔍 DEBUG upsertUser - Input userData:', JSON.stringify(userData, null, 2));
     
-    // Try to insert, and on conflict with either id or email, update the existing record
-    // IMPORTANT: Do NOT overwrite isAdmin or stripeCustomerId - these are managed separately
-    const { isAdmin, stripeCustomerId, id, ...updateData } = userData as any;
+    // Check if user already exists
+    const existingUser = await this.getUser(userData.id as string);
     
-    console.log('🔍 DEBUG upsertUser - updateData (without id/isAdmin/stripeCustomerId):', JSON.stringify(updateData, null, 2));
-    
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...updateData,
+    if (existingUser) {
+      // User exists - only update OAuth profile fields, NEVER overwrite isAdmin or stripeCustomerId
+      console.log('🔍 DEBUG upsertUser - User exists, updating OAuth fields only');
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          profileImageUrl: userData.profileImageUrl,
           updatedAt: new Date(),
-        },
-      })
-      .returning();
-    
-    console.log('🔍 DEBUG upsertUser - Returned user:', JSON.stringify(user, null, 2));
-    return user;
+        })
+        .where(eq(users.id, userData.id as string))
+        .returning();
+      
+      console.log('🔍 DEBUG upsertUser - Updated user:', JSON.stringify(updatedUser, null, 2));
+      return updatedUser;
+    } else {
+      // New user - insert with all fields (isAdmin will default to false)
+      console.log('🔍 DEBUG upsertUser - New user, inserting');
+      const [newUser] = await db
+        .insert(users)
+        .values(userData)
+        .returning();
+      
+      console.log('🔍 DEBUG upsertUser - Inserted new user:', JSON.stringify(newUser, null, 2));
+      return newUser;
+    }
   }
 
   async getAllUsers(): Promise<User[]> {
