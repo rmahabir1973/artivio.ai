@@ -591,7 +591,7 @@ export default function Admin() {
                   </TableHeader>
                   <TableBody>
                     {pricingList.map((pricing) => (
-                      <TableRow key={pricing.id} data-testid={`pricing-row-${pricing.model}`}>
+                      <TableRow key={pricing.id} data-testid={`pricing-row-${pricing.id}`}>
                         <TableCell className="font-medium capitalize" data-testid={`text-pricing-feature-${pricing.id}`}>
                           {pricing.feature.replace(/-/g, ' ')}
                         </TableCell>
