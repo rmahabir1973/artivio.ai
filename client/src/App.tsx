@@ -54,7 +54,7 @@ function Router() {
   );
 }
 
-export default function App() {
+function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   
   // Custom sidebar width
@@ -64,46 +64,45 @@ export default function App() {
   };
 
   if (isLoading || !isAuthenticated) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
+    return <Router />;
   }
 
   return (
+    <SidebarProvider style={style as React.CSSProperties}>
+      <div className="flex h-screen w-full">
+        <AppSidebar />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <header className="flex items-center justify-between gap-4 p-4 border-b bg-background sticky top-0 z-10">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <div className="flex items-center gap-4">
+              <CreditDisplay />
+              <ThemeToggle />
+              <Button
+                variant="outline"
+                asChild
+                data-testid="button-logout"
+              >
+                <a href="/api/logout">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </a>
+              </Button>
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto">
+            <Router />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+export default function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SidebarProvider style={style as React.CSSProperties}>
-          <div className="flex h-screen w-full">
-            <AppSidebar />
-            <div className="flex flex-col flex-1 overflow-hidden">
-              <header className="flex items-center justify-between gap-4 p-4 border-b bg-background sticky top-0 z-10">
-                <SidebarTrigger data-testid="button-sidebar-toggle" />
-                <div className="flex items-center gap-4">
-                  <CreditDisplay />
-                  <ThemeToggle />
-                  <Button
-                    variant="outline"
-                    asChild
-                    data-testid="button-logout"
-                  >
-                    <a href="/api/logout">
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </a>
-                  </Button>
-                </div>
-              </header>
-              <main className="flex-1 overflow-y-auto">
-                <Router />
-              </main>
-            </div>
-          </div>
-        </SidebarProvider>
+        <AppContent />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
