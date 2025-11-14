@@ -302,6 +302,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       console.log('🟢 /api/auth/user endpoint - Returning user:', JSON.stringify(user, null, 2));
+      
+      // Disable all caching to ensure fresh data
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
