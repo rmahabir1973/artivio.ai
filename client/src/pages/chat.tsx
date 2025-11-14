@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus, Send, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePricing } from "@/hooks/use-pricing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { CreditDisplay } from "@/components/credit-display";
 
@@ -29,20 +30,21 @@ type Conversation = {
   updatedAt: string;
 };
 
-const PROVIDER_MODELS = {
+const PROVIDER_MODEL_INFO = {
   deepseek: [
-    { value: 'deepseek-chat', label: 'Deepseek Chat', cost: 5 },
+    { value: 'deepseek-chat', label: 'Deepseek Chat' },
   ],
   openai: [
-    { value: 'gpt-4o', label: 'GPT-4o', cost: 20 },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini', cost: 10 },
-    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', cost: 15 },
-    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', cost: 5 },
+    { value: 'gpt-4o', label: 'GPT-4o' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
   ],
 };
 
 export default function Chat() {
   const { toast } = useToast();
+  const { getModelCost } = usePricing();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [provider, setProvider] = useState<'deepseek' | 'openai'>('deepseek');
   const [model, setModel] = useState('deepseek-chat');
@@ -52,6 +54,18 @@ export default function Chat() {
   const [optimisticUserMessage, setOptimisticUserMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Merge model info with dynamic pricing for each provider
+  const PROVIDER_MODELS = useMemo(() => ({
+    deepseek: PROVIDER_MODEL_INFO.deepseek.map(m => ({
+      ...m,
+      cost: getModelCost(m.value, 5),
+    })),
+    openai: PROVIDER_MODEL_INFO.openai.map(m => ({
+      ...m,
+      cost: getModelCost(m.value, 10),
+    })),
+  }), [getModelCost]);
 
   // Fetch conversations
   const { data: conversations = [] } = useQuery<Conversation[]>({

@@ -91,6 +91,9 @@ export type InsertPricing = z.infer<typeof insertPricingSchema>;
 export type UpdatePricing = z.infer<typeof updatePricingSchema>;
 export type Pricing = typeof pricing.$inferSelect;
 
+// Pricing entry for frontend consumption (matches backend Pricing type)
+export type PricingEntry = Pricing;
+
 // Generations table for tracking all AI generations
 export const generations = pgTable("generations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

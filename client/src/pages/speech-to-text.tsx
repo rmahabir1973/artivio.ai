@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, FileAudio, Upload, Copy, Check, Clock } from "lucide-react";
 import type { SttGeneration } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function SpeechToText() {
   const { toast } = useToast();
+  const { getModelCost } = usePricing();
   const [audioFile, setAudioFile] = useState<string>("");
   const [audioFileName, setAudioFileName] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -311,7 +313,7 @@ export default function SpeechToText() {
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm">
-                <strong>Cost:</strong> 25 credits per transcription
+                <strong>Cost:</strong> {getModelCost("eleven_scribe_v1", 25)} credits per transcription
               </p>
             </div>
           </CardContent>

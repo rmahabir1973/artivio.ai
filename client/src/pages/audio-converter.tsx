@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, Music2, Upload, Download } from "lucide-react";
 import type { AudioConversion } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
+const OPERATION_INFO = [
+  { value: 'wav-conversion', label: 'Format Conversion', key: 'audio-wav-conversion', defaultCost: 15 },
+  { value: 'vocal-removal', label: 'Vocal Removal', key: 'audio-vocal-removal', defaultCost: 25 },
+  { value: 'stem-separation', label: 'Stem Separation', key: 'audio-stem-separation', defaultCost: 30 },
+] as const;
+
 export default function AudioConverter() {
   const { toast } = useToast();
+  const { getModelCost } = usePricing();
   const [sourceAudio, setSourceAudio] = useState("");
   const [fileName, setFileName] = useState("");
   const [sourceFormat, setSourceFormat] = useState("mp3");
@@ -131,11 +139,13 @@ export default function AudioConverter() {
     });
   };
 
-  const costs = {
-    'wav-conversion': 15,
-    'vocal-removal': 25,
-    'stem-separation': 30,
-  };
+  const operationCosts = useMemo(() => {
+    const costMap: Record<string, number> = {};
+    OPERATION_INFO.forEach(op => {
+      costMap[op.value] = getModelCost(op.key, op.defaultCost);
+    });
+    return costMap;
+  }, [getModelCost]);
 
   return (
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
@@ -196,9 +206,11 @@ export default function AudioConverter() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="wav-conversion">Format Conversion (15 credits)</SelectItem>
-                  <SelectItem value="vocal-removal">Vocal Removal (25 credits)</SelectItem>
-                  <SelectItem value="stem-separation">Stem Separation (30 credits)</SelectItem>
+                  {OPERATION_INFO.map(op => (
+                    <SelectItem key={op.value} value={op.value}>
+                      {op.label} ({operationCosts[op.value] || op.defaultCost} credits)
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -263,7 +275,7 @@ export default function AudioConverter() {
               ) : (
                 <>
                   <Music2 className="mr-2 h-4 w-4" />
-                  Convert Audio ({costs[operation]} credits)
+                  Convert Audio ({operationCosts[operation] || OPERATION_INFO.find(op => op.value === operation)?.defaultCost || 15} credits)
                 </>
               )}
             </Button>
@@ -294,7 +306,7 @@ export default function AudioConverter() {
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm">
-                <strong>Costs:</strong> Format Conversion - 15 credits | Vocal Removal - 25 credits | Stem Separation - 30 credits
+                <strong>Costs:</strong> Format Conversion - {operationCosts['wav-conversion'] || 15} credits | Vocal Removal - {operationCosts['vocal-removal'] || 25} credits | Stem Separation - {operationCosts['stem-separation'] || 30} credits
               </p>
             </div>
           </CardContent>

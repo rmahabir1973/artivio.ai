@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, Volume2, Download, Mic, Clock } from "lucide-react";
 import type { TtsGeneration, VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -25,13 +26,14 @@ const PREMADE_VOICES = [
   { id: "Harry", name: "Harry" },
 ];
 
-const TTS_MODELS = [
-  { value: "eleven_multilingual_v2", label: "Multilingual v2 (20 credits)", credits: 20 },
-  { value: "eleven_turbo_v2.5", label: "Turbo v2.5 (15 credits)", credits: 15 },
+const TTS_MODEL_INFO = [
+  { value: "eleven_multilingual_v2", label: "Multilingual v2" },
+  { value: "eleven_turbo_v2.5", label: "Turbo v2.5" },
 ];
 
 export default function TextToSpeech() {
   const { toast } = useToast();
+  const { getModelCost } = usePricing();
   const [text, setText] = useState("");
   const [voiceId, setVoiceId] = useState("");
   const [voiceName, setVoiceName] = useState("");
@@ -41,6 +43,13 @@ export default function TextToSpeech() {
   const [style, setStyle] = useState([0.0]);
   const [speed, setSpeed] = useState([1.0]);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Merge model info with dynamic pricing
+  const TTS_MODELS = useMemo(() => TTS_MODEL_INFO.map(m => ({
+    ...m,
+    label: `${m.label} (${getModelCost(m.value, 20)} credits)`,
+    credits: getModelCost(m.value, 20),
+  })), [getModelCost]);
 
   // Fetch user's cloned voices
   const { data: clonedVoices = [] } = useQuery<VoiceClone[]>({

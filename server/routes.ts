@@ -1427,6 +1427,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin Pricing Management Routes
+  // Public: Get all pricing configurations (for frontend display)
+  app.get('/api/pricing', async (req, res) => {
+    try {
+      const pricingList = await storage.getAllPricing();
+      res.json(pricingList);
+    } catch (error: any) {
+      console.error('Error fetching pricing:', error);
+      res.status(500).json({ message: "Failed to fetch pricing" });
+    }
+  });
+
   app.get('/api/admin/pricing', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

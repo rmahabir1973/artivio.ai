@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, Image as ImageIcon, Video, Upload } from "lucide-react";
 import type { AvatarGeneration, VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function TalkingAvatars() {
   const { toast } = useToast();
+  const { getModelCost } = usePricing();
   const [sourceImage, setSourceImage] = useState("");
   const [imageFileName, setImageFileName] = useState("");
   const [script, setScript] = useState("");
@@ -138,7 +140,7 @@ export default function TalkingAvatars() {
     });
   };
 
-  const cost = provider === "kling-ai" ? 350 : 300;
+  const cost = provider === "kling-ai" ? getModelCost("kling-ai", 350) : getModelCost("infinite-talk", 300);
 
   return (
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
@@ -231,8 +233,8 @@ export default function TalkingAvatars() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="kling-ai">Kling AI (350 credits)</SelectItem>
-                    <SelectItem value="infinite-talk">Infinite Talk (300 credits)</SelectItem>
+                    <SelectItem value="kling-ai">Kling AI ({getModelCost("kling-ai", 350)} credits)</SelectItem>
+                    <SelectItem value="infinite-talk">Infinite Talk ({getModelCost("infinite-talk", 300)} credits)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -312,7 +314,7 @@ export default function TalkingAvatars() {
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm">
-                <strong>Costs:</strong> Kling AI - 350 credits | Infinite Talk - 300 credits
+                <strong>Costs:</strong> Kling AI - {getModelCost("kling-ai", 350)} credits | Infinite Talk - {getModelCost("infinite-talk", 300)} credits
               </p>
             </div>
           </CardContent>

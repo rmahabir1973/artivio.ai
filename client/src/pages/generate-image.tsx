@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,14 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Image as ImageIcon, Upload, X } from "lucide-react";
 
-const IMAGE_MODELS = [
-  { value: "4o-image", label: "4o Image API", cost: 100, description: "High-fidelity visuals with accurate text rendering" },
-  { value: "flux-kontext", label: "Flux Kontext", cost: 150, description: "Vivid scenes with strong subject consistency" },
-  { value: "nano-banana", label: "Nano Banana", cost: 50, description: "Fast, precise image generation and editing" },
+const IMAGE_MODEL_INFO = [
+  { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
+  { value: "flux-kontext", label: "Flux Kontext", description: "Vivid scenes with strong subject consistency" },
+  { value: "nano-banana", label: "Nano Banana", description: "Fast, precise image generation and editing" },
 ];
 
 const ASPECT_RATIOS = [
@@ -41,6 +42,7 @@ export default function GenerateImage() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { getModelCost } = usePricing();
   
   const [mode, setMode] = useState<"text-to-image" | "image-editing">("text-to-image");
   const [model, setModel] = useState("4o-image");
@@ -50,6 +52,12 @@ export default function GenerateImage() {
   const [outputFormat, setOutputFormat] = useState("PNG");
   const [quality, setQuality] = useState("standard");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
+
+  // Merge model info with dynamic pricing
+  const IMAGE_MODELS = useMemo(() => IMAGE_MODEL_INFO.map(m => ({
+    ...m,
+    cost: getModelCost(m.value, 100),
+  })), [getModelCost]);
 
   // Clear reference images when switching to text-to-image mode
   useEffect(() => {

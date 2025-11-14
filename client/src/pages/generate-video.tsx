@@ -8,16 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Video, Upload, X, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const VIDEO_MODELS = [
+const VIDEO_MODEL_INFO = [
   { 
     value: "veo-3.1", 
     label: "Veo 3.1", 
-    cost: 500, 
     description: "1080p quality with synchronized audio", 
     duration: "5-8s",
     supportsImages: true,
@@ -26,7 +26,6 @@ const VIDEO_MODELS = [
   { 
     value: "veo-3.1-fast", 
     label: "Veo 3.1 Fast", 
-    cost: 300, 
     description: "Faster generation, great quality", 
     duration: "5-8s",
     supportsImages: true,
@@ -35,7 +34,6 @@ const VIDEO_MODELS = [
   { 
     value: "veo-3", 
     label: "Veo 3", 
-    cost: 450, 
     description: "High-quality video generation", 
     duration: "5-8s",
     supportsImages: true,
@@ -44,7 +42,6 @@ const VIDEO_MODELS = [
   { 
     value: "runway-gen3-alpha-turbo", 
     label: "Runway Gen-3 Alpha Turbo", 
-    cost: 350, 
     description: "Fast, high-quality video generation", 
     duration: "5-10s",
     supportsImages: true,
@@ -53,7 +50,6 @@ const VIDEO_MODELS = [
   { 
     value: "runway-aleph", 
     label: "Runway Aleph", 
-    cost: 400, 
     description: "Advanced scene reasoning and camera control", 
     duration: "5-10s",
     supportsImages: true,
@@ -65,9 +61,16 @@ export default function GenerateVideo() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { getModelCost } = usePricing();
   
   const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
   const [model, setModel] = useState("veo-3.1");
+
+  // Merge model info with dynamic pricing
+  const VIDEO_MODELS = VIDEO_MODEL_INFO.map(m => ({
+    ...m,
+    cost: getModelCost(m.value, 400),
+  }));
   const [prompt, setPrompt] = useState("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);

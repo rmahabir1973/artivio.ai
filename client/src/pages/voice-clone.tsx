@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { usePricing } from "@/hooks/use-pricing";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,6 +17,7 @@ export default function VoiceClone() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { getModelCost } = usePricing();
   
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -244,7 +246,7 @@ export default function VoiceClone() {
         <Card>
           <CardHeader>
             <CardTitle>Create Voice Clone</CardTitle>
-            <CardDescription>Upload audio samples to clone a voice (100 credits)</CardDescription>
+            <CardDescription>Upload audio samples to clone a voice ({getModelCost("voice-clone", 100)} credits)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Voice Name */}
@@ -328,7 +330,7 @@ export default function VoiceClone() {
               ) : (
                 <>
                   <Mic className="mr-2 h-4 w-4" />
-                  Clone Voice (100 Credits)
+                  Clone Voice ({getModelCost("voice-clone", 100)} Credits)
                 </>
               )}
             </Button>

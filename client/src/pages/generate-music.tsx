@@ -9,26 +9,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Music } from "lucide-react";
 
-const MUSIC_MODELS = [
-  { value: "suno-v3.5", label: "Suno V3.5", cost: 200, description: "High-quality music generation" },
-  { value: "suno-v4", label: "Suno V4", cost: 250, description: "Enhanced vocals and richer sound" },
-  { value: "suno-v4.5", label: "Suno V4.5", cost: 300, description: "Best quality, up to 8 minutes long" },
+const MUSIC_MODEL_INFO = [
+  { value: "suno-v3.5", label: "Suno V3.5", description: "High-quality music generation" },
+  { value: "suno-v4", label: "Suno V4", description: "Enhanced vocals and richer sound" },
+  { value: "suno-v4.5", label: "Suno V4.5", description: "Best quality, up to 8 minutes long" },
 ];
 
 export default function GenerateMusic() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { getModelCost } = usePricing();
   
   const [model, setModel] = useState("suno-v4");
   const [prompt, setPrompt] = useState("");
   const [lyrics, setLyrics] = useState("");
   const [duration, setDuration] = useState([120]); // in seconds
   const [genre, setGenre] = useState("pop");
+
+  // Merge model info with dynamic pricing
+  const MUSIC_MODELS = MUSIC_MODEL_INFO.map(m => ({
+    ...m,
+    cost: getModelCost(m.value, 200),
+  }));
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
