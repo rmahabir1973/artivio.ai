@@ -10,12 +10,17 @@ import {
 } from "@shared/schema";
 
 const MODEL_COSTS = {
+  // Video Models (only confirmed Kie.ai endpoints)
+  'veo-3': 450,
   'veo-3.1': 500,
   'veo-3.1-fast': 300,
+  'runway-gen3-alpha-turbo': 350,
   'runway-aleph': 400,
+  // Image Models
   '4o-image': 100,
   'flux-kontext': 150,
   'nano-banana': 50,
+  // Music Models
   'suno-v3.5': 200,
   'suno-v4': 250,
   'suno-v4.5': 300,
@@ -30,7 +35,14 @@ function getCallbackUrl(generationId: string): string {
 }
 
 // Background generation functions
-async function generateVideoInBackground(generationId: string, model: string, prompt: string, parameters: any) {
+async function generateVideoInBackground(
+  generationId: string, 
+  model: string, 
+  prompt: string, 
+  generationType: string | undefined,
+  referenceImages: string[] | undefined,
+  parameters: any
+) {
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
@@ -39,7 +51,9 @@ async function generateVideoInBackground(generationId: string, model: string, pr
     
     const { result, keyName } = await generateVideo({ 
       model, 
-      prompt, 
+      prompt,
+      generationType,
+      referenceImages,
       parameters: { ...parameters, callBackUrl: callbackUrl } 
     });
     
@@ -283,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { model, prompt, parameters } = validationResult.data;
+      const { model, prompt, generationType, referenceImages, parameters } = validationResult.data;
       const cost = MODEL_COSTS[model as keyof typeof MODEL_COSTS] || 500;
 
       // Atomically deduct credits
@@ -292,19 +306,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Insufficient credits" });
       }
 
-      // Create generation record
+      // Create generation record with image-to-video support
       const generation = await storage.createGeneration({
         userId,
         type: 'video',
+        generationType,
         model,
         prompt,
+        referenceImages,
         parameters: parameters || {},
         status: 'pending',
         creditsCost: cost,
       });
 
       // Start generation in background (fire and forget)
-      generateVideoInBackground(generation.id, model, prompt, parameters || {});
+      generateVideoInBackground(
+        generation.id, 
+        model, 
+        prompt, 
+        generationType, 
+        referenceImages, 
+        parameters || {}
+      );
 
       res.json({ generationId: generation.id, message: "Video generation started" });
     } catch (error: any) {

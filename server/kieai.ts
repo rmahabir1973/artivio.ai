@@ -81,30 +81,86 @@ async function callKieApi(endpoint: string, data: any): Promise<{ result: any; k
   }
 }
 
-// Video Generation
+// Video Generation - Supports all AI models and image-to-video
 export async function generateVideo(params: {
   model: string;
   prompt: string;
+  generationType?: string;
+  referenceImages?: string[];
   parameters: any;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
+  const generationType = params.generationType || 'text-to-video';
+  const referenceImages = params.referenceImages || [];
   
-  // Map frontend model names to Kie.ai API model names
-  let kieModel = 'veo3';
-  if (params.model.includes('fast')) {
-    kieModel = 'veo3_fast';
-  } else if (params.model.includes('runway')) {
-    kieModel = 'runway';
+  // Route to appropriate API based on model
+  if (params.model.startsWith('veo-')) {
+    // Veo 3, 3.1, 3.1 Fast - uses /api/v1/veo/generate
+    let kieModel = 'veo3';
+    if (params.model === 'veo-3.1') {
+      kieModel = 'veo3';
+    } else if (params.model === 'veo-3.1-fast') {
+      kieModel = 'veo3_fast';
+    } else if (params.model === 'veo-3') {
+      kieModel = 'veo3';
+    }
+    
+    // Determine Veo generation type based on reference images
+    let veoGenerationType = 'TEXT_2_VIDEO';
+    if (generationType === 'image-to-video' && referenceImages.length > 0) {
+      // Smart defaults based on image count:
+      // - 1 image: REFERENCE_2_VIDEO (single reference)
+      // - 2 images: FIRST_AND_LAST_FRAMES_2_VIDEO (keyframe animation)
+      // - 3 images: REFERENCE_2_VIDEO (multi-reference, only option for 3 images)
+      if (referenceImages.length === 2) {
+        veoGenerationType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
+      } else {
+        veoGenerationType = 'REFERENCE_2_VIDEO';
+      }
+    }
+    
+    return await callKieApi('/api/v1/veo/generate', {
+      prompt: params.prompt,
+      model: kieModel,
+      generationType: veoGenerationType,
+      imageUrls: referenceImages.length > 0 ? referenceImages : undefined,
+      aspectRatio: parameters.aspectRatio || '16:9',
+      seeds: parameters.seeds,
+      watermark: parameters.watermark,
+      callBackUrl: parameters.callBackUrl,
+    });
+  } 
+  else if (params.model.startsWith('runway-')) {
+    // Runway Gen-3, Aleph - uses /api/v1/runway/generate
+    const duration = parameters.duration || 5;
+    const quality = parameters.quality || '720p';
+    const aspectRatio = parameters.aspectRatio || '16:9';
+    
+    // Map frontend model names to Kie.ai Runway model identifiers
+    let runwayModel = 'GEN3_ALPHA_TURBO';
+    if (params.model === 'runway-aleph') {
+      runwayModel = 'ALEPH';
+    } else if (params.model === 'runway-gen3-alpha-turbo') {
+      runwayModel = 'GEN3_ALPHA_TURBO';
+    }
+    
+    // For Runway: single image only (first image from array)
+    const imageUrl = referenceImages.length > 0 ? referenceImages[0] : undefined;
+    
+    return await callKieApi('/api/v1/runway/generate', {
+      prompt: params.prompt,
+      model: runwayModel, // Include model identifier for Kie.ai routing
+      imageUrl,
+      duration,
+      quality,
+      aspectRatio, // Keep aspectRatio for both text and image-to-video
+      waterMark: parameters.watermark || '', // Runway uses waterMark (capital M)
+      callBackUrl: parameters.callBackUrl,
+    });
   }
   
-  return await callKieApi('/api/v1/veo/generate', {
-    prompt: params.prompt,
-    model: kieModel,
-    aspectRatio: parameters.aspectRatio || '16:9',
-    seeds: parameters.seeds,
-    watermark: parameters.watermark,
-    callBackUrl: parameters.callBackUrl, // Forward callback URL to Kie.ai
-  });
+  // Reject unknown models instead of falling back
+  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, runway-gen3-alpha-turbo, runway-aleph`);
 }
 
 // Image Generation
