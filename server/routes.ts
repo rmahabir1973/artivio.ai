@@ -296,19 +296,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.warn('API keys can be configured later via the admin panel.');
   }
 
+  // Hardcoded admin emails - simple and reliable
+  const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai'];
+  
   // Auth endpoint
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      console.log('🟢 /api/auth/user endpoint - Returning user:', JSON.stringify(user, null, 2));
+      
+      // Override isAdmin based on email address (hardcoded approach)
+      const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+      const userWithAdminOverride = { ...user, isAdmin };
+      
+      console.log('🟢 /api/auth/user endpoint - Email:', user?.email, 'isAdmin override:', isAdmin);
       
       // Disable all caching to ensure fresh data
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       
-      res.json(user);
+      res.json(userWithAdminOverride);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
