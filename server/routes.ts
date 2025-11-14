@@ -4,10 +4,12 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateVideo, generateImage, generateMusic, initializeApiKeys } from "./kieai";
 import { saveBase64Images } from "./imageHosting";
+import { chatService, CHAT_COSTS } from "./chatService";
 import { 
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
-  generateMusicRequestSchema 
+  generateMusicRequestSchema,
+  sendMessageRequestSchema 
 } from "@shared/schema";
 
 const MODEL_COSTS = {
@@ -517,6 +519,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching stats:', error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // ========== CHAT ROUTES ==========
+
+  // Get user conversations
+  app.get('/api/chat/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversations = await storage.getUserConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
+  // Get conversation messages
+  app.get('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const messages = await storage.getConversationMessages(conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Send message (with streaming support)
+  app.post('/api/chat/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      // Validate request
+      const validationResult = sendMessageRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { conversationId, message, provider, model } = validationResult.data;
+
+      // Validate model for provider
+      if (!chatService.validateModel(provider, model)) {
+        return res.status(400).json({ 
+          message: `Invalid model '${model}' for provider '${provider}'` 
+        });
+      }
+
+      // Get credit cost
+      const cost = chatService.getCreditCost(model);
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Create or get conversation
+      let convId = conversationId;
+      if (!convId) {
+        const conversation = await storage.createConversation({
+          userId,
+          title: message.slice(0, 50) + (message.length > 50 ? '...' : ''),
+          provider,
+          model,
+        });
+        convId = conversation.id;
+      }
+
+      // Save user message
+      await storage.createMessage({
+        conversationId: convId,
+        role: 'user',
+        content: message,
+        creditsCost: 0,
+      });
+
+      // Get conversation history
+      const history = await storage.getConversationMessages(convId);
+      const chatMessages = history.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
+      // Set up streaming response
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      let fullResponse = '';
+
+      try {
+        // Stream chat response
+        for await (const chunk of chatService.streamChat(provider, model, chatMessages)) {
+          if (!chunk.done) {
+            // Send chunk to client
+            res.write(`data: ${JSON.stringify({ content: chunk.content })}\n\n`);
+            fullResponse += chunk.content;
+          } else {
+            // Final chunk - save assistant message
+            await storage.createMessage({
+              conversationId: convId,
+              role: 'assistant',
+              content: fullResponse,
+              creditsCost: cost,
+            });
+
+            // Send completion event with conversation ID
+            res.write(`data: ${JSON.stringify({ 
+              done: true, 
+              conversationId: convId,
+              content: fullResponse 
+            })}\n\n`);
+            res.end();
+          }
+        }
+      } catch (streamError: any) {
+        console.error('Streaming error:', streamError);
+        res.write(`data: ${JSON.stringify({ 
+          error: streamError.message || 'Chat error occurred' 
+        })}\n\n`);
+        res.end();
+      }
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: error.message || "Failed to send message" });
+      }
+    }
+  });
+
+  // Delete conversation
+  app.delete('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      await storage.deleteConversation(conversationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      res.status(500).json({ message: "Failed to delete conversation" });
+    }
+  });
+
+  // Update conversation title
+  app.patch('/api/chat/conversations/:conversationId/title', isAuthenticated, async (req: any, res) => {
+    try {
+      const { conversationId } = req.params;
+      const { title } = req.body;
+      const conversation = await storage.updateConversationTitle(conversationId, title);
+      res.json(conversation);
+    } catch (error) {
+      console.error('Error updating conversation title:', error);
+      res.status(500).json({ message: "Failed to update conversation title" });
     }
   });
 
