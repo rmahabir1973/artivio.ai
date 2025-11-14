@@ -49,6 +49,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // Try to insert, and on conflict with either id or email, update the existing record
     const [user] = await db
       .insert(users)
       .values(userData)

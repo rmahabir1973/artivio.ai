@@ -102,16 +102,34 @@ async function generateVideoInBackground(
   }
 }
 
-async function generateImageInBackground(generationId: string, model: string, prompt: string, parameters: any) {
+async function generateImageInBackground(
+  generationId: string, 
+  model: string, 
+  prompt: string, 
+  mode: string,
+  referenceImages: string[] | undefined,
+  parameters: any
+) {
+  let hostedImageUrls: string[] | undefined;
+  
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
+    
+    // Convert base64 images to hosted URLs for editing mode
+    if (mode === 'image-editing' && referenceImages && referenceImages.length > 0) {
+      console.log(`Converting ${referenceImages.length} base64 images to hosted URLs for editing...`);
+      hostedImageUrls = await saveBase64Images(referenceImages);
+      console.log(`✓ Images hosted successfully:`, hostedImageUrls);
+    }
     
     const callbackUrl = getCallbackUrl(generationId);
     console.log(`📞 Sending callback URL to Kie.ai for image ${generationId}: ${callbackUrl}`);
     
     const { result, keyName } = await generateImage({ 
       model, 
-      prompt, 
+      prompt,
+      mode,
+      referenceImages: hostedImageUrls,
       parameters: { ...parameters, callBackUrl: callbackUrl } 
     });
     
@@ -142,6 +160,27 @@ async function generateImageInBackground(generationId: string, model: string, pr
     throw new Error('API response missing taskId or image URL');
   } catch (error: any) {
     console.error('Background image generation failed:', error);
+    
+    // Clean up uploaded files on failure
+    if (hostedImageUrls && hostedImageUrls.length > 0) {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      
+      for (const url of hostedImageUrls) {
+        const filename = url.split('/').pop();
+        if (filename) {
+          const filePath = path.join(uploadsDir, filename);
+          try {
+            await fs.unlink(filePath);
+            console.log(`Cleaned up failed upload: ${filePath}`);
+          } catch (cleanupError) {
+            console.error(`Failed to clean up ${filePath}:`, cleanupError);
+          }
+        }
+      }
+    }
+    
     await storage.updateGeneration(generationId, {
       status: 'failed',
       errorMessage: error.message,
@@ -362,7 +401,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { model, prompt, parameters } = validationResult.data;
+      const { model, prompt, mode, referenceImages, parameters } = validationResult.data;
+      
+      // Mode-specific validation is now enforced by schema refinement
+      // This ensures no referenceImages can reach this point if mode is text-to-image
+      
       const cost = MODEL_COSTS[model as keyof typeof MODEL_COSTS] || 100;
 
       // Atomically deduct credits
@@ -376,12 +419,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'image',
         model,
         prompt,
+        referenceImages,
         parameters: parameters || {},
         status: 'pending',
         creditsCost: cost,
       });
 
-      generateImageInBackground(generation.id, model, prompt, parameters || {});
+      // Only pass referenceImages to background processing if mode is editing
+      generateImageInBackground(
+        generation.id, 
+        model, 
+        prompt, 
+        mode,
+        mode === 'image-editing' ? referenceImages : undefined,
+        parameters || {}
+      );
 
       res.json({ generationId: generation.id, message: "Image generation started" });
     } catch (error: any) {

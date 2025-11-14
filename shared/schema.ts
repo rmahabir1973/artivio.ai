@@ -108,14 +108,70 @@ export const generateVideoRequestSchema = z.object({
   }).optional(),
 });
 
+// Custom validator for base64 image data URIs
+const base64ImageSchema = z.string().refine(
+  (val) => {
+    // Must be a valid data URI format
+    if (!/^data:image\/(jpeg|jpg|png|webp|gif);base64,/.test(val)) {
+      return false;
+    }
+    
+    // Extract base64 content
+    let base64Content = val.split(',')[1];
+    if (!base64Content) return false;
+    
+    // Normalize: remove all whitespace (per RFC 2397, whitespace is allowed but ignored)
+    base64Content = base64Content.replace(/\s+/g, '');
+    
+    // Reject if normalized encoded payload exceeds 13.5MB (prevents DoS before decode)
+    const maxEncodedSize = 13.5 * 1024 * 1024;
+    if (base64Content.length > maxEncodedSize) {
+      return false;
+    }
+    
+    // Calculate decoded size accurately (base64 to binary is ~0.75x minus padding)
+    // Count padding characters (= at end)
+    let paddingCount = 0;
+    if (base64Content.endsWith('==')) paddingCount = 2;
+    else if (base64Content.endsWith('=')) paddingCount = 1;
+    
+    const decodedSize = (base64Content.length * 3) / 4 - paddingCount;
+    const maxSize = 10 * 1024 * 1024; // 10MB max
+    
+    return decodedSize <= maxSize;
+  },
+  {
+    message: "Each image must be a valid data:image/... URI with decoded size ≤ 10MB"
+  }
+);
+
 export const generateImageRequestSchema = z.object({
   model: z.enum(['4o-image', 'flux-kontext', 'nano-banana']),
   prompt: z.string().min(1).max(2000),
+  mode: z.enum(['text-to-image', 'image-editing']).default('text-to-image'),
+  referenceImages: z.array(base64ImageSchema).max(10).optional(), // Max 10 images, each validated
   parameters: z.object({
     aspectRatio: z.string().optional(),
     style: z.string().optional(),
+    outputFormat: z.enum(['PNG', 'JPEG', 'WEBP']).optional(),
+    quality: z.enum(['standard', 'hd']).optional(),
   }).optional(),
-});
+}).refine(
+  (data) => {
+    // Enforce: if mode is text-to-image, referenceImages must be empty or undefined
+    if (data.mode === 'text-to-image' && data.referenceImages && data.referenceImages.length > 0) {
+      return false;
+    }
+    // Enforce: if mode is image-editing, referenceImages must have at least one image
+    if (data.mode === 'image-editing' && (!data.referenceImages || data.referenceImages.length === 0)) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "text-to-image mode cannot include referenceImages; image-editing mode requires at least one referenceImage"
+  }
+);
 
 export const generateMusicRequestSchema = z.object({
   model: z.enum(['suno-v3.5', 'suno-v4', 'suno-v4.5']),

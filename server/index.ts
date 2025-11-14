@@ -23,11 +23,12 @@ declare module 'http' {
   }
 }
 app.use(express.json({
+  limit: '50mb', // Allow large base64 payloads for image editing (10 images max, properly validated)
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
 }));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -60,6 +61,19 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Schedule periodic cleanup of old uploaded files (runs every 24 hours)
+  const { cleanupOldUploads } = await import('./imageHosting');
+  setInterval(() => {
+    cleanupOldUploads(24 * 60 * 60 * 1000).catch((err) => {
+      console.error('Scheduled cleanup failed:', err);
+    });
+  }, 24 * 60 * 60 * 1000); // Run every 24 hours
+  
+  // Run cleanup immediately on startup
+  cleanupOldUploads(24 * 60 * 60 * 1000).catch((err) => {
+    console.error('Startup cleanup failed:', err);
+  });
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

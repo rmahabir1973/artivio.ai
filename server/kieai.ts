@@ -184,17 +184,37 @@ export async function generateVideo(params: {
 export async function generateImage(params: {
   model: string;
   prompt: string;
+  mode?: string;
+  referenceImages?: string[];
   parameters: any;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
+  const mode = params.mode || 'text-to-image';
+  const referenceImages = params.referenceImages || [];
   
-  return await callKieApi('/api/v1/gpt4o-image/generate', {
+  // Build request payload based on mode
+  const payload: any = {
     prompt: params.prompt,
-    size: parameters.size || '1:1',
+    size: parameters.aspectRatio || '1:1',
     nVariants: parameters.nVariants || 1,
     isEnhance: parameters.isEnhance || false,
-    callBackUrl: parameters.callBackUrl, // Forward callback URL to Kie.ai
-  });
+    callBackUrl: parameters.callBackUrl,
+  };
+  
+  // Add reference images for editing mode
+  if (mode === 'image-editing' && referenceImages.length > 0) {
+    payload.imageUrls = referenceImages;
+  }
+  
+  // Add output format and quality if specified
+  if (parameters.outputFormat) {
+    payload.outputFormat = parameters.outputFormat;
+  }
+  if (parameters.quality) {
+    payload.quality = parameters.quality;
+  }
+  
+  return await callKieApi('/api/v1/gpt4o-image/generate', payload);
 }
 
 // Music Generation
