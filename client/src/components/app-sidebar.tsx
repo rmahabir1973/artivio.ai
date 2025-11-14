@@ -1,4 +1,4 @@
-import { Home, Video, Image, Music, History, Settings, Shield } from "lucide-react";
+import { Home, Video, Image, Music, MessageSquare, History, Settings, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -17,6 +17,12 @@ const navItems = [
     title: "Dashboard",
     url: "/",
     icon: Home,
+    adminOnly: false,
+  },
+  {
+    title: "AI Chat",
+    url: "/chat",
+    icon: MessageSquare,
     adminOnly: false,
   },
   {

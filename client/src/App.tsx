@@ -17,6 +17,7 @@ import Home from "@/pages/home";
 import GenerateVideo from "@/pages/generate-video";
 import GenerateImage from "@/pages/generate-image";
 import GenerateMusic from "@/pages/generate-music";
+import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
@@ -45,6 +46,7 @@ function Router() {
           <Route path="/generate/video" component={GenerateVideo} />
           <Route path="/generate/image" component={GenerateImage} />
           <Route path="/generate/music" component={GenerateMusic} />
+          <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
           <Route path="/admin" component={Admin} />
         </>
