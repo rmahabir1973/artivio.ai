@@ -14,7 +14,7 @@ import {
 } from "./kieai";
 import { saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
-import { chatService, CHAT_COSTS } from "./chatService";
+import { chatService } from "./chatService";
 import { 
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
@@ -26,30 +26,39 @@ import {
   generateAvatarRequestSchema
 } from "@shared/schema";
 
-const MODEL_COSTS = {
-  // Video Models (only confirmed Kie.ai endpoints)
-  'veo-3': 450,
-  'veo-3.1': 500,
-  'veo-3.1-fast': 300,
-  'runway-gen3-alpha-turbo': 350,
-  'runway-aleph': 400,
-  // Image Models
-  '4o-image': 100,
-  'flux-kontext': 150,
-  'nano-banana': 50,
-  // Music Models
-  'suno-v3.5': 200,
-  'suno-v4': 250,
-  'suno-v4.5': 300,
-  // TTS Models
-  'eleven_multilingual_v2': 20,
-  'eleven_turbo_v2.5': 15,
-  // STT Models
-  'scribe-v1': 25,
-  // Avatar Models
-  'kling-ai': 350,
-  'infinite-talk': 300,
-};
+// Helper to get pricing from database by model name
+async function getModelCost(model: string): Promise<number> {
+  const pricing = await storage.getPricingByModel(model);
+  
+  if (pricing) {
+    return pricing.creditCost;
+  }
+  
+  // Default fallback costs if not found in database
+  const defaultCosts: Record<string, number> = {
+    'veo-3': 450,
+    'veo-3.1': 500,
+    'veo-3.1-fast': 300,
+    'runway-gen3-alpha-turbo': 350,
+    'runway-aleph': 400,
+    '4o-image': 100,
+    'flux-kontext': 150,
+    'nano-banana': 50,
+    'suno-v3.5': 200,
+    'suno-v4': 250,
+    'suno-v4.5': 300,
+    'eleven_multilingual_v2': 20,
+    'eleven_turbo_v2.5': 15,
+    'scribe-v1': 25,
+    'kling-ai': 350,
+    'infinite-talk': 300,
+    'wav-conversion': 15,
+    'vocal-removal': 25,
+    'stem-separation': 30,
+  };
+  
+  return defaultCosts[model] || 100;
+}
 
 // Helper to get callback URL
 function getCallbackUrl(generationId: string): string {
@@ -372,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { model, prompt, generationType, referenceImages, veoSubtype, parameters } = validationResult.data;
-      const cost = MODEL_COSTS[model as keyof typeof MODEL_COSTS] || 500;
+      const cost = await getModelCost(model);
 
       // Atomically deduct credits
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -430,7 +439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mode-specific validation is now enforced by schema refinement
       // This ensures no referenceImages can reach this point if mode is text-to-image
       
-      const cost = MODEL_COSTS[model as keyof typeof MODEL_COSTS] || 100;
+      const cost = await getModelCost(model);
 
       // Atomically deduct credits
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -481,7 +490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { model, prompt, parameters } = validationResult.data;
-      const cost = MODEL_COSTS[model as keyof typeof MODEL_COSTS] || 200;
+      const cost = await getModelCost(model);
 
       // Atomically deduct credits
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -594,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get credit cost
-      const cost = chatService.getCreditCost(model);
+      const cost = await chatService.getCreditCost(model);
 
       // Deduct credits atomically
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -852,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { text, voiceId, voiceName, model, parameters } = validationResult.data;
-      const cost = MODEL_COSTS[model] || 20;
+      const cost = await getModelCost(model);
 
       // Deduct credits atomically
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -956,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { audioFile, model, language, parameters } = validationResult.data;
-      const cost = MODEL_COSTS[model] || 25;
+      const cost = await getModelCost(model);
 
       // Deduct credits atomically
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -1078,7 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { sourceImage, script, voiceId, provider, parameters } = validationResult.data;
-      const cost = MODEL_COSTS[provider] || 350;
+      const cost = await getModelCost(provider);
 
       const user = await storage.deductCreditsAtomic(userId, cost);
       if (!user) {
@@ -1174,8 +1183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { sourceAudio, sourceFormat, operation, parameters } = validationResult.data;
-      const costs = { 'wav-conversion': 15, 'vocal-removal': 25, 'stem-separation': 30 };
-      const cost = costs[operation] || 20;
+      const cost = await getModelCost(operation);
 
       const user = await storage.deductCreditsAtomic(userId, cost);
       if (!user) {

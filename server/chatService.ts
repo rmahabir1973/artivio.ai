@@ -1,15 +1,7 @@
 import OpenAI from 'openai';
+import { storage } from './storage';
 
-// Credit costs for chat (per message)
-export const CHAT_COSTS = {
-  'deepseek-chat': 5, // Deepseek chat
-  'gpt-4o': 20, // GPT-4o
-  'gpt-4o-mini': 10, // GPT-4o mini
-  'gpt-4-turbo': 15, // GPT-4 Turbo
-  'gpt-3.5-turbo': 5, // GPT-3.5 Turbo
-} as const;
-
-export type ChatModel = keyof typeof CHAT_COSTS;
+export type ChatModel = 'deepseek-chat' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -68,9 +60,25 @@ export class ChatService {
     }
   }
 
-  // Get credit cost for a model
-  getCreditCost(model: string): number {
-    return CHAT_COSTS[model as ChatModel] || 10; // Default to 10 if model not found
+  // Get credit cost for a model from database
+  async getCreditCost(model: string): Promise<number> {
+    const pricing = await storage.getPricingByModel(model);
+    
+    if (pricing) {
+      return pricing.creditCost;
+    }
+    
+    // Default fallback costs if not found in database
+    const defaultCosts: Record<string, number> = {
+      'deepseek-chat': 5,
+      'deepseek-reasoner': 10,
+      'gpt-4o': 20,
+      'gpt-4o-mini': 10,
+      'o1': 30,
+      'o1-mini': 15,
+    };
+    
+    return defaultCosts[model] || 10;
   }
 
   // Stream chat completion
