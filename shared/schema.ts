@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   credits: integer("credits").notNull().default(1000),
+  stripeCustomerId: varchar("stripe_customer_id").unique(),
   isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -551,11 +552,14 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   name: varchar("name").notNull().unique(), // 'Free Trial', 'Starter', 'Pro', etc.
   displayName: varchar("display_name").notNull(), // For UI
   description: text("description"),
+  stripeProductId: varchar("stripe_product_id"), // Stripe Product ID (e.g., prod_xxx)
+  stripePriceId: varchar("stripe_price_id").unique(), // Stripe Price ID (e.g., price_xxx)
   price: integer("price").notNull(), // Price in cents (e.g., 1999 for $19.99)
   billingPeriod: varchar("billing_period").notNull().default('monthly'), // 'monthly', 'annual', 'trial'
   trialDays: integer("trial_days").default(0), // Days for trial period
   features: jsonb("features"), // List of features/limits
   creditsPerMonth: integer("credits_per_month").notNull(), // Monthly credit allocation
+  creditRolloverLimit: integer("credit_rollover_limit").default(0), // Max credits that can rollover
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0), // For display ordering
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -574,14 +578,16 @@ export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 // User Subscriptions table
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
   planId: varchar("plan_id").notNull().references(() => subscriptionPlans.id),
-  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id").unique(),
   stripeCustomerId: varchar("stripe_customer_id"),
-  status: varchar("status").notNull().default('active'), // 'active', 'cancelled', 'expired', 'trial'
+  status: varchar("status").notNull().default('active'), // 'active', 'cancelled', 'expired', 'trial', 'past_due', 'unpaid'
   currentPeriodStart: timestamp("current_period_start").notNull(),
   currentPeriodEnd: timestamp("current_period_end").notNull(),
   cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  canceledAt: timestamp("canceled_at"),
+  creditsGrantedThisPeriod: integer("credits_granted_this_period").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -639,6 +645,28 @@ export const insertFeaturePricingSchema = createInsertSchema(featurePricing).omi
 
 export type InsertFeaturePricing = z.infer<typeof insertFeaturePricingSchema>;
 export type FeaturePricing = typeof featurePricing.$inferSelect;
+
+// Credit Transactions table (audit trail for all credit movements)
+export const creditTransactions = pgTable("credit_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  amount: integer("amount").notNull(), // Positive for credits added, negative for deductions
+  balanceAfter: integer("balance_after").notNull(), // User's credit balance after this transaction
+  type: varchar("type").notNull(), // 'subscription_grant', 'subscription_renewal', 'admin_adjustment', 'usage_deduction', 'refund', 'rollover'
+  description: text("description"), // Human-readable description
+  relatedEntityType: varchar("related_entity_type"), // 'subscription', 'generation', 'admin_action'
+  relatedEntityId: varchar("related_entity_id"), // ID of related subscription/generation/etc
+  performedBy: varchar("performed_by").references(() => users.id), // Admin user ID if manual adjustment
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
 
 // Request validation schemas for new API endpoints
 
