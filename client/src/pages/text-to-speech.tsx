@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
@@ -185,21 +185,23 @@ export default function TextToSpeech() {
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>
                 <SelectContent>
-                  <optgroup label="Pre-made Voices">
+                  <SelectGroup>
+                    <SelectLabel>Pre-made Voices</SelectLabel>
                     {PREMADE_VOICES.map((voice) => (
                       <SelectItem key={voice.id} value={voice.id}>
                         {voice.name}
                       </SelectItem>
                     ))}
-                  </optgroup>
+                  </SelectGroup>
                   {clonedVoices.length > 0 && (
-                    <optgroup label="Your Cloned Voices">
+                    <SelectGroup>
+                      <SelectLabel>Your Cloned Voices</SelectLabel>
                       {clonedVoices.filter(v => v.isActive).map((voice) => (
                         <SelectItem key={voice.voiceId} value={voice.voiceId}>
                           {voice.name}
                         </SelectItem>
                       ))}
-                    </optgroup>
+                    </SelectGroup>
                   )}
                 </SelectContent>
               </Select>

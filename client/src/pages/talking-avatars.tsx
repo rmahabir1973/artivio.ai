@@ -212,10 +212,9 @@ export default function TalkingAvatars() {
               <Label htmlFor="voice">Voice (Optional)</Label>
               <Select value={voiceId} onValueChange={setVoiceId}>
                 <SelectTrigger id="voice" data-testid="select-voice">
-                  <SelectValue placeholder="Default voice" />
+                  <SelectValue placeholder="Select a voice (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Default voice</SelectItem>
                   {voices.filter(v => v.isActive).map((voice) => (
                     <SelectItem key={voice.id} value={voice.voiceId!}>
                       {voice.name}
