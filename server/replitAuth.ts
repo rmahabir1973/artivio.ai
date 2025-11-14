@@ -104,7 +104,7 @@ export async function setupAuth(app: Express) {
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "select_account", // Forces user to select account/provider (Google, GitHub, etc.)
+      prompt: "login", // Forces login screen with provider selection
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
