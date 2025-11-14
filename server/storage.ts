@@ -11,6 +11,8 @@ import {
   avatarGenerations,
   audioConversions,
   imageAnalyses,
+  videoCombinations,
+  videoCombinationEvents,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -36,6 +38,10 @@ import {
   type InsertAudioConversion,
   type ImageAnalysis,
   type InsertImageAnalysis,
+  type VideoCombination,
+  type InsertVideoCombination,
+  type VideoCombinationEvent,
+  type InsertVideoCombinationEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -119,6 +125,14 @@ export interface IStorage {
   updateImageAnalysis(id: string, updates: Partial<ImageAnalysis>): Promise<ImageAnalysis | undefined>;
   getUserImageAnalyses(userId: string): Promise<ImageAnalysis[]>;
   getImageAnalysisByIdempotencyKey(userId: string, idempotencyKey: string): Promise<ImageAnalysis | undefined>;
+
+  // Video Combination operations
+  createVideoCombination(combination: InsertVideoCombination): Promise<VideoCombination>;
+  updateVideoCombination(id: string, updates: Partial<VideoCombination>): Promise<VideoCombination | undefined>;
+  getUserVideoCombinations(userId: string): Promise<VideoCombination[]>;
+  getVideoCombinationById(id: string): Promise<VideoCombination | undefined>;
+  createVideoCombinationEvent(event: InsertVideoCombinationEvent): Promise<VideoCombinationEvent>;
+  getVideoCombinationEvents(combinationId: string): Promise<VideoCombinationEvent[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -592,6 +606,56 @@ export class DatabaseStorage implements IStorage {
         eq(imageAnalyses.idempotencyKey, idempotencyKey)
       ));
     return analysis;
+  }
+
+  // Video Combination operations
+  async createVideoCombination(combination: InsertVideoCombination): Promise<VideoCombination> {
+    const [result] = await db
+      .insert(videoCombinations)
+      .values(combination)
+      .returning();
+    return result;
+  }
+
+  async updateVideoCombination(id: string, updates: Partial<VideoCombination>): Promise<VideoCombination | undefined> {
+    const [combination] = await db
+      .update(videoCombinations)
+      .set(updates)
+      .where(eq(videoCombinations.id, id))
+      .returning();
+    return combination;
+  }
+
+  async getUserVideoCombinations(userId: string): Promise<VideoCombination[]> {
+    return await db
+      .select()
+      .from(videoCombinations)
+      .where(eq(videoCombinations.userId, userId))
+      .orderBy(desc(videoCombinations.createdAt));
+  }
+
+  async getVideoCombinationById(id: string): Promise<VideoCombination | undefined> {
+    const [combination] = await db
+      .select()
+      .from(videoCombinations)
+      .where(eq(videoCombinations.id, id));
+    return combination;
+  }
+
+  async createVideoCombinationEvent(event: InsertVideoCombinationEvent): Promise<VideoCombinationEvent> {
+    const [result] = await db
+      .insert(videoCombinationEvents)
+      .values(event)
+      .returning();
+    return result;
+  }
+
+  async getVideoCombinationEvents(combinationId: string): Promise<VideoCombinationEvent[]> {
+    return await db
+      .select()
+      .from(videoCombinationEvents)
+      .where(eq(videoCombinationEvents.combinationId, combinationId))
+      .orderBy(desc(videoCombinationEvents.createdAt));
   }
 }
 
