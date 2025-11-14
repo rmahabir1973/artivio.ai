@@ -41,6 +41,7 @@ async function generateVideoInBackground(
   prompt: string, 
   generationType: string | undefined,
   referenceImages: string[] | undefined,
+  veoSubtype: string | undefined,
   parameters: any
 ) {
   try {
@@ -54,6 +55,7 @@ async function generateVideoInBackground(
       prompt,
       generationType,
       referenceImages,
+      veoSubtype,
       parameters: { ...parameters, callBackUrl: callbackUrl } 
     });
     
@@ -297,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { model, prompt, generationType, referenceImages, parameters } = validationResult.data;
+      const { model, prompt, generationType, referenceImages, veoSubtype, parameters } = validationResult.data;
       const cost = MODEL_COSTS[model as keyof typeof MODEL_COSTS] || 500;
 
       // Atomically deduct credits
@@ -325,7 +327,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         model, 
         prompt, 
         generationType, 
-        referenceImages, 
+        referenceImages,
+        veoSubtype,
         parameters || {}
       );
 

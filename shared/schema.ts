@@ -100,6 +100,7 @@ export const generateVideoRequestSchema = z.object({
   prompt: z.string().min(1).max(2000),
   generationType: z.enum(['text-to-video', 'image-to-video']).optional(),
   referenceImages: z.array(z.string().url()).max(3).optional(), // Up to 3 images for Veo
+  veoSubtype: z.enum(['TEXT_2_VIDEO', 'REFERENCE_2_VIDEO', 'FIRST_AND_LAST_FRAMES_2_VIDEO']).optional(), // Explicit Veo generation subtype
   parameters: z.object({
     duration: z.number().optional(), // Duration in seconds (5, 10 for Runway)
     quality: z.enum(['720p', '1080p']).optional(), // For Runway

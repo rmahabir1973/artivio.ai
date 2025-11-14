@@ -87,6 +87,7 @@ export async function generateVideo(params: {
   prompt: string;
   generationType?: string;
   referenceImages?: string[];
+  veoSubtype?: string; // Explicit Veo subtype control
   parameters: any;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
@@ -105,13 +106,29 @@ export async function generateVideo(params: {
       kieModel = 'veo3';
     }
     
-    // Determine Veo generation type based on reference images
+    // Determine Veo generation type: honor explicit veoSubtype, otherwise use smart defaults
     let veoGenerationType = 'TEXT_2_VIDEO';
-    if (generationType === 'image-to-video' && referenceImages.length > 0) {
+    if (params.veoSubtype) {
+      // Use explicitly specified subtype (frontend control)
+      veoGenerationType = params.veoSubtype;
+      
+      // Validate image count for selected subtype
+      if (veoGenerationType === 'FIRST_AND_LAST_FRAMES_2_VIDEO' && referenceImages.length !== 2) {
+        throw new Error('FIRST_AND_LAST_FRAMES_2_VIDEO requires exactly 2 reference images');
+      }
+      if (veoGenerationType === 'REFERENCE_2_VIDEO') {
+        if (referenceImages.length === 0) {
+          throw new Error('REFERENCE_2_VIDEO requires at least 1 reference image');
+        }
+        if (referenceImages.length > 3) {
+          throw new Error('REFERENCE_2_VIDEO supports up to 3 reference images');
+        }
+      }
+    } else if (generationType === 'image-to-video' && referenceImages.length > 0) {
       // Smart defaults based on image count:
       // - 1 image: REFERENCE_2_VIDEO (single reference)
       // - 2 images: FIRST_AND_LAST_FRAMES_2_VIDEO (keyframe animation)
-      // - 3 images: REFERENCE_2_VIDEO (multi-reference, only option for 3 images)
+      // - 3 images: REFERENCE_2_VIDEO (multi-reference)
       if (referenceImages.length === 2) {
         veoGenerationType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
       } else {
