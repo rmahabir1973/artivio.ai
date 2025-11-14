@@ -45,7 +45,8 @@ export type User = typeof users.$inferSelect;
 // API Keys table for round-robin rotation
 export const apiKeys = pgTable("api_keys", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  keyName: varchar("key_name").notNull().unique(), // e.g., "KIE_API_KEY_1"
+  keyName: varchar("key_name").notNull().unique(), // User-friendly name or auto-generated
+  keyValue: text("key_value").notNull(), // The actual API key value
   isActive: boolean("is_active").notNull().default(true),
   usageCount: integer("usage_count").notNull().default(0),
   lastUsedAt: timestamp("last_used_at"),
