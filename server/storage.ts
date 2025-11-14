@@ -144,13 +144,16 @@ export class DatabaseStorage implements IStorage {
 
   async upsertUser(userData: UpsertUser): Promise<User> {
     // Try to insert, and on conflict with either id or email, update the existing record
+    // IMPORTANT: Do NOT overwrite isAdmin or stripeCustomerId - these are managed separately
+    const { isAdmin, stripeCustomerId, ...updateData } = userData as any;
+    
     const [user] = await db
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
         target: users.id,
         set: {
-          ...userData,
+          ...updateData,
           updatedAt: new Date(),
         },
       })
