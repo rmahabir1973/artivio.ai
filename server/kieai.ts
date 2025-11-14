@@ -57,6 +57,11 @@ async function getApiKey(): Promise<{ keyValue: string; keyName: string }> {
 async function callKieApi(endpoint: string, data: any): Promise<{ result: any; keyName: string }> {
   const { keyValue, keyName } = await getApiKey();
   
+  console.log(`🔵 Kie.ai API Request to ${endpoint}:`, JSON.stringify({
+    ...data,
+    callBackUrl: data.callBackUrl || 'NOT PROVIDED'
+  }, null, 2));
+  
   try {
     const response = await axios.post(
       `${KIE_API_BASE}${endpoint}`,
@@ -70,9 +75,17 @@ async function callKieApi(endpoint: string, data: any): Promise<{ result: any; k
       }
     );
     
+    console.log(`✅ Kie.ai API Response from ${endpoint}:`, JSON.stringify(response.data, null, 2));
+    
     return { result: response.data, keyName };
   } catch (error: any) {
-    console.error('Kie.ai API Error:', error.response?.data || error.message);
+    console.error(`❌ Kie.ai API Error for ${endpoint}:`, error.response?.data || error.message);
+    console.error('Full error details:', JSON.stringify({
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    }, null, 2));
     throw new Error(
       error.response?.data?.message || 
       error.message || 

@@ -314,7 +314,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { generationId } = req.params;
       const callbackData = req.body;
       
-      console.log(`Received Kie.ai callback for generation ${generationId}:`, JSON.stringify(callbackData));
+      console.log(`\n🔔 ===== RECEIVED KIE.AI CALLBACK =====`);
+      console.log(`Generation ID: ${generationId}`);
+      console.log(`Callback Data:`, JSON.stringify(callbackData, null, 2));
+      console.log(`Request Headers:`, JSON.stringify(req.headers, null, 2));
+      console.log(`======================================\n`);
       
       // Extract result URL from callback data
       // Kie.ai sends result URLs in various nested structures depending on the API
