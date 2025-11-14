@@ -92,6 +92,12 @@ const navItems = [
     adminOnly: false,
   },
   {
+    title: "Profile",
+    url: "/profile",
+    icon: Settings,
+    adminOnly: false,
+  },
+  {
     title: "Admin Panel",
     url: "/admin",
     icon: Shield,

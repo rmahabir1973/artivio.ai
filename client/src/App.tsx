@@ -26,6 +26,7 @@ import AudioConverter from "@/pages/audio-converter";
 import VideoEditor from "@/pages/video-editor";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
+import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
@@ -62,6 +63,7 @@ function Router() {
           <Route path="/video-editor" component={VideoEditor} />
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
+          <Route path="/profile" component={Profile} />
           <Route path="/admin" component={Admin} />
         </>
       )}
