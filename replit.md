@@ -26,6 +26,7 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, ensur
 - **AI Video Generation**: Supports Veo 3.1 (standard and fast) and Runway Aleph models, with advanced image-to-video capabilities allowing up to 3 reference images.
 - **AI Image Generation**: Integrates 4o Image API, Flux Kontext, and Nano Banana. Offers both text-to-image generation and advanced image editing with multi-image uploads (up to 10 images) and customizable output settings.
 - **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and up to 8 minutes of duration.
+- **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis, including object detection, scene description, OCR, mood detection, and artistic style analysis. Supports optional custom prompts for targeted analysis. *Note: This is an architectural exception - uses OpenAI directly because Kie.ai does not offer image analysis/vision capabilities.*
 - **AI Chat**: Features dual provider support (Deepseek and OpenAI), streaming responses via SSE, model selection, and persistent conversation history.
 - **Voice Cloning**: Integrates ElevenLabs via Kie.ai for voice cloning, supporting audio uploads and management of cloned voices.
 - **Admin Panel**: Provides comprehensive user management (credit editing, deletion) and API key management (activation/deactivation, usage tracking).
@@ -37,7 +38,7 @@ The project adopts a modular structure, separating client, server, and shared co
 
 -   **Kie.ai API**: Core AI service for video, image, music generation, and voice cloning.
 -   **Deepseek API**: Provides AI chat models (Deepseek Chat, Deepseek Reasoner).
--   **OpenAI API**: Provides AI chat models (GPT-4o, GPT-4o Mini, o1, o1 Mini).
+-   **OpenAI API**: Provides AI chat models (GPT-4o, GPT-4o Mini, o1, o1 Mini) and GPT-4o Vision for image analysis. *Note: Image analysis uses OpenAI directly as Kie.ai does not support vision/analysis capabilities.*
 -   **Neon (PostgreSQL)**: Managed PostgreSQL database service.
 -   **Replit Auth**: For user authentication and identity management (OpenID Connect compatible).
 -   **ElevenLabs**: Integrated via Kie.ai API for voice cloning capabilities.

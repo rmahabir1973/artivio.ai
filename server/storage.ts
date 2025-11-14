@@ -118,6 +118,7 @@ export interface IStorage {
   createImageAnalysis(analysis: InsertImageAnalysis): Promise<ImageAnalysis>;
   updateImageAnalysis(id: string, updates: Partial<ImageAnalysis>): Promise<ImageAnalysis | undefined>;
   getUserImageAnalyses(userId: string): Promise<ImageAnalysis[]>;
+  getImageAnalysisByIdempotencyKey(userId: string, idempotencyKey: string): Promise<ImageAnalysis | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -580,6 +581,17 @@ export class DatabaseStorage implements IStorage {
       .from(imageAnalyses)
       .where(eq(imageAnalyses.userId, userId))
       .orderBy(desc(imageAnalyses.createdAt));
+  }
+
+  async getImageAnalysisByIdempotencyKey(userId: string, idempotencyKey: string): Promise<ImageAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(imageAnalyses)
+      .where(and(
+        eq(imageAnalyses.userId, userId),
+        eq(imageAnalyses.idempotencyKey, idempotencyKey)
+      ));
+    return analysis;
   }
 }
 

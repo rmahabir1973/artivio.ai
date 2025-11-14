@@ -10,10 +10,10 @@ import {
   generateTTS,
   transcribeAudio,
   generateKlingAvatar,
-  analyzeImage,
   convertAudio,
   initializeApiKeys 
 } from "./kieai";
+import { analyzeImageWithVision } from "./openaiVision";
 import { saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
@@ -1512,8 +1512,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Analyze image - SYNCHRONOUS processing
   app.post('/api/image-analysis/analyze', isAuthenticated, async (req: any, res) => {
-    let hostedImageUrl: string[] | undefined;
     let imageAnalysis: any = undefined;
+    let creditsDeducted = false;
     
     try {
       const userId = req.user.claims.sub;
@@ -1527,52 +1527,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { image, prompt, model } = validationResult.data;
+      const { image, prompt, model, idempotencyKey } = validationResult.data;
+      
+      // Check for existing analysis with this idempotency key (prevents double-charging on retries)
+      const existingAnalysis = await storage.getImageAnalysisByIdempotencyKey(userId, idempotencyKey);
+      if (existingAnalysis) {
+        console.log(`Idempotent request detected - returning existing analysis ${existingAnalysis.id}`);
+        return res.json({
+          success: true,
+          analysisId: existingAnalysis.id,
+          analysis: typeof existingAnalysis.analysisResult === 'object' 
+            ? (existingAnalysis.analysisResult as any)?.text 
+            : existingAnalysis.analysisResult,
+          message: existingAnalysis.status === 'completed' 
+            ? "Image analyzed successfully" 
+            : "Analysis in progress",
+          cached: true,
+        });
+      }
+      
+      // Backend validation of base64 image
+      if (!image || !image.startsWith('data:image/')) {
+        return res.status(400).json({ message: "Invalid image format - must be base64 data URI" });
+      }
+
+      // Extract and validate image size (base64 is ~33% larger than binary)
+      const base64Data = image.split(',')[1] || image;
+      const imageSize = (base64Data.length * 3) / 4; // Approximate binary size
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      
+      if (imageSize > maxSize) {
+        return res.status(400).json({ message: "Image too large - maximum 10MB" });
+      }
+
+      // Validate mime type
+      const mimeMatch = image.match(/^data:image\/(jpeg|jpg|png|gif|webp);base64,/);
+      if (!mimeMatch) {
+        return res.status(400).json({ message: "Unsupported image format - use JPEG, PNG, GIF, or WebP" });
+      }
+
       const cost = await getModelCost(model || 'gpt-4o');
 
-      // Deduct credits atomically
-      const user = await storage.deductCreditsAtomic(userId, cost);
-      if (!user) {
+      // Check credits without deducting yet
+      const user = await storage.getUser(userId);
+      if (!user || user.credits < cost) {
         return res.status(400).json({ message: "Insufficient credits" });
       }
 
       try {
         // Convert base64 image to hosted URL
         console.log('Converting image to hosted URL for analysis...');
-        hostedImageUrl = await saveBase64Images([image]);
+        const hostedImageUrl = await saveBase64Images([image]);
         const imageUrl = hostedImageUrl[0];
         console.log(`✓ Image hosted at: ${imageUrl}`);
 
-        // Create image analysis record
+        // Deduct credits atomically AFTER validation
+        const updatedUser = await storage.deductCreditsAtomic(userId, cost);
+        if (!updatedUser) {
+          return res.status(400).json({ message: "Insufficient credits" });
+        }
+        creditsDeducted = true;
+
+        // Create image analysis record with idempotency key
         imageAnalysis = await storage.createImageAnalysis({
           userId,
+          idempotencyKey,
           imageUrl,
           analysisPrompt: prompt || null,
           analysisResult: null,
           model: model || 'gpt-4o',
-          provider: 'kie-ai',
+          provider: 'openai', // OpenAI used because Kie.ai doesn't support vision analysis
           errorMessage: null,
           creditsCost: cost,
         });
 
-        // Analyze image SYNCHRONOUSLY (wait for result before responding)
-        const { result, keyName } = await analyzeImage({
+        // Analyze image SYNCHRONOUSLY using OpenAI Vision API
+        const { analysis, model: usedModel } = await analyzeImageWithVision({
           imageUrl,
           prompt,
           model,
         });
 
-        // Extract analysis from result
-        const analysisText = result?.data?.analysis || result?.analysis || result?.text || result?.description;
-        if (!analysisText) {
-          throw new Error('Image analysis failed - no analysis text returned');
-        }
-
         // Update with completed analysis
         await storage.updateImageAnalysis(imageAnalysis.id, {
           status: 'completed',
-          analysisResult: typeof analysisText === 'string' ? { text: analysisText } : analysisText,
-          apiKeyUsed: keyName,
+          analysisResult: { text: analysis },
+          apiKeyUsed: 'openai-' + usedModel,
           completedAt: new Date(),
         });
 
@@ -1580,25 +1620,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ 
           success: true, 
           analysisId: imageAnalysis.id,
-          analysis: analysisText,
+          analysis,
           message: "Image analyzed successfully" 
         });
       } catch (error: any) {
-        console.error('Image analysis error:', error);
+        console.error('Image analysis processing error:', error);
         
-        // Refund credits on failure
-        const currentUser = await storage.getUser(userId);
-        if (currentUser) {
-          await storage.updateUserCredits(userId, currentUser.credits + cost);
+        // Attempt to refund credits if they were deducted
+        if (creditsDeducted) {
+          try {
+            await storage.addCreditsAtomic(userId, cost);
+            console.log(`✓ Refunded ${cost} credits to user ${userId}`);
+          } catch (refundError: any) {
+            console.error('CRITICAL: Failed to refund credits after analysis failure:', refundError);
+            // Log for manual intervention but continue with error handling
+          }
         }
 
-        // Update analysis record with failure
+        // Update analysis record with failure (if record was created)
         if (imageAnalysis) {
-          await storage.updateImageAnalysis(imageAnalysis.id, {
-            status: 'failed',
-            errorMessage: error.message || 'Image analysis failed',
-            completedAt: new Date(),
-          });
+          try {
+            await storage.updateImageAnalysis(imageAnalysis.id, {
+              status: 'failed',
+              errorMessage: error.message || 'Image analysis failed',
+              completedAt: new Date(),
+            });
+          } catch (updateError: any) {
+            console.error('Failed to update analysis record with failure status:', updateError);
+          }
         }
 
         throw error;

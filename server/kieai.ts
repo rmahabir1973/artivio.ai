@@ -244,21 +244,8 @@ export async function generateMusic(params: {
   });
 }
 
-// Image Analysis - GPT-4o Vision
-export async function analyzeImage(params: {
-  imageUrl: string;
-  prompt?: string;
-  model?: string;
-}): Promise<{ result: any; keyName: string }> {
-  const analysisPrompt = params.prompt || 
-    "Analyze this image in detail. Describe what's happening in the picture, including: the main subjects, their actions and interactions, the setting/environment, notable objects or details, colors and composition, mood or atmosphere, and any text visible in the image. Provide a comprehensive analysis.";
-  
-  return await callKieApi('/api/v1/gpt4o-image/analyze', {
-    imageUrl: params.imageUrl,
-    prompt: analysisPrompt,
-    model: params.model || 'gpt-4o',
-  });
-}
+// Note: Image Analysis (GPT-4o Vision) has been moved to server/openaiVision.ts
+// because Kie.ai does not offer image analysis/vision capabilities.
 
 // ElevenLabs Voice Cloning - Create custom voice from audio samples
 export async function cloneVoice(params: {

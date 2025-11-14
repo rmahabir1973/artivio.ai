@@ -123,10 +123,14 @@ export default function AnalyzeImage() {
       return;
     }
 
+    // Generate idempotency key to prevent double-charging on retries
+    const idempotencyKey = crypto.randomUUID();
+
     analyzeMutation.mutate({
       image: imageFile,
       prompt: customPrompt || undefined,
       model: "gpt-4o",
+      idempotencyKey,
     });
   };
 
