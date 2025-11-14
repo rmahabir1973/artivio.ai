@@ -1,4 +1,4 @@
-import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, MessageSquare, History, Settings, Shield } from "lucide-react";
+import { Home, Video, Image, Music, Mic, Volume2, FileText, UserCircle, Repeat, MessageSquare, History, Settings, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -65,6 +65,12 @@ const navItems = [
     title: "Talking Avatars",
     url: "/talking-avatars",
     icon: UserCircle,
+    adminOnly: false,
+  },
+  {
+    title: "Audio Converter",
+    url: "/audio-converter",
+    icon: Repeat,
     adminOnly: false,
   },
   {

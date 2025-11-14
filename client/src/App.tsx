@@ -21,6 +21,7 @@ import VoiceClone from "@/pages/voice-clone";
 import TextToSpeech from "@/pages/text-to-speech";
 import SpeechToText from "@/pages/speech-to-text";
 import TalkingAvatars from "@/pages/talking-avatars";
+import AudioConverter from "@/pages/audio-converter";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Admin from "@/pages/admin";
@@ -54,6 +55,7 @@ function Router() {
           <Route path="/text-to-speech" component={TextToSpeech} />
           <Route path="/speech-to-text" component={SpeechToText} />
           <Route path="/talking-avatars" component={TalkingAvatars} />
+          <Route path="/audio-converter" component={AudioConverter} />
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
           <Route path="/admin" component={Admin} />

@@ -508,11 +508,13 @@ export type GenerateAvatarRequest = z.infer<typeof generateAvatarRequestSchema>;
 
 // Audio Conversion Request
 export const convertAudioRequestSchema = z.object({
-  sourceUrl: z.string().url(),
+  sourceAudio: z.string(), // Base64 data URI
+  sourceFormat: z.string(), // e.g., 'mp3', 'wav'
   operation: z.enum(['wav-conversion', 'vocal-removal', 'stem-separation']),
   parameters: z.object({
-    targetFormat: z.enum(['wav', 'mp3']).optional(), // For format conversion
-    separationType: z.enum(['separate_vocal', 'split_stem']).optional(), // For stem separation
+    targetFormat: z.enum(['wav', 'mp3']).optional(),
+    separationType: z.enum(['separate_vocal', 'split_stem']).optional(),
+    compressionLevel: z.enum(['low', 'medium', 'high']).optional(),
   }).optional(),
 });
 

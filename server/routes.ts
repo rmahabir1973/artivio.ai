@@ -13,7 +13,7 @@ import {
   initializeApiKeys 
 } from "./kieai";
 import { saveBase64Images } from "./imageHosting";
-import { saveBase64AudioFiles } from "./audioHosting";
+import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService, CHAT_COSTS } from "./chatService";
 import { 
   generateVideoRequestSchema, 
@@ -1158,6 +1158,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(avatars);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch avatar generations" });
+    }
+  });
+
+  // ========== AUDIO CONVERSION ROUTES ==========
+
+  // Convert audio
+  app.post('/api/audio/convert', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+
+      const validationResult = convertAudioRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ message: "Invalid request", errors: validationResult.error.errors });
+      }
+
+      const { sourceAudio, sourceFormat, operation, parameters } = validationResult.data;
+      const costs = { 'wav-conversion': 15, 'vocal-removal': 25, 'stem-separation': 30 };
+      const cost = costs[operation] || 20;
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        const audioUrl = await saveBase64Audio(sourceAudio);
+
+        const conversion = await storage.createAudioConversion({
+          userId,
+          sourceUrl: audioUrl,
+          sourceFormat,
+          targetFormat: parameters?.targetFormat || 'mp3',
+          compressionLevel: parameters?.compressionLevel || null,
+          status: 'pending',
+          resultUrl: null,
+          errorMessage: null,
+          creditsCost: cost,
+        });
+
+        (async () => {
+          try {
+            const callbackUrl = getCallbackUrl(conversion.id);
+            const { result } = await convertAudio({
+              sourceUrl: audioUrl,
+              operation,
+              parameters: { ...parameters, callBackUrl: callbackUrl },
+            });
+
+            const taskId = result?.data?.taskId || result?.taskId;
+            const directUrl = result?.url || result?.audioUrl || result?.data?.url;
+
+            if (directUrl) {
+              await storage.updateAudioConversion(conversion.id, {
+                status: 'completed',
+                resultUrl: directUrl,
+                completedAt: new Date(),
+              });
+            } else if (taskId) {
+              await storage.updateAudioConversion(conversion.id, {
+                status: 'processing',
+                resultUrl: taskId,
+              });
+            } else {
+              throw new Error('No taskId or URL returned');
+            }
+          } catch (error: any) {
+            await storage.addCreditsAtomic(userId, cost);
+            await storage.updateAudioConversion(conversion.id, {
+              status: 'failed',
+              errorMessage: error.message,
+            });
+          }
+        })();
+
+        res.json({ conversionId: conversion.id, message: "Audio conversion started" });
+      } catch (error: any) {
+        await storage.addCreditsAtomic(userId, cost);
+        throw error;
+      }
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to convert audio" });
+    }
+  });
+
+  // Get user's audio conversions
+  app.get('/api/audio/conversions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversions = await storage.getUserAudioConversions(userId);
+      res.json(conversions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch conversions" });
     }
   });
 
