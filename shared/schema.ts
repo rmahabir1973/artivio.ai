@@ -451,6 +451,73 @@ export const insertFeaturePricingSchema = createInsertSchema(featurePricing).omi
 export type InsertFeaturePricing = z.infer<typeof insertFeaturePricingSchema>;
 export type FeaturePricing = typeof featurePricing.$inferSelect;
 
+// Request validation schemas for new API endpoints
+
+// Voice Cloning Request
+export const cloneVoiceRequestSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  audioFiles: z.array(z.string().url()).min(1).max(5), // URLs to uploaded audio files
+});
+
+export type CloneVoiceRequest = z.infer<typeof cloneVoiceRequestSchema>;
+
+// Text-to-Speech Request
+export const generateTTSRequestSchema = z.object({
+  text: z.string().min(1).max(5000),
+  voiceId: z.string().min(1), // Pre-made voice name or cloned voice ID
+  voiceName: z.string().optional(), // Display name
+  model: z.enum(['eleven_multilingual_v2', 'eleven_turbo_v2.5']).default('eleven_multilingual_v2'),
+  parameters: z.object({
+    stability: z.number().min(0).max(1).optional(),
+    similarityBoost: z.number().min(0).max(1).optional(),
+    style: z.number().min(0).max(1).optional(),
+    speed: z.number().min(0.7).max(1.2).optional(),
+    languageCode: z.string().optional(), // ISO 639-1
+  }).optional(),
+});
+
+export type GenerateTTSRequest = z.infer<typeof generateTTSRequestSchema>;
+
+// Speech-to-Text Request
+export const generateSTTRequestSchema = z.object({
+  audioUrl: z.string().url(),
+  model: z.enum(['scribe-v1']).default('scribe-v1'),
+  language: z.string().optional(), // ISO 639-1 code
+  parameters: z.object({
+    diarization: z.boolean().optional(), // Speaker identification
+    timestamps: z.boolean().optional(),
+  }).optional(),
+});
+
+export type GenerateSTTRequest = z.infer<typeof generateSTTRequestSchema>;
+
+// AI Talking Avatar Request
+export const generateAvatarRequestSchema = z.object({
+  sourceImageUrl: z.string().url(),
+  script: z.string().min(1).max(3000),
+  voiceId: z.string().optional(), // Use cloned voice or pre-made
+  provider: z.enum(['kling-ai', 'infinite-talk']).default('kling-ai'),
+  parameters: z.object({
+    quality: z.enum(['480p', '720p']).optional(),
+    emotion: z.string().optional(), // e.g., 'professional', 'enthusiastic'
+  }).optional(),
+});
+
+export type GenerateAvatarRequest = z.infer<typeof generateAvatarRequestSchema>;
+
+// Audio Conversion Request
+export const convertAudioRequestSchema = z.object({
+  sourceUrl: z.string().url(),
+  operation: z.enum(['wav-conversion', 'vocal-removal', 'stem-separation']),
+  parameters: z.object({
+    targetFormat: z.enum(['wav', 'mp3']).optional(), // For format conversion
+    separationType: z.enum(['separate_vocal', 'split_stem']).optional(), // For stem separation
+  }).optional(),
+});
+
+export type ConvertAudioRequest = z.infer<typeof convertAudioRequestSchema>;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   generations: many(generations),

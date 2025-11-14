@@ -243,3 +243,135 @@ export async function generateMusic(params: {
     callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid', // Required by API
   });
 }
+
+// ElevenLabs Voice Cloning - Create custom voice from audio samples
+export async function cloneVoice(params: {
+  name: string;
+  description?: string;
+  audioFiles: string[]; // URLs to audio samples (min 60s total recommended)
+}): Promise<{ result: any; keyName: string }> {
+  return await callKieApi('/api/v1/elevenlabs/voice-clone', {
+    name: params.name,
+    description: params.description || '',
+    files: params.audioFiles,
+  });
+}
+
+// ElevenLabs Text-to-Speech - Generate speech from text
+export async function generateTTS(params: {
+  text: string;
+  voiceId: string; // Voice ID or pre-made voice name (Rachel, Aria, etc.)
+  voiceName?: string; // Display name
+  model?: string; // TTS model
+  parameters?: {
+    stability?: number; // 0-1, default 0.5
+    similarityBoost?: number; // 0-1, default 0.75
+    style?: number; // 0-1, style exaggeration
+    speed?: number; // 0.7-1.2, default 1
+    languageCode?: string; // ISO 639-1 code
+  };
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  
+  const payload: any = {
+    text: params.text,
+    voice: params.voiceId, // Map voiceId to voice for Kie.ai API
+  };
+  
+  // Add optional parameters
+  if (parameters.stability !== undefined) payload.stability = parameters.stability;
+  if (parameters.similarityBoost !== undefined) payload.similarity_boost = parameters.similarityBoost;
+  if (parameters.style !== undefined) payload.style = parameters.style;
+  if (parameters.speed !== undefined) payload.speed = parameters.speed;
+  if (parameters.languageCode) payload.language_code = parameters.languageCode;
+  
+  return await callKieApi('/api/v1/elevenlabs/tts', payload);
+}
+
+// ElevenLabs Speech-to-Text (Scribe v1) - Transcribe audio with diarization
+export async function transcribeAudio(params: {
+  audioUrl: string;
+  model?: string; // STT model
+  language?: string; // ISO 639-1 code
+  parameters?: {
+    diarization?: boolean; // Speaker identification
+    timestamps?: boolean;
+  };
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  
+  const payload: any = {
+    audio_url: params.audioUrl,
+  };
+  
+  if (params.language) payload.language_code = params.language;
+  if (parameters.diarization !== undefined) payload.diarization = parameters.diarization;
+  if (parameters.timestamps !== undefined) payload.timestamps = parameters.timestamps;
+  
+  return await callKieApi('/api/v1/elevenlabs/stt', payload);
+}
+
+// Kling AI Avatar - Generate talking avatar video from image + audio/script
+export async function generateKlingAvatar(params: {
+  sourceImageUrl: string;
+  script: string; // What the avatar says (text or audio URL)
+  voiceId?: string; // Optional: use specific voice
+  provider?: string; // 'kling-ai' or 'infinite-talk'
+  parameters?: {
+    quality?: '480p' | '720p';
+    emotion?: string; // Optional emotion/style guidance
+  };
+  callBackUrl?: string;
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  
+  // Check if script is an audio URL or text
+  const isAudioUrl = params.script.startsWith('http://') || params.script.startsWith('https://');
+  
+  const payload: any = {
+    image_url: params.sourceImageUrl,
+    resolution: parameters.quality || '720p',
+  };
+  
+  if (isAudioUrl) {
+    // Script is an audio URL
+    payload.audio_url = params.script;
+  } else {
+    // Script is text - need to convert to audio first or use text field
+    payload.text = params.script;
+  }
+  
+  if (parameters.emotion) payload.description = parameters.emotion;
+  if (params.callBackUrl) payload.callBackUrl = params.callBackUrl;
+  
+  return await callKieApi('/api/v1/kling/avatar/generate', payload);
+}
+
+// Audio Conversion - Unified function for WAV conversion, vocal removal, stem separation
+export async function convertAudio(params: {
+  sourceUrl: string;
+  operation: 'wav-conversion' | 'vocal-removal' | 'stem-separation';
+  parameters?: {
+    targetFormat?: 'wav' | 'mp3';
+    separationType?: 'separate_vocal' | 'split_stem';
+  };
+  callBackUrl?: string;
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  
+  if (params.operation === 'wav-conversion') {
+    return await callKieApi('/api/v1/wav/generate', {
+      audio_url: params.sourceUrl,
+      callBackUrl: params.callBackUrl,
+    });
+  } else if (params.operation === 'vocal-removal' || params.operation === 'stem-separation') {
+    const type = parameters.separationType || 'separate_vocal';
+    return await callKieApi('/api/v1/vocal-removal/generate', {
+      audio_url: params.sourceUrl,
+      type: type,
+      callBackUrl: params.callBackUrl,
+    });
+  }
+  
+  throw new Error(`Unsupported audio conversion operation: ${params.operation}`);
+}
