@@ -299,6 +299,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Hardcoded admin emails for access control
   const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai'];
   
+  // Helper function to check admin status based on email
+  const isUserAdmin = (user: any): boolean => {
+    return user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+  };
+  
   // Auth endpoint
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
@@ -306,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       
       // Override isAdmin based on hardcoded email list
-      const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
+      const isAdmin = isUserAdmin(user);
       const userWithAdminOverride = { ...user, isAdmin };
       
       // Disable caching to ensure fresh auth data
@@ -1294,7 +1299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1352,7 +1357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1370,7 +1375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1389,7 +1394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1410,7 +1415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1468,7 +1473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1485,7 +1490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -1512,7 +1517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user?.isAdmin) {
+      if (!isUserAdmin(user)) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
