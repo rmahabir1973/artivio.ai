@@ -64,6 +64,12 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 - `GET /api/generations/recent` - Get recent generations
 - `GET /api/stats` - Get user statistics
 
+### Callback System (Kie.ai Webhooks)
+- `POST /api/callback/kie/:generationId` - Receive generation completion callbacks from Kie.ai
+  - Updates generation status from "processing" to "completed" or "failed"
+  - Extracts result URLs from callback data (resultUrls[], videoUrl, imageUrl, audioUrl)
+  - No authentication required (webhook endpoint)
+
 ### Admin
 - `GET /api/admin/users` - Get all users
 - `PATCH /api/admin/users/:userId/credits` - Update user credits
@@ -95,6 +101,36 @@ The platform implements intelligent round-robin rotation:
 3. Usage count increments automatically
 4. Keys can be activated/deactivated via admin panel
 5. Automatic initialization from environment variables
+
+## Callback System (Async Generation Completion)
+
+When a generation is submitted, Kie.ai processes it asynchronously. The platform implements a callback system to receive completion notifications:
+
+### How It Works
+1. User submits generation request (video/image/music)
+2. Server creates generation record with status "pending"
+3. Background function calls Kie.ai API with callback URL: `https://{domain}/api/callback/kie/{generationId}`
+4. Server logs: "📞 Sending callback URL to Kie.ai..."
+5. Generation status updates to "processing"
+6. Kie.ai processes generation in background
+7. **When complete**, Kie.ai POSTs result data to our callback endpoint
+8. Server extracts result URL and updates status to "completed"
+9. User sees completed generation in History with download link
+
+### Callback Endpoint Details
+- **Route**: `POST /api/callback/kie/:generationId`
+- **Authentication**: None (webhook from Kie.ai)
+- **Payload**: Extracts URLs from resultUrls[], result_urls[], videoUrl, imageUrl, audioUrl, url
+- **Response**: Updates generation status and stores result URL
+- **Logging**: Full callback data logged for debugging
+
+### Result URL Extraction
+The callback handler checks multiple fields for result URLs (Kie.ai format varies by API):
+- `data.resultUrls[0]` (video - primary)
+- `data.result_urls[0]` (video - alternative)
+- `resultUrls[0]` (root level array)
+- `videoUrl`, `imageUrl`, `audioUrl` (direct fields)
+- `url`, `data.url` (generic fields)
 
 ## Project Structure
 

@@ -103,6 +103,7 @@ export async function generateVideo(params: {
     aspectRatio: parameters.aspectRatio || '16:9',
     seeds: parameters.seeds,
     watermark: parameters.watermark,
+    callBackUrl: parameters.callBackUrl, // Forward callback URL to Kie.ai
   });
 }
 
@@ -119,6 +120,7 @@ export async function generateImage(params: {
     size: parameters.size || '1:1',
     nVariants: parameters.nVariants || 1,
     isEnhance: parameters.isEnhance || false,
+    callBackUrl: parameters.callBackUrl, // Forward callback URL to Kie.ai
   });
 }
 

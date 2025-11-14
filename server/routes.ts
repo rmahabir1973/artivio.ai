@@ -21,12 +21,27 @@ const MODEL_COSTS = {
   'suno-v4.5': 300,
 };
 
+// Helper to get callback URL
+function getCallbackUrl(generationId: string): string {
+  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+    : 'http://localhost:5000';
+  return `${baseUrl}/api/callback/kie/${generationId}`;
+}
+
 // Background generation functions
 async function generateVideoInBackground(generationId: string, model: string, prompt: string, parameters: any) {
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
-    const { result, keyName } = await generateVideo({ model, prompt, parameters: parameters || {} });
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for video ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await generateVideo({ 
+      model, 
+      prompt, 
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
     
     // Kie.ai returns a taskId for async processing
     const taskId = result?.data?.taskId;
@@ -66,7 +81,14 @@ async function generateImageInBackground(generationId: string, model: string, pr
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
-    const { result, keyName } = await generateImage({ model, prompt, parameters: parameters || {} });
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for image ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await generateImage({ 
+      model, 
+      prompt, 
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
     
     // Kie.ai may return taskId or direct URL depending on API
     const taskId = result?.data?.taskId;
@@ -106,7 +128,14 @@ async function generateMusicInBackground(generationId: string, model: string, pr
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
-    const { result, keyName } = await generateMusic({ model, prompt, parameters: parameters || {} });
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for music ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await generateMusic({ 
+      model, 
+      prompt, 
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
     
     // Kie.ai music API returns taskId
     const taskId = result?.data?.taskId;
@@ -172,6 +201,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Kie.ai Callback Endpoint (no auth - called by Kie.ai)
+  app.post('/api/callback/kie/:generationId', async (req: any, res) => {
+    try {
+      const { generationId } = req.params;
+      const callbackData = req.body;
+      
+      console.log(`Received Kie.ai callback for generation ${generationId}:`, JSON.stringify(callbackData));
+      
+      // Extract result URL from callback data
+      // Kie.ai sends result URLs in various nested structures depending on the API
+      const resultUrl = (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) ||
+                       (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) ||
+                       (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) ||
+                       (callbackData.data?.result_urls && callbackData.data.result_urls[0]) ||
+                       callbackData.resultUrls?.[0] ||
+                       callbackData.result_urls?.[0] ||
+                       callbackData.videoUrl || 
+                       callbackData.imageUrl || 
+                       callbackData.audioUrl || 
+                       callbackData.url || 
+                       callbackData.data?.url ||
+                       callbackData.data?.videoUrl ||
+                       callbackData.data?.imageUrl ||
+                       callbackData.data?.audioUrl;
+      
+      // Check for explicit status from Kie.ai
+      const kieStatus = callbackData.status?.toLowerCase();
+      const hasError = callbackData.error || callbackData.errorMessage || callbackData.data?.error;
+      
+      // Determine final status
+      let finalStatus: 'completed' | 'failed';
+      if (kieStatus === 'failed' || kieStatus === 'error') {
+        finalStatus = 'failed';
+      } else if (resultUrl) {
+        finalStatus = 'completed';
+      } else {
+        finalStatus = 'failed';
+      }
+      
+      if (finalStatus === 'completed' && resultUrl) {
+        await storage.updateGeneration(generationId, {
+          status: 'completed',
+          resultUrl,
+          completedAt: new Date(),
+        });
+        console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+      } else {
+        const errorMessage = hasError || 
+                           callbackData.message || 
+                           callbackData.data?.message ||
+                           'Generation failed - no result URL provided';
+        await storage.updateGeneration(generationId, {
+          status: 'failed',
+          errorMessage,
+        });
+        console.log(`✗ Generation ${generationId} failed: ${errorMessage}`);
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Callback processing error:', error);
+      res.status(500).json({ message: error.message });
     }
   });
 
