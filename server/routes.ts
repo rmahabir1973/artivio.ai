@@ -10,6 +10,7 @@ import {
   generateTTS,
   transcribeAudio,
   generateKlingAvatar,
+  analyzeImage,
   initializeApiKeys 
 } from "./kieai";
 import { saveBase64Images } from "./imageHosting";
@@ -23,7 +24,8 @@ import {
   cloneVoiceRequestSchema,
   generateTTSRequestSchema,
   generateSTTRequestSchema,
-  generateAvatarRequestSchema
+  generateAvatarRequestSchema,
+  analyzeImageRequestSchema
 } from "@shared/schema";
 
 // Helper to get pricing from database by model name
@@ -55,6 +57,7 @@ async function getModelCost(model: string): Promise<number> {
     'wav-conversion': 15,
     'vocal-removal': 25,
     'stem-separation': 30,
+    'gpt-4o': 20, // Image analysis with GPT-4o Vision
   };
   
   return defaultCosts[model] || 100;
@@ -1499,6 +1502,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error creating pricing:', error);
       res.status(400).json({ message: 'Failed to create pricing', error: error.message });
+    }
+  });
+
+  // ========== IMAGE ANALYSIS ROUTES ==========
+
+  // Analyze image - SYNCHRONOUS processing
+  app.post('/api/image-analysis/analyze', isAuthenticated, async (req: any, res) => {
+    let hostedImageUrl: string[] | undefined;
+    let imageAnalysis: any = undefined;
+    
+    try {
+      const userId = req.user.claims.sub;
+
+      // Validate request
+      const validationResult = analyzeImageRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { image, prompt, model } = validationResult.data;
+      const cost = await getModelCost(model || 'gpt-4o');
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        // Convert base64 image to hosted URL
+        console.log('Converting image to hosted URL for analysis...');
+        hostedImageUrl = await saveBase64Images([image]);
+        const imageUrl = hostedImageUrl[0];
+        console.log(`✓ Image hosted at: ${imageUrl}`);
+
+        // Create image analysis record
+        imageAnalysis = await storage.createImageAnalysis({
+          userId,
+          imageUrl,
+          analysisPrompt: prompt || null,
+          analysisResult: null,
+          model: model || 'gpt-4o',
+          provider: 'kie-ai',
+          status: 'processing',
+          errorMessage: null,
+          creditsCost: cost,
+        });
+
+        // Analyze image SYNCHRONOUSLY (wait for result before responding)
+        const { result, keyName } = await analyzeImage({
+          imageUrl,
+          prompt,
+          model,
+        });
+
+        // Extract analysis from result
+        const analysisText = result?.data?.analysis || result?.analysis || result?.text || result?.description;
+        if (!analysisText) {
+          throw new Error('Image analysis failed - no analysis text returned');
+        }
+
+        // Update with completed analysis
+        await storage.updateImageAnalysis(imageAnalysis.id, {
+          status: 'completed',
+          analysisResult: typeof analysisText === 'string' ? { text: analysisText } : analysisText,
+          apiKeyUsed: keyName,
+          completedAt: new Date(),
+        });
+
+        // Return success with analysis immediately
+        return res.json({ 
+          success: true, 
+          analysisId: imageAnalysis.id,
+          analysis: analysisText,
+          message: "Image analyzed successfully" 
+        });
+      } catch (error: any) {
+        console.error('Image analysis error:', error);
+        
+        // Refund credits on failure
+        const currentUser = await storage.getUser(userId);
+        if (currentUser) {
+          await storage.updateUserCredits(userId, currentUser.credits + cost);
+        }
+
+        // Update analysis record with failure
+        if (imageAnalysis) {
+          await storage.updateImageAnalysis(imageAnalysis.id, {
+            status: 'failed',
+            errorMessage: error.message || 'Image analysis failed',
+            completedAt: new Date(),
+          });
+        }
+
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('Image analysis error:', error);
+      res.status(500).json({ message: error.message || "Failed to analyze image" });
+    }
+  });
+
+  // Get user's image analyses
+  app.get('/api/image-analysis/results', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analyses = await storage.getUserImageAnalyses(userId);
+      res.json(analyses);
+    } catch (error) {
+      console.error('Error fetching image analyses:', error);
+      res.status(500).json({ message: "Failed to fetch image analyses" });
     }
   });
 
