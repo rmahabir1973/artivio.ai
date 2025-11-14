@@ -6,6 +6,9 @@ Artivio AI is a comprehensive platform designed for generating AI-powered videos
 ## User Preferences
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
+## Admin Authentication
+Admin access is controlled via a hardcoded email whitelist in `server/routes.ts`. The `/api/auth/user` endpoint checks if the logged-in user's email matches the `ADMIN_EMAILS` array and overrides the `isAdmin` flag accordingly. Current admin emails: `ryan.mahabir@outlook.com` and `admin@artivio.ai`. This approach ensures admin status persists regardless of database state and cannot be overwritten by OAuth login processes. The frontend uses React Query with `staleTime: 0` to always fetch fresh authentication data without caching.
+
 ## System Architecture
 
 ### UI/UX Decisions

@@ -296,7 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.warn('API keys can be configured later via the admin panel.');
   }
 
-  // Hardcoded admin emails - simple and reliable
+  // Hardcoded admin emails for access control
   const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai'];
   
   // Auth endpoint
@@ -305,18 +305,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      console.log('🔵 DEBUG: user?.email =', user?.email);
-      console.log('🔵 DEBUG: user?.email.toLowerCase() =', user?.email?.toLowerCase());
-      console.log('🔵 DEBUG: ADMIN_EMAILS =', ADMIN_EMAILS);
-      console.log('🔵 DEBUG: includes check =', ADMIN_EMAILS.includes(user?.email?.toLowerCase() || ''));
-      
-      // Override isAdmin based on email address (hardcoded approach)
+      // Override isAdmin based on hardcoded email list
       const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
       const userWithAdminOverride = { ...user, isAdmin };
       
-      console.log('🟢 FINAL RESPONSE - isAdmin:', isAdmin, 'Full response:', JSON.stringify(userWithAdminOverride, null, 2));
-      
-      // Disable all caching to ensure fresh data
+      // Disable caching to ensure fresh auth data
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');

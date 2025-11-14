@@ -139,19 +139,15 @@ export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    console.log('🔍 DEBUG getUser - Raw result from DB:', JSON.stringify(user, null, 2));
     return user;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    console.log('🔍 DEBUG upsertUser - Input userData:', JSON.stringify(userData, null, 2));
-    
     // Check if user already exists
     const existingUser = await this.getUser(userData.id as string);
     
     if (existingUser) {
-      // User exists - only update OAuth profile fields, NEVER overwrite isAdmin or stripeCustomerId
-      console.log('🔍 DEBUG upsertUser - User exists, updating OAuth fields only');
+      // User exists - only update OAuth profile fields, preserve isAdmin and stripeCustomerId
       const [updatedUser] = await db
         .update(users)
         .set({
@@ -164,17 +160,14 @@ export class DatabaseStorage implements IStorage {
         .where(eq(users.id, userData.id as string))
         .returning();
       
-      console.log('🔍 DEBUG upsertUser - Updated user:', JSON.stringify(updatedUser, null, 2));
       return updatedUser;
     } else {
-      // New user - insert with all fields (isAdmin will default to false)
-      console.log('🔍 DEBUG upsertUser - New user, inserting');
+      // New user - insert with defaults
       const [newUser] = await db
         .insert(users)
         .values(userData)
         .returning();
       
-      console.log('🔍 DEBUG upsertUser - Inserted new user:', JSON.stringify(newUser, null, 2));
       return newUser;
     }
   }
