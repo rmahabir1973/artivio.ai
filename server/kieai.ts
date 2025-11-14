@@ -145,6 +145,7 @@ export async function generateVideo(params: {
       seeds: parameters.seeds,
       watermark: parameters.watermark,
       callBackUrl: parameters.callBackUrl,
+      enableTranslation: true, // Enable automatic prompt translation for better results
     });
   } 
   else if (params.model.startsWith('runway-')) {
