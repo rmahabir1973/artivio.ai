@@ -305,11 +305,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
+      console.log('🔵 DEBUG: user?.email =', user?.email);
+      console.log('🔵 DEBUG: user?.email.toLowerCase() =', user?.email?.toLowerCase());
+      console.log('🔵 DEBUG: ADMIN_EMAILS =', ADMIN_EMAILS);
+      console.log('🔵 DEBUG: includes check =', ADMIN_EMAILS.includes(user?.email?.toLowerCase() || ''));
+      
       // Override isAdmin based on email address (hardcoded approach)
       const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
       const userWithAdminOverride = { ...user, isAdmin };
       
-      console.log('🟢 /api/auth/user endpoint - Email:', user?.email, 'isAdmin override:', isAdmin);
+      console.log('🟢 FINAL RESPONSE - isAdmin:', isAdmin, 'Full response:', JSON.stringify(userWithAdminOverride, null, 2));
       
       // Disable all caching to ensure fresh data
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
