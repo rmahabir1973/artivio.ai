@@ -154,6 +154,53 @@ export const insertImageAnalysisSchema = createInsertSchema(imageAnalyses).omit(
 export type InsertImageAnalysis = z.infer<typeof insertImageAnalysisSchema>;
 export type ImageAnalysis = typeof imageAnalyses.$inferSelect;
 
+// Video Combinations table for combining multiple videos into one
+export const videoCombinations = pgTable("video_combinations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sourceVideoIds: text("source_video_ids").array().notNull(), // Ordered array of generation IDs
+  outputPath: text("output_path"), // Local path or future cloud URL
+  status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
+  errorMessage: text("error_message"),
+  creditsCost: integer("credits_cost").notNull(),
+  durationSeconds: integer("duration_seconds"), // Total duration of combined video
+  taskId: varchar("task_id"), // Background job queue task identifier
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("video_combinations_user_created_idx").on(table.userId, table.createdAt),
+  uniqueIndex("video_combinations_task_idx").on(table.taskId),
+]);
+
+export const insertVideoCombinationSchema = createInsertSchema(videoCombinations).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertVideoCombination = z.infer<typeof insertVideoCombinationSchema>;
+export type VideoCombination = typeof videoCombinations.$inferSelect;
+
+// Video Combination Events table for debugging and audit trail
+export const videoCombinationEvents = pgTable("video_combination_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  combinationId: varchar("combination_id").notNull().references(() => videoCombinations.id, { onDelete: 'cascade' }),
+  eventType: varchar("event_type").notNull(), // 'status_change', 'ffmpeg_start', 'ffmpeg_complete', 'error'
+  message: text("message"), // Event description or FFmpeg logs
+  metadata: jsonb("metadata"), // Additional event data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("video_combination_events_combination_idx").on(table.combinationId, table.createdAt),
+]);
+
+export const insertVideoCombinationEventSchema = createInsertSchema(videoCombinationEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertVideoCombinationEvent = z.infer<typeof insertVideoCombinationEventSchema>;
+export type VideoCombinationEvent = typeof videoCombinationEvents.$inferSelect;
+
 // Image Analysis Request Schema
 export const analyzeImageRequestSchema = z.object({
   image: z.string(), // Base64 data URI
@@ -163,6 +210,13 @@ export const analyzeImageRequestSchema = z.object({
 });
 
 export type AnalyzeImageRequest = z.infer<typeof analyzeImageRequestSchema>;
+
+// Video Combination Request Schema
+export const combineVideosRequestSchema = z.object({
+  videoIds: z.array(z.string().uuid()).min(2, "Must select at least 2 videos").max(20, "Cannot combine more than 20 videos"),
+});
+
+export type CombineVideosRequest = z.infer<typeof combineVideosRequestSchema>;
 
 // Request validation schemas for generation endpoints
 export const generateVideoRequestSchema = z.object({
