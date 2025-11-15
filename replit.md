@@ -38,8 +38,8 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine 2-20 AI-generated videos, featuring drag-and-drop interface, background processing, and credit deduction.
 -   **AI Chat**: Dual provider support (Deepseek and OpenAI), streaming via SSE, model selection, and persistent conversation history.
 -   **Voice Cloning**: Integrates ElevenLabs via Kie.ai, supporting audio uploads and management of cloned voices.
--   **Admin Panel**: Comprehensive user management (credit editing, deletion) and API key management (activation/deactivation, usage tracking).
--   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions with Free, Starter, and Pro plans.
+-   **Admin Panel**: Comprehensive user management (credit editing, deletion), API key management (activation/deactivation, usage tracking), and Stripe integration configuration with inline editing of Price IDs and Product IDs.
+-   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions with Free, Starter, and Pro plans. Admin UI enables easy configuration of Stripe Price IDs without database editing.
 
 ### System Design Choices
 The project uses a modular structure for client, server, and shared components. The database schema includes tables for `users`, `sessions`, `api_keys`, `generations`, `conversations`, `messages`, `voice_clones`, `video_combinations`, and `video_combination_events`. Video processing utilizes server-side FFmpeg for performance, with asynchronous job processing and real-time status updates.
