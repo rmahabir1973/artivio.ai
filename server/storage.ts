@@ -171,33 +171,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    // Check if user already exists
-    const existingUser = await this.getUser(userData.id as string);
-    
-    if (existingUser) {
-      // User exists - only update OAuth profile fields, preserve isAdmin and stripeCustomerId
-      const [updatedUser] = await db
-        .update(users)
-        .set({
-          email: userData.email,
+    // Use Drizzle's onConflictDoUpdate for proper upsert semantics
+    // On conflict (email already exists), update profile fields but preserve id
+    const [upsertedUser] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.email,
+        set: {
           firstName: userData.firstName,
           lastName: userData.lastName,
           profileImageUrl: userData.profileImageUrl,
           updatedAt: new Date(),
-        })
-        .where(eq(users.id, userData.id as string))
-        .returning();
-      
-      return updatedUser;
-    } else {
-      // New user - insert with defaults
-      const [newUser] = await db
-        .insert(users)
-        .values(userData)
-        .returning();
-      
-      return newUser;
-    }
+        },
+      })
+      .returning();
+    
+    return upsertedUser;
   }
 
   async getAllUsers(): Promise<User[]> {
