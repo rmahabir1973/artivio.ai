@@ -31,10 +31,13 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Trust proxy for secure cookie detection
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Only require HTTPS in production
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      // Don't set secure/sameSite statically - let them be set per-request
+      // This fixes issues with HTTP dev and HTTPS production
+      secure: 'auto', // Auto-detect based on connection
+      sameSite: 'lax', // Use lax for better compatibility
       maxAge: sessionTtl,
     },
   });
@@ -60,6 +63,28 @@ async function upsertUser(claims: any) {
   });
 }
 
+// Normalize hostname (strip www, handle localhost)
+function normalizeHostname(hostname: string): string {
+  // Remove www. prefix for consistency
+  const normalized = hostname.replace(/^www\./, '');
+  console.log('[AUTH DEBUG] Normalized hostname:', { original: hostname, normalized });
+  return normalized;
+}
+
+// Get protocol from request (handles proxies)
+function getProtocol(req: any): string {
+  // Trust X-Forwarded-Proto from proxy
+  if (req.headers['x-forwarded-proto']) {
+    return req.headers['x-forwarded-proto'];
+  }
+  // For Replit, check if we're on a replit.app domain (always HTTPS)
+  if (req.hostname && req.hostname.includes('.repl.co')) {
+    return 'https';
+  }
+  // Fallback to req.protocol
+  return req.protocol || 'https';
+}
+
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
@@ -75,28 +100,47 @@ export async function setupAuth(app: Express) {
     const user = {};
     updateUserSession(user, tokens);
     await upsertUser(tokens.claims());
+    console.log('[AUTH DEBUG] verify callback completed, user created');
     verified(null, user);
   };
 
   // Keep track of registered strategies
   const registeredStrategies = new Set<string>();
 
-  // Helper function to ensure strategy exists for a domain
-  const ensureStrategy = (domain: string) => {
-    const strategyName = `replitauth:${domain}`;
+  // Helper function to ensure strategy exists for a protocol/host combination
+  const ensureStrategy = (req: any) => {
+    // Include BOTH protocol and host in strategy key to handle HTTP/HTTPS correctly
+    // This ensures each protocol/host combo gets its own callback URL
+    const originalHost = req.get('host') || req.hostname;
+    const protocol = getProtocol(req);
+    const strategyName = `replitauth:${protocol}://${originalHost}`;
+    const callbackURL = `${protocol}://${originalHost}/api/callback`;
+    
     if (!registeredStrategies.has(strategyName)) {
+      console.log('[AUTH DEBUG] Registering new strategy:', { 
+        strategyName, 
+        callbackURL,
+        originalHost,
+        protocol
+      });
       const strategy = new Strategy(
         {
           name: strategyName,
           config,
           scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
+          callbackURL,
         },
         verify,
       );
       passport.use(strategy);
       registeredStrategies.add(strategyName);
+    } else {
+      console.log('[AUTH DEBUG] Strategy already exists:', {
+        strategyName,
+        callbackURL,
+      });
     }
+    return strategyName;
   };
 
   passport.serializeUser((user: Express.User, cb) => {
@@ -120,9 +164,19 @@ export async function setupAuth(app: Express) {
       hostname: req.hostname,
       sessionID: req.sessionID,
       hasSession: !!req.session,
+      protocol: getProtocol(req),
     });
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`)(req, res, next);
+    const strategyName = ensureStrategy(req);
+    
+    // Save session before redirecting to ensure it persists
+    req.session.save((err) => {
+      if (err) {
+        console.error('[AUTH DEBUG] Failed to save session before login:', err);
+        return next(err);
+      }
+      console.log('[AUTH DEBUG] Session saved, initiating authentication');
+      passport.authenticate(strategyName)(req, res, next);
+    });
   });
 
   app.get("/api/callback", (req, res, next) => {
@@ -131,9 +185,11 @@ export async function setupAuth(app: Express) {
       sessionID: req.sessionID,
       hasSession: !!req.session,
       query: req.query,
+      protocol: getProtocol(req),
     });
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const strategyName = ensureStrategy(req);
+    
+    passport.authenticate(strategyName, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
