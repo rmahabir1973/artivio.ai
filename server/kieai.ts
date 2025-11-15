@@ -272,14 +272,32 @@ export async function generateVideo(params: {
         }
       }
     } else if (generationType === 'image-to-video' && referenceImages.length > 0) {
-      // Smart defaults based on image count:
-      // - 1 image: REFERENCE_2_VIDEO (single reference)
-      // - 2 images: FIRST_AND_LAST_FRAMES_2_VIDEO (keyframe animation)
-      // - 3 images: REFERENCE_2_VIDEO (multi-reference)
-      if (referenceImages.length === 2) {
+      // Smart defaults based on image count and model constraints:
+      // IMPORTANT: REFERENCE_2_VIDEO only works with veo3_fast + 16:9 (per Kie.ai docs)
+      // For veo3 (standard Veo 3.1), use FIRST_AND_LAST_FRAMES_2_VIDEO
+      
+      const aspectRatio = parameters.aspectRatio || '16:9';
+      const isVeo3Fast = kieModel === 'veo3_fast';
+      
+      if (referenceImages.length === 1) {
+        // Single image: use FIRST_AND_LAST_FRAMES_2_VIDEO for veo3, or REFERENCE_2_VIDEO for veo3_fast with 16:9
+        if (isVeo3Fast && aspectRatio === '16:9') {
+          veoGenerationType = 'REFERENCE_2_VIDEO';
+        } else {
+          veoGenerationType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
+        }
+      } else if (referenceImages.length === 2) {
+        // Two images: always use FIRST_AND_LAST_FRAMES_2_VIDEO (first and last frames)
         veoGenerationType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
+      } else if (referenceImages.length === 3) {
+        // Three images: REFERENCE_2_VIDEO only works with veo3_fast + 16:9
+        if (isVeo3Fast && aspectRatio === '16:9') {
+          veoGenerationType = 'REFERENCE_2_VIDEO';
+        } else {
+          throw new Error('Multi-reference (3 images) only supported with Veo 3.1 Fast model and 16:9 aspect ratio');
+        }
       } else {
-        veoGenerationType = 'REFERENCE_2_VIDEO';
+        throw new Error(`Invalid image count: ${referenceImages.length}. Supported: 1-3 images`);
       }
     }
     

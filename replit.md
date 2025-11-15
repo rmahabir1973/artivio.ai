@@ -40,7 +40,7 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
     -   External Stripe API calls made BEFORE transaction to avoid network timeouts within atomic block
 
 ### Feature Specifications
--   **AI Video Generation**: Supports Veo 3.1 (standard and fast) and Runway Aleph, with image-to-video capabilities (up to 3 reference images).
+-   **AI Video Generation**: Supports Veo 3.1 (standard and fast) and Runway Aleph, with image-to-video capabilities (up to 3 reference images). **Veo Generation Type Logic** (per Kie.ai API constraints): `REFERENCE_2_VIDEO` mode only works with `veo3_fast` model + `16:9` aspect ratio. For standard Veo 3.1 (`veo3`), image-to-video uses `FIRST_AND_LAST_FRAMES_2_VIDEO` for 1-2 images. Multi-reference (3 images) restricted to veo3_fast + 16:9 only. This prevents preflight API rejections and ensures requests reach Kie.ai successfully.
 -   **AI Image Generation**: Integrates 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads (up to 10).
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and up to 8 minutes duration.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis (object detection, scene description, OCR, mood, style), with optional custom prompts.
