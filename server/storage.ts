@@ -87,6 +87,11 @@ export interface IStorage {
   getAllGenerations(): Promise<Generation[]>;
   createGeneration(generation: InsertGeneration): Promise<Generation>;
   updateGeneration(id: string, updates: Partial<Generation>): Promise<Generation | undefined>;
+  finalizeGeneration(
+    generationId: string, 
+    outcome: 'success' | 'failure',
+    updates: Partial<Generation>
+  ): Promise<Generation | undefined>;
   getUserGenerations(userId: string): Promise<Generation[]>;
   getRecentGenerations(userId: string, limit?: number): Promise<Generation[]>;
   getUserStats(userId: string): Promise<{
@@ -363,6 +368,66 @@ export class DatabaseStorage implements IStorage {
       .where(eq(generations.id, id))
       .returning();
     return generation;
+  }
+
+  /**
+   * Atomically finalize a generation (success or failure) with automatic credit refunds on failure.
+   * This function is idempotent - safe to call multiple times (e.g., from webhook retries).
+   */
+  async finalizeGeneration(
+    generationId: string,
+    outcome: 'success' | 'failure',
+    updates: Partial<Generation>
+  ): Promise<Generation | undefined> {
+    return await db.transaction(async (tx) => {
+      // Lock the generation row to prevent concurrent updates
+      const [generation] = await tx
+        .select()
+        .from(generations)
+        .where(eq(generations.id, generationId))
+        .for('update')
+        .limit(1);
+
+      if (!generation) {
+        throw new Error(`Generation ${generationId} not found`);
+      }
+
+      // If already in terminal state, return existing record (idempotent)
+      if (generation.status === 'completed' || generation.status === 'failed') {
+        console.log(`[finalizeGeneration] Generation ${generationId} already finalized with status: ${generation.status}`);
+        return generation;
+      }
+
+      // If failure, refund credits atomically
+      if (outcome === 'failure' && generation.creditsCost > 0) {
+        await tx
+          .update(users)
+          .set({ 
+            credits: sql`${users.credits} + ${generation.creditsCost}` 
+          })
+          .where(eq(users.id, generation.userId));
+
+        console.log(`✓ [CREDIT REFUND] Refunded ${generation.creditsCost} credits to user ${generation.userId} for failed generation ${generationId}`);
+      }
+
+      // Update generation status
+      const [updated] = await tx
+        .update(generations)
+        .set({
+          ...updates,
+          status: outcome === 'success' ? 'completed' : 'failed',
+          completedAt: new Date(),
+        })
+        .where(eq(generations.id, generationId))
+        .returning();
+
+      if (!updated) {
+        throw new Error(`Failed to update generation ${generationId}`);
+      }
+
+      console.log(`✓ [finalizeGeneration] Generation ${generationId} finalized as ${outcome}`);
+      return updated;
+    });
   }
 
   async getUserGenerations(userId: string): Promise<Generation[]> {

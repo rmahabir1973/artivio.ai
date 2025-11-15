@@ -147,8 +147,7 @@ async function generateVideoInBackground(
     console.log(`Video generation task started: ${taskId}`);
   } catch (error: any) {
     console.error('Background video generation failed:', error);
-    await storage.updateGeneration(generationId, {
-      status: 'failed',
+    await storage.finalizeGeneration(generationId, 'failure', {
       errorMessage: error.message,
     });
   }
@@ -233,8 +232,7 @@ async function generateImageInBackground(
       }
     }
     
-    await storage.updateGeneration(generationId, {
-      status: 'failed',
+    await storage.finalizeGeneration(generationId, 'failure', {
       errorMessage: error.message,
     });
   }
@@ -280,8 +278,7 @@ async function generateMusicInBackground(generationId: string, model: string, pr
     throw new Error('API response missing taskId or audio URL');
   } catch (error: any) {
     console.error('Background music generation failed:', error);
-    await storage.updateGeneration(generationId, {
-      status: 'failed',
+    await storage.finalizeGeneration(generationId, 'failure', {
       errorMessage: error.message,
     });
   }
