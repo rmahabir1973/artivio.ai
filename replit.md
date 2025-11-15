@@ -40,6 +40,12 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **Round-Robin API Key Management**: Supports up to 20 Kie.ai API keys with a round-robin rotation for load balancing and resilience.
 -   **Credit System**: Transparent credit tracking for all AI generation types, displaying costs per action.
 -   **Streaming Chat**: AI chat uses Server-Sent Events (SSE) for real-time, streaming responses from Deepseek and OpenAI models.
+-   **Mobile Routing Resilience**: Production-grade routing system prevents infinite loading on slow networks:
+    -   Auth query includes 10-second timeout using AbortController in `useAuth` hook
+    -   Graceful timeout handling returns null (unauthenticated) on network delays
+    -   Single loading state check in AppContent prevents double-guarding
+    -   Public routes (/, /support, /workflows, /privacy, /terms, /contact) always accessible
+    -   Resolves "Did you forget to add the page to the router?" error on mobile devices
 -   **Admin Authentication**: Hardcoded email whitelist in `server/routes.ts` for admin access, bypassing database state for `isAdmin` flag.
 -   **Home Page Content Management**: Admin-controlled dynamic landing page system with JSONB storage for showcase videos and FAQs, supporting hero sections, product features, and Vimeo video embeds.
 -   **Stripe Webhook Idempotency**: Production-grade transaction-based deduplication system prevents duplicate credit grants:
