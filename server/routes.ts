@@ -250,10 +250,17 @@ async function generateMusicInBackground(generationId: string, model: string, pr
       parameters: { ...parameters, callBackUrl: callbackUrl } 
     });
     
-    // Kie.ai music API returns taskId
-    const taskId = result?.data?.taskId;
+    // Parse task ID from various possible response structures
+    // Suno v4.x returns nested: { data: { task: { taskId, status } } }
+    // Older versions: { data: { taskId } }
+    const taskId = result?.data?.task?.taskId || 
+                   result?.data?.taskId ||
+                   result?.data?.jobId ||
+                   result?.taskId;
+    
     const directUrl = result?.url || result?.audioUrl || result?.data?.url || result?.data?.audioUrl;
     
+    // If we got a direct URL, mark as completed immediately
     if (directUrl) {
       await storage.updateGeneration(generationId, {
         status: 'completed',
@@ -261,20 +268,29 @@ async function generateMusicInBackground(generationId: string, model: string, pr
         apiKeyUsed: keyName,
         completedAt: new Date(),
       });
+      console.log(`✓ Music generation completed immediately with URL: ${directUrl}`);
       return;
     }
     
+    // If we have a task ID, stay in processing state and wait for callback
     if (taskId) {
       await storage.updateGeneration(generationId, {
         status: 'processing',
         apiKeyUsed: keyName,
-        resultUrl: taskId,
+        resultUrl: taskId, // Temporarily store taskId
       });
-      console.log(`Music generation task started: ${taskId}`);
+      console.log(`📋 Music generation task queued: ${taskId} (waiting for callback)`);
       return;
     }
     
-    throw new Error('API response missing taskId or audio URL');
+    // If response has no explicit error but also no taskId/URL, log and stay in processing
+    // The callback might still arrive later
+    console.warn(`⚠️ Suno API response has no taskId or URL for ${generationId}, staying in processing state`);
+    console.warn(`Response data:`, JSON.stringify(result, null, 2));
+    await storage.updateGeneration(generationId, {
+      status: 'processing',
+      apiKeyUsed: keyName,
+    });
   } catch (error: any) {
     console.error('Background music generation failed:', error);
     await storage.finalizeGeneration(generationId, 'failure', {
@@ -369,7 +385,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Extract result URL from callback data
       // Kie.ai sends result URLs in various nested structures depending on the API
-      const resultUrl = (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) ||
+      // Suno v4.x sends: { data: { response: { sunoData: [{ audioUrl, ... }] } } }
+      const sunoAudio = callbackData.data?.response?.sunoData?.[0]?.audioUrl ||
+                       callbackData.data?.response?.sunoData?.[0]?.streamAudioUrl;
+      
+      const resultUrl = sunoAudio ||
+                       (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) ||
                        (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) ||
                        (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) ||
                        (callbackData.data?.result_urls && callbackData.data.result_urls[0]) ||
@@ -385,7 +406,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        callbackData.data?.audioUrl;
       
       // Check for explicit status from Kie.ai
-      const kieStatus = callbackData.status?.toLowerCase();
+      // Suno uses nested status: { data: { task: { status } } } or { data: { status } }
+      const kieStatus = (callbackData.data?.task?.status || 
+                        callbackData.data?.status || 
+                        callbackData.status)?.toLowerCase();
       const hasError = callbackData.error || callbackData.errorMessage || callbackData.data?.error;
       
       // Identify intermediate callbacks that should be ignored

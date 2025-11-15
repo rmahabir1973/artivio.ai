@@ -245,8 +245,14 @@ export async function generateMusic(params: {
   
   // Map frontend model names to Kie.ai API model names
   let kieModel = 'V3_5';
-  if (params.model.includes('v4.5') || params.model.includes('v4-5')) {
-    kieModel = 'V4_5';
+  if (params.model.includes('v5')) {
+    kieModel = 'V5';
+  } else if (params.model.includes('v4.5') || params.model.includes('v4-5')) {
+    if (params.model.includes('plus')) {
+      kieModel = 'V4_5PLUS';
+    } else {
+      kieModel = 'V4_5';
+    }
   } else if (params.model.includes('v4')) {
     kieModel = 'V4';
   } else if (params.model.includes('v3.5') || params.model.includes('v3-5')) {
@@ -256,8 +262,11 @@ export async function generateMusic(params: {
   return await callKieApi('/api/v1/generate', {
     prompt: params.prompt,
     model: kieModel,
-    customMode: false, // Use simple mode for now
+    customMode: parameters.customMode || false,
     instrumental: parameters.instrumental || false,
+    style: parameters.style,
+    title: parameters.title,
+    negativeTags: parameters.negativeTags,
     callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid', // Required by API
   });
 }
