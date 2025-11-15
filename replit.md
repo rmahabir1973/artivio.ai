@@ -55,6 +55,24 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
     -   Billing period change detection: automatically resets `creditsGrantedThisPeriod` when `current_period_start` changes
     -   Guarantees exactly-once credit delivery even with concurrent webhook retries or network failures
     -   External Stripe API calls made BEFORE transaction to avoid network timeouts within atomic block
+-   **Generation Queue System**: Real-time dashboard widget tracking active and recent AI generations:
+    -   Auto-refresh every 10 seconds when generations are in progress
+    -   Status indicators for pending/processing/completed/failed states
+    -   Quick actions: retry button for failed generations, download button for completed content
+    -   Retry functionality includes full original parameters (model, prompt, generationType, referenceImages, parameters)
+    -   Empty state handling and smart auto-refresh disabling when queue is idle
+    -   Integrated into home dashboard with TypeScript interfaces for type safety
+-   **Smart Credit Warnings**: Pre-generation credit cost preview system with tiered warnings:
+    -   Four warning levels: Insufficient (red), Low (orange), Moderate (yellow), Normal (blue)
+    -   Displays burn rate ("X more generations at this rate") with zero-cost guard for free features
+    -   Shows before/after credit amounts for informed decision-making
+    -   Component ready for integration across all generation pages (video, image, music, chat)
+    -   Prevents Infinity in calculations with cost > 0 validation
+-   **Favorite Workflows & Templates**: Database foundation for user-personalized content:
+    -   `favoriteWorkflows` table linking users to saved workflow templates
+    -   `generationTemplates` table storing custom prompt templates with feature-type categorization
+    -   Supports parameters storage in JSONB format for flexible template configurations
+    -   Designed for future UI implementation of quick-access workflow favorites
 
 ### Feature Specifications
 -   **AI Video Generation**: Supports Veo 3.1 (standard and fast) and Runway Aleph, with image-to-video capabilities (up to 3 reference images). **Veo Generation Type Logic** (per Kie.ai API constraints): `REFERENCE_2_VIDEO` mode only works with `veo3_fast` model + `16:9` aspect ratio. For standard Veo 3.1 (`veo3`), image-to-video uses `FIRST_AND_LAST_FRAMES_2_VIDEO` for 1-2 images. Multi-reference (3 images) restricted to veo3_fast + 16:9 only. This prevents preflight API rejections and ensures requests reach Kie.ai successfully.
@@ -69,7 +87,7 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **Dynamic Landing Page**: Public-facing landing page with admin-managed content including hero section (title, subtitle, video/image), up to 3 Vimeo showcase videos, creators and business product sections, and customizable FAQ section. Content fetched from `/api/homepage` with graceful fallbacks.
 
 ### System Design Choices
-The project uses a modular structure for client, server, and shared components. The database schema includes tables for `users`, `sessions`, `api_keys`, `generations`, `conversations`, `messages`, `voice_clones`, `video_combinations`, `video_combination_events`, and `home_page_content`. Video processing utilizes server-side FFmpeg for performance, with asynchronous job processing and real-time status updates. Landing page content is managed through a singleton database row with JSONB columns for complex data structures (showcase videos, FAQs).
+The project uses a modular structure for client, server, and shared components. The database schema includes tables for `users`, `sessions`, `api_keys`, `generations`, `conversations`, `messages`, `voice_clones`, `video_combinations`, `video_combination_events`, `home_page_content`, `favoriteWorkflows`, and `generationTemplates`. Video processing utilizes server-side FFmpeg for performance, with asynchronous job processing and real-time status updates. Landing page content is managed through a singleton database row with JSONB columns for complex data structures (showcase videos, FAQs). The generation queue system provides real-time monitoring of AI generation jobs with smart retry functionality that preserves all original parameters.
 
 ## External Dependencies
 
