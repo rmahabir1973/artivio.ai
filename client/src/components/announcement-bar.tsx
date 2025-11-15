@@ -22,14 +22,22 @@ export function AnnouncementBar() {
     }
   }, []);
 
-  const handleDismiss = (id: string) => {
+  // Create unique dismissal key that includes updatedAt timestamp
+  // This ensures edited announcements redisplay to users who dismissed the old version
+  const getDismissalKey = (announcement: Announcement) => {
+    const timestamp = announcement.updatedAt ? new Date(announcement.updatedAt).getTime() : 0;
+    return `${announcement.id}-${timestamp}`;
+  };
+
+  const handleDismiss = (announcement: Announcement) => {
+    const dismissalKey = getDismissalKey(announcement);
     const newDismissed = new Set(dismissed);
-    newDismissed.add(id);
+    newDismissed.add(dismissalKey);
     setDismissed(newDismissed);
     localStorage.setItem("dismissed_announcements", JSON.stringify(Array.from(newDismissed)));
   };
 
-  const visibleAnnouncements = announcements.filter(a => !dismissed.has(a.id));
+  const visibleAnnouncements = announcements.filter(a => !dismissed.has(getDismissalKey(a)));
 
   if (visibleAnnouncements.length === 0) return null;
 
@@ -64,7 +72,7 @@ export function AnnouncementBar() {
             <p className="text-sm truncate">{announcement.message}</p>
           </div>
           <button
-            onClick={() => handleDismiss(announcement.id)}
+            onClick={() => handleDismiss(announcement)}
             className="p-1 hover:bg-background/50 rounded-sm transition-colors flex-shrink-0"
             aria-label="Dismiss announcement"
             data-testid="button-dismiss-announcement"

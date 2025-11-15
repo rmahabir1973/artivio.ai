@@ -843,6 +843,24 @@ export const announcements = pgTable("announcements", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Strict validation schema for announcement creation/update
+// Note: XSS protection relies on React's automatic escaping when rendering {announcement.message}
+// We trim whitespace but preserve the original message for admin display
+export const createAnnouncementSchema = z.object({
+  message: z.string()
+    .min(1, "Message is required")
+    .max(500, "Message must be less than 500 characters")
+    .trim(),
+  type: z.enum(['info', 'warning', 'success', 'promo']).default('info'),
+  targetPlans: z.array(z.enum(['free', 'starter', 'pro'])).optional().nullable(),
+  isActive: z.boolean().default(true),
+  startDate: z.string().datetime().optional().nullable(),
+  endDate: z.string().datetime().optional().nullable(),
+  createdBy: z.string().optional(),
+});
+
+export const updateAnnouncementSchema = createAnnouncementSchema.partial();
+
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
   id: true,
   createdAt: true,
@@ -851,6 +869,8 @@ export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
 
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
 export type Announcement = typeof announcements.$inferSelect;
+export type CreateAnnouncementRequest = z.infer<typeof createAnnouncementSchema>;
+export type UpdateAnnouncementRequest = z.infer<typeof updateAnnouncementSchema>;
 
 // Feature Pricing table (configurable costs for each feature)
 export const featurePricing = pgTable("feature_pricing", {

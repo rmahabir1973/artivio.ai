@@ -17,7 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent } from "@shared/schema";
+import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement } from "@shared/schema";
 
 interface UserWithSubscription extends User {
   subscription: {
@@ -89,6 +89,18 @@ export default function Admin() {
   const [faqEditIndex, setFaqEditIndex] = useState<number | null>(null);
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
+  
+  // Announcements state
+  const [creatingAnnouncement, setCreatingAnnouncement] = useState(false);
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<string | null>(null);
+  const [announcementForm, setAnnouncementForm] = useState({
+    message: "",
+    type: "info" as "info" | "warning" | "success" | "promo",
+    targetPlans: [] as string[],
+    isActive: true,
+    startDate: "",
+    endDate: "",
+  });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -139,6 +151,11 @@ export default function Admin() {
 
   const { data: homePageContent, isLoading: homePageLoading } = useQuery<HomePageContent>({
     queryKey: ["/api/admin/homepage"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const { data: announcements = [], isLoading: announcementsLoading } = useQuery<Announcement[]>({
+    queryKey: ["/api/admin/announcements"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
@@ -423,6 +440,10 @@ export default function Admin() {
           <TabsTrigger value="content" data-testid="tab-content">
             <FileText className="h-4 w-4 mr-2" />
             Home Page
+          </TabsTrigger>
+          <TabsTrigger value="announcements" data-testid="tab-announcements">
+            <Activity className="h-4 w-4 mr-2" />
+            Announcements
           </TabsTrigger>
         </TabsList>
 
@@ -1387,6 +1408,130 @@ export default function Admin() {
             </Card>
           </div>
         </TabsContent>
+
+        <TabsContent value="announcements">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div>
+                <CardTitle>Announcement Management</CardTitle>
+                <CardDescription>Create and manage announcement bars with plan targeting</CardDescription>
+              </div>
+              <Button
+                onClick={() => {
+                  setAnnouncementForm({
+                    message: "",
+                    type: "info",
+                    targetPlans: [],
+                    isActive: true,
+                    startDate: "",
+                    endDate: "",
+                  });
+                  setEditingAnnouncementId(null);
+                  setCreatingAnnouncement(true);
+                }}
+                data-testid="button-create-announcement"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Announcement
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {announcementsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : announcements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No announcements yet. Create one to get started.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {announcements.map((announcement) => (
+                    <Card key={announcement.id} className="hover-elevate">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant={announcement.type === "warning" ? "destructive" : "default"}>
+                                {announcement.type}
+                              </Badge>
+                              <Badge variant={announcement.isActive ? "default" : "secondary"}>
+                                {announcement.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                              {announcement.targetPlans && announcement.targetPlans.length > 0 ? (
+                                <Badge variant="outline">
+                                  {announcement.targetPlans.join(", ")}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline">All Plans</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm">{announcement.message}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              {announcement.startDate && (
+                                <span>Start: {new Date(announcement.startDate).toLocaleDateString()}</span>
+                              )}
+                              {announcement.endDate && (
+                                <span>End: {new Date(announcement.endDate).toLocaleDateString()}</span>
+                              )}
+                              <span>Updated {formatDistanceToNow(new Date(announcement.updatedAt))} ago</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setAnnouncementForm({
+                                  message: announcement.message,
+                                  type: announcement.type as any,
+                                  targetPlans: announcement.targetPlans || [],
+                                  isActive: announcement.isActive,
+                                  startDate: announcement.startDate ? new Date(announcement.startDate).toISOString().slice(0, 16) : "",
+                                  endDate: announcement.endDate ? new Date(announcement.endDate).toISOString().slice(0, 16) : "",
+                                });
+                                setEditingAnnouncementId(announcement.id);
+                                setCreatingAnnouncement(true);
+                              }}
+                              data-testid={`button-edit-announcement-${announcement.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                if (confirm(`Delete announcement: "${announcement.message}"?`)) {
+                                  try {
+                                    await apiRequest("DELETE", `/api/admin/announcements/${announcement.id}`, {});
+                                    queryClient.invalidateQueries({ queryKey: ["/api/admin/announcements"] });
+                                    toast({
+                                      title: "Success",
+                                      description: "Announcement deleted successfully",
+                                    });
+                                  } catch (error: any) {
+                                    toast({
+                                      title: "Error",
+                                      description: error.message || "Failed to delete announcement",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }
+                              }}
+                              data-testid={`button-delete-announcement-${announcement.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Showcase Video Dialog */}
@@ -1953,6 +2098,178 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create/Edit Announcement Dialog */}
+      <Dialog open={creatingAnnouncement} onOpenChange={setCreatingAnnouncement}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingAnnouncementId ? "Edit" : "Create"} Announcement</DialogTitle>
+            <DialogDescription>
+              Configure announcement bar with plan targeting
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="announcement-message">Message *</Label>
+              <Textarea
+                id="announcement-message"
+                value={announcementForm.message}
+                onChange={(e) => setAnnouncementForm({ ...announcementForm, message: e.target.value })}
+                placeholder="Enter announcement message..."
+                rows={3}
+                maxLength={500}
+                data-testid="input-announcement-message"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {announcementForm.message.length}/500 characters
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="announcement-type">Type</Label>
+                <Select
+                  value={announcementForm.type}
+                  onValueChange={(value: any) => setAnnouncementForm({ ...announcementForm, type: value })}
+                >
+                  <SelectTrigger data-testid="select-announcement-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="info">Info (Blue)</SelectItem>
+                    <SelectItem value="warning">Warning (Yellow)</SelectItem>
+                    <SelectItem value="success">Success (Green)</SelectItem>
+                    <SelectItem value="promo">Promo (Purple)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <div className="flex items-center space-x-2 h-9">
+                  <input
+                    type="checkbox"
+                    id="announcement-active"
+                    checked={announcementForm.isActive}
+                    onChange={(e) => setAnnouncementForm({ ...announcementForm, isActive: e.target.checked })}
+                    className="h-4 w-4"
+                    data-testid="checkbox-announcement-active"
+                  />
+                  <Label htmlFor="announcement-active" className="cursor-pointer">
+                    Active
+                  </Label>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label>Target Plans (leave empty for all plans)</Label>
+              <div className="flex gap-2 mt-2">
+                {["free", "starter", "pro"].map((plan) => (
+                  <div key={plan} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`plan-${plan}`}
+                      checked={announcementForm.targetPlans.includes(plan)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setAnnouncementForm({
+                            ...announcementForm,
+                            targetPlans: [...announcementForm.targetPlans, plan],
+                          });
+                        } else {
+                          setAnnouncementForm({
+                            ...announcementForm,
+                            targetPlans: announcementForm.targetPlans.filter((p) => p !== plan),
+                          });
+                        }
+                      }}
+                      className="h-4 w-4"
+                      data-testid={`checkbox-plan-${plan}`}
+                    />
+                    <Label htmlFor={`plan-${plan}`} className="capitalize cursor-pointer">
+                      {plan}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="announcement-start">Start Date (optional)</Label>
+                <Input
+                  id="announcement-start"
+                  type="datetime-local"
+                  value={announcementForm.startDate}
+                  onChange={(e) => setAnnouncementForm({ ...announcementForm, startDate: e.target.value })}
+                  data-testid="input-announcement-start"
+                />
+              </div>
+              <div>
+                <Label htmlFor="announcement-end">End Date (optional)</Label>
+                <Input
+                  id="announcement-end"
+                  type="datetime-local"
+                  value={announcementForm.endDate}
+                  onChange={(e) => setAnnouncementForm({ ...announcementForm, endDate: e.target.value })}
+                  data-testid="input-announcement-end"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreatingAnnouncement(false)}
+              data-testid="button-cancel-announcement"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!announcementForm.message.trim()) {
+                  toast({
+                    title: "Error",
+                    description: "Message is required",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                try {
+                  const payload = {
+                    message: announcementForm.message.trim(),
+                    type: announcementForm.type,
+                    targetPlans: announcementForm.targetPlans.length > 0 ? announcementForm.targetPlans : null,
+                    isActive: announcementForm.isActive,
+                    startDate: announcementForm.startDate || null,
+                    endDate: announcementForm.endDate || null,
+                  };
+                  
+                  if (editingAnnouncementId) {
+                    await apiRequest("PATCH", `/api/admin/announcements/${editingAnnouncementId}`, payload);
+                  } else {
+                    await apiRequest("POST", "/api/admin/announcements", payload);
+                  }
+                  
+                  queryClient.invalidateQueries({ queryKey: ["/api/admin/announcements"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/announcements/active"] });
+                  setCreatingAnnouncement(false);
+                  toast({
+                    title: "Success",
+                    description: `Announcement ${editingAnnouncementId ? "updated" : "created"} successfully`,
+                  });
+                } catch (error: any) {
+                  toast({
+                    title: "Error",
+                    description: error.message || `Failed to ${editingAnnouncementId ? "update" : "create"} announcement`,
+                    variant: "destructive",
+                  });
+                }
+              }}
+              data-testid="button-save-announcement"
+            >
+              {editingAnnouncementId ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

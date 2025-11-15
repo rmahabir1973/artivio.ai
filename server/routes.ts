@@ -49,6 +49,8 @@ import {
   analyzeImageRequestSchema,
   convertAudioRequestSchema,
   combineVideosRequestSchema,
+  createAnnouncementSchema,
+  updateAnnouncementSchema,
   type InsertSubscriptionPlan
 } from "@shared/schema";
 import { getBaseUrl } from "./urlUtils";
@@ -2581,7 +2583,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const { message, type, targetPlans, startDate, endDate } = req.body;
+      // Validate and sanitize input
+      const validatedData = createAnnouncementSchema.parse(req.body);
+      const { message, type, targetPlans, startDate, endDate } = validatedData;
 
       if (!message || message.trim().length === 0) {
         return res.status(400).json({ message: "Announcement message is required" });
@@ -2615,7 +2619,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { id } = req.params;
-      const announcement = await storage.updateAnnouncement(id, req.body);
+      
+      // Validate and sanitize input
+      const validatedData = updateAnnouncementSchema.parse(req.body);
+      const announcement = await storage.updateAnnouncement(id, validatedData);
 
       if (!announcement) {
         return res.status(404).json({ message: "Announcement not found" });
