@@ -57,7 +57,7 @@ export default function Landing() {
               </p>
               <div className="flex gap-4">
                 <Button size="lg" asChild data-testid="button-get-started">
-                  <a href="/api/login">
+                  <a href="/pricing">
                     <Zap className="mr-2 h-5 w-5" />
                     Get Started Free
                   </a>
@@ -286,7 +286,7 @@ export default function Landing() {
             and user-friendly.
           </p>
           <Button size="lg" asChild data-testid="button-cta-signup">
-            <a href="/api/login">
+            <a href="/pricing">
               Get Your Free Account
             </a>
           </Button>

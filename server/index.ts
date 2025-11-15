@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -29,6 +30,9 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+
+// Configure cookie-parser with signing secret for secure plan selection
+app.use(cookieParser(process.env.SESSION_SECRET));
 
 app.use((req, res, next) => {
   const start = Date.now();

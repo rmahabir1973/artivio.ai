@@ -13,6 +13,7 @@ import { Loader2, LogOut } from "lucide-react";
 
 // Pages
 import Landing from "@/pages/landing";
+import Pricing from "@/pages/pricing";
 import Home from "@/pages/home";
 import GenerateVideo from "@/pages/generate-video";
 import GenerateImage from "@/pages/generate-image";
@@ -50,7 +51,10 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/pricing" component={Pricing} />
+        </>
       ) : (
         <>
           <Route path="/" component={Home} />

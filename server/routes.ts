@@ -589,6 +589,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const isUserAdmin = (user: any): boolean => {
     return user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
   };
+
+  // ========== PUBLIC ENDPOINTS (NO AUTH REQUIRED) ==========
+  
+  // Store plan selection before authentication
+  app.post('/api/public/plan-selection', (req, res) => {
+    try {
+      const { planName } = req.body;
+      
+      // Validate plan name
+      const validPlans = ['free', 'starter', 'pro'];
+      if (!planName || !validPlans.includes(planName)) {
+        return res.status(400).json({ 
+          message: "Invalid plan name. Must be 'free', 'starter', or 'pro'" 
+        });
+      }
+
+      // Store plan selection in signed cookie (expires in 1 hour)
+      res.cookie('selected_plan', planName, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 1000, // 1 hour
+        signed: true,
+      });
+
+      console.log(`Plan selection stored: ${planName}`);
+      res.json({ success: true, planName });
+    } catch (error) {
+      console.error('Error storing plan selection:', error);
+      res.status(500).json({ message: "Failed to store plan selection" });
+    }
+  });
+  
+  // ========== AUTH ENDPOINTS ==========
   
   // Auth endpoint
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -596,9 +630,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       let user = await storage.getUser(userId);
       
-      // If user doesn't exist yet (race condition or test environment), create them
+      // If user doesn't exist yet (first login), create them with selected plan
       if (!user) {
-        console.log(`User ${userId} not found in database, creating from claims...`);
+        console.log(`\n=== NEW USER REGISTRATION ===`);
+        console.log(`User ID: ${userId}`);
+        console.log(`Email: ${req.user.claims.email}`);
+        
+        // Debug: Check signed cookies
+        console.log(`Signed cookies present:`, Object.keys((req as any).signedCookies || {}));
+        console.log(`Selected plan cookie:`, (req as any).signedCookies?.selected_plan);
+        
+        // Create user first (starts with 0 credits)
         await storage.upsertUser({
           id: req.user.claims.sub,
           email: req.user.claims.email,
@@ -606,7 +648,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: req.user.claims.last_name,
           profileImageUrl: req.user.claims.profile_image_url,
         });
+        console.log(`✓ User record created (0 credits initially)`);
+        
+        // Check for plan selection from signed cookie
+        const selectedPlan = (req as any).signedCookies?.selected_plan;
+        
+        if (!selectedPlan) {
+          console.warn(`⚠️ No plan selection cookie found - defaulting to Free plan`);
+          console.warn(`  This may indicate user skipped pricing page or cookie expired`);
+        }
+        
+        const planName = selectedPlan || 'free';
+        console.log(`Plan selection: ${planName}`);
+        
+        // Get plan from database
+        const plans = await storage.getAllSubscriptionPlans();
+        const plan = plans.find(p => p.name === planName);
+        
+        if (plan) {
+          try {
+            // Assign plan and grant credits atomically
+            console.log(`Assigning ${plan.displayName} plan (${plan.creditsPerMonth} credits)...`);
+            const result = await storage.assignPlanToUser(userId, plan.id);
+            console.log(`✓ Plan assigned successfully`);
+            console.log(`✓ Credits granted: ${result.creditsGranted}`);
+            console.log(`✓ Subscription created`);
+            
+            // Only clear cookie after successful assignment
+            if (selectedPlan) {
+              res.clearCookie('selected_plan');
+              console.log(`✓ Plan selection cookie cleared`);
+            }
+          } catch (error) {
+            console.error(`❌ CRITICAL: Failed to assign plan to user:`, error);
+            console.error(`  User created with 0 credits - plan assignment can retry on next login`);
+            // DO NOT clear cookie - allow retry on next login
+            // User can contact support or try logging out and back in
+          }
+        } else {
+          console.error(`❌ Plan "${planName}" not found in database!`);
+          console.error(`  User created with 0 credits`);
+        }
+        
         user = await storage.getUser(userId);
+        console.log(`Final user state - Credits: ${user?.credits}, ID: ${user?.id}`);
+        console.log(`=== END REGISTRATION ===\n`);
       }
       
       // Override isAdmin based on hardcoded email list
