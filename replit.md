@@ -15,7 +15,18 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI, Wouter (routing), TanStack Query.
 -   **Backend**: Express.js and Node.js with TypeScript.
 -   **Database**: PostgreSQL (Neon) with Drizzle ORM for type-safe interactions.
--   **Authentication**: Replit Auth (OpenID Connect).
+-   **Authentication & Onboarding**: Production-ready authentication flow with plan selection before signup:
+    -   New users start with 0 credits (changed from 1000 default)
+    -   Landing page → `/pricing` → Plan selection → Replit Auth
+    -   Plan choice stored in signed httpOnly cookie (1 hour expiry) using `cookie-parser` middleware with SESSION_SECRET
+    -   `POST /api/public/plan-selection` endpoint validates plan name and sets signed cookie with `credentials: 'include'`
+    -   First login atomically assigns selected plan via `storage.assignPlanToUser()` and grants credits (Free: 1000, Starter: 5000, Pro: 15000)
+    -   Cookie cleared only after successful plan assignment
+    -   Idempotent design: plan assignment only runs when `!user` (first login), preventing duplicate credit grants
+    -   Error recovery: cookie preserved on assignment failure, allowing retry on next login
+    -   Comprehensive server-side logging tracks entire registration flow for debugging
+    -   Fallback behavior: missing or expired cookie defaults to Free plan with warning
+    -   Replit Auth (OpenID Connect) for authentication provider.
 -   **Asynchronous Operations**: Kie.ai integrations use a webhook-based callback system for real-time status updates of generation tasks. Callback handler intelligently filters intermediate status updates (processing/pending/queued) while always processing final callbacks (success/failure/error), preventing premature failures from partial updates. Database schema includes `externalTaskId` and `statusDetail` fields in `generations` table for tracking provider-specific task IDs and detailed status information.
 -   **Centralized URL Management**: Production-safe URL generation via `server/urlUtils.ts` prevents dev domain leakage:
     -   Priority chain: PRODUCTION_URL > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN > localhost
