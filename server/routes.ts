@@ -1198,6 +1198,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a generation
+  app.delete('/api/generations/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+
+      // First, verify the generation belongs to the user
+      const generations = await storage.getUserGenerations(userId);
+      const generation = generations.find(g => g.id === id);
+
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found or does not belong to you" });
+      }
+
+      await storage.deleteGeneration(id);
+      res.json({ success: true, message: "Generation deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting generation:', error);
+      res.status(500).json({ message: "Failed to delete generation" });
+    }
+  });
+
   // Get user stats
   app.get('/api/stats', isAuthenticated, async (req: any, res) => {
     try {

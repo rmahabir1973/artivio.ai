@@ -1,8 +1,11 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Calendar, Sparkles } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { Generation } from "@shared/schema";
 
 interface GenerationCardProps {
@@ -10,12 +13,34 @@ interface GenerationCardProps {
 }
 
 export function GenerationCard({ generation }: GenerationCardProps) {
+  const { toast } = useToast();
+  
   const statusColors = {
     pending: "secondary",
     processing: "default",
     completed: "default",
     failed: "destructive",
   } as const;
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/generations/${generation.id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Generation deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete generation",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleDownload = async () => {
     if (!generation.resultUrl) return;
@@ -33,6 +58,12 @@ export function GenerationCard({ generation }: GenerationCardProps) {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Download failed:', error);
+    }
+  };
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this generation? This cannot be undone.')) {
+      deleteMutation.mutate();
     }
   };
 
@@ -88,21 +119,33 @@ export function GenerationCard({ generation }: GenerationCardProps) {
         </div>
       </CardContent>
       
-      <CardFooter className="flex justify-between pt-4">
+      <CardFooter className="flex justify-between items-center gap-2 pt-4">
         <span className="text-sm text-muted-foreground">
           {generation.creditsCost} credits
         </span>
-        {generation.status === 'completed' && generation.resultUrl && (
+        <div className="flex gap-2">
+          {generation.status === 'completed' && generation.resultUrl && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDownload}
+              data-testid={`button-download-${generation.id}`}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Download
+            </Button>
+          )}
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={handleDownload}
-            data-testid={`button-download-${generation.id}`}
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+            data-testid={`button-delete-${generation.id}`}
           >
-            <Download className="h-4 w-4 mr-1" />
-            Download
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
           </Button>
-        )}
+        </div>
       </CardFooter>
     </Card>
   );
