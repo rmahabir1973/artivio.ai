@@ -87,7 +87,7 @@ export default function BillingPage() {
               <div>
                 <p className="font-medium text-lg">{currentPlan?.displayName || 'Unknown Plan'}</p>
                 <p className="text-sm text-muted-foreground">
-                  {user?.credits.toLocaleString()} credits remaining
+                  {user?.credits?.toLocaleString() || 0} credits remaining
                 </p>
               </div>
               <Badge variant={subscription.status === 'active' ? 'default' : 'destructive'} data-testid={`badge-status-${subscription.status}`}>
@@ -156,12 +156,10 @@ export default function BillingPage() {
                     <CheckCircle2 className="w-4 h-4 text-primary" />
                     <span className="text-sm">{plan.creditsPerMonth.toLocaleString()} credits/month</span>
                   </div>
-                  {plan.features && (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary" />
-                      <span className="text-sm">All AI features included</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-primary" />
+                    <span className="text-sm">All AI features included</span>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter>

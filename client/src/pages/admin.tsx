@@ -46,6 +46,8 @@ export default function Admin() {
   const [editPricingCost, setEditPricingCost] = useState("");
   const [addingPricing, setAddingPricing] = useState(false);
   const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "" });
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const [editPlanData, setEditPlanData] = useState({ stripePriceId: "", stripeProductId: "" });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -199,6 +201,22 @@ export default function Admin() {
     },
   });
 
+  const updatePlanMutation = useMutation({
+    mutationFn: async ({ planId, stripePriceId, stripeProductId }: { planId: string; stripePriceId: string; stripeProductId: string }) => {
+      return await apiRequest("PATCH", `/api/admin/plans/${planId}/stripe`, { stripePriceId, stripeProductId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
+      setEditingPlanId(null);
+      setEditPlanData({ stripePriceId: "", stripeProductId: "" });
+      toast({ title: "Success", description: "Plan updated successfully! The Subscribe buttons should now work." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to update plan", variant: "destructive" });
+    },
+  });
+
   const addApiKeyMutation = useMutation({
     mutationFn: async ({ keyName, keyValue }: { keyName: string; keyValue: string }) => {
       return await apiRequest("POST", "/api/admin/api-keys", { keyName, keyValue });
@@ -288,6 +306,10 @@ export default function Admin() {
           <TabsTrigger value="pricing" data-testid="tab-pricing">
             <DollarSign className="h-4 w-4 mr-2" />
             Pricing
+          </TabsTrigger>
+          <TabsTrigger value="plans" data-testid="tab-plans">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Subscription Plans
           </TabsTrigger>
         </TabsList>
 

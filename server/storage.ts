@@ -146,6 +146,7 @@ export interface IStorage {
   // Subscription Plan operations
   getAllPlans(): Promise<SubscriptionPlan[]>;
   getPlanById(id: string): Promise<SubscriptionPlan | undefined>;
+  updatePlanStripeIds(planId: string, stripePriceId: string | null, stripeProductId: string | null): Promise<SubscriptionPlan | undefined>;
   getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined>;
   getUsersWithSubscriptions(): Promise<Array<User & { subscription: (UserSubscription & { plan: SubscriptionPlan }) | null }>>;
   upsertUserSubscription(data: InsertUserSubscription): Promise<UserSubscription>;
@@ -713,6 +714,19 @@ export class DatabaseStorage implements IStorage {
       .from(subscriptionPlans)
       .where(eq(subscriptionPlans.id, id));
     return plan;
+  }
+
+  async updatePlanStripeIds(planId: string, stripePriceId: string | null, stripeProductId: string | null): Promise<SubscriptionPlan | undefined> {
+    const [updated] = await db
+      .update(subscriptionPlans)
+      .set({
+        stripePriceId: stripePriceId || null,
+        stripeProductId: stripeProductId || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptionPlans.id, planId))
+      .returning();
+    return updated;
   }
 
   async getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined> {

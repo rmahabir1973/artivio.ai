@@ -1627,6 +1627,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Update plan Stripe IDs
+  app.patch('/api/admin/plans/:planId/stripe', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { planId } = req.params;
+      const { stripePriceId, stripeProductId } = req.body;
+
+      const updated = await storage.updatePlanStripeIds(
+        planId,
+        stripePriceId || null,
+        stripeProductId || null
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating plan Stripe IDs:', error);
+      res.status(500).json({ message: "Failed to update plan" });
+    }
+  });
+
   // ========== IMAGE ANALYSIS ROUTES ==========
 
   // Analyze image - SYNCHRONOUS processing
@@ -1927,9 +1957,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current user's subscription
-  app.get('/api/subscriptions/current', isAuthenticated, async (req, res) => {
+  app.get('/api/subscriptions/current', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user.claims.sub;
       const subscription = await storage.getUserSubscription(userId);
       
       if (!subscription) {
@@ -1988,7 +2018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Create Checkout Session for subscription purchase
-  app.post('/api/billing/checkout', isAuthenticated, async (req, res) => {
+  app.post('/api/billing/checkout', isAuthenticated, async (req: any, res) => {
     try {
       const { planId } = req.body;
       
@@ -1996,7 +2026,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'planId is required' });
       }
 
-      const user = req.user!;
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
       const baseUrl = process.env.REPLIT_DEV_DOMAIN 
         ? `https://${process.env.REPLIT_DEV_DOMAIN}`
         : 'http://localhost:5000';
@@ -2017,11 +2052,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create Customer Portal Session for managing subscription
-  app.post('/api/billing/portal', isAuthenticated, async (req, res) => {
+  app.post('/api/billing/portal', isAuthenticated, async (req: any, res) => {
     try {
-      const user = req.user!;
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
       
-      if (!user.stripeCustomerId) {
+      if (!user || !user.stripeCustomerId) {
         return res.status(400).json({ error: 'No Stripe customer found' });
       }
 
