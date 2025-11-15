@@ -39,12 +39,31 @@ interface FeatureCard {
   modelCost?: string;
 }
 
+interface UserSubscription {
+  id: string;
+  planId: string;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  plan: {
+    id: string;
+    name: string;
+    credits: number;
+    price: number;
+  };
+}
+
 export default function Home() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { getModelCost } = usePricing();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  const { data: subscription } = useQuery<UserSubscription>({
+    queryKey: ['/api/subscriptions/current'],
+    enabled: !!user,
+  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -227,11 +246,27 @@ export default function Home() {
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
               12+ powerful AI tools at your fingertips. Generate videos, images, music, voices, and more.
             </p>
-            <div className="flex items-center justify-center gap-4 text-sm">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card border">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="font-medium">{(user as any)?.credits || 0} credits</span>
               </div>
+              {subscription?.plan && (
+                <Badge variant="outline" className="px-4 py-2 text-sm font-medium">
+                  {subscription.plan.name} Plan
+                </Badge>
+              )}
+              <Link href="/billing">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="gap-2"
+                  data-testid="button-upgrade-hero"
+                >
+                  <Zap className="h-4 w-4" />
+                  Upgrade Now
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -311,6 +346,43 @@ export default function Home() {
                 </Link>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Upgrade CTA - Only show for Free plan */}
+        {selectedCategory === 'all' && !searchQuery && subscription?.plan?.name === 'Free' && (
+          <div className="mb-12">
+            <Card className="bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 border-2 border-primary/20 overflow-hidden relative">
+              <div className="absolute inset-0 bg-grid-white/5 bg-[size:20px_20px]" />
+              <CardContent className="relative py-8 px-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="text-center md:text-left space-y-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 mb-2">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                      <span className="text-xs font-medium text-primary">Limited Credits Remaining</span>
+                    </div>
+                    <h3 className="text-2xl font-bold">Unlock Unlimited Creativity</h3>
+                    <p className="text-muted-foreground max-w-xl">
+                      Upgrade to Pro or Starter to get more credits, faster generation, and access to premium features. 
+                      Create professional content without limits.
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <Badge variant="secondary">15,000 credits/month (Pro)</Badge>
+                      <Badge variant="secondary">5,000 credits/month (Starter)</Badge>
+                      <Badge variant="secondary">Priority Support</Badge>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Link href="/billing">
+                      <Button size="lg" className="gap-2" data-testid="button-upgrade-cta">
+                        <Zap className="h-5 w-5" />
+                        Upgrade Now
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

@@ -29,6 +29,11 @@ import Admin from "@/pages/admin";
 import Billing from "@/pages/billing";
 import BillingSuccess from "@/pages/billing-success";
 import BillingCanceled from "@/pages/billing-canceled";
+import Support from "@/pages/support";
+import Workflows from "@/pages/workflows";
+import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
+import Contact from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -47,6 +52,13 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes available to all users */}
+      <Route path="/support" component={Support} />
+      <Route path="/workflows" component={Workflows} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/contact" component={Contact} />
+
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
