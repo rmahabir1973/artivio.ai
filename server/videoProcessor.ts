@@ -81,38 +81,79 @@ async function downloadVideo(url: string, tempDir: string, index: number): Promi
   const writer = createWriteStream(filepath);
   response.data.pipe(writer);
 
-  return new Promise((resolve, reject) => {
-    writer.on('finish', () => resolve(filepath));
+  await new Promise<void>((resolve, reject) => {
+    writer.on('finish', () => resolve());
     writer.on('error', reject);
   });
+
+  // Ensure file is fully written and accessible
+  try {
+    const stats = await fs.stat(filepath);
+    if (stats.size === 0) {
+      throw new Error('Downloaded file is empty');
+    }
+    console.log(`✓ Downloaded video ${index}: ${filepath} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
+  } catch (error) {
+    throw new Error(`Failed to verify downloaded video: ${error}`);
+  }
+
+  return filepath;
 }
 
 /**
  * Get video metadata using ffprobe
  */
 async function getVideoMetadata(filepath: string): Promise<VideoMetadata> {
+  // First, verify file exists and is readable
+  try {
+    const stats = await fs.stat(filepath);
+    console.log(`Probing video: ${filepath} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
+    
+    if (stats.size === 0) {
+      throw new Error('Video file is empty (0 bytes)');
+    }
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      throw new Error(`Video file not found: ${filepath}`);
+    }
+    throw new Error(`Cannot access video file: ${error.message}`);
+  }
+
   // Probe for both video and audio streams
   const command = `ffprobe -v error -show_entries stream=codec_type,codec_name,width,height,duration -of json "${filepath}"`;
   
   try {
-    const { stdout } = await execAsync(command, { timeout: 10000 });
+    const { stdout, stderr } = await execAsync(command, { timeout: 10000 });
+    
+    if (stderr) {
+      console.warn(`ffprobe stderr: ${stderr}`);
+    }
+    
     const data = JSON.parse(stdout);
     const streams = data.streams || [];
 
+    if (streams.length === 0) {
+      throw new Error('No streams found in video file - file may be corrupted');
+    }
+
     const videoStream = streams.find((s: any) => s.codec_type === 'video');
     if (!videoStream) {
-      throw new Error('No video stream found');
+      throw new Error(`No video stream found. Available streams: ${streams.map((s: any) => s.codec_type).join(', ')}`);
     }
 
     const audioStream = streams.find((s: any) => s.codec_type === 'audio');
 
-    return {
+    const metadata = {
       duration: parseFloat(videoStream.duration) || 0,
       codec: videoStream.codec_name || 'unknown',
       width: parseInt(videoStream.width) || 0,
       height: parseInt(videoStream.height) || 0,
       hasAudio: !!audioStream,
     };
+
+    console.log(`✓ Video metadata: ${metadata.width}x${metadata.height}, ${metadata.duration}s, codec: ${metadata.codec}, audio: ${metadata.hasAudio}`);
+    
+    return metadata;
   } catch (error: any) {
     throw new Error(`Failed to probe video metadata: ${error.message}`);
   }
