@@ -20,8 +20,8 @@ const VIDEO_MODEL_INFO = [
     label: "Veo 3.1", 
     description: "1080p quality with synchronized audio", 
     duration: "5-8s",
-    supportsImages: true,
-    maxImages: 3 
+    supportsImages: false,
+    maxImages: 0 
   },
   { 
     value: "veo-3.1-fast", 
