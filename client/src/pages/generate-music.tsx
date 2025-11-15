@@ -73,7 +73,11 @@ export default function GenerateMusic() {
   const [extendAudioWeight, setExtendAudioWeight] = useState([0.5]);
   
   // Upload & Cover tab state
+  const [coverAudioSource, setCoverAudioSource] = useState<"url" | "upload" | "library">("url");
+  const [coverSelectedLibraryId, setCoverSelectedLibraryId] = useState("");
   const [coverUploadUrl, setCoverUploadUrl] = useState("");
+  const [coverUploadedFile, setCoverUploadedFile] = useState<string>("");
+  const [coverUploading, setCoverUploading] = useState(false);
   const [coverPrompt, setCoverPrompt] = useState("");
   const [coverModel, setCoverModel] = useState("suno-v4");
   const [coverCustomMode, setCoverCustomMode] = useState(false);
@@ -88,7 +92,11 @@ export default function GenerateMusic() {
   const [coverAudioWeight, setCoverAudioWeight] = useState([0.5]);
   
   // Upload & Extend tab state
+  const [extendAudioSource, setExtendAudioSource] = useState<"url" | "upload" | "library">("url");
+  const [extendSelectedLibraryId, setExtendSelectedLibraryId] = useState("");
   const [extendUploadUrl, setExtendUploadUrl] = useState("");
+  const [extendUploadedFile, setExtendUploadedFile] = useState<string>("");
+  const [extendUploading, setExtendUploading] = useState(false);
   const [uploadExtendPrompt, setUploadExtendPrompt] = useState("");
   const [uploadExtendModel, setUploadExtendModel] = useState("suno-v4");
   const [uploadExtendInstrumental, setUploadExtendInstrumental] = useState(false);
@@ -102,13 +110,110 @@ export default function GenerateMusic() {
   const [uploadExtendWeirdnessConstraint, setUploadExtendWeirdnessConstraint] = useState([0.5]);
   const [uploadExtendAudioWeight, setUploadExtendAudioWeight] = useState([0.5]);
 
-  // Fetch user's music generations for extend feature
+  // Fetch user's music generations for extend and upload tabs
   const { data: generations = [] } = useQuery<any[]>({
     queryKey: ["/api/generations"],
-    enabled: isAuthenticated && activeTab === "extend",
+    enabled: isAuthenticated && (activeTab === "extend" || activeTab === "cover" || activeTab === "upload-extend"),
   });
 
   const musicGenerations = generations.filter(g => g.type === 'music' && g.status === 'completed');
+
+  // File upload handlers
+  const handleCoverAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("audio/") && !file.name.match(/\.(mp3|wav|m4a|aac|ogg|flac)$/i)) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload an audio file (MP3, WAV, M4A, AAC, OGG, FLAC).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Maximum audio size is 25MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCoverUploading(true);
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+
+      setCoverUploadedFile(dataUrl);
+      toast({
+        title: "Audio Loaded",
+        description: `${file.name} ready for cover generation`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to read audio file",
+        variant: "destructive",
+      });
+    } finally {
+      setCoverUploading(false);
+    }
+  };
+
+  const handleExtendAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("audio/") && !file.name.match(/\.(mp3|wav|m4a|aac|ogg|flac)$/i)) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload an audio file (MP3, WAV, M4A, AAC, OGG, FLAC).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Maximum audio size is 25MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setExtendUploading(true);
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+
+      setExtendUploadedFile(dataUrl);
+      toast({
+        title: "Audio Loaded",
+        description: `${file.name} ready for extension`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to read audio file",
+        variant: "destructive",
+      });
+    } finally {
+      setExtendUploading(false);
+    }
+  };
 
   // Merge model info with dynamic pricing
   const MUSIC_MODELS = MUSIC_MODEL_INFO.map(m => ({
@@ -337,13 +442,47 @@ export default function GenerateMusic() {
   };
 
   const handleUploadCover = () => {
-    if (!coverUploadUrl.trim()) {
-      toast({
-        title: "URL Required",
-        description: "Please provide an audio URL.",
-        variant: "destructive",
-      });
-      return;
+    // Determine audio source based on selection
+    let audioUrl = "";
+    if (coverAudioSource === "url") {
+      if (!coverUploadUrl.trim()) {
+        toast({
+          title: "URL Required",
+          description: "Please provide an audio URL.",
+          variant: "destructive",
+        });
+        return;
+      }
+      audioUrl = coverUploadUrl;
+    } else if (coverAudioSource === "upload") {
+      if (!coverUploadedFile) {
+        toast({
+          title: "File Required",
+          description: "Please upload an audio file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      audioUrl = coverUploadedFile;
+    } else if (coverAudioSource === "library") {
+      if (!coverSelectedLibraryId) {
+        toast({
+          title: "Selection Required",
+          description: "Please select a song from your library.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const selectedGen = musicGenerations.find(g => g.id === coverSelectedLibraryId);
+      if (!selectedGen?.outputUrl) {
+        toast({
+          title: "Error",
+          description: "Selected song has no audio URL.",
+          variant: "destructive",
+        });
+        return;
+      }
+      audioUrl = selectedGen.outputUrl;
     }
 
     const parameters: any = {};
@@ -356,7 +495,7 @@ export default function GenerateMusic() {
     }
 
     uploadCoverMutation.mutate({
-      uploadUrl: coverUploadUrl,
+      uploadUrl: audioUrl,
       model: coverModel,
       customMode: coverCustomMode,
       instrumental: coverInstrumental,
@@ -368,13 +507,47 @@ export default function GenerateMusic() {
   };
 
   const handleUploadExtend = () => {
-    if (!extendUploadUrl.trim()) {
-      toast({
-        title: "URL Required",
-        description: "Please provide an audio URL.",
-        variant: "destructive",
-      });
-      return;
+    // Determine audio source based on selection
+    let audioUrl = "";
+    if (extendAudioSource === "url") {
+      if (!extendUploadUrl.trim()) {
+        toast({
+          title: "URL Required",
+          description: "Please provide an audio URL.",
+          variant: "destructive",
+        });
+        return;
+      }
+      audioUrl = extendUploadUrl;
+    } else if (extendAudioSource === "upload") {
+      if (!extendUploadedFile) {
+        toast({
+          title: "File Required",
+          description: "Please upload an audio file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      audioUrl = extendUploadedFile;
+    } else if (extendAudioSource === "library") {
+      if (!extendSelectedLibraryId) {
+        toast({
+          title: "Selection Required",
+          description: "Please select a song from your library.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const selectedGen = musicGenerations.find(g => g.id === extendSelectedLibraryId);
+      if (!selectedGen?.outputUrl) {
+        toast({
+          title: "Error",
+          description: "Selected song has no audio URL.",
+          variant: "destructive",
+        });
+        return;
+      }
+      audioUrl = selectedGen.outputUrl;
     }
 
     const parameters: any = {};
@@ -387,7 +560,7 @@ export default function GenerateMusic() {
     }
 
     uploadExtendMutation.mutate({
-      uploadUrl: extendUploadUrl,
+      uploadUrl: audioUrl,
       model: uploadExtendModel,
       defaultParamFlag: false,
       instrumental: uploadExtendInstrumental,
@@ -994,20 +1167,86 @@ export default function GenerateMusic() {
               <CardDescription>Create a new version of existing audio</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Audio Source Selector */}
               <div className="space-y-2">
-                <Label htmlFor="coverUploadUrl">Audio URL</Label>
-                <Input
-                  id="coverUploadUrl"
-                  type="url"
-                  placeholder="https://example.com/audio.mp3"
-                  value={coverUploadUrl}
-                  onChange={(e) => setCoverUploadUrl(e.target.value)}
-                  data-testid="input-cover-url"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Provide a direct URL to the audio file you want to create a cover of
-                </p>
+                <Label>Audio Source</Label>
+                <Select value={coverAudioSource} onValueChange={(v: "url" | "upload" | "library") => setCoverAudioSource(v)}>
+                  <SelectTrigger data-testid="select-cover-audio-source">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="url">Enter URL</SelectItem>
+                    <SelectItem value="upload">Upload File</SelectItem>
+                    <SelectItem value="library">Choose from Library</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {/* Conditional Audio Input based on source */}
+              {coverAudioSource === "url" && (
+                <div className="space-y-2">
+                  <Label htmlFor="coverUploadUrl">Audio URL</Label>
+                  <Input
+                    id="coverUploadUrl"
+                    type="url"
+                    placeholder="https://example.com/audio.mp3"
+                    value={coverUploadUrl}
+                    onChange={(e) => setCoverUploadUrl(e.target.value)}
+                    data-testid="input-cover-url"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Provide a direct URL to the audio file
+                  </p>
+                </div>
+              )}
+
+              {coverAudioSource === "upload" && (
+                <div className="space-y-2">
+                  <Label htmlFor="coverUploadFile">Upload Audio File</Label>
+                  <Input
+                    id="coverUploadFile"
+                    type="file"
+                    accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                    onChange={handleCoverAudioUpload}
+                    disabled={coverUploading}
+                    data-testid="input-cover-upload"
+                  />
+                  {coverUploading && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Processing file...
+                    </p>
+                  )}
+                  {coverUploadedFile && !coverUploading && (
+                    <p className="text-xs text-green-500">✓ Audio file loaded and ready</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    MP3, WAV, M4A, AAC, OGG, FLAC (max 25MB)
+                  </p>
+                </div>
+              )}
+
+              {coverAudioSource === "library" && (
+                <div className="space-y-2">
+                  <Label htmlFor="coverLibrarySelect">Select from Your Library</Label>
+                  <Select value={coverSelectedLibraryId} onValueChange={setCoverSelectedLibraryId}>
+                    <SelectTrigger id="coverLibrarySelect" data-testid="select-cover-library">
+                      <SelectValue placeholder="Choose a song from your library..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {musicGenerations.length === 0 ? (
+                        <SelectItem value="none" disabled>No completed music generations</SelectItem>
+                      ) : (
+                        musicGenerations.map((gen) => (
+                          <SelectItem key={gen.id} value={gen.id}>
+                            {gen.prompt?.substring(0, 50) || "Untitled"} - {new Date(gen.createdAt).toLocaleDateString()}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Model */}
               <div className="space-y-2">
@@ -1183,20 +1422,86 @@ export default function GenerateMusic() {
               <CardDescription>Extend any audio file with AI</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Audio Source Selector */}
               <div className="space-y-2">
-                <Label htmlFor="extendUploadUrl">Audio URL</Label>
-                <Input
-                  id="extendUploadUrl"
-                  type="url"
-                  placeholder="https://example.com/audio.mp3"
-                  value={extendUploadUrl}
-                  onChange={(e) => setExtendUploadUrl(e.target.value)}
-                  data-testid="input-upload-extend-url"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Provide a direct URL to the audio file you want to extend
-                </p>
+                <Label>Audio Source</Label>
+                <Select value={extendAudioSource} onValueChange={(v: "url" | "upload" | "library") => setExtendAudioSource(v)}>
+                  <SelectTrigger data-testid="select-extend-audio-source">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="url">Enter URL</SelectItem>
+                    <SelectItem value="upload">Upload File</SelectItem>
+                    <SelectItem value="library">Choose from Library</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {/* Conditional Audio Input based on source */}
+              {extendAudioSource === "url" && (
+                <div className="space-y-2">
+                  <Label htmlFor="extendUploadUrl">Audio URL</Label>
+                  <Input
+                    id="extendUploadUrl"
+                    type="url"
+                    placeholder="https://example.com/audio.mp3"
+                    value={extendUploadUrl}
+                    onChange={(e) => setExtendUploadUrl(e.target.value)}
+                    data-testid="input-upload-extend-url"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Provide a direct URL to the audio file
+                  </p>
+                </div>
+              )}
+
+              {extendAudioSource === "upload" && (
+                <div className="space-y-2">
+                  <Label htmlFor="extendUploadFile">Upload Audio File</Label>
+                  <Input
+                    id="extendUploadFile"
+                    type="file"
+                    accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                    onChange={handleExtendAudioUpload}
+                    disabled={extendUploading}
+                    data-testid="input-extend-upload"
+                  />
+                  {extendUploading && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Processing file...
+                    </p>
+                  )}
+                  {extendUploadedFile && !extendUploading && (
+                    <p className="text-xs text-green-500">✓ Audio file loaded and ready</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    MP3, WAV, M4A, AAC, OGG, FLAC (max 25MB)
+                  </p>
+                </div>
+              )}
+
+              {extendAudioSource === "library" && (
+                <div className="space-y-2">
+                  <Label htmlFor="extendLibrarySelect">Select from Your Library</Label>
+                  <Select value={extendSelectedLibraryId} onValueChange={setExtendSelectedLibraryId}>
+                    <SelectTrigger id="extendLibrarySelect" data-testid="select-extend-library">
+                      <SelectValue placeholder="Choose a song from your library..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {musicGenerations.length === 0 ? (
+                        <SelectItem value="none" disabled>No completed music generations</SelectItem>
+                      ) : (
+                        musicGenerations.map((gen) => (
+                          <SelectItem key={gen.id} value={gen.id}>
+                            {gen.prompt?.substring(0, 50) || "Untitled"} - {new Date(gen.createdAt).toLocaleDateString()}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Model */}
               <div className="space-y-2">
