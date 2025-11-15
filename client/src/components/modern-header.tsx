@@ -81,9 +81,9 @@ export function ModernHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-        <div className="flex h-12 items-center justify-between">
+    <header className="sticky top-0 z-50 w-full h-12 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 h-full">
+        <div className="flex h-full items-center justify-between">
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center gap-1.5 cursor-pointer group">

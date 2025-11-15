@@ -1,12 +1,9 @@
-import { ModernHeader } from "@/components/modern-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 
 export default function Privacy() {
   return (
     <div className="min-h-screen bg-background">
-      <ModernHeader />
-      
       <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">

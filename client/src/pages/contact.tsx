@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ModernHeader } from "@/components/modern-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,8 +54,6 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-background">
-      <ModernHeader />
-      
       <div className="max-w-6xl mx-auto px-4 py-12 space-y-12">
         {/* Hero Section */}
         <div className="text-center space-y-4">
