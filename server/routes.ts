@@ -859,16 +859,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✓ Audio files hosted successfully:`, hostedAudioUrls);
 
         // Call Kie.ai voice cloning API
+        console.log(`Calling Kie.ai voice clone API with name: ${name}, files: ${hostedAudioUrls.length}`);
         const { result, keyName } = await cloneVoice({
           name,
           description,
           audioFiles: hostedAudioUrls,
         });
+        console.log(`Kie.ai voice clone response:`, JSON.stringify(result, null, 2));
 
         // Extract voice ID from result
         const voiceId = result?.data?.voiceId || result?.voiceId || result?.id;
         if (!voiceId) {
-          throw new Error('Voice cloning failed - no voice ID returned');
+          console.error('Voice cloning failed - no voice ID in result:', result);
+          throw new Error('Voice cloning failed - no voice ID returned from ElevenLabs. Please try again.');
         }
 
         // Save voice clone to database
@@ -887,16 +890,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Voice cloned successfully" 
         });
       } catch (error: any) {
+        // Log full error details for debugging
+        console.error('Voice cloning inner error:', {
+          message: error.message,
+          stack: error.stack,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+        
         // Refund credits atomically if voice cloning failed
         const currentUser = await storage.getUser(userId);
         if (currentUser) {
           await storage.updateUserCredits(userId, currentUser.credits + cost);
+          console.log(`Refunded ${cost} credits to user ${userId}`);
         }
         throw error;
       }
     } catch (error: any) {
-      console.error('Voice cloning error:', error);
-      res.status(500).json({ message: error.message || "Failed to clone voice" });
+      console.error('Voice cloning outer error:', error);
+      const errorMessage = error.message || error.response?.data?.message || error.response?.data?.error || "Voice cloning failed. Please check your audio files and try again.";
+      res.status(500).json({ message: errorMessage });
     }
   });
 

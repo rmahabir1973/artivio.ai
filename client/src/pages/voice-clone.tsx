@@ -54,6 +54,7 @@ export default function VoiceClone() {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<number | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -564,8 +565,8 @@ export default function VoiceClone() {
                   <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-2">
                     <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                     <div>
-                      <Input
-                        id="audio-files"
+                      <input
+                        ref={fileInputRef}
                         type="file"
                         accept="audio/*"
                         multiple
@@ -573,12 +574,15 @@ export default function VoiceClone() {
                         className="hidden"
                         data-testid="input-audio-files"
                       />
-                      <Label
-                        htmlFor="audio-files"
-                        className="cursor-pointer text-primary hover-elevate"
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        data-testid="button-upload-files"
                       >
-                        {uploading ? "Uploading..." : "Click to upload audio files"}
-                      </Label>
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploading ? "Uploading..." : "Upload Files"}
+                      </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       MP3, WAV, M4A (max 10MB each, 1-3 files, 60+ seconds total recommended)
