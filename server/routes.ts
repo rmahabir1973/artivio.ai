@@ -1914,6 +1914,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe Billing Routes
+
+  // Get all subscription plans (public route for billing page)
+  app.get('/api/plans', async (req, res) => {
+    try {
+      const plans = await storage.getAllPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      res.status(500).json({ message: "Failed to fetch plans" });
+    }
+  });
+
+  // Get current user's subscription
+  app.get('/api/subscriptions/current', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const subscription = await storage.getUserSubscription(userId);
+      
+      if (!subscription) {
+        return res.json(null);
+      }
+      
+      res.json(subscription);
+    } catch (error) {
+      console.error('Error fetching user subscription:', error);
+      res.status(500).json({ message: "Failed to fetch subscription" });
+    }
+  });
   
   // Stripe Webhook Handler - MUST use express.raw() for signature verification
   app.post('/api/webhooks/stripe', 
