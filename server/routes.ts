@@ -1111,12 +1111,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { prompt, audioUrl, model, parameters } = validationResult.data;
+      let { prompt, audioUrl, model, parameters } = validationResult.data;
       const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
 
       const user = await storage.deductCreditsAtomic(userId, cost);
       if (!user) {
         return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Convert base64 audio to hosted URL if needed
+      if (audioUrl.startsWith('data:audio/')) {
+        console.log('Converting base64 audio to hosted URL for cover...');
+        audioUrl = await saveBase64Audio(audioUrl);
+        console.log(`✓ Audio hosted at: ${audioUrl}`);
       }
 
       const generation = await storage.createGeneration({
@@ -1151,12 +1158,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { prompt, audioUrl, model, parameters } = validationResult.data;
+      let { prompt, audioUrl, model, parameters } = validationResult.data;
       const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
 
       const user = await storage.deductCreditsAtomic(userId, cost);
       if (!user) {
         return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Convert base64 audio to hosted URL if needed
+      if (audioUrl.startsWith('data:audio/')) {
+        console.log('Converting base64 audio to hosted URL for extend...');
+        audioUrl = await saveBase64Audio(audioUrl);
+        console.log(`✓ Audio hosted at: ${audioUrl}`);
       }
 
       const generation = await storage.createGeneration({

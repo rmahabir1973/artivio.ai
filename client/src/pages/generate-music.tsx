@@ -132,10 +132,10 @@ export default function GenerateMusic() {
       return;
     }
 
-    if (file.size > 25 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File Too Large",
-        description: "Maximum audio size is 25MB.",
+        description: "Maximum audio size is 10MB.",
         variant: "destructive",
       });
       return;
@@ -180,10 +180,10 @@ export default function GenerateMusic() {
       return;
     }
 
-    if (file.size > 25 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "File Too Large",
-        description: "Maximum audio size is 25MB.",
+        description: "Maximum audio size is 10MB.",
         variant: "destructive",
       });
       return;
@@ -475,9 +475,10 @@ export default function GenerateMusic() {
       }
       const selectedGen = musicGenerations.find(g => g.id === coverSelectedLibraryId);
       if (!selectedGen?.outputUrl) {
+        setCoverSelectedLibraryId(""); // Reset invalid selection
         toast({
-          title: "Error",
-          description: "Selected song has no audio URL.",
+          title: "Invalid Selection",
+          description: "Selected song has no audio URL. Please choose another.",
           variant: "destructive",
         });
         return;
@@ -540,9 +541,10 @@ export default function GenerateMusic() {
       }
       const selectedGen = musicGenerations.find(g => g.id === extendSelectedLibraryId);
       if (!selectedGen?.outputUrl) {
+        setExtendSelectedLibraryId(""); // Reset invalid selection
         toast({
-          title: "Error",
-          description: "Selected song has no audio URL.",
+          title: "Invalid Selection",
+          description: "Selected song has no audio URL. Please choose another.",
           variant: "destructive",
         });
         return;
@@ -1221,7 +1223,7 @@ export default function GenerateMusic() {
                     <p className="text-xs text-green-500">✓ Audio file loaded and ready</p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    MP3, WAV, M4A, AAC, OGG, FLAC (max 25MB)
+                    MP3, WAV, M4A, AAC, OGG, FLAC (max 10MB)
                   </p>
                 </div>
               )}
@@ -1476,7 +1478,7 @@ export default function GenerateMusic() {
                     <p className="text-xs text-green-500">✓ Audio file loaded and ready</p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    MP3, WAV, M4A, AAC, OGG, FLAC (max 25MB)
+                    MP3, WAV, M4A, AAC, OGG, FLAC (max 10MB)
                   </p>
                 </div>
               )}
