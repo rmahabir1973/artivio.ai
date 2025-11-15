@@ -3,14 +3,10 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { CreditDisplay } from "@/components/credit-display";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ModernHeader } from "@/components/modern-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -85,46 +81,27 @@ function Router() {
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Custom sidebar width
-  const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "3rem",
-  };
 
-  if (isLoading || !isAuthenticated) {
-    return <Router />;
-  }
-
-  return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between gap-4 p-4 border-b bg-background sticky top-0 z-10">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <div className="flex items-center gap-4">
-              <CreditDisplay />
-              <ThemeToggle />
-              <Button
-                variant="outline"
-                asChild
-                data-testid="button-logout"
-              >
-                <a href="/api/logout">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </a>
-              </Button>
-            </div>
-          </header>
-          <AnnouncementBar />
-          <main className="flex-1 overflow-y-auto">
-            <Router />
-          </main>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
-    </SidebarProvider>
+    );
+  }
+
+  // Show header and announcement for all users (authenticated and unauthenticated)
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      <ModernHeader />
+      {isAuthenticated && <AnnouncementBar />}
+      <main className="flex-1 overflow-y-auto">
+        <Router />
+      </main>
+    </div>
   );
 }
 
