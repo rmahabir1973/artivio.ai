@@ -3,7 +3,8 @@ import { storage } from "./storage";
 
 const KIE_API_BASE = "https://api.kie.ai";
 
-// Centralized Suno response parser to handle various API response formats
+// Centralized Suno response parser to handle ALL API response formats
+// Covers v3, v4, v4.5, callbacks, and all documented Suno payload variations
 export function parseSunoResponse(response: any): {
   taskId: string | null;
   audioUrl: string | null;
@@ -11,37 +12,91 @@ export function parseSunoResponse(response: any): {
   errorMessage: string | null;
 } {
   // Parse task ID from various formats
+  // Covers: data.task.taskId, data.tasks[0].taskId, data.taskId, data.task_id, taskId, task_id
   const taskId = response?.data?.task?.taskId ||
                 response?.data?.tasks?.[0]?.taskId ||
                 response?.data?.taskId ||
                 response?.data?.task_id || // v3 format
                 response?.data?.jobId ||
+                response?.response?.tasks?.[0]?.taskId || // Direct response.response
+                response?.response?.taskId ||
+                response?.tasks?.[0]?.taskId || // Direct response.tasks
                 response?.taskId ||
                 response?.task_id ||
                 null;
   
-  // Parse audio URL from various Suno payload formats
+  // Parse audio URL from ALL known Suno payload formats
+  // Priority order: nested response structures -> direct data fields -> top-level fields
+  // Include streamAudioUrl, metadata.audio, and all documented variations
   const audioUrl = response?.data?.response?.sunoData?.[0]?.audioUrl ||
                   response?.data?.response?.sunoData?.[0]?.streamAudioUrl ||
                   response?.data?.response?.tracks?.[0]?.audioUrl ||
+                  response?.data?.response?.tracks?.[0]?.streamAudioUrl ||
+                  response?.data?.response?.tracks?.[0]?.metadata?.audioUrl ||
                   response?.data?.response?.audio?.[0]?.url ||
+                  response?.data?.response?.audio?.[0]?.audioUrl ||
+                  response?.response?.sunoData?.[0]?.audioUrl || // Direct response.response
+                  response?.response?.sunoData?.[0]?.streamAudioUrl ||
+                  response?.response?.tracks?.[0]?.audioUrl ||
+                  response?.response?.tracks?.[0]?.streamAudioUrl ||
+                  response?.response?.tracks?.[0]?.metadata?.audioUrl ||
+                  response?.response?.audio?.[0]?.url ||
+                  response?.response?.audio?.[0]?.audioUrl ||
+                  response?.data?.streamAudioUrl ||
                   response?.data?.audio_url ||
                   response?.data?.audioUrl ||
+                  response?.data?.url ||
+                  response?.tasks?.[0]?.audioUrl || // Direct response.tasks
+                  response?.tasks?.[0]?.streamAudioUrl ||
+                  response?.tasks?.[0]?.metadata?.audioUrl ||
+                  response?.tasks?.[0]?.url ||
+                  response?.streamAudioUrl ||
                   response?.audioUrl ||
+                  response?.audio_url ||
                   response?.url ||
                   null;
   
-  // Parse status from nested structures
-  const status = response?.data?.task?.status ||
-                response?.data?.status ||
-                response?.status ||
-                null;
+  // Parse status from all nested structures
+  // Normalize success aliases: success, SUCCESS, complete, COMPLETE -> 'success'
+  // Keep processing states: pending, queued, processing, working as-is
+  const rawStatus = response?.data?.task?.status ||
+                   response?.data?.tasks?.[0]?.status ||
+                   response?.data?.response?.status ||  // Also check data.response.status
+                   response?.data?.status ||
+                   response?.response?.tasks?.[0]?.status || // Direct response.response
+                   response?.response?.status ||
+                   response?.tasks?.[0]?.status || // Direct response.tasks
+                   response?.status ||
+                   null;
   
-  // Parse error messages
+  // Normalize status values while preserving transitional states
+  let status = rawStatus;
+  if (rawStatus) {
+    const lower = rawStatus.toLowerCase();
+    if (lower === 'complete' || lower === 'success') {
+      status = 'success';
+    } else if (lower === 'error' || lower === 'failed') {
+      status = 'failed';
+    } else if (lower === 'pending' || lower === 'queued' || lower === 'processing' || lower === 'working') {
+      status = lower; // Keep as-is for intermediate states
+    }
+  }
+  
+  // Parse error messages and error codes from all possible locations
   const errorMessage = response?.error ||
                       response?.errorMessage ||
                       response?.data?.error ||
                       response?.data?.errorMessage ||
+                      response?.data?.task?.error ||
+                      response?.data?.task?.errorMessage ||
+                      response?.data?.tasks?.[0]?.error ||
+                      response?.data?.tasks?.[0]?.errorMessage ||
+                      response?.data?.response?.error ||
+                      response?.data?.response?.errorMessage ||
+                      response?.response?.error ||
+                      response?.response?.errorMessage ||
+                      response?.tasks?.[0]?.error ||
+                      response?.tasks?.[0]?.errorMessage ||
                       response?.message ||
                       null;
   

@@ -413,47 +413,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const kieStatus = (sunoStatus || callbackData.status)?.toLowerCase();
       const hasError = sunoError || callbackData.error || callbackData.errorMessage || callbackData.data?.error;
       
-      // Identify intermediate callbacks that should be ignored
+      // Identify intermediate callbacks - update statusDetail but don't finalize yet
       const isProcessing = kieStatus === 'processing' || 
                           kieStatus === 'pending' || 
-                          kieStatus === 'queued';
+                          kieStatus === 'queued' ||
+                          kieStatus === 'working';
       
-      // Only ignore intermediate callbacks that have no error and no result
-      // If there's an error or a resultUrl, we need to process it
+      // For intermediate callbacks, update statusDetail and acknowledge
+      // Don't exit early - Suno sends these before final success
       if (isProcessing && !hasError && !resultUrl) {
-        console.log(`⏸️  Ignoring intermediate callback for ${generationId} (status: ${kieStatus})`);
-        return res.json({ success: true, message: 'Intermediate callback ignored' });
+        // Soft update: persist status detail without finalizing
+        await storage.updateGeneration(generationId, {
+          statusDetail: kieStatus,
+        });
+        console.log(`⏸️  Intermediate callback for ${generationId} (status: ${kieStatus}) - stored statusDetail`);
+        return res.json({ success: true, message: 'Intermediate status updated' });
       }
       
       // Determine final status
-      let finalStatus: 'completed' | 'failed';
-      if (kieStatus === 'failed' || kieStatus === 'error') {
+      // Note: parseSunoResponse normalizes "complete" -> "success"
+      let finalStatus: 'completed' | 'failed' | null = null;
+      
+      if (hasError || kieStatus === 'failed' || kieStatus === 'error') {
         finalStatus = 'failed';
-      } else if (resultUrl || kieStatus === 'completed' || kieStatus === 'success') {
+      } else if (kieStatus === 'success' || kieStatus === 'completed' || kieStatus === 'complete') {
+        // Success status even without audio URL yet (might be in different payload format)
         finalStatus = 'completed';
-      } else {
-        // Only mark as failed if explicitly indicated
-        finalStatus = 'failed';
+      } else if (resultUrl) {
+        // Has result URL, treat as success
+        finalStatus = 'completed';
       }
       
-      if (finalStatus === 'completed' && resultUrl) {
-        await storage.finalizeGeneration(generationId, 'success', {
-          resultUrl,
-        });
-        console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+      // If we couldn't determine status, don't process this callback
+      if (finalStatus === null) {
+        console.warn(`⚠️  Callback for ${generationId} has unclear status (${kieStatus}), ignoring`);
+        return res.json({ success: true, message: 'Unclear callback status' });
+      }
+      
+      if (finalStatus === 'completed') {
+        if (resultUrl) {
+          await storage.finalizeGeneration(generationId, 'success', {
+            resultUrl,
+          });
+          console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+        } else {
+          // Success status but no audio URL - likely payload format we don't recognize yet
+          // Log extensively for debugging but don't fail the generation
+          console.warn(`⚠️  Generation ${generationId} marked complete but no audio URL found in callback`);
+          console.warn(`Full callback data:`, JSON.stringify(callbackData, null, 2));
+          return res.json({ success: true, message: 'Completion acknowledged but no media URL' });
+        }
       } else if (finalStatus === 'failed') {
         const errorMessage = hasError || 
                            callbackData.message || 
                            callbackData.data?.message ||
-                           'Generation failed - no result URL provided';
+                           'Generation failed - error indicated by provider';
         await storage.finalizeGeneration(generationId, 'failure', {
           errorMessage,
         });
         console.log(`✗ Generation ${generationId} failed: ${errorMessage}`);
-      } else {
-        // Callback indicates completion but no resultUrl - log warning but don't fail
-        console.warn(`⚠️  Callback for ${generationId} indicates completion but no resultUrl found. Ignoring.`);
-        return res.json({ success: true, message: 'Incomplete callback data' });
       }
       
       res.json({ success: true });
