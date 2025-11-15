@@ -602,6 +602,24 @@ export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 
+// Stripe Events table (for webhook idempotency)
+export const stripeEvents = pgTable("stripe_events", {
+  eventId: varchar("event_id").primaryKey(), // Stripe event ID (e.g., evt_xxxxx)
+  eventType: varchar("event_type").notNull(), // e.g., 'checkout.session.completed', 'invoice.paid'
+  objectId: varchar("object_id"), // Invoice ID, Subscription ID, etc for debugging
+  processed: boolean("processed").notNull().default(true), // True if successfully processed, false if partial failure
+  processedAt: timestamp("processed_at").defaultNow().notNull(),
+  metadata: jsonb("metadata"), // Trimmed event metadata for debugging
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertStripeEventSchema = createInsertSchema(stripeEvents).omit({
+  createdAt: true,
+});
+
+export type InsertStripeEvent = z.infer<typeof insertStripeEventSchema>;
+export type StripeEvent = typeof stripeEvents.$inferSelect;
+
 // Announcements table
 export const announcements = pgTable("announcements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

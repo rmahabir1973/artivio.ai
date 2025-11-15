@@ -91,8 +91,15 @@ export async function createCustomerPortalSession(params: {
   return session;
 }
 
-export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId: string) {
   console.log('[Stripe Webhook] Processing checkout.session.completed', session.id);
+
+  // Check if event already processed (idempotency)
+  const existingEvent = await storage.getStripeEventById(eventId);
+  if (existingEvent) {
+    console.log(`[Stripe Webhook] Event ${eventId} already processed, skipping`);
+    return;
+  }
 
   const userId = session.metadata?.userId;
   const planId = session.metadata?.planId;
@@ -112,29 +119,58 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-  await storage.upsertUserSubscription({
-    userId,
-    planId,
-    stripeSubscriptionId: subscriptionId,
-    stripeCustomerId: customerId,
-    status: 'active',
-    currentPeriodStart: new Date((subscription.current_period_start as any) * 1000),
-    currentPeriodEnd: new Date((subscription.current_period_end as any) * 1000),
-    cancelAtPeriodEnd: false,
-    creditsGrantedThisPeriod: plan.creditsPerMonth,
+  // Check existing subscription to prevent duplicate credit grants
+  const existingSubscription = await storage.getUserSubscription(userId);
+  const shouldGrantCredits = !existingSubscription || existingSubscription.creditsGrantedThisPeriod < plan.creditsPerMonth;
+
+  if (shouldGrantCredits) {
+    await storage.upsertUserSubscription({
+      userId,
+      planId,
+      stripeSubscriptionId: subscriptionId,
+      stripeCustomerId: customerId,
+      status: 'active',
+      currentPeriodStart: new Date((subscription.current_period_start as any) * 1000),
+      currentPeriodEnd: new Date((subscription.current_period_end as any) * 1000),
+      cancelAtPeriodEnd: false,
+      creditsGrantedThisPeriod: plan.creditsPerMonth,
+    });
+
+    await storage.addCreditsAtomic(userId, plan.creditsPerMonth);
+
+    console.log(`[Stripe Webhook] Granted ${plan.creditsPerMonth} credits to user ${userId}`);
+  } else {
+    console.log(`[Stripe Webhook] Credits already granted this period for user ${userId}`);
+  }
+
+  // Mark event as processed
+  await storage.createStripeEvent({
+    eventId,
+    eventType: 'checkout.session.completed',
+    processed: true,
+    createdAt: new Date(),
   });
-
-  await storage.addCreditsAtomic(userId, plan.creditsPerMonth);
-
-  console.log(`[Stripe Webhook] Granted ${plan.creditsPerMonth} credits to user ${userId}`);
 }
 
-export async function handleInvoicePaid(invoice: Stripe.Invoice) {
+export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string) {
   console.log('[Stripe Webhook] Processing invoice.paid', invoice.id);
+
+  // Check if event already processed (idempotency)
+  const existingEvent = await storage.getStripeEventById(eventId);
+  if (existingEvent) {
+    console.log(`[Stripe Webhook] Event ${eventId} already processed, skipping`);
+    return;
+  }
 
   const subscriptionId = (invoice as any).subscription as string;
   if (!subscriptionId) {
     console.log('[Stripe Webhook] Invoice not for subscription, skipping');
+    await storage.createStripeEvent({
+      eventId,
+      eventType: 'invoice.paid',
+      processed: true,
+      createdAt: new Date(),
+    });
     return;
   }
 
@@ -158,21 +194,28 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const isRenewal = invoice.billing_reason === 'subscription_cycle';
   
   if (isRenewal) {
-    await storage.upsertUserSubscription({
-      userId,
-      planId,
-      stripeSubscriptionId: subscriptionId,
-      stripeCustomerId: subscription.customer as string,
-      status: 'active',
-      currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-      currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-      cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
-      creditsGrantedThisPeriod: plan.creditsPerMonth,
-    });
+    // Only grant credits if not already granted this period
+    const shouldGrantCredits = !existingSubscription || existingSubscription.creditsGrantedThisPeriod < plan.creditsPerMonth;
 
-    await storage.addCreditsAtomic(userId, plan.creditsPerMonth);
+    if (shouldGrantCredits) {
+      await storage.upsertUserSubscription({
+        userId,
+        planId,
+        stripeSubscriptionId: subscriptionId,
+        stripeCustomerId: subscription.customer as string,
+        status: 'active',
+        currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+        cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+        creditsGrantedThisPeriod: plan.creditsPerMonth,
+      });
 
-    console.log(`[Stripe Webhook] Renewal: Granted ${plan.creditsPerMonth} credits to user ${userId}`);
+      await storage.addCreditsAtomic(userId, plan.creditsPerMonth);
+
+      console.log(`[Stripe Webhook] Renewal: Granted ${plan.creditsPerMonth} credits to user ${userId}`);
+    } else {
+      console.log(`[Stripe Webhook] Credits already granted this period for user ${userId}`);
+    }
   } else {
     await storage.upsertUserSubscription({
       userId,
@@ -188,6 +231,14 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice) {
     
     console.log(`[Stripe Webhook] Invoice paid (non-renewal)`);
   }
+
+  // Mark event as processed
+  await storage.createStripeEvent({
+    eventId,
+    eventType: 'invoice.paid',
+    processed: true,
+    createdAt: new Date(),
+  });
 }
 
 export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {

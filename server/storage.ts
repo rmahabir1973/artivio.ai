@@ -15,6 +15,7 @@ import {
   videoCombinationEvents,
   subscriptionPlans,
   userSubscriptions,
+  stripeEvents,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -47,6 +48,8 @@ import {
   type SubscriptionPlan,
   type UserSubscription,
   type InsertUserSubscription,
+  type StripeEvent,
+  type InsertStripeEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -148,6 +151,10 @@ export interface IStorage {
   upsertUserSubscription(data: InsertUserSubscription): Promise<UserSubscription>;
   removeUserSubscription(userId: string): Promise<void>;
   assignPlanToUser(userId: string, planId: string): Promise<{ subscription: UserSubscription; creditsGranted: number }>;
+  
+  // Stripe Event operations (for webhook idempotency)
+  getStripeEventById(eventId: string): Promise<StripeEvent | undefined>;
+  createStripeEvent(event: InsertStripeEvent): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -863,6 +870,24 @@ export class DatabaseStorage implements IStorage {
 
       return { subscription, creditsGranted: creditAdjustment };
     });
+  }
+
+  // Stripe Event operations (for webhook idempotency)
+  async getStripeEventById(eventId: string): Promise<StripeEvent | undefined> {
+    const [event] = await db.select().from(stripeEvents).where(eq(stripeEvents.eventId, eventId));
+    return event;
+  }
+
+  async createStripeEvent(event: InsertStripeEvent): Promise<void> {
+    try {
+      await db.insert(stripeEvents).values(event);
+    } catch (error: any) {
+      // Ignore unique constraint violations (duplicate events are expected during retries)
+      if (!error.message?.includes('unique constraint') && !error.code?.includes('23505')) {
+        throw error;
+      }
+      console.log(`[Storage] Stripe event ${event.eventId} already exists (expected for idempotency)`);
+    }
   }
 }
 

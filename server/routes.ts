@@ -1933,10 +1933,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Handle the event
         switch (event.type) {
           case 'checkout.session.completed':
-            await handleCheckoutCompleted(event.data.object as any);
+            await handleCheckoutCompleted(event.data.object as any, event.id);
             break;
           case 'invoice.paid':
-            await handleInvoicePaid(event.data.object as any);
+            await handleInvoicePaid(event.data.object as any, event.id);
             break;
           case 'invoice.payment_failed':
             await handleInvoicePaymentFailed(event.data.object as any);
