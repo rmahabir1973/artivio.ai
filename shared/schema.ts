@@ -316,6 +316,15 @@ const base64ImageSchema = z.string().refine(
   }
 );
 
+// Flexible image schema that accepts both base64 data URIs and HTTP/HTTPS URLs
+const imageInputSchema = z.union([
+  base64ImageSchema,
+  z.string().url().refine(
+    (url) => url.startsWith('http://') || url.startsWith('https://'),
+    { message: "Image URLs must use HTTP or HTTPS protocol" }
+  )
+]);
+
 // Request validation schemas for generation endpoints
 export const generateVideoRequestSchema = z.object({
   model: z.enum([
@@ -327,7 +336,7 @@ export const generateVideoRequestSchema = z.object({
   ]),
   prompt: z.string().min(1).max(2000),
   generationType: z.enum(['text-to-video', 'image-to-video']).optional(),
-  referenceImages: z.array(base64ImageSchema).max(3).optional(), // Up to 3 base64 images for Veo
+  referenceImages: z.array(imageInputSchema).max(3).optional(), // Up to 3 images (base64 or HTTPS URL)
   veoSubtype: z.enum(['TEXT_2_VIDEO', 'REFERENCE_2_VIDEO', 'FIRST_AND_LAST_FRAMES_2_VIDEO']).optional(), // Explicit Veo generation subtype
   parameters: z.object({
     duration: z.number().optional(), // Duration in seconds (5, 10 for Runway)
@@ -340,7 +349,7 @@ export const generateImageRequestSchema = z.object({
   model: z.enum(['4o-image', 'flux-kontext', 'nano-banana']),
   prompt: z.string().min(1).max(2000),
   mode: z.enum(['text-to-image', 'image-editing']).default('text-to-image'),
-  referenceImages: z.array(base64ImageSchema).max(10).optional(), // Max 10 images, each validated
+  referenceImages: z.array(imageInputSchema).max(10).optional(), // Max 10 images (base64 or HTTPS URL)
   parameters: z.object({
     aspectRatio: z.string().optional(),
     style: z.string().optional(),

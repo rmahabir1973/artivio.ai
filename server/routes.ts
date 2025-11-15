@@ -15,7 +15,7 @@ import {
   initializeApiKeys 
 } from "./kieai";
 import { analyzeImageWithVision } from "./openaiVision";
-import { saveBase64Images } from "./imageHosting";
+import { processImageInputs, saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
 import { combineVideos } from "./videoProcessor";
@@ -100,12 +100,12 @@ async function generateVideoInBackground(
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
-    // Convert base64 images to hosted URLs
+    // Process reference images (convert base64 data URIs to hosted URLs, pass through existing URLs)
     let hostedImageUrls: string[] | undefined;
     if (referenceImages && referenceImages.length > 0) {
-      console.log(`Converting ${referenceImages.length} base64 images to hosted URLs...`);
-      hostedImageUrls = await saveBase64Images(referenceImages);
-      console.log(`✓ Images hosted successfully:`, hostedImageUrls);
+      console.log(`Processing ${referenceImages.length} reference images (data URIs and/or URLs)...`);
+      hostedImageUrls = await processImageInputs(referenceImages);
+      console.log(`✓ Images processed successfully:`, hostedImageUrls);
     }
     
     const callbackUrl = getCallbackUrl(generationId);
@@ -167,11 +167,11 @@ async function generateImageInBackground(
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
-    // Convert base64 images to hosted URLs for editing mode
+    // Process reference images (convert base64 data URIs to hosted URLs, pass through existing URLs)
     if (mode === 'image-editing' && referenceImages && referenceImages.length > 0) {
-      console.log(`Converting ${referenceImages.length} base64 images to hosted URLs for editing...`);
-      hostedImageUrls = await saveBase64Images(referenceImages);
-      console.log(`✓ Images hosted successfully:`, hostedImageUrls);
+      console.log(`Processing ${referenceImages.length} reference images for editing (data URIs and/or URLs)...`);
+      hostedImageUrls = await processImageInputs(referenceImages);
+      console.log(`✓ Images processed successfully:`, hostedImageUrls);
     }
     
     const callbackUrl = getCallbackUrl(generationId);

@@ -95,6 +95,52 @@ export async function saveBase64Images(base64Images: string[]): Promise<string[]
 }
 
 /**
+ * Process array of images that can be either base64 data URIs or HTTP/HTTPS URLs
+ * Converts data URIs to hosted URLs, passes through URLs unchanged
+ * Preserves original array order
+ */
+export async function processImageInputs(images: string[]): Promise<string[]> {
+  const results: string[] = [];
+  const dataUrisToConvert: string[] = [];
+  const dataUriIndices: number[] = [];
+  
+  console.log(`[processImageInputs] Processing ${images.length} image inputs...`);
+  
+  // Separate data URIs from URLs
+  for (let i = 0; i < images.length; i++) {
+    const img = images[i];
+    const preview = img.substring(0, 50) + (img.length > 50 ? '...' : '');
+    
+    if (img.startsWith('data:image/')) {
+      console.log(`  [${i}] Data URI detected (will convert to hosted URL): ${preview}`);
+      dataUrisToConvert.push(img);
+      dataUriIndices.push(i);
+      results.push(''); // Placeholder, will be filled later
+    } else if (img.startsWith('https://') || img.startsWith('http://')) {
+      console.log(`  [${i}] URL detected (passing through): ${preview}`);
+      results.push(img); // Pass through URLs unchanged
+    } else {
+      console.error(`  [${i}] REJECTED - Invalid image input format: ${preview}`);
+      throw new Error(`Invalid image input at index ${i}: must be data URI (data:image/...) or HTTP/HTTPS URL. Got: ${preview}`);
+    }
+  }
+  
+  // Convert all data URIs to hosted URLs
+  if (dataUrisToConvert.length > 0) {
+    console.log(`[processImageInputs] Converting ${dataUrisToConvert.length} data URIs to hosted URLs...`);
+    const hostedUrls = await saveBase64Images(dataUrisToConvert);
+    // Fill in placeholders with converted URLs
+    for (let i = 0; i < dataUriIndices.length; i++) {
+      results[dataUriIndices[i]] = hostedUrls[i];
+      console.log(`  [${dataUriIndices[i]}] Converted to: ${hostedUrls[i]}`);
+    }
+  }
+  
+  console.log(`[processImageInputs] Successfully processed all ${images.length} images`);
+  return results;
+}
+
+/**
  * Clean up old uploaded files (optional - can be called periodically)
  * Removes files older than maxAgeMs
  */
