@@ -22,6 +22,13 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **Credit System**: Transparent credit tracking for all AI generation types, displaying costs per action.
 -   **Streaming Chat**: AI chat uses Server-Sent Events (SSE) for real-time, streaming responses from Deepseek and OpenAI models.
 -   **Admin Authentication**: Hardcoded email whitelist in `server/routes.ts` for admin access, bypassing database state for `isAdmin` flag.
+-   **Stripe Webhook Idempotency**: Production-grade transaction-based deduplication system prevents duplicate credit grants:
+    -   All webhook handlers (`handleCheckoutCompleted`, `handleInvoicePaid`) wrapped in database transactions
+    -   Event records inserted FIRST with `onConflictDoNothing().returning()` - empty result indicates duplicate
+    -   Atomic operations: event insertion, subscription updates, and credit grants all succeed or fail together
+    -   Billing period change detection: automatically resets `creditsGrantedThisPeriod` when `current_period_start` changes
+    -   Guarantees exactly-once credit delivery even with concurrent webhook retries or network failures
+    -   External Stripe API calls made BEFORE transaction to avoid network timeouts within atomic block
 
 ### Feature Specifications
 -   **AI Video Generation**: Supports Veo 3.1 (standard and fast) and Runway Aleph, with image-to-video capabilities (up to 3 reference images).
