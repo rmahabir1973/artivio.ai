@@ -1,45 +1,11 @@
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
+import { getBaseUrl } from './urlUtils';
 
 const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads', 'audio');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB max per audio file
 const ALLOWED_MIME_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
-
-// Helper to get normalized base URL with scheme validation
-function getBaseUrl(): string {
-  let baseUrl = '';
-  
-  // Priority: PRODUCTION_URL > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN > localhost
-  if (process.env.PRODUCTION_URL) {
-    baseUrl = process.env.PRODUCTION_URL.trim();
-    // Ensure PRODUCTION_URL has scheme
-    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-  } else if (process.env.REPLIT_DOMAINS) {
-    // Try each domain in comma-separated list until we find a valid one
-    const domains = process.env.REPLIT_DOMAINS.split(',');
-    for (const domain of domains) {
-      const trimmed = domain.trim();
-      if (trimmed) {
-        baseUrl = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
-        break;
-      }
-    }
-  }
-  
-  if (!baseUrl && process.env.REPLIT_DEV_DOMAIN) {
-    baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  }
-  
-  if (!baseUrl) {
-    baseUrl = 'http://localhost:5000';
-  }
-  
-  // Normalize: remove trailing slash to prevent double slashes
-  return baseUrl.replace(/\/+$/, '');
-}
 
 // Ensure uploads directory exists
 async function ensureUploadsDir() {

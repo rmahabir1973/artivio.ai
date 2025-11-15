@@ -17,6 +17,14 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **Database**: PostgreSQL (Neon) with Drizzle ORM for type-safe interactions.
 -   **Authentication**: Replit Auth (OpenID Connect).
 -   **Asynchronous Operations**: Kie.ai integrations use a webhook-based callback system for real-time status updates of generation tasks.
+-   **Centralized URL Management**: Production-safe URL generation via `server/urlUtils.ts` prevents dev domain leakage:
+    -   Priority chain: PRODUCTION_URL > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN > localhost
+    -   Automatic scheme normalization (adds https:// if missing)
+    -   URL validation with graceful fallbacks
+    -   Iterates through all REPLIT_DOMAINS entries for resilience
+    -   Single source of truth for webhook callbacks, image/audio URLs, and Stripe redirects
+    -   Ensures Kie.ai webhooks reach production domain (artivio.ai) instead of transient dev URLs
+-   **Automatic Credit Refund System**: Failed generations automatically refund credits using idempotent transaction-based `finalizeGeneration()` method with SELECT FOR UPDATE locking to prevent double-refunds from concurrent webhook retries.
 -   **Image Hosting System**: Temporary system for processing user-uploaded images, converting base64 to public URLs, with validation and automatic cleanup.
 -   **Round-Robin API Key Management**: Supports up to 20 Kie.ai API keys with a round-robin rotation for load balancing and resilience.
 -   **Credit System**: Transparent credit tracking for all AI generation types, displaying costs per action.

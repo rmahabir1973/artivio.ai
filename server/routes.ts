@@ -43,6 +43,7 @@ import {
   combineVideosRequestSchema,
   type InsertSubscriptionPlan
 } from "@shared/schema";
+import { getBaseUrl } from "./urlUtils";
 
 // Helper to get pricing from database by model name
 async function getModelCost(model: string): Promise<number> {
@@ -79,42 +80,7 @@ async function getModelCost(model: string): Promise<number> {
   return defaultCosts[model] || 100;
 }
 
-// Helper to get normalized base URL with scheme validation
-function getBaseUrl(): string {
-  let baseUrl = '';
-  
-  // Priority: PRODUCTION_URL > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN > localhost
-  if (process.env.PRODUCTION_URL) {
-    baseUrl = process.env.PRODUCTION_URL.trim();
-    // Ensure PRODUCTION_URL has scheme
-    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-  } else if (process.env.REPLIT_DOMAINS) {
-    // Try each domain in comma-separated list until we find a valid one
-    const domains = process.env.REPLIT_DOMAINS.split(',');
-    for (const domain of domains) {
-      const trimmed = domain.trim();
-      if (trimmed) {
-        baseUrl = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
-        break;
-      }
-    }
-  }
-  
-  if (!baseUrl && process.env.REPLIT_DEV_DOMAIN) {
-    baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  }
-  
-  if (!baseUrl) {
-    baseUrl = 'http://localhost:5000';
-  }
-  
-  // Normalize: remove trailing slash to prevent double slashes
-  return baseUrl.replace(/\/+$/, '');
-}
-
-// Helper to get callback URL with normalization
+// Helper to get callback URL using centralized base URL logic
 function getCallbackUrl(generationId: string): string {
   const baseUrl = getBaseUrl();
   return `${baseUrl}/api/callback/kie/${generationId}`;
