@@ -1,0 +1,34 @@
+Failed to load resource: the server responded with a status of 500 ()Understand this error
+api/generations:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+api/admin/analytics:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+api/voice-clone:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id separator https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password https://replit.com/@ryanmahabir/Artivio-AI-20Understand this error
+index-BBtUgW6Q.js:48 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-BBtUgW6Q.js:48
+a @ index-BBtUgW6Q.js:48
+j @ index-BBtUgW6Q.js:48
+start @ index-BBtUgW6Q.js:48
+fetch @ index-BBtUgW6Q.js:48
+wa @ index-BBtUgW6Q.js:48
+fetch @ index-BBtUgW6Q.js:48
+refetch @ index-BBtUgW6Q.js:48
+onFocus @ index-BBtUgW6Q.js:48
+(anonymous) @ index-BBtUgW6Q.js:48
+(anonymous) @ index-BBtUgW6Q.js:48
+batch @ index-BBtUgW6Q.js:48
+onFocus @ index-BBtUgW6Q.js:48
+(anonymous) @ index-BBtUgW6Q.js:48
+await in (anonymous)
+(anonymous) @ index-BBtUgW6Q.js:48
+onFocus @ index-BBtUgW6Q.js:48
+(anonymous) @ index-BBtUgW6Q.js:48
+n @ index-BBtUgW6Q.js:48
+index-BBtUgW6Q.js:48 Fetch finished loading: GET "
