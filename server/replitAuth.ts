@@ -99,15 +99,39 @@ export async function setupAuth(app: Express) {
     }
   };
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  passport.serializeUser((user: Express.User, cb) => {
+    console.log('[AUTH DEBUG] serializeUser called', {
+      user: user ? 'present' : 'missing',
+      hasClaims: !!(user as any)?.claims,
+    });
+    cb(null, user);
+  });
+  
+  passport.deserializeUser((user: Express.User, cb) => {
+    console.log('[AUTH DEBUG] deserializeUser called', {
+      user: user ? 'present' : 'missing',
+      hasClaims: !!(user as any)?.claims,
+    });
+    cb(null, user);
+  });
 
   app.get("/api/login", (req, res, next) => {
+    console.log('[AUTH DEBUG] /api/login - Starting authentication flow', {
+      hostname: req.hostname,
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+    });
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`)(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
+    console.log('[AUTH DEBUG] /api/callback - Callback hit', {
+      hostname: req.hostname,
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      query: req.query,
+    });
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
@@ -130,7 +154,18 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  console.log('[AUTH DEBUG] isAuthenticated check', {
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+    hasUser: !!user,
+    hasExpiresAt: !!user?.expires_at,
+    userKeys: user ? Object.keys(user) : [],
+  });
+
+  if (!req.isAuthenticated() || !user?.expires_at) {
+    console.log('[AUTH DEBUG] Authentication failed - returning 401', {
+      reason: !req.isAuthenticated() ? 'not authenticated' : 'no expires_at',
+    });
     return res.status(401).json({ message: "Unauthorized" });
   }
 
