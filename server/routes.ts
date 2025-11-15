@@ -328,7 +328,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
+      
+      // If user doesn't exist yet (race condition or test environment), create them
+      if (!user) {
+        console.log(`User ${userId} not found in database, creating from claims...`);
+        await storage.upsertUser({
+          id: req.user.claims.sub,
+          email: req.user.claims.email,
+          firstName: req.user.claims.first_name,
+          lastName: req.user.claims.last_name,
+          profileImageUrl: req.user.claims.profile_image_url,
+        });
+        user = await storage.getUser(userId);
+      }
       
       // Override isAdmin based on hardcoded email list
       const isAdmin = isUserAdmin(user);
