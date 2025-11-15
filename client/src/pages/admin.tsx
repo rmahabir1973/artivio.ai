@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +49,24 @@ export default function Admin() {
   const [addingPricing, setAddingPricing] = useState(false);
   const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "" });
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
-  const [editPlanData, setEditPlanData] = useState({ stripePriceId: "", stripeProductId: "" });
+  const [editPlanData, setEditPlanData] = useState({
+    name: "",
+    displayName: "",
+    description: "",
+    price: "",
+    creditsPerMonth: "",
+    stripePriceId: "",
+    stripeProductId: ""
+  });
+  const [creatingPlan, setCreatingPlan] = useState(false);
+  const [newPlanData, setNewPlanData] = useState({
+    name: "",
+    displayName: "",
+    description: "",
+    price: "",
+    creditsPerMonth: "",
+  });
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -201,19 +220,50 @@ export default function Admin() {
     },
   });
 
+  const createPlanMutation = useMutation({
+    mutationFn: async (data: { name: string; displayName: string; description: string; price: number; creditsPerMonth: number }) => {
+      return await apiRequest("POST", "/api/admin/plans", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
+      setCreatingPlan(false);
+      setNewPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "" });
+      toast({ title: "Success", description: "Plan created successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to create plan", variant: "destructive" });
+    },
+  });
+
   const updatePlanMutation = useMutation({
-    mutationFn: async ({ planId, stripePriceId, stripeProductId }: { planId: string; stripePriceId: string; stripeProductId: string }) => {
-      return await apiRequest("PATCH", `/api/admin/plans/${planId}/stripe`, { stripePriceId, stripeProductId });
+    mutationFn: async ({ planId, ...updates }: { planId: string; [key: string]: any }) => {
+      return await apiRequest("PATCH", `/api/admin/plans/${planId}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
       queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
       setEditingPlanId(null);
-      setEditPlanData({ stripePriceId: "", stripeProductId: "" });
-      toast({ title: "Success", description: "Plan updated successfully! The Subscribe buttons should now work." });
+      setEditPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
+      toast({ title: "Success", description: "Plan updated successfully!" });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message || "Failed to update plan", variant: "destructive" });
+    },
+  });
+
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      return await apiRequest("DELETE", `/api/admin/plans/${planId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
+      setDeletingPlanId(null);
+      toast({ title: "Success", description: "Plan deleted successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to delete plan", variant: "destructive" });
     },
   });
 
@@ -808,11 +858,17 @@ export default function Admin() {
 
         <TabsContent value="plans">
           <Card>
-            <CardHeader>
-              <CardTitle>Subscription Plans</CardTitle>
-              <CardDescription>
-                Configure Stripe Price IDs and Product IDs for subscription billing
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div>
+                <CardTitle>Subscription Plans</CardTitle>
+                <CardDescription>
+                  Manage subscription plans, pricing, and Stripe configuration
+                </CardDescription>
+              </div>
+              <Button onClick={() => setCreatingPlan(true)} data-testid="button-create-plan">
+                <Plus className="h-4 w-4 mr-2" />
+                Create New Plan
+              </Button>
             </CardHeader>
             <CardContent>
               {plansLoading ? (
@@ -823,105 +879,49 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Plan Name</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Display Name</TableHead>
+                      <TableHead>Price</TableHead>
                       <TableHead>Credits/Month</TableHead>
-                      <TableHead>Stripe Price ID</TableHead>
-                      <TableHead>Stripe Product ID</TableHead>
+                      <TableHead>Stripe</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {plans.map((plan) => (
                       <TableRow key={plan.id}>
-                        <TableCell className="font-medium" data-testid={`text-plan-name-${plan.id}`}>
+                        <TableCell className="font-medium font-mono text-sm" data-testid={`text-plan-name-${plan.id}`}>
                           {plan.name}
+                        </TableCell>
+                        <TableCell data-testid={`text-plan-display-name-${plan.id}`}>
+                          {plan.displayName}
+                        </TableCell>
+                        <TableCell data-testid={`text-plan-price-${plan.id}`}>
+                          ${(plan.price / 100).toFixed(2)}/mo
                         </TableCell>
                         <TableCell data-testid={`text-plan-credits-${plan.id}`}>
                           {plan.creditsPerMonth.toLocaleString()}
                         </TableCell>
-                        <TableCell>
-                          {editingPlanId === plan.id ? (
-                            <Input
-                              type="text"
-                              placeholder="price_xxxxxxxxxxxxx"
-                              value={editPlanData.stripePriceId}
-                              onChange={(e) => setEditPlanData({ ...editPlanData, stripePriceId: e.target.value })}
-                              className="font-mono text-sm"
-                              data-testid={`input-plan-price-id-${plan.id}`}
-                              autoFocus
-                            />
+                        <TableCell data-testid={`text-plan-stripe-status-${plan.id}`}>
+                          {plan.stripePriceId && plan.stripeProductId ? (
+                            <Badge variant="default" className="text-xs">Configured</Badge>
                           ) : (
-                            <span className={`font-mono text-sm ${plan.stripePriceId ? 'text-foreground' : 'text-muted-foreground italic'}`} data-testid={`text-plan-price-id-value-${plan.id}`}>
-                              {plan.stripePriceId || 'Not set'}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {editingPlanId === plan.id ? (
-                            <Input
-                              type="text"
-                              placeholder="prod_xxxxxxxxxxxxx"
-                              value={editPlanData.stripeProductId}
-                              onChange={(e) => setEditPlanData({ ...editPlanData, stripeProductId: e.target.value })}
-                              className="font-mono text-sm"
-                              data-testid={`input-plan-product-id-${plan.id}`}
-                            />
-                          ) : (
-                            <span className={`font-mono text-sm ${plan.stripeProductId ? 'text-foreground' : 'text-muted-foreground italic'}`} data-testid={`text-plan-product-id-value-${plan.id}`}>
-                              {plan.stripeProductId || 'Not set'}
-                            </span>
+                            <Badge variant="secondary" className="text-xs">Not Set</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          {editingPlanId === plan.id ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => {
-                                  const trimmedPriceId = editPlanData.stripePriceId.trim();
-                                  const trimmedProductId = editPlanData.stripeProductId.trim();
-                                  
-                                  if (!trimmedPriceId || !trimmedProductId) {
-                                    toast({ title: "Error", description: "Both Stripe Price ID and Product ID are required", variant: "destructive" });
-                                    return;
-                                  }
-                                  
-                                  updatePlanMutation.mutate({
-                                    planId: plan.id,
-                                    stripePriceId: trimmedPriceId,
-                                    stripeProductId: trimmedProductId,
-                                  });
-                                }}
-                                disabled={updatePlanMutation.isPending}
-                                data-testid={`button-save-plan-${plan.id}`}
-                              >
-                                {updatePlanMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Save className="h-4 w-4" />
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingPlanId(null);
-                                  setEditPlanData({ stripePriceId: "", stripeProductId: "" });
-                                }}
-                                disabled={updatePlanMutation.isPending}
-                                data-testid={`button-cancel-plan-${plan.id}`}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
+                          <div className="flex items-center justify-end gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {
                                 setEditingPlanId(plan.id);
                                 setEditPlanData({
+                                  name: plan.name,
+                                  displayName: plan.displayName,
+                                  description: plan.description || "",
+                                  price: (plan.price / 100).toString(),
+                                  creditsPerMonth: plan.creditsPerMonth.toString(),
                                   stripePriceId: plan.stripePriceId || "",
                                   stripeProductId: plan.stripeProductId || "",
                                 });
@@ -930,7 +930,15 @@ export default function Admin() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                          )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDeletingPlanId(plan.id)}
+                              data-testid={`button-delete-plan-${plan.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1096,6 +1104,243 @@ export default function Admin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create/Edit Plan Dialog */}
+      <Dialog open={creatingPlan || editingPlanId !== null} onOpenChange={(open) => {
+        if (!open) {
+          setCreatingPlan(false);
+          setEditingPlanId(null);
+          setEditPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingPlanId ? "Edit Plan" : "Create New Plan"}</DialogTitle>
+            <DialogDescription>
+              {editingPlanId ? "Update the subscription plan details below." : "Create a new subscription plan with pricing and credits."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="plan-name">Name (unique ID)</Label>
+                <Input
+                  id="plan-name"
+                  placeholder="e.g., premium, enterprise"
+                  value={creatingPlan ? newPlanData.name : editPlanData.name}
+                  onChange={(e) => creatingPlan 
+                    ? setNewPlanData({ ...newPlanData, name: e.target.value })
+                    : setEditPlanData({ ...editPlanData, name: e.target.value })
+                  }
+                  data-testid="input-plan-name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="plan-display-name">Display Name</Label>
+                <Input
+                  id="plan-display-name"
+                  placeholder="e.g., Premium Plan"
+                  value={creatingPlan ? newPlanData.displayName : editPlanData.displayName}
+                  onChange={(e) => creatingPlan
+                    ? setNewPlanData({ ...newPlanData, displayName: e.target.value })
+                    : setEditPlanData({ ...editPlanData, displayName: e.target.value })
+                  }
+                  data-testid="input-plan-display-name"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="plan-description">Description</Label>
+              <Textarea
+                id="plan-description"
+                placeholder="Brief description of the plan"
+                value={creatingPlan ? newPlanData.description : editPlanData.description}
+                onChange={(e) => creatingPlan
+                  ? setNewPlanData({ ...newPlanData, description: e.target.value })
+                  : setEditPlanData({ ...editPlanData, description: e.target.value })
+                }
+                data-testid="input-plan-description"
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="plan-price">Price (USD/month)</Label>
+                <Input
+                  id="plan-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="9.99"
+                  value={creatingPlan ? newPlanData.price : editPlanData.price}
+                  onChange={(e) => creatingPlan
+                    ? setNewPlanData({ ...newPlanData, price: e.target.value })
+                    : setEditPlanData({ ...editPlanData, price: e.target.value })
+                  }
+                  data-testid="input-plan-price"
+                />
+              </div>
+              <div>
+                <Label htmlFor="plan-credits">Credits/Month</Label>
+                <Input
+                  id="plan-credits"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="1000"
+                  value={creatingPlan ? newPlanData.creditsPerMonth : editPlanData.creditsPerMonth}
+                  onChange={(e) => creatingPlan
+                    ? setNewPlanData({ ...newPlanData, creditsPerMonth: e.target.value })
+                    : setEditPlanData({ ...editPlanData, creditsPerMonth: e.target.value })
+                  }
+                  data-testid="input-plan-credits"
+                />
+              </div>
+            </div>
+            {!creatingPlan && (
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                <div>
+                  <Label htmlFor="plan-stripe-price-id">Stripe Price ID (optional)</Label>
+                  <Input
+                    id="plan-stripe-price-id"
+                    placeholder="price_xxxxxxxxxxxxx"
+                    value={editPlanData.stripePriceId}
+                    onChange={(e) => setEditPlanData({ ...editPlanData, stripePriceId: e.target.value })}
+                    data-testid="input-plan-stripe-price-id"
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="plan-stripe-product-id">Stripe Product ID (optional)</Label>
+                  <Input
+                    id="plan-stripe-product-id"
+                    placeholder="prod_xxxxxxxxxxxxx"
+                    value={editPlanData.stripeProductId}
+                    onChange={(e) => setEditPlanData({ ...editPlanData, stripeProductId: e.target.value })}
+                    data-testid="input-plan-stripe-product-id"
+                    className="font-mono text-sm"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreatingPlan(false);
+                setEditingPlanId(null);
+                setEditPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
+                setNewPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "" });
+              }}
+              disabled={createPlanMutation.isPending || updatePlanMutation.isPending}
+              data-testid="button-cancel-plan-dialog"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const data = creatingPlan ? newPlanData : editPlanData;
+                const name = data.name.trim();
+                const displayName = data.displayName.trim();
+                const description = data.description.trim();
+                const priceStr = data.price.trim();
+                const creditsStr = data.creditsPerMonth.trim();
+
+                if (!name || !displayName || !priceStr || !creditsStr) {
+                  toast({ title: "Error", description: "Name, Display Name, Price, and Credits are required", variant: "destructive" });
+                  return;
+                }
+
+                const price = parseFloat(priceStr);
+                const credits = parseInt(creditsStr);
+
+                if (isNaN(price) || price < 0) {
+                  toast({ title: "Error", description: "Price must be a valid positive number", variant: "destructive" });
+                  return;
+                }
+
+                if (isNaN(credits) || credits < 0) {
+                  toast({ title: "Error", description: "Credits must be a valid positive number", variant: "destructive" });
+                  return;
+                }
+
+                const priceInCents = Math.round(price * 100);
+
+                if (creatingPlan) {
+                  createPlanMutation.mutate({
+                    name,
+                    displayName,
+                    description,
+                    price: priceInCents,
+                    creditsPerMonth: credits,
+                  });
+                } else {
+                  const updates: any = {
+                    planId: editingPlanId!,
+                    name,
+                    displayName,
+                    description,
+                    price: priceInCents,
+                    creditsPerMonth: credits,
+                  };
+                  
+                  const stripePriceId = editPlanData.stripePriceId.trim();
+                  const stripeProductId = editPlanData.stripeProductId.trim();
+                  if (stripePriceId) updates.stripePriceId = stripePriceId;
+                  if (stripeProductId) updates.stripeProductId = stripeProductId;
+
+                  updatePlanMutation.mutate(updates);
+                }
+              }}
+              disabled={createPlanMutation.isPending || updatePlanMutation.isPending}
+              data-testid="button-save-plan-dialog"
+            >
+              {createPlanMutation.isPending || updatePlanMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {creatingPlan ? "Creating..." : "Saving..."}
+                </>
+              ) : (
+                creatingPlan ? "Create Plan" : "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Plan Confirmation */}
+      <AlertDialog open={deletingPlanId !== null} onOpenChange={(open) => !open && setDeletingPlanId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Subscription Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the plan "{plans.find(p => p.id === deletingPlanId)?.displayName || 'Unknown'}". 
+              {' '}Users with active subscriptions to this plan will not be affected, but you cannot delete a plan that has active subscriptions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletePlanMutation.isPending} data-testid="button-cancel-delete-plan">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingPlanId && deletePlanMutation.mutate(deletingPlanId)}
+              disabled={deletePlanMutation.isPending}
+              data-testid="button-confirm-delete-plan"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletePlanMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Plan"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

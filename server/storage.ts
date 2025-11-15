@@ -46,6 +46,7 @@ import {
   type VideoCombinationEvent,
   type InsertVideoCombinationEvent,
   type SubscriptionPlan,
+  type InsertSubscriptionPlan,
   type UserSubscription,
   type InsertUserSubscription,
   type StripeEvent,
@@ -146,7 +147,11 @@ export interface IStorage {
   // Subscription Plan operations
   getAllPlans(): Promise<SubscriptionPlan[]>;
   getPlanById(id: string): Promise<SubscriptionPlan | undefined>;
+  createPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updatePlan(planId: string, updates: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined>;
   updatePlanStripeIds(planId: string, stripePriceId: string | null, stripeProductId: string | null): Promise<SubscriptionPlan | undefined>;
+  deletePlan(planId: string): Promise<{ success: boolean; error?: string }>;
+  checkPlanInUse(planId: string): Promise<boolean>;
   getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined>;
   getUsersWithSubscriptions(): Promise<Array<User & { subscription: (UserSubscription & { plan: SubscriptionPlan }) | null }>>;
   upsertUserSubscription(data: InsertUserSubscription): Promise<UserSubscription>;
@@ -716,6 +721,26 @@ export class DatabaseStorage implements IStorage {
     return plan;
   }
 
+  async createPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const [created] = await db
+      .insert(subscriptionPlans)
+      .values(plan)
+      .returning();
+    return created;
+  }
+
+  async updatePlan(planId: string, updates: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined> {
+    const [updated] = await db
+      .update(subscriptionPlans)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptionPlans.id, planId))
+      .returning();
+    return updated;
+  }
+
   async updatePlanStripeIds(planId: string, stripePriceId: string | null, stripeProductId: string | null): Promise<SubscriptionPlan | undefined> {
     const [updated] = await db
       .update(subscriptionPlans)
@@ -727,6 +752,37 @@ export class DatabaseStorage implements IStorage {
       .where(eq(subscriptionPlans.id, planId))
       .returning();
     return updated;
+  }
+
+  async checkPlanInUse(planId: string): Promise<boolean> {
+    const result = await db
+      .select()
+      .from(userSubscriptions)
+      .where(eq(userSubscriptions.planId, planId))
+      .limit(1);
+    return result.length > 0;
+  }
+
+  async deletePlan(planId: string): Promise<{ success: boolean; error?: string }> {
+    // Check if plan is in use
+    const inUse = await this.checkPlanInUse(planId);
+    if (inUse) {
+      return {
+        success: false,
+        error: 'Cannot delete plan with active subscriptions'
+      };
+    }
+
+    // Soft delete by setting isActive to false
+    await db
+      .update(subscriptionPlans)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptionPlans.id, planId));
+
+    return { success: true };
   }
 
   async getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined> {

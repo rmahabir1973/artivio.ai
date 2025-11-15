@@ -40,7 +40,8 @@ import {
   generateAvatarRequestSchema,
   analyzeImageRequestSchema,
   convertAudioRequestSchema,
-  combineVideosRequestSchema
+  combineVideosRequestSchema,
+  type InsertSubscriptionPlan
 } from "@shared/schema";
 
 // Helper to get pricing from database by model name
@@ -1624,6 +1625,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating user subscription:', error);
       res.status(500).json({ message: "Failed to update subscription" });
+    }
+  });
+
+  // Admin: Create new plan
+  app.post('/api/admin/plans', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { name, displayName, description, price, creditsPerMonth, billingPeriod, features, sortOrder } = req.body;
+
+      // Validate required fields
+      if (!name || !displayName || price === undefined || creditsPerMonth === undefined) {
+        return res.status(400).json({ message: "Missing required fields: name, displayName, price, creditsPerMonth" });
+      }
+
+      // Validate price is a number in cents
+      if (typeof price !== 'number' || price < 0) {
+        return res.status(400).json({ message: "Price must be a positive number (in cents)" });
+      }
+
+      // Validate creditsPerMonth
+      if (typeof creditsPerMonth !== 'number' || creditsPerMonth < 0) {
+        return res.status(400).json({ message: "Credits per month must be a positive number" });
+      }
+
+      const created = await storage.createPlan({
+        name,
+        displayName,
+        description: description || null,
+        price,
+        creditsPerMonth,
+        billingPeriod: billingPeriod || 'monthly',
+        features: features || null,
+        sortOrder: sortOrder ?? 0,
+        isActive: true,
+      });
+
+      res.json(created);
+    } catch (error: any) {
+      console.error('Error creating plan:', error);
+      if (error.code === '23505') {
+        return res.status(400).json({ message: "Plan name already exists" });
+      }
+      res.status(500).json({ message: "Failed to create plan" });
+    }
+  });
+
+  // Admin: Update plan (all fields)
+  app.patch('/api/admin/plans/:planId', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { planId } = req.params;
+      const updates: Partial<InsertSubscriptionPlan> = {};
+
+      // Allow updating any field
+      if (req.body.name !== undefined) updates.name = req.body.name;
+      if (req.body.displayName !== undefined) updates.displayName = req.body.displayName;
+      if (req.body.description !== undefined) updates.description = req.body.description;
+      if (req.body.price !== undefined) {
+        if (typeof req.body.price !== 'number' || req.body.price < 0) {
+          return res.status(400).json({ message: "Price must be a positive number (in cents)" });
+        }
+        updates.price = req.body.price;
+      }
+      if (req.body.creditsPerMonth !== undefined) {
+        if (typeof req.body.creditsPerMonth !== 'number' || req.body.creditsPerMonth < 0) {
+          return res.status(400).json({ message: "Credits per month must be a positive number" });
+        }
+        updates.creditsPerMonth = req.body.creditsPerMonth;
+      }
+      if (req.body.billingPeriod !== undefined) updates.billingPeriod = req.body.billingPeriod;
+      if (req.body.features !== undefined) updates.features = req.body.features;
+      if (req.body.sortOrder !== undefined) updates.sortOrder = req.body.sortOrder;
+      if (req.body.stripePriceId !== undefined) updates.stripePriceId = req.body.stripePriceId || null;
+      if (req.body.stripeProductId !== undefined) updates.stripeProductId = req.body.stripeProductId || null;
+
+      const updated = await storage.updatePlan(planId, updates);
+
+      if (!updated) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating plan:', error);
+      if (error.code === '23505') {
+        return res.status(400).json({ message: "Plan name already exists" });
+      }
+      res.status(500).json({ message: "Failed to update plan" });
+    }
+  });
+
+  // Admin: Delete plan
+  app.delete('/api/admin/plans/:planId', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { planId } = req.params;
+
+      const result = await storage.deletePlan(planId);
+
+      if (!result.success) {
+        return res.status(400).json({ message: result.error });
+      }
+
+      res.json({ message: "Plan deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      res.status(500).json({ message: "Failed to delete plan" });
     }
   });
 
