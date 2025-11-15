@@ -368,8 +368,9 @@ export async function generateImage(params: {
   };
   
   // Add reference images for editing mode
+  // According to Kie.ai API docs: use "filesUrl" for image editing with reference images
   if (mode === 'image-editing' && referenceImages.length > 0) {
-    payload.imageUrls = referenceImages;
+    payload.filesUrl = referenceImages;
   }
   
   // Add output format and quality if specified
