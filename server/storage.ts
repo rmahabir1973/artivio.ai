@@ -1079,6 +1079,11 @@ export class DatabaseStorage implements IStorage {
       const previouslyGranted = existingSub?.creditsGrantedThisPeriod || 0;
       const creditAdjustment = plan.creditsPerMonth - previouslyGranted;
 
+      // For manual admin assignments, set period to 30 days from now
+      const now = new Date();
+      const periodEnd = new Date(now);
+      periodEnd.setDate(periodEnd.getDate() + 30);
+
       // Update or create subscription
       let subscription: UserSubscription;
       if (existingSub) {
@@ -1089,8 +1094,8 @@ export class DatabaseStorage implements IStorage {
             stripeSubscriptionId: null,
             stripeCustomerId: null,
             status: 'active',
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: null,
+            currentPeriodStart: now,
+            currentPeriodEnd: periodEnd,
             cancelAtPeriodEnd: false,
             creditsGrantedThisPeriod: plan.creditsPerMonth,
             updatedAt: new Date(),
@@ -1107,8 +1112,8 @@ export class DatabaseStorage implements IStorage {
             stripeSubscriptionId: null,
             stripeCustomerId: null,
             status: 'active',
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: null,
+            currentPeriodStart: now,
+            currentPeriodEnd: periodEnd,
             cancelAtPeriodEnd: false,
             creditsGrantedThisPeriod: plan.creditsPerMonth,
           })

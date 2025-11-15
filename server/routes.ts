@@ -641,7 +641,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Selected plan cookie:`, (req as any).signedCookies?.selected_plan);
         
         // Create user first (starts with 0 credits)
-        await storage.upsertUser({
+        // Note: upsertUser may return existing user if email already exists
+        const createdUser = await storage.upsertUser({
           id: req.user.claims.sub,
           email: req.user.claims.email,
           firstName: req.user.claims.first_name,
@@ -662,14 +663,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Plan selection: ${planName}`);
         
         // Get plan from database
-        const plans = await storage.getAllSubscriptionPlans();
+        const plans = await storage.getAllPlans();
         const plan = plans.find(p => p.name === planName);
         
         if (plan) {
           try {
             // Assign plan and grant credits atomically
+            // Use the actual user ID from upsertUser (may differ from sub if email collision)
             console.log(`Assigning ${plan.displayName} plan (${plan.creditsPerMonth} credits)...`);
-            const result = await storage.assignPlanToUser(userId, plan.id);
+            const result = await storage.assignPlanToUser(createdUser.id, plan.id);
             console.log(`✓ Plan assigned successfully`);
             console.log(`✓ Credits granted: ${result.creditsGranted}`);
             console.log(`✓ Subscription created`);
