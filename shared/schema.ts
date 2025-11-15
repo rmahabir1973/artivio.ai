@@ -775,6 +775,46 @@ export const generationsRelations = relations(generations, ({ one }) => ({
   }),
 }));
 
+// Home Page Content Management
+export const homePageContent = pgTable("home_page_content", {
+  id: varchar("id").primaryKey().default('homepage'), // Single row configuration
+  heroTitle: text("hero_title").notNull().default('Create any video you can imagine'),
+  heroSubtitle: text("hero_subtitle").notNull().default('Generate stunning videos, images, and music with powerful AI models'),
+  heroVideoUrl: text("hero_video_url"), // Vimeo embed URL
+  heroImageUrl: text("hero_image_url"), // Fallback image
+  
+  // Video showcases section
+  showcaseVideos: jsonb("showcase_videos").$type<{
+    url: string;
+    title?: string;
+    description?: string;
+  }[]>().default([]),
+  
+  // Product sections
+  creatorsTitle: text("creators_title").default('Creators'),
+  creatorsDescription: text("creators_description"),
+  creatorsImageUrl: text("creators_image_url"),
+  
+  businessTitle: text("business_title").default('Businesses'),
+  businessDescription: text("business_description"),
+  businessImageUrl: text("business_image_url"),
+  
+  // FAQ section
+  faqs: jsonb("faqs").$type<{
+    question: string;
+    answer: string;
+  }[]>().default([]),
+  
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export const insertHomePageContentSchema = createInsertSchema(homePageContent).omit({
+  updatedAt: true,
+});
+
+export type InsertHomePageContent = z.infer<typeof insertHomePageContentSchema>;
+export type HomePageContent = typeof homePageContent.$inferSelect;
+
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({
   user: one(users, {
     fields: [conversations.userId],
