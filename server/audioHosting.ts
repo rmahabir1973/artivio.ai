@@ -5,7 +5,18 @@ import { getBaseUrl } from './urlUtils';
 
 const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads', 'audio');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB max per audio file
-const ALLOWED_MIME_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
+const ALLOWED_MIME_TYPES = [
+  'audio/mpeg', 
+  'audio/mp3', 
+  'audio/wav', 
+  'audio/m4a', 
+  'audio/x-m4a',  // Alternative MIME type for M4A files
+  'audio/aac', 
+  'audio/x-aac',  // Alternative MIME type for AAC files
+  'audio/ogg', 
+  'audio/webm',
+  'audio/mp4'     // Some systems report M4A as audio/mp4
+];
 
 // Ensure uploads directory exists
 async function ensureUploadsDir() {
@@ -44,8 +55,11 @@ export async function saveBase64Audio(base64Data: string): Promise<string> {
   
   // Extract extension from MIME type
   let extension = mimeType.split('/')[1];
-  // Handle special cases
+  // Handle special cases and alternative MIME types
   if (extension === 'mpeg') extension = 'mp3';
+  if (extension === 'x-m4a') extension = 'm4a';
+  if (extension === 'x-aac') extension = 'aac';
+  if (extension === 'mp4') extension = 'm4a'; // audio/mp4 is often M4A
   
   // Generate unique filename with hash to prevent duplicates
   const hash = crypto.createHash('md5').update(buffer).digest('hex');
