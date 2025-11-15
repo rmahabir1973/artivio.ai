@@ -14,10 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { User, ApiKey, Pricing, SubscriptionPlan } from "@shared/schema";
+import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent } from "@shared/schema";
 
 interface UserWithSubscription extends User {
   subscription: {
@@ -67,6 +67,28 @@ export default function Admin() {
     creditsPerMonth: "",
   });
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+  
+  // Home page content state
+  const [editingHomePage, setEditingHomePage] = useState(false);
+  const [homePageFormData, setHomePageFormData] = useState({
+    heroTitle: "",
+    heroSubtitle: "",
+    heroVideoUrl: "",
+    heroImageUrl: "",
+    creatorsTitle: "",
+    creatorsDescription: "",
+    creatorsImageUrl: "",
+    businessTitle: "",
+    businessDescription: "",
+    businessImageUrl: "",
+  });
+  const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
+  const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
+  const [showcaseVideo, setShowcaseVideo] = useState({ url: "", title: "", description: "" });
+  const [faqDialogOpen, setFaqDialogOpen] = useState(false);
+  const [faqEditIndex, setFaqEditIndex] = useState<number | null>(null);
+  const [faqQuestion, setFaqQuestion] = useState("");
+  const [faqAnswer, setFaqAnswer] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -114,6 +136,28 @@ export default function Admin() {
     queryKey: ["/api/admin/pricing"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
+
+  const { data: homePageContent, isLoading: homePageLoading } = useQuery<HomePageContent>({
+    queryKey: ["/api/admin/homepage"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  useEffect(() => {
+    if (homePageContent && !editingHomePage) {
+      setHomePageFormData({
+        heroTitle: homePageContent.heroTitle || "",
+        heroSubtitle: homePageContent.heroSubtitle || "",
+        heroVideoUrl: homePageContent.heroVideoUrl || "",
+        heroImageUrl: homePageContent.heroImageUrl || "",
+        creatorsTitle: homePageContent.creatorsTitle || "",
+        creatorsDescription: homePageContent.creatorsDescription || "",
+        creatorsImageUrl: homePageContent.creatorsImageUrl || "",
+        businessTitle: homePageContent.businessTitle || "",
+        businessDescription: homePageContent.businessDescription || "",
+        businessImageUrl: homePageContent.businessImageUrl || "",
+      });
+    }
+  }, [homePageContent, editingHomePage]);
 
   const updateCreditsMutation = useMutation({
     mutationFn: async ({ userId, credits }: { userId: string; credits: number }) => {
@@ -267,6 +311,21 @@ export default function Admin() {
     },
   });
 
+  const updateHomePageMutation = useMutation({
+    mutationFn: async (data: Partial<HomePageContent>) => {
+      return await apiRequest("PATCH", "/api/admin/homepage", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/homepage"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/homepage"] });
+      setEditingHomePage(false);
+      toast({ title: "Success", description: "Home page content updated successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to update home page content", variant: "destructive" });
+    },
+  });
+
   const addApiKeyMutation = useMutation({
     mutationFn: async ({ keyName, keyValue }: { keyName: string; keyValue: string }) => {
       return await apiRequest("POST", "/api/admin/api-keys", { keyName, keyValue });
@@ -360,6 +419,10 @@ export default function Admin() {
           <TabsTrigger value="plans" data-testid="tab-plans">
             <TrendingUp className="h-4 w-4 mr-2" />
             Subscription Plans
+          </TabsTrigger>
+          <TabsTrigger value="content" data-testid="tab-content">
+            <FileText className="h-4 w-4 mr-2" />
+            Home Page
           </TabsTrigger>
         </TabsList>
 
@@ -948,7 +1011,556 @@ export default function Admin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="content">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Hero Section</CardTitle>
+                <CardDescription>Manage the main hero section of the home page</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {homePageLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="heroTitle">Hero Title</Label>
+                        <Input
+                          id="heroTitle"
+                          value={homePageFormData.heroTitle}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, heroTitle: e.target.value })}
+                          placeholder="Create any video you can imagine"
+                          data-testid="input-hero-title"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="heroSubtitle">Hero Subtitle</Label>
+                        <Input
+                          id="heroSubtitle"
+                          value={homePageFormData.heroSubtitle}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, heroSubtitle: e.target.value })}
+                          placeholder="Generate stunning videos, images, and music"
+                          data-testid="input-hero-subtitle"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="heroVideoUrl">Hero Video URL (Vimeo)</Label>
+                        <Input
+                          id="heroVideoUrl"
+                          value={homePageFormData.heroVideoUrl}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, heroVideoUrl: e.target.value })}
+                          placeholder="https://player.vimeo.com/video/..."
+                          data-testid="input-hero-video-url"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Vimeo player URL</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="heroImageUrl">Hero Image URL (fallback)</Label>
+                        <Input
+                          id="heroImageUrl"
+                          value={homePageFormData.heroImageUrl}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, heroImageUrl: e.target.value })}
+                          placeholder="https://..."
+                          data-testid="input-hero-image-url"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Used if no video URL provided</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        updateHomePageMutation.mutate({
+                          heroTitle: homePageFormData.heroTitle.trim() || undefined,
+                          heroSubtitle: homePageFormData.heroSubtitle.trim() || undefined,
+                          heroVideoUrl: homePageFormData.heroVideoUrl.trim() || undefined,
+                          heroImageUrl: homePageFormData.heroImageUrl.trim() || undefined,
+                        });
+                      }}
+                      disabled={updateHomePageMutation.isPending}
+                      data-testid="button-save-hero"
+                    >
+                      {updateHomePageMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Hero Section
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 gap-2">
+                <div>
+                  <CardTitle>Showcase Videos</CardTitle>
+                  <CardDescription>Manage the showcase video gallery (max 3 videos)</CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if ((homePageContent?.showcaseVideos || []).length >= 3) {
+                      toast({ title: "Maximum reached", description: "You can only have up to 3 showcase videos", variant: "destructive" });
+                      return;
+                    }
+                    setShowcaseEditIndex(null);
+                    setShowcaseVideo({ url: "", title: "", description: "" });
+                    setShowcaseDialogOpen(true);
+                  }}
+                  data-testid="button-add-showcase-video"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Video
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {homePageLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (homePageContent?.showcaseVideos || []).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No showcase videos added yet. Click "Add Video" to get started.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {(homePageContent?.showcaseVideos || []).map((video, index) => (
+                      <Card key={index}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-1">
+                              <p className="text-sm font-medium truncate">{video.url}</p>
+                              {video.title && <p className="text-xs text-muted-foreground">{video.title}</p>}
+                              {video.description && <p className="text-xs text-muted-foreground">{video.description}</p>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setShowcaseEditIndex(index);
+                                  setShowcaseVideo({
+                                    url: video.url,
+                                    title: video.title || "",
+                                    description: video.description || "",
+                                  });
+                                  setShowcaseDialogOpen(true);
+                                }}
+                                data-testid={`button-edit-showcase-${index}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const updated = [...(homePageContent?.showcaseVideos || [])];
+                                updated.splice(index, 1);
+                                updateHomePageMutation.mutate({ showcaseVideos: updated });
+                              }}
+                              data-testid={`button-delete-showcase-${index}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Creators Section</CardTitle>
+                  <CardDescription>Content for creators/individuals</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="creatorsTitle">Title</Label>
+                    <Input
+                      id="creatorsTitle"
+                      value={homePageFormData.creatorsTitle}
+                      onChange={(e) => setHomePageFormData({ ...homePageFormData, creatorsTitle: e.target.value })}
+                      placeholder="Creators"
+                      data-testid="input-creators-title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="creatorsDescription">Description</Label>
+                    <Textarea
+                      id="creatorsDescription"
+                      value={homePageFormData.creatorsDescription}
+                      onChange={(e) => setHomePageFormData({ ...homePageFormData, creatorsDescription: e.target.value })}
+                      placeholder="Description for creators..."
+                      rows={3}
+                      data-testid="input-creators-description"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="creatorsImageUrl">Image URL</Label>
+                    <Input
+                      id="creatorsImageUrl"
+                      value={homePageFormData.creatorsImageUrl}
+                      onChange={(e) => setHomePageFormData({ ...homePageFormData, creatorsImageUrl: e.target.value })}
+                      placeholder="https://..."
+                      data-testid="input-creators-image-url"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => {
+                      updateHomePageMutation.mutate({
+                        creatorsTitle: homePageFormData.creatorsTitle.trim() || undefined,
+                        creatorsDescription: homePageFormData.creatorsDescription.trim() || undefined,
+                        creatorsImageUrl: homePageFormData.creatorsImageUrl.trim() || undefined,
+                      });
+                    }}
+                    disabled={updateHomePageMutation.isPending}
+                    data-testid="button-save-creators"
+                  >
+                    {updateHomePageMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Business Section</CardTitle>
+                  <CardDescription>Content for businesses</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="businessTitle">Title</Label>
+                    <Input
+                      id="businessTitle"
+                      value={homePageFormData.businessTitle}
+                      onChange={(e) => setHomePageFormData({ ...homePageFormData, businessTitle: e.target.value })}
+                      placeholder="Businesses"
+                      data-testid="input-business-title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="businessDescription">Description</Label>
+                    <Textarea
+                      id="businessDescription"
+                      value={homePageFormData.businessDescription}
+                      onChange={(e) => setHomePageFormData({ ...homePageFormData, businessDescription: e.target.value })}
+                      placeholder="Description for businesses..."
+                      rows={3}
+                      data-testid="input-business-description"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="businessImageUrl">Image URL</Label>
+                    <Input
+                      id="businessImageUrl"
+                      value={homePageFormData.businessImageUrl}
+                      onChange={(e) => setHomePageFormData({ ...homePageFormData, businessImageUrl: e.target.value })}
+                      placeholder="https://..."
+                      data-testid="input-business-image-url"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => {
+                      updateHomePageMutation.mutate({
+                        businessTitle: homePageFormData.businessTitle.trim() || undefined,
+                        businessDescription: homePageFormData.businessDescription.trim() || undefined,
+                        businessImageUrl: homePageFormData.businessImageUrl.trim() || undefined,
+                      });
+                    }}
+                    disabled={updateHomePageMutation.isPending}
+                    data-testid="button-save-business"
+                  >
+                    {updateHomePageMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 gap-2">
+                <div>
+                  <CardTitle>FAQs</CardTitle>
+                  <CardDescription>Manage frequently asked questions</CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setFaqEditIndex(null);
+                    setFaqQuestion("");
+                    setFaqAnswer("");
+                    setFaqDialogOpen(true);
+                  }}
+                  data-testid="button-add-faq"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add FAQ
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {homePageLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (homePageContent?.faqs || []).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No FAQs added yet. Click "Add FAQ" to get started.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {(homePageContent?.faqs || []).map((faq, index) => (
+                      <Card key={index}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-1">
+                              <p className="text-sm font-medium">{faq.question}</p>
+                              <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setFaqEditIndex(index);
+                                  setFaqQuestion(faq.question);
+                                  setFaqAnswer(faq.answer);
+                                  setFaqDialogOpen(true);
+                                }}
+                                data-testid={`button-edit-faq-${index}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const updated = [...(homePageContent?.faqs || [])];
+                                  updated.splice(index, 1);
+                                  updateHomePageMutation.mutate({ faqs: updated });
+                                }}
+                                data-testid={`button-delete-faq-${index}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* Showcase Video Dialog */}
+      <Dialog open={showcaseDialogOpen} onOpenChange={setShowcaseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{showcaseEditIndex !== null ? "Edit" : "Add"} Showcase Video</DialogTitle>
+            <DialogDescription>
+              Enter video details for the showcase gallery
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="showcaseVideoUrl">Video URL *</Label>
+              <Input
+                id="showcaseVideoUrl"
+                value={showcaseVideo.url}
+                onChange={(e) => setShowcaseVideo({ ...showcaseVideo, url: e.target.value })}
+                placeholder="https://player.vimeo.com/video/..."
+                data-testid="input-showcase-video-url"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Must be a vimeo.com URL (e.g., https://player.vimeo.com/video/123456789)
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="showcaseVideoTitle">Title (optional)</Label>
+              <Input
+                id="showcaseVideoTitle"
+                value={showcaseVideo.title}
+                onChange={(e) => setShowcaseVideo({ ...showcaseVideo, title: e.target.value })}
+                placeholder="Video title..."
+                data-testid="input-showcase-video-title"
+              />
+            </div>
+            <div>
+              <Label htmlFor="showcaseVideoDescription">Description (optional)</Label>
+              <Textarea
+                id="showcaseVideoDescription"
+                value={showcaseVideo.description}
+                onChange={(e) => setShowcaseVideo({ ...showcaseVideo, description: e.target.value })}
+                placeholder="Video description..."
+                rows={3}
+                data-testid="input-showcase-video-description"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowcaseDialogOpen(false)} data-testid="button-cancel-showcase">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const trimmedUrl = showcaseVideo.url.trim();
+                const trimmedTitle = showcaseVideo.title.trim();
+                const trimmedDescription = showcaseVideo.description.trim();
+                
+                if (!trimmedUrl) {
+                  toast({ title: "Error", description: "Video URL is required", variant: "destructive" });
+                  return;
+                }
+                if (!trimmedUrl.includes('vimeo.com')) {
+                  toast({ title: "Error", description: "Must be a Vimeo URL", variant: "destructive" });
+                  return;
+                }
+                
+                const updated = [...(homePageContent?.showcaseVideos || [])];
+                const videoData: { url: string; title?: string; description?: string } = {
+                  url: trimmedUrl,
+                };
+                
+                if (trimmedTitle) {
+                  videoData.title = trimmedTitle;
+                }
+                if (trimmedDescription) {
+                  videoData.description = trimmedDescription;
+                }
+                
+                if (showcaseEditIndex !== null) {
+                  updated[showcaseEditIndex] = videoData;
+                } else {
+                  updated.push(videoData);
+                }
+                
+                updateHomePageMutation.mutate({ showcaseVideos: updated });
+                setShowcaseDialogOpen(false);
+              }}
+              disabled={updateHomePageMutation.isPending}
+              data-testid="button-save-showcase"
+            >
+              {updateHomePageMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* FAQ Dialog */}
+      <Dialog open={faqDialogOpen} onOpenChange={setFaqDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{faqEditIndex !== null ? "Edit" : "Add"} FAQ</DialogTitle>
+            <DialogDescription>
+              Add a frequently asked question and its answer
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="faqQuestion">Question</Label>
+              <Input
+                id="faqQuestion"
+                value={faqQuestion}
+                onChange={(e) => setFaqQuestion(e.target.value)}
+                placeholder="What is Artivio AI?"
+                data-testid="input-faq-question"
+              />
+            </div>
+            <div>
+              <Label htmlFor="faqAnswer">Answer</Label>
+              <Textarea
+                id="faqAnswer"
+                value={faqAnswer}
+                onChange={(e) => setFaqAnswer(e.target.value)}
+                placeholder="Artivio AI is a comprehensive platform..."
+                rows={4}
+                data-testid="input-faq-answer"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFaqDialogOpen(false)} data-testid="button-cancel-faq">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const trimmedQuestion = faqQuestion.trim();
+                const trimmedAnswer = faqAnswer.trim();
+                
+                if (!trimmedQuestion || !trimmedAnswer) {
+                  toast({ title: "Error", description: "Question and answer are required", variant: "destructive" });
+                  return;
+                }
+                
+                const updated = [...(homePageContent?.faqs || [])];
+                if (faqEditIndex !== null) {
+                  updated[faqEditIndex] = { question: trimmedQuestion, answer: trimmedAnswer };
+                } else {
+                  updated.push({ question: trimmedQuestion, answer: trimmedAnswer });
+                }
+                
+                updateHomePageMutation.mutate({ faqs: updated });
+                setFaqDialogOpen(false);
+              }}
+              disabled={updateHomePageMutation.isPending}
+              data-testid="button-save-faq"
+            >
+              {updateHomePageMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add API Key Dialog */}
       <Dialog open={addingApiKey} onOpenChange={setAddingApiKey}>

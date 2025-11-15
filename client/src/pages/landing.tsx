@@ -1,8 +1,34 @@
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Image, Music, Zap, Shield, Sparkles } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Video, Image, Music, Zap, Shield, Sparkles, Loader2 } from "lucide-react";
+import type { HomePageContent } from "@shared/schema";
 
 export default function Landing() {
+  const { data: content, isLoading } = useQuery<HomePageContent>({
+    queryKey: ["/api/homepage"],
+  });
+
+  const heroTitle = content?.heroTitle || "Create any video you can imagine";
+  const heroSubtitle = content?.heroSubtitle || "Generate stunning videos, images, and music with powerful AI models";
+  const showcaseVideos = content?.showcaseVideos || [];
+  const creatorsTitle = content?.creatorsTitle || "Creators";
+  const creatorsDescription = content?.creatorsDescription || null;
+  const creatorsImageUrl = content?.creatorsImageUrl || null;
+  const businessTitle = content?.businessTitle || "Businesses";
+  const businessDescription = content?.businessDescription || null;
+  const businessImageUrl = content?.businessImageUrl || null;
+  const faqs = content?.faqs || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header */}
@@ -19,46 +45,89 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-24 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-            Access the Best Video, Image & Music Models in{" "}
-            <span className="text-primary">One API</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            All your AI APIs for video, image, music, and chat — lower cost, fast, and developer-friendly. 
-            Create stunning AI content with powerful models like Veo 3.1, Runway Aleph, Flux Kontext, and Suno.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Button size="lg" asChild data-testid="button-get-started">
-              <a href="/api/login">
-                <Zap className="mr-2 h-5 w-5" />
-                Get Started Free
-              </a>
-            </Button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12">
-            <div>
-              <div className="text-3xl font-bold">99.9%</div>
-              <div className="text-sm text-muted-foreground">Uptime</div>
+      <section className="container mx-auto px-4 py-24">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+                {heroTitle}
+              </h1>
+              <p className="text-xl text-muted-foreground">
+                {heroSubtitle}
+              </p>
+              <div className="flex gap-4">
+                <Button size="lg" asChild data-testid="button-get-started">
+                  <a href="/api/login">
+                    <Zap className="mr-2 h-5 w-5" />
+                    Get Started Free
+                  </a>
+                </Button>
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold">24.7s</div>
-              <div className="text-sm text-muted-foreground">Response Time</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold">24/7</div>
-              <div className="text-sm text-muted-foreground">Support</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold">#1</div>
-              <div className="text-sm text-muted-foreground">Data Security</div>
+            <div className="relative">
+              {content?.heroVideoUrl ? (
+                <div className="relative rounded-xl overflow-hidden shadow-2xl aspect-video">
+                  <iframe
+                    src={content.heroVideoUrl}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    title="Hero Video"
+                  />
+                </div>
+              ) : content?.heroImageUrl ? (
+                <div className="relative rounded-xl overflow-hidden shadow-2xl aspect-video">
+                  <img
+                    src={content.heroImageUrl}
+                    alt="Hero"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="relative rounded-xl overflow-hidden shadow-2xl aspect-video bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <Sparkles className="h-24 w-24 text-primary/40" />
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
+
+      {/* Showcase Videos */}
+      {showcaseVideos.length > 0 && (
+        <section className="container mx-auto px-4 py-16">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">See What's Possible</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {showcaseVideos.map((video, index) => (
+                <Card key={index} className="hover-elevate overflow-hidden">
+                  <div className="aspect-video">
+                    <iframe
+                      src={video.url}
+                      className="w-full h-full"
+                      frameBorder="0"
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title={video.title || `Showcase Video ${index + 1}`}
+                    />
+                  </div>
+                  {(video.title || video.description) && (
+                    <CardContent className="p-4">
+                      {video.title && (
+                        <h3 className="font-semibold mb-1">{video.title}</h3>
+                      )}
+                      {video.description && (
+                        <p className="text-sm text-muted-foreground">{video.description}</p>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features */}
       <section className="container mx-auto px-4 py-16">
@@ -99,6 +168,53 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Creators & Business Sections */}
+      {(creatorsDescription || businessDescription) && (
+        <section className="container mx-auto px-4 py-16">
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12">
+            {creatorsDescription && (
+              <Card className="hover-elevate">
+                <CardHeader>
+                  <CardTitle className="text-2xl">{creatorsTitle}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {creatorsImageUrl && (
+                    <div className="aspect-video rounded-lg overflow-hidden">
+                      <img
+                        src={creatorsImageUrl}
+                        alt={creatorsTitle}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <p className="text-muted-foreground">{creatorsDescription}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {businessDescription && (
+              <Card className="hover-elevate">
+                <CardHeader>
+                  <CardTitle className="text-2xl">{businessTitle}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {businessImageUrl && (
+                    <div className="aspect-video rounded-lg overflow-hidden">
+                      <img
+                        src={businessImageUrl}
+                        alt={businessTitle}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <p className="text-muted-foreground">{businessDescription}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Why Choose Section */}
       <section className="container mx-auto px-4 py-16 bg-muted/30 rounded-2xl my-16">
         <h2 className="text-3xl font-bold text-center mb-12">Why Choose Artivio AI</h2>
@@ -137,6 +253,27 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* FAQs */}
+      {faqs.length > 0 && (
+        <section className="container mx-auto px-4 py-16">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <Accordion type="single" collapsible className="space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem key={index} value={`faq-${index}`}>
+                  <AccordionTrigger className="text-left hover:no-underline">
+                    <span className="font-semibold">{faq.question}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="container mx-auto px-4 py-16 text-center">
