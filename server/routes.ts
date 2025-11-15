@@ -400,10 +400,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (finalStatus === 'completed' && resultUrl) {
-        await storage.updateGeneration(generationId, {
-          status: 'completed',
+        await storage.finalizeGeneration(generationId, 'success', {
           resultUrl,
-          completedAt: new Date(),
         });
         console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
       } else {
@@ -411,8 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                            callbackData.message || 
                            callbackData.data?.message ||
                            'Generation failed - no result URL provided';
-        await storage.updateGeneration(generationId, {
-          status: 'failed',
+        await storage.finalizeGeneration(generationId, 'failure', {
           errorMessage,
         });
         console.log(`✗ Generation ${generationId} failed: ${errorMessage}`);
