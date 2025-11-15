@@ -190,11 +190,41 @@ async function callKieApi(endpoint: string, data: any): Promise<{ result: any; k
       data: error.response?.data,
       message: error.message
     }, null, 2));
-    throw new Error(
-      error.response?.data?.message || 
-      error.message || 
-      'Failed to communicate with AI service'
-    );
+    
+    // Extract error message with better fallbacks
+    let errorMessage = 'Failed to communicate with AI service';
+    
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      // Check status codes FIRST before trying to extract messages
+      // This ensures we provide helpful messages even if API returns unhelpful ones
+      if (status === 404) {
+        errorMessage = `AI service endpoint not found (${endpoint}). This feature may not be available yet.`;
+      } else if (status === 401 || status === 403) {
+        errorMessage = 'AI service authentication failed. Please check API key configuration.';
+      } else if (status === 429) {
+        errorMessage = 'AI service rate limit exceeded. Please try again later.';
+      } else if (status >= 500) {
+        errorMessage = 'AI service is temporarily unavailable. Please try again later.';
+      } else if (data?.message && data.message !== 'No message available') {
+        // Use provider message if it's actually helpful
+        errorMessage = data.message;
+      } else if (data?.error) {
+        errorMessage = data.error;
+      } else if (data?.detail) {
+        errorMessage = data.detail;
+      } else if (typeof data === 'string') {
+        errorMessage = data;
+      } else {
+        errorMessage = error.response.statusText || `AI service error (${status})`;
+      }
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
 }
 
