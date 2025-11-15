@@ -19,10 +19,17 @@ import {
   Globe,
   Crown
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { Link } from "wouter";
 
 export default function Workflows() {
-  const [, setLocation] = useLocation();
+  // Helper function to determine the route based on workflow features
+  const getWorkflowRoute = (features: string[]): string => {
+    if (features.includes("Video Generation")) return "/generate/video";
+    if (features.includes("Image Generation")) return "/generate/image";
+    if (features.includes("Music Generation")) return "/generate/music";
+    if (features.includes("AI Chat")) return "/chat";
+    return "/";
+  };
 
   const workflows = [
     {
@@ -402,29 +409,17 @@ export default function Workflows() {
                   </div>
 
                   {/* Action */}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full mt-2 gap-2"
-                    onClick={() => {
-                      // Navigate to first feature in the workflow
-                      if (workflow.features.includes("Video Generation")) {
-                        setLocation("/generate/video");
-                      } else if (workflow.features.includes("Image Generation")) {
-                        setLocation("/generate/image");
-                      } else if (workflow.features.includes("Music Generation")) {
-                        setLocation("/generate/music");
-                      } else if (workflow.features.includes("AI Chat")) {
-                        setLocation("/chat");
-                      } else {
-                        setLocation("/");
-                      }
-                    }}
-                    data-testid={`workflow-start-${workflow.id}`}
-                  >
-                    <Zap className="h-4 w-4" />
-                    Start Workflow
-                  </Button>
+                  <Link href={getWorkflowRoute(workflow.features)}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full mt-2 gap-2"
+                      data-testid={`workflow-start-${workflow.id}`}
+                    >
+                      <Zap className="h-4 w-4" />
+                      Start Workflow
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             );
@@ -441,9 +436,11 @@ export default function Workflows() {
                 These workflows are just the beginning. Combine any of our features to create your own
                 custom automation pipelines. The possibilities are endless!
               </p>
-              <Button onClick={() => setLocation("/")} data-testid="button-explore-features">
-                Explore All Features
-              </Button>
+              <Link href="/">
+                <Button data-testid="button-explore-features">
+                  Explore All Features
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
