@@ -3,6 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
@@ -20,6 +21,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
   const [, setLocation] = useLocation();
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const statusColors = {
     pending: "secondary",
@@ -77,10 +79,9 @@ export function GenerationCard({ generation }: GenerationCardProps) {
     }
   };
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this generation? This cannot be undone.')) {
-      deleteMutation.mutate();
-    }
+  const handleDeleteConfirm = () => {
+    deleteMutation.mutate();
+    setShowDeleteDialog(false);
   };
 
   const handleCopyPrompt = () => {
@@ -94,9 +95,9 @@ export function GenerationCard({ generation }: GenerationCardProps) {
   const handleRegenerate = () => {
     // Navigate to the appropriate generation page with the prompt pre-filled
     const typeRoutes: Record<string, string> = {
-      video: '/video',
-      image: '/image',
-      music: '/music',
+      video: '/generate-video',
+      image: '/generate-image',
+      music: '/generate-music',
     };
     
     const route = typeRoutes[generation.type];
@@ -140,6 +141,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   <div 
                     className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     onClick={handlePlayVideo}
+                    data-testid={`video-overlay-${generation.id}`}
                   >
                     <div className="bg-white/90 rounded-full p-4 hover:bg-white transition-colors">
                       <Play className="h-8 w-8 text-black fill-black" />
@@ -258,7 +260,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={handleDelete}
+              onClick={() => setShowDeleteDialog(true)}
               disabled={deleteMutation.isPending}
               className="w-full text-destructive hover:text-destructive"
               data-testid={`button-delete-${generation.id}`}
@@ -339,6 +341,31 @@ export function GenerationCard({ generation }: GenerationCardProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Generation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this generation? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid={`button-cancel-delete-${generation.id}`}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid={`button-confirm-delete-${generation.id}`}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
