@@ -805,6 +805,141 @@ export default function Admin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="plans">
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Plans</CardTitle>
+              <CardDescription>
+                Configure Stripe Price IDs and Product IDs for subscription billing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {plansLoading ? (
+                <div className="flex items-center justify-center p-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Plan Name</TableHead>
+                      <TableHead>Credits/Month</TableHead>
+                      <TableHead>Stripe Price ID</TableHead>
+                      <TableHead>Stripe Product ID</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {plans.map((plan) => (
+                      <TableRow key={plan.id}>
+                        <TableCell className="font-medium" data-testid={`text-plan-name-${plan.id}`}>
+                          {plan.name}
+                        </TableCell>
+                        <TableCell data-testid={`text-plan-credits-${plan.id}`}>
+                          {plan.creditsPerMonth.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {editingPlanId === plan.id ? (
+                            <Input
+                              type="text"
+                              placeholder="price_xxxxxxxxxxxxx"
+                              value={editPlanData.stripePriceId}
+                              onChange={(e) => setEditPlanData({ ...editPlanData, stripePriceId: e.target.value })}
+                              className="font-mono text-sm"
+                              data-testid={`input-plan-price-id-${plan.id}`}
+                              autoFocus
+                            />
+                          ) : (
+                            <span className={`font-mono text-sm ${plan.stripePriceId ? 'text-foreground' : 'text-muted-foreground italic'}`} data-testid={`text-plan-price-id-value-${plan.id}`}>
+                              {plan.stripePriceId || 'Not set'}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {editingPlanId === plan.id ? (
+                            <Input
+                              type="text"
+                              placeholder="prod_xxxxxxxxxxxxx"
+                              value={editPlanData.stripeProductId}
+                              onChange={(e) => setEditPlanData({ ...editPlanData, stripeProductId: e.target.value })}
+                              className="font-mono text-sm"
+                              data-testid={`input-plan-product-id-${plan.id}`}
+                            />
+                          ) : (
+                            <span className={`font-mono text-sm ${plan.stripeProductId ? 'text-foreground' : 'text-muted-foreground italic'}`} data-testid={`text-plan-product-id-value-${plan.id}`}>
+                              {plan.stripeProductId || 'Not set'}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {editingPlanId === plan.id ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => {
+                                  const trimmedPriceId = editPlanData.stripePriceId.trim();
+                                  const trimmedProductId = editPlanData.stripeProductId.trim();
+                                  
+                                  if (!trimmedPriceId || !trimmedProductId) {
+                                    toast({ title: "Error", description: "Both Stripe Price ID and Product ID are required", variant: "destructive" });
+                                    return;
+                                  }
+                                  
+                                  updatePlanMutation.mutate({
+                                    planId: plan.id,
+                                    stripePriceId: trimmedPriceId,
+                                    stripeProductId: trimmedProductId,
+                                  });
+                                }}
+                                disabled={updatePlanMutation.isPending}
+                                data-testid={`button-save-plan-${plan.id}`}
+                              >
+                                {updatePlanMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Save className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingPlanId(null);
+                                  setEditPlanData({ stripePriceId: "", stripeProductId: "" });
+                                }}
+                                disabled={updatePlanMutation.isPending}
+                                data-testid={`button-cancel-plan-${plan.id}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingPlanId(plan.id);
+                                setEditPlanData({
+                                  stripePriceId: plan.stripePriceId || "",
+                                  stripeProductId: plan.stripeProductId || "",
+                                });
+                              }}
+                              data-testid={`button-edit-plan-${plan.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Add API Key Dialog */}
