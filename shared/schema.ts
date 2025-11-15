@@ -376,18 +376,156 @@ export const generateImageRequestSchema = z.object({
 );
 
 export const generateMusicRequestSchema = z.object({
-  model: z.enum(['suno-v3.5', 'suno-v4', 'suno-v4.5']),
-  prompt: z.string().min(1).max(2000),
+  model: z.enum(['suno-v3.5', 'suno-v4', 'suno-v4.5', 'suno-v4.5-plus', 'suno-v5']),
+  prompt: z.string().min(1).max(5000),
   parameters: z.object({
     lyrics: z.string().optional(),
     duration: z.number().optional(),
     genre: z.string().optional(),
+    customMode: z.boolean().optional(),
+    instrumental: z.boolean().optional(),
+    style: z.string().optional(),
+    title: z.string().optional(),
+    negativeTags: z.string().optional(),
+    vocalGender: z.enum(['m', 'f']).optional(),
+    styleWeight: z.number().min(0).max(1).optional(),
+    weirdnessConstraint: z.number().min(0).max(1).optional(),
+    audioWeight: z.number().min(0).max(1).optional(),
   }).optional(),
+});
+
+// Extend Music Request
+export const extendMusicRequestSchema = z.object({
+  audioId: z.string(),
+  model: z.enum(['suno-v3.5', 'suno-v4', 'suno-v4.5', 'suno-v4.5-plus', 'suno-v5']),
+  defaultParamFlag: z.boolean(),
+  continueAt: z.number().optional(),
+  prompt: z.string().max(5000).optional(),
+  style: z.string().max(1000).optional(),
+  title: z.string().max(100).optional(),
+  parameters: z.object({
+    instrumental: z.boolean().optional(),
+    negativeTags: z.string().optional(),
+    vocalGender: z.enum(['m', 'f']).optional(),
+    styleWeight: z.number().min(0).max(1).optional(),
+    weirdnessConstraint: z.number().min(0).max(1).optional(),
+    audioWeight: z.number().min(0).max(1).optional(),
+  }).optional(),
+});
+
+// Upload & Cover Request
+export const uploadCoverRequestSchema = z.object({
+  uploadUrl: z.string().url(),
+  model: z.enum(['suno-v3.5', 'suno-v4', 'suno-v4.5', 'suno-v4.5-plus', 'suno-v5']),
+  customMode: z.boolean(),
+  instrumental: z.boolean(),
+  prompt: z.string().max(5000).optional(),
+  style: z.string().max(1000).optional(),
+  title: z.string().max(100).optional(),
+  parameters: z.object({
+    negativeTags: z.string().optional(),
+    vocalGender: z.enum(['m', 'f']).optional(),
+    styleWeight: z.number().min(0).max(1).optional(),
+    weirdnessConstraint: z.number().min(0).max(1).optional(),
+    audioWeight: z.number().min(0).max(1).optional(),
+  }).optional(),
+});
+
+// Upload & Extend Request
+export const uploadExtendRequestSchema = z.object({
+  uploadUrl: z.string().url(),
+  model: z.enum(['suno-v3.5', 'suno-v4', 'suno-v4.5', 'suno-v4.5-plus', 'suno-v5']),
+  defaultParamFlag: z.boolean(),
+  instrumental: z.boolean(),
+  continueAt: z.number(),
+  prompt: z.string().max(5000).optional(),
+  style: z.string().max(1000).optional(),
+  title: z.string().max(100).optional(),
+  parameters: z.object({
+    negativeTags: z.string().optional(),
+    vocalGender: z.enum(['m', 'f']).optional(),
+    styleWeight: z.number().min(0).max(1).optional(),
+    weirdnessConstraint: z.number().min(0).max(1).optional(),
+    audioWeight: z.number().min(0).max(1).optional(),
+  }).optional(),
+});
+
+// Add Instrumental Request
+export const addInstrumentalRequestSchema = z.object({
+  uploadUrl: z.string().url(),
+  model: z.enum(['suno-v4.5-plus', 'suno-v5']).default('suno-v4.5-plus'),
+  title: z.string(),
+  tags: z.string(),
+  negativeTags: z.string(),
+  parameters: z.object({
+    vocalGender: z.enum(['m', 'f']).optional(),
+    styleWeight: z.number().min(0).max(1).optional(),
+    weirdnessConstraint: z.number().min(0).max(1).optional(),
+    audioWeight: z.number().min(0).max(1).optional(),
+  }).optional(),
+});
+
+// Add Vocals Request
+export const addVocalsRequestSchema = z.object({
+  uploadUrl: z.string().url(),
+  model: z.enum(['suno-v4.5-plus', 'suno-v5']).default('suno-v4.5-plus'),
+  prompt: z.string(),
+  title: z.string(),
+  style: z.string(),
+  negativeTags: z.string(),
+  parameters: z.object({
+    vocalGender: z.enum(['m', 'f']).optional(),
+    styleWeight: z.number().min(0).max(1).optional(),
+    weirdnessConstraint: z.number().min(0).max(1).optional(),
+    audioWeight: z.number().min(0).max(1).optional(),
+  }).optional(),
+});
+
+// Separate Vocals Request
+export const separateVocalsRequestSchema = z.object({
+  taskId: z.string(),
+  audioId: z.string(),
+  type: z.enum(['separate_vocal', 'split_stem']).default('separate_vocal'),
+});
+
+// Convert to WAV Request
+export const convertToWavRequestSchema = z.object({
+  taskId: z.string(),
+  audioId: z.string(),
+});
+
+// Get Timestamped Lyrics Request
+export const getTimestampedLyricsRequestSchema = z.object({
+  taskId: z.string(),
+  audioId: z.string(),
+});
+
+// Create Music Video Request
+export const createMusicVideoRequestSchema = z.object({
+  taskId: z.string(),
+  audioId: z.string(),
+  author: z.string().max(50).optional(),
+  domainName: z.string().max(50).optional(),
+});
+
+// Generate Lyrics Request
+export const generateLyricsRequestSchema = z.object({
+  prompt: z.string().min(1).max(200),
 });
 
 export type GenerateVideoRequest = z.infer<typeof generateVideoRequestSchema>;
 export type GenerateImageRequest = z.infer<typeof generateImageRequestSchema>;
 export type GenerateMusicRequest = z.infer<typeof generateMusicRequestSchema>;
+export type ExtendMusicRequest = z.infer<typeof extendMusicRequestSchema>;
+export type UploadCoverRequest = z.infer<typeof uploadCoverRequestSchema>;
+export type UploadExtendRequest = z.infer<typeof uploadExtendRequestSchema>;
+export type AddInstrumentalRequest = z.infer<typeof addInstrumentalRequestSchema>;
+export type AddVocalsRequest = z.infer<typeof addVocalsRequestSchema>;
+export type SeparateVocalsRequest = z.infer<typeof separateVocalsRequestSchema>;
+export type ConvertToWavRequest = z.infer<typeof convertToWavRequestSchema>;
+export type GetTimestampedLyricsRequest = z.infer<typeof getTimestampedLyricsRequestSchema>;
+export type CreateMusicVideoRequest = z.infer<typeof createMusicVideoRequestSchema>;
+export type GenerateLyricsRequest = z.infer<typeof generateLyricsRequestSchema>;
 
 // Conversations table for AI chat
 export const conversations = pgTable("conversations", {
@@ -506,6 +644,30 @@ export const insertSttGenerationSchema = createInsertSchema(sttGenerations).omit
 
 export type InsertSttGeneration = z.infer<typeof insertSttGenerationSchema>;
 export type SttGeneration = typeof sttGenerations.$inferSelect;
+
+// Lyrics Generations table for Suno AI-generated lyrics
+export const lyricsGenerations = pgTable("lyrics_generations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  prompt: text("prompt").notNull(), // Theme/description for lyrics
+  lyricsText: text("lyrics_text"), // Generated lyrics content
+  lyricsTitle: varchar("lyrics_title"), // Title of the lyrics
+  externalTaskId: varchar("external_task_id"), // Kie.ai task ID
+  status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
+  errorMessage: text("error_message"),
+  creditsCost: integer("credits_cost").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertLyricsGenerationSchema = createInsertSchema(lyricsGenerations).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertLyricsGeneration = z.infer<typeof insertLyricsGenerationSchema>;
+export type LyricsGeneration = typeof lyricsGenerations.$inferSelect;
 
 // AI Talking Avatar generations table
 export const avatarGenerations = pgTable("avatar_generations", {
@@ -774,6 +936,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   voiceClones: many(voiceClones),
   ttsGenerations: many(ttsGenerations),
   sttGenerations: many(sttGenerations),
+  lyricsGenerations: many(lyricsGenerations),
   avatarGenerations: many(avatarGenerations),
   audioConversions: many(audioConversions),
   subscriptions: many(userSubscriptions),
@@ -858,6 +1021,13 @@ export const ttsGenerationsRelations = relations(ttsGenerations, ({ one }) => ({
 export const sttGenerationsRelations = relations(sttGenerations, ({ one }) => ({
   user: one(users, {
     fields: [sttGenerations.userId],
+    references: [users.id],
+  }),
+}));
+
+export const lyricsGenerationsRelations = relations(lyricsGenerations, ({ one }) => ({
+  user: one(users, {
+    fields: [lyricsGenerations.userId],
     references: [users.id],
   }),
 }));
