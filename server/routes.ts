@@ -79,13 +79,44 @@ async function getModelCost(model: string): Promise<number> {
   return defaultCosts[model] || 100;
 }
 
-// Helper to get callback URL
-function getCallbackUrl(generationId: string): string {
+// Helper to get normalized base URL with scheme validation
+function getBaseUrl(): string {
+  let baseUrl = '';
+  
   // Priority: PRODUCTION_URL > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN > localhost
-  const baseUrl = process.env.PRODUCTION_URL ||
-    (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : null) ||
-    (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) ||
-    'http://localhost:5000';
+  if (process.env.PRODUCTION_URL) {
+    baseUrl = process.env.PRODUCTION_URL.trim();
+    // Ensure PRODUCTION_URL has scheme
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = `https://${baseUrl}`;
+    }
+  } else if (process.env.REPLIT_DOMAINS) {
+    // Try each domain in comma-separated list until we find a valid one
+    const domains = process.env.REPLIT_DOMAINS.split(',');
+    for (const domain of domains) {
+      const trimmed = domain.trim();
+      if (trimmed) {
+        baseUrl = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
+        break;
+      }
+    }
+  }
+  
+  if (!baseUrl && process.env.REPLIT_DEV_DOMAIN) {
+    baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  }
+  
+  if (!baseUrl) {
+    baseUrl = 'http://localhost:5000';
+  }
+  
+  // Normalize: remove trailing slash to prevent double slashes
+  return baseUrl.replace(/\/+$/, '');
+}
+
+// Helper to get callback URL with normalization
+function getCallbackUrl(generationId: string): string {
+  const baseUrl = getBaseUrl();
   return `${baseUrl}/api/callback/kie/${generationId}`;
 }
 
@@ -2240,10 +2271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      const baseUrl = process.env.PRODUCTION_URL ||
-        (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : null) ||
-        (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) ||
-        'http://localhost:5000';
+      const baseUrl = getBaseUrl();
 
       const session = await createCheckoutSession({
         userId: user.id,
@@ -2270,10 +2298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No Stripe customer found' });
       }
 
-      const baseUrl = process.env.PRODUCTION_URL ||
-        (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : null) ||
-        (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) ||
-        'http://localhost:5000';
+      const baseUrl = getBaseUrl();
 
       const session = await createCustomerPortalSession({
         customerId: user.stripeCustomerId,
