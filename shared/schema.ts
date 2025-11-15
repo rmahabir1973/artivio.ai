@@ -347,6 +347,42 @@ export const generateVideoRequestSchema = z.object({
   }).optional(),
 });
 
+// Sora 2 Pro Text-to-Video Request
+export const sora2ProTextRequestSchema = z.object({
+  model: z.enum(['sora-2-pro-text-720p', 'sora-2-pro-text-1080p']),
+  prompt: z.string().min(1).max(2000),
+  parameters: z.object({
+    aspectRatio: z.enum(['portrait', 'landscape']).default('landscape'),
+    nFrames: z.enum(['10', '15']).default('10'),
+    removeWatermark: z.boolean().default(true),
+  }).optional(),
+});
+
+// Sora 2 Pro Image-to-Video Request
+export const sora2ProImageRequestSchema = z.object({
+  model: z.enum(['sora-2-pro-image-720p', 'sora-2-pro-image-1080p']),
+  prompt: z.string().min(1).max(2000),
+  referenceImages: z.array(imageInputSchema).min(1).max(1), // Exactly 1 image
+  parameters: z.object({
+    aspectRatio: z.enum(['portrait', 'landscape']).default('landscape'),
+    nFrames: z.enum(['10', '15']).default('10'),
+    removeWatermark: z.boolean().default(true),
+  }).optional(),
+});
+
+// Sora 2 Pro Storyboard Request
+export const sora2ProStoryboardRequestSchema = z.object({
+  shots: z.array(z.object({
+    prompt: z.string().min(1).max(2000),
+    duration: z.number().min(1).max(25),
+  })).min(1).max(10), // Up to 10 scenes
+  referenceImages: z.array(imageInputSchema).max(1).optional(), // Optional reference image
+  parameters: z.object({
+    nFrames: z.enum(['10', '15', '25']).default('15'),
+    aspectRatio: z.enum(['portrait', 'landscape']).default('landscape'),
+  }).optional(),
+});
+
 export const generateImageRequestSchema = z.object({
   model: z.enum(['4o-image', 'flux-kontext', 'nano-banana']),
   prompt: z.string().min(1).max(2000),
