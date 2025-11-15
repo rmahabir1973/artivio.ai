@@ -388,13 +388,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const kieStatus = callbackData.status?.toLowerCase();
       const hasError = callbackData.error || callbackData.errorMessage || callbackData.data?.error;
       
+      // Identify intermediate callbacks that should be ignored
+      const isProcessing = kieStatus === 'processing' || 
+                          kieStatus === 'pending' || 
+                          kieStatus === 'queued';
+      
+      // Only ignore intermediate callbacks that have no error and no result
+      // If there's an error or a resultUrl, we need to process it
+      if (isProcessing && !hasError && !resultUrl) {
+        console.log(`⏸️  Ignoring intermediate callback for ${generationId} (status: ${kieStatus})`);
+        return res.json({ success: true, message: 'Intermediate callback ignored' });
+      }
+      
       // Determine final status
       let finalStatus: 'completed' | 'failed';
       if (kieStatus === 'failed' || kieStatus === 'error') {
         finalStatus = 'failed';
-      } else if (resultUrl) {
+      } else if (resultUrl || kieStatus === 'completed' || kieStatus === 'success') {
         finalStatus = 'completed';
       } else {
+        // Only mark as failed if explicitly indicated
         finalStatus = 'failed';
       }
       
@@ -403,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           resultUrl,
         });
         console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
-      } else {
+      } else if (finalStatus === 'failed') {
         const errorMessage = hasError || 
                            callbackData.message || 
                            callbackData.data?.message ||
@@ -412,6 +425,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errorMessage,
         });
         console.log(`✗ Generation ${generationId} failed: ${errorMessage}`);
+      } else {
+        // Callback indicates completion but no resultUrl - log warning but don't fail
+        console.warn(`⚠️  Callback for ${generationId} indicates completion but no resultUrl found. Ignoring.`);
+        return res.json({ success: true, message: 'Incomplete callback data' });
       }
       
       res.json({ success: true });

@@ -16,7 +16,7 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **Backend**: Express.js and Node.js with TypeScript.
 -   **Database**: PostgreSQL (Neon) with Drizzle ORM for type-safe interactions.
 -   **Authentication**: Replit Auth (OpenID Connect).
--   **Asynchronous Operations**: Kie.ai integrations use a webhook-based callback system for real-time status updates of generation tasks.
+-   **Asynchronous Operations**: Kie.ai integrations use a webhook-based callback system for real-time status updates of generation tasks. Callback handler intelligently filters intermediate status updates (processing/pending/queued) while always processing final callbacks (success/failure/error), preventing premature failures from partial updates.
 -   **Centralized URL Management**: Production-safe URL generation via `server/urlUtils.ts` prevents dev domain leakage:
     -   Priority chain: PRODUCTION_URL > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN > localhost
     -   Automatic scheme normalization (adds https:// if missing)
