@@ -221,8 +221,8 @@ function buildFilterGraph(
     // No transitions - simple concatenation
     videoFilterSteps.push(`${videoStreams.join('')}concat=n=${videoCount}:v=1:a=0[vout]`);
   } else {
-    // Single video
-    videoFilterSteps.push(`${videoStreams[0]}copy[vout]`);
+    // Single video - use null filter (no-op passthrough)
+    videoFilterSteps.push(`${videoStreams[0]}null[vout]`);
   }
 
   // Add text overlays
@@ -256,7 +256,8 @@ function buildFilterGraph(
       textFilter = `[${outputLabel}]`;
     }
   } else {
-    videoFilterSteps.push('[vout]copy[vfinal]');
+    // No text overlays - use null filter (no-op passthrough)
+    videoFilterSteps.push('[vout]null[vfinal]');
   }
 
   // Normalize sample rates to 44100 Hz before concatenation (handles mixed rates)
@@ -282,8 +283,8 @@ function buildFilterGraph(
     // No transitions - concatenate audio sequentially
     audioFilterSteps.push(`${resampledLabels.join('')}concat=n=${videoCount}:v=0:a=1[aout]`);
   } else {
-    // Single video - just copy the resampled audio
-    audioFilterSteps.push(`${resampledLabels[0]}acopy[aout]`);
+    // Single video - use anull filter (no-op passthrough for audio)
+    audioFilterSteps.push(`${resampledLabels[0]}anull[aout]`);
   }
 
   const videoFilters = videoFilterSteps.join(';');
