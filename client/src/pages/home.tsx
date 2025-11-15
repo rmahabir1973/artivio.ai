@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
+import { GenerationsQueue } from "@/components/generations-queue";
 import { 
   Video, 
   Image as ImageIcon, 
@@ -273,6 +274,11 @@ export default function Home() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Generations Queue Widget */}
+        <div className="mb-8">
+          <GenerationsQueue />
+        </div>
+
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div className="relative">

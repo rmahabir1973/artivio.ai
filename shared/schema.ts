@@ -985,6 +985,51 @@ export const convertAudioRequestSchema = z.object({
 
 export type ConvertAudioRequest = z.infer<typeof convertAudioRequestSchema>;
 
+// Favorite Workflows - User's saved workflows for quick access
+export const favoriteWorkflows = pgTable("favorite_workflows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  workflowId: integer("workflow_id").notNull(), // References workflow ID from workflows.tsx
+  workflowTitle: varchar("workflow_title").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("user_workflow_idx").on(table.userId, table.workflowId),
+]);
+
+export const insertFavoriteWorkflowSchema = createInsertSchema(favoriteWorkflows).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFavoriteWorkflow = z.infer<typeof insertFavoriteWorkflowSchema>;
+export type FavoriteWorkflow = typeof favoriteWorkflows.$inferSelect;
+
+// Generation Templates - Pre-configured prompts and settings for quick generation
+export const generationTemplates = pgTable("generation_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }), // null for global templates
+  featureType: varchar("feature_type").notNull(), // 'video', 'image', 'music', etc.
+  name: varchar("name").notNull(),
+  description: text("description"),
+  prompt: text("prompt").notNull(),
+  model: varchar("model"), // Preferred model for this template
+  parameters: jsonb("parameters"), // Template-specific settings
+  isPublic: boolean("is_public").notNull().default(false), // Global templates vs user templates
+  usageCount: integer("usage_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export const insertGenerationTemplateSchema = createInsertSchema(generationTemplates).omit({
+  id: true,
+  usageCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertGenerationTemplate = z.infer<typeof insertGenerationTemplateSchema>;
+export type GenerationTemplate = typeof generationTemplates.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   generations: many(generations),
@@ -996,11 +1041,27 @@ export const usersRelations = relations(users, ({ many }) => ({
   avatarGenerations: many(avatarGenerations),
   audioConversions: many(audioConversions),
   subscriptions: many(userSubscriptions),
+  favoriteWorkflows: many(favoriteWorkflows),
+  generationTemplates: many(generationTemplates),
 }));
 
 export const generationsRelations = relations(generations, ({ one }) => ({
   user: one(users, {
     fields: [generations.userId],
+    references: [users.id],
+  }),
+}));
+
+export const favoriteWorkflowsRelations = relations(favoriteWorkflows, ({ one }) => ({
+  user: one(users, {
+    fields: [favoriteWorkflows.userId],
+    references: [users.id],
+  }),
+}));
+
+export const generationTemplatesRelations = relations(generationTemplates, ({ one }) => ({
+  user: one(users, {
+    fields: [generationTemplates.userId],
     references: [users.id],
   }),
 }));
