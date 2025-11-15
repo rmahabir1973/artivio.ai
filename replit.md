@@ -44,7 +44,7 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
 -   **AI Image Generation**: Integrates 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads (up to 10).
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and up to 8 minutes duration.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis (object detection, scene description, OCR, mood, style), with optional custom prompts.
--   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine 2-20 AI-generated videos, featuring drag-and-drop interface, background processing, and credit deduction.
+-   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine 2-20 AI-generated videos, featuring drag-and-drop interface, background processing, credit deduction, and corrected filter graph using valid FFmpeg `null`/`anull` filters for single-video and no-overlay paths.
 -   **AI Chat**: Dual provider support (Deepseek and OpenAI), streaming via SSE, model selection, and persistent conversation history.
 -   **Voice Cloning**: Integrates ElevenLabs via Kie.ai, supporting audio uploads (via ref-based file input trigger) and audio recording, with comprehensive error handling and detailed logging for debugging provider failures.
 -   **Admin Panel**: Comprehensive user management (credit editing, deletion), API key management (activation/deactivation, usage tracking), Stripe integration configuration with inline editing of Price IDs and Product IDs, and home page content management for controlling landing page hero sections, showcase videos, creator/business sections, and FAQs.
