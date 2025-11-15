@@ -568,7 +568,7 @@ export default function VoiceClone() {
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="audio/*"
+                        accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac"
                         multiple
                         onChange={handleFileSelect}
                         className="hidden"
@@ -576,7 +576,11 @@ export default function VoiceClone() {
                       />
                       <Button
                         variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                          console.log('Upload Files button clicked');
+                          console.log('fileInputRef.current:', fileInputRef.current);
+                          fileInputRef.current?.click();
+                        }}
                         disabled={uploading}
                         data-testid="button-upload-files"
                       >
