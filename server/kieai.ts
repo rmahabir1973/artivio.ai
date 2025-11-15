@@ -3,6 +3,51 @@ import { storage } from "./storage";
 
 const KIE_API_BASE = "https://api.kie.ai";
 
+// Centralized Suno response parser to handle various API response formats
+export function parseSunoResponse(response: any): {
+  taskId: string | null;
+  audioUrl: string | null;
+  status: string | null;
+  errorMessage: string | null;
+} {
+  // Parse task ID from various formats
+  const taskId = response?.data?.task?.taskId ||
+                response?.data?.tasks?.[0]?.taskId ||
+                response?.data?.taskId ||
+                response?.data?.task_id || // v3 format
+                response?.data?.jobId ||
+                response?.taskId ||
+                response?.task_id ||
+                null;
+  
+  // Parse audio URL from various Suno payload formats
+  const audioUrl = response?.data?.response?.sunoData?.[0]?.audioUrl ||
+                  response?.data?.response?.sunoData?.[0]?.streamAudioUrl ||
+                  response?.data?.response?.tracks?.[0]?.audioUrl ||
+                  response?.data?.response?.audio?.[0]?.url ||
+                  response?.data?.audio_url ||
+                  response?.data?.audioUrl ||
+                  response?.audioUrl ||
+                  response?.url ||
+                  null;
+  
+  // Parse status from nested structures
+  const status = response?.data?.task?.status ||
+                response?.data?.status ||
+                response?.status ||
+                null;
+  
+  // Parse error messages
+  const errorMessage = response?.error ||
+                      response?.errorMessage ||
+                      response?.data?.error ||
+                      response?.data?.errorMessage ||
+                      response?.message ||
+                      null;
+  
+  return { taskId, audioUrl, status, errorMessage };
+}
+
 // Get available API keys from environment
 function getAvailableApiKeys(): string[] {
   const keys: string[] = [];
