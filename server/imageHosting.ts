@@ -53,9 +53,10 @@ export async function saveBase64Image(base64Data: string): Promise<string> {
   await fs.writeFile(filePath, buffer);
   
   // Return public URL (prefer production domain if available)
-  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-    : 'http://localhost:5000';
+  const baseUrl = process.env.PRODUCTION_URL ||
+    (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : null) ||
+    (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null) ||
+    'http://localhost:5000';
   
   return `${baseUrl}/uploads/${filename}`;
 }
