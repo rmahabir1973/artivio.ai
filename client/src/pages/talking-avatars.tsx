@@ -5,12 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, Image as ImageIcon, Video, Upload } from "lucide-react";
 import type { AvatarGeneration, VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+
+// Pre-made ElevenLabs voices for talking avatars
+const PREMADE_VOICES = [
+  { id: "Rachel", name: "Rachel" },
+  { id: "Aria", name: "Aria" },
+  { id: "Clyde", name: "Clyde" },
+  { id: "Dave", name: "Dave" },
+  { id: "Drew", name: "Drew" },
+  { id: "Fin", name: "Fin" },
+  { id: "Freya", name: "Freya" },
+  { id: "Gigi", name: "Gigi" },
+  { id: "Glinda", name: "Glinda" },
+  { id: "Harry", name: "Harry" },
+];
 
 export default function TalkingAvatars() {
   const { toast } = useToast();
@@ -215,11 +229,24 @@ export default function TalkingAvatars() {
                   <SelectValue placeholder="Select a voice (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {voices.filter(v => v.isActive && v.voiceId && v.voiceId.trim() !== '').map((voice) => (
-                    <SelectItem key={voice.id} value={voice.voiceId!}>
-                      {voice.name}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    <SelectLabel>Pre-made Voices</SelectLabel>
+                    {PREMADE_VOICES.map((voice) => (
+                      <SelectItem key={voice.id} value={voice.id}>
+                        {voice.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  {voices.filter(v => v.isActive && v.voiceId && v.voiceId.trim() !== '').length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Your Cloned Voices</SelectLabel>
+                      {voices.filter(v => v.isActive && v.voiceId && v.voiceId.trim() !== '').map((voice) => (
+                        <SelectItem key={voice.id} value={voice.voiceId!}>
+                          {voice.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             </div>
