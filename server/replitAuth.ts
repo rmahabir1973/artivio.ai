@@ -99,8 +99,9 @@ export async function setupAuth(app: Express) {
   ) => {
     const user = {};
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    console.log('[AUTH DEBUG] verify callback completed, user created');
+    // Note: User creation and plan assignment happens in GET /api/auth/user
+    // Don't create user here, otherwise the !user check will always be false
+    console.log('[AUTH DEBUG] verify callback completed, session created');
     verified(null, user);
   };
 
