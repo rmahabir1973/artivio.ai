@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CreditDisplay } from "@/components/credit-display";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AnnouncementBar } from "@/components/announcement-bar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, LogOut } from "lucide-react";
@@ -117,6 +118,7 @@ function AppContent() {
               </Button>
             </div>
           </header>
+          <AnnouncementBar />
           <main className="flex-1 overflow-y-auto">
             <Router />
           </main>

@@ -2529,6 +2529,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== ANNOUNCEMENT ROUTES ==========
+
+  // Get active announcements for current user
+  app.get('/api/announcements/active', async (req: any, res) => {
+    try {
+      // Get user's plan if authenticated
+      let userPlanName: string | undefined = undefined;
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        if (user) {
+          const subscription = await storage.getUserSubscription(userId);
+          userPlanName = subscription?.plan.name;
+        }
+      }
+
+      const announcements = await storage.getActiveAnnouncements(userPlanName);
+      res.json(announcements);
+    } catch (error) {
+      console.error('Error fetching active announcements:', error);
+      res.status(500).json({ message: "Failed to fetch announcements" });
+    }
+  });
+
+  // Admin: Get all announcements
+  app.get('/api/admin/announcements', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const announcements = await storage.getAllAnnouncements();
+      res.json(announcements);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      res.status(500).json({ message: "Failed to fetch announcements" });
+    }
+  });
+
+  // Admin: Create announcement
+  app.post('/api/admin/announcements', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { message, type, targetPlans, startDate, endDate } = req.body;
+
+      if (!message || message.trim().length === 0) {
+        return res.status(400).json({ message: "Announcement message is required" });
+      }
+
+      const announcement = await storage.createAnnouncement({
+        message: message.trim(),
+        type: type || 'info',
+        targetPlans: targetPlans || null,
+        isActive: true,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        createdBy: userId,
+      });
+
+      res.json(announcement);
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      res.status(500).json({ message: "Failed to create announcement" });
+    }
+  });
+
+  // Admin: Update announcement
+  app.patch('/api/admin/announcements/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { id } = req.params;
+      const announcement = await storage.updateAnnouncement(id, req.body);
+
+      if (!announcement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+
+      res.json(announcement);
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+      res.status(500).json({ message: "Failed to update announcement" });
+    }
+  });
+
+  // Admin: Delete announcement
+  app.delete('/api/admin/announcements/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { id } = req.params;
+      await storage.deleteAnnouncement(id);
+      res.json({ message: "Announcement deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      res.status(500).json({ message: "Failed to delete announcement" });
+    }
+  });
+
   // ========== IMAGE ANALYSIS ROUTES ==========
 
   // Analyze image - SYNCHRONOUS processing

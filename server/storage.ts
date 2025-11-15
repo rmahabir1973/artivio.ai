@@ -18,6 +18,7 @@ import {
   userSubscriptions,
   stripeEvents,
   homePageContent,
+  announcements,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -56,6 +57,8 @@ import {
   type StripeEvent,
   type InsertStripeEvent,
   type HomePageContent,
+  type Announcement,
+  type InsertAnnouncement,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -187,6 +190,13 @@ export interface IStorage {
   // Stripe Event operations (for webhook idempotency)
   getStripeEventById(eventId: string): Promise<StripeEvent | undefined>;
   createStripeEvent(event: InsertStripeEvent): Promise<void>;
+
+  // Announcement operations
+  getAllAnnouncements(): Promise<Announcement[]>;
+  getActiveAnnouncements(userPlanName?: string): Promise<Announcement[]>;
+  createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
+  updateAnnouncement(id: string, updates: Partial<InsertAnnouncement>): Promise<Announcement | undefined>;
+  deleteAnnouncement(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1153,6 +1163,65 @@ export class DatabaseStorage implements IStorage {
       }
       console.log(`[Storage] Stripe event ${event.eventId} already exists (expected for idempotency)`);
     }
+  }
+
+  // Announcement operations
+  async getAllAnnouncements(): Promise<Announcement[]> {
+    return await db.select().from(announcements).orderBy(desc(announcements.createdAt));
+  }
+
+  async getActiveAnnouncements(userPlanName?: string): Promise<Announcement[]> {
+    const now = new Date();
+    
+    // Build conditions
+    const conditions = [
+      eq(announcements.isActive, true),
+    ];
+
+    // Add date range filter (announcement is active if it's between startDate and endDate, or no dates set)
+    const result = await db
+      .select()
+      .from(announcements)
+      .where(and(...conditions))
+      .orderBy(desc(announcements.createdAt));
+
+    // Filter by date range and target plans in application code
+    return result.filter(announcement => {
+      // Check if announcement is within date range
+      if (announcement.startDate && new Date(announcement.startDate) > now) {
+        return false;
+      }
+      if (announcement.endDate && new Date(announcement.endDate) < now) {
+        return false;
+      }
+
+      // Check if announcement targets this user's plan
+      if (announcement.targetPlans && announcement.targetPlans.length > 0) {
+        if (!userPlanName) return false; // No plan specified, but announcement has plan targeting
+        return announcement.targetPlans.includes(userPlanName);
+      }
+
+      // No plan targeting, show to all users
+      return true;
+    });
+  }
+
+  async createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement> {
+    const [created] = await db.insert(announcements).values(announcement).returning();
+    return created;
+  }
+
+  async updateAnnouncement(id: string, updates: Partial<InsertAnnouncement>): Promise<Announcement | undefined> {
+    const [updated] = await db
+      .update(announcements)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(announcements.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAnnouncement(id: string): Promise<void> {
+    await db.delete(announcements).where(eq(announcements.id, id));
   }
 }
 
