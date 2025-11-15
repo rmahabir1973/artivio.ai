@@ -1783,6 +1783,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== HOME PAGE CONTENT ROUTES ==========
+
+  // Public: Get home page content
+  app.get('/api/homepage', async (req, res) => {
+    try {
+      const content = await storage.getHomePageContent();
+      
+      if (!content) {
+        // Return default content if nothing is configured
+        return res.json({
+          heroTitle: 'Create any video you can imagine',
+          heroSubtitle: 'Generate stunning videos, images, and music with powerful AI models',
+          heroVideoUrl: null,
+          heroImageUrl: null,
+          showcaseVideos: [],
+          creatorsTitle: 'Creators',
+          creatorsDescription: null,
+          creatorsImageUrl: null,
+          businessTitle: 'Businesses',
+          businessDescription: null,
+          businessImageUrl: null,
+          faqs: [],
+        });
+      }
+      
+      res.json(content);
+    } catch (error) {
+      console.error('Error fetching home page content:', error);
+      res.status(500).json({ message: "Failed to fetch home page content" });
+    }
+  });
+
+  // Admin: Get home page content
+  app.get('/api/admin/homepage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const content = await storage.getHomePageContent();
+      res.json(content);
+    } catch (error) {
+      console.error('Error fetching home page content:', error);
+      res.status(500).json({ message: "Failed to fetch home page content" });
+    }
+  });
+
+  // Admin: Update home page content
+  app.patch('/api/admin/homepage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updated = await storage.updateHomePageContent(req.body);
+      
+      if (!updated) {
+        return res.status(500).json({ message: "Failed to update home page content" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating home page content:', error);
+      res.status(500).json({ message: "Failed to update home page content" });
+    }
+  });
+
   // ========== IMAGE ANALYSIS ROUTES ==========
 
   // Analyze image - SYNCHRONOUS processing

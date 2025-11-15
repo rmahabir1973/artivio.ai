@@ -16,6 +16,7 @@ import {
   subscriptionPlans,
   userSubscriptions,
   stripeEvents,
+  homePageContent,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -51,6 +52,7 @@ import {
   type InsertUserSubscription,
   type StripeEvent,
   type InsertStripeEvent,
+  type HomePageContent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -152,6 +154,11 @@ export interface IStorage {
   updatePlanStripeIds(planId: string, stripePriceId: string | null, stripeProductId: string | null): Promise<SubscriptionPlan | undefined>;
   deletePlan(planId: string): Promise<{ success: boolean; error?: string }>;
   checkPlanInUse(planId: string): Promise<boolean>;
+
+  // Home Page Content operations
+  getHomePageContent(): Promise<HomePageContent | undefined>;
+  updateHomePageContent(updates: Partial<HomePageContent>): Promise<HomePageContent | undefined>;
+
   getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined>;
   getUsersWithSubscriptions(): Promise<Array<User & { subscription: (UserSubscription & { plan: SubscriptionPlan }) | null }>>;
   upsertUserSubscription(data: InsertUserSubscription): Promise<UserSubscription>;
@@ -751,6 +758,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userSubscriptions.planId, planId))
       .limit(1);
     return result.length > 0;
+  }
+
+  // Home Page Content operations
+  async getHomePageContent(): Promise<HomePageContent | undefined> {
+    const [content] = await db
+      .select()
+      .from(homePageContent)
+      .where(eq(homePageContent.id, 'homepage'));
+    return content;
+  }
+
+  async updateHomePageContent(updates: Partial<HomePageContent>): Promise<HomePageContent | undefined> {
+    // First, try to get existing content
+    const existing = await this.getHomePageContent();
+    
+    if (existing) {
+      // Update existing content
+      const [updated] = await db
+        .update(homePageContent)
+        .set({
+          ...updates,
+          updatedAt: new Date(),
+        })
+        .where(eq(homePageContent.id, 'homepage'))
+        .returning();
+      return updated;
+    } else {
+      // Insert new content with defaults
+      const [inserted] = await db
+        .insert(homePageContent)
+        .values({
+          id: 'homepage',
+          ...updates,
+        } as any)
+        .returning();
+      return inserted;
+    }
   }
 
   async deletePlan(planId: string): Promise<{ success: boolean; error?: string }> {
