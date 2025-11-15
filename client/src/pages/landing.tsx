@@ -21,9 +21,9 @@ export default function Landing() {
       {/* Fixed Navigation Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#0F0F0F]/80 backdrop-blur-lg border-b border-white/10">
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-20 flex-wrap gap-4">
             {/* Logo */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <div className="bg-gradient-to-br from-purple-500 to-blue-600 p-2 rounded-lg">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
@@ -31,22 +31,23 @@ export default function Landing() {
             </div>
 
             {/* Center Navigation - Desktop */}
-            <nav className="hidden md:flex items-center gap-8">
-              <a href="#products" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+            <nav className="hidden md:flex items-center gap-6 lg:gap-8 flex-1 justify-center flex-wrap">
+              <a href="#products" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-products">
                 Products
               </a>
-              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-pricing">
                 Pricing
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-blog">
                 Blog
               </a>
-              <a href="/api/login" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="/api/login" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-login">
                 Log In
               </a>
               <a 
                 href="/pricing" 
-                className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
+                className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap"
+                data-testid="nav-signup"
               >
                 Sign Up
               </a>
@@ -54,7 +55,7 @@ export default function Landing() {
 
             {/* Mobile Menu Button */}
             <button 
-              className="md:hidden text-gray-300 hover:text-white"
+              className="md:hidden text-gray-300 hover:text-white flex-shrink-0"
               onClick={() => {
                 const menu = document.getElementById('mobile-menu');
                 if (menu) {
@@ -68,26 +69,26 @@ export default function Landing() {
               </svg>
             </button>
 
-            {/* Spacer for alignment */}
-            <div className="hidden md:block w-[140px]" />
+            {/* Spacer for alignment - matches logo width */}
+            <div className="hidden md:block flex-shrink-0" style={{ width: '140px' }} />
           </div>
 
           {/* Mobile Menu */}
           <div id="mobile-menu" className="hidden md:hidden py-4 border-t border-white/10">
             <nav className="flex flex-col gap-4">
-              <a href="#products" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="#products" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-products">
                 Products
               </a>
-              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-pricing">
                 Pricing
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-blog">
                 Blog
               </a>
-              <a href="/api/login" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="/api/login" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-login">
                 Log In
               </a>
-              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-signup">
                 Sign Up
               </a>
             </nav>
@@ -118,6 +119,7 @@ export default function Landing() {
                 size="lg" 
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 h-14"
                 asChild
+                data-testid="button-hero-get-started"
               >
                 <a href="/pricing">
                   Get Started Free
@@ -129,6 +131,7 @@ export default function Landing() {
                 variant="outline" 
                 className="border-white/20 hover:bg-white/5 text-lg px-8 h-14"
                 asChild
+                data-testid="button-hero-see-action"
               >
                 <a href="#features">
                   <Play className="mr-2 h-5 w-5" />
@@ -185,7 +188,7 @@ export default function Landing() {
                 Generate professional videos with Veo 3.1, Runway, and more. 
                 From concept to completion in minutes.
               </p>
-              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group">
+              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-video">
                 Learn More
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </a>
@@ -201,7 +204,7 @@ export default function Landing() {
                 Create stunning visuals with DALL-E, Flux, and Midjourney. 
                 Photorealistic to artistic styles.
               </p>
-              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group">
+              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-image">
                 Learn More
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </a>
@@ -217,7 +220,7 @@ export default function Landing() {
                 Compose original tracks with Suno V4. 
                 Full songs with vocals up to 8 minutes long.
               </p>
-              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group">
+              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-music">
                 Learn More
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </a>
@@ -263,7 +266,7 @@ export default function Landing() {
                   </div>
                 </li>
               </ul>
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild>
+              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-section-video">
                 <a href="/pricing">Start Creating</a>
               </Button>
             </div>
@@ -295,7 +298,7 @@ export default function Landing() {
                   </div>
                 </li>
               </ul>
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild>
+              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-section-image">
                 <a href="/pricing">Get Started</a>
               </Button>
             </div>
@@ -343,7 +346,7 @@ export default function Landing() {
                   </div>
                 </li>
               </ul>
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild>
+              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-section-music">
                 <a href="/pricing">Create Music</a>
               </Button>
             </div>
@@ -366,6 +369,7 @@ export default function Landing() {
               size="lg" 
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-12 h-16"
               asChild
+              data-testid="button-final-cta"
             >
               <a href="/pricing">
                 Get Started Free
@@ -397,10 +401,10 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                <li><a href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">API Docs</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Changelog</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-features">Features</a></li>
+                <li><a href="/pricing" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-pricing">Pricing</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-api-docs">API Docs</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-changelog">Changelog</a></li>
               </ul>
             </div>
 
@@ -408,10 +412,10 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Press</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-about">About</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-blog">Blog</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-careers">Careers</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-press">Press</a></li>
               </ul>
             </div>
 
@@ -419,10 +423,10 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-help">Help Center</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-contact">Contact</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-privacy">Privacy</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-terms">Terms</a></li>
               </ul>
             </div>
           </div>
@@ -432,13 +436,13 @@ export default function Landing() {
               © 2024 Artivio AI. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="social-twitter" aria-label="Twitter">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/></svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="social-github" aria-label="GitHub">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="social-linkedin" aria-label="LinkedIn">
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
               </a>
             </div>
