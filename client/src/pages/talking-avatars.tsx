@@ -29,7 +29,7 @@ export default function TalkingAvatars() {
   });
 
   const { data: voices = [] } = useQuery<VoiceClone[]>({
-    queryKey: ["/api/voices"],
+    queryKey: ["/api/voice-clones"],
   });
 
   const generateMutation = useMutation({
