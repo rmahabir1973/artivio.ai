@@ -279,26 +279,6 @@ export const combineVideosRequestSchema = z.object({
 
 export type CombineVideosRequest = z.infer<typeof combineVideosRequestSchema>;
 
-// Request validation schemas for generation endpoints
-export const generateVideoRequestSchema = z.object({
-  model: z.enum([
-    'veo-3',
-    'veo-3.1',
-    'veo-3.1-fast',
-    'runway-gen3-alpha-turbo',
-    'runway-aleph',
-  ]),
-  prompt: z.string().min(1).max(2000),
-  generationType: z.enum(['text-to-video', 'image-to-video']).optional(),
-  referenceImages: z.array(z.string().url()).max(3).optional(), // Up to 3 images for Veo
-  veoSubtype: z.enum(['TEXT_2_VIDEO', 'REFERENCE_2_VIDEO', 'FIRST_AND_LAST_FRAMES_2_VIDEO']).optional(), // Explicit Veo generation subtype
-  parameters: z.object({
-    duration: z.number().optional(), // Duration in seconds (5, 10 for Runway)
-    quality: z.enum(['720p', '1080p']).optional(), // For Runway
-    aspectRatio: z.enum(['16:9', '9:16', '4:3', '1:1', '3:4', 'Auto']).optional(),
-  }).optional(),
-});
-
 // Custom validator for base64 image data URIs
 const base64ImageSchema = z.string().refine(
   (val) => {
@@ -335,6 +315,26 @@ const base64ImageSchema = z.string().refine(
     message: "Each image must be a valid data:image/... URI with decoded size ≤ 10MB"
   }
 );
+
+// Request validation schemas for generation endpoints
+export const generateVideoRequestSchema = z.object({
+  model: z.enum([
+    'veo-3',
+    'veo-3.1',
+    'veo-3.1-fast',
+    'runway-gen3-alpha-turbo',
+    'runway-aleph',
+  ]),
+  prompt: z.string().min(1).max(2000),
+  generationType: z.enum(['text-to-video', 'image-to-video']).optional(),
+  referenceImages: z.array(base64ImageSchema).max(3).optional(), // Up to 3 base64 images for Veo
+  veoSubtype: z.enum(['TEXT_2_VIDEO', 'REFERENCE_2_VIDEO', 'FIRST_AND_LAST_FRAMES_2_VIDEO']).optional(), // Explicit Veo generation subtype
+  parameters: z.object({
+    duration: z.number().optional(), // Duration in seconds (5, 10 for Runway)
+    quality: z.enum(['720p', '1080p']).optional(), // For Runway
+    aspectRatio: z.enum(['16:9', '9:16', '4:3', '1:1', '3:4', 'Auto']).optional(),
+  }).optional(),
+});
 
 export const generateImageRequestSchema = z.object({
   model: z.enum(['4o-image', 'flux-kontext', 'nano-banana']),
