@@ -13,6 +13,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Video, Upload, X, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { CreditCostWarning } from "@/components/credit-cost-warning";
 
 const VIDEO_MODEL_INFO = [
   { 
@@ -59,7 +60,7 @@ const VIDEO_MODEL_INFO = [
 
 export default function GenerateVideo() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
   
@@ -468,10 +469,18 @@ export default function GenerateVideo() {
               </Select>
             </div>
 
+            {/* Credit Cost Warning */}
+            {selectedModel && (
+              <CreditCostWarning 
+                cost={selectedModel.cost} 
+                featureName={`${selectedModel.label} video generation`}
+              />
+            )}
+
             {/* Generate Button */}
             <Button
               onClick={handleGenerate}
-              disabled={generateMutation.isPending}
+              disabled={generateMutation.isPending || (user && (user as any).credits < (selectedModel?.cost || 0))}
               className="w-full"
               size="lg"
               data-testid="button-generate-video"
@@ -481,6 +490,8 @@ export default function GenerateVideo() {
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Generating...
                 </>
+              ) : (user && (user as any).credits < (selectedModel?.cost || 0)) ? (
+                <>Insufficient Credits - Upgrade Plan</>
               ) : (
                 <>Generate Video ({selectedModel?.cost} credits)</>
               )}
