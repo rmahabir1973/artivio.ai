@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  credits: integer("credits").notNull().default(1000),
+  credits: integer("credits").notNull().default(0), // Changed from 1000 - users must select a plan to get credits
   stripeCustomerId: varchar("stripe_customer_id").unique(),
   isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
