@@ -92,14 +92,16 @@ export function GenerationCard({ generation }: GenerationCardProps) {
     });
   };
 
+  // Supported types for regeneration
+  const typeRoutes: Record<string, string> = {
+    video: '/generate/video',
+    image: '/generate/image',
+    music: '/generate/music',
+  };
+  
+  const canRegenerate = generation.type in typeRoutes;
+  
   const handleRegenerate = () => {
-    // Navigate to the appropriate generation page with the prompt pre-filled
-    const typeRoutes: Record<string, string> = {
-      video: '/generate-video',
-      image: '/generate-image',
-      music: '/generate-music',
-    };
-    
     const route = typeRoutes[generation.type];
     if (route) {
       // Store the prompt in sessionStorage to pre-fill the form
@@ -246,17 +248,19 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 w-full">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleRegenerate}
-              className="w-full"
-              data-testid={`button-regenerate-${generation.id}`}
-            >
-              <RotateCw className="h-4 w-4 mr-1" />
-              Regenerate
-            </Button>
+          <div className={canRegenerate ? "grid grid-cols-2 gap-2 w-full" : "w-full"}>
+            {canRegenerate && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleRegenerate}
+                className="w-full"
+                data-testid={`button-regenerate-${generation.id}`}
+              >
+                <RotateCw className="h-4 w-4 mr-1" />
+                Regenerate
+              </Button>
+            )}
             <Button 
               variant="outline" 
               size="sm" 
