@@ -2273,22 +2273,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       const { planId } = req.body;
 
+      console.log(`[ADMIN] Updating subscription for user ${userId} to plan ${planId}`);
+
       // If planId is null, remove subscription
       if (!planId || planId === 'none') {
         await storage.removeUserSubscription(userId);
+        console.log(`[ADMIN] ✓ Removed subscription for user ${userId}`);
         return res.json({ message: "Subscription removed successfully" });
       }
 
       // Use atomic transaction to assign plan and grant credits
       const result = await storage.assignPlanToUser(userId, planId);
 
+      console.log(`[ADMIN] ✓ Assigned plan ${planId} to user ${userId}, granted ${result.creditsGranted} credits`);
+
       res.json({
         ...result.subscription,
         creditsGranted: result.creditsGranted,
       });
-    } catch (error) {
-      console.error('Error updating user subscription:', error);
-      res.status(500).json({ message: "Failed to update subscription" });
+    } catch (error: any) {
+      console.error('[ADMIN] Error updating user subscription:', error);
+      console.error('[ADMIN] Error details:', {
+        userId: req.params.userId,
+        planId: req.body.planId,
+        errorMessage: error.message,
+        errorStack: error.stack,
+      });
+      res.status(500).json({ 
+        message: "Failed to update subscription",
+        error: error.message // Include error message for debugging
+      });
     }
   });
 
