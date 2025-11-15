@@ -6,7 +6,11 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { 
   generateVideo, 
   generateImage, 
-  generateMusic, 
+  generateMusic,
+  extendMusic,
+  generateLyrics,
+  uploadCover,
+  uploadExtend,
   cloneVoice,
   generateTTS,
   transcribeAudio,
@@ -33,6 +37,10 @@ import {
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
   generateMusicRequestSchema,
+  extendMusicRequestSchema,
+  generateLyricsRequestSchema,
+  uploadCoverRequestSchema,
+  uploadExtendRequestSchema,
   sendMessageRequestSchema,
   cloneVoiceRequestSchema,
   generateTTSRequestSchema,
@@ -303,6 +311,248 @@ async function generateMusicInBackground(generationId: string, model: string, pr
   }
 }
 
+// Extend Music Background Processing
+async function extendMusicInBackground(generationId: string, audioUrl: string, model: string | undefined, continueAt: number | undefined, continueClipId: string | undefined, parameters: any) {
+  try {
+    await storage.updateGeneration(generationId, { status: 'processing' });
+    
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for extend music ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await extendMusic({ 
+      audioUrl, 
+      continueAt,
+      continueClipId,
+      model,
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
+    
+    const { taskId, audioUrl: resultAudioUrl, status: providerStatus, errorMessage } = await import('./kieai').then(m => m.parseSunoResponse(result));
+    
+    if (errorMessage) {
+      await storage.finalizeGeneration(generationId, 'failure', {
+        errorMessage: errorMessage,
+      });
+      console.log(`❌ Extend music API returned error: ${errorMessage}`);
+      return;
+    }
+    
+    if (resultAudioUrl) {
+      await storage.finalizeGeneration(generationId, 'success', {
+        resultUrl: resultAudioUrl,
+        apiKeyUsed: keyName,
+        statusDetail: providerStatus || 'completed',
+      });
+      console.log(`✓ Extend music completed immediately with URL: ${resultAudioUrl}`);
+      return;
+    }
+    
+    if (taskId) {
+      await storage.updateGeneration(generationId, {
+        status: 'processing',
+        apiKeyUsed: keyName,
+        externalTaskId: taskId,
+        statusDetail: providerStatus || 'queued',
+      });
+      console.log(`📋 Extend music task queued: ${taskId} (status: ${providerStatus || 'unknown'}, waiting for callback)`);
+      return;
+    }
+    
+    console.warn(`⚠️ Extend music API response has no taskId or URL for ${generationId}`);
+    await storage.updateGeneration(generationId, {
+      status: 'processing',
+      apiKeyUsed: keyName,
+      statusDetail: 'awaiting_callback',
+    });
+  } catch (error: any) {
+    console.error('Background extend music failed:', error);
+    await storage.finalizeGeneration(generationId, 'failure', {
+      errorMessage: error.message || 'Unknown error during extend music',
+    });
+  }
+}
+
+// Generate Lyrics Background Processing (uses lyricsGenerations table)
+async function generateLyricsInBackground(lyricsId: string, prompt: string, parameters: any) {
+  try {
+    await storage.updateLyricsGeneration(lyricsId, { status: 'processing' });
+    
+    const callbackUrl = `${getBaseUrl()}/api/callback/lyrics/${lyricsId}`;
+    console.log(`📞 Sending callback URL to Kie.ai for lyrics ${lyricsId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await generateLyrics({ 
+      prompt, 
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
+    
+    console.log(`📋 Lyrics generation response:`, JSON.stringify(result, null, 2));
+    
+    if (result.code === 200 && result.data) {
+      const { taskId, lyrics, title, status: providerStatus, error } = result.data;
+      
+      if (error) {
+        await storage.updateLyricsGeneration(lyricsId, {
+          status: 'failed',
+          errorMessage: error,
+        });
+        console.log(`❌ Lyrics API returned error: ${error}`);
+        return;
+      }
+      
+      if (lyrics) {
+        await storage.updateLyricsGeneration(lyricsId, {
+          status: 'completed',
+          lyricsText: lyrics,
+          lyricsTitle: title,
+          completedAt: new Date(),
+        });
+        console.log(`✓ Lyrics generation completed immediately`);
+        return;
+      }
+      
+      if (taskId) {
+        await storage.updateLyricsGeneration(lyricsId, {
+          status: 'processing',
+          externalTaskId: taskId,
+        });
+        console.log(`📋 Lyrics task queued: ${taskId} (waiting for callback)`);
+        return;
+      }
+    }
+    
+    console.warn(`⚠️ Lyrics API response has no taskId or lyrics for ${lyricsId}`);
+    await storage.updateLyricsGeneration(lyricsId, {
+      status: 'processing',
+    });
+  } catch (error: any) {
+    console.error('Background lyrics generation failed:', error);
+    await storage.updateLyricsGeneration(lyricsId, {
+      status: 'failed',
+      errorMessage: error.message || 'Unknown error during lyrics generation',
+    });
+  }
+}
+
+// Upload & Cover Background Processing
+async function uploadCoverInBackground(generationId: string, prompt: string, audioUrl: string, model: string | undefined, parameters: any) {
+  try {
+    await storage.updateGeneration(generationId, { status: 'processing' });
+    
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for upload cover ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await uploadCover({ 
+      prompt,
+      audioUrl, 
+      model,
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
+    
+    const { taskId, audioUrl: resultAudioUrl, status: providerStatus, errorMessage } = await import('./kieai').then(m => m.parseSunoResponse(result));
+    
+    if (errorMessage) {
+      await storage.finalizeGeneration(generationId, 'failure', {
+        errorMessage: errorMessage,
+      });
+      console.log(`❌ Upload cover API returned error: ${errorMessage}`);
+      return;
+    }
+    
+    if (resultAudioUrl) {
+      await storage.finalizeGeneration(generationId, 'success', {
+        resultUrl: resultAudioUrl,
+        apiKeyUsed: keyName,
+        statusDetail: providerStatus || 'completed',
+      });
+      console.log(`✓ Upload cover completed immediately with URL: ${resultAudioUrl}`);
+      return;
+    }
+    
+    if (taskId) {
+      await storage.updateGeneration(generationId, {
+        status: 'processing',
+        apiKeyUsed: keyName,
+        externalTaskId: taskId,
+        statusDetail: providerStatus || 'queued',
+      });
+      console.log(`📋 Upload cover task queued: ${taskId} (status: ${providerStatus || 'unknown'}, waiting for callback)`);
+      return;
+    }
+    
+    console.warn(`⚠️ Upload cover API response has no taskId or URL for ${generationId}`);
+    await storage.updateGeneration(generationId, {
+      status: 'processing',
+      apiKeyUsed: keyName,
+      statusDetail: 'awaiting_callback',
+    });
+  } catch (error: any) {
+    console.error('Background upload cover failed:', error);
+    await storage.finalizeGeneration(generationId, 'failure', {
+      errorMessage: error.message || 'Unknown error during upload cover',
+    });
+  }
+}
+
+// Upload & Extend Background Processing
+async function uploadExtendInBackground(generationId: string, prompt: string, audioUrl: string, model: string | undefined, parameters: any) {
+  try {
+    await storage.updateGeneration(generationId, { status: 'processing' });
+    
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for upload extend ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await uploadExtend({ 
+      prompt,
+      audioUrl, 
+      model,
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
+    
+    const { taskId, audioUrl: resultAudioUrl, status: providerStatus, errorMessage } = await import('./kieai').then(m => m.parseSunoResponse(result));
+    
+    if (errorMessage) {
+      await storage.finalizeGeneration(generationId, 'failure', {
+        errorMessage: errorMessage,
+      });
+      console.log(`❌ Upload extend API returned error: ${errorMessage}`);
+      return;
+    }
+    
+    if (resultAudioUrl) {
+      await storage.finalizeGeneration(generationId, 'success', {
+        resultUrl: resultAudioUrl,
+        apiKeyUsed: keyName,
+        statusDetail: providerStatus || 'completed',
+      });
+      console.log(`✓ Upload extend completed immediately with URL: ${resultAudioUrl}`);
+      return;
+    }
+    
+    if (taskId) {
+      await storage.updateGeneration(generationId, {
+        status: 'processing',
+        apiKeyUsed: keyName,
+        externalTaskId: taskId,
+        statusDetail: providerStatus || 'queued',
+      });
+      console.log(`📋 Upload extend task queued: ${taskId} (status: ${providerStatus || 'unknown'}, waiting for callback)`);
+      return;
+    }
+    
+    console.warn(`⚠️ Upload extend API response has no taskId or URL for ${generationId}`);
+    await storage.updateGeneration(generationId, {
+      status: 'processing',
+      apiKeyUsed: keyName,
+      statusDetail: 'awaiting_callback',
+    });
+  } catch (error: any) {
+    console.error('Background upload extend failed:', error);
+    await storage.finalizeGeneration(generationId, 'failure', {
+      errorMessage: error.message || 'Unknown error during upload extend',
+    });
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize auth - fail-fast if this doesn't work
   // Auth is critical; without it, all protected routes will fail
@@ -481,6 +731,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Lyrics Callback Endpoint (no auth - called by Kie.ai)
+  app.post('/api/callback/lyrics/:lyricsId', async (req: any, res) => {
+    try {
+      const { lyricsId } = req.params;
+      const callbackData = req.body;
+      
+      console.log(`\n🔔 ===== RECEIVED LYRICS CALLBACK =====`);
+      console.log(`Lyrics ID: ${lyricsId}`);
+      console.log(`Callback Data:`, JSON.stringify(callbackData, null, 2));
+      console.log(`======================================\n`);
+      
+      // Extract lyrics data from callback
+      const lyrics = callbackData.data?.lyrics || callbackData.lyrics;
+      const title = callbackData.data?.title || callbackData.title;
+      const kieStatus = callbackData.status?.toLowerCase();
+      const hasError = callbackData.error || callbackData.errorMessage || callbackData.data?.error;
+      
+      // Handle intermediate callbacks
+      const isProcessing = kieStatus === 'processing' || kieStatus === 'pending' || kieStatus === 'queued';
+      if (isProcessing && !hasError && !lyrics) {
+        await storage.updateLyricsGeneration(lyricsId, {
+          status: 'processing',
+        });
+        console.log(`⏸️  Intermediate lyrics callback (status: ${kieStatus})`);
+        return res.json({ success: true, message: 'Intermediate status updated' });
+      }
+      
+      // Determine final status
+      if (hasError || kieStatus === 'failed' || kieStatus === 'error') {
+        const errorMessage = hasError || callbackData.message || 'Lyrics generation failed';
+        await storage.finalizeLyricsGeneration(lyricsId, 'failure', {
+          errorMessage,
+        });
+        console.log(`✗ Lyrics ${lyricsId} failed: ${errorMessage}`);
+      } else if (lyrics || kieStatus === 'success' || kieStatus === 'completed') {
+        await storage.finalizeLyricsGeneration(lyricsId, 'success', {
+          lyricsText: lyrics,
+          lyricsTitle: title,
+        });
+        console.log(`✓ Lyrics ${lyricsId} completed successfully`);
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Lyrics callback processing error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Video Generation
   app.post('/api/generate/video', isAuthenticated, async (req: any, res) => {
     try {
@@ -629,6 +928,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Music generation error:', error);
       res.status(500).json({ message: error.message || "Failed to generate music" });
+    }
+  });
+
+  // Extend Music
+  app.post('/api/generate/extend-music', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validationResult = extendMusicRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { audioUrl, continueAt, continueClipId, model, parameters } = validationResult.data;
+      const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'music',
+        model: model || 'suno-v3.5',
+        prompt: 'Music extension',
+        parameters: parameters || {},
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      extendMusicInBackground(generation.id, audioUrl, model, continueAt, continueClipId, parameters || {});
+
+      res.json({ generationId: generation.id, message: "Music extension started" });
+    } catch (error: any) {
+      console.error('Extend music error:', error);
+      res.status(500).json({ message: error.message || "Failed to extend music" });
+    }
+  });
+
+  // Generate Lyrics
+  app.post('/api/generate/lyrics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validationResult = generateLyricsRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { prompt, parameters } = validationResult.data;
+      const cost = 5; // Lyrics generation cost
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      const lyricsGeneration = await storage.createLyricsGeneration({
+        userId,
+        prompt,
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      generateLyricsInBackground(lyricsGeneration.id, prompt, parameters || {});
+
+      res.json({ lyricsId: lyricsGeneration.id, message: "Lyrics generation started" });
+    } catch (error: any) {
+      console.error('Lyrics generation error:', error);
+      res.status(500).json({ message: error.message || "Failed to generate lyrics" });
+    }
+  });
+
+  // Upload & Cover
+  app.post('/api/generate/upload-cover', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validationResult = uploadCoverRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { prompt, audioUrl, model, parameters } = validationResult.data;
+      const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'music',
+        model: model || 'suno-v3.5',
+        prompt,
+        parameters: parameters || {},
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      uploadCoverInBackground(generation.id, prompt, audioUrl, model, parameters || {});
+
+      res.json({ generationId: generation.id, message: "Upload & cover started" });
+    } catch (error: any) {
+      console.error('Upload cover error:', error);
+      res.status(500).json({ message: error.message || "Failed to upload & cover" });
+    }
+  });
+
+  // Upload & Extend
+  app.post('/api/generate/upload-extend', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validationResult = uploadExtendRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { prompt, audioUrl, model, parameters } = validationResult.data;
+      const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'music',
+        model: model || 'suno-v3.5',
+        prompt,
+        parameters: parameters || {},
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      uploadExtendInBackground(generation.id, prompt, audioUrl, model, parameters || {});
+
+      res.json({ generationId: generation.id, message: "Upload & extend started" });
+    } catch (error: any) {
+      console.error('Upload extend error:', error);
+      res.status(500).json({ message: error.message || "Failed to upload & extend" });
     }
   });
 

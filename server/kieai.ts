@@ -383,6 +383,16 @@ export async function generateImage(params: {
   return await callKieApi('/api/v1/gpt4o-image/generate', payload);
 }
 
+// Helper: Map frontend model names to Kie.ai API model names
+function mapSunoModel(model: string): string {
+  if (model.includes('v5')) return 'V5';
+  if (model.includes('v4.5') || model.includes('v4-5')) {
+    return model.includes('plus') ? 'V4_5PLUS' : 'V4_5';
+  }
+  if (model.includes('v4')) return 'V4';
+  return 'V3_5';
+}
+
 // Music Generation
 export async function generateMusic(params: {
   model: string;
@@ -390,22 +400,7 @@ export async function generateMusic(params: {
   parameters: any;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
-  
-  // Map frontend model names to Kie.ai API model names
-  let kieModel = 'V3_5';
-  if (params.model.includes('v5')) {
-    kieModel = 'V5';
-  } else if (params.model.includes('v4.5') || params.model.includes('v4-5')) {
-    if (params.model.includes('plus')) {
-      kieModel = 'V4_5PLUS';
-    } else {
-      kieModel = 'V4_5';
-    }
-  } else if (params.model.includes('v4')) {
-    kieModel = 'V4';
-  } else if (params.model.includes('v3.5') || params.model.includes('v3-5')) {
-    kieModel = 'V3_5';
-  }
+  const kieModel = mapSunoModel(params.model);
   
   return await callKieApi('/api/v1/generate', {
     prompt: params.prompt,
@@ -416,6 +411,75 @@ export async function generateMusic(params: {
     title: parameters.title,
     negativeTags: parameters.negativeTags,
     callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid', // Required by API
+  });
+}
+
+// Extend Music - Continue an existing song
+export async function extendMusic(params: {
+  audioUrl: string;
+  continueAt?: number;
+  continueClipId?: string;
+  model?: string;
+  parameters: any;
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  const kieModel = params.model ? mapSunoModel(params.model) : 'V3_5';
+  
+  return await callKieApi('/api/v1/generate/extend', {
+    audioUrl: params.audioUrl,
+    continueAt: params.continueAt,
+    continueClipId: params.continueClipId,
+    model: kieModel,
+    callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid',
+  });
+}
+
+// Generate Lyrics - AI-generated lyrics based on theme/description
+export async function generateLyrics(params: {
+  prompt: string;
+  parameters: any;
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  
+  return await callKieApi('/api/v1/lyrics', {
+    prompt: params.prompt,
+    callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid',
+  });
+}
+
+// Upload & Cover - Generate music cover from uploaded audio
+export async function uploadCover(params: {
+  prompt: string;
+  audioUrl: string;
+  model?: string;
+  parameters: any;
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  const kieModel = params.model ? mapSunoModel(params.model) : 'V3_5';
+  
+  return await callKieApi('/api/v1/generate/upload-cover', {
+    prompt: params.prompt,
+    audioUrl: params.audioUrl,
+    model: kieModel,
+    callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid',
+  });
+}
+
+// Upload & Extend - Extend uploaded audio
+export async function uploadExtend(params: {
+  prompt: string;
+  audioUrl: string;
+  model?: string;
+  parameters: any;
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  const kieModel = params.model ? mapSunoModel(params.model) : 'V3_5';
+  
+  return await callKieApi('/api/v1/generate/upload-extend', {
+    prompt: params.prompt,
+    audioUrl: params.audioUrl,
+    model: kieModel,
+    callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid',
   });
 }
 

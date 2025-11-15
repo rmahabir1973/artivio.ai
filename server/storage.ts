@@ -11,6 +11,7 @@ import {
   avatarGenerations,
   audioConversions,
   imageAnalyses,
+  lyricsGenerations,
   videoCombinations,
   videoCombinationEvents,
   subscriptionPlans,
@@ -42,6 +43,8 @@ import {
   type InsertAudioConversion,
   type ImageAnalysis,
   type InsertImageAnalysis,
+  type LyricsGeneration,
+  type InsertLyricsGeneration,
   type VideoCombination,
   type InsertVideoCombination,
   type VideoCombinationEvent,
@@ -142,6 +145,16 @@ export interface IStorage {
   updateImageAnalysis(id: string, updates: Partial<ImageAnalysis>): Promise<ImageAnalysis | undefined>;
   getUserImageAnalyses(userId: string): Promise<ImageAnalysis[]>;
   getImageAnalysisByIdempotencyKey(userId: string, idempotencyKey: string): Promise<ImageAnalysis | undefined>;
+
+  // Lyrics Generation operations
+  createLyricsGeneration(generation: InsertLyricsGeneration): Promise<LyricsGeneration>;
+  updateLyricsGeneration(id: string, updates: Partial<LyricsGeneration>): Promise<LyricsGeneration | undefined>;
+  finalizeLyricsGeneration(
+    lyricsId: string,
+    outcome: 'success' | 'failure',
+    updates: Partial<LyricsGeneration>
+  ): Promise<LyricsGeneration | undefined>;
+  getUserLyricsGenerations(userId: string): Promise<LyricsGeneration[]>;
 
   // Video Combination operations
   createVideoCombination(combination: InsertVideoCombination): Promise<VideoCombination>;
@@ -714,6 +727,79 @@ export class DatabaseStorage implements IStorage {
         eq(imageAnalyses.idempotencyKey, idempotencyKey)
       ));
     return analysis;
+  }
+
+  // Lyrics Generation operations
+  async createLyricsGeneration(generation: InsertLyricsGeneration): Promise<LyricsGeneration> {
+    const [result] = await db
+      .insert(lyricsGenerations)
+      .values(generation)
+      .returning();
+    return result;
+  }
+
+  async updateLyricsGeneration(id: string, updates: Partial<LyricsGeneration>): Promise<LyricsGeneration | undefined> {
+    const [lyrics] = await db
+      .update(lyricsGenerations)
+      .set(updates)
+      .where(eq(lyricsGenerations.id, id))
+      .returning();
+    return lyrics;
+  }
+
+  async finalizeLyricsGeneration(
+    lyricsId: string,
+    outcome: 'success' | 'failure',
+    updates: Partial<LyricsGeneration>
+  ): Promise<LyricsGeneration | undefined> {
+    return await db.transaction(async (tx) => {
+      const [lyrics] = await tx
+        .select()
+        .from(lyricsGenerations)
+        .where(eq(lyricsGenerations.id, lyricsId))
+        .for('update')
+        .limit(1);
+
+      if (!lyrics) {
+        throw new Error(`Lyrics generation ${lyricsId} not found`);
+      }
+
+      if (lyrics.status === 'completed' || lyrics.status === 'failed') {
+        console.log(`[finalizeLyricsGeneration] Lyrics ${lyricsId} already finalized with status: ${lyrics.status}`);
+        return lyrics;
+      }
+
+      if (outcome === 'failure' && lyrics.creditsCost > 0) {
+        await tx
+          .update(users)
+          .set({ 
+            credits: sql`${users.credits} + ${lyrics.creditsCost}` 
+          })
+          .where(eq(users.id, lyrics.userId));
+
+        console.log(`✓ [CREDIT REFUND] Refunded ${lyrics.creditsCost} credits to user ${lyrics.userId} for failed lyrics ${lyricsId}`);
+      }
+
+      const [updated] = await tx
+        .update(lyricsGenerations)
+        .set({
+          ...updates,
+          status: outcome === 'success' ? 'completed' : 'failed',
+          completedAt: outcome === 'success' ? (updates.completedAt || new Date()) : null,
+        })
+        .where(eq(lyricsGenerations.id, lyricsId))
+        .returning();
+
+      return updated;
+    });
+  }
+
+  async getUserLyricsGenerations(userId: string): Promise<LyricsGeneration[]> {
+    return await db
+      .select()
+      .from(lyricsGenerations)
+      .where(eq(lyricsGenerations.userId, userId))
+      .orderBy(desc(lyricsGenerations.createdAt));
   }
 
   // Video Combination operations
