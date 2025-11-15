@@ -294,6 +294,96 @@ export default function Workflows() {
       difficulty: "Advanced",
       estimatedTime: "35 minutes",
       credits: 700
+    },
+    {
+      id: 16,
+      title: "Recipe Tutorial Series",
+      description: "Transform cooking recipes into engaging tutorial videos with step-by-step visuals, voiceover instructions, and background music.",
+      icon: GraduationCap,
+      category: "Education",
+      steps: [
+        "Write recipe steps with AI Chat",
+        "Generate food photography with Flux",
+        "Create cooking process videos with Veo",
+        "Add chef voiceover with TTS or Voice Clone",
+        "Combine with upbeat background music"
+      ],
+      features: ["AI Chat", "Image Generation", "Video Generation", "Text to Speech", "Music Generation"],
+      difficulty: "Intermediate",
+      estimatedTime: "30 minutes",
+      credits: 550
+    },
+    {
+      id: 17,
+      title: "Corporate Training Module",
+      description: "Develop professional training videos with AI-generated scenarios, talking presenter, and interactive elements for employee onboarding.",
+      icon: Briefcase,
+      category: "Business",
+      steps: [
+        "Create training script with AI Chat",
+        "Generate workplace scenarios with Sora 2",
+        "Add corporate presenter with Talking Avatars",
+        "Create professional voiceover with TTS",
+        "Combine into training series"
+      ],
+      features: ["AI Chat", "Video Generation", "Talking Avatars", "Text to Speech"],
+      difficulty: "Advanced",
+      estimatedTime: "45 minutes",
+      credits: 850
+    },
+    {
+      id: 18,
+      title: "Travel Vlog Creator",
+      description: "Turn travel photos into cinematic vlogs with AI-generated transitions, location music, and personal narration.",
+      icon: Globe,
+      category: "Content Creation",
+      steps: [
+        "Upload travel photos",
+        "Generate smooth transitions with Runway",
+        "Create location-themed music with Suno",
+        "Add personal narration with Voice Clone",
+        "Export travel vlog for YouTube"
+      ],
+      features: ["Video Generation", "Music Generation", "Voice Cloning"],
+      difficulty: "Beginner",
+      estimatedTime: "20 minutes",
+      credits: 500
+    },
+    {
+      id: 19,
+      title: "Gaming Highlight Montage",
+      description: "Create epic gaming montages with AI-generated intro sequences, energy music, and dramatic effects for streaming platforms.",
+      icon: Film,
+      category: "Entertainment",
+      steps: [
+        "Design intro graphics with 4o Image",
+        "Generate intro animation with Veo",
+        "Compose high-energy music with Suno V5",
+        "Combine gameplay clips with Video Editor",
+        "Export for Twitch/YouTube"
+      ],
+      features: ["Image Generation", "Video Generation", "Music Generation", "Video Editor"],
+      difficulty: "Intermediate",
+      estimatedTime: "35 minutes",
+      credits: 650
+    },
+    {
+      id: 20,
+      title: "Motivational Quote Videos",
+      description: "Produce inspirational quote videos with stunning backgrounds, cinematic music, and professional typography for social media.",
+      icon: Sparkles,
+      category: "Social Media",
+      steps: [
+        "Generate inspiring backgrounds with Flux",
+        "Create animated scenes with Veo 3.1",
+        "Compose uplifting music with Suno",
+        "Add voiceover with TTS",
+        "Export for Instagram/TikTok stories"
+      ],
+      features: ["Image Generation", "Video Generation", "Music Generation", "Text to Speech"],
+      difficulty: "Beginner",
+      estimatedTime: "12 minutes",
+      credits: 350
     }
   ];
 
@@ -312,7 +402,7 @@ export default function Workflows() {
             Pre-Built Workflows
           </h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Chain AI features together to automate complex creative tasks. Choose from 15 proven workflows
+            Chain AI features together to automate complex creative tasks. Choose from 20 proven workflows
             that combine video, image, music generation, and more.
           </p>
         </div>
