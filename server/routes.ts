@@ -1549,13 +1549,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Generate TTS
   app.post('/api/tts/generate', isAuthenticated, async (req: any, res) => {
-    // Feature gate: ElevenLabs TTS API not available through Kie.ai
-    return res.status(503).json({
-      message: "Text-to-Speech service is temporarily unavailable. This feature requires ElevenLabs API integration which is not currently supported through our provider. Please check back later or contact support for alternatives.",
-      error: "SERVICE_UNAVAILABLE",
-      feature: "text-to-speech"
-    });
-    
     try {
       const userId = req.user.claims.sub;
 
