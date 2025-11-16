@@ -24,24 +24,24 @@ export default function Affiliates() {
   const emailFunnel = [
     {
       day: 1,
-      subject: "Welcome to Artivio AI - Your First Video Awaits! 🎬",
+      subject: "Welcome to Artivio AI - Your First Video Awaits!",
       body: `Hi [Name],
 
 Welcome to Artivio AI! I'm thrilled you've joined our community of creators transforming ideas into stunning AI-powered content.
 
 Here's what you can create right now:
-✨ Professional videos with Veo 3.1, Runway, and Kling AI
-🎨 Breathtaking images with Flux, Midjourney v7, and 4o Image
-🎵 Custom music with Suno V5
-🗣️ Voice cloning with ElevenLabs
-🎬 AI talking avatars and video editing
+• Professional videos with Veo 3.1, Runway, and Kling AI
+• Breathtaking images with Flux, Midjourney v7, and 4o Image
+• Custom music with Suno V5
+• Voice cloning with ElevenLabs
+• AI talking avatars and video editing
 
 Your free plan includes 1,000 credits to get started. That's enough for:
 - 2-3 AI videos (Veo 3.1)
 - 10-15 AI images (Flux)
 - 3-4 music tracks (Suno)
 
-👉 Start creating now: https://artivio.ai
+>> Start creating now: https://artivio.ai
 
 Quick Start Tips:
 1. Try the video generator first - it's our most popular feature
@@ -58,30 +58,30 @@ P.S. Need more credits? Upgrade to Starter ($19.99/mo) for 5,000 credits - perfe
     },
     {
       day: 3,
-      subject: "🚀 3 Killer Strategies to Maximize Your Artivio AI Credits",
+      subject: "3 Killer Strategies to Maximize Your Artivio AI Credits",
       body: `Hey [Name],
 
 Hope you've had a chance to explore Artivio AI! I wanted to share 3 strategies that helped me create 10x more content with the same credits:
 
-1️⃣ **Start with Templates**
+[1] **Start with Templates**
    Don't write prompts from scratch. Use our 20 pre-built workflow templates - they're optimized for the best results with fewer retries.
 
-2️⃣ **Use Image-to-Video**
+[2] **Use Image-to-Video**
    Upload reference images instead of pure text-to-video. You'll get more consistent results on the first try, saving credits on regenerations.
 
-3️⃣ **Batch Your Creations**
+[3] **Batch Your Creations**
    Plan your content in advance. Generate 5 videos at once instead of one at a time - you'll stay in the creative flow and waste less credits on experimentation.
 
-💡 Pro Tip: The Image Analyzer feature is FREE - use it to perfect your reference images before generating videos. Zero credit cost!
+** Pro Tip: The Image Analyzer feature is FREE - use it to perfect your reference images before generating videos. Zero credit cost!
 
 Want to see these in action? I created a quick tutorial: [Link to your tutorial if you have one]
 
-👉 Jump back in: https://artivio.ai
+>> Jump back in: https://artivio.ai
 
 Happy creating!
 [Your Name]
 
-P.S. Loving Artivio? Share it with a creator friend - we both get bonus credits! 🎁`
+P.S. Loving Artivio? Share it with a creator friend - we both get bonus credits!`
     },
     {
       day: 5,
@@ -92,27 +92,27 @@ You joined Artivio to create amazing content. But did you know creators are now 
 
 Here's how they're doing it:
 
-📹 **Stock Video Sales**
+** Stock Video Sales **
 Generate unique B-roll footage and sell on Pond5, Adobe Stock, Shutterstock. One creator made $3,200 last month.
 
-🎨 **Custom Client Work**
+** Custom Client Work **
 Offer AI image/video services on Fiverr, Upwork. Charge $50-$200 per video, costs you 200-400 credits ($1-2).
 
-🎵 **Music Licensing**
+** Music Licensing **
 Create background music for YouTubers, podcasters. License for $25-$100 per track, costs 100 credits ($0.50).
 
-🎬 **Social Media Content**
+** Social Media Content **
 Manage clients' Instagram/TikTok with daily AI videos. Charge $500-$1,500/month per client.
 
 **Real Numbers:**
 - Pro Plan: $49.99/month (15,000 credits)
 - Generate 30 high-quality videos
 - Sell at $75 average = $2,250/month
-- Profit: $2,200+/month 💰
+- Profit: $2,200+/month
 
 Want the full playbook? I put together a guide on monetizing AI content: [Link]
 
-👉 Start your side hustle: https://artivio.ai
+>> Start your side hustle: https://artivio.ai
 
 To your success,
 [Your Name]
@@ -121,7 +121,7 @@ P.S. Serious about this? The Pro plan pays for itself with just one client. Upgr
     },
     {
       day: 7,
-      subject: "⚡ Last Chance: Your Free Trial Credit Insights + Exclusive Bonus",
+      subject: "Last Chance: Your Free Trial Credit Insights + Exclusive Bonus",
       body: `Hey [Name],
 
 Quick check-in - you've been with Artivio for a week now!
@@ -133,19 +133,19 @@ With your remaining credits:
 - [Z] more AI images
 - Or mix and match!
 
-🎁 **EXCLUSIVE BONUS FOR YOU:**
+** EXCLUSIVE BONUS FOR YOU: **
 Upgrade to Starter or Pro in the next 48 hours and get:
-✅ +1,000 bonus credits (on top of your monthly allocation)
-✅ Priority generation queue (3x faster)
-✅ Early access to new AI models
-✅ Premium support
+• +1,000 bonus credits (on top of your monthly allocation)
+• Priority generation queue (3x faster)
+• Early access to new AI models
+• Premium support
 
 **Why upgrade now?**
 • Creators on paid plans generate 5x more content
 • 92% see ROI within the first month
 • Cancel anytime, keep your generated content forever
 
-👉 Claim your bonus: https://artivio.ai/pricing
+>> Claim your bonus: https://artivio.ai/pricing
 
 Still have questions? Hit reply - I'm here to help you decide if an upgrade makes sense for your goals.
 
@@ -156,11 +156,11 @@ Artivio AI Advocate
 P.S. This bonus is only valid for 48 hours. After that, standard pricing applies. Don't miss out!
 
 ---
-Not ready to upgrade? No problem! You can always purchase credit top-ups as needed. 😊`
+Not ready to upgrade? No problem! You can always purchase credit top-ups as needed.`
     },
     {
       day: 10,
-      subject: "🎯 Your Custom Artivio AI Action Plan (Based on Your Usage)",
+      subject: "Your Custom Artivio AI Action Plan (Based on Your Usage)",
       body: `Hi [Name],
 
 I've been analyzing how you've used Artivio AI over the past 10 days, and I created a personalized action plan to help you get even more value:
@@ -197,17 +197,17 @@ Need help? I'm offering FREE 15-min onboarding calls this week. Interested?"
 **Special Offer for You:**
 Use code ADVOCATE10 for 10% off your first 3 months on any paid plan. Expires in 5 days.
 
-👉 Upgrade now: https://artivio.ai/pricing?code=ADVOCATE10
+>> Upgrade now: https://artivio.ai/pricing?code=ADVOCATE10
 
 Let me know if you need any guidance - I'm here for you!
 
 [Your Name]
 
-P.S. Loving Artivio? Leave us a review and I'll send you 500 bonus credits! 🌟`
+P.S. Loving Artivio? Leave us a review and I'll send you 500 bonus credits!`
     },
     {
       day: 14,
-      subject: "🔥 What's New at Artivio AI + A Special Thank You",
+      subject: "What's New at Artivio AI + A Special Thank You",
       body: `Hey [Name],
 
 It's been 2 weeks since you joined Artivio AI - time flies!
@@ -215,20 +215,20 @@ It's been 2 weeks since you joined Artivio AI - time flies!
 First, **THANK YOU** for being part of our creator community. Whether you've generated 1 video or 100, you're helping shape the future of AI content creation.
 
 **What's New This Week:**
-🆕 New Model: Seedance 1.0 Pro (ultra-realistic videos)
-🆕 Feature: Bulk video generation (create 10 at once)
-🆕 Integration: Export directly to YouTube, TikTok
-🆕 Templates: 5 new viral video templates added
+• New Model: Seedance 1.0 Pro (ultra-realistic videos)
+• Feature: Bulk video generation (create 10 at once)
+• Integration: Export directly to YouTube, TikTok
+• Templates: 5 new viral video templates added
 
 **Community Highlights:**
-📊 10,000+ creators generated 50,000+ videos this week
-🎖️ Top creator made 127 videos in 7 days (!)
-💡 Most popular: Product demo videos (22% of all generations)
+• 10,000+ creators generated 50,000+ videos this week
+• Top creator made 127 videos in 7 days
+• Most popular: Product demo videos (22% of all generations)
 
 **How You Can Help:**
 We're growing fast thanks to creators like you. If you know anyone who'd benefit from AI content creation, here's our referral link:
 
-👉 Share Artivio: https://artivio.ai/referral/[your-code]
+>> Share Artivio: https://artivio.ai/referral/[your-code]
 
 For every friend who signs up, you BOTH get 500 bonus credits. No limit!
 
@@ -244,11 +244,11 @@ Keep creating amazing content!
 [Your Name]
 Artivio AI Advocate
 
-P.S. Got a success story? Reply and share - we might feature you in our newsletter! 📰`
+P.S. Got a success story? Reply and share - we might feature you in our newsletter!`
     },
     {
       day: 21,
-      subject: "💎 Become an Artivio AI Affiliate - Earn 30% Recurring Commissions",
+      subject: "Become an Artivio AI Affiliate - Earn 30% Recurring Commissions",
       body: `Hi [Name],
 
 You've been with Artivio AI for 3 weeks now, and I have an exciting opportunity for you.
@@ -256,21 +256,21 @@ You've been with Artivio AI for 3 weeks now, and I have an exciting opportunity 
 **How would you like to earn money while helping other creators?**
 
 Our Affiliate Program offers:
-💰 30% recurring commission on all referrals (for life!)
-🎯 Average affiliate earns $500-$2,000/month
-📈 Top affiliates earning $10,000+/month
-🎁 Bonus: $50 for your first 5 paid referrals
+• 30% recurring commission on all referrals (for life!)
+• Average affiliate earns $500-$2,000/month
+• Top affiliates earning $10,000+/month
+• Bonus: $50 for your first 5 paid referrals
 
 **The Math:**
 - Refer 10 Starter plans ($19.99) = $60/month recurring
 - Refer 10 Pro plans ($49.99) = $150/month recurring
-- Refer 50 Pro plans = $750/month passive income 💰
+- Refer 50 Pro plans = $750/month passive income
 
 **Why It Works:**
-✅ 92% trial-to-paid conversion rate
-✅ AI content creation is exploding (10x growth in 2025)
-✅ We handle all support, billing, product development
-✅ You just share your unique link and earn
+• 92% trial-to-paid conversion rate
+• AI content creation is exploding (10x growth in 2025)
+• We handle all support, billing, product development
+• You just share your unique link and earn
 
 **Who Should Join:**
 - Content creators with an audience
@@ -279,13 +279,13 @@ Our Affiliate Program offers:
 - Anyone who loves Artivio and wants to share it!
 
 **What You Get:**
-📊 Real-time dashboard with analytics
-💳 Monthly payouts via Stripe
-📧 Pre-written email templates (7-day funnel)
-🎨 Marketing materials (banners, videos, posts)
-🤝 Dedicated affiliate support
+• Real-time dashboard with analytics
+• Monthly payouts via Stripe
+• Pre-written email templates (7-day funnel)
+• Marketing materials (banners, videos, posts)
+• Dedicated affiliate support
 
-👉 Join the Affiliate Program: ${AFFILIATE_LINK}
+>> Join the Affiliate Program: ${AFFILIATE_LINK}
 
 **Success Stories:**
 "I made $3,200 in my first month just by adding Artivio to my AI newsletter footer." - Sarah K., Tech Blogger
@@ -297,7 +297,7 @@ Ready to turn your passion into profit?
 [Your Name]
 Artivio AI Advocate
 
-P.S. The program is free to join, no approval needed. Sign up, get your link, start earning today! 🚀
+P.S. The program is free to join, no approval needed. Sign up, get your link, start earning today!
 
 ---
 Questions? Reply to this email or check out our Affiliate FAQ: https://artivio.ai/affiliates`
