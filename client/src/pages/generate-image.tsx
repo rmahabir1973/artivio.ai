@@ -12,6 +12,7 @@ import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Image as ImageIcon, Upload, X } from "lucide-react";
+import { CreditCostWarning } from "@/components/credit-cost-warning";
 
 const IMAGE_MODEL_INFO = [
   { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
@@ -40,7 +41,7 @@ const QUALITY_OPTIONS = [
 
 export default function GenerateImage() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
   
@@ -165,6 +166,8 @@ export default function GenerateImage() {
     setReferenceImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const selectedModel = IMAGE_MODELS.find(m => m.value === model);
+
   const handleGenerate = () => {
     if (!prompt.trim()) {
       toast({
@@ -202,10 +205,21 @@ export default function GenerateImage() {
       payload.referenceImages = referenceImages;
     }
 
+    // Defensive credit check - prevent API call if insufficient credits
+    const userCredits = (user as any)?.credits;
+    const modelCost = selectedModel?.cost || 0;
+    
+    if (typeof userCredits === 'number' && userCredits < modelCost) {
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${modelCost} credits but only have ${userCredits}. Please upgrade your plan.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     generateMutation.mutate(payload);
   };
-
-  const selectedModel = IMAGE_MODELS.find(m => m.value === model);
 
   if (authLoading) {
     return (
@@ -405,10 +419,21 @@ export default function GenerateImage() {
                 </Select>
               </div>
 
+              {/* Credit Cost Warning */}
+              {selectedModel && (
+                <CreditCostWarning 
+                  cost={selectedModel.cost} 
+                  featureName={`${selectedModel.label} image ${mode === "text-to-image" ? "generation" : "editing"}`}
+                />
+              )}
+
               {/* Generate Button */}
               <Button
                 onClick={handleGenerate}
-                disabled={generateMutation.isPending}
+                disabled={
+                  generateMutation.isPending || 
+                  (user && typeof (user as any).credits === 'number' && (user as any).credits < (selectedModel?.cost || 0))
+                }
                 className="w-full"
                 size="lg"
                 data-testid="button-generate-image"
@@ -418,6 +443,8 @@ export default function GenerateImage() {
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     {mode === "text-to-image" ? "Generating..." : "Editing..."}
                   </>
+                ) : (user && typeof (user as any).credits === 'number' && (user as any).credits < (selectedModel?.cost || 0)) ? (
+                  <>Insufficient Credits - Upgrade Plan</>
                 ) : (
                   <>{mode === "text-to-image" ? "Generate Image" : "Edit Image"} ({selectedModel?.cost} credits)</>
                 )}

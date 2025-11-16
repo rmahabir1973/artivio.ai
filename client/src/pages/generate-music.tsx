@@ -16,6 +16,7 @@ import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Music, ChevronDown, Sparkles, Upload, Plus } from "lucide-react";
+import { CreditCostWarning } from "@/components/credit-cost-warning";
 
 const MUSIC_MODEL_INFO = [
   { value: "suno-v3.5", label: "Suno V3.5", description: "High-quality music generation" },
@@ -27,7 +28,7 @@ const MUSIC_MODEL_INFO = [
 
 export default function GenerateMusic() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
   
@@ -384,6 +385,19 @@ export default function GenerateMusic() {
       parameters.styleWeight = styleWeight[0];
       parameters.weirdnessConstraint = weirdnessConstraint[0];
       parameters.audioWeight = audioWeight[0];
+    }
+
+    // Defensive credit check - prevent API call if insufficient credits
+    const userCredits = (user as any)?.credits;
+    const modelCost = selectedModel?.cost || 0;
+    
+    if (typeof userCredits === 'number' && userCredits < modelCost) {
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${modelCost} credits but only have ${userCredits}. Please upgrade your plan.`,
+        variant: "destructive",
+      });
+      return;
     }
 
     generateMutation.mutate({
@@ -842,10 +856,21 @@ export default function GenerateMusic() {
                   </CollapsibleContent>
                 </Collapsible>
 
+                {/* Credit Cost Warning */}
+                {selectedModel && (
+                  <CreditCostWarning 
+                    cost={selectedModel.cost} 
+                    featureName={`${selectedModel.label} music generation`}
+                  />
+                )}
+
                 {/* Generate Button */}
                 <Button
                   onClick={handleGenerate}
-                  disabled={generateMutation.isPending}
+                  disabled={
+                    generateMutation.isPending || 
+                    (user && typeof (user as any).credits === 'number' && (user as any).credits < (selectedModel?.cost || 0))
+                  }
                   className="w-full"
                   size="lg"
                   data-testid="button-generate-music"
@@ -855,6 +880,8 @@ export default function GenerateMusic() {
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       Generating...
                     </>
+                  ) : (user && typeof (user as any).credits === 'number' && (user as any).credits < (selectedModel?.cost || 0)) ? (
+                    <>Insufficient Credits - Upgrade Plan</>
                   ) : (
                     <>Generate Music ({selectedModel?.cost} credits)</>
                   )}

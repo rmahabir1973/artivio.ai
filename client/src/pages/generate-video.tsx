@@ -243,6 +243,19 @@ export default function GenerateVideo() {
       return;
     }
 
+    // Defensive credit check - prevent API call if insufficient credits
+    const userCredits = (user as any)?.credits;
+    const modelCost = selectedModel?.cost || 0;
+    
+    if (typeof userCredits === 'number' && userCredits < modelCost) {
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${modelCost} credits but only have ${userCredits}. Please upgrade your plan.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     generateMutation.mutate({
       model,
       prompt,
@@ -480,7 +493,10 @@ export default function GenerateVideo() {
             {/* Generate Button */}
             <Button
               onClick={handleGenerate}
-              disabled={generateMutation.isPending || (user && (user as any).credits < (selectedModel?.cost || 0))}
+              disabled={
+                generateMutation.isPending || 
+                (user && typeof (user as any).credits === 'number' && (user as any).credits < (selectedModel?.cost || 0))
+              }
               className="w-full"
               size="lg"
               data-testid="button-generate-video"
@@ -490,7 +506,7 @@ export default function GenerateVideo() {
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Generating...
                 </>
-              ) : (user && (user as any).credits < (selectedModel?.cost || 0)) ? (
+              ) : (user && typeof (user as any).credits === 'number' && (user as any).credits < (selectedModel?.cost || 0)) ? (
                 <>Insufficient Credits - Upgrade Plan</>
               ) : (
                 <>Generate Video ({selectedModel?.cost} credits)</>

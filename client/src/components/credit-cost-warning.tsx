@@ -10,7 +10,13 @@ interface CreditCostWarningProps {
 
 export function CreditCostWarning({ cost, featureName }: CreditCostWarningProps) {
   const { user } = useAuth();
-  const userCredits = (user as any)?.credits || 0;
+  
+  // Don't show warnings until user data is loaded (prevents stale/missing credit data)
+  if (!user || typeof (user as any)?.credits !== 'number') {
+    return null;
+  }
+  
+  const userCredits = (user as any).credits;
   
   // Handle zero-cost models (free features)
   if (cost === 0) {
