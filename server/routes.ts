@@ -154,14 +154,15 @@ async function generateVideoInBackground(
       throw new Error('API response missing taskId or video URL');
     }
     
-    // Store taskId and mark as processing (will be completed via polling or webhook)
+    // Store taskId in externalTaskId field for webhook matching
     await storage.updateGeneration(generationId, {
       status: 'processing',
       apiKeyUsed: keyName,
-      resultUrl: taskId, // Temporarily store taskId in resultUrl field
+      externalTaskId: taskId,
+      statusDetail: 'queued',
     });
     
-    console.log(`Video generation task started: ${taskId}`);
+    console.log(`📋 Video generation task queued: ${taskId} (waiting for callback)`);
   } catch (error: any) {
     console.error('Background video generation failed:', error);
     await storage.finalizeGeneration(generationId, 'failure', {
@@ -217,9 +218,10 @@ async function generateImageInBackground(
       await storage.updateGeneration(generationId, {
         status: 'processing',
         apiKeyUsed: keyName,
-        resultUrl: taskId,
+        externalTaskId: taskId,
+        statusDetail: 'queued',
       });
-      console.log(`Image generation task started: ${taskId}`);
+      console.log(`📋 Image generation task queued: ${taskId} (waiting for callback)`);
       return;
     }
     
