@@ -1608,7 +1608,7 @@ export class DatabaseStorage implements IStorage {
 
     if (user?.referralCode) {
       const { referralLogger } = await import('./logger');
-      referralLogger.codeRetrieved(userId, Date.now() - startTime);
+      referralLogger.codeRetrieved(Date.now() - startTime);
       return user.referralCode;
     }
 
@@ -1637,7 +1637,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
 
     const { referralLogger } = await import('./logger');
-    referralLogger.codeGenerated(userId, code, Date.now() - startTime);
+    referralLogger.codeGenerated(code.length, Date.now() - startTime);
     return code;
   }
 
@@ -1676,7 +1676,7 @@ export class DatabaseStorage implements IStorage {
       // Handle duplicate entries gracefully (unique constraint violation)
       if (error?.code === '23505') {
         const { referralLogger } = await import('./logger');
-        referralLogger.clickDuplicate(referralCode);
+        referralLogger.clickDuplicate(referralCode.length);
         // Return existing referral instead of throwing
         const [existing] = await db
           .select()
@@ -1775,7 +1775,7 @@ export class DatabaseStorage implements IStorage {
       if (result.referralId) {
         referralLogger.conversionRaceDetected(result.referralId, transactionId, duration);
       } else {
-        referralLogger.conversionNotFound(referralCode, transactionId, duration);
+        referralLogger.conversionNotFound(referralCode.length, transactionId, duration);
       }
     } else if (result.referralId) {
       referralLogger.conversionSuccess(

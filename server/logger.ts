@@ -37,16 +37,32 @@ class Logger {
   private scrubPII(obj: any): any {
     if (typeof obj === 'string') {
       // Mask email addresses
-      return obj.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+      let scrubbed = obj.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+      
+      // Mask UUID patterns (8-4-4-4-12 format)
+      scrubbed = scrubbed.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '[UUID]');
+      
+      // Mask other ID-like patterns (long alphanumeric strings)
+      scrubbed = scrubbed.replace(/\b[0-9a-f]{24,}\b/gi, '[ID]');
+      
+      return scrubbed;
     }
     
     if (typeof obj === 'object' && obj !== null) {
       const scrubbed: any = Array.isArray(obj) ? [] : {};
       for (const key in obj) {
-        // Redact sensitive fields
-        if (['email', 'refereeEmail', 'password', 'token', 'secret'].includes(key)) {
+        // Redact sensitive field names including user IDs, names, and any field with 'id' or 'Id' in name
+        const lowerKey = key.toLowerCase();
+        if (
+          ['email', 'password', 'token', 'secret', 'name', 'username', 'firstname', 'lastname', 'fullname'].includes(lowerKey) ||
+          lowerKey.includes('email') ||
+          lowerKey.includes('name') || // Redact any field containing 'name'
+          (lowerKey.includes('id') && lowerKey !== 'txid') || // Allow txId (random string, not a real ID)
+          lowerKey.endsWith('id')
+        ) {
           scrubbed[key] = '[REDACTED]';
         } else {
+          // Recursively scrub nested objects
           scrubbed[key] = this.scrubPII(obj[key]);
         }
       }
@@ -104,25 +120,22 @@ class Logger {
 export const logger = new Logger();
 
 // Specific logger for referral operations
+// NOTE: Never log user IDs (userId, refereeId, referrerId) - use referralId instead
 export const referralLogger = {
-  codeGenerated: (userId: string, code: string, duration: number) => {
-    logger.info('REFERRAL', 'Code generated', { userId, codeLength: code.length, duration });
+  codeGenerated: (codeLength: number, duration: number) => {
+    logger.info('REFERRAL', 'Code generated', { codeLength, duration });
   },
 
-  codeRetrieved: (userId: string, duration: number) => {
-    logger.debug('REFERRAL', 'Code retrieved from cache', { userId, duration });
+  codeRetrieved: (duration: number) => {
+    logger.debug('REFERRAL', 'Code retrieved from cache', { duration });
   },
 
   clickTracked: (referralId: string, hasEmail: boolean, duration: number) => {
     logger.info('REFERRAL', 'Click tracked', { referralId, hasEmail, duration });
   },
 
-  clickDuplicate: (referralCode: string) => {
-    logger.warn('REFERRAL', 'Duplicate click attempt', { referralCodeLength: referralCode.length });
-  },
-
-  conversionStarted: (referralCode: string, refereeId: string, txId: string) => {
-    logger.info('REFERRAL', 'Conversion started', { referralCodeLength: referralCode.length, refereeId, txId });
+  clickDuplicate: (referralCodeLength: number) => {
+    logger.warn('REFERRAL', 'Duplicate click attempt', { referralCodeLength });
   },
 
   conversionSuccess: (referralId: string, txId: string, referrerCredits: number, refereeCredits: number, duration: number) => {
@@ -140,13 +153,13 @@ export const referralLogger = {
       referralId, 
       txId, 
       duration,
-      note: 'This indicates concurrent conversion attempts were properly prevented'
+      note: 'Concurrent conversion attempts properly prevented'
     });
   },
 
-  conversionNotFound: (referralCode: string, txId: string, duration: number) => {
+  conversionNotFound: (referralCodeLength: number, txId: string, duration: number) => {
     logger.debug('REFERRAL', 'No pending referral found', { 
-      referralCodeLength: referralCode.length, 
+      referralCodeLength, 
       txId, 
       duration 
     });
