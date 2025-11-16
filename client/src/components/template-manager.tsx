@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import {
   Save,
   FolderOpen,
@@ -73,6 +74,7 @@ export function TemplateManager({
 }: TemplateManagerProps) {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const { markStepComplete } = useOnboarding();
   const [open, setOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -177,6 +179,10 @@ export function TemplateManager({
     useMutation_.mutate(template.id);
     onLoadTemplate?.(template);
     setOpen(false);
+    
+    // Mark onboarding step 2 as complete
+    markStepComplete('triedTemplate');
+    
     toast({
       title: "Template Loaded",
       description: `"${template.name}" has been loaded.`,

@@ -65,6 +65,10 @@ import {
   type InsertFavoriteWorkflow,
   type GenerationTemplate,
   type InsertGenerationTemplate,
+  userOnboarding,
+  type InsertUserOnboarding,
+  type UpdateUserOnboarding,
+  type UserOnboarding,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -226,6 +230,10 @@ export interface IStorage {
   updateTemplate(id: string, updates: Partial<InsertGenerationTemplate>): Promise<GenerationTemplate | undefined>;
   deleteTemplate(id: string): Promise<void>;
   incrementTemplateUsage(id: string): Promise<void>;
+
+  // Onboarding operations
+  getOrCreateOnboarding(userId: string): Promise<UserOnboarding>;
+  updateOnboarding(userId: string, updates: UpdateUserOnboarding): Promise<UserOnboarding | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -479,6 +487,25 @@ export class DatabaseStorage implements IStorage {
       }
 
       console.log(`✓ [finalizeGeneration] Generation ${generationId} finalized as ${outcome}`);
+      
+      // Track onboarding step 3 completion for successful generations
+      if (outcome === 'success') {
+        try {
+          const onboarding = await this.getOrCreateOnboarding(generation.userId);
+          
+          // Only mark complete if not already complete to prevent redundant updates
+          if (!onboarding.completedFirstGeneration) {
+            await this.updateOnboarding(generation.userId, {
+              completedFirstGeneration: true,
+            });
+            console.log(`✓ [Onboarding] Marked step 3 complete for user ${generation.userId}`);
+          }
+        } catch (onboardingError) {
+          // Log but don't fail the finalization if onboarding update fails
+          console.error('[Onboarding] Failed to update progress:', onboardingError);
+        }
+      }
+      
       return updated;
     });
   }
@@ -1454,6 +1481,40 @@ export class DatabaseStorage implements IStorage {
       .update(generationTemplates)
       .set({ usageCount: sql`${generationTemplates.usageCount} + 1` })
       .where(eq(generationTemplates.id, id));
+  }
+
+  // Onboarding operations
+  async getOrCreateOnboarding(userId: string): Promise<UserOnboarding> {
+    // Try to get existing onboarding record
+    const [existing] = await db
+      .select()
+      .from(userOnboarding)
+      .where(eq(userOnboarding.userId, userId));
+
+    if (existing) {
+      return existing;
+    }
+
+    // Create new onboarding record with all steps incomplete
+    const [created] = await db
+      .insert(userOnboarding)
+      .values({ userId })
+      .returning();
+    
+    return created;
+  }
+
+  async updateOnboarding(userId: string, updates: UpdateUserOnboarding): Promise<UserOnboarding | undefined> {
+    const [updated] = await db
+      .update(userOnboarding)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(userOnboarding.userId, userId))
+      .returning();
+    
+    return updated;
   }
 }
 

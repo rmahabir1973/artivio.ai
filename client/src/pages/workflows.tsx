@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 type FavoriteWorkflow = {
   id: string;
@@ -41,6 +42,14 @@ export default function Workflows() {
   const [filter, setFilter] = useState<"all" | "favorites">("all");
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
+  const { markStepComplete } = useOnboarding();
+
+  // Mark "explored workflows" step as complete when page loads
+  useEffect(() => {
+    if (isAuthenticated) {
+      markStepComplete('exploredWorkflows');
+    }
+  }, [isAuthenticated, markStepComplete]);
 
   // Fetch user's favorite workflows
   const { data: favorites = [] } = useQuery<FavoriteWorkflow[]>({

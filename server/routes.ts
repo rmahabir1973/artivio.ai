@@ -135,11 +135,9 @@ async function generateVideoInBackground(
       // If we got direct URL (older API format), use it
       const resultUrl = result?.url || result?.videoUrl || result?.data?.url;
       if (resultUrl) {
-        await storage.updateGeneration(generationId, {
-          status: 'completed',
+        await storage.finalizeGeneration(generationId, 'success', {
           resultUrl,
           apiKeyUsed: keyName,
-          completedAt: new Date(),
         });
         return;
       }
@@ -198,11 +196,9 @@ async function generateImageInBackground(
     const directUrl = result?.url || result?.imageUrl || result?.data?.url || result?.data?.imageUrl;
     
     if (directUrl) {
-      await storage.updateGeneration(generationId, {
-        status: 'completed',
+      await storage.finalizeGeneration(generationId, 'success', {
         resultUrl: directUrl,
         apiKeyUsed: keyName,
-        completedAt: new Date(),
       });
       return;
     }
@@ -274,12 +270,10 @@ async function generateMusicInBackground(generationId: string, model: string, pr
     
     // If we got a direct audio URL, mark as completed immediately
     if (audioUrl) {
-      await storage.updateGeneration(generationId, {
-        status: 'completed',
+      await storage.finalizeGeneration(generationId, 'success', {
         resultUrl: audioUrl,
         apiKeyUsed: keyName,
         statusDetail: providerStatus || 'completed',
-        completedAt: new Date(),
       });
       console.log(`✓ Music generation completed immediately with URL: ${audioUrl}`);
       return;
@@ -1473,6 +1467,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error incrementing template usage:', error);
       res.status(500).json({ message: "Failed to increment template usage" });
+    }
+  });
+
+  // ========== ONBOARDING ROUTES ==========
+
+  // Get or create onboarding progress
+  app.get('/api/onboarding', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const onboarding = await storage.getOrCreateOnboarding(userId);
+      res.json(onboarding);
+    } catch (error) {
+      console.error('Error fetching onboarding:', error);
+      res.status(500).json({ message: "Failed to fetch onboarding progress" });
+    }
+  });
+
+  // Update onboarding progress
+  app.patch('/api/onboarding', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body with zod schema
+      const { updateUserOnboardingSchema } = await import('@shared/schema');
+      const validationResult = updateUserOnboardingSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+      
+      // Ensure onboarding record exists before updating
+      await storage.getOrCreateOnboarding(userId);
+      
+      const onboarding = await storage.updateOnboarding(userId, validationResult.data);
+      
+      if (!onboarding) {
+        return res.status(404).json({ message: "Failed to update onboarding" });
+      }
+      
+      res.json(onboarding);
+    } catch (error) {
+      console.error('Error updating onboarding:', error);
+      res.status(500).json({ message: "Failed to update onboarding progress" });
     }
   });
 

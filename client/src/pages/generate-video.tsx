@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -64,6 +65,7 @@ export default function GenerateVideo() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
+  const { markStepComplete } = useOnboarding();
   
   const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
   const [model, setModel] = useState("veo-3.1");

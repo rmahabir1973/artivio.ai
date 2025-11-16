@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { GenerationsQueue } from "@/components/generations-queue";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { 
   Video, 
   Image as ImageIcon, 
@@ -322,6 +323,13 @@ export default function Home() {
         <div className="mb-8">
           <GenerationsQueue />
         </div>
+
+        {/* Onboarding Checklist */}
+        {isAuthenticated && (
+          <div className="mb-8">
+            <OnboardingChecklist />
+          </div>
+        )}
 
         {/* Favorite Workflows Quick Launch */}
         {favoriteWorkflows.length > 0 && (

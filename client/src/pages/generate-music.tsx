@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -32,6 +33,7 @@ export default function GenerateMusic() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
+  const { markStepComplete } = useOnboarding();
   
   // Tab state
   const [activeTab, setActiveTab] = useState("generate");

@@ -1030,8 +1030,37 @@ export const insertGenerationTemplateSchema = createInsertSchema(generationTempl
 export type InsertGenerationTemplate = z.infer<typeof insertGenerationTemplateSchema>;
 export type GenerationTemplate = typeof generationTemplates.$inferSelect;
 
+// User Onboarding Progress - Track completion of onboarding steps
+export const userOnboarding = pgTable("user_onboarding", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  exploredWorkflows: boolean("explored_workflows").notNull().default(false),
+  triedTemplate: boolean("tried_template").notNull().default(false),
+  completedFirstGeneration: boolean("completed_first_generation").notNull().default(false),
+  dismissed: boolean("dismissed").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export const insertUserOnboardingSchema = createInsertSchema(userOnboarding).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateUserOnboardingSchema = z.object({
+  exploredWorkflows: z.boolean().optional(),
+  triedTemplate: z.boolean().optional(),
+  completedFirstGeneration: z.boolean().optional(),
+  dismissed: z.boolean().optional(),
+});
+
+export type InsertUserOnboarding = z.infer<typeof insertUserOnboardingSchema>;
+export type UpdateUserOnboarding = z.infer<typeof updateUserOnboardingSchema>;
+export type UserOnboarding = typeof userOnboarding.$inferSelect;
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   generations: many(generations),
   conversations: many(conversations),
   voiceClones: many(voiceClones),
@@ -1043,6 +1072,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   subscriptions: many(userSubscriptions),
   favoriteWorkflows: many(favoriteWorkflows),
   generationTemplates: many(generationTemplates),
+  onboarding: one(userOnboarding, {
+    fields: [users.id],
+    references: [userOnboarding.userId],
+  }),
 }));
 
 export const generationsRelations = relations(generations, ({ one }) => ({

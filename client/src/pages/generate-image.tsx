@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -45,6 +46,7 @@ export default function GenerateImage() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
+  const { markStepComplete } = useOnboarding();
   
   const [mode, setMode] = useState<"text-to-image" | "image-editing">("text-to-image");
   const [model, setModel] = useState("4o-image");
