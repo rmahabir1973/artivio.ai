@@ -151,6 +151,11 @@ export async function cleanupOldUploads(maxAgeMs: number = 24 * 60 * 60 * 1000):
     for (const file of files) {
       const filePath = path.join(UPLOADS_DIR, file);
       const stats = await fs.stat(filePath);
+      
+      if (stats.isDirectory()) {
+        continue;
+      }
+      
       const age = now - stats.mtimeMs;
       
       if (age > maxAgeMs) {
