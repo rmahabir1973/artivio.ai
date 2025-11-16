@@ -629,6 +629,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to store plan selection" });
     }
   });
+
+  // Store referral code in cookie (public endpoint for referral links)
+  app.post('/api/public/referral/set', (req, res) => {
+    try {
+      const { referralCode } = req.body;
+      
+      if (!referralCode) {
+        return res.status(400).json({ message: "Referral code is required" });
+      }
+
+      // Store referral code in signed cookie (expires in 30 days)
+      res.cookie('referral_code', referralCode, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        signed: true,
+      });
+
+      console.log(`Referral code stored: ${referralCode}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error storing referral code:', error);
+      res.status(500).json({ message: "Failed to store referral code" });
+    }
+  });
   
   // ========== AUTH ENDPOINTS ==========
   
@@ -698,6 +724,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           console.error(`❌ Plan "${planName}" not found in database!`);
           console.error(`  User created with 0 credits`);
+        }
+        
+        // Check for referral code and convert referral
+        const referralCode = (req as any).signedCookies?.referral_code;
+        if (referralCode) {
+          console.log(`Referral code found: ${referralCode}`);
+          try {
+            const result = await storage.convertReferral(referralCode, createdUser.id);
+            if (result.referrerCredits > 0 || result.refereeCredits > 0) {
+              console.log(`✓ Referral converted successfully!`);
+              console.log(`  - Referrer earned: ${result.referrerCredits} credits`);
+              console.log(`  - Referee (you) received: ${result.refereeCredits} bonus credits`);
+              
+              // Clear the referral cookie after successful conversion
+              res.clearCookie('referral_code');
+              console.log(`✓ Referral code cookie cleared`);
+            } else {
+              console.log(`ℹ️ No pending referral found for code ${referralCode}`);
+            }
+          } catch (error) {
+            console.error(`⚠️ Failed to convert referral:`, error);
+            // Non-critical error - don't block signup
+            // User still gets their plan credits
+          }
         }
         
         user = await storage.getUser(userId);
