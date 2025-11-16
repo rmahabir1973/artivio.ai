@@ -20,6 +20,7 @@ import {
   Crown
 } from "lucide-react";
 import { Link } from "wouter";
+import { Footer } from "@/components/footer";
 
 export default function Workflows() {
   // Helper function to determine the route based on workflow features
@@ -535,6 +536,9 @@ export default function Workflows() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, MessageSquare, Send, Sparkles, Zap, Globe, Users } from "lucide-react";
+import { Footer } from "@/components/footer";
 
 export default function Contact() {
   const { toast } = useToast();
@@ -275,6 +276,9 @@ export default function Contact() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

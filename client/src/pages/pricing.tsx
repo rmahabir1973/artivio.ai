@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/footer";
 
 interface Plan {
   name: string;
@@ -189,6 +190,9 @@ export default function Pricing() {
           <p className="mt-2">By continuing, you agree to our Terms of Service and Privacy Policy.</p>
         </div>
       </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
