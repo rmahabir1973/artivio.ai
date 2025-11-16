@@ -1250,6 +1250,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user analytics
+  app.get('/api/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const days = req.query.days ? parseInt(req.query.days as string) : 30;
+      const analytics = await storage.getUserAnalytics(userId, days);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
   // ========== FAVORITE WORKFLOW ROUTES ==========
 
   // Get user's favorite workflows

@@ -8,6 +8,7 @@ import { Loader2, CreditCard, User, Mail, Calendar, Shield, ExternalLink, Refres
 import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { UsageAnalytics } from "@/components/usage-analytics";
 
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
@@ -218,6 +219,9 @@ export default function Profile() {
           )}
         </CardContent>
       </Card>
+
+      {/* Usage Analytics */}
+      <UsageAnalytics />
     </div>
   );
 }

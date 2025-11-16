@@ -112,6 +112,14 @@ export interface IStorage {
     todayGenerations: number;
     successRate: number;
   }>;
+  getUserAnalytics(userId: string, days?: number): Promise<{
+    totalCreditsSpent: number;
+    totalGenerations: number;
+    successRate: number;
+    byFeatureType: Array<{ type: string; count: number; credits: number }>;
+    byModel: Array<{ model: string; count: number; credits: number }>;
+    dailyTrends: Array<{ date: string; credits: number; count: number }>;
+  }>;
 
   // Chat operations
   createConversation(conversation: InsertConversation): Promise<Conversation>;
@@ -522,6 +530,92 @@ export class DatabaseStorage implements IStorage {
       totalGenerations: allGens.length,
       todayGenerations: todayGens.length,
       successRate,
+    };
+  }
+
+  async getUserAnalytics(userId: string, days: number = 30): Promise<{
+    totalCreditsSpent: number;
+    totalGenerations: number;
+    successRate: number;
+    byFeatureType: Array<{ type: string; count: number; credits: number }>;
+    byModel: Array<{ model: string; count: number; credits: number }>;
+    dailyTrends: Array<{ date: string; credits: number; count: number }>;
+  }> {
+    // Get all generations for the user within the date range
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const allGens = await db
+      .select()
+      .from(generations)
+      .where(eq(generations.userId, userId));
+
+    const recentGens = allGens.filter(
+      g => new Date(g.createdAt) >= cutoffDate
+    );
+
+    // Calculate total credits spent
+    const totalCreditsSpent = recentGens.reduce((sum, g) => sum + (g.creditsCost || 0), 0);
+
+    // Calculate success rate
+    const completed = recentGens.filter(g => g.status === 'completed').length;
+    const successRate = recentGens.length > 0 
+      ? (completed / recentGens.length) * 100 
+      : 0;
+
+    // Group by feature type
+    const byFeatureTypeMap = recentGens.reduce((acc: any, g) => {
+      const type = g.type || 'unknown';
+      if (!acc[type]) acc[type] = { type, count: 0, credits: 0 };
+      acc[type].count += 1;
+      acc[type].credits += g.creditsCost || 0;
+      return acc;
+    }, {});
+    const byFeatureType = Object.values(byFeatureTypeMap).sort((a: any, b: any) => b.credits - a.credits);
+
+    // Group by model
+    const byModelMap = recentGens.reduce((acc: any, g) => {
+      const model = g.model || 'unknown';
+      if (!acc[model]) acc[model] = { model, count: 0, credits: 0 };
+      acc[model].count += 1;
+      acc[model].credits += g.creditsCost || 0;
+      return acc;
+    }, {});
+    const byModel = Object.values(byModelMap).sort((a: any, b: any) => b.credits - a.credits);
+
+    // Calculate daily trends
+    const dailyMap = new Map<string, { credits: number; count: number }>();
+    
+    // Initialize all days in range with zero
+    for (let i = 0; i < days; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dailyMap.set(dateStr, { credits: 0, count: 0 });
+    }
+
+    // Populate with actual data
+    recentGens.forEach(g => {
+      const dateStr = new Date(g.createdAt).toISOString().split('T')[0];
+      const existing = dailyMap.get(dateStr);
+      if (existing) {
+        existing.credits += g.creditsCost || 0;
+        existing.count += 1;
+      }
+    });
+
+    // Convert to array and sort by date (oldest first for charts)
+    const dailyTrends = Array.from(dailyMap.entries())
+      .map(([date, data]) => ({ date, ...data }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return {
+      totalCreditsSpent,
+      totalGenerations: recentGens.length,
+      successRate,
+      byFeatureType: byFeatureType as any,
+      byModel: byModel as any,
+      dailyTrends,
     };
   }
 
