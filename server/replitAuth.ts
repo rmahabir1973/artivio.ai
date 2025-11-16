@@ -26,19 +26,33 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  
+  // Determine if we should use secure cookies
+  // CRITICAL FIX: 'auto' is NOT valid - must be boolean
+  // Use secure cookies in production (HTTPS), but not in development (HTTP)
+  const isProduction = process.env.NODE_ENV === 'production';
+  const productionUrl = process.env.PRODUCTION_URL || '';
+  const isHttps = productionUrl.startsWith('https://') || isProduction;
+  
+  console.log('[SESSION CONFIG]', {
+    isProduction,
+    isHttps,
+    secureCookies: isHttps,
+    sameSite: 'lax',
+  });
+  
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    proxy: true, // Trust proxy for secure cookie detection
+    proxy: true, // Trust proxy headers (X-Forwarded-Proto, etc.)
     cookie: {
       httpOnly: true,
-      // Don't set secure/sameSite statically - let them be set per-request
-      // This fixes issues with HTTP dev and HTTPS production
-      secure: 'auto', // Auto-detect based on connection
-      sameSite: 'lax', // Use lax for better compatibility
+      secure: isHttps, // FIXED: Boolean value instead of invalid 'auto'
+      sameSite: 'lax', // Lax for better mobile browser compatibility
       maxAge: sessionTtl,
+      // Don't set domain - let browser handle it automatically
     },
   });
 }

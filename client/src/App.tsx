@@ -44,6 +44,7 @@ function Router() {
       {/* Public routes available to all users */}
       <Route path="/support" component={Support} />
       <Route path="/workflows" component={Workflows} />
+      <Route path="/templates" component={Workflows} /> {/* Alias for /workflows */}
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />
