@@ -65,6 +65,13 @@ function updateUserSession(
   user.access_token = tokens.access_token;
   user.refresh_token = tokens.refresh_token;
   user.expires_at = user.claims?.exp;
+  
+  console.log('[AUTH DEBUG] updateUserSession called', {
+    hasAccessToken: !!tokens.access_token,
+    hasRefreshToken: !!tokens.refresh_token,
+    hasExp: !!user.claims?.exp,
+    expiresAt: user.expires_at,
+  });
 }
 
 async function upsertUser(claims: any) {
@@ -241,12 +248,24 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   }
 
   const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
+  const timeUntilExpiry = user.expires_at - now;
+  
+  console.log('[AUTH DEBUG] Token expiration check', {
+    now,
+    expires_at: user.expires_at,
+    timeUntilExpiry,
+    isExpired: timeUntilExpiry <= 0,
+  });
+  
+  if (timeUntilExpiry > 0) {
+    console.log('[AUTH DEBUG] Token still valid, allowing request');
     return next();
   }
 
+  console.log('[AUTH DEBUG] Token expired, attempting refresh');
   const refreshToken = user.refresh_token;
   if (!refreshToken) {
+    console.log('[AUTH DEBUG] No refresh token available, returning 401');
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
@@ -255,8 +274,10 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     const config = await getOidcConfig();
     const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
     updateUserSession(user, tokenResponse);
+    console.log('[AUTH DEBUG] Token refresh successful');
     return next();
-  } catch (error) {
+  } catch (error: any) {
+    console.error('[AUTH DEBUG] Token refresh failed:', error.message);
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
