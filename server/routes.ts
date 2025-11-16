@@ -1487,6 +1487,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== REFERRAL ROUTES ==========
+
+  // Get user's referral code
+  app.get('/api/referral/code', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const code = await storage.getUserReferralCode(userId);
+      res.json({ code });
+    } catch (error) {
+      console.error('Error getting referral code:', error);
+      res.status(500).json({ message: "Failed to get referral code" });
+    }
+  });
+
+  // Get user's referral statistics
+  app.get('/api/referral/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getUserReferralStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error getting referral stats:', error);
+      res.status(500).json({ message: "Failed to get referral stats" });
+    }
+  });
+
+  // Get referral leaderboard
+  app.get('/api/referral/leaderboard', async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const leaderboard = await storage.getReferralLeaderboard(limit);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Error getting referral leaderboard:', error);
+      res.status(500).json({ message: "Failed to get referral leaderboard" });
+    }
+  });
+
+  // Track referral click (public endpoint for when someone clicks a referral link)
+  app.post('/api/public/referral/track', async (req, res) => {
+    try {
+      const { referralCode, email } = req.body;
+      
+      if (!referralCode) {
+        return res.status(400).json({ message: "Referral code is required" });
+      }
+
+      const referral = await storage.createReferralClick(referralCode, email);
+      res.json({ success: true, referralId: referral.id });
+    } catch (error: any) {
+      console.error('Error tracking referral:', error);
+      // Return success even if tracking fails to not break user flow
+      res.status(200).json({ success: false, message: error.message || "Failed to track referral" });
+    }
+  });
+
   // ========== GENERATION TEMPLATE ROUTES ==========
 
   // Get user templates (optionally filtered by feature type)
