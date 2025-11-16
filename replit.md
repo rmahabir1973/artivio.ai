@@ -35,7 +35,16 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
     -   Iterates through all REPLIT_DOMAINS entries for resilience
     -   Single source of truth for webhook callbacks, image/audio URLs, and Stripe redirects
     -   Ensures Kie.ai webhooks reach production domain (artivio.ai) instead of transient dev URLs
--   **Automatic Credit Refund System**: Failed generations automatically refund credits using idempotent transaction-based `finalizeGeneration()` method with SELECT FOR UPDATE locking to prevent double-refunds from concurrent webhook retries.
+-   **Automatic Credit Refund System**: Failed generations automatically refund credits using idempotent transaction-based `finalizeGeneration()` method with guarded UPDATE pattern to prevent double-refunds from concurrent webhook retries.
+-   **Atomic Job Cancellation System**: User-initiated cancellation with race-condition-safe credit refunds:
+    -   Cancel button in Generations Queue with AlertDialog confirmation
+    -   Both `cancelGeneration` and `finalizeGeneration` use identical `UPDATE ... WHERE status IN ('pending','processing') RETURNING` guards
+    -   Database-enforced mutual exclusion ensures only ONE transaction can transition generation from pending/processing to terminal state
+    -   Prevents race conditions between user cancellation and webhook callbacks
+    -   Prevents double-refunds and state overwrites
+    -   Idempotent design: safe to call multiple times, returns early if already finalized
+    -   Toast notifications display refund amounts when credits are returned
+    -   Frontend invalidates both /api/generations and /api/user cache for real-time UI updates
 -   **Image Hosting System**: Temporary system for processing user-uploaded images, converting base64 to public URLs, with validation and automatic cleanup.
 -   **Round-Robin API Key Management**: Supports up to 20 Kie.ai API keys with a round-robin rotation for load balancing and resilience.
 -   **Credit System**: Transparent credit tracking for all AI generation types, displaying costs per action.
