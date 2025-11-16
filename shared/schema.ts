@@ -62,6 +62,8 @@ export const referrals = pgTable("referrals", {
   index("referee_idx").on(table.refereeId),
   index("referral_code_idx").on(table.referralCode),
   index("status_idx").on(table.status),
+  // Prevent duplicate referral entries for same email per referrer
+  uniqueIndex("referrer_referee_email_idx").on(table.referrerId, table.refereeEmail).where(sql`${table.refereeEmail} IS NOT NULL`),
 ]);
 
 export const insertReferralSchema = createInsertSchema(referrals).omit({

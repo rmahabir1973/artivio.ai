@@ -1666,7 +1666,8 @@ export class DatabaseStorage implements IStorage {
     const REFEREE_BONUS = 500;   // Credits for the referee
 
     return await db.transaction(async (tx) => {
-      // Find the most recent pending referral for this code
+      // Find and lock the most recent pending referral for this code
+      // FOR UPDATE ensures only one transaction can convert this referral
       const [referral] = await tx
         .select()
         .from(referrals)
@@ -1677,15 +1678,17 @@ export class DatabaseStorage implements IStorage {
           )
         )
         .orderBy(desc(referrals.createdAt))
-        .limit(1);
+        .limit(1)
+        .for('update');
 
       if (!referral) {
         // No pending referral found, skip conversion
         return { referrerCredits: 0, refereeCredits: 0 };
       }
 
-      // Update the referral record
-      await tx
+      // Update the referral record with status guard to ensure idempotency
+      // If another transaction already converted this, the WHERE clause will match 0 rows
+      const updatedReferrals = await tx
         .update(referrals)
         .set({
           refereeId,
@@ -1695,7 +1698,19 @@ export class DatabaseStorage implements IStorage {
           convertedAt: new Date(),
           creditedAt: new Date(),
         })
-        .where(eq(referrals.id, referral.id));
+        .where(
+          and(
+            eq(referrals.id, referral.id),
+            eq(referrals.status, 'pending') // Double-check status hasn't changed
+          )
+        )
+        .returning();
+
+      // If update affected no rows, another transaction already credited this referral
+      if (!updatedReferrals || updatedReferrals.length === 0) {
+        console.log(`ℹ️ [REFERRAL] Referral ${referral.id} already credited by another transaction`);
+        return { referrerCredits: 0, refereeCredits: 0 };
+      }
 
       // Grant credits to referrer
       await tx

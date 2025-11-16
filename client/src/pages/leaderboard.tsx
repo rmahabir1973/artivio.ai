@@ -13,12 +13,7 @@ interface LeaderboardEntry {
 
 export default function LeaderboardPage() {
   const { data: leaderboard, isLoading } = useQuery<LeaderboardEntry[]>({
-    queryKey: ["/api/referral/leaderboard"],
-    queryFn: async () => {
-      const response = await fetch("/api/referral/leaderboard?limit=50");
-      if (!response.ok) throw new Error("Failed to fetch leaderboard");
-      return response.json();
-    },
+    queryKey: ["/api/referral/leaderboard?limit=50"],
   });
 
   const getRankIcon = (index: number) => {
