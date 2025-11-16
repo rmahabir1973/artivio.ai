@@ -58,6 +58,46 @@ const VIDEO_MODEL_INFO = [
     supportsImages: true,
     maxImages: 1 
   },
+  { 
+    value: "seedance-1-pro", 
+    label: "Seedance 1.0 Pro", 
+    description: "1080p cinematic quality with camera control", 
+    duration: "5-10s",
+    supportsImages: true,
+    maxImages: 1 
+  },
+  { 
+    value: "seedance-1-lite", 
+    label: "Seedance 1.0 Lite", 
+    description: "720p fast generation", 
+    duration: "5-10s",
+    supportsImages: true,
+    maxImages: 1 
+  },
+  { 
+    value: "wan-2.5", 
+    label: "Wan 2.5", 
+    description: "Native audio sync & lip-sync support", 
+    duration: "5-10s",
+    supportsImages: true,
+    maxImages: 1 
+  },
+  { 
+    value: "kling-2.5-turbo", 
+    label: "Kling 2.5 Turbo", 
+    description: "Fast, fluid motion with realistic physics", 
+    duration: "5-10s",
+    supportsImages: true,
+    maxImages: 1 
+  },
+  { 
+    value: "kling-2.1", 
+    label: "Kling 2.1", 
+    description: "Professional hyper-realistic video generation", 
+    duration: "5-10s",
+    supportsImages: true,
+    maxImages: 1 
+  },
 ];
 
 export default function GenerateVideo() {

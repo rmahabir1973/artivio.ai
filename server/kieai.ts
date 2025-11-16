@@ -341,9 +341,102 @@ export async function generateVideo(params: {
       callBackUrl: parameters.callBackUrl,
     });
   }
+  else if (params.model.startsWith('seedance-')) {
+    // Seedance 1.0 Pro/Lite - uses /api/v1/seedance/generate
+    const resolution = parameters.resolution || '720p';
+    const duration = parameters.duration || 5;
+    const cameraFixed = parameters.cameraFixed !== undefined ? parameters.cameraFixed : false;
+    const seed = parameters.seed || -1;
+    
+    // Determine model variant
+    let seedanceModel = 'seedance-1-lite';
+    if (params.model === 'seedance-1-pro') {
+      seedanceModel = 'seedance-1-pro';
+    }
+    
+    // For image-to-video, include image_url
+    const imageUrl = referenceImages.length > 0 ? referenceImages[0] : undefined;
+    const endImageUrl = parameters.endImageUrl; // Optional end frame
+    
+    return await callKieApi('/api/v1/seedance/generate', {
+      prompt: params.prompt,
+      model: seedanceModel,
+      image_url: imageUrl,
+      end_image_url: endImageUrl,
+      resolution,
+      duration,
+      camera_fixed: cameraFixed,
+      seed,
+      callBackUrl: parameters.callBackUrl,
+    });
+  }
+  else if (params.model.startsWith('wan-')) {
+    // Wan 2.5 T2V/I2V - uses /api/v1/wan/generate
+    const resolution = parameters.resolution || '720p';
+    const duration = parameters.duration || 5;
+    const aspectRatio = parameters.aspectRatio || '16:9';
+    
+    // Determine T2V or I2V based on reference images
+    const isImageToVideo = referenceImages.length > 0;
+    const wanModel = isImageToVideo ? 'wan2.5-i2v-preview' : 'wan2.5-t2v-preview';
+    
+    const payload: any = {
+      model: wanModel,
+      prompt: params.prompt,
+      negative_prompt: parameters.negativePrompt,
+      resolution,
+      aspectRatio,
+      duration,
+      seed: parameters.seed,
+      callBackUrl: parameters.callBackUrl,
+    };
+    
+    // Add image URL for I2V
+    if (isImageToVideo) {
+      payload.image_url = referenceImages[0];
+    }
+    
+    // Add audio controls
+    if (parameters.audioUrl) {
+      payload.audio_url = parameters.audioUrl;
+    } else if (parameters.enableAudio) {
+      payload.enable_audio = true;
+    }
+    
+    return await callKieApi('/api/v1/wan/generate', payload);
+  }
+  else if (params.model.startsWith('kling-')) {
+    // Kling 2.5 Turbo / 2.1 - uses /api/v1/kling/generate
+    const aspectRatio = parameters.aspectRatio || '16:9';
+    const duration = parameters.duration || 5;
+    const mode = parameters.mode || 'standard';
+    
+    // Determine model variant
+    let klingModel = 'kling-2.5-turbo';
+    if (params.model === 'kling-2.1') {
+      klingModel = 'kling-2.1';
+    }
+    
+    const payload: any = {
+      model: klingModel,
+      prompt: params.prompt,
+      aspectRatio,
+      duration,
+      mode,
+      negative_prompt: parameters.negativePrompt,
+      callBackUrl: parameters.callBackUrl,
+    };
+    
+    // Add image URL for I2V
+    if (referenceImages.length > 0) {
+      payload.image_url = referenceImages[0];
+    }
+    
+    return await callKieApi('/api/v1/kling/generate', payload);
+  }
   
   // Reject unknown models instead of falling back
-  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, runway-gen3-alpha-turbo, runway-aleph`);
+  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, kling-2.1`);
 }
 
 // Image Generation
@@ -358,30 +451,96 @@ export async function generateImage(params: {
   const mode = params.mode || 'text-to-image';
   const referenceImages = params.referenceImages || [];
   
-  // Build request payload based on mode
-  const payload: any = {
-    prompt: params.prompt,
-    size: parameters.aspectRatio || '1:1',
-    nVariants: parameters.nVariants || 1,
-    isEnhance: parameters.isEnhance || false,
-    callBackUrl: parameters.callBackUrl,
-  };
-  
-  // Add reference images for editing mode
-  // According to Kie.ai API docs: use "filesUrl" for image editing with reference images
-  if (mode === 'image-editing' && referenceImages.length > 0) {
-    payload.filesUrl = referenceImages;
+  // Route to appropriate API based on model
+  if (params.model === 'seedream-4') {
+    // Seedream 4.0 - up to 4K resolution, batch generation
+    const imageResolution = parameters.imageResolution || '2K';
+    const imageSize = parameters.imageSize || 'square';
+    const maxImages = parameters.maxImages || 1;
+    const seed = parameters.seed;
+    const watermark = parameters.watermark !== undefined ? parameters.watermark : false;
+    
+    const payload: any = {
+      model: 'bytedance-seedream-4-0-250828',
+      prompt: params.prompt,
+      image_resolution: imageResolution,
+      image_size: imageSize,
+      max_images: maxImages,
+      seed,
+      watermark,
+      response_format: 'url',
+      callBackUrl: parameters.callBackUrl,
+    };
+    
+    // Add reference images for editing (up to 10 images)
+    if (mode === 'image-editing' && referenceImages.length > 0) {
+      payload.image_input = referenceImages.slice(0, 10);
+    }
+    
+    // Custom resolution
+    if (imageResolution === 'custom' && parameters.width && parameters.height) {
+      payload.width = parameters.width;
+      payload.height = parameters.height;
+    }
+    
+    return await callKieApi('/api/v1/seedream/generate', payload);
+  }
+  else if (params.model === 'midjourney-v7') {
+    // Midjourney v7 - generates 4 variants with style controls
+    const taskType = mode === 'image-editing' ? 'mj_img2img' : 'mj_txt2img';
+    const version = parameters.version || '7';
+    const speed = parameters.speed || 'Fast';
+    const aspectRatio = parameters.aspectRatio || '1:1';
+    const stylization = parameters.stylization !== undefined ? parameters.stylization : 100;
+    const weirdness = parameters.weirdness !== undefined ? parameters.weirdness : 0;
+    const waterMark = parameters.watermark || '';
+    
+    const payload: any = {
+      taskType,
+      prompt: params.prompt,
+      version,
+      speed,
+      aspectRatio,
+      stylization,
+      weirdness,
+      waterMark,
+      callBackUrl: parameters.callBackUrl,
+    };
+    
+    // Add reference image for img2img
+    if (taskType === 'mj_img2img' && referenceImages.length > 0) {
+      payload.fileUrl = referenceImages[0];
+    }
+    
+    return await callKieApi('/api/v1/mj/generate', payload);
+  }
+  else if (params.model === '4o-image' || params.model === 'flux-kontext' || params.model === 'nano-banana') {
+    // Existing models: 4o Image, Flux Kontext, Nano Banana
+    const payload: any = {
+      prompt: params.prompt,
+      size: parameters.aspectRatio || '1:1',
+      nVariants: parameters.nVariants || 1,
+      isEnhance: parameters.isEnhance || false,
+      callBackUrl: parameters.callBackUrl,
+    };
+    
+    // Add reference images for editing mode
+    if (mode === 'image-editing' && referenceImages.length > 0) {
+      payload.filesUrl = referenceImages;
+    }
+    
+    // Add output format and quality if specified
+    if (parameters.outputFormat) {
+      payload.outputFormat = parameters.outputFormat;
+    }
+    if (parameters.quality) {
+      payload.quality = parameters.quality;
+    }
+    
+    return await callKieApi('/api/v1/gpt4o-image/generate', payload);
   }
   
-  // Add output format and quality if specified
-  if (parameters.outputFormat) {
-    payload.outputFormat = parameters.outputFormat;
-  }
-  if (parameters.quality) {
-    payload.quality = parameters.quality;
-  }
-  
-  return await callKieApi('/api/v1/gpt4o-image/generate', payload);
+  throw new Error(`Unsupported image model: ${params.model}. Supported models: 4o-image, flux-kontext, nano-banana, seedream-4, midjourney-v7`);
 }
 
 // Helper: Map frontend model names to Kie.ai API model names

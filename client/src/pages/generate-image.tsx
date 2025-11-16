@@ -20,6 +20,8 @@ const IMAGE_MODEL_INFO = [
   { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
   { value: "flux-kontext", label: "Flux Kontext", description: "Vivid scenes with strong subject consistency" },
   { value: "nano-banana", label: "Nano Banana", description: "Fast, precise image generation and editing" },
+  { value: "seedream-4", label: "Seedream 4.0", description: "Up to 4K resolution with batch generation" },
+  { value: "midjourney-v7", label: "Midjourney v7", description: "Latest MJ with style controls (4 variants)" },
 ];
 
 const ASPECT_RATIOS = [

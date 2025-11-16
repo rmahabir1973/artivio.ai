@@ -8,6 +8,11 @@ const INITIAL_PRICING = [
   { feature: 'video', model: 'veo-3.1-fast', creditCost: 300, category: 'generation', description: 'Google Veo 3.1 Fast video generation' },
   { feature: 'video', model: 'runway-gen3-alpha-turbo', creditCost: 350, category: 'generation', description: 'Runway Gen3 Alpha Turbo' },
   { feature: 'video', model: 'runway-aleph', creditCost: 400, category: 'generation', description: 'Runway Aleph video generation' },
+  { feature: 'video', model: 'seedance-1-pro', creditCost: 500, category: 'generation', description: 'Seedance 1.0 Pro - 1080p cinematic' },
+  { feature: 'video', model: 'seedance-1-lite', creditCost: 120, category: 'generation', description: 'Seedance 1.0 Lite - 720p fast' },
+  { feature: 'video', model: 'wan-2.5', creditCost: 250, category: 'generation', description: 'Wan 2.5 - Audio sync & lip-sync' },
+  { feature: 'video', model: 'kling-2.5-turbo', creditCost: 150, category: 'generation', description: 'Kling 2.5 Turbo - Fast generation' },
+  { feature: 'video', model: 'kling-2.1', creditCost: 250, category: 'generation', description: 'Kling 2.1 - Professional quality' },
   
   // Video Enhancements (Video Combiner)
   { feature: 'video-enhancement', model: 'crossfade-transitions', creditCost: 25, category: 'editing', description: 'Crossfade transitions between clips' },
@@ -19,6 +24,8 @@ const INITIAL_PRICING = [
   { feature: 'image', model: '4o-image', creditCost: 100, category: 'generation', description: 'GPT-4o image generation' },
   { feature: 'image', model: 'flux-kontext', creditCost: 150, category: 'generation', description: 'Flux Kontext image generation' },
   { feature: 'image', model: 'nano-banana', creditCost: 50, category: 'generation', description: 'Nano Banana image generation' },
+  { feature: 'image', model: 'seedream-4', creditCost: 25, category: 'generation', description: 'Seedream 4.0 - Up to 4K resolution' },
+  { feature: 'image', model: 'midjourney-v7', creditCost: 60, category: 'generation', description: 'Midjourney v7 - Latest with style controls' },
   
   // Music Models
   { feature: 'music', model: 'suno-v3.5', creditCost: 200, category: 'generation', description: 'Suno V3.5 music generation' },
