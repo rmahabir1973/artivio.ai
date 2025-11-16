@@ -21,8 +21,11 @@ import {
   announcements,
   favoriteWorkflows,
   generationTemplates,
+  referrals,
   type User,
   type UpsertUser,
+  type Referral,
+  type InsertReferral,
   type ApiKey,
   type InsertApiKey,
   type Pricing,
@@ -235,6 +238,25 @@ export interface IStorage {
   // Onboarding operations
   getOrCreateOnboarding(userId: string): Promise<UserOnboarding>;
   updateOnboarding(userId: string, updates: UpdateUserOnboarding): Promise<UserOnboarding | undefined>;
+
+  // Referral operations
+  getUserReferralCode(userId: string): Promise<string>;
+  createReferralClick(referralCode: string, refereeEmail?: string): Promise<Referral>;
+  convertReferral(referralCode: string, refereeId: string): Promise<{ referrerCredits: number; refereeCredits: number }>;
+  getUserReferralStats(userId: string): Promise<{
+    totalReferrals: number;
+    convertedReferrals: number;
+    pendingReferrals: number;
+    totalCreditsEarned: number;
+    referrals: Referral[];
+  }>;
+  getReferralLeaderboard(limit?: number): Promise<Array<{
+    userId: string;
+    userName: string;
+    profileImageUrl: string | null;
+    totalReferrals: number;
+    totalCreditsEarned: number;
+  }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1571,6 +1593,204 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updated;
+  }
+
+  // Referral operations
+  async getUserReferralCode(userId: string): Promise<string> {
+    // Check if user already has a referral code
+    const [user] = await db
+      .select({ referralCode: users.referralCode })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (user?.referralCode) {
+      return user.referralCode;
+    }
+
+    // Generate a unique referral code (8 character alphanumeric)
+    const generateCode = () => Math.random().toString(36).substring(2, 10).toUpperCase();
+    let code = generateCode();
+    let attempts = 0;
+
+    // Ensure uniqueness
+    while (attempts < 10) {
+      const [existing] = await db
+        .select()
+        .from(users)
+        .where(eq(users.referralCode, code))
+        .limit(1);
+
+      if (!existing) break;
+      code = generateCode();
+      attempts++;
+    }
+
+    // Update user with the new code
+    await db
+      .update(users)
+      .set({ referralCode: code })
+      .where(eq(users.id, userId));
+
+    return code;
+  }
+
+  async createReferralClick(referralCode: string, refereeEmail?: string): Promise<Referral> {
+    // Find the referrer by code
+    const [referrer] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.referralCode, referralCode))
+      .limit(1);
+
+    if (!referrer) {
+      throw new Error('Invalid referral code');
+    }
+
+    // Create referral record
+    const [referral] = await db
+      .insert(referrals)
+      .values({
+        referrerId: referrer.id,
+        referralCode,
+        refereeEmail,
+        status: 'pending',
+      })
+      .returning();
+
+    return referral;
+  }
+
+  async convertReferral(referralCode: string, refereeId: string): Promise<{ referrerCredits: number; refereeCredits: number }> {
+    const REFERRER_BONUS = 1000; // Credits for the referrer
+    const REFEREE_BONUS = 500;   // Credits for the referee
+
+    return await db.transaction(async (tx) => {
+      // Find the most recent pending referral for this code
+      const [referral] = await tx
+        .select()
+        .from(referrals)
+        .where(
+          and(
+            eq(referrals.referralCode, referralCode),
+            eq(referrals.status, 'pending')
+          )
+        )
+        .orderBy(desc(referrals.createdAt))
+        .limit(1);
+
+      if (!referral) {
+        // No pending referral found, skip conversion
+        return { referrerCredits: 0, refereeCredits: 0 };
+      }
+
+      // Update the referral record
+      await tx
+        .update(referrals)
+        .set({
+          refereeId,
+          status: 'credited',
+          referrerCreditsEarned: REFERRER_BONUS,
+          refereeCreditsGiven: REFEREE_BONUS,
+          convertedAt: new Date(),
+          creditedAt: new Date(),
+        })
+        .where(eq(referrals.id, referral.id));
+
+      // Grant credits to referrer
+      await tx
+        .update(users)
+        .set({ credits: sql`${users.credits} + ${REFERRER_BONUS}` })
+        .where(eq(users.id, referral.referrerId));
+
+      // Grant credits to referee
+      await tx
+        .update(users)
+        .set({ 
+          credits: sql`${users.credits} + ${REFEREE_BONUS}`,
+          referredBy: referral.referrerId,
+        })
+        .where(eq(users.id, refereeId));
+
+      console.log(`✓ [REFERRAL] Converted referral ${referral.id}: ${REFERRER_BONUS} credits to referrer, ${REFEREE_BONUS} credits to referee`);
+
+      return { 
+        referrerCredits: REFERRER_BONUS, 
+        refereeCredits: REFEREE_BONUS 
+      };
+    });
+  }
+
+  async getUserReferralStats(userId: string): Promise<{
+    totalReferrals: number;
+    convertedReferrals: number;
+    pendingReferrals: number;
+    totalCreditsEarned: number;
+    referrals: Referral[];
+  }> {
+    const userReferrals = await db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(referrals.createdAt));
+
+    const convertedReferrals = userReferrals.filter(r => r.status === 'credited');
+    const pendingReferrals = userReferrals.filter(r => r.status === 'pending');
+    const totalCreditsEarned = convertedReferrals.reduce((sum, r) => sum + r.referrerCreditsEarned, 0);
+
+    return {
+      totalReferrals: userReferrals.length,
+      convertedReferrals: convertedReferrals.length,
+      pendingReferrals: pendingReferrals.length,
+      totalCreditsEarned,
+      referrals: userReferrals,
+    };
+  }
+
+  async getReferralLeaderboard(limit = 10): Promise<Array<{
+    userId: string;
+    userName: string;
+    profileImageUrl: string | null;
+    totalReferrals: number;
+    totalCreditsEarned: number;
+  }>> {
+    // Get aggregated referral stats per user
+    const leaderboard = await db
+      .select({
+        userId: referrals.referrerId,
+        totalReferrals: sql<number>`count(*)::int`,
+        totalCreditsEarned: sql<number>`COALESCE(sum(${referrals.referrerCreditsEarned}), 0)::int`,
+      })
+      .from(referrals)
+      .where(eq(referrals.status, 'credited'))
+      .groupBy(referrals.referrerId)
+      .orderBy(sql`sum(${referrals.referrerCreditsEarned}) DESC`)
+      .limit(limit);
+
+    // Join with user data
+    const result = await Promise.all(
+      leaderboard.map(async (entry) => {
+        const [user] = await db
+          .select({
+            firstName: users.firstName,
+            lastName: users.lastName,
+            profileImageUrl: users.profileImageUrl,
+          })
+          .from(users)
+          .where(eq(users.id, entry.userId))
+          .limit(1);
+
+        return {
+          userId: entry.userId,
+          userName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Anonymous' : 'Anonymous',
+          profileImageUrl: user?.profileImageUrl || null,
+          totalReferrals: entry.totalReferrals,
+          totalCreditsEarned: entry.totalCreditsEarned,
+        };
+      })
+    );
+
+    return result;
   }
 }
 

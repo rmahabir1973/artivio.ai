@@ -35,12 +35,44 @@ export const users = pgTable("users", {
   credits: integer("credits").notNull().default(0),
   stripeCustomerId: varchar("stripe_customer_id").unique(),
   isAdmin: boolean("is_admin").notNull().default(false),
+  referralCode: varchar("referral_code").unique(), // Unique code for sharing with friends
+  referredBy: varchar("referred_by"), // ID of user who referred them
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Referrals table for tracking referral program
+export const referrals = pgTable("referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  referrerId: varchar("referrer_id").notNull().references(() => users.id, { onDelete: 'cascade' }), // User who shared the referral
+  referralCode: varchar("referral_code").notNull(), // The code that was shared
+  refereeId: varchar("referee_id").references(() => users.id, { onDelete: 'set null' }), // User who signed up (null until conversion)
+  refereeEmail: varchar("referee_email"), // Email of person who clicked (before signup)
+  status: varchar("status").notNull().default('pending'), // 'pending', 'converted', 'credited'
+  referrerCreditsEarned: integer("referrer_credits_earned").notNull().default(0), // Credits given to referrer
+  refereeCreditsGiven: integer("referee_credits_given").notNull().default(0), // Bonus credits given to referee
+  convertedAt: timestamp("converted_at"), // When referee signed up
+  creditedAt: timestamp("credited_at"), // When credits were awarded
+  createdAt: timestamp("created_at").defaultNow().notNull(), // When referral link was first clicked
+}, (table) => [
+  index("referrer_idx").on(table.referrerId),
+  index("referee_idx").on(table.refereeId),
+  index("referral_code_idx").on(table.referralCode),
+  index("status_idx").on(table.status),
+]);
+
+export const insertReferralSchema = createInsertSchema(referrals).omit({
+  id: true,
+  createdAt: true,
+  convertedAt: true,
+  creditedAt: true,
+});
+
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
+export type Referral = typeof referrals.$inferSelect;
 
 // API Keys table for round-robin rotation
 export const apiKeys = pgTable("api_keys", {
