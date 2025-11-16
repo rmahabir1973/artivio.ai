@@ -25,6 +25,7 @@ import { processImageInputs, saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
 import { combineVideos } from "./videoProcessor";
+import { LoopsService } from "./loops";
 import { 
   createCheckoutSession, 
   createCustomerPortalSession,
@@ -747,6 +748,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error(`⚠️ Failed to convert referral:`, error);
             // Non-critical error - don't block signup
             // User still gets their plan credits
+          }
+        }
+        
+        // Add new Free plan users to Loops.so 7-day email funnel
+        if (planName === 'free') {
+          try {
+            console.log(`📧 Adding user to Loops.so 7-day email funnel...`);
+            const loopsResult = await LoopsService.addToSevenDayFunnel(
+              req.user.claims.email,
+              req.user.claims.first_name,
+              req.user.claims.last_name,
+              createdUser.id
+            );
+            
+            if (loopsResult.success) {
+              console.log(`✓ User added to 7-day email funnel successfully`);
+            } else {
+              console.warn(`⚠️ Failed to add user to email funnel: ${loopsResult.message}`);
+            }
+          } catch (error) {
+            console.error(`⚠️ Error adding user to email funnel:`, error);
+            // Non-critical error - don't block signup
           }
         }
         
@@ -3199,6 +3222,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting announcement:', error);
       res.status(500).json({ message: "Failed to delete announcement" });
+    }
+  });
+
+  // ========== LOOPS.SO EMAIL INTEGRATION ==========
+
+  // Admin: Get all Loops.so mailing lists
+  app.get('/api/admin/loops/lists', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const lists = await LoopsService.getMailingLists();
+      res.json({ lists });
+    } catch (error) {
+      console.error('Error fetching Loops.so mailing lists:', error);
+      res.status(500).json({ message: "Failed to fetch mailing lists" });
+    }
+  });
+
+  // Admin: Test adding a contact to the 7-day funnel
+  app.post('/api/admin/loops/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { email, firstName, lastName } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const result = await LoopsService.addToSevenDayFunnel(
+        email,
+        firstName,
+        lastName,
+        userId
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error testing Loops.so integration:', error);
+      res.status(500).json({ message: "Failed to test Loops.so integration" });
     }
   });
 
