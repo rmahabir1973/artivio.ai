@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 // Pages
 import Landing from "@/pages/landing";
 import Pricing from "@/pages/pricing";
+import Affiliates from "@/pages/affiliates";
 import Home from "@/pages/home";
 import GenerateVideo from "@/pages/generate-video";
 import GenerateImage from "@/pages/generate-image";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/support" component={Support} />
       <Route path="/workflows" component={Workflows} />
       <Route path="/templates" component={Workflows} /> {/* Alias for /workflows */}
+      <Route path="/affiliates" component={Affiliates} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />

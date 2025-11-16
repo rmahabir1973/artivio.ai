@@ -30,7 +30,8 @@ import {
   Scissors,
   History as HistoryIcon,
   Sparkles,
-  Mic2
+  Mic2,
+  DollarSign
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -141,6 +142,20 @@ export function ModernHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+
+            {/* Affiliate link for all users */}
+            <Link href="/affiliates">
+              <Button
+                variant={location === "/affiliates" ? "default" : "ghost"}
+                size="sm"
+                className="gap-2"
+                data-testid="nav-affiliates"
+              >
+                <DollarSign className="h-4 w-4" />
+                <span className="hidden lg:inline">Earn 30%</span>
+                <span className="lg:hidden">Affiliates</span>
+              </Button>
+            </Link>
 
             {/* Pricing link for unauthenticated users */}
             {!isAuthenticated && (
@@ -374,6 +389,18 @@ export function ModernHeader() {
                   >
                     <CreditCard className="h-5 w-5" />
                     Pricing
+                  </Button>
+                </Link>
+
+                <Link href="/affiliates">
+                  <Button
+                    variant={location === "/affiliates" ? "default" : "ghost"}
+                    className="w-full justify-start gap-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                    data-testid="mobile-nav-affiliates"
+                  >
+                    <DollarSign className="h-5 w-5" />
+                    Earn 30% Commission
                   </Button>
                 </Link>
 

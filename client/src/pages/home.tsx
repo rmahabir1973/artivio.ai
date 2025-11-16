@@ -28,7 +28,10 @@ import {
   TrendingUp,
   Mic2,
   Star,
-  ArrowRight
+  ArrowRight,
+  DollarSign,
+  Gift,
+  ExternalLink
 } from "lucide-react";
 
 interface FeatureCard {
@@ -330,6 +333,95 @@ export default function Home() {
             <OnboardingChecklist />
           </div>
         )}
+
+        {/* Affiliate Promotion Cards */}
+        <div className="mb-8 grid md:grid-cols-2 gap-6">
+          {/* Main Affiliate CTA Card */}
+          <Card className="hover-elevate border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-purple-500/5">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Earn 30% Commission</CardTitle>
+                  <CardDescription>Join our affiliate program today</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Share Artivio AI with your audience and earn <span className="font-bold text-foreground">30% recurring commission</span> for every paying customer. Average affiliates earn $500-$2,000/month!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  asChild 
+                  size="lg"
+                  className="flex-1"
+                  data-testid="button-join-affiliate-dashboard"
+                >
+                  <a 
+                    href="https://artivio-ai.getrewardful.com/signup?campaign=artivio-affiliate-team&code=F4Ng9WuVZ9mhUHVjYMpAxkqM" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <Gift className="mr-2 h-5 w-5" />
+                    Join Program Free
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  size="lg"
+                  className="flex-1"
+                  data-testid="button-learn-more-affiliate"
+                >
+                  <Link href="/affiliates">
+                    Learn More
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Affiliate Benefits Card */}
+          <Card className="hover-elevate">
+            <CardHeader>
+              <CardTitle className="text-lg">Why Become an Affiliate?</CardTitle>
+              <CardDescription>Everything you need to succeed</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">92% Conversion Rate</p>
+                  <p className="text-xs text-muted-foreground">Industry-leading trial-to-paid conversion</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Gift className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Ready-Made Materials</p>
+                  <p className="text-xs text-muted-foreground">7-day email funnel, banners, templates included</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">$750+ Average Monthly</p>
+                  <p className="text-xs text-muted-foreground">Passive recurring income from referrals</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Favorite Workflows Quick Launch */}
         {favoriteWorkflows.length > 0 && (
