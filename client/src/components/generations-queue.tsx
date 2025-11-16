@@ -4,6 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Loader2, 
   CheckCircle2, 
@@ -13,7 +23,8 @@ import {
   RefreshCw,
   Eye,
   ExternalLink,
-  History as HistoryIcon
+  History as HistoryIcon,
+  Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -39,6 +50,8 @@ interface Generation {
 export function GenerationsQueue() {
   const { toast } = useToast();
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [generationToCancel, setGenerationToCancel] = useState<string | null>(null);
 
   // Fetch recent generations (last 10)
   const { data: generations = [], isLoading } = useQuery<Generation[]>({
@@ -104,6 +117,47 @@ export function GenerationsQueue() {
     },
   });
 
+  const cancelMutation = useMutation({
+    mutationFn: async (generationId: string) => {
+      return await apiRequest("DELETE", `/api/generations/${generationId}`);
+    },
+    onSuccess: (data: any) => {
+      const message = data.refunded 
+        ? `Generation cancelled. ${data.amount} credits have been refunded to your account.`
+        : "Generation cancelled.";
+      
+      toast({
+        title: "Generation Cancelled",
+        description: message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      setCancelDialogOpen(false);
+      setGenerationToCancel(null);
+    },
+    onError: (error: Error) => {
+      console.error('Cancel failed:', error);
+      toast({
+        title: "Cancellation Failed",
+        description: error.message || "Failed to cancel generation. Please try again.",
+        variant: "destructive",
+      });
+      setCancelDialogOpen(false);
+      setGenerationToCancel(null);
+    },
+  });
+
+  const handleCancelClick = (generationId: string) => {
+    setGenerationToCancel(generationId);
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirm = () => {
+    if (generationToCancel) {
+      cancelMutation.mutate(generationToCancel);
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -162,29 +216,30 @@ export function GenerationsQueue() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <HistoryIcon className="h-5 w-5 text-primary" />
-              Recent Generations
-              {inProgress.length > 0 && (
-                <Badge variant="secondary" className="ml-2">{inProgress.length} in progress</Badge>
-              )}
-            </CardTitle>
-            <CardDescription>Track your AI generations in real-time</CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <HistoryIcon className="h-5 w-5 text-primary" />
+                Recent Generations
+                {inProgress.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">{inProgress.length} in progress</Badge>
+                )}
+              </CardTitle>
+              <CardDescription>Track your AI generations in real-time</CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/generations"] })}
+              data-testid="button-refresh-queue"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/generations"] })}
-            data-testid="button-refresh-queue"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent className="space-y-4">
         {/* In-Progress Generations */}
         {inProgress.length > 0 && (
@@ -210,6 +265,16 @@ export function GenerationsQueue() {
                         </div>
                         <p className="text-sm line-clamp-1 text-muted-foreground">{gen.prompt}</p>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleCancelClick(gen.id)}
+                        disabled={cancelMutation.isPending}
+                        className="shrink-0"
+                        data-testid={`button-cancel-${gen.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
                     </div>
                     <Progress value={gen.status === 'processing' ? 60 : 30} className="h-1" />
                     <p className="text-xs text-muted-foreground">
@@ -308,5 +373,29 @@ export function GenerationsQueue() {
         )}
       </CardContent>
     </Card>
+
+    <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancel Generation?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently remove this generation from the queue. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel data-testid="button-cancel-dialog-cancel">
+            Keep Generation
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleCancelConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            data-testid="button-cancel-dialog-confirm"
+          >
+            Cancel Generation
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

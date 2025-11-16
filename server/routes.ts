@@ -1358,7 +1358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete a generation
+  // Cancel/Delete a generation
   app.delete('/api/generations/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1372,11 +1372,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Generation not found or does not belong to you" });
       }
 
-      await storage.deleteGeneration(id);
-      res.json({ success: true, message: "Generation deleted successfully" });
+      // Atomically cancel and refund if still processing
+      const result = await storage.cancelGeneration(id);
+      
+      if (!result) {
+        return res.status(500).json({ message: "Failed to cancel generation" });
+      }
+
+      // Return success with refund information
+      res.json({ 
+        success: true, 
+        message: result.refunded 
+          ? `Generation cancelled and ${result.amount} credits refunded`
+          : "Generation cancelled (already completed or no refund needed)",
+        refunded: result.refunded,
+        amount: result.amount
+      });
     } catch (error) {
-      console.error('Error deleting generation:', error);
-      res.status(500).json({ message: "Failed to delete generation" });
+      console.error('Error cancelling generation:', error);
+      res.status(500).json({ message: "Failed to cancel generation" });
     }
   });
 

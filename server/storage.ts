@@ -108,6 +108,7 @@ export interface IStorage {
     outcome: 'success' | 'failure',
     updates: Partial<Generation>
   ): Promise<Generation | undefined>;
+  cancelGeneration(generationId: string): Promise<{ refunded: boolean; amount: number } | undefined>;
   getUserGenerations(userId: string): Promise<Generation[]>;
   getRecentGenerations(userId: string, limit?: number): Promise<Generation[]>;
   deleteGeneration(id: string): Promise<void>;
@@ -434,6 +435,7 @@ export class DatabaseStorage implements IStorage {
   /**
    * Atomically finalize a generation (success or failure) with automatic credit refunds on failure.
    * This function is idempotent - safe to call multiple times (e.g., from webhook retries).
+   * Uses UPDATE with WHERE guard to prevent overwriting user cancellations.
    */
   async finalizeGeneration(
     generationId: string,
@@ -441,37 +443,8 @@ export class DatabaseStorage implements IStorage {
     updates: Partial<Generation>
   ): Promise<Generation | undefined> {
     return await db.transaction(async (tx) => {
-      // Lock the generation row to prevent concurrent updates
-      const [generation] = await tx
-        .select()
-        .from(generations)
-        .where(eq(generations.id, generationId))
-        .for('update')
-        .limit(1);
-
-      if (!generation) {
-        throw new Error(`Generation ${generationId} not found`);
-      }
-
-      // If already in terminal state, return existing record (idempotent)
-      if (generation.status === 'completed' || generation.status === 'failed') {
-        console.log(`[finalizeGeneration] Generation ${generationId} already finalized with status: ${generation.status}`);
-        return generation;
-      }
-
-      // If failure, refund credits atomically
-      if (outcome === 'failure' && generation.creditsCost > 0) {
-        await tx
-          .update(users)
-          .set({ 
-            credits: sql`${users.credits} + ${generation.creditsCost}` 
-          })
-          .where(eq(users.id, generation.userId));
-
-        console.log(`✓ [CREDIT REFUND] Refunded ${generation.creditsCost} credits to user ${generation.userId} for failed generation ${generationId}`);
-      }
-
-      // Update generation status
+      // Atomically update ONLY if still in pending/processing state
+      // This prevents overwriting user cancellations and ensures idempotency
       const [updated] = await tx
         .update(generations)
         .set({
@@ -479,11 +452,41 @@ export class DatabaseStorage implements IStorage {
           status: outcome === 'success' ? 'completed' : 'failed',
           completedAt: new Date(),
         })
-        .where(eq(generations.id, generationId))
+        .where(
+          and(
+            eq(generations.id, generationId),
+            sql`${generations.status} IN ('pending', 'processing')`
+          )
+        )
         .returning();
 
+      // If no rows were updated, generation was already finalized or cancelled
       if (!updated) {
-        throw new Error(`Failed to update generation ${generationId}`);
+        // Fetch current state for logging
+        const [existing] = await tx
+          .select()
+          .from(generations)
+          .where(eq(generations.id, generationId))
+          .limit(1);
+        
+        if (existing) {
+          console.log(`[finalizeGeneration] Generation ${generationId} already finalized with status: ${existing.status}`);
+          return existing;
+        }
+        
+        throw new Error(`Generation ${generationId} not found`);
+      }
+
+      // Only refund credits for failures
+      if (outcome === 'failure' && updated.creditsCost > 0) {
+        await tx
+          .update(users)
+          .set({ 
+            credits: sql`${users.credits} + ${updated.creditsCost}` 
+          })
+          .where(eq(users.id, updated.userId));
+
+        console.log(`✓ [CREDIT REFUND] Refunded ${updated.creditsCost} credits to user ${updated.userId} for failed generation ${generationId}`);
       }
 
       console.log(`✓ [finalizeGeneration] Generation ${generationId} finalized as ${outcome}`);
@@ -491,14 +494,14 @@ export class DatabaseStorage implements IStorage {
       // Track onboarding step 3 completion for successful generations
       if (outcome === 'success') {
         try {
-          const onboarding = await this.getOrCreateOnboarding(generation.userId);
+          const onboarding = await this.getOrCreateOnboarding(updated.userId);
           
           // Only mark complete if not already complete to prevent redundant updates
           if (!onboarding.completedFirstGeneration) {
-            await this.updateOnboarding(generation.userId, {
+            await this.updateOnboarding(updated.userId, {
               completedFirstGeneration: true,
             });
-            console.log(`✓ [Onboarding] Marked step 3 complete for user ${generation.userId}`);
+            console.log(`✓ [Onboarding] Marked step 3 complete for user ${updated.userId}`);
           }
         } catch (onboardingError) {
           // Log but don't fail the finalization if onboarding update fails
@@ -507,6 +510,59 @@ export class DatabaseStorage implements IStorage {
       }
       
       return updated;
+    });
+  }
+
+  /**
+   * Atomically cancel a generation and refund credits if still in pending/processing state.
+   * This function is idempotent - safe to call multiple times.
+   * Uses UPDATE with WHERE guard to ensure only non-terminal generations are modified.
+   */
+  async cancelGeneration(generationId: string): Promise<{ refunded: boolean; amount: number } | undefined> {
+    return await db.transaction(async (tx) => {
+      // Atomically update ONLY if still in pending/processing state
+      // This prevents race conditions with webhook callbacks
+      const [updated] = await tx
+        .update(generations)
+        .set({
+          status: 'failed',
+          errorMessage: 'Cancelled by user',
+          completedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(generations.id, generationId),
+            sql`${generations.status} IN ('pending', 'processing')`
+          )
+        )
+        .returning();
+
+      // If no rows were updated, generation was already in terminal state
+      if (!updated) {
+        console.log(`[cancelGeneration] Generation ${generationId} already finalized - no refund`);
+        return { refunded: false, amount: 0 };
+      }
+
+      // Only refund if the generation had a cost (using data from the RETURNING clause)
+      if (updated.creditsCost > 0) {
+        // Refund credits atomically
+        await tx
+          .update(users)
+          .set({ 
+            credits: sql`${users.credits} + ${updated.creditsCost}` 
+          })
+          .where(eq(users.id, updated.userId));
+
+        console.log(`✓ [CANCEL REFUND] Refunded ${updated.creditsCost} credits to user ${updated.userId} for cancelled generation ${generationId}`);
+        
+        return { 
+          refunded: true, 
+          amount: updated.creditsCost 
+        };
+      }
+
+      console.log(`✓ [cancelGeneration] Generation ${generationId} marked as cancelled (no credits to refund)`);
+      return { refunded: false, amount: 0 };
     });
   }
 
