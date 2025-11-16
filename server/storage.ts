@@ -20,6 +20,7 @@ import {
   homePageContent,
   announcements,
   favoriteWorkflows,
+  generationTemplates,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -62,6 +63,8 @@ import {
   type InsertAnnouncement,
   type FavoriteWorkflow,
   type InsertFavoriteWorkflow,
+  type GenerationTemplate,
+  type InsertGenerationTemplate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -206,6 +209,15 @@ export interface IStorage {
   removeFavoriteWorkflow(userId: string, workflowId: number): Promise<void>;
   getUserFavoriteWorkflows(userId: string): Promise<FavoriteWorkflow[]>;
   isFavoriteWorkflow(userId: string, workflowId: number): Promise<boolean>;
+
+  // Generation Template operations
+  createTemplate(template: InsertGenerationTemplate): Promise<GenerationTemplate>;
+  getTemplate(id: string): Promise<GenerationTemplate | undefined>;
+  getUserTemplates(userId: string, featureType?: string): Promise<GenerationTemplate[]>;
+  getPublicTemplates(featureType?: string): Promise<GenerationTemplate[]>;
+  updateTemplate(id: string, updates: Partial<InsertGenerationTemplate>): Promise<GenerationTemplate | undefined>;
+  deleteTemplate(id: string): Promise<void>;
+  incrementTemplateUsage(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1284,6 +1296,70 @@ export class DatabaseStorage implements IStorage {
       ))
       .limit(1);
     return !!favorite;
+  }
+
+  // Generation Template operations
+  async createTemplate(template: InsertGenerationTemplate): Promise<GenerationTemplate> {
+    const [newTemplate] = await db
+      .insert(generationTemplates)
+      .values(template)
+      .returning();
+    return newTemplate;
+  }
+
+  async getTemplate(id: string): Promise<GenerationTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(generationTemplates)
+      .where(eq(generationTemplates.id, id))
+      .limit(1);
+    return template;
+  }
+
+  async getUserTemplates(userId: string, featureType?: string): Promise<GenerationTemplate[]> {
+    const conditions = [eq(generationTemplates.userId, userId)];
+    if (featureType) {
+      conditions.push(eq(generationTemplates.featureType, featureType));
+    }
+    return db
+      .select()
+      .from(generationTemplates)
+      .where(and(...conditions))
+      .orderBy(desc(generationTemplates.createdAt));
+  }
+
+  async getPublicTemplates(featureType?: string): Promise<GenerationTemplate[]> {
+    const conditions = [eq(generationTemplates.isPublic, true)];
+    if (featureType) {
+      conditions.push(eq(generationTemplates.featureType, featureType));
+    }
+    return db
+      .select()
+      .from(generationTemplates)
+      .where(and(...conditions))
+      .orderBy(desc(generationTemplates.usageCount));
+  }
+
+  async updateTemplate(id: string, updates: Partial<InsertGenerationTemplate>): Promise<GenerationTemplate | undefined> {
+    const [updated] = await db
+      .update(generationTemplates)
+      .set(updates)
+      .where(eq(generationTemplates.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteTemplate(id: string): Promise<void> {
+    await db
+      .delete(generationTemplates)
+      .where(eq(generationTemplates.id, id));
+  }
+
+  async incrementTemplateUsage(id: string): Promise<void> {
+    await db
+      .update(generationTemplates)
+      .set({ usageCount: sql`${generationTemplates.usageCount} + 1` })
+      .where(eq(generationTemplates.id, id));
   }
 }
 

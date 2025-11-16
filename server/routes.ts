@@ -1318,6 +1318,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== GENERATION TEMPLATE ROUTES ==========
+
+  // Get user templates (optionally filtered by feature type)
+  app.get('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const featureType = req.query.featureType as string | undefined;
+      const templates = await storage.getUserTemplates(userId, featureType);
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+
+  // Get public templates (optionally filtered by feature type)
+  app.get('/api/templates/public', async (req, res) => {
+    try {
+      const featureType = req.query.featureType as string | undefined;
+      const templates = await storage.getPublicTemplates(featureType);
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching public templates:', error);
+      res.status(500).json({ message: "Failed to fetch public templates" });
+    }
+  });
+
+  // Get specific template
+  app.get('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const template = await storage.getTemplate(id);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Check if user owns the template or it's public
+      const userId = req.user.claims.sub;
+      if (template.userId !== userId && !template.isPublic) {
+        return res.status(403).json({ message: "Unauthorized access to template" });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error('Error fetching template:', error);
+      res.status(500).json({ message: "Failed to fetch template" });
+    }
+  });
+
+  // Create new template
+  app.post('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { name, description, prompt, model, parameters, featureType, isPublic } = req.body;
+
+      if (!name || !prompt || !featureType) {
+        return res.status(400).json({ message: "Name, prompt, and featureType are required" });
+      }
+
+      const template = await storage.createTemplate({
+        userId,
+        name,
+        description,
+        prompt,
+        model,
+        parameters,
+        featureType,
+        isPublic: isPublic || false,
+      });
+
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Error creating template:', error);
+      res.status(500).json({ message: "Failed to create template" });
+    }
+  });
+
+  // Update template
+  app.patch('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+
+      // Verify ownership
+      const existing = await storage.getTemplate(id);
+      if (!existing) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized to update this template" });
+      }
+
+      const { name, description, prompt, model, parameters, isPublic } = req.body;
+      const updated = await storage.updateTemplate(id, {
+        name,
+        description,
+        prompt,
+        model,
+        parameters,
+        isPublic,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating template:', error);
+      res.status(500).json({ message: "Failed to update template" });
+    }
+  });
+
+  // Delete template
+  app.delete('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+
+      // Verify ownership
+      const existing = await storage.getTemplate(id);
+      if (!existing) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      if (existing.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized to delete this template" });
+      }
+
+      await storage.deleteTemplate(id);
+      res.json({ success: true, message: "Template deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      res.status(500).json({ message: "Failed to delete template" });
+    }
+  });
+
+  // Increment template usage count
+  app.post('/api/templates/:id/use', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.incrementTemplateUsage(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error incrementing template usage:', error);
+      res.status(500).json({ message: "Failed to increment template usage" });
+    }
+  });
+
   // ========== CHAT ROUTES ==========
 
   // Get user conversations

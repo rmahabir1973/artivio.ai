@@ -13,6 +13,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Image as ImageIcon, Upload, X } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
+import { TemplateManager } from "@/components/template-manager";
 
 const IMAGE_MODEL_INFO = [
   { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
@@ -53,6 +54,20 @@ export default function GenerateImage() {
   const [outputFormat, setOutputFormat] = useState("PNG");
   const [quality, setQuality] = useState("standard");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
+
+  // Load template handler
+  const handleLoadTemplate = (template: any) => {
+    setPrompt(template.prompt);
+    if (template.model) {
+      setModel(template.model);
+    }
+    if (template.parameters) {
+      if (template.parameters.aspectRatio) setAspectRatio(template.parameters.aspectRatio);
+      if (template.parameters.style) setStyle(template.parameters.style);
+      if (template.parameters.outputFormat) setOutputFormat(template.parameters.outputFormat);
+      if (template.parameters.quality) setQuality(template.parameters.quality);
+    }
+  };
 
   // Merge model info with dynamic pricing
   const IMAGE_MODELS = useMemo(() => IMAGE_MODEL_INFO.map(m => ({
@@ -253,12 +268,23 @@ export default function GenerateImage() {
           {/* Controls */}
           <Card>
             <CardHeader>
-              <CardTitle>Generation Settings</CardTitle>
-              <CardDescription>
-                {mode === "text-to-image" 
-                  ? "Configure your image parameters" 
-                  : "Upload images and describe the edits you want"}
-              </CardDescription>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <CardTitle>Generation Settings</CardTitle>
+                  <CardDescription>
+                    {mode === "text-to-image" 
+                      ? "Configure your image parameters" 
+                      : "Upload images and describe the edits you want"}
+                  </CardDescription>
+                </div>
+                <TemplateManager
+                  featureType="image"
+                  onLoadTemplate={handleLoadTemplate}
+                  currentPrompt={prompt}
+                  currentModel={model}
+                  currentParameters={{ aspectRatio, style, outputFormat, quality }}
+                />
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Model Selection */}

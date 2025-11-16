@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Video, Upload, X, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
+import { TemplateManager } from "@/components/template-manager";
 
 const VIDEO_MODEL_INFO = [
   { 
@@ -78,6 +79,19 @@ export default function GenerateVideo() {
   const [duration, setDuration] = useState(5);
   const [quality, setQuality] = useState("1080p");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+
+  // Load template handler
+  const handleLoadTemplate = (template: any) => {
+    setPrompt(template.prompt);
+    if (template.model) {
+      setModel(template.model);
+    }
+    if (template.parameters) {
+      if (template.parameters.aspectRatio) setAspectRatio(template.parameters.aspectRatio);
+      if (template.parameters.duration) setDuration(template.parameters.duration);
+      if (template.parameters.quality) setQuality(template.parameters.quality);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -295,8 +309,19 @@ export default function GenerateVideo() {
         {/* Controls */}
         <Card>
           <CardHeader>
-            <CardTitle>Generation Settings</CardTitle>
-            <CardDescription>Configure your video parameters</CardDescription>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle>Generation Settings</CardTitle>
+                <CardDescription>Configure your video parameters</CardDescription>
+              </div>
+              <TemplateManager
+                featureType="video"
+                onLoadTemplate={handleLoadTemplate}
+                currentPrompt={prompt}
+                currentModel={model}
+                currentParameters={{ aspectRatio, duration, quality }}
+              />
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Generation Type Tabs */}

@@ -17,6 +17,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Music, ChevronDown, Sparkles, Upload, Plus } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
+import { TemplateManager } from "@/components/template-manager";
 
 const MUSIC_MODEL_INFO = [
   { value: "suno-v3.5", label: "Suno V3.5", description: "High-quality music generation" },
@@ -41,6 +42,21 @@ export default function GenerateMusic() {
   const [lyrics, setLyrics] = useState("");
   const [duration, setDuration] = useState([120]); // in seconds
   const [genre, setGenre] = useState("pop");
+  
+  // Load template handler
+  const handleLoadTemplate = (template: any) => {
+    setPrompt(template.prompt);
+    if (template.model) {
+      setModel(template.model);
+    }
+    if (template.parameters) {
+      if (template.parameters.lyrics) setLyrics(template.parameters.lyrics);
+      if (template.parameters.duration) setDuration([template.parameters.duration]);
+      if (template.parameters.genre) setGenre(template.parameters.genre);
+      if (template.parameters.style) setStyle(template.parameters.style);
+      if (template.parameters.instrumental !== undefined) setInstrumental(template.parameters.instrumental);
+    }
+  };
   
   // Advanced settings state
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -641,8 +657,19 @@ export default function GenerateMusic() {
           <div className="grid lg:grid-cols-2 gap-8">
             <Card>
               <CardHeader>
-                <CardTitle>Generation Settings</CardTitle>
-                <CardDescription>Configure your music parameters</CardDescription>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <CardTitle>Generation Settings</CardTitle>
+                    <CardDescription>Configure your music parameters</CardDescription>
+                  </div>
+                  <TemplateManager
+                    featureType="music"
+                    onLoadTemplate={handleLoadTemplate}
+                    currentPrompt={prompt}
+                    currentModel={model}
+                    currentParameters={{ lyrics, duration: duration[0], genre, style, instrumental }}
+                  />
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Model Selection */}
