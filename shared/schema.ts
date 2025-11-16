@@ -100,9 +100,11 @@ export type PricingEntry = Pricing;
 export const generations = pgTable("generations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  type: varchar("type").notNull(), // 'video', 'image', 'music'
+  type: varchar("type").notNull(), // 'video', 'image', 'music', 'upscaling'
   generationType: varchar("generation_type"), // 'text-to-video', 'image-to-video', null for image/music
-  model: varchar("model").notNull(), // e.g., 'veo-3.1', 'flux-kontext', 'suno-v4'
+  processingStage: varchar("processing_stage").notNull().default('generation'), // 'generation', 'upscale'
+  parentGenerationId: varchar("parent_generation_id"), // Links upscaled content to original generation
+  model: varchar("model").notNull(), // e.g., 'veo-3.1', 'flux-kontext', 'suno-v4', 'topaz-image', 'topaz-video'
   prompt: text("prompt").notNull(),
   referenceImages: text("reference_images").array(), // Image URLs for image-to-video (up to 3 for Veo)
   parameters: jsonb("parameters"), // Store generation parameters
@@ -465,6 +467,20 @@ export const uploadCoverRequestSchema = z.object({
     weirdnessConstraint: z.number().min(0).max(1).optional(),
     audioWeight: z.number().min(0).max(1).optional(),
   }).optional(),
+});
+
+// Topaz AI Image Upscaling Request
+export const upscaleImageRequestSchema = z.object({
+  sourceUrl: z.string().url().describe("URL of the image to upscale"),
+  upscaleFactor: z.enum(['2', '4', '8']).describe("Upscale factor: 2x, 4x, or 8x"),
+  parentGenerationId: z.string().optional().describe("Link to original generation if upscaling from history"),
+});
+
+// Topaz AI Video Upscaling Request
+export const upscaleVideoRequestSchema = z.object({
+  sourceUrl: z.string().url().describe("URL of the video to upscale"),
+  upscaleFactor: z.enum(['2', '4']).describe("Upscale factor: 2x or 4x"),
+  parentGenerationId: z.string().optional().describe("Link to original generation if upscaling from history"),
 });
 
 // Upload & Extend Request

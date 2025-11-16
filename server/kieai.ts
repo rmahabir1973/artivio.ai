@@ -777,3 +777,29 @@ export async function convertAudio(params: {
   
   throw new Error(`Unsupported audio conversion operation: ${params.operation}`);
 }
+
+// Topaz AI Image Upscaling - High-fidelity image enhancement
+export async function upscaleImage(params: {
+  sourceImageUrl: string;
+  upscaleFactor: 2 | 4 | 8;
+  callBackUrl?: string;
+}): Promise<{ result: any; keyName: string }> {
+  return await callKieApi('/api/v1/topaz/image-upscale', {
+    image_url: params.sourceImageUrl,
+    upscale_factor: params.upscaleFactor.toString(),
+    callBackUrl: params.callBackUrl,
+  });
+}
+
+// Topaz AI Video Upscaling - High-fidelity video enhancement
+export async function upscaleVideo(params: {
+  sourceVideoUrl: string;
+  upscaleFactor: 2 | 4;
+  callBackUrl?: string;
+}): Promise<{ result: any; keyName: string }> {
+  return await callKieApi('/api/v1/topaz/video-upscale', {
+    video_url: params.sourceVideoUrl,
+    upscale_factor: params.upscaleFactor.toString(),
+    callBackUrl: params.callBackUrl,
+  });
+}

@@ -16,6 +16,8 @@ import {
   transcribeAudio,
   generateKlingAvatar,
   convertAudio,
+  upscaleImage,
+  upscaleVideo,
   initializeApiKeys 
 } from "./kieai";
 import { analyzeImageWithVision } from "./openaiVision";
@@ -49,6 +51,8 @@ import {
   analyzeImageRequestSchema,
   convertAudioRequestSchema,
   combineVideosRequestSchema,
+  upscaleImageRequestSchema,
+  upscaleVideoRequestSchema,
   createAnnouncementSchema,
   updateAnnouncementSchema,
   type InsertSubscriptionPlan
@@ -88,6 +92,12 @@ async function getModelCost(model: string): Promise<number> {
   };
   
   return defaultCosts[model] || 100;
+}
+
+// Helper to get upscale cost based on type and factor
+async function getUpscaleCost(type: 'image' | 'video', factor: string): Promise<number> {
+  const modelName = `topaz-${type}-${factor}x`;
+  return await getModelCost(modelName);
 }
 
 // Helper to get callback URL using centralized base URL logic
@@ -970,6 +980,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Image generation error:', error);
       res.status(500).json({ message: error.message || "Failed to generate image" });
+    }
+  });
+
+  // Topaz AI Image Upscaling
+  app.post('/api/upscale/image', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validationResult = upscaleImageRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { sourceUrl, upscaleFactor, parentGenerationId } = validationResult.data;
+      const cost = await getUpscaleCost('image', upscaleFactor);
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'upscaling',
+        processingStage: 'upscale',
+        parentGenerationId,
+        model: `topaz-image-${upscaleFactor}x`,
+        prompt: `Upscale image ${upscaleFactor}x using Topaz AI`,
+        parameters: { sourceUrl, upscaleFactor },
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      // Start upscaling in background
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+          
+          const callbackUrl = getCallbackUrl(generation.id);
+          const { result, keyName } = await upscaleImage({
+            sourceImageUrl: sourceUrl,
+            upscaleFactor: parseInt(upscaleFactor) as 2 | 4 | 8,
+            callBackUrl: callbackUrl,
+          });
+
+          const taskId = result?.taskId || result?.id || result?.task_id;
+          if (taskId) {
+            await storage.updateGeneration(generation.id, {
+              externalTaskId: taskId,
+              apiKeyUsed: keyName,
+            });
+          }
+        } catch (error: any) {
+          console.error('Image upscale error:', error);
+          await storage.finalizeGeneration(generation.id, 'failure', { 
+            status: 'failed', 
+            errorMessage: error.message 
+          });
+        }
+      })();
+
+      res.json({ generationId: generation.id, message: "Image upscaling started" });
+    } catch (error: any) {
+      console.error('Image upscale request error:', error);
+      res.status(500).json({ message: error.message || "Failed to start image upscaling" });
+    }
+  });
+
+  // Topaz AI Video Upscaling
+  app.post('/api/upscale/video', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const validationResult = upscaleVideoRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { sourceUrl, upscaleFactor, parentGenerationId } = validationResult.data;
+      const cost = await getUpscaleCost('video', upscaleFactor);
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'upscaling',
+        processingStage: 'upscale',
+        parentGenerationId,
+        model: `topaz-video-${upscaleFactor}x`,
+        prompt: `Upscale video ${upscaleFactor}x using Topaz AI`,
+        parameters: { sourceUrl, upscaleFactor },
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      // Start upscaling in background
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+          
+          const callbackUrl = getCallbackUrl(generation.id);
+          const { result, keyName } = await upscaleVideo({
+            sourceVideoUrl: sourceUrl,
+            upscaleFactor: parseInt(upscaleFactor) as 2 | 4,
+            callBackUrl: callbackUrl,
+          });
+
+          const taskId = result?.taskId || result?.id || result?.task_id;
+          if (taskId) {
+            await storage.updateGeneration(generation.id, {
+              externalTaskId: taskId,
+              apiKeyUsed: keyName,
+            });
+          }
+        } catch (error: any) {
+          console.error('Video upscale error:', error);
+          await storage.finalizeGeneration(generation.id, 'failure', { 
+            status: 'failed', 
+            errorMessage: error.message 
+          });
+        }
+      })();
+
+      res.json({ generationId: generation.id, message: "Video upscaling started" });
+    } catch (error: any) {
+      console.error('Video upscale request error:', error);
+      res.status(500).json({ message: error.message || "Failed to start video upscaling" });
     }
   });
 

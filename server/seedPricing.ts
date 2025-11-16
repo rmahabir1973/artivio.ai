@@ -58,6 +58,13 @@ const INITIAL_PRICING = [
   { feature: 'audio-converter', model: 'wav-conversion', creditCost: 15, category: 'audio', description: 'WAV Audio Conversion' },
   { feature: 'audio-converter', model: 'vocal-removal', creditCost: 25, category: 'audio', description: 'Vocal Removal' },
   { feature: 'audio-converter', model: 'stem-separation', creditCost: 30, category: 'audio', description: 'Stem Separation' },
+  
+  // Topaz AI Upscaling
+  { feature: 'upscaling', model: 'topaz-image-2x', creditCost: 10, category: 'enhancement', description: 'Topaz Image Upscale 2x (up to 2K)' },
+  { feature: 'upscaling', model: 'topaz-image-4x', creditCost: 20, category: 'enhancement', description: 'Topaz Image Upscale 4x (4K resolution)' },
+  { feature: 'upscaling', model: 'topaz-image-8x', creditCost: 40, category: 'enhancement', description: 'Topaz Image Upscale 8x (8K resolution)' },
+  { feature: 'upscaling', model: 'topaz-video-2x', creditCost: 80, category: 'enhancement', description: 'Topaz Video Upscale 2x (HD enhancement)' },
+  { feature: 'upscaling', model: 'topaz-video-4x', creditCost: 150, category: 'enhancement', description: 'Topaz Video Upscale 4x (4K enhancement)' },
 ];
 
 async function seedPricing() {
