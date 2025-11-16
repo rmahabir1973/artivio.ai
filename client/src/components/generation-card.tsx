@@ -11,6 +11,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Generation } from "@shared/schema";
 import { useLocation } from "wouter";
+import { UpscaleModal } from "@/components/upscale-modal";
 
 interface GenerationCardProps {
   generation: Generation;
@@ -22,6 +23,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showUpscaleModal, setShowUpscaleModal] = useState(false);
   
   const statusColors = {
     pending: "secondary",
@@ -117,15 +119,28 @@ export function GenerationCard({ generation }: GenerationCardProps) {
     }
   };
 
+  const canUpscale = generation.status === 'completed' && 
+                     generation.resultUrl && 
+                     (generation.type === 'image' || generation.type === 'video') &&
+                     generation.processingStage !== 'upscale';
+
   return (
     <>
       <Card className="overflow-hidden hover-elevate">
         <CardHeader className="space-y-2 pb-4">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-base line-clamp-2">{generation.prompt}</CardTitle>
-            <Badge variant={statusColors[generation.status as keyof typeof statusColors]} className="shrink-0">
-              {generation.status}
-            </Badge>
+            <div className="flex gap-2 shrink-0">
+              {generation.processingStage === 'upscale' && (
+                <Badge variant="secondary" className="flex items-center gap-1" data-testid={`badge-upscaled-${generation.id}`}>
+                  <Maximize2 className="h-3 w-3" />
+                  Upscaled
+                </Badge>
+              )}
+              <Badge variant={statusColors[generation.status as keyof typeof statusColors]}>
+                {generation.status}
+              </Badge>
+            </div>
           </div>
         </CardHeader>
         
@@ -221,7 +236,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 w-full">
+          <div className={`grid ${canUpscale ? 'grid-cols-3' : 'grid-cols-2'} gap-2 w-full`}>
             {generation.status === 'completed' && generation.resultUrl && (
               <>
                 <Button 
@@ -244,6 +259,18 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   <Copy className="h-4 w-4 mr-1" />
                   Copy
                 </Button>
+                {canUpscale && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowUpscaleModal(true)}
+                    className="w-full"
+                    data-testid={`button-upscale-${generation.id}`}
+                  >
+                    <Maximize2 className="h-4 w-4 mr-1" />
+                    Upscale
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -341,6 +368,21 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   <p className="text-sm text-muted-foreground">{generation.statusDetail}</p>
                 </div>
               )}
+              {generation.parentGenerationId && (
+                <div className="col-span-2">
+                  <h4 className="text-sm font-medium mb-1">Parent Generation</h4>
+                  <p className="text-sm text-muted-foreground font-mono">{generation.parentGenerationId}</p>
+                  <p className="text-xs text-muted-foreground mt-1">This is an upscaled version of another generation</p>
+                </div>
+              )}
+              {generation.processingStage && (
+                <div className="col-span-2">
+                  <h4 className="text-sm font-medium mb-1">Processing Stage</h4>
+                  <Badge variant={generation.processingStage === 'upscale' ? 'secondary' : 'outline'}>
+                    {generation.processingStage === 'upscale' ? 'Upscaled Content' : 'Original Generation'}
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -370,6 +412,23 @@ export function GenerationCard({ generation }: GenerationCardProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Upscale Modal */}
+      {canUpscale && generation.resultUrl && (
+        <UpscaleModal
+          open={showUpscaleModal}
+          onOpenChange={setShowUpscaleModal}
+          contentType={generation.type as 'image' | 'video'}
+          sourceUrl={generation.resultUrl}
+          parentGenerationId={generation.id}
+          onSuccess={() => {
+            toast({
+              title: "Success",
+              description: "Check the generation queue to track your upscale progress",
+            });
+          }}
+        />
+      )}
     </>
   );
 }
