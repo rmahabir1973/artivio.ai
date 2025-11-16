@@ -25,7 +25,9 @@ import {
   Sparkles,
   Zap,
   TrendingUp,
-  Mic2
+  Mic2,
+  Star,
+  ArrowRight
 } from "lucide-react";
 
 interface FeatureCard {
@@ -65,6 +67,48 @@ export default function Home() {
     queryKey: ['/api/subscriptions/current'],
     enabled: !!user,
   });
+
+  // Fetch user's favorite workflows
+  type FavoriteWorkflow = {
+    id: string;
+    userId: string;
+    workflowId: number;
+    workflowTitle: string;
+    createdAt: string;
+  };
+
+  const { data: favoriteWorkflows = [] } = useQuery<FavoriteWorkflow[]>({
+    queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  // Map workflow ID to route for deep-linking
+  const getWorkflowRoute = (workflowId: number): string => {
+    // Map workflow IDs to their primary feature routes
+    const routeMap: Record<number, string> = {
+      1: '/generate/video',   // One-Click Ad Generation
+      2: '/generate/image',   // Social Media Content Factory  
+      3: '/generate/video',   // Product Demo Video Creator
+      4: '/generate/music',   // Music Video Production
+      5: '/chat',            // Educational Course Content
+      6: '/generate/music',   // Podcast to Video Converter
+      7: '/generate/image',   // Brand Identity Package
+      8: '/generate/video',   // Documentary Short Creator
+      9: '/generate/music',   // Audiobook Production
+      10: '/generate/video',  // Event Highlight Reel
+      11: '/generate/image',  // Real Estate Virtual Tour
+      12: '/chat',           // Customer Service Chatbot
+      13: '/voice-clone',    // Voice Acting Portfolio
+      14: '/generate/music', // Meditation Audio Creator
+      15: '/generate/video', // Tutorial Video Series
+      16: '/generate/video', // Recipe Tutorial Series
+      17: '/generate/video', // Corporate Training Module
+      18: '/generate/video', // Travel Vlog Creator
+      19: '/generate/video', // Gaming Highlight Montage
+      20: '/generate/video', // Motivational Quote Videos
+    };
+    return routeMap[workflowId] || '/workflows';
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -278,6 +322,61 @@ export default function Home() {
         <div className="mb-8">
           <GenerationsQueue />
         </div>
+
+        {/* Favorite Workflows Quick Launch */}
+        {favoriteWorkflows.length > 0 && (
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5 text-primary fill-primary" />
+                    <CardTitle>Favorite Workflows</CardTitle>
+                  </div>
+                  <Link href="/workflows">
+                    <Button variant="ghost" size="sm" className="gap-2" data-testid="button-view-all-workflows">
+                      View All
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+                <CardDescription>
+                  Quick access to your bookmarked automation workflows
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {favoriteWorkflows.slice(0, 6).map((favorite) => (
+                    <Link key={favorite.id} href={getWorkflowRoute(favorite.workflowId)}>
+                      <Card className="hover-elevate cursor-pointer group">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <Zap className="h-4 w-4 text-primary shrink-0" />
+                              <span className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                                {favorite.workflowTitle}
+                              </span>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+                {favoriteWorkflows.length > 6 && (
+                  <div className="mt-3 text-center">
+                    <Link href="/workflows">
+                      <Button variant="outline" size="sm" data-testid="button-more-favorites">
+                        View {favoriteWorkflows.length - 6} More Favorites
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">

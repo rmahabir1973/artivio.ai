@@ -1250,6 +1250,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== FAVORITE WORKFLOW ROUTES ==========
+
+  // Get user's favorite workflows
+  app.get('/api/favorites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getUserFavoriteWorkflows(userId);
+      res.json(favorites);
+    } catch (error) {
+      console.error('Error fetching favorite workflows:', error);
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  // Add workflow to favorites
+  app.post('/api/favorites', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { workflowId, workflowTitle } = req.body;
+
+      if (!workflowId || !workflowTitle) {
+        return res.status(400).json({ message: "workflowId and workflowTitle are required" });
+      }
+
+      const favorite = await storage.addFavoriteWorkflow(userId, workflowId, workflowTitle);
+      res.json(favorite);
+    } catch (error) {
+      console.error('Error adding favorite workflow:', error);
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  // Remove workflow from favorites
+  app.delete('/api/favorites/:workflowId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const workflowId = parseInt(req.params.workflowId);
+
+      if (isNaN(workflowId)) {
+        return res.status(400).json({ message: "Invalid workflowId" });
+      }
+
+      await storage.removeFavoriteWorkflow(userId, workflowId);
+      res.json({ success: true, message: "Favorite removed successfully" });
+    } catch (error) {
+      console.error('Error removing favorite workflow:', error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // Check if workflow is favorited
+  app.get('/api/favorites/:workflowId/check', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const workflowId = parseInt(req.params.workflowId);
+
+      if (isNaN(workflowId)) {
+        return res.status(400).json({ message: "Invalid workflowId" });
+      }
+
+      const isFavorite = await storage.isFavoriteWorkflow(userId, workflowId);
+      res.json({ isFavorite });
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+      res.status(500).json({ message: "Failed to check favorite status" });
+    }
+  });
+
   // ========== CHAT ROUTES ==========
 
   // Get user conversations

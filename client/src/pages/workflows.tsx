@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Zap,
   Video,
@@ -17,12 +19,100 @@ import {
   Film,
   Mic,
   Globe,
-  Crown
+  Crown,
+  Star
 } from "lucide-react";
 import { Link } from "wouter";
 import { Footer } from "@/components/footer";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+
+type FavoriteWorkflow = {
+  id: string;
+  userId: string;
+  workflowId: number;
+  workflowTitle: string;
+  createdAt: string;
+};
 
 export default function Workflows() {
+  const [filter, setFilter] = useState<"all" | "favorites">("all");
+  const { isAuthenticated, user } = useAuth();
+  const { toast } = useToast();
+
+  // Fetch user's favorite workflows
+  const { data: favorites = [] } = useQuery<FavoriteWorkflow[]>({
+    queryKey: ["/api/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  // Add favorite mutation
+  const addFavoriteMutation = useMutation({
+    mutationFn: async (data: { workflowId: number; workflowTitle: string }) => {
+      return await apiRequest("POST", "/api/favorites", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Added to Favorites",
+        description: "Workflow added to your favorites successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Add Favorite",
+        description: error.message || "Could not add workflow to favorites.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove favorite mutation
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async (workflowId: number) => {
+      return await apiRequest("DELETE", `/api/favorites/${workflowId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast({
+        title: "Removed from Favorites",
+        description: "Workflow removed from your favorites.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Remove Favorite",
+        description: error.message || "Could not remove workflow from favorites.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Check if workflow is favorited
+  const isFavorited = (workflowId: number): boolean => {
+    return favorites.some(f => f.workflowId === workflowId);
+  };
+
+  // Toggle favorite
+  const toggleFavorite = (workflowId: number, workflowTitle: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to save favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isFavorited(workflowId)) {
+      removeFavoriteMutation.mutate(workflowId);
+    } else {
+      addFavoriteMutation.mutate({ workflowId, workflowTitle });
+    }
+  };
+
   // Helper function to determine the route based on workflow features
   const getWorkflowRoute = (features: string[]): string => {
     if (features.includes("Video Generation")) return "/generate/video";
@@ -408,6 +498,23 @@ export default function Workflows() {
           </p>
         </div>
 
+        {/* Favorites Filter Tabs */}
+        {isAuthenticated && (
+          <div className="flex justify-center">
+            <Tabs value={filter} onValueChange={(v: any) => setFilter(v)} className="w-auto">
+              <TabsList>
+                <TabsTrigger value="all" data-testid="tab-all-workflows">
+                  All Workflows ({workflows.length})
+                </TabsTrigger>
+                <TabsTrigger value="favorites" data-testid="tab-favorite-workflows">
+                  <Star className="h-4 w-4 mr-2" />
+                  Favorites ({favorites.length})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-2">
           {categories.map((category) => (
@@ -423,8 +530,36 @@ export default function Workflows() {
         </div>
 
         {/* Workflows Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workflows.map((workflow) => {
+        {(() => {
+          const filteredWorkflows = workflows.filter(workflow => {
+            if (filter === "all") return true;
+            return isFavorited(workflow.id);
+          });
+
+          if (filteredWorkflows.length === 0 && filter === "favorites") {
+            return (
+              <div className="text-center py-16 space-y-4">
+                <Star className="h-16 w-16 mx-auto text-muted-foreground/50" />
+                <div>
+                  <h3 className="text-xl font-semibold">No Favorites Yet</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Click the star icon on any workflow to add it to your favorites
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setFilter("all")}
+                  data-testid="button-show-all-workflows"
+                >
+                  Browse All Workflows
+                </Button>
+              </div>
+            );
+          }
+
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredWorkflows.map((workflow) => {
             const Icon = workflow.icon;
             return (
               <Card key={workflow.id} className="hover-elevate flex flex-col">
@@ -433,9 +568,31 @@ export default function Workflows() {
                     <div className="p-3 rounded-lg bg-gradient-to-br from-primary/10 to-purple-500/10 border border-primary/20">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {workflow.category}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {workflow.category}
+                      </Badge>
+                      {isAuthenticated && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleFavorite(workflow.id, workflow.title);
+                          }}
+                          className="h-8 w-8"
+                          data-testid={`button-favorite-${workflow.id}`}
+                        >
+                          <Star
+                            className={`h-4 w-4 ${
+                              isFavorited(workflow.id)
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <CardTitle className="text-lg mb-2">{workflow.title}</CardTitle>
@@ -515,7 +672,9 @@ export default function Workflows() {
               </Card>
             );
           })}
-        </div>
+            </div>
+          );
+        })()}
 
         {/* Bottom CTA */}
         <Card className="bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">

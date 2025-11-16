@@ -19,6 +19,7 @@ import {
   stripeEvents,
   homePageContent,
   announcements,
+  favoriteWorkflows,
   type User,
   type UpsertUser,
   type ApiKey,
@@ -59,6 +60,8 @@ import {
   type HomePageContent,
   type Announcement,
   type InsertAnnouncement,
+  type FavoriteWorkflow,
+  type InsertFavoriteWorkflow,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -197,6 +200,12 @@ export interface IStorage {
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
   updateAnnouncement(id: string, updates: Partial<InsertAnnouncement>): Promise<Announcement | undefined>;
   deleteAnnouncement(id: string): Promise<void>;
+
+  // Favorite Workflow operations
+  addFavoriteWorkflow(userId: string, workflowId: number, workflowTitle: string): Promise<FavoriteWorkflow>;
+  removeFavoriteWorkflow(userId: string, workflowId: number): Promise<void>;
+  getUserFavoriteWorkflows(userId: string): Promise<FavoriteWorkflow[]>;
+  isFavoriteWorkflow(userId: string, workflowId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1222,6 +1231,59 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAnnouncement(id: string): Promise<void> {
     await db.delete(announcements).where(eq(announcements.id, id));
+  }
+
+  // Favorite Workflow operations
+  async addFavoriteWorkflow(userId: string, workflowId: number, workflowTitle: string): Promise<FavoriteWorkflow> {
+    const [favorite] = await db
+      .insert(favoriteWorkflows)
+      .values({ userId, workflowId, workflowTitle })
+      .onConflictDoNothing()
+      .returning();
+    
+    // If conflict occurred (favorite already exists), fetch and return it
+    if (!favorite) {
+      const [existing] = await db
+        .select()
+        .from(favoriteWorkflows)
+        .where(and(
+          eq(favoriteWorkflows.userId, userId),
+          eq(favoriteWorkflows.workflowId, workflowId)
+        ))
+        .limit(1);
+      return existing;
+    }
+    
+    return favorite;
+  }
+
+  async removeFavoriteWorkflow(userId: string, workflowId: number): Promise<void> {
+    await db
+      .delete(favoriteWorkflows)
+      .where(and(
+        eq(favoriteWorkflows.userId, userId),
+        eq(favoriteWorkflows.workflowId, workflowId)
+      ));
+  }
+
+  async getUserFavoriteWorkflows(userId: string): Promise<FavoriteWorkflow[]> {
+    return await db
+      .select()
+      .from(favoriteWorkflows)
+      .where(eq(favoriteWorkflows.userId, userId))
+      .orderBy(desc(favoriteWorkflows.createdAt));
+  }
+
+  async isFavoriteWorkflow(userId: string, workflowId: number): Promise<boolean> {
+    const [favorite] = await db
+      .select()
+      .from(favoriteWorkflows)
+      .where(and(
+        eq(favoriteWorkflows.userId, userId),
+        eq(favoriteWorkflows.workflowId, workflowId)
+      ))
+      .limit(1);
+    return !!favorite;
   }
 }
 
