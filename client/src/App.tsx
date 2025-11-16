@@ -35,6 +35,8 @@ import Workflows from "@/pages/workflows";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Contact from "@/pages/contact";
+import Referrals from "@/pages/referrals";
+import Leaderboard from "@/pages/leaderboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -47,6 +49,7 @@ function Router() {
       <Route path="/workflows" component={Workflows} />
       <Route path="/templates" component={Workflows} /> {/* Alias for /workflows */}
       <Route path="/affiliates" component={Affiliates} />
+      <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />
@@ -72,6 +75,7 @@ function Router() {
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
           <Route path="/profile" component={Profile} />
+          <Route path="/referrals" component={Referrals} />
           <Route path="/admin" component={Admin} />
           <Route path="/billing" component={Billing} />
           <Route path="/billing/success" component={BillingSuccess} />

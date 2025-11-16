@@ -31,7 +31,9 @@ import {
   History as HistoryIcon,
   Sparkles,
   Mic2,
-  DollarSign
+  DollarSign,
+  Users,
+  Trophy
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -77,6 +79,13 @@ export function ModernHeader() {
         { label: "Video Editor", href: "/video-editor", icon: Scissors },
         { label: "History", href: "/history", icon: HistoryIcon },
         { label: "Workflows", href: "/workflows", icon: Sparkles },
+      ]
+    },
+    {
+      label: "Rewards & Social",
+      features: [
+        { label: "Referrals", href: "/referrals", icon: Users },
+        { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
       ]
     }
   ];
