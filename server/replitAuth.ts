@@ -166,17 +166,31 @@ export async function setupAuth(app: Express) {
   };
 
   passport.serializeUser((user: Express.User, cb) => {
+    // Explicitly serialize as plain JSON to persist refresh_token
+    const userAny = user as any;
+    const sessionUser = {
+      claims: userAny.claims,
+      access_token: userAny.access_token,
+      refresh_token: userAny.refresh_token,
+      expires_at: userAny.expires_at,
+    };
+    
     console.log('[AUTH DEBUG] serializeUser called', {
       user: user ? 'present' : 'missing',
-      hasClaims: !!(user as any)?.claims,
+      hasClaims: !!userAny.claims,
+      hasRefreshToken: !!userAny.refresh_token,
+      keys: Object.keys(sessionUser),
     });
-    cb(null, user);
+    
+    cb(null, sessionUser);
   });
   
   passport.deserializeUser((user: Express.User, cb) => {
     console.log('[AUTH DEBUG] deserializeUser called', {
       user: user ? 'present' : 'missing',
       hasClaims: !!(user as any)?.claims,
+      hasRefreshToken: !!(user as any)?.refresh_token,
+      userKeys: user ? Object.keys(user) : [],
     });
     cb(null, user);
   });
