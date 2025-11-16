@@ -385,7 +385,7 @@ export async function generateVideo(params: {
       prompt: params.prompt,
       negative_prompt: parameters.negativePrompt,
       resolution,
-      aspectRatio,
+      aspect_ratio: aspectRatio,
       duration,
       seed: parameters.seed,
       callBackUrl: parameters.callBackUrl,
