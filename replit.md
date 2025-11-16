@@ -82,6 +82,13 @@ The frontend is built with React, TypeScript, Tailwind CSS, and Shadcn UI, provi
     -   `generationTemplates` table storing custom prompt templates with feature-type categorization
     -   Supports parameters storage in JSONB format for flexible template configurations
     -   Designed for future UI implementation of quick-access workflow favorites
+-   **Loops.so Email Marketing Integration**: Automated email funnel for free trial user conversion:
+    -   Automatic enrollment of Free plan users into 7-day educational funnel during signup
+    -   Fire-and-forget error handling prevents email failures from blocking user registration
+    -   Production-safe logging with automatic PII scrubbing (emails, names, user IDs redacted)
+    -   Admin test endpoints with Zod validation: `GET /api/admin/loops/lists` and `POST /api/admin/loops/test`
+    -   Comprehensive documentation in `LOOPS_INTEGRATION.md` with security best practices
+    -   Uses structured logger (`server/logger.ts`) for all operations with configurable LOG_LEVEL
 
 ### Feature Specifications
 -   **AI Video Generation**: Supports Veo 3.1 (standard and fast) and Runway Aleph, with image-to-video capabilities (up to 3 reference images). **Veo Generation Type Logic** (per Kie.ai API constraints): `REFERENCE_2_VIDEO` mode only works with `veo3_fast` model + `16:9` aspect ratio. For standard Veo 3.1 (`veo3`), image-to-video uses `FIRST_AND_LAST_FRAMES_2_VIDEO` for 1-2 images. Multi-reference (3 images) restricted to veo3_fast + 16:9 only. This prevents preflight API rejections and ensures requests reach Kie.ai successfully.
@@ -108,3 +115,4 @@ The project uses a modular structure for client, server, and shared components. 
 -   **ElevenLabs**: Integrated via Kie.ai API for voice cloning.
 -   **FFmpeg 6.1.1**: System package for server-side video processing.
 -   **Stripe**: Payment processing for subscription management.
+-   **Loops.so**: Email marketing platform for automated 7-day funnel enrollment of free trial users.

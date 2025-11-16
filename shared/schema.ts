@@ -257,6 +257,15 @@ export const analyzeImageRequestSchema = z.object({
 
 export type AnalyzeImageRequest = z.infer<typeof analyzeImageRequestSchema>;
 
+// Loops.so Test Contact Request Schema
+export const loopsTestContactRequestSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+});
+
+export type LoopsTestContactRequest = z.infer<typeof loopsTestContactRequestSchema>;
+
 // Video Enhancement Schemas
 export const transitionsEnhancementSchema = z.object({
   mode: z.enum(['none', 'crossfade']).default('none'),

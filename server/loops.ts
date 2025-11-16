@@ -56,12 +56,10 @@ export class LoopsService {
 
       if (data.success) {
         logger.info('LOOPS', 'Contact created successfully', {
-          email: contact.email,
-          lists: Object.keys(contact.mailingLists || {}),
+          listCount: Object.keys(contact.mailingLists || {}).length,
         });
       } else {
         logger.error('LOOPS', 'Failed to create contact', {
-          email: contact.email,
           error: data.message,
         });
       }
@@ -95,10 +93,9 @@ export class LoopsService {
       const data = await response.json();
 
       if (data.success) {
-        logger.info('LOOPS', 'Contact updated successfully', { email });
+        logger.info('LOOPS', 'Contact updated successfully');
       } else {
         logger.error('LOOPS', 'Failed to update contact', {
-          email,
           error: data.message,
         });
       }

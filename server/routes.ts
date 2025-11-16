@@ -26,6 +26,7 @@ import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
 import { combineVideos } from "./videoProcessor";
 import { LoopsService } from "./loops";
+import { logger } from "./logger";
 import { 
   createCheckoutSession, 
   createCustomerPortalSession,
@@ -56,6 +57,7 @@ import {
   upscaleVideoRequestSchema,
   createAnnouncementSchema,
   updateAnnouncementSchema,
+  loopsTestContactRequestSchema,
   type InsertSubscriptionPlan
 } from "@shared/schema";
 import { getBaseUrl } from "./urlUtils";
@@ -753,24 +755,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Add new Free plan users to Loops.so 7-day email funnel
         if (planName === 'free') {
-          try {
-            console.log(`📧 Adding user to Loops.so 7-day email funnel...`);
-            const loopsResult = await LoopsService.addToSevenDayFunnel(
-              req.user.claims.email,
-              req.user.claims.first_name,
-              req.user.claims.last_name,
-              createdUser.id
-            );
-            
-            if (loopsResult.success) {
-              console.log(`✓ User added to 7-day email funnel successfully`);
-            } else {
-              console.warn(`⚠️ Failed to add user to email funnel: ${loopsResult.message}`);
-            }
-          } catch (error) {
-            console.error(`⚠️ Error adding user to email funnel:`, error);
-            // Non-critical error - don't block signup
-          }
+          LoopsService.addToSevenDayFunnel(
+            req.user.claims.email,
+            req.user.claims.first_name,
+            req.user.claims.last_name,
+            createdUser.id
+          ).catch(loopsError => {
+            logger.error('LOOPS', 'Failed to add user to 7-day funnel', {
+              error: loopsError instanceof Error ? loopsError.message : String(loopsError)
+            });
+          });
         }
         
         user = await storage.getUser(userId);
@@ -3255,11 +3249,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const { email, firstName, lastName } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
+      // Validate request body with Zod
+      const validationResult = loopsTestContactRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
       }
+
+      const { email, firstName, lastName } = validationResult.data;
 
       const result = await LoopsService.addToSevenDayFunnel(
         email,
@@ -3270,7 +3269,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result);
     } catch (error) {
-      console.error('Error testing Loops.so integration:', error);
+      logger.error('LOOPS', 'Failed to test Loops.so integration', {
+        error: error instanceof Error ? error.message : String(error)
+      });
       res.status(500).json({ message: "Failed to test Loops.so integration" });
     }
   });
