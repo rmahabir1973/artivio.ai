@@ -1,0 +1,162 @@
+/**
+ * Structured Logger for Production-Safe Logging
+ * 
+ * Provides log levels, PII scrubbing, and performance-optimized logging
+ * for the referral system and other critical paths.
+ */
+
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  category: string;
+  message: string;
+  metadata?: Record<string, any>;
+}
+
+class Logger {
+  private currentLevel: LogLevel;
+  private levels: Record<LogLevel, number> = {
+    debug: 0,
+    info: 1,
+    warn: 2,
+    error: 3,
+  };
+
+  constructor() {
+    // Set log level based on environment
+    const envLevel = process.env.LOG_LEVEL?.toLowerCase() as LogLevel;
+    this.currentLevel = envLevel || (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
+  }
+
+  private shouldLog(level: LogLevel): boolean {
+    return this.levels[level] >= this.levels[this.currentLevel];
+  }
+
+  private scrubPII(obj: any): any {
+    if (typeof obj === 'string') {
+      // Mask email addresses
+      return obj.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+    }
+    
+    if (typeof obj === 'object' && obj !== null) {
+      const scrubbed: any = Array.isArray(obj) ? [] : {};
+      for (const key in obj) {
+        // Redact sensitive fields
+        if (['email', 'refereeEmail', 'password', 'token', 'secret'].includes(key)) {
+          scrubbed[key] = '[REDACTED]';
+        } else {
+          scrubbed[key] = this.scrubPII(obj[key]);
+        }
+      }
+      return scrubbed;
+    }
+    
+    return obj;
+  }
+
+  private formatLog(level: LogLevel, category: string, message: string, metadata?: Record<string, any>): string {
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level,
+      category,
+      message,
+      metadata: metadata ? this.scrubPII(metadata) : undefined,
+    };
+
+    // In production, use JSON for log aggregation tools
+    if (process.env.NODE_ENV === 'production') {
+      return JSON.stringify(entry);
+    }
+
+    // In development, use human-readable format
+    const metaStr = metadata ? ` ${JSON.stringify(this.scrubPII(metadata))}` : '';
+    return `[${entry.timestamp}] ${level.toUpperCase()} [${category}] ${message}${metaStr}`;
+  }
+
+  debug(category: string, message: string, metadata?: Record<string, any>): void {
+    if (this.shouldLog('debug')) {
+      console.log(this.formatLog('debug', category, message, metadata));
+    }
+  }
+
+  info(category: string, message: string, metadata?: Record<string, any>): void {
+    if (this.shouldLog('info')) {
+      console.log(this.formatLog('info', category, message, metadata));
+    }
+  }
+
+  warn(category: string, message: string, metadata?: Record<string, any>): void {
+    if (this.shouldLog('warn')) {
+      console.warn(this.formatLog('warn', category, message, metadata));
+    }
+  }
+
+  error(category: string, message: string, metadata?: Record<string, any>): void {
+    if (this.shouldLog('error')) {
+      console.error(this.formatLog('error', category, message, metadata));
+    }
+  }
+}
+
+// Export singleton instance
+export const logger = new Logger();
+
+// Specific logger for referral operations
+export const referralLogger = {
+  codeGenerated: (userId: string, code: string, duration: number) => {
+    logger.info('REFERRAL', 'Code generated', { userId, codeLength: code.length, duration });
+  },
+
+  codeRetrieved: (userId: string, duration: number) => {
+    logger.debug('REFERRAL', 'Code retrieved from cache', { userId, duration });
+  },
+
+  clickTracked: (referralId: string, hasEmail: boolean, duration: number) => {
+    logger.info('REFERRAL', 'Click tracked', { referralId, hasEmail, duration });
+  },
+
+  clickDuplicate: (referralCode: string) => {
+    logger.warn('REFERRAL', 'Duplicate click attempt', { referralCodeLength: referralCode.length });
+  },
+
+  conversionStarted: (referralCode: string, refereeId: string, txId: string) => {
+    logger.info('REFERRAL', 'Conversion started', { referralCodeLength: referralCode.length, refereeId, txId });
+  },
+
+  conversionSuccess: (referralId: string, txId: string, referrerCredits: number, refereeCredits: number, duration: number) => {
+    logger.info('REFERRAL', 'Conversion succeeded', { 
+      referralId, 
+      txId, 
+      referrerCredits, 
+      refereeCredits, 
+      duration 
+    });
+  },
+
+  conversionRaceDetected: (referralId: string, txId: string, duration: number) => {
+    logger.warn('REFERRAL', 'Race condition detected - conversion blocked', { 
+      referralId, 
+      txId, 
+      duration,
+      note: 'This indicates concurrent conversion attempts were properly prevented'
+    });
+  },
+
+  conversionNotFound: (referralCode: string, txId: string, duration: number) => {
+    logger.debug('REFERRAL', 'No pending referral found', { 
+      referralCodeLength: referralCode.length, 
+      txId, 
+      duration 
+    });
+  },
+
+  error: (operation: string, error: Error, metadata?: Record<string, any>) => {
+    logger.error('REFERRAL', `Operation failed: ${operation}`, { 
+      error: error.message, 
+      stack: error.stack,
+      ...metadata 
+    });
+  },
+};

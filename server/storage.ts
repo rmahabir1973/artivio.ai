@@ -1597,6 +1597,8 @@ export class DatabaseStorage implements IStorage {
 
   // Referral operations
   async getUserReferralCode(userId: string): Promise<string> {
+    const startTime = Date.now();
+    
     // Check if user already has a referral code
     const [user] = await db
       .select({ referralCode: users.referralCode })
@@ -1605,6 +1607,8 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     if (user?.referralCode) {
+      const { referralLogger } = await import('./logger');
+      referralLogger.codeRetrieved(userId, Date.now() - startTime);
       return user.referralCode;
     }
 
@@ -1632,10 +1636,14 @@ export class DatabaseStorage implements IStorage {
       .set({ referralCode: code })
       .where(eq(users.id, userId));
 
+    const { referralLogger } = await import('./logger');
+    referralLogger.codeGenerated(userId, code, Date.now() - startTime);
     return code;
   }
 
   async createReferralClick(referralCode: string, refereeEmail?: string): Promise<Referral> {
+    const startTime = Date.now();
+    
     // Find the referrer by code
     const [referrer] = await db
       .select({ id: users.id })
@@ -1644,28 +1652,55 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     if (!referrer) {
+      const { referralLogger } = await import('./logger');
+      referralLogger.error('createReferralClick', new Error('Invalid referral code'), { referralCodeLength: referralCode.length });
       throw new Error('Invalid referral code');
     }
 
-    // Create referral record
-    const [referral] = await db
-      .insert(referrals)
-      .values({
-        referrerId: referrer.id,
-        referralCode,
-        refereeEmail,
-        status: 'pending',
-      })
-      .returning();
+    try {
+      // Create referral record
+      const [referral] = await db
+        .insert(referrals)
+        .values({
+          referrerId: referrer.id,
+          referralCode,
+          refereeEmail,
+          status: 'pending',
+        })
+        .returning();
 
-    return referral;
+      const { referralLogger } = await import('./logger');
+      referralLogger.clickTracked(referral.id, !!refereeEmail, Date.now() - startTime);
+      return referral;
+    } catch (error: any) {
+      // Handle duplicate entries gracefully (unique constraint violation)
+      if (error?.code === '23505') {
+        const { referralLogger } = await import('./logger');
+        referralLogger.clickDuplicate(referralCode);
+        // Return existing referral instead of throwing
+        const [existing] = await db
+          .select()
+          .from(referrals)
+          .where(
+            and(
+              eq(referrals.referralCode, referralCode),
+              eq(referrals.refereeEmail, refereeEmail || '')
+            )
+          )
+          .limit(1);
+        return existing;
+      }
+      throw error;
+    }
   }
 
   async convertReferral(referralCode: string, refereeId: string): Promise<{ referrerCredits: number; refereeCredits: number }> {
     const REFERRER_BONUS = 1000; // Credits for the referrer
     const REFEREE_BONUS = 500;   // Credits for the referee
-
-    return await db.transaction(async (tx) => {
+    const startTime = Date.now();
+    const transactionId = Math.random().toString(36).substring(2, 9);
+    
+    const result = await db.transaction(async (tx) => {
       // Find and lock the most recent pending referral for this code
       // FOR UPDATE ensures only one transaction can convert this referral
       const [referral] = await tx
@@ -1682,8 +1717,7 @@ export class DatabaseStorage implements IStorage {
         .for('update');
 
       if (!referral) {
-        // No pending referral found, skip conversion
-        return { referrerCredits: 0, refereeCredits: 0 };
+        return { referrerCredits: 0, refereeCredits: 0, referralId: null };
       }
 
       // Update the referral record with status guard to ensure idempotency
@@ -1708,8 +1742,7 @@ export class DatabaseStorage implements IStorage {
 
       // If update affected no rows, another transaction already credited this referral
       if (!updatedReferrals || updatedReferrals.length === 0) {
-        console.log(`ℹ️ [REFERRAL] Referral ${referral.id} already credited by another transaction`);
-        return { referrerCredits: 0, refereeCredits: 0 };
+        return { referrerCredits: 0, refereeCredits: 0, referralId: referral.id };
       }
 
       // Grant credits to referrer
@@ -1727,13 +1760,37 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(users.id, refereeId));
 
-      console.log(`✓ [REFERRAL] Converted referral ${referral.id}: ${REFERRER_BONUS} credits to referrer, ${REFEREE_BONUS} credits to referee`);
-
       return { 
         referrerCredits: REFERRER_BONUS, 
-        refereeCredits: REFEREE_BONUS 
+        refereeCredits: REFEREE_BONUS,
+        referralId: referral.id,
       };
     });
+
+    // Log after transaction completes to avoid extending lock time
+    const { referralLogger } = await import('./logger');
+    const duration = Date.now() - startTime;
+    
+    if (result.referrerCredits === 0 && result.refereeCredits === 0) {
+      if (result.referralId) {
+        referralLogger.conversionRaceDetected(result.referralId, transactionId, duration);
+      } else {
+        referralLogger.conversionNotFound(referralCode, transactionId, duration);
+      }
+    } else if (result.referralId) {
+      referralLogger.conversionSuccess(
+        result.referralId,
+        transactionId,
+        result.referrerCredits,
+        result.refereeCredits,
+        duration
+      );
+    }
+
+    return { 
+      referrerCredits: result.referrerCredits, 
+      refereeCredits: result.refereeCredits 
+    };
   }
 
   async getUserReferralStats(userId: string): Promise<{
