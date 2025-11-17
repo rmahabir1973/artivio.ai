@@ -1,0 +1,301 @@
+# Music Video Generation Callbacks
+
+> When MP4 generation is complete, the system will send a POST request to the provided callback URL to notify the result
+
+When you submit a music video generation task to the Suno API, you can use the `callBackUrl` parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+
+## Callback Mechanism Overview
+
+<Info>
+  The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+</Info>
+
+### Callback Timing
+
+The system will send callback notifications in the following situations:
+
+* Music video generation task completed successfully
+* Music video generation task failed
+* Errors occurred during task processing
+
+### Callback Method
+
+* **HTTP Method**: POST
+* **Content Type**: application/json
+* **Timeout Setting**: 15 seconds
+
+## Callback Request Format
+
+When the task is completed, the system will send a POST request to your `callBackUrl` in the following format:
+
+<CodeGroup>
+  ```json Success Callback theme={null}
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "task_id": "task_id_5bbe7721119d",
+      "video_url": "video_url_847715e66259"
+    }
+  }
+  ```
+
+  ```json Failure Callback theme={null}
+  {
+    "code": 500,
+    "msg": "Internal Error - Please try again later",
+    "data": {
+      "task_id": "task_id_5bbe7721119d",
+      "video_url": null
+    }
+  }
+  ```
+</CodeGroup>
+
+## Status Code Description
+
+<ParamField path="code" type="integer" required>
+  Callback status code indicating task processing result:
+
+  | Status Code | Description                                       |
+  | ----------- | ------------------------------------------------- |
+  | 200         | Success - Request has been processed successfully |
+  | 500         | Internal Error - Please try again later           |
+</ParamField>
+
+<ParamField path="msg" type="string" required>
+  Status message providing detailed status description
+</ParamField>
+
+<ParamField path="data.task_id" type="string" required>
+  Unique identifier of the generation task, consistent with the task\_id returned when you submitted the task
+</ParamField>
+
+<ParamField path="data.video_url" type="string">
+  Accessible video URL, returned on success, valid for 14 days
+</ParamField>
+
+## Callback Reception Examples
+
+Here are example codes for receiving callbacks in popular programming languages:
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript  theme={null}
+    const express = require('express');
+    const app = express();
+
+    app.use(express.json());
+
+    app.post('/suno-video-callback', (req, res) => {
+      const { code, msg, data } = req.body;
+      
+      console.log('Received music video callback:', {
+        taskId: data.task_id,
+        status: code,
+        message: msg
+      });
+      
+      if (code === 200) {
+        // Task completed successfully
+        console.log('Music video generation completed');
+        console.log(`Video URL: ${data.video_url}`);
+        console.log('Note: Video link is valid for 14 days');
+        
+        // Process generated video
+        // Can download video, save locally, etc.
+        
+      } else {
+        // Task failed
+        console.log('Music video generation failed:', msg);
+        
+        // Handle failure cases...
+      }
+      
+      // Return 200 status code to confirm callback received
+      res.status(200).json({ status: 'received' });
+    });
+
+    app.listen(3000, () => {
+      console.log('Callback server running on port 3000');
+    });
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python  theme={null}
+    from flask import Flask, request, jsonify
+    import requests
+    from datetime import datetime, timedelta
+
+    app = Flask(__name__)
+
+    @app.route('/suno-video-callback', methods=['POST'])
+    def handle_callback():
+        data = request.json
+        
+        code = data.get('code')
+        msg = data.get('msg')
+        callback_data = data.get('data', {})
+        task_id = callback_data.get('task_id')
+        video_url = callback_data.get('video_url')
+        
+        print(f"Received music video callback: {task_id}, status: {code}, message: {msg}")
+        
+        if code == 200:
+            # Task completed successfully
+            print("Music video generation completed")
+            print(f"Video URL: {video_url}")
+            print("Note: Video link is valid for 14 days")
+            
+            # Process generated video
+            if video_url:
+                try:
+                    # Download video file example
+                    response = requests.get(video_url)
+                    if response.status_code == 200:
+                        filename = f"music_video_{task_id}.mp4"
+                        with open(filename, "wb") as f:
+                            f.write(response.content)
+                        print(f"Music video saved as {filename}")
+                        
+                        # Record expiration time
+                        expire_date = datetime.now() + timedelta(days=14)
+                        print(f"Video link will expire on {expire_date.strftime('%Y-%m-%d %H:%M:%S')}")
+                        
+                except Exception as e:
+                    print(f"Video download failed: {e}")
+                    
+        else:
+            # Task failed
+            print(f"Music video generation failed: {msg}")
+            
+            # Handle failure cases...
+        
+        # Return 200 status code to confirm callback received
+        return jsonify({'status': 'received'}), 200
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=3000)
+    ```
+  </Tab>
+
+  <Tab title="PHP">
+    ```php  theme={null}
+    <?php
+    header('Content-Type: application/json');
+
+    // Get POST data
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    $code = $data['code'] ?? null;
+    $msg = $data['msg'] ?? '';
+    $callbackData = $data['data'] ?? [];
+    $taskId = $callbackData['task_id'] ?? '';
+    $videoUrl = $callbackData['video_url'] ?? '';
+
+    error_log("Received music video callback: $taskId, status: $code, message: $msg");
+
+    if ($code === 200) {
+        // Task completed successfully
+        error_log("Music video generation completed");
+        error_log("Video URL: $videoUrl");
+        error_log("Note: Video link is valid for 14 days");
+        
+        // Process generated video
+        if (!empty($videoUrl)) {
+            try {
+                // Download video file example
+                $videoContent = file_get_contents($videoUrl);
+                if ($videoContent !== false) {
+                    $filename = "music_video_{$taskId}.mp4";
+                    file_put_contents($filename, $videoContent);
+                    error_log("Music video saved as $filename");
+                    
+                    // Record expiration time
+                    $expireDate = date('Y-m-d H:i:s', strtotime('+14 days'));
+                    error_log("Video link will expire on $expireDate");
+                }
+            } catch (Exception $e) {
+                error_log("Video download failed: " . $e->getMessage());
+            }
+        }
+        
+    } else {
+        // Task failed
+        error_log("Music video generation failed: $msg");
+        
+        // Handle failure cases...
+    }
+
+    // Return 200 status code to confirm callback received
+    http_response_code(200);
+    echo json_encode(['status' => 'received']);
+    ?>
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+  ### Callback URL Configuration Recommendations
+
+  1. **Use HTTPS**: Ensure your callback URL uses HTTPS protocol for secure data transmission
+  2. **Verify Source**: Verify the legitimacy of the request source in callback processing
+  3. **Idempotent Processing**: The same task\_id may receive multiple callbacks, ensure processing logic is idempotent
+  4. **Quick Response**: Callback processing should return a 200 status code as quickly as possible to avoid timeout
+  5. **Asynchronous Processing**: Complex business logic should be processed asynchronously to avoid blocking callback response
+  6. **Timely Download**: Video links are valid for only 14 days, recommend downloading and saving promptly
+</Tip>
+
+<Warning>
+  ### Important Reminders
+
+  * Callback URL must be a publicly accessible address
+  * Server must respond within 15 seconds, otherwise it will be considered a timeout
+  * If 3 consecutive retries fail, the system will stop sending callbacks
+  * Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+  * **Video URL is valid for 14 days**, please download and save to local storage promptly
+  * Video files are usually large, pay attention to network stability and storage space when downloading
+</Warning>
+
+## Troubleshooting
+
+If you do not receive callback notifications, please check the following:
+
+<AccordionGroup>
+  <Accordion title="Network Connection Issues">
+    * Confirm that the callback URL is accessible from the public network
+    * Check firewall settings to ensure inbound requests are not blocked
+    * Verify that domain name resolution is correct
+  </Accordion>
+
+  <Accordion title="Server Response Issues">
+    * Ensure the server returns HTTP 200 status code within 15 seconds
+    * Check server logs for error messages
+    * Verify that the interface path and HTTP method are correct
+  </Accordion>
+
+  <Accordion title="Content Format Issues">
+    * Confirm that the received POST request body is in JSON format
+    * Check that Content-Type is application/json
+    * Verify that JSON parsing is correct
+  </Accordion>
+
+  <Accordion title="Video Processing Issues">
+    * Confirm that the video URL is accessible
+    * Check video download permissions and network connections
+    * Verify that storage space is sufficient
+    * Note that video files may be large, download time may be long
+  </Accordion>
+</AccordionGroup>
+
+## Alternative Solution
+
+If you cannot use the callback mechanism, you can also use polling:
+
+<Card title="Poll Query Results" icon="radar" href="/suno-api/get-music-video-details">
+  Use the get music video details endpoint to regularly query task status. We recommend querying every 30 seconds.
+</Card>
