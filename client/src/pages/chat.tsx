@@ -81,9 +81,7 @@ export default function Chat() {
   // Delete conversation mutation
   const deleteConversation = useMutation({
     mutationFn: async (conversationId: string) => {
-      await apiRequest(`/api/chat/conversations/${conversationId}`, {
-        method: 'DELETE',
-      });
+      await apiRequest("DELETE", `/api/chat/conversations/${conversationId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations'] });
@@ -187,9 +185,10 @@ export default function Chat() {
             }
 
             if (data.done) {
-              // Conversation completed
+              // Conversation completed successfully
               setIsStreaming(false);
               setOptimisticUserMessage('');
+              abortControllerRef.current = null; // Clear controller after successful completion
               
               const finalConvId = data.conversationId || selectedConversationId;
               
@@ -217,7 +216,10 @@ export default function Chat() {
         }
       }
     } catch (error: any) {
-      if (error.name !== 'AbortError') {
+      // Check if this was an intentional abort (user clicked Stop)
+      const isAborted = error.name === 'AbortError' || abortControllerRef.current === null;
+      
+      if (!isAborted) {
         console.error('Chat error:', error);
         toast({
           title: "Error",
@@ -225,10 +227,11 @@ export default function Chat() {
           variant: "destructive",
         });
       }
+      
+      // Clean up state regardless of error type
       setIsStreaming(false);
       setStreamingMessage('');
       setOptimisticUserMessage('');
-    } finally {
       abortControllerRef.current = null;
     }
   };
