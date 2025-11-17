@@ -75,6 +75,9 @@ export default function Admin() {
     heroSubtitle: "",
     heroVideoUrl: "",
     heroImageUrl: "",
+    featureVideoUrl: "",
+    featureImageUrl: "",
+    featureMusicUrl: "",
     creatorsTitle: "",
     creatorsDescription: "",
     creatorsImageUrl: "",
@@ -166,6 +169,9 @@ export default function Admin() {
         heroSubtitle: homePageContent.heroSubtitle || "",
         heroVideoUrl: homePageContent.heroVideoUrl || "",
         heroImageUrl: homePageContent.heroImageUrl || "",
+        featureVideoUrl: homePageContent.featureVideoUrl || "",
+        featureImageUrl: homePageContent.featureImageUrl || "",
+        featureMusicUrl: homePageContent.featureMusicUrl || "",
         creatorsTitle: homePageContent.creatorsTitle || "",
         creatorsDescription: homePageContent.creatorsDescription || "",
         creatorsImageUrl: homePageContent.creatorsImageUrl || "",
@@ -1114,6 +1120,79 @@ export default function Admin() {
                         <>
                           <Save className="mr-2 h-4 w-4" />
                           Save Hero Section
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Feature Section Videos</CardTitle>
+                <CardDescription>Vimeo video URLs for the three feature sections on the landing page</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {homePageLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="featureVideoUrl">"Create videos that captivate" Section Video URL (Vimeo)</Label>
+                      <Input
+                        id="featureVideoUrl"
+                        value={homePageFormData.featureVideoUrl}
+                        onChange={(e) => setHomePageFormData({ ...homePageFormData, featureVideoUrl: e.target.value })}
+                        placeholder="https://player.vimeo.com/video/..."
+                        data-testid="input-feature-video-url"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Video placeholder for "Create videos that captivate" section</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="featureImageUrl">"Images that inspire" Section Video URL (Vimeo)</Label>
+                      <Input
+                        id="featureImageUrl"
+                        value={homePageFormData.featureImageUrl}
+                        onChange={(e) => setHomePageFormData({ ...homePageFormData, featureImageUrl: e.target.value })}
+                        placeholder="https://player.vimeo.com/video/..."
+                        data-testid="input-feature-image-url"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Video placeholder for "Images that inspire" section</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="featureMusicUrl">"Music that moves" Section Video URL (Vimeo)</Label>
+                      <Input
+                        id="featureMusicUrl"
+                        value={homePageFormData.featureMusicUrl}
+                        onChange={(e) => setHomePageFormData({ ...homePageFormData, featureMusicUrl: e.target.value })}
+                        placeholder="https://player.vimeo.com/video/..."
+                        data-testid="input-feature-music-url"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Video placeholder for "Music that moves" section</p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        updateHomePageMutation.mutate({
+                          featureVideoUrl: homePageFormData.featureVideoUrl.trim() || undefined,
+                          featureImageUrl: homePageFormData.featureImageUrl.trim() || undefined,
+                          featureMusicUrl: homePageFormData.featureMusicUrl.trim() || undefined,
+                        });
+                      }}
+                      disabled={updateHomePageMutation.isPending}
+                      data-testid="button-save-feature-videos"
+                    >
+                      {updateHomePageMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Feature Videos
                         </>
                       )}
                     </Button>

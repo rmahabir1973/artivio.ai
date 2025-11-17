@@ -237,9 +237,20 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl blur-2xl" />
               <div className="relative aspect-square bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 flex items-center justify-center">
-                  <Film className="h-32 w-32 text-purple-500/40" />
-                </div>
+                {content?.featureVideoUrl ? (
+                  <iframe
+                    src={content.featureVideoUrl}
+                    className="absolute inset-0 w-full h-full"
+                    frameBorder="0"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    title="Create videos that captivate"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 flex items-center justify-center">
+                    <Film className="h-32 w-32 text-purple-500/40" />
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-6">
@@ -305,9 +316,20 @@ export default function Landing() {
             <div className="relative md:order-2">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-3xl blur-2xl" />
               <div className="relative aspect-square bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center">
-                  <Palette className="h-32 w-32 text-blue-500/40" />
-                </div>
+                {content?.featureImageUrl ? (
+                  <iframe
+                    src={content.featureImageUrl}
+                    className="absolute inset-0 w-full h-full"
+                    frameBorder="0"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    title="Images that inspire"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center">
+                    <Palette className="h-32 w-32 text-blue-500/40" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -317,9 +339,20 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl blur-2xl" />
               <div className="relative aspect-square bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 flex items-center justify-center">
-                  <Mic className="h-32 w-32 text-purple-500/40" />
-                </div>
+                {content?.featureMusicUrl ? (
+                  <iframe
+                    src={content.featureMusicUrl}
+                    className="absolute inset-0 w-full h-full"
+                    frameBorder="0"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                    title="Music that moves"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 flex items-center justify-center">
+                    <Mic className="h-32 w-32 text-purple-500/40" />
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-6">

@@ -1173,6 +1173,11 @@ export const homePageContent = pgTable("home_page_content", {
     description?: string;
   }[]>().default([]),
   
+  // Feature section video placeholders
+  featureVideoUrl: text("feature_video_url"), // "Create videos that captivate" section Vimeo URL
+  featureImageUrl: text("feature_image_url"), // "Images that inspire" section Vimeo URL
+  featureMusicUrl: text("feature_music_url"), // "Music that moves" section Vimeo URL
+  
   // Product sections
   creatorsTitle: text("creators_title").default('Creators'),
   creatorsDescription: text("creators_description"),
