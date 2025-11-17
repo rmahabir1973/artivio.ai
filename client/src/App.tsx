@@ -24,6 +24,7 @@ import AnalyzeImage from "@/pages/analyze-image";
 import TalkingAvatars from "@/pages/talking-avatars";
 import AudioConverter from "@/pages/audio-converter";
 import VideoEditor from "@/pages/video-editor";
+import QRGenerator from "@/pages/qr-generator";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Profile from "@/pages/profile";
@@ -74,6 +75,7 @@ function Router() {
           <Route path="/talking-avatars" component={TalkingAvatars} />
           <Route path="/audio-converter" component={AudioConverter} />
           <Route path="/video-editor" component={VideoEditor} />
+          <Route path="/qr-generator" component={QRGenerator} />
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
           <Route path="/generations" component={History} /> {/* Alias for /history */}

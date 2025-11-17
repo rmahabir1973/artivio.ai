@@ -33,7 +33,8 @@ import {
   Mic2,
   DollarSign,
   Users,
-  Trophy
+  Trophy,
+  QrCode
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -78,6 +79,7 @@ export function ModernHeader() {
       features: [
         { label: "AI Chat", href: "/chat", icon: MessageSquare },
         { label: "Video Editor", href: "/video-editor", icon: Scissors },
+        { label: "QR Generator", href: "/qr-generator", icon: QrCode },
         { label: "History", href: "/history", icon: HistoryIcon },
         { label: "Workflows", href: "/workflows", icon: Sparkles },
       ]
