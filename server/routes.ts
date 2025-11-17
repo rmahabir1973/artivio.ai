@@ -915,11 +915,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { audioUrl: sunoAudioUrl, status: sunoStatus, errorMessage: sunoError } = parseSunoResponse(callbackData);
       
       // Extract result URL from callback data
-      // Priority order: Runway (video_url), Suno (audioUrl), then other providers
-      const resultUrl = callbackData.data?.video_url ||  // Runway uses snake_case
-                       callbackData.data?.videoUrl ||     // Veo uses camelCase
+      // Handle Seedance/Bytedance resultJson (JSON string containing resultUrls array)
+      let seedanceResultUrl: string | undefined;
+      if (callbackData.data?.resultJson) {
+        try {
+          const resultData = JSON.parse(callbackData.data.resultJson);
+          seedanceResultUrl = resultData.resultUrls?.[0];
+        } catch (e) {
+          console.warn('Failed to parse Seedance resultJson:', e);
+        }
+      }
+      
+      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Suno, others
+      const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string
+                       callbackData.data?.video_url ||    // Runway uses snake_case
+                       (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) || // Veo nested
+                       callbackData.data?.videoUrl ||     // Other models camelCase
                        sunoAudioUrl ||                    // Suno audio
-                       (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) ||
                        (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) ||
                        (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) ||
                        (callbackData.data?.result_urls && callbackData.data.result_urls[0]) ||
@@ -941,11 +953,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const callbackType = callbackData.data?.callbackType || callbackData.callbackType;
       const isSunoIntermediateStage = callbackType === 'text' || callbackType === 'first';
       
-      // Kie.ai models use HTTP status codes in 'code' field (Runway, Veo)
+      // Kie.ai models use HTTP status codes in 'code' field (Runway, Veo, Seedance)
       const httpStatusCode = callbackData.code;
       const isKieSuccess = httpStatusCode === 200;
       // Veo error codes: 400, 422, 500, 501
       // Runway error codes: 400, 500
+      // Seedance error codes: 501 (uses data.state: 'fail')
+      const isSeedanceError = httpStatusCode === 501 || callbackData.data?.state === 'fail';
       const isKieError = httpStatusCode === 400 || httpStatusCode === 422 || httpStatusCode === 500 || httpStatusCode === 501;
       
       // Comprehensive error detection - catch all possible error formats from Kie.ai
@@ -1033,8 +1047,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else if (finalStatus === 'failed') {
         // Extract comprehensive error message from various possible fields
-        // Runway uses "msg" field for error descriptions
-        const errorMessage = callbackData.msg ||  // Runway error message
+        // Seedance uses data.failMsg and data.failCode
+        // Runway/Veo use "msg" field for error descriptions
+        const errorMessage = callbackData.data?.failMsg ||  // Seedance error message
+                           callbackData.msg ||              // Runway/Veo error message
                            sunoError ||
                            callbackData.errorMessage || 
                            callbackData.error_message ||
@@ -1044,6 +1060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                            callbackData.data?.error_message ||
                            callbackData.data?.error ||
                            callbackData.data?.message ||
+                           (callbackData.data?.failCode ? `Error code: ${callbackData.data.failCode}` : null) ||
                            (hasErrorCode ? `Error code: ${hasErrorCode}` : null) ||
                            'Generation failed - error indicated by provider';
         

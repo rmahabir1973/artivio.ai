@@ -377,38 +377,49 @@ export async function generateVideo(params: {
     });
   }
   else if (params.model.startsWith('seedance-')) {
-    // Seedance 1.0 Pro/Lite - uses /api/v1/seedance/generate
+    // Seedance 1.0 Pro/Lite - uses /api/v1/jobs/createTask (Bytedance API)
     const resolution = parameters.resolution || '720p';
-    const duration = parameters.duration || 5;
+    const duration = parameters.duration ? String(parameters.duration) : '10';
     const cameraFixed = parameters.cameraFixed !== undefined ? parameters.cameraFixed : false;
-    const seed = parameters.seed || -1;
+    const seed = parameters.seed !== undefined ? parameters.seed : -1;
     const aspectRatio = parameters.aspectRatio || '16:9';
     
-    // Validate aspect ratio for Seedance models (16:9, 9:16, 1:1, 4:3 supported)
-    if (!['16:9', '9:16', '1:1', '4:3'].includes(aspectRatio)) {
-      throw new Error(`Seedance models support 16:9, 9:16, 1:1, and 4:3 aspect ratios. Received: ${aspectRatio}`);
+    // Validate aspect ratio for Seedance models (21:9, 16:9, 9:16, 1:1, 4:3, 3:4 supported)
+    if (!['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'].includes(aspectRatio)) {
+      throw new Error(`Seedance models support 21:9, 16:9, 4:3, 1:1, 3:4, and 9:16 aspect ratios. Received: ${aspectRatio}`);
     }
     
-    // Determine model variant
-    let seedanceModel = 'seedance-1-lite';
+    // Validate duration (5 or 10 seconds only)
+    if (!['5', '10'].includes(duration)) {
+      throw new Error(`Seedance models support 5 or 10 second durations. Received: ${duration}`);
+    }
+    
+    // Map to Bytedance model names
+    let bytedanceModel = 'bytedance/v1-lite-text-to-video';
     if (params.model === 'seedance-1-pro') {
-      seedanceModel = 'seedance-1-pro';
+      bytedanceModel = 'bytedance/v1-pro-text-to-video';
     }
     
-    // For image-to-video, include image_url
-    const imageUrl = referenceImages.length > 0 ? referenceImages[0] : undefined;
-    const endImageUrl = parameters.endImageUrl; // Optional end frame
-    
-    return await callKieApi('/api/v1/seedance/generate', {
+    // Build input object
+    const inputPayload: any = {
       prompt: params.prompt,
-      model: seedanceModel,
-      image_url: imageUrl,
-      end_image_url: endImageUrl,
+      aspect_ratio: aspectRatio,
       resolution,
       duration,
       camera_fixed: cameraFixed,
       seed,
+      enable_safety_checker: true,
+    };
+    
+    // For image-to-video: add image_url to input (Bytedance supports single image)
+    if (referenceImages.length > 0) {
+      inputPayload.image_url = referenceImages[0];
+    }
+    
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: bytedanceModel,
       callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
     });
   }
   else if (params.model.startsWith('wan-')) {
