@@ -52,6 +52,7 @@ export function ModernHeader() {
       label: "Video Tools",
       features: [
         { label: "Video Generation", href: "/generate/video", icon: Video },
+        { label: "Sora 2 Pro", href: "/generate/sora", icon: Sparkles },
         { label: "Talking Avatars", href: "/talking-avatars", icon: UserCircle },
       ]
     },

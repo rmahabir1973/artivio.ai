@@ -14,6 +14,7 @@ import Pricing from "@/pages/pricing";
 import Affiliates from "@/pages/affiliates";
 import Home from "@/pages/home";
 import GenerateVideo from "@/pages/generate-video";
+import GenerateSora from "@/pages/generate-sora";
 import GenerateImage from "@/pages/generate-image";
 import GenerateMusic from "@/pages/generate-music";
 import VoiceClone from "@/pages/voice-clone";
@@ -63,6 +64,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/generate/video" component={GenerateVideo} />
+          <Route path="/generate/sora" component={GenerateSora} />
           <Route path="/generate/image" component={GenerateImage} />
           <Route path="/generate/music" component={GenerateMusic} />
           <Route path="/voice-clone" component={VoiceClone} />

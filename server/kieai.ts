@@ -522,9 +522,70 @@ export async function generateVideo(params: {
       input: inputPayload,
     });
   }
+  else if (params.model.startsWith('sora-2')) {
+    // Sora 2 - uses /api/v1/jobs/createTask (Bytedance Playground API)
+    const aspectRatio = parameters.aspectRatio || 'landscape'; // portrait or landscape
+    const nFrames = parameters.nFrames || '10'; // 10s, 15s, or 25s (for storyboard)
+    const removeWatermark = parameters.removeWatermark !== undefined ? parameters.removeWatermark : true;
+    
+    // Determine model variant
+    let soraModel = 'sora-2-text-to-video';
+    if (params.model === 'sora-2-pro-storyboard') {
+      soraModel = 'sora-2-pro-storyboard';
+    } else if (params.model === 'sora-2-image-to-video' || (params.model === 'sora-2' && referenceImages.length > 0)) {
+      soraModel = 'sora-2-image-to-video';
+    }
+    
+    // Build input object
+    const inputPayload: any = {
+      prompt: params.prompt,
+      aspect_ratio: aspectRatio,
+      n_frames: nFrames,
+      remove_watermark: removeWatermark,
+    };
+    
+    // Sora 2 Pro Storyboard: Multi-scene support
+    if (soraModel === 'sora-2-pro-storyboard' && parameters.shots) {
+      // Validate shots array
+      if (!Array.isArray(parameters.shots) || parameters.shots.length < 2 || parameters.shots.length > 3) {
+        throw new Error('Storyboard requires 2-3 scenes');
+      }
+
+      // Validate each shot has Scene and duration
+      parameters.shots.forEach((shot: any, index: number) => {
+        if (!shot.Scene || typeof shot.Scene !== 'string' || !shot.Scene.trim()) {
+          throw new Error(`Scene ${index + 1} must have a prompt`);
+        }
+        if (typeof shot.duration !== 'number' || !Number.isInteger(shot.duration) || shot.duration < 1) {
+          throw new Error(`Scene ${index + 1} duration must be a positive integer`);
+        }
+      });
+
+      // Validate total duration matches n_frames
+      const totalSceneDuration = parameters.shots.reduce((sum: number, shot: any) => sum + shot.duration, 0);
+      const targetDuration = parseInt(nFrames);
+      if (totalSceneDuration !== targetDuration) {
+        throw new Error(`Scene durations (${totalSceneDuration}s) must sum to total duration (${targetDuration}s)`);
+      }
+
+      inputPayload.shots = parameters.shots; // Array of {Scene: string, duration: number}
+      delete inputPayload.prompt; // Storyboard uses shots instead of prompt
+    }
+    
+    // Image-to-Video: Add image URLs
+    if ((soraModel === 'sora-2-image-to-video' || soraModel === 'sora-2-pro-storyboard') && referenceImages.length > 0) {
+      inputPayload.image_urls = referenceImages;
+    }
+    
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: soraModel,
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
+  }
   
   // Reject unknown models instead of falling back
-  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, grok-imagine`);
+  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, grok-imagine, sora-2, sora-2-image-to-video, sora-2-pro-storyboard`);
 }
 
 // Image Generation

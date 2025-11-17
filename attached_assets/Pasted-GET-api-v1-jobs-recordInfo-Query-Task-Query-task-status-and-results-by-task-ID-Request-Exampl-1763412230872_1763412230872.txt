@@ -1,0 +1,67 @@
+GET
+/api/v1/jobs/recordInfo
+Query Task
+Query task status and results by task ID
+
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X GET "https://api.kie.ai/api/v1/jobs/recordInfo?taskId=task_12345678" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678",
+    "model": "sora-2-pro-storyboard",
+    "state": "success",
+    "param": "{\"model\":\"sora-2-pro-storyboard\",\"callBackUrl\":\"https://your-domain.com/api/callback\",\"input\":{\"n_frames\":\"15\",\"image_urls\":[\"https://file.aiquickdraw.com/custom-page/akr/section-images/1760776438785hyue5ogz.png\"],\"aspect_ratio\":\"landscape\",\"shots\":[{\"Scene\":\"A cute fluffy orange-and-white kitten wearing orange headphones, sitting at a cozy indoor table with a small slice of cake on a plate, a toy fish and a silver microphone nearby, warm soft lighting, cinematic close-up, shallow depth of field, gentle ASMR atmosphere.\",\"duration\":7.5},{\"Scene\":\"The same cute fluffy orange-and-white kitten wearing orange headphones, in the same cozy indoor ASMR setup with the toy fish and microphone, the cake now finished, the kitten gently licks its lips with a satisfied smile, warm ambient lighting, cinematic close-up, shallow depth of field, calm and content mood.\",\"duration\":7.5}]}}",
+    "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+    "failCode": "",
+    "failMsg": "",
+    "completeTime": 1698765432000,
+    "createTime": 1698765400000,
+    "updateTime": 1698765432000
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID
+data.model
+Model used for generation
+data.state
+Generation state
+data.param
+Complete Create Task request parameters as JSON string (includes model, callBackUrl, input and all other parameters)
+data.resultJson
+Result JSON string containing generated media URLs
+data.failCode
+Error code (when generation failed)
+data.failMsg
+Error message (when generation failed)
+data.completeTime
+Completion timestamp
+data.createTime
+Creation timestamp
+data.updateTime
+Update timestamp
+State Values
+waiting
+Waiting for generation
+queuing
+In queue
+generating
+Generating
+success
+Generation successful
+fail
+Generation failed
