@@ -1,0 +1,223 @@
+# Create Music Video
+
+> Create a video with visualizations based on your generated music track.
+
+## OpenAPI
+
+````yaml suno-api/suno-api.json post /api/v1/mp4/generate
+paths:
+  path: /api/v1/mp4/generate
+  method: post
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              taskId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Unique identifier of the music generation task. This
+                      should be a taskId returned from either the "Generate
+                      Music" or "Extend Music" endpoints.
+                    example: taskId_774b9aa0422f
+              audioId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Unique identifier of the specific audio track to
+                      visualize. This ID is returned in the callback data after
+                      music generation completes.
+                    example: e231****-****-****-****-****8cadc7dc
+              callBackUrl:
+                allOf:
+                  - type: string
+                    format: uri
+                    description: >-
+                      The URL to receive music video generation task completion
+                      updates. Required for all music video generation requests.
+
+
+                      - System will POST task status and results to this URL
+                      when video generation completes
+
+                      - Callback includes the generated music video file URL
+                      with visual effects and branding
+
+                      - Your callback endpoint should accept POST requests with
+                      JSON payload containing the video file location
+
+                      - For detailed callback format and implementation guide,
+                      see [Music Video
+                      Callbacks](./create-music-video-callbacks)
+
+                      - Alternatively, use the Get Music Video Details endpoint
+                      to poll task status
+                    example: https://api.example.com/callback
+              author:
+                allOf:
+                  - type: string
+                    maxLength: 50
+                    description: >-
+                      Artist or creator name to display as a signature on the
+                      video cover. Maximum 50 characters. This creates
+                      attribution for the music creator.
+                    example: DJ Electronic
+              domainName:
+                allOf:
+                  - type: string
+                    maxLength: 50
+                    description: >-
+                      Website or brand to display as a watermark at the bottom
+                      of the video. Maximum 50 characters. Useful for
+                      promotional branding or attribution.
+                    example: music.example.com
+            required: true
+            requiredProperties:
+              - taskId
+              - audioId
+              - callBackUrl
+        examples:
+          example:
+            value:
+              taskId: taskId_774b9aa0422f
+              audioId: e231****-****-****-****-****8cadc7dc
+              callBackUrl: https://api.example.com/callback
+              author: DJ Electronic
+              domainName: music.example.com
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    format: int32
+                    description: Status code
+                    example: 0
+                  - type: integer
+                    enum:
+                      - 200
+                      - 400
+                      - 401
+                      - 402
+                      - 404
+                      - 409
+                      - 422
+                      - 429
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **400**: Format Error - The parameter is not in a valid
+                      JSON format
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **402**: Insufficient Credits - Account does not have
+                      enough credits to perform the operation
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **409**: Conflict - WAV record already exists
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **429**: Rate Limited - Your call frequency is too high.
+                      Please try again later.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+
+                      Build Failed - Audio mp4 generation failed
+              msg:
+                allOf:
+                  - type: string
+                    description: Status message
+                    example: ''
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: Task ID
+                        example: ''
+        examples:
+          example:
+            value:
+              code: 0
+              msg: ''
+              data:
+                taskId: ''
+        description: Success
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````
