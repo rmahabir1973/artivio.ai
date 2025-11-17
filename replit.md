@@ -33,10 +33,16 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Download Proxy System**: CORS-safe backend proxy for authenticated downloads of generated content.
 
 ### Feature Specifications
--   **AI Video Generation**: Supports Veo 3.1, Runway Aleph, Seedance, Wan 2.5, and Kling models with image-to-video capabilities (up to 3 reference images for Veo models) and specific logic for Kie.ai API constraints. Model-specific aspect ratio support with frontend filtering and backend validation:
-    - Veo (3, 3.1, 3.1 Fast) & Runway (Gen-3, Aleph): 16:9, 9:16 only
-    - Seedance (1.0 Pro/Lite): 16:9, 9:16, 1:1, 4:3 (most flexible)
-    - Wan 2.5 & Kling (2.1, 2.5 Turbo): 16:9, 9:16, 1:1
+-   **AI Video Generation**: Supports Veo 3.1, Runway Aleph, Seedance, Wan 2.5, and Kling models with image-to-video capabilities (up to 3 reference images for Veo models) and specific logic for Kie.ai API constraints. Model-specific aspect ratio and duration support with frontend filtering and backend validation:
+    - **Aspect Ratios**:
+      - Veo (3, 3.1, 3.1 Fast) & Runway (Gen-3, Aleph): 16:9, 9:16 only
+      - Seedance (1.0 Pro/Lite): 16:9, 9:16, 1:1, 4:3 (most flexible)
+      - Wan 2.5 & Kling (2.1, 2.5 Turbo): 16:9, 9:16, 1:1
+    - **Durations**:
+      - Veo (3, 3.1, 3.1 Fast): 8 seconds only (fixed)
+      - Runway (Gen-3, Aleph): 5s, 10s (8s NOT supported)
+      - Seedance (1.0 Pro/Lite) & Wan 2.5: 10 seconds only
+      - Kling (2.1, 2.5 Turbo): 5s, 10s
 -   **AI Image Generation**: Integrates 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads.
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and extended durations.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis.

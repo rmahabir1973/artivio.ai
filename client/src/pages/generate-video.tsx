@@ -30,6 +30,19 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "kling-2.1": ["16:9", "9:16", "1:1"],
 };
 
+const DURATION_SUPPORT: Record<string, number[]> = {
+  "veo-3.1": [8],
+  "veo-3.1-fast": [8],
+  "veo-3": [8],
+  "runway-gen3-alpha-turbo": [5, 10],
+  "runway-aleph": [5, 10],
+  "seedance-1-pro": [10],
+  "seedance-1-lite": [10],
+  "wan-2.5": [10],
+  "kling-2.5-turbo": [5, 10],
+  "kling-2.1": [5, 10],
+};
+
 const ASPECT_RATIO_LABELS: Record<string, string> = {
   "16:9": "16:9 (Landscape)",
   "9:16": "9:16 (Portrait)",
@@ -42,7 +55,7 @@ const VIDEO_MODEL_INFO = [
     value: "veo-3.1", 
     label: "Veo 3.1", 
     description: "1080p quality with synchronized audio", 
-    duration: "5-8s",
+    duration: "8s",
     supportsImages: false,
     maxImages: 0 
   },
@@ -50,7 +63,7 @@ const VIDEO_MODEL_INFO = [
     value: "veo-3.1-fast", 
     label: "Veo 3.1 Fast", 
     description: "Faster generation, great quality", 
-    duration: "5-8s",
+    duration: "8s",
     supportsImages: true,
     maxImages: 3 
   },
@@ -58,7 +71,7 @@ const VIDEO_MODEL_INFO = [
     value: "veo-3", 
     label: "Veo 3", 
     description: "High-quality video generation", 
-    duration: "5-8s",
+    duration: "8s",
     supportsImages: true,
     maxImages: 3 
   },
@@ -66,7 +79,7 @@ const VIDEO_MODEL_INFO = [
     value: "runway-gen3-alpha-turbo", 
     label: "Runway Gen-3 Alpha Turbo", 
     description: "Fast, high-quality video generation", 
-    duration: "5-10s",
+    duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -74,7 +87,7 @@ const VIDEO_MODEL_INFO = [
     value: "runway-aleph", 
     label: "Runway Aleph", 
     description: "Advanced scene reasoning and camera control", 
-    duration: "5-10s",
+    duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -82,7 +95,7 @@ const VIDEO_MODEL_INFO = [
     value: "seedance-1-pro", 
     label: "Seedance 1.0 Pro", 
     description: "1080p cinematic quality with camera control", 
-    duration: "5-10s",
+    duration: "10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -90,7 +103,7 @@ const VIDEO_MODEL_INFO = [
     value: "seedance-1-lite", 
     label: "Seedance 1.0 Lite", 
     description: "720p fast generation", 
-    duration: "5-10s",
+    duration: "10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -98,7 +111,7 @@ const VIDEO_MODEL_INFO = [
     value: "wan-2.5", 
     label: "Wan 2.5", 
     description: "Native audio sync & lip-sync support", 
-    duration: "5-10s",
+    duration: "10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -106,7 +119,7 @@ const VIDEO_MODEL_INFO = [
     value: "kling-2.5-turbo", 
     label: "Kling 2.5 Turbo", 
     description: "Fast, fluid motion with realistic physics", 
-    duration: "5-10s",
+    duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -114,7 +127,7 @@ const VIDEO_MODEL_INFO = [
     value: "kling-2.1", 
     label: "Kling 2.1", 
     description: "Professional hyper-realistic video generation", 
-    duration: "5-10s",
+    duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -182,13 +195,23 @@ export default function GenerateVideo() {
     }
   }, [model, maxImages, referenceImages.length, selectedModel?.label, toast]);
 
-  // Auto-adjust duration when switching from Runway to Veo (10s not supported by Veo)
+  // Auto-adjust duration when model changes to ensure it's supported
   useEffect(() => {
-    if (model.startsWith('veo-') && duration > 8) {
-      setDuration(8);
+    const supportedDurations = DURATION_SUPPORT[model] || [5, 8, 10];
+    
+    // If current duration is not supported by the new model, auto-adjust to closest supported duration
+    if (!supportedDurations.includes(duration)) {
+      // Find the closest supported duration
+      const closestDuration = supportedDurations.reduce((prev, curr) => 
+        Math.abs(curr - duration) < Math.abs(prev - duration) ? curr : prev
+      );
+      
+      setDuration(closestDuration);
+      
+      const modelLabel = VIDEO_MODEL_INFO.find(m => m.value === model)?.label || model;
       toast({
         title: "Duration Adjusted",
-        description: "Veo models support durations up to 8 seconds. Duration set to 8s.",
+        description: `${modelLabel} supports: ${supportedDurations.join('s, ')}s. Duration set to ${closestDuration}s.`,
       });
     }
   }, [model, duration, toast]);
@@ -324,10 +347,12 @@ export default function GenerateVideo() {
     }
 
     // Validate duration for model
-    if (model.startsWith('veo-') && duration > 8) {
+    const supportedDurations = DURATION_SUPPORT[model] || [5, 8, 10];
+    if (!supportedDurations.includes(duration)) {
+      const modelLabel = VIDEO_MODEL_INFO.find(m => m.value === model)?.label || model;
       toast({
         title: "Invalid Duration",
-        description: "Veo models support durations up to 8 seconds.",
+        description: `${modelLabel} supports: ${supportedDurations.join('s, ')}s only.`,
         variant: "destructive",
       });
       return;
@@ -543,14 +568,18 @@ export default function GenerateVideo() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="5">5 seconds</SelectItem>
-                  <SelectItem value="8">8 seconds</SelectItem>
-                  {/* 10 seconds only available for Runway models */}
-                  {model.startsWith('runway-') && (
-                    <SelectItem value="10">10 seconds</SelectItem>
-                  )}
+                  {(DURATION_SUPPORT[model] || [5, 8, 10]).map((dur) => (
+                    <SelectItem key={dur} value={String(dur)}>
+                      {dur} seconds
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {(DURATION_SUPPORT[model] || []).length < 3 && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedModel?.label || model} supports: {(DURATION_SUPPORT[model] || [5, 8, 10]).join('s, ')}s
+                </p>
+              )}
             </div>
 
             {/* Quality */}
