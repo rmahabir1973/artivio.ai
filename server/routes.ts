@@ -934,7 +934,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check for explicit status from Kie.ai
       const kieStatus = (sunoStatus || callbackData.status)?.toLowerCase();
-      const hasError = sunoError || callbackData.error || callbackData.errorMessage || callbackData.data?.error;
+      
+      // Comprehensive error detection - catch all possible error formats from Kie.ai
+      const hasError = sunoError || 
+                      callbackData.error || 
+                      callbackData.errorMessage || 
+                      callbackData.errorCode ||
+                      callbackData.error_message ||
+                      callbackData.error_code ||
+                      callbackData.code ||
+                      callbackData.data?.error || 
+                      callbackData.data?.errorMessage ||
+                      callbackData.data?.errorCode ||
+                      callbackData.data?.error_message ||
+                      callbackData.data?.error_code ||
+                      callbackData.data?.code;
+      
+      // Check if this is an HTTP error code (4xx, 5xx)
+      const hasErrorCode = callbackData.code || callbackData.errorCode || callbackData.data?.code || callbackData.data?.errorCode;
+      const isHttpError = hasErrorCode && (String(hasErrorCode).startsWith('4') || String(hasErrorCode).startsWith('5'));
       
       // Identify intermediate callbacks - update statusDetail but don't finalize yet
       const isProcessing = kieStatus === 'processing' || 
@@ -957,8 +975,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Note: parseSunoResponse normalizes "complete" -> "success"
       let finalStatus: 'completed' | 'failed' | null = null;
       
-      if (hasError || kieStatus === 'failed' || kieStatus === 'error') {
+      // Check for failure conditions (including HTTP error codes)
+      if (hasError || isHttpError || kieStatus === 'failed' || kieStatus === 'error') {
         finalStatus = 'failed';
+        
+        // Log extensive error details for debugging
+        console.error(`\n❌ ===== ERROR DETECTED IN CALLBACK =====`);
+        console.error(`Generation ID: ${generationId}`);
+        console.error(`Status: ${kieStatus}`);
+        console.error(`Error Code: ${hasErrorCode || 'N/A'}`);
+        console.error(`Error Message: ${hasError || 'N/A'}`);
+        console.error(`Full Callback Payload:`, safeStringify(callbackData));
+        console.error(`=========================================\n`);
       } else if (kieStatus === 'success' || kieStatus === 'completed' || kieStatus === 'complete') {
         // Success status even without audio URL yet (might be in different payload format)
         finalStatus = 'completed';
@@ -970,6 +998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If we couldn't determine status, don't process this callback
       if (finalStatus === null) {
         console.warn(`⚠️  Callback for ${generationId} has unclear status (${kieStatus}), ignoring`);
+        console.warn(`Full callback data:`, safeStringify(callbackData));
         return res.json({ success: true, message: 'Unclear callback status' });
       }
       
@@ -987,12 +1016,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({ success: true, message: 'Completion acknowledged but no media URL' });
         }
       } else if (finalStatus === 'failed') {
-        const errorMessage = hasError || 
+        // Extract comprehensive error message from various possible fields
+        const errorMessage = sunoError ||
+                           callbackData.errorMessage || 
+                           callbackData.error_message ||
+                           callbackData.error ||
                            callbackData.message || 
+                           callbackData.data?.errorMessage ||
+                           callbackData.data?.error_message ||
+                           callbackData.data?.error ||
                            callbackData.data?.message ||
+                           (hasErrorCode ? `Error code: ${hasErrorCode}` : null) ||
                            'Generation failed - error indicated by provider';
+        
         await storage.finalizeGeneration(generationId, 'failure', {
-          errorMessage,
+          errorMessage: String(errorMessage),
         });
         console.log(`✗ Generation ${generationId} failed: ${errorMessage}`);
       }
@@ -1516,6 +1554,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const generations = await storage.getUserGenerations(userId);
+      
+      // Check for stuck generations (processing for more than 10 minutes = 600,000ms)
+      const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+      const now = Date.now();
+      
+      for (const gen of generations) {
+        if ((gen.status === 'pending' || gen.status === 'processing') && gen.createdAt) {
+          const createdTime = new Date(gen.createdAt).getTime();
+          const elapsedMs = now - createdTime;
+          
+          if (elapsedMs > TIMEOUT_MS) {
+            console.warn(`⏱️  Generation ${gen.id} timed out after ${Math.round(elapsedMs / 60000)} minutes`);
+            
+            // Mark as failed due to timeout
+            await storage.finalizeGeneration(gen.id, 'failure', {
+              errorMessage: `Generation timed out after ${Math.round(elapsedMs / 60000)} minutes. The provider may have failed without sending a callback. Please try again.`,
+            });
+            
+            // Update the generation object in the array so the response reflects the change
+            gen.status = 'failed';
+            gen.errorMessage = `Generation timed out after ${Math.round(elapsedMs / 60000)} minutes. The provider may have failed without sending a callback. Please try again.`;
+          }
+        }
+      }
+      
       res.json(generations);
     } catch (error) {
       console.error('Error fetching generations:', error);

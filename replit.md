@@ -16,7 +16,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Backend**: Express.js and Node.js with TypeScript.
 -   **Database**: PostgreSQL (Neon) with Drizzle ORM.
 -   **Authentication & Onboarding**: Production-ready flow with plan selection before Replit Auth signup, credit assignment based on chosen plan, and robust error recovery.
--   **Asynchronous Operations**: Kie.ai integrations use webhook-based callbacks for real-time status updates, intelligently filtering intermediate states.
+-   **Asynchronous Operations**: Kie.ai integrations use webhook-based callbacks for real-time status updates, intelligently filtering intermediate states. Enhanced error detection catches all error formats (errorCode, error_message, HTTP codes 4xx/5xx) with comprehensive logging. Automatic timeout detection (10-minute threshold) prevents stuck generations.
 -   **Centralized URL Management**: Production-safe URL generation and validation via `server/urlUtils.ts` ensures correct routing for webhooks and assets.
 -   **Credit Management**: Automatic credit refund system for failed generations and an atomic job cancellation system with race-condition-safe credit refunds.
 -   **Image Hosting**: Temporary system for user-uploaded images, converting base64 to public URLs with validation and cleanup.
