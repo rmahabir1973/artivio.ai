@@ -18,6 +18,9 @@ const app = express();
 // Serve uploaded images statically from public/uploads
 app.use('/uploads', express.static('public/uploads'));
 
+// Serve combined videos statically from public/video-combinations
+app.use('/video-combinations', express.static('public/video-combinations'));
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown

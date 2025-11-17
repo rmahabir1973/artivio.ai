@@ -496,8 +496,9 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
         const fadeOut = enhancements.backgroundMusic.fadeOutSeconds || 0;
         const musicStreamIdx = downloadedPaths.length;
 
-        // Apply volume and fades to music
-        let musicFilter = `[${musicStreamIdx}:a]volume=${volume}`;
+        // Apply volume, trim to match video duration, and fades to music
+        // CRITICAL: atrim ensures music duration exactly matches video duration to prevent amix errors
+        let musicFilter = `[${musicStreamIdx}:a]atrim=0:${totalDuration},asetpts=PTS-STARTPTS,volume=${volume}`;
         if (fadeIn > 0) {
           musicFilter += `,afade=t=in:st=0:d=${fadeIn}`;
         }
@@ -506,8 +507,8 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
         }
         musicFilter += `[music]`;
 
-        // Mix video audio with background music
-        completeAudioFilter += `;${musicFilter};[aout][music]amix=inputs=2:duration=first[afinal]`;
+        // Mix video audio with background music (both streams now have identical duration)
+        completeAudioFilter += `;${musicFilter};[aout][music]amix=inputs=2:duration=first:dropout_transition=0[afinal]`;
         finalAudioLabel = '[afinal]';
       }
 
