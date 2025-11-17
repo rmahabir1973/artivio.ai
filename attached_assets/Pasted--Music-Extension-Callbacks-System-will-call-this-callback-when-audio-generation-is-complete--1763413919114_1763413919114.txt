@@ -1,0 +1,614 @@
+# Music Extension Callbacks
+
+> System will call this callback when audio generation is complete
+
+When you submit a music extension task to the Suno API, you can use the `callBackUrl` parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+
+## Callback Mechanism Overview
+
+<Info>
+  The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+</Info>
+
+### Callback Timing
+
+The system will send callback notifications in the following situations:
+
+* Text generation completed (callbackType: "text")
+* First audio track generation completed (callbackType: "first")
+* All audio tracks generation completed (callbackType: "complete")
+* Audio generation task failed
+* Errors occurred during task processing
+
+### Callback Method
+
+* **HTTP Method**: POST
+* **Content Type**: application/json
+* **Timeout Setting**: 15 seconds
+
+## Callback Request Format
+
+When the task progresses or completes, the system will send a POST request to your `callBackUrl` in the following format:
+
+<CodeGroup>
+  ```json Complete Success Callback theme={null}
+  {
+    "code": 200,
+    "msg": "All generated successfully.",
+    "data": {
+      "callbackType": "complete",
+      "task_id": "2fac****9f72",
+      "data": [
+        {
+          "id": "e231****-****-****-****-****8cadc7dc",
+          "audio_url": "https://example.cn/****.mp3",
+          "stream_audio_url": "https://example.cn/****",
+          "image_url": "https://example.cn/****.jpeg",
+          "prompt": "[Verse] Night city lights shining bright",
+          "model_name": "chirp-v3-5",
+          "title": "Iron Man",
+          "tags": "electrifying, rock",
+          "createTime": "2025-01-01 00:00:00",
+          "duration": 198.44
+        },
+        {
+          "id": "e231****-****-****-****-****8cadc7dc",
+          "audio_url": "https://example.cn/****.mp3",
+          "stream_audio_url": "https://example.cn/****",
+          "image_url": "https://example.cn/****.jpeg",
+          "prompt": "[Verse] Night city lights shining bright",
+          "model_name": "chirp-v3-5",
+          "title": "Iron Man",
+          "tags": "electrifying, rock",
+          "createTime": "2025-01-01 00:00:00",
+          "duration": 228.28
+        }
+      ]
+    }
+  }
+  ```
+
+  ```json First Track Complete Callback theme={null}
+  {
+    "code": 200,
+    "msg": "First track generated successfully.",
+    "data": {
+      "callbackType": "first",
+      "task_id": "2fac****9f72",
+      "data": [
+        {
+          "id": "e231****-****-****-****-****8cadc7dc",
+          "audio_url": "https://example.cn/****.mp3",
+          "stream_audio_url": "https://example.cn/****",
+          "image_url": "https://example.cn/****.jpeg",
+          "prompt": "[Verse] Night city lights shining bright",
+          "model_name": "chirp-v3-5",
+          "title": "Iron Man",
+          "tags": "electrifying, rock",
+          "createTime": "2025-01-01 00:00:00",
+          "duration": 198.44
+        }
+      ]
+    }
+  }
+  ```
+
+  ```json Text Generation Complete Callback theme={null}
+  {
+    "code": 200,
+    "msg": "Text generation completed.",
+    "data": {
+      "callbackType": "text",
+      "task_id": "2fac****9f72",
+      "data": []
+    }
+  }
+  ```
+
+  ```json Failure Callback theme={null}
+  {
+    "code": 501,
+    "msg": "Audio generation failed.",
+    "data": {
+      "callbackType": "error",
+      "task_id": "2fac****9f72",
+      "data": []
+    }
+  }
+  ```
+</CodeGroup>
+
+## Status Code Description
+
+<ParamField path="code" type="integer" required>
+  Callback status code indicating task processing result:
+
+  | Status Code | Description                                                                                                    |
+  | ----------- | -------------------------------------------------------------------------------------------------------------- |
+  | 200         | Success - Request has been processed successfully                                                              |
+  | 400         | Validation Error - Lyrics contained copyrighted material                                                       |
+  | 408         | Rate Limited - Timeout                                                                                         |
+  | 413         | Conflict - Uploaded audio matches existing work of art                                                         |
+  | 500         | Server Error - An unexpected error occurred while processing the request                                       |
+  | 501         | Audio generation failed                                                                                        |
+  | 531         | Server Error - Sorry, the generation failed due to an issue. Your credits have been refunded. Please try again |
+</ParamField>
+
+<ParamField path="msg" type="string" required>
+  Status message providing detailed status description
+</ParamField>
+
+<ParamField path="data.callbackType" type="string" required>
+  Callback type indicating the stage of generation:
+
+  * **text**: Text generation complete
+  * **first**: First track complete
+  * **complete**: All tracks complete
+  * **error**: Generation failed
+</ParamField>
+
+<ParamField path="data.task_id" type="string" required>
+  Task ID, consistent with the taskId returned when you submitted the task
+</ParamField>
+
+<ParamField path="data.data" type="array" required>
+  Array of generated audio tracks. Empty for text callbacks or failures.
+</ParamField>
+
+<ParamField path="data.data[].id" type="string">
+  Audio unique identifier (audioId)
+</ParamField>
+
+<ParamField path="data.data[].audio_url" type="string">
+  Audio file URL for download
+</ParamField>
+
+<ParamField path="data.data[].stream_audio_url" type="string">
+  Streaming audio URL for real-time playback
+</ParamField>
+
+<ParamField path="data.data[].image_url" type="string">
+  Cover image URL
+</ParamField>
+
+<ParamField path="data.data[].prompt" type="string">
+  Generation prompt/lyrics used
+</ParamField>
+
+<ParamField path="data.data[].model_name" type="string">
+  Model name used for generation (e.g., "chirp-v3-5")
+</ParamField>
+
+<ParamField path="data.data[].title" type="string">
+  Music title
+</ParamField>
+
+<ParamField path="data.data[].tags" type="string">
+  Music tags/genre
+</ParamField>
+
+<ParamField path="data.data[].createTime" type="string">
+  Creation timestamp
+</ParamField>
+
+<ParamField path="data.data[].duration" type="number">
+  Audio duration in seconds
+</ParamField>
+
+## Callback Reception Examples
+
+Here are example codes for receiving callbacks in popular programming languages:
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript  theme={null}
+    const express = require('express');
+    const fs = require('fs');
+    const https = require('https');
+    const app = express();
+
+    app.use(express.json());
+
+    app.post('/suno-extend-callback', (req, res) => {
+      const { code, msg, data } = req.body;
+      
+      console.log('Received Suno music extension callback:', {
+        taskId: data.task_id,
+        callbackType: data.callbackType,
+        status: code,
+        message: msg
+      });
+      
+      if (code === 200) {
+        // Task progressed or completed successfully
+        const { callbackType, task_id, data: tracks } = data;
+        
+        console.log(`Callback type: ${callbackType}`);
+        console.log(`Number of tracks: ${tracks.length}`);
+        
+        switch (callbackType) {
+          case 'text':
+            console.log('Text generation completed, waiting for audio...');
+            break;
+            
+          case 'first':
+            console.log('First track completed, processing remaining tracks...');
+            downloadTracks(tracks, task_id);
+            break;
+            
+          case 'complete':
+            console.log('All tracks completed successfully!');
+            downloadTracks(tracks, task_id);
+            break;
+        }
+        
+      } else {
+        // Task failed
+        console.log('Suno music extension failed:', msg);
+        
+        // Handle specific error types
+        if (code === 400) {
+          console.log('Validation error - check for copyrighted content');
+        } else if (code === 408) {
+          console.log('Rate limited - please wait before retrying');
+        } else if (code === 413) {
+          console.log('Content conflict - audio matches existing work');
+        } else if (code === 501) {
+          console.log('Generation failed - may need to adjust parameters');
+        } else if (code === 531) {
+          console.log('Server error with credit refund - safe to retry');
+        }
+      }
+      
+      // Return 200 status code to confirm callback received
+      res.status(200).json({ status: 'received' });
+    });
+
+    // Function to download tracks
+    function downloadTracks(tracks, taskId) {
+      tracks.forEach((track, index) => {
+        const { id, audio_url, image_url, title, duration } = track;
+        
+        console.log(`Track ${index + 1}: ${title} (${duration}s)`);
+        
+        // Download audio file
+        if (audio_url) {
+          downloadFile(audio_url, `suno_extend_${taskId}_${id}.mp3`)
+            .then(() => console.log(`Audio downloaded: ${id}`))
+            .catch(err => console.error(`Audio download failed for ${id}:`, err));
+        }
+        
+        // Download cover image
+        if (image_url) {
+          downloadFile(image_url, `suno_cover_${taskId}_${id}.jpeg`)
+            .then(() => console.log(`Cover downloaded: ${id}`))
+            .catch(err => console.error(`Cover download failed for ${id}:`, err));
+        }
+      });
+    }
+
+    // Helper function to download files
+    function downloadFile(url, filename) {
+      return new Promise((resolve, reject) => {
+        const file = fs.createWriteStream(filename);
+        
+        https.get(url, (response) => {
+          if (response.statusCode === 200) {
+            response.pipe(file);
+            file.on('finish', () => {
+              file.close();
+              resolve();
+            });
+          } else {
+            reject(new Error(`HTTP ${response.statusCode}`));
+          }
+        }).on('error', reject);
+      });
+    }
+
+    app.listen(3000, () => {
+      console.log('Callback server running on port 3000');
+    });
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python  theme={null}
+    from flask import Flask, request, jsonify
+    import requests
+    import os
+
+    app = Flask(__name__)
+
+    @app.route('/suno-extend-callback', methods=['POST'])
+    def handle_callback():
+        data = request.json
+        
+        code = data.get('code')
+        msg = data.get('msg')
+        callback_data = data.get('data', {})
+        callback_type = callback_data.get('callbackType')
+        task_id = callback_data.get('task_id')
+        tracks = callback_data.get('data', [])
+        
+        print(f"Received Suno music extension callback:")
+        print(f"Task ID: {task_id}, Type: {callback_type}")
+        print(f"Status: {code}, Message: {msg}")
+        
+        if code == 200:
+            # Task progressed or completed successfully
+            print(f"Callback type: {callback_type}")
+            print(f"Number of tracks: {len(tracks)}")
+            
+            if callback_type == 'text':
+                print("Text generation completed, waiting for audio...")
+            elif callback_type == 'first':
+                print("First track completed, processing remaining tracks...")
+                download_tracks(tracks, task_id)
+            elif callback_type == 'complete':
+                print("All tracks completed successfully!")
+                download_tracks(tracks, task_id)
+                
+        else:
+            # Task failed
+            print(f"Suno music extension failed: {msg}")
+            
+            # Handle specific error types
+            if code == 400:
+                print("Validation error - check for copyrighted content")
+            elif code == 408:
+                print("Rate limited - please wait before retrying")
+            elif code == 413:
+                print("Content conflict - audio matches existing work")
+            elif code == 501:
+                print("Generation failed - may need to adjust parameters")
+            elif code == 531:
+                print("Server error with credit refund - safe to retry")
+        
+        # Return 200 status code to confirm callback received
+        return jsonify({'status': 'received'}), 200
+
+    def download_tracks(tracks, task_id):
+        """Download audio tracks and cover images"""
+        for i, track in enumerate(tracks):
+            track_id = track.get('id')
+            audio_url = track.get('audio_url')
+            image_url = track.get('image_url')
+            title = track.get('title')
+            duration = track.get('duration')
+            
+            print(f"Track {i + 1}: {title} ({duration}s)")
+            
+            # Download audio file
+            if audio_url:
+                try:
+                    audio_filename = f"suno_extend_{task_id}_{track_id}.mp3"
+                    download_file(audio_url, audio_filename)
+                    print(f"Audio downloaded: {track_id}")
+                except Exception as e:
+                    print(f"Audio download failed for {track_id}: {e}")
+            
+            # Download cover image
+            if image_url:
+                try:
+                    image_filename = f"suno_cover_{task_id}_{track_id}.jpeg"
+                    download_file(image_url, image_filename)
+                    print(f"Cover downloaded: {track_id}")
+                except Exception as e:
+                    print(f"Cover download failed for {track_id}: {e}")
+
+    def download_file(url, filename):
+        """Download file from URL and save locally"""
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        os.makedirs('downloads', exist_ok=True)
+        filepath = os.path.join('downloads', filename)
+        
+        with open(filepath, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=3000)
+    ```
+  </Tab>
+
+  <Tab title="PHP">
+    ```php  theme={null}
+    <?php
+    header('Content-Type: application/json');
+
+    // Get POST data
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    $code = $data['code'] ?? null;
+    $msg = $data['msg'] ?? '';
+    $callbackData = $data['data'] ?? [];
+    $callbackType = $callbackData['callbackType'] ?? '';
+    $taskId = $callbackData['task_id'] ?? '';
+    $tracks = $callbackData['data'] ?? [];
+
+    error_log("Received Suno music extension callback:");
+    error_log("Task ID: $taskId, Type: $callbackType");
+    error_log("Status: $code, Message: $msg");
+
+    if ($code === 200) {
+        // Task progressed or completed successfully
+        error_log("Callback type: $callbackType");
+        error_log("Number of tracks: " . count($tracks));
+        
+        switch ($callbackType) {
+            case 'text':
+                error_log("Text generation completed, waiting for audio...");
+                break;
+                
+            case 'first':
+                error_log("First track completed, processing remaining tracks...");
+                downloadTracks($tracks, $taskId);
+                break;
+                
+            case 'complete':
+                error_log("All tracks completed successfully!");
+                downloadTracks($tracks, $taskId);
+                break;
+        }
+        
+    } else {
+        // Task failed
+        error_log("Suno music extension failed: $msg");
+        
+        // Handle specific error types
+        if ($code === 400) {
+            error_log("Validation error - check for copyrighted content");
+        } elseif ($code === 408) {
+            error_log("Rate limited - please wait before retrying");
+        } elseif ($code === 413) {
+            error_log("Content conflict - audio matches existing work");
+        } elseif ($code === 501) {
+            error_log("Generation failed - may need to adjust parameters");
+        } elseif ($code === 531) {
+            error_log("Server error with credit refund - safe to retry");
+        }
+    }
+
+    // Return 200 status code to confirm callback received
+    http_response_code(200);
+    echo json_encode(['status' => 'received']);
+
+    function downloadTracks($tracks, $taskId) {
+        foreach ($tracks as $i => $track) {
+            $trackId = $track['id'] ?? '';
+            $audioUrl = $track['audio_url'] ?? '';
+            $imageUrl = $track['image_url'] ?? '';
+            $title = $track['title'] ?? '';
+            $duration = $track['duration'] ?? 0;
+            
+            error_log("Track " . ($i + 1) . ": $title ({$duration}s)");
+            
+            // Download audio file
+            if (!empty($audioUrl)) {
+                try {
+                    $audioFilename = "suno_extend_{$taskId}_{$trackId}.mp3";
+                    downloadFile($audioUrl, $audioFilename);
+                    error_log("Audio downloaded: $trackId");
+                } catch (Exception $e) {
+                    error_log("Audio download failed for $trackId: " . $e->getMessage());
+                }
+            }
+            
+            // Download cover image
+            if (!empty($imageUrl)) {
+                try {
+                    $imageFilename = "suno_cover_{$taskId}_{$trackId}.jpeg";
+                    downloadFile($imageUrl, $imageFilename);
+                    error_log("Cover downloaded: $trackId");
+                } catch (Exception $e) {
+                    error_log("Cover download failed for $trackId: " . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    function downloadFile($url, $filename) {
+        $downloadDir = 'downloads';
+        if (!is_dir($downloadDir)) {
+            mkdir($downloadDir, 0755, true);
+        }
+        
+        $filepath = $downloadDir . '/' . $filename;
+        
+        $fileContent = file_get_contents($url);
+        if ($fileContent === false) {
+            throw new Exception("Failed to download file from URL");
+        }
+        
+        $result = file_put_contents($filepath, $fileContent);
+        if ($result === false) {
+            throw new Exception("Failed to save file locally");
+        }
+    }
+    ?>
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+  ### Callback URL Configuration Recommendations
+
+  1. **Use HTTPS**: Ensure your callback URL uses HTTPS protocol for secure data transmission
+  2. **Verify Source**: Verify the legitimacy of the request source in callback processing
+  3. **Idempotent Processing**: The same task\_id may receive multiple callbacks, ensure processing logic is idempotent
+  4. **Quick Response**: Callback processing should return a 200 status code as quickly as possible to avoid timeout
+  5. **Asynchronous Processing**: Complex business logic should be processed asynchronously to avoid blocking callback response
+  6. **Handle Multiple Callbacks**: Be prepared to receive text, first, and complete callbacks for the same task
+</Tip>
+
+<Warning>
+  ### Important Reminders
+
+  * Callback URL must be a publicly accessible address
+  * Server must respond within 15 seconds, otherwise it will be considered a timeout
+  * If 3 consecutive retries fail, the system will stop sending callbacks
+  * You may receive multiple callbacks for the same task (text → first → complete)
+  * Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+  * Handle copyright and conflict errors appropriately (codes 400, 413)
+  * Credit refunds are automatic for certain server errors (code 531)
+</Warning>
+
+## Troubleshooting
+
+If you do not receive callback notifications, please check the following:
+
+<AccordionGroup>
+  <Accordion title="Network Connection Issues">
+    * Confirm that the callback URL is accessible from the public network
+    * Check firewall settings to ensure inbound requests are not blocked
+    * Verify that domain name resolution is correct
+  </Accordion>
+
+  <Accordion title="Server Response Issues">
+    * Ensure the server returns HTTP 200 status code within 15 seconds
+    * Check server logs for error messages
+    * Verify that the interface path and HTTP method are correct
+  </Accordion>
+
+  <Accordion title="Content Format Issues">
+    * Confirm that the received POST request body is in JSON format
+    * Check that Content-Type is application/json
+    * Verify that JSON parsing is correct
+  </Accordion>
+
+  <Accordion title="Audio Processing Issues">
+    * Confirm that audio URLs are accessible
+    * Check audio download permissions and network connections
+    * Verify audio save paths and permissions
+    * Handle both regular and streaming audio URLs appropriately
+    * Process multiple tracks in the same callback
+  </Accordion>
+
+  <Accordion title="Copyright and Content Issues">
+    * Review error messages for copyright violations (code 400)
+    * Check for content conflicts with existing works (code 413)
+    * Ensure compliance with platform content policies
+    * Adjust lyrics or prompts if flagged
+  </Accordion>
+
+  <Accordion title="Rate Limiting Issues">
+    * Handle timeout errors gracefully (code 408)
+    * Implement appropriate retry logic with backoff
+    * Monitor API usage to avoid rate limits
+    * Consider upgrading service plan if needed
+  </Accordion>
+</AccordionGroup>
+
+## Alternative Solution
+
+If you cannot use the callback mechanism, you can also use polling:
+
+<Card title="Poll Query Results" icon="radar" href="/suno-api/get-music-details">
+  Use the get music details endpoint to regularly query task status. We recommend querying every 30 seconds.
+</Card>

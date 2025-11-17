@@ -1,0 +1,215 @@
+# Vocal & Instrument Stem Separation
+
+> Use Suno’s official get‑stem API to split tracks created on our platform into clean vocal, accompaniment, or per‑instrument stems with state‑of‑the‑art source‑separation AI.
+
+## OpenAPI
+
+````yaml suno-api/suno-api.json post /api/v1/vocal-removal/generate
+paths:
+  path: /api/v1/vocal-removal/generate
+  method: post
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              taskId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Unique identifier of the music generation task. This
+                      should be a taskId returned from either the "Generate
+                      Music" or "Extend Music" endpoints.
+                    example: 5c79****be8e
+              audioId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Unique identifier of the specific audio track to process
+                      for vocal separation. This ID is returned in the callback
+                      data after music generation completes.
+                    example: e231****-****-****-****-****8cadc7dc
+              type:
+                allOf:
+                  - type: string
+                    enum:
+                      - separate_vocal
+                      - split_stem
+                    default: separate_vocal
+                    description: >-
+                      Separation type with the following options:
+
+
+                      - **separate_vocal**: Separate vocals and accompaniment,
+                      generating vocal and instrumental tracks
+
+                      - **split_stem**: Separate various instrument sounds,
+                      generating vocals, backing vocals, drums, bass, guitar,
+                      keyboard, strings, brass, woodwinds, percussion,
+                      synthesizer, effects, and other tracks
+                    example: separate_vocal
+              callBackUrl:
+                allOf:
+                  - type: string
+                    format: uri
+                    description: >-
+                      The URL to receive vocal separation task completion
+                      updates. Required for all vocal separation requests.
+
+
+                      - System will POST task status and results to this URL
+                      when vocal separation completes
+
+                      - Callback content varies based on the type parameter:
+                      separate_vocal returns vocals and accompaniment,
+                      split_stem returns multiple instrument tracks
+
+                      - Your callback endpoint should accept POST requests with
+                      JSON payload containing separated audio file links
+
+                      - For detailed callback format and implementation guide,
+                      see [Vocal Separation
+                      Callbacks](./separate-vocals-callbacks)
+
+                      - Alternatively, use the Get Vocal Separation Details
+                      endpoint to poll task status
+                    example: https://api.example.com/callback
+            required: true
+            requiredProperties:
+              - taskId
+              - audioId
+              - callBackUrl
+        examples:
+          example:
+            value:
+              taskId: 5c79****be8e
+              audioId: e231****-****-****-****-****8cadc7dc
+              type: separate_vocal
+              callBackUrl: https://api.example.com/callback
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 400
+                      - 401
+                      - 402
+                      - 404
+                      - 409
+                      - 422
+                      - 429
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **400**: Format Error - The parameter is not in a valid
+                      JSON format
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **402**: Insufficient Credits - Account does not have
+                      enough credits to perform the operation
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **409**: Conflict - WAV record already exists
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **429**: Rate Limited - Request limit has been exceeded
+                      for this resource
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: Task ID for tracking task status
+                        example: 5c79****be8e
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: 5c79****be8e
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

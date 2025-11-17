@@ -1,0 +1,353 @@
+# Extend Music
+
+> Extend or modify existing music by creating a continuation based on a source audio track.
+
+## OpenAPI
+
+````yaml suno-api/suno-api.json post /api/v1/generate/extend
+paths:
+  path: /api/v1/generate/extend
+  method: post
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              defaultParamFlag:
+                allOf:
+                  - type: boolean
+                    description: >-
+                      Controls parameter source for extension.  
+
+                      - If `true`: Use custom parameters specified in this
+                      request. Requires `continueAt`, `prompt`, `style`, and
+                      `title`.  
+
+                      - If `false`: Use original audio parameters. Only
+                      `audioId` is required, other parameters are inherited.
+                    example: true
+              audioId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Unique identifier of the audio track to extend. Required
+                      for all extension requests.
+                    example: e231****-****-****-****-****8cadc7dc
+              prompt:
+                allOf:
+                  - type: string
+                    description: >-
+                      Description of the desired audio extension content.  
+
+                      - Required when `defaultParamFlag` is `true`.  
+
+                      - Max length: 3000 characters.  
+
+                      - Describes how the music should continue or change in the
+                      extension.
+                    example: >-
+                      Extend the music with more relaxing notes and a gentle
+                      bridge section
+              style:
+                allOf:
+                  - type: string
+                    description: >-
+                      Music style specification for the extended audio.  
+
+                      - Required when `defaultParamFlag` is `true`.  
+
+                      - Max length: 200 characters.  
+
+                      - Should typically align with the original audio's style
+                      for best results.
+                    example: Classical
+              title:
+                allOf:
+                  - type: string
+                    description: |-
+                      Title for the extended music track.  
+                      - Required when `defaultParamFlag` is `true`.  
+                      - Max length: 80 characters.  
+                      - Will be displayed in player interfaces and filenames.
+                    example: Peaceful Piano Extended
+              continueAt:
+                allOf:
+                  - type: number
+                    description: >-
+                      The time point (in seconds) from which to start extending
+                      the music.  
+
+                      - Required when `defaultParamFlag` is `true`.  
+
+                      - Value range: greater than 0 and less than the total
+                      duration of the generated audio.  
+
+                      - Specifies the position in the original track where the
+                      extension should begin.
+                    example: 60
+              model:
+                allOf:
+                  - type: string
+                    description: |-
+                      The AI model version to use for generation.  
+                      - Required for all requests.  
+                      - Available options:  
+                        - **`V5`**: Superior musical expression, faster generation.  
+                        - **`V4_5PLUS`**: V4.5+ is richer sound, new waysto create, max 8 min.  
+                        - **`V4_5`**: V4.5 is smarter prompts, fastergenerations, max 8 min.  
+                        - **`V4`**: V4 is improved vocal quality,max 4 min.  
+                        - **`V3_5`**: V3.5 is better song structure,max 4 min.
+                    enum:
+                      - V3_5
+                      - V4
+                      - V4_5
+                      - V4_5PLUS
+                      - V5
+                    example: V3_5
+              callBackUrl:
+                allOf:
+                  - type: string
+                    format: uri
+                    description: >-
+                      The URL to receive music extension task completion
+                      updates. Required for all music extension requests.
+
+
+                      - System will POST task status and results to this URL
+                      when extension completes
+
+                      - Callback process has three stages: `text` (text
+                      generation), `first` (first track complete), `complete`
+                      (all tracks complete)
+
+                      - Your callback endpoint should accept POST requests with
+                      JSON payload containing extended track results and audio
+                      URLs
+
+                      - For detailed callback format and implementation guide,
+                      see [Music Extension Callbacks](./extend-music-callbacks)
+
+                      - Alternatively, use the Get Music Details endpoint to
+                      poll task status
+                    example: https://api.example.com/callback
+              negativeTags:
+                allOf:
+                  - type: string
+                    description: >-
+                      Music styles or traits to exclude from the extended audio.
+                      Optional. Use to avoid specific undesired characteristics.
+                    example: Heavy Metal, Upbeat Drums
+              vocalGender:
+                allOf:
+                  - type: string
+                    description: >-
+                      Vocal gender preference for the singing voice. Optional.
+                      Use 'm' for male and 'f' for female. Based on practice,
+                      this parameter can only increase the probability but
+                      cannot guarantee adherence to male/female voice
+                      instructions.
+                    enum:
+                      - m
+                      - f
+                    example: m
+              styleWeight:
+                allOf:
+                  - type: number
+                    description: >-
+                      Strength of adherence to the specified style. Optional.
+                      Range 0–1, up to 2 decimal places.
+                    minimum: 0
+                    maximum: 1
+                    multipleOf: 0.01
+                    example: 0.65
+              weirdnessConstraint:
+                allOf:
+                  - type: number
+                    description: >-
+                      Controls experimental/creative deviation. Optional. Range
+                      0–1, up to 2 decimal places.
+                    minimum: 0
+                    maximum: 1
+                    multipleOf: 0.01
+                    example: 0.65
+              audioWeight:
+                allOf:
+                  - type: number
+                    description: >-
+                      Balance weight for audio features vs. other factors.
+                      Optional. Range 0–1, up to 2 decimal places.
+                    minimum: 0
+                    maximum: 1
+                    multipleOf: 0.01
+                    example: 0.65
+              personaId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Only available when Custom Mode (`customMode: true`) is
+                      enabled. Persona ID to apply to the generated music.
+                      Optional. Use this to apply a specific persona style to
+                      your music generation. 
+
+
+                      To generate a persona ID, use the [Generate
+                      Persona](generate-persona) endpoint to create a
+                      personalized music Persona based on generated music.
+                    example: persona_123
+            required: true
+            requiredProperties:
+              - defaultParamFlag
+              - audioId
+              - callBackUrl
+              - model
+              - prompt
+        examples:
+          example:
+            value:
+              defaultParamFlag: true
+              audioId: e231****-****-****-****-****8cadc7dc
+              prompt: >-
+                Extend the music with more relaxing notes and a gentle bridge
+                section
+              style: Classical
+              title: Peaceful Piano Extended
+              continueAt: 60
+              model: V3_5
+              callBackUrl: https://api.example.com/callback
+              negativeTags: Heavy Metal, Upbeat Drums
+              vocalGender: m
+              styleWeight: 0.65
+              weirdnessConstraint: 0.65
+              audioWeight: 0.65
+              personaId: persona_123
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 402
+                      - 404
+                      - 409
+                      - 422
+                      - 429
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **402**: Insufficient Credits - Account does not have
+                      enough credits to perform the operation
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **409**: Conflict - WAV record already exists
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **429**: Rate Limited - Request limit has been exceeded
+                      for this resource
+
+                      - **451**: Unauthorized - Failed to fetch the image.
+                      Kindly verify any access limits set by you or your service
+                      provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: >-
+                          Task ID for tracking task status. Use this ID with the
+                          "Get Music Details" endpoint to query extension task
+                          details and results.
+                        example: 5c79****be8e
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: 5c79****be8e
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

@@ -1,0 +1,545 @@
+# Audio Separation Callbacks
+
+> System will call this callback when vocal and instrument separation is complete.
+
+When you submit a vocal separation task to the Suno API, you can use the `callBackUrl` parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+
+## Callback Mechanism Overview
+
+<Info>
+  The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+</Info>
+
+### Callback Timing
+
+The system will send callback notifications in the following situations:
+
+* Vocal separation task completed successfully
+* Vocal separation task failed
+* Errors occurred during task processing
+
+### Callback Method
+
+* **HTTP Method**: POST
+* **Content Type**: application/json
+* **Timeout Setting**: 15 seconds
+
+## Callback Request Format
+
+When the task is completed, the system will send a POST request to your `callBackUrl` based on the separation type you selected. Different separation types correspond to different callback data structures:
+
+### separate\_vocal Type Callbacks
+
+<CodeGroup>
+  ```json Success Callback - separate_vocal theme={null}
+  {
+    "code": 200,
+    "msg": "vocal separation generated successfully.",
+    "data": {
+      "task_id": "3e63b4cc88d52611159371f6af5571e7",
+      "vocal_separation_info": {
+        "instrumental_url": "https://file.aiquickdraw.com/s/d92a13bf-c6f4-4ade-bb47-f69738435528_Instrumental.mp3",
+        "origin_url": "",
+        "vocal_url": "https://file.aiquickdraw.com/s/3d7021c9-fa8b-4eda-91d1-3b9297ddb172_Vocals.mp3"
+      }
+    }
+  }
+  ```
+
+  ```json Failure Callback - separate_vocal theme={null}
+  {
+    "code": 500,
+    "msg": "Vocal separation failed",
+    "data": {
+      "task_id": "3e63b4cc88d52611159371f6af5571e7",
+      "vocal_separation_info": null
+    }
+  }
+  ```
+</CodeGroup>
+
+### split\_stem Type Callbacks
+
+<CodeGroup>
+  ```json Success Callback - split_stem theme={null}
+  {
+    "code": 200,
+    "msg": "vocal separation generated successfully.",
+    "data": {
+      "task_id": "e649edb7abfd759285bd41a47a634b10",
+      "vocal_separation_info": {
+        "origin_url": "",
+        "backing_vocals_url": "https://file.aiquickdraw.com/s/aadc51a3-4c88-4c8e-a4c8-e867c539673d_Backing_Vocals.mp3",
+        "bass_url": "https://file.aiquickdraw.com/s/a3c2da5a-b364-4422-adb5-2692b9c26d33_Bass.mp3",
+        "brass_url": "https://file.aiquickdraw.com/s/334b2d23-0c65-4a04-92c7-22f828afdd44_Brass.mp3",
+        "drums_url": "https://file.aiquickdraw.com/s/ac75c5ea-ac77-4ad2-b7d9-66e140b78e44_Drums.mp3",
+        "fx_url": "https://file.aiquickdraw.com/s/a8822c73-6629-4089-8f2a-d19f41f0007d_FX.mp3",
+        "guitar_url": "https://file.aiquickdraw.com/s/064dd08e-d5d2-4201-9058-c5c40fb695b4_Guitar.mp3",
+        "keyboard_url": "https://file.aiquickdraw.com/s/adc934e0-df7d-45da-8220-1dba160d74e0_Keyboard.mp3",
+        "percussion_url": "https://file.aiquickdraw.com/s/0f70884d-047c-41f1-a6d0-7044618b7dc6_Percussion.mp3",
+        "strings_url": "https://file.aiquickdraw.com/s/49829425-a5b0-424e-857a-75d4c63a426b_Strings.mp3",
+        "synth_url": "https://file.aiquickdraw.com/s/56b2d94a-eb92-4d21-bc43-3460de0c8348_Synth.mp3",
+        "vocal_url": "https://file.aiquickdraw.com/s/07420749-29a2-4054-9b62-e6a6f8b90ccb_Vocals.mp3",
+        "woodwinds_url": "https://file.aiquickdraw.com/s/d81545b1-6f94-4388-9785-1aaa6ecabb02_Woodwinds.mp3"
+      }
+    }
+  }
+  ```
+
+  ```json Failure Callback - split_stem theme={null}
+  {
+    "code": 500,
+    "msg": "Instrument separation failed",
+    "data": {
+      "task_id": "e649edb7abfd759285bd41a47a634b10",
+      "vocal_separation_info": null
+    }
+  }
+  ```
+</CodeGroup>
+
+## Status Code Description
+
+<ParamField path="code" type="integer" required>
+  Callback status code indicating task processing result:
+
+  | Status Code | Description                                       |
+  | ----------- | ------------------------------------------------- |
+  | 200         | Success - Request has been processed successfully |
+  | 500         | Internal Error - Please try again later           |
+</ParamField>
+
+<ParamField path="msg" type="string" required>
+  Status message providing detailed status description
+</ParamField>
+
+<ParamField path="data.task_id" type="string" required>
+  Task ID, consistent with the task\_id returned when you submitted the task
+</ParamField>
+
+<ParamField path="data.vocal_separation_info" type="object">
+  Vocal separation result information, returned on success. The returned fields depend on the separation type (type parameter)
+</ParamField>
+
+## separate\_vocal Type Callback Fields
+
+<ParamField path="data.vocal_separation_info.instrumental_url" type="string">
+  Instrumental part audio URL (separate\_vocal type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.origin_url" type="string">
+  Original audio URL
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.vocal_url" type="string">
+  Vocal part audio URL
+</ParamField>
+
+## split\_stem Type Callback Fields
+
+<ParamField path="data.vocal_separation_info.origin_url" type="string">
+  Original audio URL
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.vocal_url" type="string">
+  Main vocal audio URL
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.backing_vocals_url" type="string">
+  Backing vocals audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.drums_url" type="string">
+  Drums part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.bass_url" type="string">
+  Bass part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.guitar_url" type="string">
+  Guitar part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.keyboard_url" type="string">
+  Keyboard part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.percussion_url" type="string">
+  Percussion part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.strings_url" type="string">
+  Strings part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.synth_url" type="string">
+  Synthesizer part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.fx_url" type="string">
+  Effects part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.brass_url" type="string">
+  Brass part audio URL (split\_stem type only)
+</ParamField>
+
+<ParamField path="data.vocal_separation_info.woodwinds_url" type="string">
+  Woodwinds part audio URL (split\_stem type only)
+</ParamField>
+
+## Callback Reception Examples
+
+Below are example codes for receiving callbacks in popular programming languages:
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript  theme={null}
+    const express = require('express');
+    const app = express();
+
+    app.use(express.json());
+
+    app.post('/suno-vocal-separation-callback', (req, res) => {
+      const { code, msg, data } = req.body;
+      
+      console.log('Received vocal separation callback:', {
+        taskId: data.task_id,
+        status: code,
+        message: msg
+      });
+      
+      if (code === 200) {
+        // Task completed successfully
+        console.log('Vocal separation completed');
+        const vocalInfo = data.vocal_separation_info;
+        
+        if (vocalInfo) {
+          console.log('Separation results:');
+          console.log(`Original audio: ${vocalInfo.origin_url}`);
+          console.log(`Vocal part: ${vocalInfo.vocal_url}`);
+          
+          // separate_vocal type specific fields
+          if (vocalInfo.instrumental_url) {
+            console.log(`Instrumental part: ${vocalInfo.instrumental_url}`);
+          }
+          
+          // split_stem type specific fields
+          if (vocalInfo.backing_vocals_url) {
+            console.log(`Backing vocals: ${vocalInfo.backing_vocals_url}`);
+            console.log(`Drums part: ${vocalInfo.drums_url}`);
+            console.log(`Bass part: ${vocalInfo.bass_url}`);
+            console.log(`Guitar part: ${vocalInfo.guitar_url}`);
+            console.log(`Keyboard part: ${vocalInfo.keyboard_url}`);
+            console.log(`Percussion part: ${vocalInfo.percussion_url}`);
+            console.log(`Strings part: ${vocalInfo.strings_url}`);
+            console.log(`Synthesizer part: ${vocalInfo.synth_url}`);
+            console.log(`Effects part: ${vocalInfo.fx_url}`);
+            console.log(`Brass part: ${vocalInfo.brass_url}`);
+            console.log(`Woodwinds part: ${vocalInfo.woodwinds_url}`);
+          }
+          
+          // Process separated audio files
+          // Can download files, save locally, etc.
+        }
+        
+      } else {
+        // Task failed
+        console.log('Vocal separation failed:', msg);
+        
+        // Handle failure scenarios...
+      }
+      
+      // Return 200 status code to confirm callback received
+      res.status(200).json({ status: 'received' });
+    });
+
+    app.listen(3000, () => {
+      console.log('Callback server running on port 3000');
+    });
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python  theme={null}
+    from flask import Flask, request, jsonify
+    import requests
+    import os
+
+    app = Flask(__name__)
+
+    @app.route('/suno-vocal-separation-callback', methods=['POST'])
+    def handle_callback():
+        data = request.json
+        
+        code = data.get('code')
+        msg = data.get('msg')
+        callback_data = data.get('data', {})
+        task_id = callback_data.get('task_id')
+        vocal_info = callback_data.get('vocal_separation_info')
+        
+        print(f"Received vocal separation callback: {task_id}, status: {code}, message: {msg}")
+        
+        if code == 200:
+            # Task completed successfully
+            print("Vocal separation completed")
+            
+            if vocal_info:
+                print("Separation results:")
+                print(f"Original audio: {vocal_info.get('origin_url')}")
+                print(f"Vocal part: {vocal_info.get('vocal_url')}")
+                
+                # separate_vocal type specific fields
+                if vocal_info.get('instrumental_url'):
+                    print(f"Instrumental part: {vocal_info.get('instrumental_url')}")
+                
+                # split_stem type specific fields
+                if vocal_info.get('backing_vocals_url'):
+                    print(f"Backing vocals: {vocal_info.get('backing_vocals_url')}")
+                    print(f"Drums part: {vocal_info.get('drums_url')}")
+                    print(f"Bass part: {vocal_info.get('bass_url')}")
+                    print(f"Guitar part: {vocal_info.get('guitar_url')}")
+                    print(f"Keyboard part: {vocal_info.get('keyboard_url')}")
+                    print(f"Percussion part: {vocal_info.get('percussion_url')}")
+                    print(f"Strings part: {vocal_info.get('strings_url')}")
+                    print(f"Synthesizer part: {vocal_info.get('synth_url')}")
+                    print(f"Effects part: {vocal_info.get('fx_url')}")
+                    print(f"Brass part: {vocal_info.get('brass_url')}")
+                    print(f"Woodwinds part: {vocal_info.get('woodwinds_url')}")
+                
+                # Process separated audio files
+                # Download file example
+                def download_audio_file(url, filename):
+                    if url:
+                        try:
+                            response = requests.get(url)
+                            if response.status_code == 200:
+                                with open(filename, "wb") as f:
+                                    f.write(response.content)
+                                print(f"Saved: {filename}")
+                        except Exception as e:
+                            print(f"Download failed {filename}: {e}")
+                
+                # Create directory
+                os.makedirs(f"vocal_separation_{task_id}", exist_ok=True)
+                
+                # Download separated audio files
+                download_audio_file(vocal_info.get('vocal_url'), 
+                                  f"vocal_separation_{task_id}/vocal.mp3")
+                
+                # separate_vocal type files
+                if vocal_info.get('instrumental_url'):
+                    download_audio_file(vocal_info.get('instrumental_url'), 
+                                      f"vocal_separation_{task_id}/instrumental.mp3")
+                
+                # split_stem type files
+                if vocal_info.get('backing_vocals_url'):
+                    stem_files = {
+                        'backing_vocals': vocal_info.get('backing_vocals_url'),
+                        'drums': vocal_info.get('drums_url'),
+                        'bass': vocal_info.get('bass_url'),
+                        'guitar': vocal_info.get('guitar_url'),
+                        'keyboard': vocal_info.get('keyboard_url'),
+                        'percussion': vocal_info.get('percussion_url'),
+                        'strings': vocal_info.get('strings_url'),
+                        'synth': vocal_info.get('synth_url'),
+                        'fx': vocal_info.get('fx_url'),
+                        'brass': vocal_info.get('brass_url'),
+                        'woodwinds': vocal_info.get('woodwinds_url')
+                    }
+                    
+                    for name, url in stem_files.items():
+                        download_audio_file(url, f"vocal_separation_{task_id}/{name}.mp3")
+                    
+        else:
+            # Task failed
+            print(f"Vocal separation failed: {msg}")
+            
+            # Handle failure scenarios...
+        
+        # Return 200 status code to confirm callback received
+        return jsonify({'status': 'received'}), 200
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=3000)
+    ```
+  </Tab>
+
+  <Tab title="PHP">
+    ```php  theme={null}
+    <?php
+    header('Content-Type: application/json');
+
+    // Get POST data
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    $code = $data['code'] ?? null;
+    $msg = $data['msg'] ?? '';
+    $callbackData = $data['data'] ?? [];
+    $taskId = $callbackData['task_id'] ?? '';
+    $vocalInfo = $callbackData['vocal_separation_info'] ?? null;
+
+    error_log("Received vocal separation callback: $taskId, status: $code, message: $msg");
+
+    if ($code === 200) {
+        // Task completed successfully
+        error_log("Vocal separation completed");
+        
+        if ($vocalInfo) {
+            error_log("Separation results:");
+            error_log("Original audio: " . ($vocalInfo['origin_url'] ?? ''));
+            error_log("Vocal part: " . ($vocalInfo['vocal_url'] ?? ''));
+            
+            // separate_vocal type specific fields
+            if (!empty($vocalInfo['instrumental_url'])) {
+                error_log("Instrumental part: " . $vocalInfo['instrumental_url']);
+            }
+            
+            // split_stem type specific fields
+            if (!empty($vocalInfo['backing_vocals_url'])) {
+                error_log("Backing vocals: " . $vocalInfo['backing_vocals_url']);
+                error_log("Drums part: " . ($vocalInfo['drums_url'] ?? ''));
+                error_log("Bass part: " . ($vocalInfo['bass_url'] ?? ''));
+                error_log("Guitar part: " . ($vocalInfo['guitar_url'] ?? ''));
+                error_log("Keyboard part: " . ($vocalInfo['keyboard_url'] ?? ''));
+                error_log("Percussion part: " . ($vocalInfo['percussion_url'] ?? ''));
+                error_log("Strings part: " . ($vocalInfo['strings_url'] ?? ''));
+                error_log("Synthesizer part: " . ($vocalInfo['synth_url'] ?? ''));
+                error_log("Effects part: " . ($vocalInfo['fx_url'] ?? ''));
+                error_log("Brass part: " . ($vocalInfo['brass_url'] ?? ''));
+                error_log("Woodwinds part: " . ($vocalInfo['woodwinds_url'] ?? ''));
+            }
+            
+            // Process separated audio files
+            function downloadAudioFile($url, $filename) {
+                if (!empty($url)) {
+                    try {
+                        $audioContent = file_get_contents($url);
+                        if ($audioContent !== false) {
+                            file_put_contents($filename, $audioContent);
+                            error_log("Saved: $filename");
+                        }
+                    } catch (Exception $e) {
+                        error_log("Download failed $filename: " . $e->getMessage());
+                    }
+                }
+            }
+            
+            // Create directory
+            $dir = "vocal_separation_$taskId";
+            if (!is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+            
+            // Download basic files
+            downloadAudioFile($vocalInfo['vocal_url'] ?? '', "$dir/vocal.mp3");
+            
+            // separate_vocal type files
+            if (!empty($vocalInfo['instrumental_url'])) {
+                downloadAudioFile($vocalInfo['instrumental_url'], "$dir/instrumental.mp3");
+            }
+            
+            // split_stem type files
+            if (!empty($vocalInfo['backing_vocals_url'])) {
+                $stemFiles = [
+                    'backing_vocals' => $vocalInfo['backing_vocals_url'] ?? '',
+                    'drums' => $vocalInfo['drums_url'] ?? '',
+                    'bass' => $vocalInfo['bass_url'] ?? '',
+                    'guitar' => $vocalInfo['guitar_url'] ?? '',
+                    'keyboard' => $vocalInfo['keyboard_url'] ?? '',
+                    'percussion' => $vocalInfo['percussion_url'] ?? '',
+                    'strings' => $vocalInfo['strings_url'] ?? '',
+                    'synth' => $vocalInfo['synth_url'] ?? '',
+                    'fx' => $vocalInfo['fx_url'] ?? '',
+                    'brass' => $vocalInfo['brass_url'] ?? '',
+                    'woodwinds' => $vocalInfo['woodwinds_url'] ?? ''
+                ];
+                
+                foreach ($stemFiles as $name => $url) {
+                    downloadAudioFile($url, "$dir/$name.mp3");
+                }
+            }
+        }
+        
+    } else {
+        // Task failed
+        error_log("Vocal separation failed: $msg");
+        
+        // Handle failure scenarios...
+    }
+
+    // Return 200 status code to confirm callback received
+    http_response_code(200);
+    echo json_encode(['status' => 'received']);
+    ?>
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+  ### Callback URL Configuration Recommendations
+
+  1. **Use HTTPS**: Ensure callback URL uses HTTPS protocol for secure data transmission
+  2. **Verify Origin**: Verify the legitimacy of the request source in callback processing
+  3. **Idempotent Processing**: The same task\_id may receive multiple callbacks, ensure processing logic is idempotent
+  4. **Quick Response**: Callback processing should return 200 status code quickly to avoid timeout
+  5. **Asynchronous Processing**: Complex business logic should be processed asynchronously to avoid blocking callback responses
+  6. **Type-based Processing**: Handle different audio file structures based on different separation types
+  7. **Batch Download**: split\_stem type produces multiple files, recommend batch downloading and organizing by type
+</Tip>
+
+<Warning>
+  ### Important Reminders
+
+  * Callback URL must be publicly accessible
+  * Server must respond within 15 seconds, otherwise will be considered timeout
+  * If 3 consecutive retry attempts fail, the system will stop sending callbacks
+  * Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+  * Vocal separation generated audio file URLs may have time limits, recommend downloading and saving promptly
+  * Note that some audio part URLs may be empty, certain instrument separations might be empty
+  * separate\_vocal and split\_stem types return different fields, please handle corresponding fields based on the type parameter in the request
+</Warning>
+
+## Troubleshooting
+
+If you are not receiving callback notifications, please check the following:
+
+<AccordionGroup>
+  <Accordion title="Network Connection Issues">
+    * Confirm callback URL is accessible from public internet
+    * Check firewall settings to ensure inbound requests are not blocked
+    * Verify domain name resolution is correct
+  </Accordion>
+
+  <Accordion title="Server Response Issues">
+    * Ensure server returns HTTP 200 status code within 15 seconds
+    * Check server logs for error messages
+    * Verify endpoint path and HTTP method are correct
+  </Accordion>
+
+  <Accordion title="Content Format Issues">
+    * Confirm received POST request body is in JSON format
+    * Check if Content-Type is application/json
+    * Verify JSON parsing is correct
+  </Accordion>
+
+  <Accordion title="File Processing Issues">
+    * Confirm all audio file URLs are accessible
+    * Check file download permissions and network connection
+    * Verify file save path and permissions
+    * Note that some instrument separation results may be empty
+    * Note the field differences between separate\_vocal and split\_stem types
+  </Accordion>
+</AccordionGroup>
+
+## Alternative Solutions
+
+If you cannot use the callback mechanism, you can also use polling:
+
+<Card title="Poll Query Results" icon="radar" href="/suno-api/get-vocal-separation-details">
+  Use the Get Vocal Separation Details endpoint to periodically query task status. We recommend querying every 30 seconds.
+</Card>

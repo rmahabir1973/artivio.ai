@@ -1,0 +1,300 @@
+# Get Vocal Separation Details
+
+> Retrieve detailed information about a vocal separation task.
+
+## OpenAPI
+
+````yaml suno-api/suno-api.json get /api/v1/vocal-removal/record-info
+paths:
+  path: /api/v1/vocal-removal/record-info
+  method: get
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query:
+        taskId:
+          schema:
+            - type: string
+              required: true
+              description: >-
+                Unique identifier of the vocal separation task to retrieve. This
+                is the taskId returned when creating the vocal separation task.
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 404
+                      - 422
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **451**: Failed to fetch the image. Kindly verify any
+                      access limits set by you or your service provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: Task ID
+                      musicId:
+                        type: string
+                        description: Music ID
+                      callbackUrl:
+                        type: string
+                        description: Callback address
+                      audioId:
+                        type: integer
+                        description: Audio ID
+                      completeTime:
+                        type: string
+                        description: Complete callback time
+                        format: date-time
+                      response:
+                        type: object
+                        description: >-
+                          Vocal separation response result, fields vary based on
+                          the type parameter from the original request
+                        properties:
+                          originUrl:
+                            type: string
+                            description: Original audio URL
+                          instrumentalUrl:
+                            type: string
+                            description: >-
+                              Instrumental part audio URL (separate_vocal type
+                              only)
+                          vocalUrl:
+                            type: string
+                            description: Vocal part audio URL
+                          backingVocalsUrl:
+                            type: string
+                            description: Backing vocals audio URL (split_stem type only)
+                          drumsUrl:
+                            type: string
+                            description: Drums part audio URL (split_stem type only)
+                          bassUrl:
+                            type: string
+                            description: Bass part audio URL (split_stem type only)
+                          guitarUrl:
+                            type: string
+                            description: Guitar part audio URL (split_stem type only)
+                          pianoUrl:
+                            type: string
+                            description: Piano part audio URL (split_stem type only)
+                          keyboardUrl:
+                            type: string
+                            description: Keyboard part audio URL (split_stem type only)
+                          percussionUrl:
+                            type: string
+                            description: Percussion part audio URL (split_stem type only)
+                          stringsUrl:
+                            type: string
+                            description: Strings part audio URL (split_stem type only)
+                          synthUrl:
+                            type: string
+                            description: Synthesizer part audio URL (split_stem type only)
+                          fxUrl:
+                            type: string
+                            description: Effects part audio URL (split_stem type only)
+                          brassUrl:
+                            type: string
+                            description: Brass part audio URL (split_stem type only)
+                          woodwindsUrl:
+                            type: string
+                            description: Woodwinds part audio URL (split_stem type only)
+                      successFlag:
+                        type: string
+                        description: Task status
+                        enum:
+                          - PENDING
+                          - SUCCESS
+                          - CREATE_TASK_FAILED
+                          - GENERATE_AUDIO_FAILED
+                          - CALLBACK_EXCEPTION
+                      createTime:
+                        type: string
+                        description: Creation time
+                        format: date-time
+                      errorCode:
+                        type: number
+                        description: >-
+                          Error code, valid when task fails
+
+
+                          - **200**: Success - Request has been processed
+                          successfully
+
+                          - **500**: Internal Error - Please try again later.
+                        enum:
+                          - 200
+                          - 500
+                      errorMessage:
+                        type: string
+                        description: Error message, valid when task fails
+        examples:
+          separate_vocal:
+            summary: separate_vocal Type Query Result
+            description: Response example for vocal separation type query details
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: 3e63b4cc88d52611159371f6af5571e7
+                musicId: 376c687e-d439-42c1-b1e4-bcb43b095ec2
+                callbackUrl: https://57312fc2e366.ngrok-free.app/api/v1/vocal-removal/test
+                audioId: e231****-****-****-****-****8cadc7dc
+                completeTime: 1753782937000
+                response:
+                  originUrl: null
+                  instrumentalUrl: >-
+                    https://file.aiquickdraw.com/s/d92a13bf-c6f4-4ade-bb47-f69738435528_Instrumental.mp3
+                  vocalUrl: >-
+                    https://file.aiquickdraw.com/s/3d7021c9-fa8b-4eda-91d1-3b9297ddb172_Vocals.mp3
+                  backingVocalsUrl: null
+                  drumsUrl: null
+                  bassUrl: null
+                  guitarUrl: null
+                  pianoUrl: null
+                  keyboardUrl: null
+                  percussionUrl: null
+                  stringsUrl: null
+                  synthUrl: null
+                  fxUrl: null
+                  brassUrl: null
+                  woodwindsUrl: null
+                successFlag: SUCCESS
+                createTime: 1753782854000
+                errorCode: null
+                errorMessage: null
+          split_stem:
+            summary: split_stem Type Query Result
+            description: Response example for instrument separation type query details
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: e649edb7abfd759285bd41a47a634b10
+                musicId: 376c687e-d439-42c1-b1e4-bcb43b095ec2
+                callbackUrl: https://57312fc2e366.ngrok-free.app/api/v1/vocal-removal/test
+                audioId: e231****-****-****-****-****8cadc7dc
+                completeTime: 1753782459000
+                response:
+                  originUrl: null
+                  instrumentalUrl: null
+                  vocalUrl: >-
+                    https://file.aiquickdraw.com/s/07420749-29a2-4054-9b62-e6a6f8b90ccb_Vocals.mp3
+                  backingVocalsUrl: >-
+                    https://file.aiquickdraw.com/s/aadc51a3-4c88-4c8e-a4c8-e867c539673d_Backing_Vocals.mp3
+                  drumsUrl: >-
+                    https://file.aiquickdraw.com/s/ac75c5ea-ac77-4ad2-b7d9-66e140b78e44_Drums.mp3
+                  bassUrl: >-
+                    https://file.aiquickdraw.com/s/a3c2da5a-b364-4422-adb5-2692b9c26d33_Bass.mp3
+                  guitarUrl: >-
+                    https://file.aiquickdraw.com/s/064dd08e-d5d2-4201-9058-c5c40fb695b4_Guitar.mp3
+                  pianoUrl: null
+                  keyboardUrl: >-
+                    https://file.aiquickdraw.com/s/adc934e0-df7d-45da-8220-1dba160d74e0_Keyboard.mp3
+                  percussionUrl: >-
+                    https://file.aiquickdraw.com/s/0f70884d-047c-41f1-a6d0-7044618b7dc6_Percussion.mp3
+                  stringsUrl: >-
+                    https://file.aiquickdraw.com/s/49829425-a5b0-424e-857a-75d4c63a426b_Strings.mp3
+                  synthUrl: >-
+                    https://file.aiquickdraw.com/s/56b2d94a-eb92-4d21-bc43-3460de0c8348_Synth.mp3
+                  fxUrl: >-
+                    https://file.aiquickdraw.com/s/a8822c73-6629-4089-8f2a-d19f41f0007d_FX.mp3
+                  brassUrl: >-
+                    https://file.aiquickdraw.com/s/334b2d23-0c65-4a04-92c7-22f828afdd44_Brass.mp3
+                  woodwindsUrl: >-
+                    https://file.aiquickdraw.com/s/d81545b1-6f94-4388-9785-1aaa6ecabb02_Woodwinds.mp3
+                successFlag: SUCCESS
+                createTime: 1753782327000
+                errorCode: null
+                errorMessage: null
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

@@ -1,0 +1,230 @@
+# Get Lyrics Task Details
+
+> Retrieve detailed information about a lyrics generation task.
+
+## OpenAPI
+
+````yaml suno-api/suno-api.json get /api/v1/lyrics/record-info
+paths:
+  path: /api/v1/lyrics/record-info
+  method: get
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query:
+        taskId:
+          schema:
+            - type: string
+              required: true
+              description: >-
+                Unique identifier of the lyrics generation task to retrieve.
+                This is the taskId returned when creating the lyrics generation
+                task.
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 400
+                      - 401
+                      - 404
+                      - 422
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **400**: Please try rephrasing   with more specific
+                      details or using a different approach.
+
+                      Song Description contained artist name:
+
+                      Song Description flagged for moderation
+
+                      Unable to generate lyrics from song   description
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **451**: Failed to fetch the image. Kindly verify any
+                      access limits set by you or your service provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+
+                      Internal Error - Please try again later.
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: Task ID
+                      param:
+                        type: string
+                        description: Parameter information for task generation
+                      response:
+                        type: object
+                        properties:
+                          taskId:
+                            type: string
+                            description: Task ID
+                          data:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                text:
+                                  type: string
+                                  description: Lyrics content
+                                title:
+                                  type: string
+                                  description: Lyrics title
+                                status:
+                                  type: string
+                                  description: Generation status
+                                  enum:
+                                    - complete
+                                    - failed
+                                errorMessage:
+                                  type: string
+                                  description: Error message, valid when status is failed
+                      status:
+                        type: string
+                        description: Task status
+                        enum:
+                          - PENDING
+                          - SUCCESS
+                          - CREATE_TASK_FAILED
+                          - GENERATE_LYRICS_FAILED
+                          - CALLBACK_EXCEPTION
+                          - SENSITIVE_WORD_ERROR
+                      type:
+                        type: string
+                        description: Task type
+                        example: LYRICS
+                      errorCode:
+                        type: number
+                        description: >-
+                          Error code, valid when task fails
+
+
+                          - **200**: Success - Request has been processed
+                          successfully
+
+                          - **400**: Please try rephrasing   with more specific
+                          details or using a different approach.
+
+                          Song Description contained artist name
+
+                          Song Description flagged for moderation
+
+                          Unable to generate lyrics from song   description
+
+                          - **500**: Internal Error - Please try again later.
+                        enum:
+                          - 200
+                          - 400
+                          - 500
+                      errorMessage:
+                        type: string
+                        description: Error message, valid when task fails
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: 11dc****8b0f
+                param: '{"prompt":"A song about peaceful night in the city"}'
+                response:
+                  taskId: 11dc****8b0f
+                  data:
+                    - text: |-
+                        [Verse]
+                        我穿越城市黑暗夜
+                        心中燃烧梦想的烈火
+                      title: 钢铁侠
+                      status: complete
+                      errorMessage: ''
+                status: SUCCESS
+                type: LYRICS
+                errorCode: null
+                errorMessage: null
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

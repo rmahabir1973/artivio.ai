@@ -380,6 +380,14 @@ export const generateVideoRequestSchema = z.object({
     'veo-3.1-fast',
     'runway-gen3-alpha-turbo',
     'runway-aleph',
+    'seedance-1-pro',
+    'seedance-1-lite',
+    'wan-2.5',
+    'kling-2.5-turbo',
+    'grok-imagine',
+    'sora-2',
+    'sora-2-image-to-video',
+    'sora-2-pro-storyboard',
   ]),
   prompt: z.string().min(1).max(2000),
   generationType: z.enum(['text-to-video', 'image-to-video']).optional(),
@@ -389,6 +397,13 @@ export const generateVideoRequestSchema = z.object({
     duration: z.number().optional(), // Duration in seconds (5, 10 for Runway)
     quality: z.enum(['720p', '1080p']).optional(), // For Runway
     aspectRatio: z.enum(['16:9', '9:16', '4:3', '1:1', '3:4', 'Auto']).optional(),
+    shots: z.array(z.object({
+      Scene: z.string().min(1).max(2000),
+      duration: z.number().int().min(1).max(25),
+    })).min(2).max(3).optional(), // Sora storyboard shots (2-3 scenes)
+    nFrames: z.string().optional(), // Sora duration ('10', '15', '25')
+    removeWatermark: z.boolean().optional(), // Sora watermark removal
+    mode: z.enum(['fun', 'normal', 'spicy']).optional(), // Grok Imagine mode
   }).optional(),
 });
 

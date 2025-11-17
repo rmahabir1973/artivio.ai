@@ -1,0 +1,193 @@
+# Get WAV Conversion Details
+
+> Retrieve detailed information about a WAV format conversion task.
+
+## OpenAPI
+
+````yaml suno-api/suno-api.json get /api/v1/wav/record-info
+paths:
+  path: /api/v1/wav/record-info
+  method: get
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query:
+        taskId:
+          schema:
+            - type: string
+              required: true
+              description: >-
+                Unique identifier of the WAV conversion task to retrieve. This
+                is the taskId returned when creating the WAV conversion task.
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 404
+                      - 422
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **451**: Failed to fetch the image. Kindly verify any
+                      access limits set by you or your service provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: Task ID
+                      musicId:
+                        type: string
+                        description: Music ID
+                      callbackUrl:
+                        type: string
+                        description: Callback address
+                      musicIndex:
+                        type: integer
+                        description: Music index
+                      completeTime:
+                        type: string
+                        description: Complete callback time
+                        format: date-time
+                      response:
+                        type: object
+                        properties:
+                          audioWavUrl:
+                            type: string
+                            description: WAV format audio file URL
+                      successFlag:
+                        type: string
+                        description: Task status
+                        enum:
+                          - PENDING
+                          - SUCCESS
+                          - CREATE_TASK_FAILED
+                          - GENERATE_WAV_FAILED
+                          - CALLBACK_EXCEPTION
+                      createTime:
+                        type: string
+                        description: Creation time
+                        format: date-time
+                      errorCode:
+                        type: number
+                        description: >-
+                          Error code, valid when task fails
+
+
+                          - **200**: Success - Request has been processed
+                          successfully
+
+                          - **500**: Internal Error - Please try again later.
+                        enum:
+                          - 200
+                          - 500
+                      errorMessage:
+                        type: string
+                        description: Error message, valid when task fails
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: 988e****c8d3
+                musicId: e231****-****-****-****-****8cadc7dc
+                callbackUrl: https://api.example.com/callback
+                audioId: e231****-****-****-****-****8cadc7dc
+                completeTime: '2025-01-01 00:10:00'
+                response:
+                  audioWavUrl: https://example.com/s/04e6****e727.wav
+                successFlag: >-
+                  PENDING-待执行 SUCCESS-成功 CREATE_TASK_FAILED-创建任务失败
+                  GENERATE_AUDIO_FAILED-生成wav失败
+                createTime: '2025-01-01 00:00:00'
+                errorCode: null
+                errorMessage: null
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

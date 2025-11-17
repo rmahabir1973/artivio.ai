@@ -55,7 +55,8 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
       - Sora 2 Pro Storyboard: 10s, 15s, 25s (multi-scene)
     - **Special Features**:
       - Grok Imagine: Mode control (fun, normal, spicy), can use previously generated Grok images via task_id
-      - Sora 2 Pro Storyboard: Multi-scene videos (2-3 scenes) with precise per-scene timing control and total duration validation
+      - Sora 2 Pro Storyboard: Multi-scene videos (2-3 scenes) with precise per-scene timing control and exact total duration validation
+      - **Sora 2 Implementation**: Dedicated `/generate/sora` page with tabbed interface for Text-to-Video, Image-to-Video, and Pro Storyboard modes. Storyboard uses functional state updates to prevent race conditions, integer-only duration sliders, and auto-redistribution when total duration or scene count changes. Backend validates scene count (2-3), integer durations, prompt presence, and exact sum matching.
 -   **AI Image Generation**: Integrates Seedream 4.0 (up to 4K resolution), 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads.
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and extended durations.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis.

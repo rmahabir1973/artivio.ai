@@ -1,0 +1,353 @@
+# Generate Music
+
+> Generate music with or without lyrics using AI models.
+
+## OpenAPI
+
+````yaml suno-api/suno-api.json post /api/v1/generate
+paths:
+  path: /api/v1/generate
+  method: post
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              prompt:
+                allOf:
+                  - type: string
+                    description: >-
+                      A description of the desired audio content.  
+
+                      - In Custom Mode (`customMode: true`): Required if
+                      `instrumental` is `false`. The prompt will be strictly
+                      used as the lyrics and sung in the generated track.
+                      Character limits by model:  
+                        - **V3_5 & V4**: Maximum 3000 characters  
+                        - **V4_5 & V4_5PLUS**: Maximum 5000 characters  
+                        - **V5**: Maximum 5000 characters  
+                        Example: "A calm and relaxing piano track with soft melodies"  
+                      - In Non-custom Mode (`customMode: false`): Always
+                      required. The prompt serves as the core idea, and lyrics
+                      will be automatically generated based on it (not strictly
+                      matching the input). Maximum 500 characters.  
+                        Example: "A short relaxing piano tune"
+                    example: A calm and relaxing piano track with soft melodies
+              style:
+                allOf:
+                  - type: string
+                    description: >-
+                      Music style specification for the generated audio.  
+
+                      - Required in Custom Mode (`customMode: true`). Defines
+                      the genre, mood, or artistic direction.  
+
+                      - Character limits by model:  
+                        - **V3_5 & V4**: Maximum 200 characters  
+                        - **V4_5 & V4_5PLUS**: Maximum 1000 characters  
+                        - **V5**: Maximum 1000 characters  
+                      - Common examples: Jazz, Classical, Electronic, Pop, Rock,
+                      Hip-hop, etc.
+                    example: Classical
+              title:
+                allOf:
+                  - type: string
+                    description: |-
+                      Title for the generated music track.  
+                      - Required in Custom Mode (`customMode: true`).  
+                      - Max length: 80 characters.  
+                      - Will be displayed in player interfaces and filenames.
+                    example: Peaceful Piano Meditation
+              customMode:
+                allOf:
+                  - type: boolean
+                    description: >-
+                      Determines if advanced parameter customization is
+                      enabled.  
+
+                      - If `true`: Allows detailed control with specific
+                      requirements for `style` and `title` fields.  
+
+                      - If `false`: Simplified mode where only `prompt` is
+                      required and other parameters are ignored.
+                    example: true
+              instrumental:
+                allOf:
+                  - type: boolean
+                    description: >-
+                      Determines if the audio should be instrumental (no
+                      lyrics).  
+
+                      - In Custom Mode (`customMode: true`):  
+                        - If `true`: Only `style` and `title` are required.  
+                        - If `false`: `style`, `title`, and `prompt` are required (with prompt used as the exact lyrics).  
+                      - In Non-custom Mode (`customMode: false`): No impact on
+                      required fields (prompt only).
+                    example: true
+              model:
+                allOf:
+                  - type: string
+                    description: |-
+                      The AI model version to use for generation.  
+                      - Required for all requests.  
+                      - Available options:  
+                        - **`V5`**: Superior musical expression, faster generation.  
+                        - **`V4_5PLUS`**: V4.5+ is richer sound, new waysto create, max 8 min.  
+                        - **`V4_5`**: V4.5 is smarter prompts, fastergenerations, max 8 min.  
+                        - **`V4`**: V4 is improved vocal quality,max 4 min.  
+                        - **`V3_5`**: V3.5 is better song structure,max 4 min.
+                    enum:
+                      - V3_5
+                      - V4
+                      - V4_5
+                      - V4_5PLUS
+                      - V5
+                    example: V3_5
+              callBackUrl:
+                allOf:
+                  - type: string
+                    format: uri
+                    description: >-
+                      The URL to receive music generation task completion
+                      updates. Required for all music generation requests.
+
+
+                      - System will POST task status and results to this URL
+                      when generation completes
+
+                      - Callback process has three stages: `text` (text
+                      generation), `first` (first track complete), `complete`
+                      (all tracks complete)
+
+                      - Note: Some cases may skip `text` and `first` stages and
+                      return `complete` directly
+
+                      - Your callback endpoint should accept POST requests with
+                      JSON payload containing task results and audio URLs
+
+                      - For detailed callback format and implementation guide,
+                      see [Music Generation
+                      Callbacks](./generate-music-callbacks)
+
+                      - Alternatively, use the Get Music Details endpoint to
+                      poll task status
+                    example: https://api.example.com/callback
+              negativeTags:
+                allOf:
+                  - type: string
+                    description: >-
+                      Music styles or traits to exclude from the generated
+                      audio. Optional. Use to avoid specific styles.
+                    example: Heavy Metal, Upbeat Drums
+              vocalGender:
+                allOf:
+                  - type: string
+                    description: >-
+                      Vocal gender preference for the singing voice. Optional.
+                      Use 'm' for male and 'f' for female. Note: This parameter
+                      is only effective when customMode is true. Based on
+                      practice, this parameter can only increase the probability
+                      but cannot guarantee adherence to male/female voice
+                      instructions.
+                    enum:
+                      - m
+                      - f
+                    example: m
+              styleWeight:
+                allOf:
+                  - type: number
+                    description: >-
+                      Strength of adherence to the specified style. Optional.
+                      Range 0–1, up to 2 decimal places.
+                    minimum: 0
+                    maximum: 1
+                    multipleOf: 0.01
+                    example: 0.65
+              weirdnessConstraint:
+                allOf:
+                  - type: number
+                    description: >-
+                      Controls experimental/creative deviation. Optional. Range
+                      0–1, up to 2 decimal places.
+                    minimum: 0
+                    maximum: 1
+                    multipleOf: 0.01
+                    example: 0.65
+              audioWeight:
+                allOf:
+                  - type: number
+                    description: >-
+                      Balance weight for audio features vs. other factors.
+                      Optional. Range 0–1, up to 2 decimal places.
+                    minimum: 0
+                    maximum: 1
+                    multipleOf: 0.01
+                    example: 0.65
+              personaId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Only available when Custom Mode (`customMode: true`) is
+                      enabled. Persona ID to apply to the generated music.
+                      Optional. Use this to apply a specific persona style to
+                      your music generation. 
+
+
+                      To generate a persona ID, use the [Generate
+                      Persona](generate-persona) endpoint to create a
+                      personalized music Persona based on generated music.
+                    example: persona_123
+            required: true
+            requiredProperties:
+              - customMode
+              - instrumental
+              - callBackUrl
+              - model
+              - prompt
+        examples:
+          example:
+            value:
+              prompt: A calm and relaxing piano track with soft melodies
+              style: Classical
+              title: Peaceful Piano Meditation
+              customMode: true
+              instrumental: true
+              model: V3_5
+              callBackUrl: https://api.example.com/callback
+              negativeTags: Heavy Metal, Upbeat Drums
+              vocalGender: m
+              styleWeight: 0.65
+              weirdnessConstraint: 0.65
+              audioWeight: 0.65
+              personaId: persona_123
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 402
+                      - 404
+                      - 409
+                      - 422
+                      - 429
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response Status Codes
+
+
+                      - **200**: Success - Request has been processed
+                      successfully  
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid  
+
+                      - **402**: Insufficient Credits - Account does not have
+                      enough credits to perform the operation  
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist  
+
+                      - **409**: Conflict - WAV record already exists  
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks  
+
+                      - **429**: Rate Limited - Request limit has been exceeded
+                      for this resource  
+
+                      - **451**: Unauthorized - Failed to fetch the image.
+                      Kindly verify any access limits set by you or your service
+                      provider  
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance  
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: >-
+                          Task ID for tracking task status. Use this ID with the
+                          "Get Music Details" endpoint to query task details and
+                          results.
+                        example: 5c79****be8e
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: 5c79****be8e
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

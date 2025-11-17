@@ -171,8 +171,10 @@ export default function GenerateSora() {
 
       let model = 'sora-2';
       let finalPrompt = prompt;
+      // Convert landscape/portrait to proper aspect ratio format
+      const convertedAspectRatio = aspectRatio === 'landscape' ? '16:9' : '9:16';
       const parameters: any = {
-        aspectRatio,
+        aspectRatio: convertedAspectRatio,
         nFrames: mode === "storyboard" ? totalDuration : duration,
         removeWatermark
       };
@@ -200,7 +202,7 @@ export default function GenerateSora() {
         model = 'sora-2-image-to-video';
       }
 
-      const response = await fetch("/api/generations/video", {
+      const response = await fetch("/api/generate/video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,0 +1,286 @@
+# Convert to WAV Callbacks
+
+> System will call this callback when WAV format audio generation is complete.
+
+When you submit a WAV format conversion task to the Suno API, you can use the `callBackUrl` parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+
+## Callback Mechanism Overview
+
+<Info>
+  The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+</Info>
+
+### Callback Timing
+
+The system will send callback notifications in the following situations:
+
+* WAV format conversion task completed successfully
+* WAV format conversion task failed
+* Errors occurred during task processing
+
+### Callback Method
+
+* **HTTP Method**: POST
+* **Content Type**: application/json
+* **Timeout Setting**: 15 seconds
+
+## Callback Request Format
+
+When the task is completed, the system will send a POST request to your `callBackUrl` in the following format:
+
+<CodeGroup>
+  ```json Success Callback theme={null}
+  {
+    "code": 200,
+    "msg": "success",
+    "data": {
+      "audioWavUrl": "https://example.com/s/04e6****e727.wav",
+      "task_id": "988e****c8d3"
+    }
+  }
+  ```
+
+  ```json Failure Callback theme={null}
+  {
+    "code": 500,
+    "msg": "Internal Error - Please try again later",
+    "data": {
+      "audioWavUrl": null,
+      "task_id": "988e****c8d3"
+    }
+  }
+  ```
+</CodeGroup>
+
+## Status Code Description
+
+<ParamField path="code" type="integer" required>
+  Callback status code indicating task processing result:
+
+  | Status Code | Description                                       |
+  | ----------- | ------------------------------------------------- |
+  | 200         | Success - Request has been processed successfully |
+  | 500         | Internal Error - Please try again later           |
+</ParamField>
+
+<ParamField path="msg" type="string" required>
+  Status message providing detailed status description
+</ParamField>
+
+<ParamField path="data.task_id" type="string" required>
+  Task ID, consistent with the task\_id returned when you submitted the task
+</ParamField>
+
+<ParamField path="data.audioWavUrl" type="string">
+  WAV format audio file URL, returned on success with accessible download link
+</ParamField>
+
+## Callback Reception Examples
+
+Here are example codes for receiving callbacks in popular programming languages:
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript  theme={null}
+    const express = require('express');
+    const app = express();
+
+    app.use(express.json());
+
+    app.post('/suno-wav-callback', (req, res) => {
+      const { code, msg, data } = req.body;
+      
+      console.log('Received WAV conversion callback:', {
+        taskId: data.task_id,
+        status: code,
+        message: msg
+      });
+      
+      if (code === 200) {
+        // Task completed successfully
+        console.log('WAV conversion completed');
+        console.log(`WAV file URL: ${data.audioWavUrl}`);
+        
+        // Process generated WAV file
+        // Can download file, save locally, etc.
+        
+      } else {
+        // Task failed
+        console.log('WAV conversion failed:', msg);
+        
+        // Handle failure cases...
+      }
+      
+      // Return 200 status code to confirm callback received
+      res.status(200).json({ status: 'received' });
+    });
+
+    app.listen(3000, () => {
+      console.log('Callback server running on port 3000');
+    });
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python  theme={null}
+    from flask import Flask, request, jsonify
+    import requests
+
+    app = Flask(__name__)
+
+    @app.route('/suno-wav-callback', methods=['POST'])
+    def handle_callback():
+        data = request.json
+        
+        code = data.get('code')
+        msg = data.get('msg')
+        callback_data = data.get('data', {})
+        task_id = callback_data.get('task_id')
+        audio_wav_url = callback_data.get('audioWavUrl')
+        
+        print(f"Received WAV conversion callback: {task_id}, status: {code}, message: {msg}")
+        
+        if code == 200:
+            # Task completed successfully
+            print("WAV conversion completed")
+            print(f"WAV file URL: {audio_wav_url}")
+            
+            # Process generated WAV file
+            # Can download file, save locally, etc.
+            if audio_wav_url:
+                try:
+                    # Download WAV file example
+                    response = requests.get(audio_wav_url)
+                    if response.status_code == 200:
+                        with open(f"wav_file_{task_id}.wav", "wb") as f:
+                            f.write(response.content)
+                        print(f"WAV file saved as wav_file_{task_id}.wav")
+                except Exception as e:
+                    print(f"WAV file download failed: {e}")
+                    
+        else:
+            # Task failed
+            print(f"WAV conversion failed: {msg}")
+            
+            # Handle failure cases...
+        
+        # Return 200 status code to confirm callback received
+        return jsonify({'status': 'received'}), 200
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=3000)
+    ```
+  </Tab>
+
+  <Tab title="PHP">
+    ```php  theme={null}
+    <?php
+    header('Content-Type: application/json');
+
+    // Get POST data
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    $code = $data['code'] ?? null;
+    $msg = $data['msg'] ?? '';
+    $callbackData = $data['data'] ?? [];
+    $taskId = $callbackData['task_id'] ?? '';
+    $audioWavUrl = $callbackData['audioWavUrl'] ?? '';
+
+    error_log("Received WAV conversion callback: $taskId, status: $code, message: $msg");
+
+    if ($code === 200) {
+        // Task completed successfully
+        error_log("WAV conversion completed");
+        error_log("WAV file URL: $audioWavUrl");
+        
+        // Process generated WAV file
+        if (!empty($audioWavUrl)) {
+            try {
+                // Download WAV file example
+                $wavContent = file_get_contents($audioWavUrl);
+                if ($wavContent !== false) {
+                    $filename = "wav_file_{$taskId}.wav";
+                    file_put_contents($filename, $wavContent);
+                    error_log("WAV file saved as $filename");
+                }
+            } catch (Exception $e) {
+                error_log("WAV file download failed: " . $e->getMessage());
+            }
+        }
+        
+    } else {
+        // Task failed
+        error_log("WAV conversion failed: $msg");
+        
+        // Handle failure cases...
+    }
+
+    // Return 200 status code to confirm callback received
+    http_response_code(200);
+    echo json_encode(['status' => 'received']);
+    ?>
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+  ### Callback URL Configuration Recommendations
+
+  1. **Use HTTPS**: Ensure your callback URL uses HTTPS protocol for secure data transmission
+  2. **Verify Source**: Verify the legitimacy of the request source in callback processing
+  3. **Idempotent Processing**: The same task\_id may receive multiple callbacks, ensure processing logic is idempotent
+  4. **Quick Response**: Callback processing should return a 200 status code as quickly as possible to avoid timeout
+  5. **Asynchronous Processing**: Complex business logic should be processed asynchronously to avoid blocking callback response
+  6. **File Processing**: WAV file download and processing should be done in asynchronous tasks to avoid blocking callback response
+</Tip>
+
+<Warning>
+  ### Important Reminders
+
+  * Callback URL must be a publicly accessible address
+  * Server must respond within 15 seconds, otherwise it will be considered a timeout
+  * If 3 consecutive retries fail, the system will stop sending callbacks
+  * Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+  * WAV file URLs may have time limits, recommend downloading and saving promptly
+</Warning>
+
+## Troubleshooting
+
+If you do not receive callback notifications, please check the following:
+
+<AccordionGroup>
+  <Accordion title="Network Connection Issues">
+    * Confirm that the callback URL is accessible from the public network
+    * Check firewall settings to ensure inbound requests are not blocked
+    * Verify that domain name resolution is correct
+  </Accordion>
+
+  <Accordion title="Server Response Issues">
+    * Ensure the server returns HTTP 200 status code within 15 seconds
+    * Check server logs for error messages
+    * Verify that the interface path and HTTP method are correct
+  </Accordion>
+
+  <Accordion title="Content Format Issues">
+    * Confirm that the received POST request body is in JSON format
+    * Check that Content-Type is application/json
+    * Verify that JSON parsing is correct
+  </Accordion>
+
+  <Accordion title="File Processing Issues">
+    * Confirm that the WAV file URL is accessible
+    * Check file download permissions and network connections
+    * Verify file save paths and permissions
+  </Accordion>
+</AccordionGroup>
+
+## Alternative Solution
+
+If you cannot use the callback mechanism, you can also use polling:
+
+<Card title="Poll Query Results" icon="radar" href="/suno-api/get-wav-details">
+  Use the get WAV details endpoint to regularly query task status. We recommend querying every 30 seconds.
+</Card>
