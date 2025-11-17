@@ -926,27 +926,35 @@ export async function convertAudio(params: {
 }
 
 // Topaz AI Image Upscaling - High-fidelity image enhancement
+// Uses Bytedance/Playground format: /api/v1/jobs/createTask with nested input object
 export async function upscaleImage(params: {
   sourceImageUrl: string;
   upscaleFactor: 2 | 4 | 8;
   callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
-  return await callKieApi('/api/v1/topaz/image-upscale', {
-    image_url: params.sourceImageUrl,
-    upscale_factor: params.upscaleFactor.toString(),
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: 'topaz/image-upscale',
     callBackUrl: params.callBackUrl,
+    input: {
+      image_url: params.sourceImageUrl,
+      upscale_factor: params.upscaleFactor.toString(),
+    },
   });
 }
 
 // Topaz AI Video Upscaling - High-fidelity video enhancement
+// Uses Bytedance/Playground format: /api/v1/jobs/createTask with nested input object
 export async function upscaleVideo(params: {
   sourceVideoUrl: string;
   upscaleFactor: 2 | 4;
   callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
-  return await callKieApi('/api/v1/topaz/video-upscale', {
-    video_url: params.sourceVideoUrl,
-    upscale_factor: params.upscaleFactor.toString(),
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: 'topaz/video-upscale',
     callBackUrl: params.callBackUrl,
+    input: {
+      video_url: params.sourceVideoUrl,
+      upscale_factor: params.upscaleFactor.toString(),
+    },
   });
 }
