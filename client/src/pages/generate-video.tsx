@@ -17,6 +17,26 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 
+const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
+  "veo-3.1": ["16:9", "9:16"],
+  "veo-3.1-fast": ["16:9", "9:16"],
+  "veo-3": ["16:9", "9:16"],
+  "runway-gen3-alpha-turbo": ["16:9", "9:16"],
+  "runway-aleph": ["16:9", "9:16"],
+  "seedance-1-pro": ["16:9", "9:16", "1:1", "4:3"],
+  "seedance-1-lite": ["16:9", "9:16", "1:1", "4:3"],
+  "wan-2.5": ["16:9", "9:16", "1:1"],
+  "kling-2.5-turbo": ["16:9", "9:16", "1:1"],
+  "kling-2.1": ["16:9", "9:16", "1:1"],
+};
+
+const ASPECT_RATIO_LABELS: Record<string, string> = {
+  "16:9": "16:9 (Landscape)",
+  "9:16": "9:16 (Portrait)",
+  "1:1": "1:1 (Square)",
+  "4:3": "4:3 (Classic)",
+};
+
 const VIDEO_MODEL_INFO = [
   { 
     value: "veo-3.1", 
@@ -173,19 +193,19 @@ export default function GenerateVideo() {
     }
   }, [model, duration, toast]);
 
-  // Auto-adjust aspect ratio when switching to/from Veo models
+  // Auto-adjust aspect ratio when switching models
   useEffect(() => {
-    const isVeoModel = model.startsWith('veo-');
-    const unsupportedAspectRatios = ['1:1', '4:3'];
+    const supportedRatios = ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"];
     
-    if (isVeoModel && unsupportedAspectRatios.includes(aspectRatio)) {
+    if (!supportedRatios.includes(aspectRatio)) {
       setAspectRatio('16:9');
+      const modelName = selectedModel?.label || model;
       toast({
         title: "Aspect Ratio Adjusted",
-        description: "Veo models only support 16:9 and 9:16. Aspect ratio set to 16:9.",
+        description: `${modelName} doesn't support ${aspectRatio}. Aspect ratio set to 16:9.`,
       });
     }
-  }, [model, aspectRatio, toast]);
+  }, [model, aspectRatio, toast, selectedModel?.label]);
 
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -555,19 +575,16 @@ export default function GenerateVideo() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
-                  <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                  {!model.startsWith('veo-') && (
-                    <>
-                      <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                      <SelectItem value="4:3">4:3 (Classic)</SelectItem>
-                    </>
-                  )}
+                  {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).map((ratio) => (
+                    <SelectItem key={ratio} value={ratio}>
+                      {ASPECT_RATIO_LABELS[ratio] || ratio}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              {model.startsWith('veo-') && (
+              {(ASPECT_RATIO_SUPPORT[model] || []).length < 4 && (
                 <p className="text-xs text-muted-foreground">
-                  Veo models only support 16:9 and 9:16 aspect ratios
+                  {selectedModel?.label || model} supports: {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).join(", ")}
                 </p>
               )}
             </div>

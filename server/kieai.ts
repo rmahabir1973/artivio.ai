@@ -349,6 +349,11 @@ export async function generateVideo(params: {
     const quality = parameters.quality || '720p';
     const aspectRatio = parameters.aspectRatio || '16:9';
     
+    // Validate aspect ratio for Runway models (only 16:9 and 9:16 supported)
+    if (!['16:9', '9:16'].includes(aspectRatio)) {
+      throw new Error(`Runway models only support 16:9 and 9:16 aspect ratios. Received: ${aspectRatio}`);
+    }
+    
     // Map frontend model names to Kie.ai Runway model identifiers
     let runwayModel = 'GEN3_ALPHA_TURBO';
     if (params.model === 'runway-aleph') {
@@ -377,6 +382,12 @@ export async function generateVideo(params: {
     const duration = parameters.duration || 5;
     const cameraFixed = parameters.cameraFixed !== undefined ? parameters.cameraFixed : false;
     const seed = parameters.seed || -1;
+    const aspectRatio = parameters.aspectRatio || '16:9';
+    
+    // Validate aspect ratio for Seedance models (16:9, 9:16, 1:1, 4:3 supported)
+    if (!['16:9', '9:16', '1:1', '4:3'].includes(aspectRatio)) {
+      throw new Error(`Seedance models support 16:9, 9:16, 1:1, and 4:3 aspect ratios. Received: ${aspectRatio}`);
+    }
     
     // Determine model variant
     let seedanceModel = 'seedance-1-lite';
@@ -405,6 +416,11 @@ export async function generateVideo(params: {
     const resolution = parameters.resolution || '720p';
     const duration = parameters.duration || 5;
     const aspectRatio = parameters.aspectRatio || '16:9';
+    
+    // Validate aspect ratio for Wan models (16:9, 9:16, 1:1 supported)
+    if (!['16:9', '9:16', '1:1'].includes(aspectRatio)) {
+      throw new Error(`Wan models support 16:9, 9:16, and 1:1 aspect ratios. Received: ${aspectRatio}`);
+    }
     
     // Determine T2V or I2V based on reference images
     const isImageToVideo = referenceImages.length > 0;
@@ -440,6 +456,11 @@ export async function generateVideo(params: {
     const aspectRatio = parameters.aspectRatio || '16:9';
     const duration = parameters.duration || 5;
     const mode = parameters.mode || 'standard';
+    
+    // Validate aspect ratio for Kling models (16:9, 9:16, 1:1 supported)
+    if (!['16:9', '9:16', '1:1'].includes(aspectRatio)) {
+      throw new Error(`Kling models support 16:9, 9:16, and 1:1 aspect ratios. Received: ${aspectRatio}`);
+    }
     
     // Determine model variant
     let klingModel = 'kling-2.5-turbo';
