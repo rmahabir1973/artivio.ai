@@ -461,42 +461,41 @@ export async function generateVideo(params: {
     });
   }
   else if (params.model.startsWith('kling-')) {
-    // Kling 2.5 Turbo / 2.1 - uses /api/v1/kling/generate
+    // Kling 2.5 Turbo - uses /api/v1/jobs/createTask (Bytedance Playground API)
     const aspectRatio = parameters.aspectRatio || '16:9';
-    const duration = parameters.duration || 5;
-    const mode = parameters.mode || 'standard';
+    const duration = parameters.duration ? String(parameters.duration) : '5';
     
     // Validate aspect ratio for Kling models (16:9, 9:16, 1:1 supported)
     if (!['16:9', '9:16', '1:1'].includes(aspectRatio)) {
       throw new Error(`Kling models support 16:9, 9:16, and 1:1 aspect ratios. Received: ${aspectRatio}`);
     }
     
-    // Determine model variant
-    let klingModel = 'kling-2.5-turbo';
-    if (params.model === 'kling-2.1') {
-      klingModel = 'kling-2.1';
+    // Validate duration (5 or 10 seconds only)
+    if (!['5', '10'].includes(duration)) {
+      throw new Error(`Kling models support 5 or 10 second durations. Received: ${duration}`);
     }
     
-    const payload: any = {
-      model: klingModel,
+    // Kling 2.5 Turbo uses kling/v2-5-turbo-text-to-video-pro
+    const klingModel = 'kling/v2-5-turbo-text-to-video-pro';
+    
+    // Build input object
+    const inputPayload: any = {
       prompt: params.prompt,
-      aspectRatio,
       duration,
-      mode,
+      aspect_ratio: aspectRatio,
       negative_prompt: parameters.negativePrompt,
-      callBackUrl: parameters.callBackUrl,
+      cfg_scale: parameters.cfgScale !== undefined ? parameters.cfgScale : 0.5,
     };
     
-    // Add image URL for I2V
-    if (referenceImages.length > 0) {
-      payload.image_url = referenceImages[0];
-    }
-    
-    return await callKieApi('/api/v1/kling/generate', payload);
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: klingModel,
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
   }
   
   // Reject unknown models instead of falling back
-  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, kling-2.1`);
+  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo`);
 }
 
 // Image Generation

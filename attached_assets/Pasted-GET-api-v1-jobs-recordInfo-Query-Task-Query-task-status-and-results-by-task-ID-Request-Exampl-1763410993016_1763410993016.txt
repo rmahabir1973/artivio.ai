@@ -1,0 +1,67 @@
+GET
+/api/v1/jobs/recordInfo
+Query Task
+Query task status and results by task ID
+
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X GET "https://api.kie.ai/api/v1/jobs/recordInfo?taskId=task_12345678" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678",
+    "model": "kling/v2-5-turbo-text-to-video-pro",
+    "state": "success",
+    "param": "{\"model\":\"kling/v2-5-turbo-text-to-video-pro\",\"callBackUrl\":\"https://your-domain.com/api/callback\",\"input\":{\"prompt\":\"Real-time playback. Wide shot of a ruined city: collapsed towers, fires blazing, storm clouds with lightning. Camera drops fast from the sky over burning streets and tilted buildings. Smoke and dust fill the air. A lone hero walks out of the ruins, silhouetted by fire. Camera shifts front: his face is dirty with dust and sweat, eyes firm, a faint smile. Wind blows, debris rises. Extreme close-up: his eyes reflect the approaching enemy. Music and drums hit. Final wide shot: fire forms a blazing halo behind him — reborn in flames with epic cinematic vibe.\",\"duration\":\"5\",\"aspect_ratio\":\"16:9\",\"negative_prompt\":\"blur, distort, and low quality\",\"cfg_scale\":0.5}}",
+    "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+    "failCode": "",
+    "failMsg": "",
+    "completeTime": 1698765432000,
+    "createTime": 1698765400000,
+    "updateTime": 1698765432000
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID
+data.model
+Model used for generation
+data.state
+Generation state
+data.param
+Complete Create Task request parameters as JSON string (includes model, callBackUrl, input and all other parameters)
+data.resultJson
+Result JSON string containing generated media URLs
+data.failCode
+Error code (when generation failed)
+data.failMsg
+Error message (when generation failed)
+data.completeTime
+Completion timestamp
+data.createTime
+Creation timestamp
+data.updateTime
+Update timestamp
+State Values
+waiting
+Waiting for generation
+queuing
+In queue
+generating
+Generating
+success
+Generation successful
+fail
+Generation failed
