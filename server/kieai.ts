@@ -267,6 +267,13 @@ export async function generateVideo(params: {
   // Route to appropriate API based on model
   if (params.model.startsWith('veo-')) {
     // Veo 3, 3.1, 3.1 Fast - uses /api/v1/veo/generate
+    
+    // Validate aspect ratio for Veo models (only 16:9 and 9:16 supported)
+    const aspectRatio = parameters.aspectRatio || '16:9';
+    if (!['16:9', '9:16'].includes(aspectRatio)) {
+      throw new Error(`Veo models only support 16:9 and 9:16 aspect ratios. Received: ${aspectRatio}`);
+    }
+    
     let kieModel = 'veo3';
     if (params.model === 'veo-3.1') {
       kieModel = 'veo3';

@@ -173,6 +173,20 @@ export default function GenerateVideo() {
     }
   }, [model, duration, toast]);
 
+  // Auto-adjust aspect ratio when switching to/from Veo models
+  useEffect(() => {
+    const isVeoModel = model.startsWith('veo-');
+    const unsupportedAspectRatios = ['1:1', '4:3'];
+    
+    if (isVeoModel && unsupportedAspectRatios.includes(aspectRatio)) {
+      setAspectRatio('16:9');
+      toast({
+        title: "Aspect Ratio Adjusted",
+        description: "Veo models only support 16:9 and 9:16. Aspect ratio set to 16:9.",
+      });
+    }
+  }, [model, aspectRatio, toast]);
+
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest("POST", "/api/generate/video", data);
@@ -543,10 +557,19 @@ export default function GenerateVideo() {
                 <SelectContent>
                   <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
                   <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
-                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                  <SelectItem value="4:3">4:3 (Classic)</SelectItem>
+                  {!model.startsWith('veo-') && (
+                    <>
+                      <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                      <SelectItem value="4:3">4:3 (Classic)</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
+              {model.startsWith('veo-') && (
+                <p className="text-xs text-muted-foreground">
+                  Veo models only support 16:9 and 9:16 aspect ratios
+                </p>
+              )}
             </div>
 
             {/* Credit Cost Warning */}

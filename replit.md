@@ -33,7 +33,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Download Proxy System**: CORS-safe backend proxy for authenticated downloads of generated content.
 
 ### Feature Specifications
--   **AI Video Generation**: Supports Veo 3.1 and Runway Aleph, with image-to-video capabilities (up to 3 reference images) and specific logic for Kie.ai API constraints.
+-   **AI Video Generation**: Supports Veo 3.1 and Runway Aleph, with image-to-video capabilities (up to 3 reference images) and specific logic for Kie.ai API constraints. Veo models only support 16:9 and 9:16 aspect ratios (validated on both frontend and backend).
 -   **AI Image Generation**: Integrates 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads.
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and extended durations.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis.
