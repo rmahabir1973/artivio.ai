@@ -1039,11 +1039,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
         } else {
-          // Success status but no audio URL - likely payload format we don't recognize yet
-          // Log extensively for debugging but don't fail the generation
-          console.warn(`⚠️  Generation ${generationId} marked complete but no audio URL found in callback`);
-          console.warn(`Full callback data:`, safeStringify(callbackData));
-          return res.json({ success: true, message: 'Completion acknowledged but no media URL' });
+          // Success status but no media URL - mark as failed with debugging info
+          console.error(`❌ Generation ${generationId} marked complete but no media URL found in callback`);
+          console.error(`Full callback data:`, safeStringify(callbackData));
+          
+          // Finalize as failed so it doesn't stay stuck in processing
+          await storage.finalizeGeneration(generationId, 'failure', {
+            errorMessage: 'Generation completed but result URL could not be extracted from callback. Please contact support with generation ID.',
+          });
+          console.log(`✗ Generation ${generationId} marked as failed due to missing result URL`);
         }
       } else if (finalStatus === 'failed') {
         // Extract comprehensive error message from various possible fields

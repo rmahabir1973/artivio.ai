@@ -20,7 +20,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
     - **Runway**: Uses `code: 200/400/500` with `data.video_url` (snake_case) and `msg` field for errors
     - **Veo**: Uses `code: 200/400/422/500/501` with `data.info.resultUrls` array and `msg` field for errors
     - **Bytedance Models (Seedance, Wan, Kling, Seedream, Grok, Sora 2)**: Use `/api/v1/jobs/createTask` endpoint with nested `input` object, `code: 200/501`, JSON-stringified `data.resultJson`, and `data.failMsg` for errors  
-    - **Suno**: Multi-stage callbacks (`text`, `first`, `complete`) with nested response structures
+    - **Suno**: Multi-stage callbacks (`text`, `first`, `complete`) with official API format `data.data[].audio_url` parsing. Fixed callback handler to properly extract audio URLs from snake_case fields and finalize generations even when result URL extraction fails (prevents stuck processing state)
     - **Error Detection**: Catches HTTP error codes (4xx, 5xx), errorCode fields, and all format variations
     - **Timeout Protection**: 10-minute automatic timeout prevents stuck generations
 -   **Centralized URL Management**: Production-safe URL generation and validation via `server/urlUtils.ts` ensures correct routing for webhooks and assets.

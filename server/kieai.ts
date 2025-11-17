@@ -40,9 +40,13 @@ export function parseSunoResponse(response: any): {
                 null;
   
   // Parse audio URL from ALL known Suno payload formats
-  // Priority order: nested response structures -> direct data fields -> top-level fields
+  // Priority order: Official API docs format -> nested response structures -> direct data fields -> top-level fields
   // Include streamAudioUrl, metadata.audio, and all documented variations
-  const audioUrl = response?.data?.response?.sunoData?.[0]?.audioUrl ||
+  const audioUrl = response?.data?.data?.[0]?.audio_url ||      // Official Suno API callback format (snake_case)
+                  response?.data?.data?.[0]?.stream_audio_url || // Official Suno API callback format (snake_case)
+                  response?.data?.data?.[0]?.audioUrl ||         // Possible camelCase variant
+                  response?.data?.data?.[0]?.streamAudioUrl ||   // Possible camelCase variant
+                  response?.data?.response?.sunoData?.[0]?.audioUrl ||
                   response?.data?.response?.sunoData?.[0]?.streamAudioUrl ||
                   response?.data?.response?.tracks?.[0]?.audioUrl ||
                   response?.data?.response?.tracks?.[0]?.streamAudioUrl ||
