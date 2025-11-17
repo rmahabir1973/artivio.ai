@@ -941,13 +941,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const callbackType = callbackData.data?.callbackType || callbackData.callbackType;
       const isSunoIntermediateStage = callbackType === 'text' || callbackType === 'first';
       
-      // Runway-specific: Check for HTTP status code (200 = success, 400/500 = error)
+      // Kie.ai models use HTTP status codes in 'code' field (Runway, Veo)
       const httpStatusCode = callbackData.code;
-      const isRunwaySuccess = httpStatusCode === 200;
-      const isRunwayError = httpStatusCode === 400 || httpStatusCode === 500;
+      const isKieSuccess = httpStatusCode === 200;
+      // Veo error codes: 400, 422, 500, 501
+      // Runway error codes: 400, 500
+      const isKieError = httpStatusCode === 400 || httpStatusCode === 422 || httpStatusCode === 500 || httpStatusCode === 501;
       
       // Comprehensive error detection - catch all possible error formats from Kie.ai
-      const hasError = isRunwayError ||  // Runway uses code: 400/500 for errors
+      const hasError = isKieError ||  // Runway/Veo use code: 400/422/500/501 for errors
                       sunoError || 
                       callbackData.error || 
                       callbackData.errorMessage || 
@@ -961,9 +963,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       callbackData.data?.error_code ||
                       callbackData.data?.code;
       
-      // Check if this is an HTTP error code (4xx, 5xx) - but NOT Runway's 200 success code
+      // Check if this is an HTTP error code (4xx, 5xx) - but NOT success code 200
       const hasErrorCode = callbackData.code || callbackData.errorCode || callbackData.data?.code || callbackData.data?.errorCode;
-      const isHttpError = hasErrorCode && !isRunwaySuccess && (String(hasErrorCode).startsWith('4') || String(hasErrorCode).startsWith('5'));
+      const isHttpError = hasErrorCode && !isKieSuccess && (String(hasErrorCode).startsWith('4') || String(hasErrorCode).startsWith('5'));
       
       // Identify intermediate callbacks - update statusDetail but don't finalize yet
       const isProcessing = kieStatus === 'processing' || 
@@ -1001,8 +1003,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`Error Message: ${callbackData.msg || hasError || 'N/A'}`);
         console.error(`Full Callback Payload:`, safeStringify(callbackData));
         console.error(`=========================================\n`);
-      } else if (isRunwaySuccess || kieStatus === 'success' || kieStatus === 'completed' || kieStatus === 'complete') {
-        // Runway success (code: 200) OR generic success status
+      } else if (isKieSuccess || kieStatus === 'success' || kieStatus === 'completed' || kieStatus === 'complete') {
+        // Runway/Veo success (code: 200) OR generic success status
         finalStatus = 'completed';
       } else if (resultUrl) {
         // Has result URL, treat as success
