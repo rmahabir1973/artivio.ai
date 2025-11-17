@@ -41,7 +41,7 @@ const ONBOARDING_STEPS = [
     title: 'Try a Template',
     description: 'Use a saved template to quickly generate content',
     icon: BookTemplate,
-    link: '/generate-video',
+    link: '/generate/video',
     dataTestId: 'onboarding-step-template'
   },
   {
@@ -49,7 +49,7 @@ const ONBOARDING_STEPS = [
     title: 'Generate Content',
     description: 'Create your first AI-powered video, image, or music',
     icon: Rocket,
-    link: '/generate-video',
+    link: '/generate/video',
     dataTestId: 'onboarding-step-generation'
   },
 ] as const;
