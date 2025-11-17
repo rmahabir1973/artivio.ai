@@ -915,8 +915,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { audioUrl: sunoAudioUrl, status: sunoStatus, errorMessage: sunoError } = parseSunoResponse(callbackData);
       
       // Extract result URL from callback data
-      // Check Suno-specific URL first, then fallback to other providers
-      const resultUrl = sunoAudioUrl ||
+      // Priority order: Runway (video_url), Suno (audioUrl), then other providers
+      const resultUrl = callbackData.data?.video_url ||  // Runway uses snake_case
+                       callbackData.data?.videoUrl ||     // Veo uses camelCase
+                       sunoAudioUrl ||                    // Suno audio
                        (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) ||
                        (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) ||
                        (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) ||
@@ -928,8 +930,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        callbackData.audioUrl || 
                        callbackData.url || 
                        callbackData.data?.url ||
-                       callbackData.data?.videoUrl ||
                        callbackData.data?.imageUrl ||
+                       callbackData.data?.image_url ||   // Runway image cover
                        callbackData.data?.audioUrl;
       
       // Check for explicit status from Kie.ai
@@ -939,14 +941,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const callbackType = callbackData.data?.callbackType || callbackData.callbackType;
       const isSunoIntermediateStage = callbackType === 'text' || callbackType === 'first';
       
+      // Runway-specific: Check for HTTP status code (200 = success, 400/500 = error)
+      const httpStatusCode = callbackData.code;
+      const isRunwaySuccess = httpStatusCode === 200;
+      const isRunwayError = httpStatusCode === 400 || httpStatusCode === 500;
+      
       // Comprehensive error detection - catch all possible error formats from Kie.ai
-      const hasError = sunoError || 
+      const hasError = isRunwayError ||  // Runway uses code: 400/500 for errors
+                      sunoError || 
                       callbackData.error || 
                       callbackData.errorMessage || 
                       callbackData.errorCode ||
                       callbackData.error_message ||
                       callbackData.error_code ||
-                      callbackData.code ||
                       callbackData.data?.error || 
                       callbackData.data?.errorMessage ||
                       callbackData.data?.errorCode ||
@@ -954,9 +961,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       callbackData.data?.error_code ||
                       callbackData.data?.code;
       
-      // Check if this is an HTTP error code (4xx, 5xx)
+      // Check if this is an HTTP error code (4xx, 5xx) - but NOT Runway's 200 success code
       const hasErrorCode = callbackData.code || callbackData.errorCode || callbackData.data?.code || callbackData.data?.errorCode;
-      const isHttpError = hasErrorCode && (String(hasErrorCode).startsWith('4') || String(hasErrorCode).startsWith('5'));
+      const isHttpError = hasErrorCode && !isRunwaySuccess && (String(hasErrorCode).startsWith('4') || String(hasErrorCode).startsWith('5'));
       
       // Identify intermediate callbacks - update statusDetail but don't finalize yet
       const isProcessing = kieStatus === 'processing' || 
@@ -989,12 +996,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`\n❌ ===== ERROR DETECTED IN CALLBACK =====`);
         console.error(`Generation ID: ${generationId}`);
         console.error(`Status: ${kieStatus}`);
+        console.error(`HTTP Status Code: ${httpStatusCode || 'N/A'}`);
         console.error(`Error Code: ${hasErrorCode || 'N/A'}`);
-        console.error(`Error Message: ${hasError || 'N/A'}`);
+        console.error(`Error Message: ${callbackData.msg || hasError || 'N/A'}`);
         console.error(`Full Callback Payload:`, safeStringify(callbackData));
         console.error(`=========================================\n`);
-      } else if (kieStatus === 'success' || kieStatus === 'completed' || kieStatus === 'complete') {
-        // Success status even without audio URL yet (might be in different payload format)
+      } else if (isRunwaySuccess || kieStatus === 'success' || kieStatus === 'completed' || kieStatus === 'complete') {
+        // Runway success (code: 200) OR generic success status
         finalStatus = 'completed';
       } else if (resultUrl) {
         // Has result URL, treat as success
@@ -1023,7 +1031,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else if (finalStatus === 'failed') {
         // Extract comprehensive error message from various possible fields
-        const errorMessage = sunoError ||
+        // Runway uses "msg" field for error descriptions
+        const errorMessage = callbackData.msg ||  // Runway error message
+                           sunoError ||
                            callbackData.errorMessage || 
                            callbackData.error_message ||
                            callbackData.error ||
