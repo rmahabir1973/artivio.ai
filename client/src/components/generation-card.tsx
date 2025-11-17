@@ -56,12 +56,25 @@ export function GenerationCard({ generation }: GenerationCardProps) {
     if (!generation.resultUrl) return;
     
     try {
-      const response = await fetch(generation.resultUrl);
+      // Use the backend proxy endpoint to avoid CORS issues
+      const response = await fetch(`/api/generations/${generation.id}/download`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `artivio-${generation.type}-${generation.id}`;
+      
+      // Extract filename from Content-Disposition header if available
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      a.download = filenameMatch?.[1] || `artivio-${generation.type}-${generation.id}`;
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

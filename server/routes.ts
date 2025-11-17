@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
+import axios from "axios";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { 
@@ -1519,6 +1520,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching generations:', error);
       res.status(500).json({ message: "Failed to fetch generations" });
+    }
+  });
+
+  // Download generation file (proxy to avoid CORS issues)
+  app.get('/api/generations/:id/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+
+      // Verify the generation belongs to the user
+      const generations = await storage.getUserGenerations(userId);
+      const generation = generations.find(g => g.id === id);
+
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found or does not belong to you" });
+      }
+
+      if (!generation.resultUrl) {
+        return res.status(400).json({ message: "Generation does not have a result URL" });
+      }
+
+      // Fetch the file from the external URL
+      const fileResponse = await axios({
+        method: 'GET',
+        url: generation.resultUrl,
+        responseType: 'stream',
+      });
+
+      // Determine file extension and content type based on generation type
+      const extensionMap: Record<string, { ext: string; contentType: string }> = {
+        video: { ext: 'mp4', contentType: 'video/mp4' },
+        image: { ext: 'png', contentType: 'image/png' },
+        music: { ext: 'mp3', contentType: 'audio/mpeg' },
+      };
+
+      const fileInfo = extensionMap[generation.type] || { ext: 'bin', contentType: 'application/octet-stream' };
+      const filename = `artivio-${generation.type}-${generation.id}.${fileInfo.ext}`;
+
+      // Set response headers for download
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', fileInfo.contentType);
+
+      // Stream the file to the client
+      fileResponse.data.pipe(res);
+    } catch (error: any) {
+      console.error('Download proxy error:', error);
+      res.status(500).json({ message: error.message || "Failed to download file" });
     }
   });
 
