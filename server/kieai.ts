@@ -423,44 +423,42 @@ export async function generateVideo(params: {
     });
   }
   else if (params.model.startsWith('wan-')) {
-    // Wan 2.5 T2V/I2V - uses /api/v1/wan/generate
+    // Wan 2.5 T2V/I2V - uses /api/v1/jobs/createTask (Bytedance Playground API)
     const resolution = parameters.resolution || '720p';
-    const duration = parameters.duration || 5;
-    const aspectRatio = parameters.aspectRatio || '16:9';
+    const duration = parameters.duration ? String(parameters.duration) : '5';
     
-    // Validate aspect ratio for Wan models (16:9, 9:16, 1:1 supported)
-    if (!['16:9', '9:16', '1:1'].includes(aspectRatio)) {
-      throw new Error(`Wan models support 16:9, 9:16, and 1:1 aspect ratios. Received: ${aspectRatio}`);
+    // Validate duration (5 or 10 seconds only)
+    if (!['5', '10'].includes(duration)) {
+      throw new Error(`Wan models support 5 or 10 second durations. Received: ${duration}`);
     }
     
     // Determine T2V or I2V based on reference images
     const isImageToVideo = referenceImages.length > 0;
-    const wanModel = isImageToVideo ? 'wan2.5-i2v-preview' : 'wan2.5-t2v-preview';
+    const wanModel = isImageToVideo ? 'wan/2-5-image-to-video' : 'wan/2-5-text-to-video';
     
-    const payload: any = {
-      model: wanModel,
+    // Build input object
+    const inputPayload: any = {
       prompt: params.prompt,
-      negative_prompt: parameters.negativePrompt,
-      resolution,
-      aspect_ratio: aspectRatio,
       duration,
+      resolution,
+      negative_prompt: parameters.negativePrompt,
+      enable_prompt_expansion: parameters.enablePromptExpansion !== undefined ? parameters.enablePromptExpansion : true,
       seed: parameters.seed,
-      callBackUrl: parameters.callBackUrl,
     };
     
-    // Add image URL for I2V
+    // For image-to-video: add image_url to input (Wan requires single image)
     if (isImageToVideo) {
-      payload.image_url = referenceImages[0];
+      if (referenceImages.length === 0) {
+        throw new Error('Wan image-to-video requires exactly 1 reference image');
+      }
+      inputPayload.image_url = referenceImages[0];
     }
     
-    // Add audio controls
-    if (parameters.audioUrl) {
-      payload.audio_url = parameters.audioUrl;
-    } else if (parameters.enableAudio) {
-      payload.enable_audio = true;
-    }
-    
-    return await callKieApi('/api/v1/wan/generate', payload);
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: wanModel,
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
   }
   else if (params.model.startsWith('kling-')) {
     // Kling 2.5 Turbo / 2.1 - uses /api/v1/kling/generate
