@@ -62,6 +62,20 @@ import {
 } from "@shared/schema";
 import { getBaseUrl } from "./urlUtils";
 
+// Safe JSON stringifier to prevent circular reference errors
+function safeStringify(obj: any): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  }, 2);
+}
+
 // Helper to get pricing from database by model name
 async function getModelCost(model: string): Promise<number> {
   const pricing = await storage.getPricingByModel(model);
@@ -168,9 +182,25 @@ async function generateVideoInBackground(
     console.log(`📋 Video generation task queued: ${taskId} (waiting for callback)`);
   } catch (error: any) {
     console.error('Background video generation failed:', error);
-    await storage.finalizeGeneration(generationId, 'failure', {
+    
+    // Capture full error details from Kie.ai for debugging
+    const errorDetails: any = {
       errorMessage: error.message,
-    });
+    };
+    
+    // If this is an enhanced error from Kie.ai, include all diagnostic details
+    if (error.kieaiDetails) {
+      errorDetails.statusDetail = safeStringify({
+        httpStatus: error.kieaiDetails.status,
+        statusText: error.kieaiDetails.statusText,
+        endpoint: error.kieaiDetails.endpoint,
+        providerError: error.kieaiDetails.data,
+      });
+      
+      console.error('🔍 Kie.ai Error Details:', errorDetails.statusDetail);
+    }
+    
+    await storage.finalizeGeneration(generationId, 'failure', errorDetails);
   }
 }
 
@@ -252,9 +282,24 @@ async function generateImageInBackground(
       }
     }
     
-    await storage.finalizeGeneration(generationId, 'failure', {
-      errorMessage: error.message,
-    });
+    // Capture full error details from Kie.ai for debugging
+    const errorDetails: any = {
+      errorMessage: error.message || 'Unknown error during image generation',
+    };
+    
+    // If this is an enhanced error from Kie.ai, include all diagnostic details
+    if (error.kieaiDetails) {
+      errorDetails.statusDetail = safeStringify({
+        httpStatus: error.kieaiDetails.status,
+        statusText: error.kieaiDetails.statusText,
+        endpoint: error.kieaiDetails.endpoint,
+        providerError: error.kieaiDetails.data,
+      });
+      
+      console.error('🔍 Kie.ai Error Details:', errorDetails.statusDetail);
+    }
+    
+    await storage.finalizeGeneration(generationId, 'failure', errorDetails);
   }
 }
 
@@ -316,9 +361,25 @@ async function generateMusicInBackground(generationId: string, model: string, pr
     });
   } catch (error: any) {
     console.error('Background music generation failed:', error);
-    await storage.finalizeGeneration(generationId, 'failure', {
+    
+    // Capture full error details from Kie.ai for debugging
+    const errorDetails: any = {
       errorMessage: error.message || 'Unknown error during music generation',
-    });
+    };
+    
+    // If this is an enhanced error from Kie.ai, include all diagnostic details
+    if (error.kieaiDetails) {
+      errorDetails.statusDetail = safeStringify({
+        httpStatus: error.kieaiDetails.status,
+        statusText: error.kieaiDetails.statusText,
+        endpoint: error.kieaiDetails.endpoint,
+        providerError: error.kieaiDetails.data,
+      });
+      
+      console.error('🔍 Kie.ai Error Details:', errorDetails.statusDetail);
+    }
+    
+    await storage.finalizeGeneration(generationId, 'failure', errorDetails);
   }
 }
 
@@ -377,9 +438,25 @@ async function extendMusicInBackground(generationId: string, audioUrl: string, m
     });
   } catch (error: any) {
     console.error('Background extend music failed:', error);
-    await storage.finalizeGeneration(generationId, 'failure', {
+    
+    // Capture full error details from Kie.ai for debugging
+    const errorDetails: any = {
       errorMessage: error.message || 'Unknown error during extend music',
-    });
+    };
+    
+    // If this is an enhanced error from Kie.ai, include all diagnostic details
+    if (error.kieaiDetails) {
+      errorDetails.statusDetail = safeStringify({
+        httpStatus: error.kieaiDetails.status,
+        statusText: error.kieaiDetails.statusText,
+        endpoint: error.kieaiDetails.endpoint,
+        providerError: error.kieaiDetails.data,
+      });
+      
+      console.error('🔍 Kie.ai Error Details:', errorDetails.statusDetail);
+    }
+    
+    await storage.finalizeGeneration(generationId, 'failure', errorDetails);
   }
 }
 

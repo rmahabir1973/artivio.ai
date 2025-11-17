@@ -3,6 +3,20 @@ import { storage } from "./storage";
 
 const KIE_API_BASE = "https://api.kie.ai";
 
+// Safe JSON stringifier to prevent circular reference errors
+function safeStringify(obj: any): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  }, 2);
+}
+
 // Centralized Suno response parser to handle ALL API response formats
 // Covers v3, v4, v4.5, callbacks, and all documented Suno payload variations
 export function parseSunoResponse(response: any): {
@@ -161,10 +175,10 @@ async function getApiKey(): Promise<{ keyValue: string; keyName: string }> {
 async function callKieApi(endpoint: string, data: any): Promise<{ result: any; keyName: string }> {
   const { keyValue, keyName } = await getApiKey();
   
-  console.log(`🔵 Kie.ai API Request to ${endpoint}:`, JSON.stringify({
+  console.log(`🔵 Kie.ai API Request to ${endpoint}:`, safeStringify({
     ...data,
     callBackUrl: data.callBackUrl || 'NOT PROVIDED'
-  }, null, 2));
+  }));
   
   try {
     const response = await axios.post(
@@ -179,17 +193,17 @@ async function callKieApi(endpoint: string, data: any): Promise<{ result: any; k
       }
     );
     
-    console.log(`✅ Kie.ai API Response from ${endpoint}:`, JSON.stringify(response.data, null, 2));
+        console.log(`✅ Kie.ai API Response from ${endpoint}:`, safeStringify(response.data));
     
     return { result: response.data, keyName };
   } catch (error: any) {
     console.error(`❌ Kie.ai API Error for ${endpoint}:`, error.response?.data || error.message);
-    console.error('Full error details:', JSON.stringify({
+        console.error("Full error details:", safeStringify({
       status: error.response?.status,
       statusText: error.response?.statusText,
       data: error.response?.data,
       message: error.message
-    }, null, 2));
+    }));
     
     // Extract error message with better fallbacks
     let errorMessage = 'Failed to communicate with AI service';
@@ -224,7 +238,16 @@ async function callKieApi(endpoint: string, data: any): Promise<{ result: any; k
       errorMessage = error.message;
     }
     
-    throw new Error(errorMessage);
+    // Create enhanced error with full details for debugging
+    const enhancedError: any = new Error(errorMessage);
+    enhancedError.kieaiDetails = {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      endpoint,
+    };
+    
+    throw enhancedError;
   }
 }
 
