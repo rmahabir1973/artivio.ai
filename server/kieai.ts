@@ -512,37 +512,31 @@ export async function generateImage(params: {
   
   // Route to appropriate API based on model
   if (params.model === 'seedream-4') {
-    // Seedream 4.0 - up to 4K resolution, batch generation
-    const imageResolution = parameters.imageResolution || '2K';
-    const imageSize = parameters.imageSize || 'square';
+    // Seedream 4.0 - uses /api/v1/jobs/createTask (Bytedance Playground API)
+    const imageResolution = parameters.imageResolution || '1K';
+    const imageSize = parameters.imageSize || 'square_hd';
     const maxImages = parameters.maxImages || 1;
     const seed = parameters.seed;
-    const watermark = parameters.watermark !== undefined ? parameters.watermark : false;
     
-    const payload: any = {
-      model: 'bytedance-seedream-4-0-250828',
+    // Build input object
+    const inputPayload: any = {
       prompt: params.prompt,
-      image_resolution: imageResolution,
       image_size: imageSize,
+      image_resolution: imageResolution,
       max_images: maxImages,
       seed,
-      watermark,
-      response_format: 'url',
-      callBackUrl: parameters.callBackUrl,
     };
     
-    // Add reference images for editing (up to 10 images)
+    // Add reference images for editing (up to 10 images) - if supported
     if (mode === 'image-editing' && referenceImages.length > 0) {
-      payload.image_input = referenceImages.slice(0, 10);
+      inputPayload.image_input = referenceImages.slice(0, 10);
     }
     
-    // Custom resolution
-    if (imageResolution === 'custom' && parameters.width && parameters.height) {
-      payload.width = parameters.width;
-      payload.height = parameters.height;
-    }
-    
-    return await callKieApi('/api/v1/seedream/generate', payload);
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: 'bytedance/seedream-v4-text-to-image',
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
   }
   else if (params.model === 'midjourney-v7') {
     // Midjourney v7 - generates 4 variants with style controls

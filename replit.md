@@ -19,7 +19,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Asynchronous Operations**: Kie.ai integrations use webhook-based callbacks for real-time status updates, intelligently filtering intermediate states. Enhanced error detection catches all error formats with model-specific payload parsing:
     - **Runway**: Uses `code: 200/400/500` with `data.video_url` (snake_case) and `msg` field for errors
     - **Veo**: Uses `code: 200/400/422/500/501` with `data.info.resultUrls` array and `msg` field for errors
-    - **Seedance, Wan & Kling**: Use `/api/v1/jobs/createTask` endpoint with nested `input` object, `code: 200/501`, JSON-stringified `data.resultJson`, and `data.failMsg` for errors  
+    - **Bytedance Models (Seedance, Wan, Kling, Seedream)**: Use `/api/v1/jobs/createTask` endpoint with nested `input` object, `code: 200/501`, JSON-stringified `data.resultJson`, and `data.failMsg` for errors  
     - **Suno**: Multi-stage callbacks (`text`, `first`, `complete`) with nested response structures
     - **Error Detection**: Catches HTTP error codes (4xx, 5xx), errorCode fields, and all format variations
     - **Timeout Protection**: 10-minute automatic timeout prevents stuck generations
