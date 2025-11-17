@@ -935,6 +935,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for explicit status from Kie.ai
       const kieStatus = (sunoStatus || callbackData.status)?.toLowerCase();
       
+      // Check for Suno-specific callback stages (text, first, complete)
+      const callbackType = callbackData.data?.callbackType || callbackData.callbackType;
+      const isSunoIntermediateStage = callbackType === 'text' || callbackType === 'first';
+      
       // Comprehensive error detection - catch all possible error formats from Kie.ai
       const hasError = sunoError || 
                       callbackData.error || 
@@ -962,12 +966,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For intermediate callbacks, update statusDetail and acknowledge
       // Don't exit early - Suno sends these before final success
-      if (isProcessing && !hasError && !resultUrl) {
+      // IMPORTANT: Suno sends 'text' (lyrics generated) and 'first' (first track) callbacks before 'complete'
+      if ((isProcessing && !hasError && !resultUrl) || isSunoIntermediateStage) {
         // Soft update: persist status detail without finalizing
+        const statusDetail = callbackType ? `${kieStatus} (${callbackType})` : kieStatus;
         await storage.updateGeneration(generationId, {
-          statusDetail: kieStatus,
+          statusDetail,
         });
-        console.log(`⏸️  Intermediate callback for ${generationId} (status: ${kieStatus}) - stored statusDetail`);
+        console.log(`⏸️  Intermediate callback for ${generationId} (status: ${kieStatus}, type: ${callbackType || 'N/A'}) - stored statusDetail`);
         return res.json({ success: true, message: 'Intermediate status updated' });
       }
       
