@@ -493,9 +493,38 @@ export async function generateVideo(params: {
       input: inputPayload,
     });
   }
+  else if (params.model.startsWith('grok-')) {
+    // Grok Imagine - Image-to-Video only (uses /api/v1/jobs/createTask)
+    const mode = parameters.mode || 'normal'; // fun, normal, or spicy
+    
+    // Grok requires an image input (image-to-video only, not text-to-video)
+    if (referenceImages.length === 0) {
+      throw new Error('Grok image-to-video requires exactly 1 reference image');
+    }
+    
+    // Build input object
+    const inputPayload: any = {
+      image_urls: [referenceImages[0]], // Grok uses array with single image
+      prompt: params.prompt,
+      mode,
+    };
+    
+    // Optional: If user provides a Grok task_id and index to use previously generated image
+    if (parameters.grokTaskId) {
+      delete inputPayload.image_urls; // Don't use external image
+      inputPayload.task_id = parameters.grokTaskId;
+      inputPayload.index = parameters.grokImageIndex !== undefined ? parameters.grokImageIndex : 0;
+    }
+    
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: 'grok-imagine/image-to-video',
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
+  }
   
   // Reject unknown models instead of falling back
-  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo`);
+  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, grok-imagine`);
 }
 
 // Image Generation

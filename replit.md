@@ -19,7 +19,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Asynchronous Operations**: Kie.ai integrations use webhook-based callbacks for real-time status updates, intelligently filtering intermediate states. Enhanced error detection catches all error formats with model-specific payload parsing:
     - **Runway**: Uses `code: 200/400/500` with `data.video_url` (snake_case) and `msg` field for errors
     - **Veo**: Uses `code: 200/400/422/500/501` with `data.info.resultUrls` array and `msg` field for errors
-    - **Bytedance Models (Seedance, Wan, Kling, Seedream)**: Use `/api/v1/jobs/createTask` endpoint with nested `input` object, `code: 200/501`, JSON-stringified `data.resultJson`, and `data.failMsg` for errors  
+    - **Bytedance Models (Seedance, Wan, Kling, Seedream, Grok)**: Use `/api/v1/jobs/createTask` endpoint with nested `input` object, `code: 200/501`, JSON-stringified `data.resultJson`, and `data.failMsg` for errors  
     - **Suno**: Multi-stage callbacks (`text`, `first`, `complete`) with nested response structures
     - **Error Detection**: Catches HTTP error codes (4xx, 5xx), errorCode fields, and all format variations
     - **Timeout Protection**: 10-minute automatic timeout prevents stuck generations
@@ -39,16 +39,20 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Download Proxy System**: CORS-safe backend proxy for authenticated downloads of generated content.
 
 ### Feature Specifications
--   **AI Video Generation**: Supports Veo 3.1, Runway Aleph, Seedance, Wan 2.5, and Kling 2.5 Turbo models with image-to-video capabilities (up to 3 reference images for Veo models) and specific logic for Kie.ai API constraints. Model-specific aspect ratio and duration support with frontend filtering and backend validation:
+-   **AI Video Generation**: Supports Veo 3.1, Runway Aleph, Seedance, Wan 2.5, Kling 2.5 Turbo, and Grok Imagine models with image-to-video capabilities (up to 3 reference images for Veo models, 1 required for Grok) and specific logic for Kie.ai API constraints. Model-specific aspect ratio and duration support with frontend filtering and backend validation:
     - **Aspect Ratios**:
       - Veo (3, 3.1, 3.1 Fast) & Runway (Gen-3, Aleph): 16:9, 9:16 only
       - Seedance (1.0 Pro/Lite): 16:9, 9:16, 1:1, 4:3, 3:4, 21:9 (most flexible)
       - Wan 2.5 & Kling 2.5 Turbo: 16:9, 9:16, 1:1
+      - Grok Imagine: Image-to-video only (requires 1 reference image)
     - **Durations**:
       - Veo (3, 3.1, 3.1 Fast): 8 seconds only (fixed)
       - Runway (Gen-3, Aleph): 5s, 10s (8s NOT supported)
       - Seedance (1.0 Pro/Lite), Wan 2.5 & Kling 2.5 Turbo: 5s, 10s
--   **AI Image Generation**: Integrates 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads.
+      - Grok Imagine: Fixed duration (API-determined)
+    - **Special Features**:
+      - Grok Imagine: Mode control (fun, normal, spicy), can use previously generated Grok images via task_id
+-   **AI Image Generation**: Integrates Seedream 4.0 (up to 4K resolution), 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads.
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, and V4.5, supporting custom lyrics and extended durations.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis.
 -   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine AI-generated videos with drag-and-drop interface and background processing.

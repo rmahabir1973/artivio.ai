@@ -1,0 +1,169 @@
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"grok-imagine/image-to-video"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.image_urls
+Optional
+array(URL)
+Provide one external image URL as a reference for video generation (only one image is supported). This is one of two image input options — you can either upload an external image or specify a task_id + index from a Grok-generated image below. Do not provide both image_urls and task_id at the same time.
+
+File URL after upload, not file content; Accepted types: image/jpeg, image/png, image/webp; Max size: 10.0MB
+Example:
+
+["https://file.aiquickdraw.com/custom-page/akr/section-images/1762247692373tw5di116.png"]
+input.task_id
+Optional
+string
+Enter the taskid of an image previously generated with the Grok model on Kie. Use it together with the index below to select a specific image from that generation. When using this method, do not provide image_urls. Unlike external images, this method supports Spicy mode.
+
+Max length: 100 characters
+input.index
+Optional
+number
+When using a task_id, specify which image to use (Grok generates 6 images per task). This parameter only works with task_id and is ignored if image_urls is used(0-based).
+
+Min: 0, Max: 5, Step: 1
+Example:
+
+0
+input.prompt
+Optional
+string
+The text prompt describing the desired video motion
+
+Max length: 5000 characters
+Example:
+
+"POV hand comes into frame handing the girl a cup of take away coffee, the girl steps out of the screen looking tired, then takes it and she says happily: “thanks! Back to work” she exits the frame and walks right to a different part of the office."
+input.mode
+Optional
+string
+Note: When generating videos using external image inputs, Spicy mode is not supported and will automatically switch to Normal.
+
+Available options:
+
+fun
+-
+fun
+normal
+-
+normal
+spicy
+-
+spicy
+Example:
+
+"normal"
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "grok-imagine/image-to-video",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "image_urls": [
+        "https://file.aiquickdraw.com/custom-page/akr/section-images/1762247692373tw5di116.png"
+      ],
+      "index": 0,
+      "prompt": "POV hand comes into frame handing the girl a cup of take away coffee, the girl steps out of the screen looking tired, then takes it and she says happily: “thanks! Back to work” she exits the frame and walks right to a different part of the office.",
+      "mode": "normal"
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "grok-imagine/image-to-video",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"grok-imagine/image-to-video\",\"input\":{\"image_urls\":[\"https://file.aiquickdraw.com/custom-page/akr/section-images/1762247692373tw5di116.png\"],\"index\":0,\"prompt\":\"POV hand comes into frame handing the girl a cup of take away coffee, the girl steps out of the screen looking tired, then takes it and she says happily: “thanks! Back to work” she exits the frame and walks right to a different part of the office.\",\"mode\":\"normal\"}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "grok-imagine/image-to-video",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"grok-imagine/image-to-video\",\"input\":{\"image_urls\":[\"https://file.aiquickdraw.com/custom-page/akr/section-images/1762247692373tw5di116.png\"],\"index\":0,\"prompt\":\"POV hand comes into frame handing the girl a cup of take away coffee, the girl steps out of the screen looking tired, then takes it and she says happily: “thanks! Back to work” she exits the frame and walks right to a different part of the office.\",\"mode\":\"normal\"}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section
+If callBackUrl is not provided, no callback notifications will be sent
