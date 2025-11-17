@@ -728,14 +728,63 @@ export default function GenerateMusic() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pop">Pop</SelectItem>
-                      <SelectItem value="rock">Rock</SelectItem>
-                      <SelectItem value="electronic">Electronic</SelectItem>
-                      <SelectItem value="jazz">Jazz</SelectItem>
-                      <SelectItem value="classical">Classical</SelectItem>
-                      <SelectItem value="hiphop">Hip Hop</SelectItem>
+                      <SelectItem value="afrobeat">Afrobeat</SelectItem>
+                      <SelectItem value="alternative-rock">Alternative Rock</SelectItem>
                       <SelectItem value="ambient">Ambient</SelectItem>
+                      <SelectItem value="anime-jpop">Anime / J-Pop Openings</SelectItem>
+                      <SelectItem value="blues">Blues</SelectItem>
+                      <SelectItem value="bluegrass">Bluegrass</SelectItem>
+                      <SelectItem value="bossa-nova">Bossa Nova</SelectItem>
+                      <SelectItem value="calypso">Calypso</SelectItem>
+                      <SelectItem value="chutney-soca">Chutney Soca</SelectItem>
+                      <SelectItem value="classical">Classical</SelectItem>
+                      <SelectItem value="classic-rock">Classic Rock</SelectItem>
                       <SelectItem value="country">Country</SelectItem>
+                      <SelectItem value="disco">Disco</SelectItem>
+                      <SelectItem value="drum-bass">Drum & Bass</SelectItem>
+                      <SelectItem value="dubstep">Dubstep</SelectItem>
+                      <SelectItem value="electronic">Electronic</SelectItem>
+                      <SelectItem value="emo">Emo</SelectItem>
+                      <SelectItem value="folk">Folk</SelectItem>
+                      <SelectItem value="freestyle-italo">Freestyle / Italo</SelectItem>
+                      <SelectItem value="funk">Funk</SelectItem>
+                      <SelectItem value="future-bass">Future Bass</SelectItem>
+                      <SelectItem value="gospel">Gospel</SelectItem>
+                      <SelectItem value="grunge">Grunge</SelectItem>
+                      <SelectItem value="hard-rock">Hard Rock</SelectItem>
+                      <SelectItem value="heavy-metal">Heavy Metal</SelectItem>
+                      <SelectItem value="hiphop">Hip Hop</SelectItem>
+                      <SelectItem value="house">House</SelectItem>
+                      <SelectItem value="hyperpop">Hyperpop</SelectItem>
+                      <SelectItem value="indie-rock">Indie Rock</SelectItem>
+                      <SelectItem value="industrial">Industrial</SelectItem>
+                      <SelectItem value="jazz">Jazz</SelectItem>
+                      <SelectItem value="kpop">K-Pop</SelectItem>
+                      <SelectItem value="latin-pop">Latin Pop</SelectItem>
+                      <SelectItem value="lofi-hiphop">Lo-Fi Hip Hop</SelectItem>
+                      <SelectItem value="movie-soundtrack">Movie Soundtrack / Cinematic</SelectItem>
+                      <SelectItem value="parang-soca">Parang Soca</SelectItem>
+                      <SelectItem value="phonk">Phonk</SelectItem>
+                      <SelectItem value="pop">Pop</SelectItem>
+                      <SelectItem value="pop-punk">Pop Punk</SelectItem>
+                      <SelectItem value="post-rock">Post-Rock</SelectItem>
+                      <SelectItem value="progressive-rock">Progressive Rock</SelectItem>
+                      <SelectItem value="punk-rock">Punk Rock</SelectItem>
+                      <SelectItem value="raga-soca">Raga Soca</SelectItem>
+                      <SelectItem value="reggae">Reggae</SelectItem>
+                      <SelectItem value="reggaeton">Reggaeton</SelectItem>
+                      <SelectItem value="rock">Rock</SelectItem>
+                      <SelectItem value="sea-shanty">Sea Shanty</SelectItem>
+                      <SelectItem value="shoegaze">Shoegaze</SelectItem>
+                      <SelectItem value="soca">Soca</SelectItem>
+                      <SelectItem value="soul">Soul</SelectItem>
+                      <SelectItem value="southern-rock">Southern Rock</SelectItem>
+                      <SelectItem value="steelband">Steelband</SelectItem>
+                      <SelectItem value="synthwave">Synthwave / Retrowave</SelectItem>
+                      <SelectItem value="techno">Techno</SelectItem>
+                      <SelectItem value="trance">Trance</SelectItem>
+                      <SelectItem value="vaporwave">Vaporwave</SelectItem>
+                      <SelectItem value="videogame-music">Video Game Music (Chiptune / 8-Bit)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
