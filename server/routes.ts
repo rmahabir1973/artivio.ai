@@ -181,7 +181,7 @@ async function generateVideoInBackground(
     
     console.log(`📋 Video generation task queued: ${taskId} (waiting for callback)`);
   } catch (error: any) {
-    console.error('Background video generation failed:', error);
+    console.error('Background video generation failed:', safeStringify(error));
     
     // Capture full error details from Kie.ai for debugging
     const errorDetails: any = {
@@ -260,7 +260,7 @@ async function generateImageInBackground(
     
     throw new Error('API response missing taskId or image URL');
   } catch (error: any) {
-    console.error('Background image generation failed:', error);
+    console.error('Background image generation failed:', safeStringify(error));
     
     // Clean up uploaded files on failure
     if (hostedImageUrls && hostedImageUrls.length > 0) {
@@ -360,7 +360,7 @@ async function generateMusicInBackground(generationId: string, model: string, pr
       statusDetail: 'awaiting_callback',
     });
   } catch (error: any) {
-    console.error('Background music generation failed:', error);
+    console.error('Background music generation failed:', safeStringify(error));
     
     // Capture full error details from Kie.ai for debugging
     const errorDetails: any = {
@@ -437,7 +437,7 @@ async function extendMusicInBackground(generationId: string, audioUrl: string, m
       statusDetail: 'awaiting_callback',
     });
   } catch (error: any) {
-    console.error('Background extend music failed:', error);
+    console.error('Background extend music failed:', safeStringify(error));
     
     // Capture full error details from Kie.ai for debugging
     const errorDetails: any = {
@@ -473,7 +473,7 @@ async function generateLyricsInBackground(lyricsId: string, prompt: string, para
       parameters: { ...parameters, callBackUrl: callbackUrl } 
     });
     
-    console.log(`📋 Lyrics generation response:`, JSON.stringify(result, null, 2));
+    console.log(`📋 Lyrics generation response:`, safeStringify(result));
     
     if (result.code === 200 && result.data) {
       const { taskId, lyrics, title, status: providerStatus, error } = result.data;
@@ -574,10 +574,26 @@ async function uploadCoverInBackground(generationId: string, prompt: string, aud
       statusDetail: 'awaiting_callback',
     });
   } catch (error: any) {
-    console.error('Background upload cover failed:', error);
-    await storage.finalizeGeneration(generationId, 'failure', {
+    console.error('Background upload cover failed:', safeStringify(error));
+    
+    // Capture full error details from Kie.ai for debugging
+    const errorDetails: any = {
       errorMessage: error.message || 'Unknown error during upload cover',
-    });
+    };
+    
+    // If this is an enhanced error from Kie.ai, include all diagnostic details
+    if (error.kieaiDetails) {
+      errorDetails.statusDetail = safeStringify({
+        httpStatus: error.kieaiDetails.status,
+        statusText: error.kieaiDetails.statusText,
+        endpoint: error.kieaiDetails.endpoint,
+        providerError: error.kieaiDetails.data,
+      });
+      
+      console.error('🔍 Kie.ai Error Details:', errorDetails.statusDetail);
+    }
+    
+    await storage.finalizeGeneration(generationId, 'failure', errorDetails);
   }
 }
 
@@ -634,10 +650,26 @@ async function uploadExtendInBackground(generationId: string, prompt: string, au
       statusDetail: 'awaiting_callback',
     });
   } catch (error: any) {
-    console.error('Background upload extend failed:', error);
-    await storage.finalizeGeneration(generationId, 'failure', {
+    console.error('Background upload extend failed:', safeStringify(error));
+    
+    // Capture full error details from Kie.ai for debugging
+    const errorDetails: any = {
       errorMessage: error.message || 'Unknown error during upload extend',
-    });
+    };
+    
+    // If this is an enhanced error from Kie.ai, include all diagnostic details
+    if (error.kieaiDetails) {
+      errorDetails.statusDetail = safeStringify({
+        httpStatus: error.kieaiDetails.status,
+        statusText: error.kieaiDetails.statusText,
+        endpoint: error.kieaiDetails.endpoint,
+        providerError: error.kieaiDetails.data,
+      });
+      
+      console.error('🔍 Kie.ai Error Details:', errorDetails.statusDetail);
+    }
+    
+    await storage.finalizeGeneration(generationId, 'failure', errorDetails);
   }
 }
 
@@ -873,8 +905,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`\n🔔 ===== RECEIVED KIE.AI CALLBACK =====`);
       console.log(`Generation ID: ${generationId}`);
-      console.log(`Callback Data:`, JSON.stringify(callbackData, null, 2));
-      console.log(`Request Headers:`, JSON.stringify(req.headers, null, 2));
+      console.log(`Callback Data:`, safeStringify(callbackData));
+      console.log(`Request Headers:`, safeStringify(req.headers));
       console.log(`======================================\n`);
       
       // Use centralized parser for consistent result extraction
@@ -950,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Success status but no audio URL - likely payload format we don't recognize yet
           // Log extensively for debugging but don't fail the generation
           console.warn(`⚠️  Generation ${generationId} marked complete but no audio URL found in callback`);
-          console.warn(`Full callback data:`, JSON.stringify(callbackData, null, 2));
+          console.warn(`Full callback data:`, safeStringify(callbackData));
           return res.json({ success: true, message: 'Completion acknowledged but no media URL' });
         }
       } else if (finalStatus === 'failed') {
@@ -979,7 +1011,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`\n🔔 ===== RECEIVED LYRICS CALLBACK =====`);
       console.log(`Lyrics ID: ${lyricsId}`);
-      console.log(`Callback Data:`, JSON.stringify(callbackData, null, 2));
+      console.log(`Callback Data:`, safeStringify(callbackData));
       console.log(`======================================\n`);
       
       // Extract lyrics data from callback
@@ -2082,7 +2114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description,
           audioFiles: hostedAudioUrls,
         });
-        console.log(`Kie.ai voice clone response:`, JSON.stringify(result, null, 2));
+        console.log(`Kie.ai voice clone response:`, safeStringify(result));
 
         // Extract voice ID from result
         const voiceId = result?.data?.voiceId || result?.voiceId || result?.id;

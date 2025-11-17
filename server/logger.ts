@@ -5,6 +5,20 @@
  * for the referral system and other critical paths.
  */
 
+// Safe JSON stringifier to prevent circular reference errors
+function safeStringify(obj: any): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  }, 2);
+}
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {
@@ -34,7 +48,7 @@ class Logger {
     return this.levels[level] >= this.levels[this.currentLevel];
   }
 
-  private scrubPII(obj: any): any {
+  private scrubPII(obj: any, seen = new WeakSet()): any {
     if (typeof obj === 'string') {
       // Mask email addresses
       let scrubbed = obj.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
@@ -49,6 +63,12 @@ class Logger {
     }
     
     if (typeof obj === 'object' && obj !== null) {
+      // Handle circular references
+      if (seen.has(obj)) {
+        return '[Circular]';
+      }
+      seen.add(obj);
+      
       const scrubbed: any = Array.isArray(obj) ? [] : {};
       for (const key in obj) {
         // Redact sensitive field names including user IDs, names, and any field with 'id' or 'Id' in name
@@ -62,8 +82,8 @@ class Logger {
         ) {
           scrubbed[key] = '[REDACTED]';
         } else {
-          // Recursively scrub nested objects
-          scrubbed[key] = this.scrubPII(obj[key]);
+          // Recursively scrub nested objects with circular reference tracking
+          scrubbed[key] = this.scrubPII(obj[key], seen);
         }
       }
       return scrubbed;
@@ -83,11 +103,11 @@ class Logger {
 
     // In production, use JSON for log aggregation tools
     if (process.env.NODE_ENV === 'production') {
-      return JSON.stringify(entry);
+      return safeStringify(entry);
     }
 
     // In development, use human-readable format
-    const metaStr = metadata ? ` ${JSON.stringify(this.scrubPII(metadata))}` : '';
+    const metaStr = metadata ? ` ${safeStringify(this.scrubPII(metadata))}` : '';
     return `[${entry.timestamp}] ${level.toUpperCase()} [${category}] ${message}${metaStr}`;
   }
 

@@ -74,6 +74,7 @@ function Router() {
           <Route path="/video-editor" component={VideoEditor} />
           <Route path="/chat" component={Chat} />
           <Route path="/history" component={History} />
+          <Route path="/generations" component={History} /> {/* Alias for /history */}
           <Route path="/profile" component={Profile} />
           <Route path="/referrals" component={Referrals} />
           <Route path="/admin" component={Admin} />
