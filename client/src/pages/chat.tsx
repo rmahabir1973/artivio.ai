@@ -2,10 +2,10 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Send, Sparkles } from "lucide-react";
+import { Trash2, Plus, Send, Sparkles, Square } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -107,6 +107,20 @@ export default function Chat() {
       setModel(models[0].value);
     }
   }, [provider]);
+
+  const stopStreaming = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsStreaming(false);
+      setStreamingMessage('');
+      setOptimisticUserMessage('');
+      toast({
+        title: "Stopped",
+        description: "Response generation stopped",
+      });
+    }
+  };
 
   const sendMessage = async () => {
     if (!message.trim()) return;
@@ -390,27 +404,41 @@ export default function Chat() {
             </div>
 
             {/* Message Input */}
-            <div className="flex gap-2">
-              <Input
+            <div className="flex gap-2 items-end">
+              <Textarea
                 data-testid="input-message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    sendMessage();
+                    if (!isStreaming) {
+                      sendMessage();
+                    }
                   }
                 }}
-                placeholder="Type your message..."
+                placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
                 disabled={isStreaming}
-                className="flex-1"
+                className="flex-1 min-h-[60px] max-h-[200px] resize-y"
+                rows={3}
               />
               <Button
                 data-testid="button-send-message"
-                onClick={sendMessage}
-                disabled={!message.trim() || isStreaming}
+                onClick={isStreaming ? stopStreaming : sendMessage}
+                disabled={!isStreaming && !message.trim()}
+                variant={isStreaming ? "destructive" : "default"}
               >
-                <Send className="w-4 h-4" />
+                {isStreaming ? (
+                  <>
+                    <Square className="w-4 h-4 mr-2" />
+                    Stop
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send
+                  </>
+                )}
               </Button>
             </div>
 
