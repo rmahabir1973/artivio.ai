@@ -1,0 +1,189 @@
+2025-11-17 13:41:50.75
+4b32eac3
+User
+✅ Kie.ai API Response from /api/v1/veo/generate: {
+2025-11-17 13:41:50.75
+4b32eac3
+User
+"code": 422,
+2025-11-17 13:41:50.75
+4b32eac3
+User
+"data": null
+2025-11-17 13:41:52.70
+4b32eac3
+User
+✓ [finalizeGeneration] Generation 47f0e1b5-0d1f-4c54-b691-fcd2f9b31793 finalized as failure
+2025-11-17 13:41:52.92
+4b32eac3
+User
+6:41:52 PM [express] GET /api/generations 200 in 2706ms :: [{"id":"47f0e1b5-0d1f-4c54-b691-fcd2f9b31…
+2025-11-17 13:42:11.94
+4b32eac3
+User
+[AUTH DEBUG] Token still valid, allowing request
+2025-11-17 13:42:11.94
+4b32eac3
+User
+isAuthenticated: true,
+2025-11-17 13:42:11.94
+4b32eac3
+User
+user: 'present',
+2025-11-17 13:42:11.94
+4b32eac3
+User
+hasExpiresAt: true,
+2025-11-17 13:42:11.94
+4b32eac3
+User
+[AUTH DEBUG] Token expiration check {
+2025-11-17 13:42:11.94
+4b32eac3
+User
+}
+2025-11-17 13:42:11.94
+4b32eac3
+User
+expires_at: 1763408498,
+2025-11-17 13:42:11.94
+4b32eac3
+User
+[AUTH DEBUG] isAuthenticated check {
+2025-11-17 13:42:11.94
+4b32eac3
+User
+isExpired: false
+2025-11-17 13:42:11.94
+4b32eac3
+User
+[AUTH DEBUG] deserializeUser called {
+2025-11-17 13:42:11.94
+4b32eac3
+User
+userKeys: [ 'claims', 'expires_at', 'access_token' ]
+2025-11-17 13:42:11.94
+4b32eac3
+User
+now: 1763404931,
+2025-11-17 13:42:11.94
+4b32eac3
+User
+hasClaims: true,
+2025-11-17 13:42:11.94
+4b32eac3
+User
+userKeys: [ 'claims', 'expires_at', 'access_token' ]
+2025-11-17 13:42:11.94
+4b32eac3
+User
+timeUntilExpiry: 3567,
+2025-11-17 13:42:11.94
+4b32eac3
+User
+sessionID: 'Eq2VrLFDS4f2xT9ujk-6qMr3lrvBVmEg',
+2025-11-17 13:42:11.94
+4b32eac3
+User
+}
+2025-11-17 13:42:11.94
+4b32eac3
+User
+}
+2025-11-17 13:42:11.94
+4b32eac3
+User
+hasUser: true,
+2025-11-17 13:42:11.94
+4b32eac3
+User
+hasRefreshToken: false,
+2025-11-17 13:42:12.06
+4b32eac3
+User
+6:42:12 PM [express] GET /api/auth/user 200 in 314ms :: {"id":"49729939","email":"ryan.mahabir@outlo…
+2025-11-17 13:42:13.29
+4b32eac3
+User
+}
+2025-11-17 13:42:13.29
+4b32eac3
+User
+hasUser: true,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+}
+2025-11-17 13:42:13.29
+4b32eac3
+User
+sessionID: 'Eq2VrLFDS4f2xT9ujk-6qMr3lrvBVmEg',
+2025-11-17 13:42:13.29
+4b32eac3
+User
+}
+2025-11-17 13:42:13.29
+4b32eac3
+User
+userKeys: [ 'claims', 'expires_at', 'access_token' ]
+2025-11-17 13:42:13.29
+4b32eac3
+User
+userKeys: [ 'claims', 'expires_at', 'access_token' ]
+2025-11-17 13:42:13.29
+4b32eac3
+User
+user: 'present',
+2025-11-17 13:42:13.29
+4b32eac3
+User
+[AUTH DEBUG] Token expiration check {
+2025-11-17 13:42:13.29
+4b32eac3
+User
+hasClaims: true,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+isExpired: false
+2025-11-17 13:42:13.29
+4b32eac3
+User
+expires_at: 1763408498,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+timeUntilExpiry: 3565,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+[AUTH DEBUG] Token still valid, allowing request
+2025-11-17 13:42:13.29
+4b32eac3
+User
+hasRefreshToken: false,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+isAuthenticated: true,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+now: 1763404933,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+hasExpiresAt: true,
+2025-11-17 13:42:13.29
+4b32eac3
+User
+[AUTH DEBUG] isAuthenticated check {
+2025-11-17 13:42:13.29
+4b32eac3
+User
+[AUTH DEBUG] deserializeUser called {
+
+2025-11-17 13:42:18.73
+4b32eac3
+User
+6:42:18 PM [express] GET /api/generations 200 in 3008ms :: [{"id":"47f0e1b5-0d1f-4c54-b691-fcd2f9b31…
