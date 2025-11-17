@@ -24,7 +24,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Streaming Chat**: AI chat uses Server-Sent Events (SSE) for real-time responses from Deepseek and OpenAI models.
 -   **Mobile Routing Resilience**: Production-grade routing system prevents infinite loading on slow networks with timeouts and graceful handling.
 -   **Admin Authentication**: Hardcoded email whitelist for direct admin access.
--   **Home Page Content Management**: Admin-controlled dynamic landing page with JSONB storage for showcase videos and FAQs.
+-   **Home Page Content Management**: Admin-controlled dynamic landing page with JSONB storage for showcase videos and FAQs. Supports Vimeo video embeds for the three main feature sections (video, image, music) with icon placeholders when URLs are not provided.
 -   **Stripe Webhook Idempotency**: Transaction-based deduplication system prevents duplicate credit grants from Stripe webhooks.
 -   **Generation Queue System**: Real-time dashboard widget tracking AI generations with status indicators, quick actions (retry, download), and smart auto-refresh.
 -   **Smart Credit Warnings**: Pre-generation credit cost preview system with tiered warnings and burn rate display.
