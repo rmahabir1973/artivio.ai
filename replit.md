@@ -62,7 +62,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis.
 -   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine AI-generated videos with drag-and-drop interface and background processing.
 -   **QR Code Generator**: Client-side QR code generator using `qr-code-styling` library with logo embedding, customization options (size, colors, dot/corner styles), live preview, and PNG/SVG download. No credits required (user-requested free feature).
--   **AI Chat**: Dual provider support (Deepseek, OpenAI), streaming, model selection, and persistent conversation history.
+-   **AI Chat**: Dual provider support (Deepseek, OpenAI) with streaming responses, model selection, and persistent conversation history. Features multi-line textarea input (like ChatGPT/Claude), keyboard shortcuts (Enter to send, Shift+Enter for new line), and Stop button to abort streaming responses mid-generation.
 -   **Voice Cloning**: Integrates ElevenLabs via Kie.ai, supporting audio uploads and recording.
 -   **Admin Panel**: Comprehensive user management, API key management, Stripe integration configuration, and home page content management.
 -   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions (Free, Starter, Pro).
