@@ -139,7 +139,10 @@ export default function Pricing() {
                       <CardDescription>{plan.description}</CardDescription>
                       <div className="mt-4">
                         <span className="text-4xl font-bold">
-                          ${(plan.price / 100).toFixed(0)}
+                          ${(() => {
+                            const price = plan.price / 100;
+                            return price % 1 === 0 ? price.toFixed(0) : price.toFixed(2);
+                          })()}
                         </span>
                         <span className="text-muted-foreground">
                           {isTrial ? '' : '/month'}
