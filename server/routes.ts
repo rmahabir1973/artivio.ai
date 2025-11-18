@@ -3252,6 +3252,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Reorder plan (move up or down)
+  app.patch('/api/admin/plans/:planId/reorder', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { planId } = req.params;
+      const { direction } = req.body; // 'up' or 'down'
+
+      if (!direction || !['up', 'down'].includes(direction)) {
+        return res.status(400).json({ message: "Invalid direction. Must be 'up' or 'down'" });
+      }
+
+      // Get all plans sorted by sortOrder
+      const allPlans = await storage.getAllPlans();
+      const currentIndex = allPlans.findIndex(p => p.id === planId);
+
+      if (currentIndex === -1) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      // Determine the index to swap with
+      const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+      // Check bounds
+      if (swapIndex < 0 || swapIndex >= allPlans.length) {
+        return res.status(400).json({ message: `Cannot move ${direction}. Already at the ${direction === 'up' ? 'top' : 'bottom'}` });
+      }
+
+      const currentPlan = allPlans[currentIndex];
+      const swapPlan = allPlans[swapIndex];
+
+      // Swap sortOrder values
+      const tempSortOrder = currentPlan.sortOrder;
+      await storage.updatePlan(currentPlan.id, { sortOrder: swapPlan.sortOrder });
+      await storage.updatePlan(swapPlan.id, { sortOrder: tempSortOrder });
+
+      // Return updated plans list
+      const updatedPlans = await storage.getAllPlans();
+      res.json(updatedPlans);
+    } catch (error) {
+      console.error('Error reordering plan:', error);
+      res.status(500).json({ message: "Failed to reorder plan" });
+    }
+  });
+
   // Admin: Update plan Stripe IDs
   app.patch('/api/admin/plans/:planId/stripe', isAuthenticated, async (req: any, res) => {
     try {
