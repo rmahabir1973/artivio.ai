@@ -280,11 +280,12 @@ export async function setupAuth(app: Express) {
 }
 
 // Telemetry counters for production monitoring
-let authMetrics = {
+export let authMetrics = {
   totalChecks: 0,
   sessionValidCount: 0,
   sessionInvalidCount: 0,
   expiredTokenWithValidSession: 0,
+  orphanedSessionsDetected: 0,
   lastReset: Date.now(),
 };
 
@@ -296,6 +297,7 @@ setInterval(() => {
     sessionValidCount: 0,
     sessionInvalidCount: 0,
     expiredTokenWithValidSession: 0,
+    orphanedSessionsDetected: 0,
     lastReset: Date.now(),
   };
 }, 60 * 60 * 1000);
@@ -318,6 +320,34 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // The session cookie is httpOnly, secure, and persisted to PostgreSQL
   if (!req.isAuthenticated()) {
     authMetrics.sessionInvalidCount++;
+    
+    // ORPHANED SESSION RECOVERY: If session cookie exists but no passport data,
+    // clear cookie and destroy session before sending 401
+    if (req.session && req.sessionID) {
+      authMetrics.orphanedSessionsDetected++;
+      console.log('[AUTH] ⚠️  Orphaned session detected - clearing cookie and destroying session', {
+        sessionID: req.sessionID,
+        hasSessionObject: !!req.session,
+        hasPassportData: !!(req.session as any).passport,
+        totalOrphanedCount: authMetrics.orphanedSessionsDetected,
+      });
+      
+      // Clear the session cookie FIRST (before sending response)
+      res.clearCookie('connect.sid', {
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+      });
+      
+      // Then destroy the orphaned session (async, but doesn't block response)
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('[AUTH] Failed to destroy orphaned session:', err);
+        }
+      });
+    }
+    
     console.log('[AUTH] ❌ Authentication failed - no valid session', {
       sessionID: req.sessionID,
       path: req.path,
