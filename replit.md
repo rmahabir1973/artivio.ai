@@ -9,6 +9,16 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
 ## Recent Changes (November 18, 2025)
+-   **7 Day Free Trial Implementation with Backend Sync**: Comprehensive trial system with Stripe integration and expiration enforcement:
+    - **Backend Plan Update**: Converted "Free" plan to "7 Day Free Trial" with `billingPeriod: "trial"` and `trialDays: 7`
+    - **Trial Expiration Logic**: `assignPlanToUser` now calculates `currentPeriodEnd` based on `plan.trialDays` (7 days for trial, 30 days for paid plans)
+    - **Middleware Protection**: Added `checkTrialExpiration` middleware to block expired trial users from generation endpoints while allowing access to billing/pricing/plan-selection for upgrades
+    - **Stripe Validation**: Checkout endpoint validates and rejects trial plan IDs with clear error message
+    - **Pricing Page Sync**: Updated `/pricing` to fetch plans dynamically from `/api/plans` backend endpoint instead of hardcoded data
+    - **Stripe Integration**: Paid plans (Starter, Pro) trigger Stripe checkout; free trial uses existing signup flow
+    - **Features Comparison**: Added comprehensive section showing all plans include all features (AI models, platform features) with emphasis that only credit amounts differ
+    - **Testing**: E2E tests passed - verified plan loading, pricing display, Stripe integration, and trial signup flow
+    - **Architect Review**: Confirmed 7-day expiration properly enforced, upgrade paths accessible, no security issues
 -   **Landing Page Pricing Section Simplified**: Replaced full pricing card grid with streamlined "Get Started For Free" CTA card:
     - Removed detailed subscription plan cards (Free, Starter, Pro) from landing page
     - Added simple CTA card with "FREE TO START" badge, free tier messaging (1,000 credits/month, no credit card)
