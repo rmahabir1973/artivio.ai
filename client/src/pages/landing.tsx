@@ -8,7 +8,7 @@ import {
   Award, DollarSign, Droplet, Monitor, Smartphone, Tablet, Check, Star, Laptop
 } from "lucide-react";
 import { SiApple, SiAndroid, SiIos } from "react-icons/si";
-import type { HomePageContent, SubscriptionPlan } from "@shared/schema";
+import type { HomePageContent } from "@shared/schema";
 import { normalizeVimeoUrl } from "@/lib/vimeo";
 
 export default function Landing() {
@@ -16,10 +16,6 @@ export default function Landing() {
   
   const { data: content, isLoading } = useQuery<HomePageContent>({
     queryKey: ["/api/homepage"],
-  });
-
-  const { data: plans, isLoading: plansLoading } = useQuery<SubscriptionPlan[]>({
-    queryKey: ['/api/plans'],
   });
 
   // Normalize Vimeo URL outside of render to avoid hook violations
@@ -449,72 +445,47 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing Section - UPDATE #5 */}
+      {/* Simple Get Started CTA */}
       <section id="pricing" className="py-20 px-6">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-xl text-gray-400">
-              Choose the plan that works best for you
-            </p>
-          </div>
-
-          {plansLoading ? (
-            <div className="flex justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {plans?.map((plan) => (
-                <Card 
-                  key={plan.id} 
-                  className={`bg-[#1A1A1A] border-white/10 ${plan.name === 'Pro' ? 'border-purple-500 shadow-2xl shadow-purple-500/20' : ''}`}
-                  data-testid={`pricing-card-${plan.name.toLowerCase()}`}
+        <div className="container mx-auto max-w-4xl">
+          <Card className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border-purple-500/30">
+            <CardContent className="p-12 text-center space-y-6">
+              <div className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold px-4 py-2 rounded-full">
+                FREE TO START
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold">
+                Get Started For Free
+              </h2>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                Start creating amazing content today with 1,000 free credits per month. 
+                No credit card required. Upgrade anytime for more credits and premium features.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 h-14"
+                  asChild
+                  data-testid="button-get-started-free"
                 >
-                  <CardHeader>
-                    {plan.name === 'Pro' && (
-                      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full w-fit mb-2">
-                        MOST POPULAR
-                      </div>
-                    )}
-                    <CardTitle className="text-2xl">{plan.displayName}</CardTitle>
-                    <CardDescription className="text-gray-400">{plan.description}</CardDescription>
-                    <div className="mt-4">
-                      <span className="text-5xl font-bold">${(plan.price / 100).toFixed(0)}</span>
-                      <span className="text-gray-400">/{plan.billingPeriod}</span>
-                    </div>
-                    <div className="text-sm text-gray-400 mt-2">
-                      {plan.creditsPerMonth.toLocaleString()} credits per month
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {plan.features && Array.isArray(plan.features) ? (
-                      (plan.features as string[]).map((feature, idx) => (
-                        <div key={idx} className="flex items-start gap-2">
-                          <Check className="h-5 w-5 text-purple-500 shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-300">{String(feature)}</span>
-                        </div>
-                      ))
-                    ) : null}
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      className={`w-full ${plan.name === 'Pro' ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' : ''}`}
-                      variant={plan.name === 'Pro' ? 'default' : 'outline'}
-                      asChild
-                      data-testid={`button-select-plan-${plan.name.toLowerCase()}`}
-                    >
-                      <a href="/pricing">
-                        {plan.name === 'Free Trial' ? 'Start Free Trial' : 'Subscribe Now'}
-                      </a>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
+                  <a href="/pricing">
+                    Get Started Free
+                    <ChevronRight className="ml-2 h-5 w-5" />
+                  </a>
+                </Button>
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-lg px-8 h-14"
+                  asChild
+                  data-testid="button-view-all-plans"
+                >
+                  <a href="/pricing">
+                    View All Plans
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
