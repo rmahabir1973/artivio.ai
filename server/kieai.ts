@@ -528,7 +528,18 @@ export async function generateVideo(params: {
   }
   else if (params.model.startsWith('sora-2')) {
     // Sora 2 - uses /api/v1/jobs/createTask (Bytedance Playground API)
-    const aspectRatio = parameters.aspectRatio || 'landscape'; // portrait or landscape
+    // Convert aspect ratio from frontend format ("16:9"/"9:16") to API format ("landscape"/"portrait")
+    let aspectRatio = parameters.aspectRatio || 'landscape';
+    if (aspectRatio === '16:9') {
+      aspectRatio = 'landscape';
+    } else if (aspectRatio === '9:16') {
+      aspectRatio = 'portrait';
+    } else if (aspectRatio !== 'landscape' && aspectRatio !== 'portrait') {
+      // If invalid value, default to landscape and log warning
+      console.warn(`[SORA-2] Invalid aspect ratio "${aspectRatio}", defaulting to "landscape"`);
+      aspectRatio = 'landscape';
+    }
+    
     const nFrames = parameters.nFrames || '10'; // 10s, 15s, or 25s (for storyboard)
     const removeWatermark = parameters.removeWatermark !== undefined ? parameters.removeWatermark : true;
     
