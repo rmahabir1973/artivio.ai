@@ -3,6 +3,8 @@
 ## Overview
 Artivio AI is a comprehensive platform for generating AI-powered videos, images, music, and AI chatbot conversations. It offers robust user authentication, a credit-based usage system, an administrative panel, advanced image-to-video capabilities, extensive image editing tools, and a versatile AI chatbot with streaming responses. The platform aims to become a leading solution in the AI content generation market, consolidating diverse creative AI tools.
 
+**PRODUCTION STATUS**: Site is LIVE at https://artivio.ai - All webhooks and callbacks point to production URL.
+
 ## User Preferences
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
@@ -23,7 +25,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
     - **Suno**: Multi-stage callbacks (`text`, `first`, `complete`) with official API format `data.data[].audio_url` parsing. Fixed callback handler to properly extract audio URLs from snake_case fields and finalize generations even when result URL extraction fails (prevents stuck processing state)
     - **Error Detection**: Catches HTTP error codes (4xx, 5xx), errorCode fields, and all format variations
     - **Timeout Protection**: 10-minute automatic timeout prevents stuck generations
--   **Centralized URL Management**: Production-safe URL generation and validation via `server/urlUtils.ts` ensures correct routing for webhooks and assets.
+-   **Centralized URL Management**: Production-safe URL generation via `server/urlUtils.ts` prioritizes PRODUCTION_URL (https://artivio.ai) for all webhooks and callbacks. Site is live in production.
 -   **Credit Management**: Automatic credit refund system for failed generations and an atomic job cancellation system with race-condition-safe credit refunds.
 -   **Image Hosting**: Temporary system for user-uploaded images, converting base64 to public URLs with validation and cleanup.
 -   **API Key Management**: Round-robin rotation for up to 20 Kie.ai API keys.
