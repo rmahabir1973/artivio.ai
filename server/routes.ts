@@ -1591,6 +1591,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user generations
   app.get('/api/generations', isAuthenticated, async (req: any, res) => {
     try {
+      // Guard: Check if user exists (session might be cleared after middleware)
+      if (!req.user || !req.user.claims) {
+        console.log('[/api/generations] No user in request - session likely cleared');
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const userId = req.user.claims.sub;
       const generations = await storage.getUserGenerations(userId);
       
