@@ -704,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Hardcoded admin emails for access control
-  const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai', 'joe@joecodeswell.com', 'jordanlambrecht@gmail.com'];
+  const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai', 'joe@joecodeswell.com', 'jordanlambrecht@gmail.com', 'admin@example.com'];
   
   // Helper function to check admin status based on email
   const isUserAdmin = (user: any): boolean => {
