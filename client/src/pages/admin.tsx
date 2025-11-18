@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement } from "@shared/schema";
@@ -331,6 +331,27 @@ export default function Admin() {
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message || "Failed to delete plan", variant: "destructive" });
+    },
+  });
+
+  const reorderPlanMutation = useMutation({
+    mutationFn: async ({ planId, direction }: { planId: string; direction: 'up' | 'down' }) => {
+      return await apiRequest("PATCH", `/api/admin/plans/${planId}/reorder`, { direction });
+    },
+    onSuccess: (updatedPlans) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
+      toast({ 
+        title: "Success", 
+        description: `Plan reordered successfully!`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to reorder plan", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -969,6 +990,7 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-20">Order</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Display Name</TableHead>
                       <TableHead>Price</TableHead>
@@ -978,8 +1000,13 @@ export default function Admin() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {plans.map((plan) => (
+                    {plans.map((plan, index) => (
                       <TableRow key={plan.id}>
+                        <TableCell className="font-medium" data-testid={`text-plan-sort-order-${plan.id}`}>
+                          <div className="flex items-center gap-1">
+                            <span className="text-muted-foreground">{plan.sortOrder}</span>
+                          </div>
+                        </TableCell>
                         <TableCell className="font-medium font-mono text-sm" data-testid={`text-plan-name-${plan.id}`}>
                           {plan.name}
                         </TableCell>
@@ -1001,6 +1028,26 @@ export default function Admin() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => reorderPlanMutation.mutate({ planId: plan.id, direction: 'up' })}
+                              disabled={index === 0 || reorderPlanMutation.isPending}
+                              title="Move up"
+                              data-testid={`button-reorder-up-${plan.id}`}
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => reorderPlanMutation.mutate({ planId: plan.id, direction: 'down' })}
+                              disabled={index === plans.length - 1 || reorderPlanMutation.isPending}
+                              title="Move down"
+                              data-testid={`button-reorder-down-${plan.id}`}
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
