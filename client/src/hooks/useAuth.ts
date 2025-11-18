@@ -5,7 +5,7 @@ export function useAuth() {
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout (reduced for mobile)
 
       try {
         const res = await fetch("/api/auth/user", {
@@ -36,9 +36,10 @@ export function useAuth() {
       }
     },
     retry: false,
-    staleTime: 0, // Always fetch fresh user data - no caching for auth
+    gcTime: 0, // Don't cache auth data (was cacheTime in v4)
+    staleTime: 0, // Always fetch fresh user data
     refetchOnMount: true, // Refetch every time component mounts
-    refetchOnWindowFocus: true, // Refetch when window gets focus
+    refetchOnWindowFocus: false, // Disabled to prevent excessive refetches on mobile
   });
 
   return {

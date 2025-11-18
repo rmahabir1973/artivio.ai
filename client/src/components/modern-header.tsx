@@ -249,11 +249,16 @@ export function ModernHeader() {
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <a href="/api/logout" className="cursor-pointer text-destructive">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </a>
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-destructive"
+                    data-testid="desktop-nav-logout"
+                    onClick={() => {
+                      // Force full page navigation for mobile Safari compatibility
+                      window.location.href = '/api/logout';
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -365,13 +370,14 @@ export function ModernHeader() {
                   <Button
                     variant="ghost"
                     className="w-full justify-start gap-3 text-destructive hover:text-destructive"
-                    asChild
                     data-testid="mobile-nav-logout"
+                    onClick={() => {
+                      // Force full page navigation for mobile Safari compatibility
+                      window.location.href = '/api/logout';
+                    }}
                   >
-                    <a href="/api/logout">
-                      <LogOut className="h-5 w-5" />
-                      Log out
-                    </a>
+                    <LogOut className="h-5 w-5" />
+                    Log out
                   </Button>
                 </div>
               </>

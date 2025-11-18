@@ -172,16 +172,14 @@ export default function Profile() {
               </p>
               <Button
                 variant="outline"
-                asChild
                 data-testid="button-reset-password"
+                onClick={() => {
+                  // Force full page navigation for mobile Safari compatibility
+                  window.location.href = '/api/logout';
+                }}
               >
-                <a
-                  href="/api/logout"
-                  className="inline-flex items-center"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Logout & Reset Password
-                </a>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Logout & Reset Password
               </Button>
               <p className="text-xs text-muted-foreground mt-2">
                 After logging out, use the "Forgot password?" link on the login screen to reset your password.
