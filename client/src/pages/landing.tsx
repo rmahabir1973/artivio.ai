@@ -72,7 +72,7 @@ export default function Landing() {
             {/* CTA Buttons */}
             <div className="flex items-center gap-4 flex-shrink-0">
               <Button variant="ghost" asChild data-testid="button-sign-in">
-                <a href="/auth">Sign In</a>
+                <a href="/api/login">Sign In</a>
               </Button>
               <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-get-started">
                 <a href="/pricing">Get Started</a>
