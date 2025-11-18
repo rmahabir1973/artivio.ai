@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -94,6 +95,36 @@ function Router() {
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  // Handle logout - clear React Query cache when redirected after logout
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('logout') === 'success') {
+      console.log('[AUTH] Logout detected - clearing all cached data');
+      
+      // Clear ALL React Query cache
+      queryClient.clear();
+      
+      // Remove the logout query parameter from URL
+      searchParams.delete('logout');
+      const newSearch = searchParams.toString();
+      const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+      window.history.replaceState({}, '', newUrl);
+      
+      console.log('[AUTH] ✓ Cache cleared and URL cleaned');
+    }
+  }, [location]);
+
+  // Handle login - invalidate cache to fetch fresh data
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log('[AUTH] Login detected - invalidating cache to fetch fresh data');
+      
+      // Invalidate all queries to force fresh data fetch
+      queryClient.invalidateQueries();
+    }
+  }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (

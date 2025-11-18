@@ -268,13 +268,50 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/logout", (req, res) => {
-    req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
+    console.log('[AUTH] Logout initiated', {
+      userId: (req.user as any)?.claims?.sub,
+      sessionID: req.sessionID,
+    });
+    
+    req.logout((err) => {
+      if (err) {
+        console.error('[AUTH] Logout error:', err);
+      }
+      
+      // Build the correct redirect URL using getProtocol and req.get('host')
+      const protocol = getProtocol(req);
+      const host = req.get('host') || req.hostname;
+      const baseUrl = `${protocol}://${host}`;
+      const redirectUrl = `${baseUrl}?logout=success`;
+      
+      // Destroy the session in the database (if it exists)
+      if (req.session) {
+        req.session.destroy((destroyErr) => {
+          if (destroyErr) {
+            console.error('[AUTH] Session destroy error:', destroyErr);
+          }
+        });
+      }
+      
+      // Clear the session cookie explicitly
+      res.clearCookie('connect.sid', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production' || process.env.PRODUCTION_URL?.startsWith('https://'),
+        sameSite: 'lax',
+        path: '/',
+      });
+      
+      console.log('[AUTH] ✓ Logout complete - session destroyed and cookie cleared', {
+        redirectUrl,
+      });
+      
+      // Redirect to Replit's logout with a query param to signal frontend cache clear
+      const logoutUrl = client.buildEndSessionUrl(config, {
+        client_id: process.env.REPL_ID!,
+        post_logout_redirect_uri: redirectUrl,
+      }).href;
+      
+      res.redirect(logoutUrl);
     });
   });
 }
