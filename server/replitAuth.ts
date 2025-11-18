@@ -166,9 +166,12 @@ export async function setupAuth(app: Express) {
   };
 
   passport.serializeUser((user: Express.User, cb) => {
-    // Explicitly serialize as plain JSON to persist refresh_token
+    // CRITICAL FIX: Store userId at top level for Passport authentication to work
+    // Without this, req.isAuthenticated() returns false even with valid session
     const userAny = user as any;
     const sessionUser = {
+      userId: userAny.claims?.sub, // CRITICAL: Required for req.isAuthenticated() to succeed
+      email: userAny.claims?.email, // Optional: Useful for logging
       claims: userAny.claims,
       access_token: userAny.access_token,
       refresh_token: userAny.refresh_token,
@@ -177,6 +180,8 @@ export async function setupAuth(app: Express) {
     
     console.log('[AUTH DEBUG] serializeUser called', {
       user: user ? 'present' : 'missing',
+      userId: sessionUser.userId,
+      email: sessionUser.email,
       hasClaims: !!userAny.claims,
       hasRefreshToken: !!userAny.refresh_token,
       keys: Object.keys(sessionUser),
@@ -186,12 +191,43 @@ export async function setupAuth(app: Express) {
   });
   
   passport.deserializeUser((user: Express.User, cb) => {
+    const userAny = user as any;
+    
+    // BACKWARD COMPATIBILITY: Handle old sessions that don't have userId at top level
+    // Old sessions have claims.sub, new sessions have userId at top level
+    const userId = userAny?.userId || userAny?.claims?.sub;
+    const email = userAny?.email || userAny?.claims?.email;
+    
     console.log('[AUTH DEBUG] deserializeUser called', {
       user: user ? 'present' : 'missing',
-      hasClaims: !!(user as any)?.claims,
-      hasRefreshToken: !!(user as any)?.refresh_token,
+      userId,
+      email,
+      hasTopLevelUserId: !!userAny?.userId,
+      hasClaimsSub: !!userAny?.claims?.sub,
+      hasClaims: !!userAny?.claims,
+      hasRefreshToken: !!userAny?.refresh_token,
       userKeys: user ? Object.keys(user) : [],
     });
+    
+    // CRITICAL: Verify userId exists (either at top level or in claims.sub)
+    // Without userId, Passport authentication will fail
+    if (!userId) {
+      console.error('[AUTH ERROR] deserializeUser - no userId found in session!', {
+        hasTopLevelUserId: !!userAny?.userId,
+        hasClaimsSub: !!userAny?.claims?.sub,
+        userKeys: user ? Object.keys(user) : [],
+        claimsKeys: userAny?.claims ? Object.keys(userAny.claims) : [],
+      });
+      return cb(new Error('No userId in session'));
+    }
+    
+    // Upgrade old sessions by adding userId at top level
+    if (!userAny.userId && userId) {
+      console.log('[AUTH DEBUG] Upgrading old session format - adding userId to top level', { userId });
+      userAny.userId = userId;
+      userAny.email = email;
+    }
+    
     cb(null, user);
   });
 
