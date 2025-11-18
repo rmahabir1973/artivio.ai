@@ -5,12 +5,21 @@
 
 /**
  * Get normalized base URL with robust scheme validation and fallback logic
- * Priority: PRODUCTION_URL > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN > localhost
+ * Priority in DEVELOPMENT: REPLIT_DEV_DOMAIN > localhost (ensures webhooks reach dev environment)
+ * Priority in PRODUCTION: PRODUCTION_URL > REPLIT_DOMAINS > localhost
  */
 export function getBaseUrl(): string {
   let baseUrl = '';
+  const isDevelopment = process.env.NODE_ENV === 'development';
   
-  // 1. Try PRODUCTION_URL (highest priority)
+  // In development, prioritize DEV domain for webhook callbacks
+  if (isDevelopment && process.env.REPLIT_DEV_DOMAIN) {
+    baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    console.log(`[URL] Development mode: Using DEV domain for callbacks: ${baseUrl}`);
+    return baseUrl.replace(/\/+$/, '');
+  }
+  
+  // In production, use PRODUCTION_URL (highest priority)
   if (process.env.PRODUCTION_URL) {
     const trimmed = process.env.PRODUCTION_URL.trim();
     if (trimmed) {
@@ -29,7 +38,7 @@ export function getBaseUrl(): string {
     }
   }
   
-  // 2. Try REPLIT_DOMAINS (published app domain)
+  // Try REPLIT_DOMAINS (published app domain)
   if (!baseUrl && process.env.REPLIT_DOMAINS) {
     const domains = process.env.REPLIT_DOMAINS.split(',');
     for (const domain of domains) {
@@ -48,12 +57,12 @@ export function getBaseUrl(): string {
     }
   }
   
-  // 3. Fall back to REPLIT_DEV_DOMAIN (development)
+  // Fall back to REPLIT_DEV_DOMAIN (development)
   if (!baseUrl && process.env.REPLIT_DEV_DOMAIN) {
     baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
   }
   
-  // 4. Final fallback: localhost
+  // Final fallback: localhost
   if (!baseUrl) {
     baseUrl = 'http://localhost:5000';
   }
