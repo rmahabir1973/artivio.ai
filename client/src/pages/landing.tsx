@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Video, Image, Music, Zap, Shield, Sparkles, Loader2, ChevronRight, Play, Palette, Mic, Film } from "lucide-react";
 import type { HomePageContent } from "@shared/schema";
+import { normalizeVimeoUrl } from "@/lib/vimeo";
 
 export default function Landing() {
+  const [videoLoadFailed, setVideoLoadFailed] = useState(false);
+  
   const { data: content, isLoading } = useQuery<HomePageContent>({
     queryKey: ["/api/homepage"],
   });
@@ -96,28 +100,67 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-        {/* Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl" />
+      {/* Hero Section - Full Screen with Background Video */}
+      <section className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden">
+        {/* Background Video or Gradient */}
+        {(() => {
+          // Try to normalize Vimeo URL if provided
+          if (content?.heroVideoUrl && content.heroVideoUrl.includes('vimeo.com') && !videoLoadFailed) {
+            const result = normalizeVimeoUrl(content.heroVideoUrl);
+            
+            if (result.success && result.url) {
+              // Render video background with error handling
+              return (
+                <>
+                  <div className="absolute inset-0 z-0">
+                    <iframe
+                      src={result.url}
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]"
+                      frameBorder="0"
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title="Hero Background Video"
+                      onError={() => {
+                        console.error('Hero video failed to load');
+                        setVideoLoadFailed(true);
+                      }}
+                    />
+                  </div>
+                  {/* Dark overlay for text readability */}
+                  <div className="absolute inset-0 bg-black/60 z-[1]" />
+                </>
+              );
+            } else {
+              // Log error and fall back to gradient
+              console.error('Vimeo URL normalization failed:', result.error);
+            }
+          }
+          
+          // Default: gradient background (shown when no video, normalization fails, or video fails to load)
+          return (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20 z-0" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl z-0" />
+            </>
+          );
+        })()}
         
         <div className="container mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h1 className="text-6xl md:text-7xl font-bold leading-tight">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold leading-tight drop-shadow-2xl">
               The platform built for{" "}
               <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                 creators
               </span>
             </h1>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-gray-200 max-w-2xl mx-auto drop-shadow-lg">
               Transform your ideas into reality with AI-powered video, image, and music generation. 
               Professional quality content in minutes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 h-14"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 h-14 shadow-2xl"
                 asChild
                 data-testid="button-hero-get-started"
               >
@@ -129,7 +172,7 @@ export default function Landing() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-white/20 hover:bg-white/5 text-lg px-8 h-14"
+                className="border-white/30 bg-black/30 backdrop-blur-sm hover:bg-white/10 text-lg px-8 h-14 shadow-2xl"
                 asChild
                 data-testid="button-hero-see-action"
               >
@@ -141,26 +184,9 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Hero Visual */}
-          <div className="mt-16 max-w-5xl mx-auto">
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              {content?.heroVideoUrl ? (
-                <div className="aspect-video bg-[#1A1A1A]">
-                  <iframe
-                    src={content.heroVideoUrl}
-                    className="w-full h-full"
-                    frameBorder="0"
-                    allow="autoplay; fullscreen; picture-in-picture"
-                    allowFullScreen
-                    title="Hero Video"
-                  />
-                </div>
-              ) : (
-                <div className="aspect-video bg-gradient-to-br from-purple-900/20 to-blue-900/20 flex items-center justify-center">
-                  <Sparkles className="h-32 w-32 text-purple-500/40" />
-                </div>
-              )}
-            </div>
+          {/* Scroll indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+            <ChevronRight className="h-8 w-8 rotate-90 text-white/60" />
           </div>
         </div>
       </section>
