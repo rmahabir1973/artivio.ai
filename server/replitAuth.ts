@@ -243,58 +243,87 @@ export async function setupAuth(app: Express) {
   });
 }
 
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
+// Telemetry counters for production monitoring
+let authMetrics = {
+  totalChecks: 0,
+  sessionValidCount: 0,
+  sessionInvalidCount: 0,
+  expiredTokenWithValidSession: 0,
+  lastReset: Date.now(),
+};
 
-  console.log('[AUTH DEBUG] isAuthenticated check', {
+// Reset metrics every hour for fresh stats
+setInterval(() => {
+  console.log('[AUTH METRICS] Hourly summary', authMetrics);
+  authMetrics = {
+    totalChecks: 0,
+    sessionValidCount: 0,
+    sessionInvalidCount: 0,
+    expiredTokenWithValidSession: 0,
+    lastReset: Date.now(),
+  };
+}, 60 * 60 * 1000);
+
+export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  authMetrics.totalChecks++;
+  const user = req.user as any;
+  const userId = user?.claims?.sub;
+
+  console.log('[AUTH] Checking authentication', {
     sessionID: req.sessionID,
+    userId: userId || 'unknown',
+    path: req.path,
     isAuthenticated: req.isAuthenticated(),
-    hasUser: !!user,
-    hasExpiresAt: !!user?.expires_at,
-    userKeys: user ? Object.keys(user) : [],
+    hasSession: !!req.session,
   });
 
-  if (!req.isAuthenticated() || !user?.expires_at) {
-    console.log('[AUTH DEBUG] Authentication failed - returning 401', {
-      reason: !req.isAuthenticated() ? 'not authenticated' : 'no expires_at',
+  // CRITICAL FIX: Trust the express-session validity (7 days), not the short-lived ID token
+  // Replit Auth doesn't provide refresh tokens for public clients, so we rely on server-side sessions
+  // The session cookie is httpOnly, secure, and persisted to PostgreSQL
+  if (!req.isAuthenticated()) {
+    authMetrics.sessionInvalidCount++;
+    console.log('[AUTH] ❌ Authentication failed - no valid session', {
+      sessionID: req.sessionID,
+      path: req.path,
+      metrics: {
+        totalChecks: authMetrics.totalChecks,
+        failureRate: ((authMetrics.sessionInvalidCount / authMetrics.totalChecks) * 100).toFixed(2) + '%',
+      },
     });
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const now = Math.floor(Date.now() / 1000);
-  const timeUntilExpiry = user.expires_at - now;
-  
-  console.log('[AUTH DEBUG] Token expiration check', {
-    now,
-    expires_at: user.expires_at,
-    timeUntilExpiry,
-    isExpired: timeUntilExpiry <= 0,
+  authMetrics.sessionValidCount++;
+
+  // Session is valid - user is authenticated
+  // The ID token's expiry is irrelevant because the session itself is the authority
+  console.log('[AUTH] ✓ Session valid - request authorized', {
+    userId,
+    sessionID: req.sessionID,
+    path: req.path,
   });
   
-  if (timeUntilExpiry > 0) {
-    console.log('[AUTH DEBUG] Token still valid, allowing request');
-    return next();
+  // Monitoring: Log when ID token expires but session is still valid (expected with Replit Auth)
+  if (user?.expires_at) {
+    const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = user.expires_at - now;
+    
+    if (timeUntilExpiry <= 0) {
+      authMetrics.expiredTokenWithValidSession++;
+      console.log('[AUTH] 📊 ID token expired, session valid (expected behavior)', {
+        userId,
+        sessionID: req.sessionID,
+        tokenExpiredSecondsAgo: Math.abs(timeUntilExpiry),
+        tokenExpiredHoursAgo: (Math.abs(timeUntilExpiry) / 3600).toFixed(1),
+        metrics: {
+          expiredTokenCount: authMetrics.expiredTokenWithValidSession,
+          percentageWithExpiredToken: ((authMetrics.expiredTokenWithValidSession / authMetrics.sessionValidCount) * 100).toFixed(1) + '%',
+        },
+      });
+    }
   }
 
-  console.log('[AUTH DEBUG] Token expired, attempting refresh');
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    console.log('[AUTH DEBUG] No refresh token available, returning 401');
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    console.log('[AUTH DEBUG] Token refresh successful');
-    return next();
-  } catch (error: any) {
-    console.error('[AUTH DEBUG] Token refresh failed:', error.message);
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  return next();
 };
 
 export const checkTrialExpiration: RequestHandler = async (req, res, next) => {
