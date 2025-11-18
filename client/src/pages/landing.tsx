@@ -1,8 +1,14 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Video, Image, Music, Zap, Shield, Sparkles, Loader2, ChevronRight, Play, Palette, Mic, Film } from "lucide-react";
-import type { HomePageContent } from "@shared/schema";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { 
+  Video, Image, Music, Zap, Shield, Sparkles, Loader2, ChevronRight, Play, Palette, Mic, Film,
+  Award, DollarSign, Droplet, Monitor, Smartphone, Tablet, Check, Star, Laptop
+} from "lucide-react";
+import { SiApple, SiAndroid, SiIos } from "react-icons/si";
+import type { HomePageContent, SubscriptionPlan } from "@shared/schema";
 import { normalizeVimeoUrl } from "@/lib/vimeo";
 
 export default function Landing() {
@@ -11,6 +17,23 @@ export default function Landing() {
   const { data: content, isLoading } = useQuery<HomePageContent>({
     queryKey: ["/api/homepage"],
   });
+
+  const { data: plans, isLoading: plansLoading } = useQuery<SubscriptionPlan[]>({
+    queryKey: ['/api/plans'],
+  });
+
+  // Normalize Vimeo URL outside of render to avoid hook violations
+  const normalizedVideoUrl = useMemo(() => {
+    if (content?.heroVideoUrl && content.heroVideoUrl.includes('vimeo.com') && !videoLoadFailed) {
+      const result = normalizeVimeoUrl(content.heroVideoUrl);
+      if (result.success && result.url) {
+        return result.url;
+      } else {
+        console.error('Vimeo URL normalization failed:', result.error);
+      }
+    }
+    return null;
+  }, [content?.heroVideoUrl, videoLoadFailed]);
 
   if (isLoading) {
     return (
@@ -34,68 +57,31 @@ export default function Landing() {
               <span className="text-xl font-bold">Artivio AI</span>
             </div>
 
-            {/* Center Navigation - Desktop */}
-            <nav className="hidden md:flex items-center gap-6 lg:gap-8 flex-1 justify-center flex-wrap">
-              <a href="#products" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-products">
-                Products
+            {/* Navigation Links */}
+            <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
+              <a href="#features" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-features">
+                Features
               </a>
-              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-pricing">
+              <a href="#pricing" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-pricing">
                 Pricing
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-blog">
-                Blog
+              <a href="#showcase" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-showcase">
+                Showcase
               </a>
-              <a href="/api/login" className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap" data-testid="nav-login">
-                Log In
-              </a>
-              <a 
-                href="/pricing" 
-                className="text-gray-300 hover:text-white transition-colors text-sm font-medium whitespace-nowrap"
-                data-testid="nav-signup"
-              >
-                Sign Up
+              <a href="#faq" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-faq">
+                FAQ
               </a>
             </nav>
 
-            {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden text-gray-300 hover:text-white flex-shrink-0"
-              onClick={() => {
-                const menu = document.getElementById('mobile-menu');
-                if (menu) {
-                  menu.classList.toggle('hidden');
-                }
-              }}
-              data-testid="button-mobile-menu"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-
-            {/* Spacer for alignment - matches logo width */}
-            <div className="hidden md:block flex-shrink-0" style={{ width: '140px' }} />
-          </div>
-
-          {/* Mobile Menu */}
-          <div id="mobile-menu" className="hidden md:hidden py-4 border-t border-white/10">
-            <nav className="flex flex-col gap-4">
-              <a href="#products" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-products">
-                Products
-              </a>
-              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-pricing">
-                Pricing
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-blog">
-                Blog
-              </a>
-              <a href="/api/login" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-login">
-                Log In
-              </a>
-              <a href="/pricing" className="text-gray-300 hover:text-white transition-colors text-sm font-medium" data-testid="mobile-nav-signup">
-                Sign Up
-              </a>
-            </nav>
+            {/* CTA Buttons */}
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <Button variant="ghost" asChild data-testid="button-sign-in">
+                <a href="/auth">Sign In</a>
+              </Button>
+              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-get-started">
+                <a href="/pricing">Get Started</a>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -103,47 +89,31 @@ export default function Landing() {
       {/* Hero Section - Full Screen with Background Video */}
       <section className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden">
         {/* Background Video or Gradient */}
-        {(() => {
-          // Try to normalize Vimeo URL if provided
-          if (content?.heroVideoUrl && content.heroVideoUrl.includes('vimeo.com') && !videoLoadFailed) {
-            const result = normalizeVimeoUrl(content.heroVideoUrl);
-            
-            if (result.success && result.url) {
-              // Render video background with error handling
-              return (
-                <>
-                  <div className="absolute inset-0 z-0">
-                    <iframe
-                      src={result.url}
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]"
-                      frameBorder="0"
-                      allow="autoplay; fullscreen; picture-in-picture"
-                      allowFullScreen
-                      title="Hero Background Video"
-                      onError={() => {
-                        console.error('Hero video failed to load');
-                        setVideoLoadFailed(true);
-                      }}
-                    />
-                  </div>
-                  {/* Dark overlay for text readability */}
-                  <div className="absolute inset-0 bg-black/60 z-[1]" />
-                </>
-              );
-            } else {
-              // Log error and fall back to gradient
-              console.error('Vimeo URL normalization failed:', result.error);
-            }
-          }
-          
-          // Default: gradient background (shown when no video, normalization fails, or video fails to load)
-          return (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20 z-0" />
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl z-0" />
-            </>
-          );
-        })()}
+        {normalizedVideoUrl ? (
+          <>
+            <div className="absolute inset-0 z-0">
+              <iframe
+                src={normalizedVideoUrl}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title="Hero Background Video"
+                onError={() => {
+                  console.error('Hero video failed to load');
+                  setVideoLoadFailed(true);
+                }}
+              />
+            </div>
+            {/* Dark overlay for text readability */}
+            <div className="absolute inset-0 bg-black/60 z-[1]" />
+          </>
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20 z-0" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl z-0" />
+          </>
+        )}
         
         <div className="container mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
@@ -191,6 +161,32 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Benefits Bar - UPDATE #2 */}
+      <section className="py-8 px-6 border-y border-white/10 bg-[#1A1A1A]/50">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-3" data-testid="benefit-no-watermarks">
+              <div className="bg-gradient-to-br from-yellow-500 to-orange-500 p-3 rounded-full">
+                <Droplet className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-lg font-semibold">No Watermarks</span>
+            </div>
+            <div className="flex items-center justify-center gap-3" data-testid="benefit-commercial-use">
+              <div className="bg-gradient-to-br from-green-500 to-emerald-500 p-3 rounded-full">
+                <Award className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-lg font-semibold">Commercial Use</span>
+            </div>
+            <div className="flex items-center justify-center gap-3" data-testid="benefit-low-fees">
+              <div className="bg-gradient-to-br from-purple-500 to-blue-500 p-3 rounded-full">
+                <DollarSign className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-lg font-semibold">Low Monthly Fees</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Grid */}
       <section id="features" className="py-20 px-6">
         <div className="container mx-auto">
@@ -204,7 +200,7 @@ export default function Landing() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Feature Card 1 */}
+            {/* Feature Card 1 - UPDATE #1: Using 16:9 aspect ratio */}
             <div className="group bg-[#1A1A1A] rounded-2xl p-8 border border-white/10 hover:border-purple-500/50 transition-all hover:-translate-y-1">
               <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-4 rounded-xl w-fit mb-6">
                 <Video className="h-8 w-8 text-white" />
@@ -214,7 +210,7 @@ export default function Landing() {
                 Generate professional videos with Veo 3.1, Runway, and more. 
                 From concept to completion in minutes.
               </p>
-              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-video">
+              <a href="/generate/video" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-video">
                 Learn More
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </a>
@@ -230,7 +226,7 @@ export default function Landing() {
                 Create stunning visuals with DALL-E, Flux, and Midjourney. 
                 Photorealistic to artistic styles.
               </p>
-              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-image">
+              <a href="/generate/image" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-image">
                 Learn More
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </a>
@@ -246,7 +242,7 @@ export default function Landing() {
                 Compose original tracks with Suno V4. 
                 Full songs with vocals up to 8 minutes long.
               </p>
-              <a href="#" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-music">
+              <a href="/generate/music" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-music">
                 Learn More
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </a>
@@ -255,14 +251,14 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Alternating Content Sections */}
+      {/* Alternating Content Sections - UPDATE #1: Changed to aspect-video (16:9) */}
       <section id="products" className="py-20 px-6">
         <div className="container mx-auto space-y-32">
           {/* Section 1: Image Left */}
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl blur-2xl" />
-              <div className="relative aspect-square bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
+              <div className="relative aspect-video bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
                 {content?.featureVideoUrl ? (
                   <iframe
                     src={content.featureVideoUrl}
@@ -341,7 +337,7 @@ export default function Landing() {
             </div>
             <div className="relative md:order-2">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-3xl blur-2xl" />
-              <div className="relative aspect-square bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
+              <div className="relative aspect-video bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
                 {content?.featureImageUrl ? (
                   <iframe
                     src={content.featureImageUrl}
@@ -364,7 +360,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl blur-2xl" />
-              <div className="relative aspect-square bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
+              <div className="relative aspect-video bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
                 {content?.featureMusicUrl ? (
                   <iframe
                     src={content.featureMusicUrl}
@@ -413,6 +409,435 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Platform Compatibility - UPDATE #6 */}
+      <section className="py-16 px-6 bg-[#1A1A1A]/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Works Everywhere You Do
+            </h2>
+            <p className="text-xl text-gray-400">
+              Fully compatible across all platforms
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            <div className="flex flex-col items-center gap-3" data-testid="platform-macos">
+              <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-6 rounded-2xl">
+                <SiApple className="h-12 w-12 text-white" />
+              </div>
+              <span className="font-semibold">Mac OS</span>
+            </div>
+            <div className="flex flex-col items-center gap-3" data-testid="platform-windows">
+              <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-6 rounded-2xl">
+                <Laptop className="h-12 w-12 text-white" />
+              </div>
+              <span className="font-semibold">Windows PC</span>
+            </div>
+            <div className="flex flex-col items-center gap-3" data-testid="platform-ios">
+              <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-6 rounded-2xl">
+                <SiIos className="h-12 w-12 text-white" />
+              </div>
+              <span className="font-semibold">iOS</span>
+            </div>
+            <div className="flex flex-col items-center gap-3" data-testid="platform-android">
+              <div className="bg-gradient-to-br from-purple-600 to-blue-600 p-6 rounded-2xl">
+                <SiAndroid className="h-12 w-12 text-white" />
+              </div>
+              <span className="font-semibold">Android</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section - UPDATE #5 */}
+      <section id="pricing" className="py-20 px-6">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-xl text-gray-400">
+              Choose the plan that works best for you
+            </p>
+          </div>
+
+          {plansLoading ? (
+            <div className="flex justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {plans?.map((plan) => (
+                <Card 
+                  key={plan.id} 
+                  className={`bg-[#1A1A1A] border-white/10 ${plan.name === 'Pro' ? 'border-purple-500 shadow-2xl shadow-purple-500/20' : ''}`}
+                  data-testid={`pricing-card-${plan.name.toLowerCase()}`}
+                >
+                  <CardHeader>
+                    {plan.name === 'Pro' && (
+                      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full w-fit mb-2">
+                        MOST POPULAR
+                      </div>
+                    )}
+                    <CardTitle className="text-2xl">{plan.displayName}</CardTitle>
+                    <CardDescription className="text-gray-400">{plan.description}</CardDescription>
+                    <div className="mt-4">
+                      <span className="text-5xl font-bold">${(plan.price / 100).toFixed(0)}</span>
+                      <span className="text-gray-400">/{plan.billingPeriod}</span>
+                    </div>
+                    <div className="text-sm text-gray-400 mt-2">
+                      {plan.creditsPerMonth.toLocaleString()} credits per month
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {plan.features && Array.isArray(plan.features) ? (
+                      (plan.features as string[]).map((feature, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <Check className="h-5 w-5 text-purple-500 shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-300">{String(feature)}</span>
+                        </div>
+                      ))
+                    ) : null}
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className={`w-full ${plan.name === 'Pro' ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' : ''}`}
+                      variant={plan.name === 'Pro' ? 'default' : 'outline'}
+                      asChild
+                      data-testid={`button-select-plan-${plan.name.toLowerCase()}`}
+                    >
+                      <a href="/pricing">
+                        {plan.name === 'Free Trial' ? 'Start Free Trial' : 'Subscribe Now'}
+                      </a>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 3 Easy Steps - UPDATE #7 */}
+      <section className="py-20 px-6 bg-[#1A1A1A]/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Create in 3 Simple Steps
+            </h2>
+            <p className="text-xl text-gray-400">
+              From idea to final product in minutes
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto">
+            <div className="relative" data-testid="step-1">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                1
+              </div>
+              <Card className="bg-[#1A1A1A] border-white/10 pt-10 text-center">
+                <CardContent className="space-y-4">
+                  <div className="bg-purple-500/10 p-4 rounded-full w-fit mx-auto">
+                    <Sparkles className="h-8 w-8 text-purple-500" />
+                  </div>
+                  <h3 className="text-xl font-bold">Choose Your Tool</h3>
+                  <p className="text-gray-400">
+                    Select from video, image, or music generation based on your project needs
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="relative" data-testid="step-2">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                2
+              </div>
+              <Card className="bg-[#1A1A1A] border-white/10 pt-10 text-center">
+                <CardContent className="space-y-4">
+                  <div className="bg-purple-500/10 p-4 rounded-full w-fit mx-auto">
+                    <Film className="h-8 w-8 text-purple-500" />
+                  </div>
+                  <h3 className="text-xl font-bold">Describe Your Vision</h3>
+                  <p className="text-gray-400">
+                    Enter your prompt or upload reference images to guide the AI
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="relative" data-testid="step-3">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                3
+              </div>
+              <Card className="bg-[#1A1A1A] border-white/10 pt-10 text-center">
+                <CardContent className="space-y-4">
+                  <div className="bg-purple-500/10 p-4 rounded-full w-fit mx-auto">
+                    <Star className="h-8 w-8 text-purple-500" />
+                  </div>
+                  <h3 className="text-xl font-bold">Download & Share</h3>
+                  <p className="text-gray-400">
+                    Get your professional-quality content ready to use in minutes
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase Videos Section - UPDATE #3 & #4 */}
+      {content?.showcaseVideos && content.showcaseVideos.length > 0 && (
+        <section id="showcase" className="py-20 px-6">
+          <div className="container mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Featured Creations
+              </h2>
+              <p className="text-xl text-gray-400">
+                See what's possible with Artivio AI
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+              {content.showcaseVideos.map((video, index) => {
+                const normalizedUrl = video.url.includes('vimeo.com') 
+                  ? normalizeVimeoUrl(video.url)
+                  : { success: false, url: '', error: 'Not a Vimeo URL' };
+
+                return (
+                  <div 
+                    key={index} 
+                    className="group bg-[#1A1A1A] rounded-xl border border-white/10 overflow-hidden hover:border-purple-500/50 transition-all"
+                    data-testid={`showcase-video-${index}`}
+                  >
+                    <div className="relative aspect-video bg-black">
+                      {normalizedUrl.success ? (
+                        <iframe
+                          src={normalizedUrl.url?.replace('background=1', 'background=0')}
+                          className="absolute inset-0 w-full h-full"
+                          frameBorder="0"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                          title={video.title || `Showcase ${index + 1}`}
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 flex items-center justify-center">
+                          <Play className="h-16 w-16 text-purple-500/40" />
+                        </div>
+                      )}
+                    </div>
+                    {(video.title || video.description) && (
+                      <div className="p-4">
+                        {video.title && (
+                          <h3 className="font-semibold mb-2">{video.title}</h3>
+                        )}
+                        {video.description && (
+                          <p className="text-sm text-gray-400">{video.description}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* All Features Section - UPDATE #8 */}
+      <section className="py-20 px-6 bg-[#1A1A1A]/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              All Features
+            </h2>
+            <p className="text-xl text-gray-400">
+              Everything you need in one platform
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {/* Video Generation */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-video-generation">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Video className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Video Generation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Create stunning videos with Veo 3.1, Runway Aleph, and more AI models
+                </p>
+                <p className="text-sm text-purple-400">500+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Image Generation */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-image-generation">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Image className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Image Generation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Generate images with 4o Image, Flux Kontext, and Nano Banana
+                </p>
+                <p className="text-sm text-purple-400">100+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Music Generation */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-music-generation">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Music className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Music Generation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Compose original music with Suno V3.5, V4, and V4.5 models
+                </p>
+                <p className="text-sm text-purple-400">100+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* AI Chat */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-ai-chat">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Sparkles className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>AI Chat</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Chat with Deepseek and OpenAI models including GPT-4o and o1
+                </p>
+                <p className="text-sm text-purple-400">Free</p>
+              </CardContent>
+            </Card>
+
+            {/* Voice Cloning */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-voice-cloning">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Mic className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Voice Cloning</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Clone voices with ElevenLabs technology for natural speech
+                </p>
+                <p className="text-sm text-purple-400">100+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Image Analysis */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-image-analysis">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Shield className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Image Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Analyze images with GPT-4o Vision for insights and descriptions
+                </p>
+                <p className="text-sm text-purple-400">100+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Video Editor */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-video-editor">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Film className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Video Editor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Combine and edit AI-generated videos with transitions
+                </p>
+                <p className="text-sm text-purple-400">Free</p>
+              </CardContent>
+            </Card>
+
+            {/* QR Code Generator */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-qr-generator">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Monitor className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>QR Code Generator</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Create custom QR codes with logo embedding and styling
+                </p>
+                <p className="text-sm text-purple-400">Free</p>
+              </CardContent>
+            </Card>
+
+            {/* Generation History */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-history">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Zap className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Generation History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  View and manage all your AI-generated content
+                </p>
+                <p className="text-sm text-purple-400">Free</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section - UPDATE #4 */}
+      {content?.faqs && content.faqs.length > 0 && (
+        <section id="faq" className="py-20 px-6">
+          <div className="container mx-auto max-w-4xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-xl text-gray-400">
+                Everything you need to know
+              </p>
+            </div>
+
+            <Accordion type="single" collapsible className="space-y-4">
+              {content.faqs.map((faq, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`faq-${index}`}
+                  className="bg-[#1A1A1A] border border-white/10 rounded-lg px-6"
+                  data-testid={`faq-item-${index}`}
+                >
+                  <AccordionTrigger className="text-left hover:no-underline">
+                    <span className="font-semibold">{faq.question}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-gray-400">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </section>
+      )}
+
       {/* Final CTA */}
       <section className="py-32 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20" />
@@ -460,7 +885,7 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-features">Features</a></li>
+                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-features">Features</a></li>
                 <li><a href="/pricing" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-pricing">Pricing</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-api-docs">API Docs</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors" data-testid="footer-changelog">Changelog</a></li>
