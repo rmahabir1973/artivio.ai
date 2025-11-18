@@ -3,7 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import axios from "axios";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, checkTrialExpiration } from "./replitAuth";
 import { 
   generateVideo, 
   generateImage, 
@@ -1131,7 +1131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Video Generation
-  app.post('/api/generate/video', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate/video', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -1185,7 +1185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image Generation
-  app.post('/api/generate/image', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate/image', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -1376,7 +1376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Music Generation
-  app.post('/api/generate/music', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate/music', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -1418,7 +1418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Extend Music
-  app.post('/api/generate/extend-music', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate/extend-music', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -1495,7 +1495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload & Cover
-  app.post('/api/generate/upload-cover', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate/upload-cover', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -3902,6 +3902,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!planId) {
         return res.status(400).json({ error: 'planId is required' });
+      }
+
+      // Validate that the plan exists and isn't a trial
+      const plan = await storage.getPlanById(planId);
+      if (!plan) {
+        return res.status(404).json({ error: 'Plan not found' });
+      }
+      
+      if (plan.billingPeriod === 'trial') {
+        return res.status(400).json({ error: 'Cannot purchase trial plans via Stripe. Please use the free signup flow.' });
       }
 
       const userId = req.user.claims.sub;

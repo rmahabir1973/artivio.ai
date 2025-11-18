@@ -1309,10 +1309,16 @@ export class DatabaseStorage implements IStorage {
       const previouslyGranted = existingSub?.creditsGrantedThisPeriod || 0;
       const creditAdjustment = plan.creditsPerMonth - previouslyGranted;
 
-      // For manual admin assignments, set period to 30 days from now
+      // Calculate period based on plan type
       const now = new Date();
       const periodEnd = new Date(now);
-      periodEnd.setDate(periodEnd.getDate() + 30);
+      
+      // For trial plans, use trial days; otherwise use 30 days
+      if (plan.billingPeriod === 'trial' && plan.trialDays) {
+        periodEnd.setDate(periodEnd.getDate() + plan.trialDays);
+      } else {
+        periodEnd.setDate(periodEnd.getDate() + 30);
+      }
 
       // Update or create subscription
       let subscription: UserSubscription;

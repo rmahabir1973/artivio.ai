@@ -296,3 +296,58 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+export const checkTrialExpiration: RequestHandler = async (req, res, next) => {
+  // Skip trial check for billing and plan-related endpoints
+  // Allow expired trial users to upgrade by accessing these paths
+  const billingPaths = [
+    '/api/billing/checkout',
+    '/api/billing/portal',
+    '/api/subscription',
+    '/api/plans',
+    '/api/public/plan-selection', // Allow expired trial users to select upgrade plan
+  ];
+  
+  if (billingPaths.some(path => req.path.startsWith(path))) {
+    return next();
+  }
+
+  const user = req.user as any;
+  if (!user?.claims?.sub) {
+    return next(); // Let isAuthenticated handle this
+  }
+
+  try {
+    const { storage } = await import('./storage');
+    const subscription = await storage.getUserSubscription(user.claims.sub);
+    
+    if (!subscription) {
+      // No subscription - allow access (edge case)
+      return next();
+    }
+
+    const now = new Date();
+    const periodEnd = new Date(subscription.currentPeriodEnd);
+    
+    // Check if trial has expired
+    if (subscription.plan.billingPeriod === 'trial' && periodEnd < now) {
+      console.log('[TRIAL CHECK] Trial expired', {
+        userId: user.claims.sub,
+        periodEnd,
+        now,
+      });
+      
+      return res.status(403).json({ 
+        error: "trial_expired",
+        message: "Your free trial has ended. Please upgrade to continue using Artivio AI.",
+        trialEndDate: periodEnd.toISOString(),
+      });
+    }
+    
+    return next();
+  } catch (error: any) {
+    console.error('[TRIAL CHECK] Error checking trial expiration:', error);
+    // Allow request to continue on error to avoid blocking legitimate users
+    return next();
+  }
+};

@@ -6,17 +6,19 @@ import { eq } from "drizzle-orm";
 const defaultPlans = [
   {
     name: "free",
-    displayName: "Free",
-    description: "Get started with basic features",
+    displayName: "7 Day Free Trial",
+    description: "Try all features free for 7 days",
     price: 0,
-    billingPeriod: "monthly",
+    billingPeriod: "trial",
+    trialDays: 7,
     creditsPerMonth: 1000,
-    creditRolloverLimit: 500,
+    creditRolloverLimit: 0,
     features: [
-      "1,000 credits per month",
-      "Basic video generation",
-      "Basic image generation",
-      "Community support"
+      "1,000 credits (one-time)",
+      "Full access to all AI models",
+      "All features included",
+      "7 day trial period",
+      "No credit card required"
     ],
     isActive: true,
     sortOrder: 1,
