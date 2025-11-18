@@ -154,7 +154,7 @@ export default function GenerateSora() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
-      setUploadedImages([...uploadedImages, base64]);
+      setUploadedImages((prev) => [...prev, base64]);
     };
     reader.readAsDataURL(file);
   };
