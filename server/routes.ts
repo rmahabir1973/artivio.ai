@@ -3,7 +3,8 @@ import express from "express";
 import { createServer, type Server } from "http";
 import axios from "axios";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, checkTrialExpiration } from "./replitAuth";
+import { setupAuth } from "./customAuth";
+import { isAuthenticated, registerAuthRoutes } from "./authRoutes";
 import { 
   generateVideo, 
   generateImage, 
@@ -679,6 +680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth is critical; without it, all protected routes will fail
   try {
     await setupAuth(app);
+    registerAuthRoutes(app); // Register custom auth routes (register, login, Google OAuth, logout)
     console.log('✓ Authentication initialized successfully');
   } catch (error) {
     console.error('FATAL: Failed to setup authentication:', error);
@@ -770,133 +772,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // ========== AUTH ENDPOINTS ==========
-  
-  // Auth endpoint
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      let user = await storage.getUser(userId);
-      
-      // If user doesn't exist yet (first login), create them with selected plan
-      if (!user) {
-        console.log(`\n=== NEW USER REGISTRATION ===`);
-        console.log(`User ID: ${userId}`);
-        console.log(`Email: ${req.user.claims.email}`);
-        
-        // Debug: Check signed cookies
-        console.log(`Signed cookies present:`, Object.keys((req as any).signedCookies || {}));
-        console.log(`Selected plan cookie:`, (req as any).signedCookies?.selected_plan);
-        
-        // Create user first (starts with 0 credits)
-        // Note: upsertUser may return existing user if email already exists
-        const createdUser = await storage.upsertUser({
-          id: req.user.claims.sub,
-          email: req.user.claims.email,
-          firstName: req.user.claims.first_name,
-          lastName: req.user.claims.last_name,
-          profileImageUrl: req.user.claims.profile_image_url,
-        });
-        console.log(`✓ User record created (0 credits initially)`);
-        
-        // Check for plan selection from signed cookie
-        const selectedPlan = (req as any).signedCookies?.selected_plan;
-        
-        if (!selectedPlan) {
-          console.warn(`⚠️ No plan selection cookie found - defaulting to Free plan`);
-          console.warn(`  This may indicate user skipped pricing page or cookie expired`);
-        }
-        
-        const planName = selectedPlan || 'free';
-        console.log(`Plan selection: ${planName}`);
-        
-        // Get plan from database
-        const plans = await storage.getAllPlans();
-        const plan = plans.find(p => p.name === planName);
-        
-        if (plan) {
-          try {
-            // Assign plan and grant credits atomically
-            // Use the actual user ID from upsertUser (may differ from sub if email collision)
-            console.log(`Assigning ${plan.displayName} plan (${plan.creditsPerMonth} credits)...`);
-            const result = await storage.assignPlanToUser(createdUser.id, plan.id);
-            console.log(`✓ Plan assigned successfully`);
-            console.log(`✓ Credits granted: ${result.creditsGranted}`);
-            console.log(`✓ Subscription created`);
-            
-            // Only clear cookie after successful assignment
-            if (selectedPlan) {
-              res.clearCookie('selected_plan');
-              console.log(`✓ Plan selection cookie cleared`);
-            }
-          } catch (error) {
-            console.error(`❌ CRITICAL: Failed to assign plan to user:`, error);
-            console.error(`  User created with 0 credits - plan assignment can retry on next login`);
-            // DO NOT clear cookie - allow retry on next login
-            // User can contact support or try logging out and back in
-          }
-        } else {
-          console.error(`❌ Plan "${planName}" not found in database!`);
-          console.error(`  User created with 0 credits`);
-        }
-        
-        // Check for referral code and convert referral
-        const referralCode = (req as any).signedCookies?.referral_code;
-        if (referralCode) {
-          console.log(`Referral code found: ${referralCode}`);
-          try {
-            const result = await storage.convertReferral(referralCode, createdUser.id);
-            if (result.referrerCredits > 0 || result.refereeCredits > 0) {
-              console.log(`✓ Referral converted successfully!`);
-              console.log(`  - Referrer earned: ${result.referrerCredits} credits`);
-              console.log(`  - Referee (you) received: ${result.refereeCredits} bonus credits`);
-              
-              // Clear the referral cookie after successful conversion
-              res.clearCookie('referral_code');
-              console.log(`✓ Referral code cookie cleared`);
-            } else {
-              console.log(`ℹ️ No pending referral found for code ${referralCode}`);
-            }
-          } catch (error) {
-            console.error(`⚠️ Failed to convert referral:`, error);
-            // Non-critical error - don't block signup
-            // User still gets their plan credits
-          }
-        }
-        
-        // Add new Free plan users to Loops.so 7-day email funnel
-        if (planName === 'free') {
-          LoopsService.addToSevenDayFunnel(
-            req.user.claims.email,
-            req.user.claims.first_name,
-            req.user.claims.last_name,
-            createdUser.id
-          ).catch(loopsError => {
-            logger.error('LOOPS', 'Failed to add user to 7-day funnel', {
-              error: loopsError instanceof Error ? loopsError.message : String(loopsError)
-            });
-          });
-        }
-        
-        user = await storage.getUser(userId);
-        console.log(`Final user state - Credits: ${user?.credits}, ID: ${user?.id}`);
-        console.log(`=== END REGISTRATION ===\n`);
-      }
-      
-      // Override isAdmin based on hardcoded email list
-      const isAdmin = isUserAdmin(user);
-      const userWithAdminOverride = { ...user, isAdmin };
-      
-      // Disable caching to ensure fresh auth data
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
-      res.json(userWithAdminOverride);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Auth routes (register, login, Google OAuth, logout) are now in authRoutes.ts
+  // GET /api/auth/user is handled in authRoutes.ts
 
   // Kie.ai Callback Endpoint (no auth - called by Kie.ai)
   app.post('/api/callback/kie/:generationId', async (req: any, res) => {
