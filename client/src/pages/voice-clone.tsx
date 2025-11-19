@@ -64,7 +64,7 @@ export default function VoiceClone() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
     }
   }, [isAuthenticated, authLoading, toast]);
@@ -98,7 +98,7 @@ export default function VoiceClone() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }

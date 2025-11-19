@@ -198,7 +198,7 @@ export function ModernHeader() {
             {/* Login Button - unauthenticated only */}
             {!isAuthenticated && (
               <Button asChild size="sm" data-testid="nav-login">
-                <a href="/api/login">Log in</a>
+                <a href="/login">Log in</a>
               </Button>
             )}
 
@@ -429,7 +429,7 @@ export function ModernHeader() {
                     asChild
                     data-testid="mobile-nav-login"
                   >
-                    <a href="/api/login">
+                    <a href="/login">
                       <LogOut className="h-5 w-5" />
                       Log in
                     </a>
