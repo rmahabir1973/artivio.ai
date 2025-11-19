@@ -15,6 +15,7 @@ import {
   rotateRefreshToken,
   JWTPayload,
 } from "./jwtUtils";
+import { requireJWT } from "./jwtMiddleware";
 
 // Validation schemas
 const registerSchema = z.object({
@@ -502,24 +503,26 @@ export function registerAuthRoutes(app: Express) {
     }
   });
 
-  // Get current user
-  app.get("/api/auth/user", async (req: any, res) => {
+  // Get current user (JWT-protected endpoint)
+  app.get("/api/auth/user", requireJWT, async (req: any, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
+      // req.user is already set by requireJWT middleware
       const userId = req.user.id;
-      let user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      
+      console.log("[AUTH] Fetching user data", { userId });
 
-      if (!user || user.length === 0) {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!user) {
         console.error("[AUTH] User not found in database", { userId });
         return res.status(404).json({ message: "User not found" });
       }
 
-      const currentUser = user[0];
-
-      // Hardcoded admin emails for access control
+      // Admin email whitelist (already set in JWT but double-check with current email)
       const ADMIN_EMAILS = [
         "ryan.mahabir@outlook.com",
         "admin@artivio.ai",
@@ -527,14 +530,19 @@ export function registerAuthRoutes(app: Express) {
         "jordanlambrecht@gmail.com",
       ];
 
-      // Override isAdmin based on hardcoded email list
-      const isAdmin = ADMIN_EMAILS.includes(currentUser.email?.toLowerCase() || "");
-      const userWithAdminOverride = { ...currentUser, isAdmin };
+      const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || "");
+      const userWithAdminOverride = { ...user, isAdmin };
 
       // Disable caching to ensure fresh auth data
       res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
       res.setHeader("Pragma", "no-cache");
       res.setHeader("Expires", "0");
+
+      console.log("[AUTH] ✓ User data fetched successfully", {
+        userId: user.id,
+        email: user.email,
+        isAdmin,
+      });
 
       res.json(userWithAdminOverride);
     } catch (error) {
