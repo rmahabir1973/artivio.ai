@@ -1,0 +1,152 @@
+2025-11-19 16:12:24.80
+12538a6a
+User
+}
+2025-11-19 16:12:24.80
+12538a6a
+User
+tokenId: '56987aa8',
+2025-11-19 16:12:24.80
+12538a6a
+User
+[JWT] Refresh token stored in database { userId: '49729939', tokenId: '56987aa8-de01-4d36-9e06-25bcbed77504' }
+2025-11-19 16:12:25.12
+12538a6a
+User
+[AUTH] Refresh token request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '56987aa8' }
+2025-11-19 16:12:25.16
+12538a6a
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '56987aa8-de01-4d36-9e06-25bcbed77504' }
+2025-11-19 16:12:25.20
+12538a6a
+User
+[JWT] Refresh token revoked { tokenId: '56987aa8-de01-4d36-9e06-25bcbed77504' }
+2025-11-19 16:12:25.23
+12538a6a
+User
+}
+2025-11-19 16:12:25.23
+12538a6a
+User
+userId: '49729939',
+2025-11-19 16:12:25.23
+12538a6a
+User
+[JWT] Refresh token rotated {
+2025-11-19 16:12:25.23
+12538a6a
+User
+newTokenId: '05a9a811-232b-411b-98b4-cae0bd766eed'
+2025-11-19 16:12:25.23
+12538a6a
+User
+[JWT] Refresh token stored in database { userId: '49729939', tokenId: '05a9a811-232b-411b-98b4-cae0bd766eed' }
+2025-11-19 16:12:25.23
+12538a6a
+User
+oldTokenId: '56987aa8-de01-4d36-9e06-25bcbed77504',
+2025-11-19 16:12:25.23
+12538a6a
+User
+userId: '49729939',
+2025-11-19 16:12:25.23
+12538a6a
+User
+isAdmin: true
+2025-11-19 16:12:25.23
+12538a6a
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-19 16:12:25.23
+12538a6a
+User
+[AUTH] ✓ Token refresh successful {
+2025-11-19 16:12:25.23
+12538a6a
+User
+}
+2025-11-19 16:12:25.23
+12538a6a
+User
+newTokenId: '05a9a811',
+2025-11-19 16:12:25.23
+12538a6a
+User
+9:12:25 PM [express] POST /api/auth/refresh 200 in 110ms :: {"message":"Token refreshed successfully…
+2025-11-19 16:12:25.31
+12538a6a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:12:25.31
+12538a6a
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-19 16:12:25.33
+12538a6a
+User
+isAdmin: true
+2025-11-19 16:12:25.33
+12538a6a
+User
+userId: '49729939',
+2025-11-19 16:12:25.33
+12538a6a
+User
+}
+2025-11-19 16:12:25.33
+12538a6a
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-19 16:12:25.33
+12538a6a
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-19 16:12:25.33
+12538a6a
+User
+9:12:25 PM [express] GET /api/auth/user 200 in 44ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-19 16:12:25.44
+12538a6a
+User
+9:12:25 PM [express] GET /api/announcements/active 200 in 23ms :: []
+2025-11-19 16:12:25.52
+12538a6a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:12:25.53
+12538a6a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:12:25.53
+12538a6a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:12:25.53
+12538a6a
+User
+9:12:25 PM [express] GET /api/pricing 200 in 98ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-19 16:12:25.54
+12538a6a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:12:25.55
+12538a6a
+User
+9:12:25 PM [express] GET /api/favorites 200 in 124ms :: []
+2025-11-19 16:12:25.56
+12538a6a
+User
+9:12:25 PM [express] GET /api/subscriptions/current 200 in 118ms :: {"id":"7069d11e-8eea-4517-952c-7…
+2025-11-19 16:12:25.56
+12538a6a
+User
+9:12:25 PM [express] GET /api/onboarding 200 in 121ms :: {"id":"94d37fba-091b-4e62-9023-6a268c1916b4…
+2025-11-19 16:12:30.73
+12538a6a
+User
+9:12:30 PM [express] GET /api/generations 200 in 3840ms :: [{"id":"c8bea92c-acbf-4bcd-a1ea-38b07c09d…
+2025-11-19 16:13:25.67
+12538a6a
+User
+9:13:25 PM [express] GET /api/announcements/active 304 in 131ms :: []
