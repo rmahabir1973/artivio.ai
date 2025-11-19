@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
-import { setAuthContext } from "@/lib/queryClient";
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { setAccessToken as bridgeSetAccessToken, getAccessToken as bridgeGetAccessToken } from "@/lib/authBridge";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -24,17 +24,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  
-  // Use ref to always get current token value
-  const accessTokenRef = useRef<string | null>(null);
-  accessTokenRef.current = accessToken;
 
   const setAccessToken = useCallback((token: string | null) => {
     setAccessTokenState(token);
+    // CRITICAL: Update the auth bridge so fetchWithAuth sees the new token
+    bridgeSetAccessToken(token);
   }, []);
 
   const login = useCallback((token: string) => {
     setAccessTokenState(token);
+    bridgeSetAccessToken(token);
   }, []);
 
   const logout = useCallback(async () => {
@@ -49,6 +48,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       // Always clear local state regardless of API call result
       setAccessTokenState(null);
+      bridgeSetAccessToken(null);
       setUser(null);
     }
   }, []);
@@ -69,6 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (data.accessToken) {
         setAccessTokenState(data.accessToken);
+        bridgeSetAccessToken(data.accessToken);
         console.log("[AUTH] Access token refreshed successfully");
         return data.accessToken;
       }
@@ -80,26 +81,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // Use ref to avoid stale closure - this callback never changes
+  // Use bridge for getAccessToken
   const getAccessToken = useCallback(() => {
-    const token = accessTokenRef.current;
-    console.log("[AUTH] getAccessToken called, token:", token ? `${token.substring(0, 20)}...` : "NULL");
-    return token;
-  }, []); // No dependencies - always returns current ref value
-
-  // CRITICAL: Set auth context SYNCHRONOUSLY during render, NOT in useEffect
-  // This ensures authContextRef is available before any API calls happen
-  // We use useMemo to run once and only re-run if callbacks change (they won't)
-  const authContextValue = {
-    getAccessToken,
-    refreshAccessToken,
-    logout,
-  };
-  
-  // Set immediately, not in useEffect - this runs during render before children mount
-  if (typeof window !== 'undefined') {
-    setAuthContext(authContextValue);
-  }
+    return bridgeGetAccessToken();
+  }, []);
 
   // Fetch user data on mount using refresh token
   useEffect(() => {

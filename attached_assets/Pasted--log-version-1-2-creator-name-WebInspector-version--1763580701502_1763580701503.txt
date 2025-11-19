@@ -1,0 +1,1924 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "WebInspector",
+      "version": "537.36"
+    },
+    "pages": [],
+    "entries": [
+      {
+        "_connectionId": "4785",
+        "_initiator": {
+          "type": "script",
+          "stack": {
+            "callFrames": [
+              {
+                "functionName": "Ej",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 43064
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 43792
+              },
+              {
+                "functionName": "s",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 14392
+              },
+              {
+                "functionName": "x",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 9985
+              },
+              {
+                "functionName": "start",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 10444
+              },
+              {
+                "functionName": "fetch",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 15728
+              },
+              {
+                "functionName": "nd",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 36124
+              },
+              {
+                "functionName": "onSubscribe",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 30658
+              },
+              {
+                "functionName": "subscribe",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 4344
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 41648
+              },
+              {
+                "functionName": "v_",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 37,
+                "columnNumber": 19707
+              },
+              {
+                "functionName": "Xg",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 24282
+              },
+              {
+                "functionName": "Wl",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 42408
+              },
+              {
+                "functionName": "hz",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 41230
+              },
+              {
+                "functionName": "Xs",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 40277
+              },
+              {
+                "functionName": "mC",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 36885
+              },
+              {
+                "functionName": "Ms",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 37,
+                "columnNumber": 3278
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 34262
+              }
+            ]
+          }
+        },
+        "_priority": "High",
+        "_resourceType": "fetch",
+        "cache": {},
+        "connection": "443",
+        "request": {
+          "method": "GET",
+          "url": "https://artivio.ai/api/generations",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": ":authority",
+              "value": "artivio.ai"
+            },
+            {
+              "name": ":method",
+              "value": "GET"
+            },
+            {
+              "name": ":path",
+              "value": "/api/generations"
+            },
+            {
+              "name": ":scheme",
+              "value": "https"
+            },
+            {
+              "name": "accept",
+              "value": "*/*"
+            },
+            {
+              "name": "accept-encoding",
+              "value": "gzip, deflate, br, zstd"
+            },
+            {
+              "name": "accept-language",
+              "value": "en-US,en;q=0.9,en-CA;q=0.8"
+            },
+            {
+              "name": "priority",
+              "value": "u=1, i"
+            },
+            {
+              "name": "referer",
+              "value": "https://artivio.ai/history"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?1"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Android\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "empty"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-origin"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36 Edg/143.0.0.0"
+            }
+          ],
+          "queryString": [],
+          "cookies": [],
+          "headersSize": -1,
+          "bodySize": 0
+        },
+        "response": {
+          "status": 500,
+          "statusText": "Internal Server Error",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": "alt-svc",
+              "value": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+            },
+            {
+              "name": "content-length",
+              "value": "0"
+            },
+            {
+              "name": "content-type",
+              "value": "text/html"
+            },
+            {
+              "name": "date",
+              "value": "Wed, 19 Nov 2025 19:30:26 GMT"
+            },
+            {
+              "name": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "name": "strict-transport-security",
+              "value": "max-age=63072000; includeSubDomains"
+            },
+            {
+              "name": "via",
+              "value": "1.1 google"
+            },
+            {
+              "name": "x-cloud-trace-context",
+              "value": "3f7d909a27005734386738d8d0376221;o=1"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "size": 0,
+            "mimeType": "text/html",
+            "text": ""
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_transferSize": 18,
+          "_error": null,
+          "_fetchedViaServiceWorker": false
+        },
+        "serverIPAddress": "34.111.179.208",
+        "startedDateTime": "2025-11-19T19:30:22.659Z",
+        "time": 4375.470999977551,
+        "timings": {
+          "blocked": 2.338999974196777,
+          "dns": -1,
+          "ssl": -1,
+          "connect": -1,
+          "send": 0.2489999999999999,
+          "wait": 4372.3600000082,
+          "receive": 0.52299999515526,
+          "_blocked_queueing": 0.7189999741967767,
+          "_workerStart": -1,
+          "_workerReady": -1,
+          "_workerFetchStart": -1,
+          "_workerRespondWithSettled": -1
+        }
+      },
+      {
+        "_connectionId": "4785",
+        "_initiator": {
+          "type": "script",
+          "stack": {
+            "callFrames": [
+              {
+                "functionName": "Ej",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 43064
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 43792
+              },
+              {
+                "functionName": "s",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 14392
+              },
+              {
+                "functionName": "x",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 9985
+              },
+              {
+                "functionName": "start",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 10444
+              },
+              {
+                "functionName": "fetch",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 15728
+              },
+              {
+                "functionName": "nd",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 36124
+              },
+              {
+                "functionName": "onSubscribe",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 30658
+              },
+              {
+                "functionName": "subscribe",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 4344
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 41648
+              },
+              {
+                "functionName": "v_",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 37,
+                "columnNumber": 19707
+              },
+              {
+                "functionName": "Xg",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 24282
+              },
+              {
+                "functionName": "Wl",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 42408
+              },
+              {
+                "functionName": "hz",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 41230
+              },
+              {
+                "functionName": "Xs",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 40277
+              },
+              {
+                "functionName": "mC",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 36885
+              },
+              {
+                "functionName": "Ms",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 37,
+                "columnNumber": 3278
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 39,
+                "columnNumber": 34262
+              }
+            ]
+          }
+        },
+        "_priority": "High",
+        "_resourceType": "fetch",
+        "cache": {},
+        "connection": "443",
+        "request": {
+          "method": "GET",
+          "url": "https://artivio.ai/api/image-analysis/results",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": ":authority",
+              "value": "artivio.ai"
+            },
+            {
+              "name": ":method",
+              "value": "GET"
+            },
+            {
+              "name": ":path",
+              "value": "/api/image-analysis/results"
+            },
+            {
+              "name": ":scheme",
+              "value": "https"
+            },
+            {
+              "name": "accept",
+              "value": "*/*"
+            },
+            {
+              "name": "accept-encoding",
+              "value": "gzip, deflate, br, zstd"
+            },
+            {
+              "name": "accept-language",
+              "value": "en-US,en;q=0.9,en-CA;q=0.8"
+            },
+            {
+              "name": "priority",
+              "value": "u=1, i"
+            },
+            {
+              "name": "referer",
+              "value": "https://artivio.ai/analyze-image"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?1"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Android\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "empty"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-origin"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36 Edg/143.0.0.0"
+            }
+          ],
+          "queryString": [],
+          "cookies": [],
+          "headersSize": -1,
+          "bodySize": 0
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": "alt-svc",
+              "value": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+            },
+            {
+              "name": "content-length",
+              "value": "4504"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "name": "date",
+              "value": "Wed, 19 Nov 2025 19:30:34 GMT"
+            },
+            {
+              "name": "etag",
+              "value": "W/\"1198-a3c3Li0J9TpgmEdneWjTy1MDmfg\""
+            },
+            {
+              "name": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "name": "strict-transport-security",
+              "value": "max-age=63072000; includeSubDomains"
+            },
+            {
+              "name": "via",
+              "value": "1.1 google"
+            },
+            {
+              "name": "x-cloud-trace-context",
+              "value": "64ce9926c4a89397386738d8d0376cd3;o=1"
+            },
+            {
+              "name": "x-powered-by",
+              "value": "Express"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "size": 4504,
+            "mimeType": "application/json",
+            "text": "[{\"id\":\"aa2de9a8-1df9-40ef-9ae3-729ff3ccc9d0\",\"userId\":\"49729939\",\"idempotencyKey\":\"d2f76905-54d0-4fd9-8777-7091fed44f7c\",\"imageUrl\":\"https://artivio.ai/uploads/1763575958449-9adce318ffe3c2038f905f2a845babcd.jpeg\",\"analysisPrompt\":null,\"analysisResult\":{\"text\":\"The image is a screenshot of a user interface for a music generation platform called \\\"Music Studio.\\\" Here's a detailed analysis:\\n\\n### Main Subjects:\\n- **Music Generation Interface**: The interface is designed for creating music using AI-powered models provided by Suno.\\n\\n### Actions and Interactions:\\n- **Model Selection**: Users can choose from different models like Suno V3.5, Suno V4, Suno V4.5, Suno V4.5 Plus, and Suno V5. Each model costs 200 credits per track.\\n- **Music Description**: There's a text box for users to describe the type of music they want to create.\\n- **Lyrics Input**: An optional field where users can enter lyrics for their song.\\n- **Genre and Duration**: Users can select the genre from a dropdown menu (currently set to Pop) and adjust the duration using a slider.\\n- **Credit Information**: Displays the cost of generating music and the remaining credits.\\n\\n### Setting/Environment:\\n- The interface is digital, sleek, and designed for ease of use, likely targeting music creators who want to use AI for music production.\\n\\n### Notable Objects or Details:\\n- **Buttons**: Options like \\\"Generate,\\\" \\\"Extend,\\\" \\\"Lyrics,\\\" \\\"Cover,\\\" and \\\"Upload & Extend\\\" suggest various functionalities for enhancing and using the music.\\n- **Templates**: There's an option to use templates, indicating predefined settings for music creation.\\n- **Advanced Settings**: Additional customization options are available under advanced settings.\\n\\n### Colors and Composition:\\n- **Color Scheme**: The interface uses a dark theme with white text. Blue highlights are used for selected options, providing contrast and focus.\\n- **Layout**: The layout is divided into a left pane for generation settings and a right pane for available models, offering a clear and organized view.\\n\\n### Mood or Atmosphere:\\n- The overall mood is professional and modern, designed to appeal to tech-savvy users interested in music production.\\n\\n### Text Visible in the Image:\\n- The interface has text labels and descriptions, including model names, descriptions, and functional buttons, guiding the user through the music creation process.\\n\\nThis interface facilitates seamless interaction for generating and customizing music tracks using AI technology.\"},\"model\":\"gpt-4o\",\"provider\":\"openai\",\"status\":\"completed\",\"errorMessage\":null,\"creditsCost\":20,\"apiKeyUsed\":\"openai-gpt-4o\",\"createdAt\":\"2025-11-19T18:12:38.490Z\",\"completedAt\":\"2025-11-19T18:12:58.767Z\"},{\"id\":\"f09d19d7-9a5f-4764-b39e-ae61d5edb7eb\",\"userId\":\"49729939\",\"idempotencyKey\":\"fc3eca8f-08e2-4b51-9e47-acb735d70d92\",\"imageUrl\":\"https://artivio.ai/uploads/1763414860367-caade3708b4a8a6a967d56ecb719e620.png\",\"analysisPrompt\":\"Can you create a prompt for me to make this into a video\",\"analysisResult\":{\"text\":\"Certainly! Here's a video prompt based on the image:\\n\\n---\\n\\n**Title: Unlock Creativity with AI Power**\\n\\n**Scene 1:**\\n- **Visual:** Dynamic animation of various digital tools (video clapperboard, paintbrush, robot icon).\\n- **Voiceover:** \\\"Welcome to the future of creativity.\\\"\\n\\n**Scene 2:**\\n- **Visual:** Showcase each AI tool with a brief animation - video creation, image generation, music composition, voice synthesis.\\n- **Voiceover:** \\\"Explore 12+ powerful AI tools at your fingertips.\\\"\\n\\n**Scene 3:**\\n- **Visual:** Smooth transitions between different creative works - a vibrant painting, a catchy music clip, a realistic robot voice, dynamic social media graphics.\\n- **Voiceover:** \\\"Generate videos, images, music, voices, and more effortlessly.\\\"\\n\\n**Scene 4:**\\n- **Visual:** A user easily interacting with an AI application on a tablet or computer.\\n- **Voiceover:** \\\"Empower your projects and unleash your potential.\\\"\\n\\n**Scene 5:**\\n- **Visual:** Fade to a call-to-action screen with text: \\\"Start Creating Today!\\\"\\n- **Voiceover:** \\\"Join the creative revolution with AI.\\\"\\n\\n--- \\n\\nThis script will help you create an engaging and informative video highlighting the capabilities of AI tools for content creation.\"},\"model\":\"gpt-4o\",\"provider\":\"openai\",\"status\":\"completed\",\"errorMessage\":null,\"creditsCost\":20,\"apiKeyUsed\":\"openai-gpt-4o\",\"createdAt\":\"2025-11-17T21:27:40.410Z\",\"completedAt\":\"2025-11-17T21:27:52.791Z\"}]"
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_transferSize": 4531,
+          "_error": null,
+          "_fetchedViaServiceWorker": false
+        },
+        "serverIPAddress": "34.111.179.208",
+        "startedDateTime": "2025-11-19T19:30:35.054Z",
+        "time": 134.03200000175275,
+        "timings": {
+          "blocked": 1.7649999978840352,
+          "dns": -1,
+          "ssl": -1,
+          "connect": -1,
+          "send": 0.31599999999999984,
+          "wait": 131.39400001175517,
+          "receive": 0.5569999921135604,
+          "_blocked_queueing": 0.7029999978840351,
+          "_workerStart": -1,
+          "_workerReady": -1,
+          "_workerFetchStart": -1,
+          "_workerRespondWithSettled": -1
+        }
+      },
+      {
+        "_connectionId": "4785",
+        "_initiator": {
+          "type": "script",
+          "stack": {
+            "callFrames": [],
+            "parent": {
+              "description": "Image",
+              "callFrames": [
+                {
+                  "functionName": "dC",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 32270
+                },
+                {
+                  "functionName": "K_",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 31478
+                },
+                {
+                  "functionName": "lz",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 31028
+                },
+                {
+                  "functionName": "hz",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 40919
+                },
+                {
+                  "functionName": "Xs",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 40277
+                },
+                {
+                  "functionName": "mC",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 36885
+                },
+                {
+                  "functionName": "Ms",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 37,
+                  "columnNumber": 3278
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 34262
+                }
+              ],
+              "parent": {
+                "description": "setTimeout",
+                "callFrames": [
+                  {
+                    "functionName": "a",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 10518
+                  },
+                  {
+                    "functionName": "o",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 10605
+                  },
+                  {
+                    "functionName": "batch",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 10697
+                  },
+                  {
+                    "functionName": "ia",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 16772
+                  },
+                  {
+                    "functionName": "setData",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 11980
+                  },
+                  {
+                    "functionName": "onSuccess",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 15217
+                  },
+                  {
+                    "functionName": "d",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 9645
+                  }
+                ],
+                "parent": {
+                  "description": "Promise.then",
+                  "callFrames": [
+                    {
+                      "functionName": "x",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 10038
+                    },
+                    {
+                      "functionName": "start",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 10444
+                    },
+                    {
+                      "functionName": "fetch",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 15728
+                    },
+                    {
+                      "functionName": "nd",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 36124
+                    },
+                    {
+                      "functionName": "onSubscribe",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 30658
+                    },
+                    {
+                      "functionName": "subscribe",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 4344
+                    },
+                    {
+                      "functionName": "",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 41648
+                    },
+                    {
+                      "functionName": "v_",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 37,
+                      "columnNumber": 19707
+                    },
+                    {
+                      "functionName": "Xg",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 24282
+                    },
+                    {
+                      "functionName": "Wl",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 42408
+                    },
+                    {
+                      "functionName": "hz",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 41230
+                    },
+                    {
+                      "functionName": "Xs",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 40277
+                    },
+                    {
+                      "functionName": "mC",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 36885
+                    },
+                    {
+                      "functionName": "Ms",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 37,
+                      "columnNumber": 3278
+                    },
+                    {
+                      "functionName": "",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 34262
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "_priority": "High",
+        "_resourceType": "image",
+        "cache": {},
+        "connection": "443",
+        "request": {
+          "method": "GET",
+          "url": "https://artivio.ai/uploads/1763575958449-9adce318ffe3c2038f905f2a845babcd.jpeg",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": ":authority",
+              "value": "artivio.ai"
+            },
+            {
+              "name": ":method",
+              "value": "GET"
+            },
+            {
+              "name": ":path",
+              "value": "/uploads/1763575958449-9adce318ffe3c2038f905f2a845babcd.jpeg"
+            },
+            {
+              "name": ":scheme",
+              "value": "https"
+            },
+            {
+              "name": "accept",
+              "value": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+            },
+            {
+              "name": "accept-encoding",
+              "value": "gzip, deflate, br, zstd"
+            },
+            {
+              "name": "accept-language",
+              "value": "en-US,en;q=0.9,en-CA;q=0.8"
+            },
+            {
+              "name": "priority",
+              "value": "i"
+            },
+            {
+              "name": "referer",
+              "value": "https://artivio.ai/analyze-image"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?1"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Android\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "image"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "no-cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-origin"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36 Edg/143.0.0.0"
+            }
+          ],
+          "queryString": [],
+          "cookies": [],
+          "headersSize": -1,
+          "bodySize": 0
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": "accept-ranges",
+              "value": "bytes"
+            },
+            {
+              "name": "alt-svc",
+              "value": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+            },
+            {
+              "name": "cache-control",
+              "value": "public, max-age=0"
+            },
+            {
+              "name": "content-length",
+              "value": "977"
+            },
+            {
+              "name": "content-type",
+              "value": "text/html; charset=UTF-8"
+            },
+            {
+              "name": "date",
+              "value": "Wed, 19 Nov 2025 19:30:34 GMT"
+            },
+            {
+              "name": "etag",
+              "value": "W/\"3d1-19a9d94e420\""
+            },
+            {
+              "name": "last-modified",
+              "value": "Wed, 19 Nov 2025 19:26:12 GMT"
+            },
+            {
+              "name": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "name": "strict-transport-security",
+              "value": "max-age=63072000; includeSubDomains"
+            },
+            {
+              "name": "via",
+              "value": "1.1 google"
+            },
+            {
+              "name": "x-cloud-trace-context",
+              "value": "d36132f8150eb970386738d8d0376b22"
+            },
+            {
+              "name": "x-powered-by",
+              "value": "Express"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "size": 977,
+            "mimeType": "text/html",
+            "text": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1\" />\n    <link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\" />\n    <title>Artivio AI - AI Content Generation Platform</title>\n    <meta name=\"description\" content=\"Create stunning AI-generated videos, images, and music with Artivio AI. Access powerful AI models including Veo 3.1, Runway Aleph, Flux Kontext, and Suno in one platform.\">\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n    <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n    <script type=\"module\" crossorigin src=\"/assets/index-Bmf5YQtw.js\"></script>\n    <link rel=\"stylesheet\" crossorigin href=\"/assets/index-CGQlMLYw.css\">\n  </head>\n  <body>\n    <div id=\"root\"></div>\n  </body>\n</html>"
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_transferSize": 977,
+          "_error": null,
+          "_fetchedViaServiceWorker": false
+        },
+        "serverIPAddress": "34.111.179.208",
+        "startedDateTime": "2025-11-19T19:30:35.196Z",
+        "time": 91.01199998985976,
+        "timings": {
+          "blocked": 1.610999999238178,
+          "dns": -1,
+          "ssl": -1,
+          "connect": -1,
+          "send": 0.30399999999999994,
+          "wait": 86.58400000572018,
+          "receive": 2.5129999849013984,
+          "_blocked_queueing": 0.7069999992381781,
+          "_workerStart": -1,
+          "_workerReady": -1,
+          "_workerFetchStart": -1,
+          "_workerRespondWithSettled": -1
+        }
+      },
+      {
+        "_connectionId": "4785",
+        "_initiator": {
+          "type": "script",
+          "stack": {
+            "callFrames": [],
+            "parent": {
+              "description": "Image",
+              "callFrames": [
+                {
+                  "functionName": "dC",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 32270
+                },
+                {
+                  "functionName": "K_",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 31478
+                },
+                {
+                  "functionName": "lz",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 31028
+                },
+                {
+                  "functionName": "hz",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 40919
+                },
+                {
+                  "functionName": "Xs",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 40277
+                },
+                {
+                  "functionName": "mC",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 36885
+                },
+                {
+                  "functionName": "Ms",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 37,
+                  "columnNumber": 3278
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 34262
+                }
+              ],
+              "parent": {
+                "description": "setTimeout",
+                "callFrames": [
+                  {
+                    "functionName": "a",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 10518
+                  },
+                  {
+                    "functionName": "o",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 10605
+                  },
+                  {
+                    "functionName": "batch",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 10697
+                  },
+                  {
+                    "functionName": "ia",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 16772
+                  },
+                  {
+                    "functionName": "setData",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 11980
+                  },
+                  {
+                    "functionName": "onSuccess",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 15217
+                  },
+                  {
+                    "functionName": "d",
+                    "scriptId": "5",
+                    "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                    "lineNumber": 47,
+                    "columnNumber": 9645
+                  }
+                ],
+                "parent": {
+                  "description": "Promise.then",
+                  "callFrames": [
+                    {
+                      "functionName": "x",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 10038
+                    },
+                    {
+                      "functionName": "start",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 10444
+                    },
+                    {
+                      "functionName": "fetch",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 15728
+                    },
+                    {
+                      "functionName": "nd",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 36124
+                    },
+                    {
+                      "functionName": "onSubscribe",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 30658
+                    },
+                    {
+                      "functionName": "subscribe",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 4344
+                    },
+                    {
+                      "functionName": "",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 47,
+                      "columnNumber": 41648
+                    },
+                    {
+                      "functionName": "v_",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 37,
+                      "columnNumber": 19707
+                    },
+                    {
+                      "functionName": "Xg",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 24282
+                    },
+                    {
+                      "functionName": "Wl",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 42408
+                    },
+                    {
+                      "functionName": "hz",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 41230
+                    },
+                    {
+                      "functionName": "Xs",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 40277
+                    },
+                    {
+                      "functionName": "mC",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 36885
+                    },
+                    {
+                      "functionName": "Ms",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 37,
+                      "columnNumber": 3278
+                    },
+                    {
+                      "functionName": "",
+                      "scriptId": "5",
+                      "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                      "lineNumber": 39,
+                      "columnNumber": 34262
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "_priority": "Low",
+        "_resourceType": "image",
+        "cache": {},
+        "connection": "443",
+        "request": {
+          "method": "GET",
+          "url": "https://artivio.ai/uploads/1763414860367-caade3708b4a8a6a967d56ecb719e620.png",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": ":authority",
+              "value": "artivio.ai"
+            },
+            {
+              "name": ":method",
+              "value": "GET"
+            },
+            {
+              "name": ":path",
+              "value": "/uploads/1763414860367-caade3708b4a8a6a967d56ecb719e620.png"
+            },
+            {
+              "name": ":scheme",
+              "value": "https"
+            },
+            {
+              "name": "accept",
+              "value": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+            },
+            {
+              "name": "accept-encoding",
+              "value": "gzip, deflate, br, zstd"
+            },
+            {
+              "name": "accept-language",
+              "value": "en-US,en;q=0.9,en-CA;q=0.8"
+            },
+            {
+              "name": "priority",
+              "value": "i"
+            },
+            {
+              "name": "referer",
+              "value": "https://artivio.ai/analyze-image"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?1"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Android\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "image"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "no-cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-origin"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36 Edg/143.0.0.0"
+            }
+          ],
+          "queryString": [],
+          "cookies": [],
+          "headersSize": -1,
+          "bodySize": 0
+        },
+        "response": {
+          "status": 200,
+          "statusText": "OK",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": "accept-ranges",
+              "value": "bytes"
+            },
+            {
+              "name": "alt-svc",
+              "value": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+            },
+            {
+              "name": "cache-control",
+              "value": "public, max-age=0"
+            },
+            {
+              "name": "content-length",
+              "value": "977"
+            },
+            {
+              "name": "content-type",
+              "value": "text/html; charset=UTF-8"
+            },
+            {
+              "name": "date",
+              "value": "Wed, 19 Nov 2025 19:30:34 GMT"
+            },
+            {
+              "name": "etag",
+              "value": "W/\"3d1-19a9d94e420\""
+            },
+            {
+              "name": "last-modified",
+              "value": "Wed, 19 Nov 2025 19:26:12 GMT"
+            },
+            {
+              "name": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "name": "strict-transport-security",
+              "value": "max-age=63072000; includeSubDomains"
+            },
+            {
+              "name": "via",
+              "value": "1.1 google"
+            },
+            {
+              "name": "x-cloud-trace-context",
+              "value": "02efb61583ad4025386738d8d0376cb9"
+            },
+            {
+              "name": "x-powered-by",
+              "value": "Express"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "size": 977,
+            "mimeType": "text/html",
+            "text": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1\" />\n    <link rel=\"icon\" type=\"image/png\" href=\"/favicon.png\" />\n    <title>Artivio AI - AI Content Generation Platform</title>\n    <meta name=\"description\" content=\"Create stunning AI-generated videos, images, and music with Artivio AI. Access powerful AI models including Veo 3.1, Runway Aleph, Flux Kontext, and Suno in one platform.\">\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n    <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n    <script type=\"module\" crossorigin src=\"/assets/index-Bmf5YQtw.js\"></script>\n    <link rel=\"stylesheet\" crossorigin href=\"/assets/index-CGQlMLYw.css\">\n  </head>\n  <body>\n    <div id=\"root\"></div>\n  </body>\n</html>"
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_transferSize": 977,
+          "_error": null,
+          "_fetchedViaServiceWorker": false
+        },
+        "serverIPAddress": "34.111.179.208",
+        "startedDateTime": "2025-11-19T19:30:35.196Z",
+        "time": 87.87299998220988,
+        "timings": {
+          "blocked": 1.847000000966713,
+          "dns": -1,
+          "ssl": -1,
+          "connect": -1,
+          "send": 0.18600000000000005,
+          "wait": 84.25199999662117,
+          "receive": 1.5879999846220016,
+          "_blocked_queueing": 1.0130000009667128,
+          "_workerStart": -1,
+          "_workerReady": -1,
+          "_workerFetchStart": -1,
+          "_workerRespondWithSettled": -1
+        }
+      },
+      {
+        "_connectionId": "4785",
+        "_initiator": {
+          "type": "script",
+          "stack": {
+            "callFrames": [
+              {
+                "functionName": "mutationFn",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 888,
+                "columnNumber": 82511
+              },
+              {
+                "functionName": "fn",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 19559
+              },
+              {
+                "functionName": "x",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 9985
+              },
+              {
+                "functionName": "start",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 10444
+              },
+              {
+                "functionName": "execute",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 20364
+              }
+            ],
+            "parent": {
+              "description": "await",
+              "callFrames": [
+                {
+                  "functionName": "mutate",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 47,
+                  "columnNumber": 39307
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 47,
+                  "columnNumber": 42591
+                },
+                {
+                  "functionName": "R",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 888,
+                  "columnNumber": 83943
+                },
+                {
+                  "functionName": "_8",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 9863
+                },
+                {
+                  "functionName": "I8",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 10017
+                },
+                {
+                  "functionName": "$8",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 10074
+                },
+                {
+                  "functionName": "LS",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 31461
+                },
+                {
+                  "functionName": "t_",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 31878
+                },
+                {
+                  "functionName": "",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 36791
+                },
+                {
+                  "functionName": "gj",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 39,
+                  "columnNumber": 36956
+                },
+                {
+                  "functionName": "CT",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 8998
+                },
+                {
+                  "functionName": "sy",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 33165
+                },
+                {
+                  "functionName": "W1",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 17375
+                },
+                {
+                  "functionName": "X8",
+                  "scriptId": "5",
+                  "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                  "lineNumber": 36,
+                  "columnNumber": 17159
+                }
+              ]
+            }
+          }
+        },
+        "_priority": "High",
+        "_resourceType": "fetch",
+        "cache": {},
+        "connection": "443",
+        "request": {
+          "method": "POST",
+          "url": "https://artivio.ai/api/generate/video",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": ":authority",
+              "value": "artivio.ai"
+            },
+            {
+              "name": ":method",
+              "value": "POST"
+            },
+            {
+              "name": ":path",
+              "value": "/api/generate/video"
+            },
+            {
+              "name": ":scheme",
+              "value": "https"
+            },
+            {
+              "name": "accept",
+              "value": "*/*"
+            },
+            {
+              "name": "accept-encoding",
+              "value": "gzip, deflate, br, zstd"
+            },
+            {
+              "name": "accept-language",
+              "value": "en-US,en;q=0.9,en-CA;q=0.8"
+            },
+            {
+              "name": "content-length",
+              "value": "147"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "origin",
+              "value": "https://artivio.ai"
+            },
+            {
+              "name": "priority",
+              "value": "u=1, i"
+            },
+            {
+              "name": "referer",
+              "value": "https://artivio.ai/generate/sora"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?1"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Android\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "empty"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-origin"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36 Edg/143.0.0.0"
+            }
+          ],
+          "queryString": [],
+          "cookies": [],
+          "headersSize": -1,
+          "bodySize": 147,
+          "postData": {
+            "mimeType": "application/json",
+            "text": "{\"model\":\"sora-2\",\"prompt\":\"Video of a bird flying\",\"referenceImages\":[],\"parameters\":{\"aspectRatio\":\"16:9\",\"nFrames\":\"10\",\"removeWatermark\":true}}"
+          }
+        },
+        "response": {
+          "status": 401,
+          "statusText": "Unauthorized",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": "alt-svc",
+              "value": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+            },
+            {
+              "name": "content-length",
+              "value": "46"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "name": "date",
+              "value": "Wed, 19 Nov 2025 19:31:00 GMT"
+            },
+            {
+              "name": "etag",
+              "value": "W/\"2e-2myeMP/HLhPaYlT8X2ymX20uZRw\""
+            },
+            {
+              "name": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "name": "strict-transport-security",
+              "value": "max-age=63072000; includeSubDomains"
+            },
+            {
+              "name": "via",
+              "value": "1.1 google"
+            },
+            {
+              "name": "x-cloud-trace-context",
+              "value": "99d5c0671c31320d15c8506857088fc1;o=1"
+            },
+            {
+              "name": "x-powered-by",
+              "value": "Express"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "size": 46,
+            "mimeType": "application/json",
+            "text": "{\"message\":\"Unauthorized - No token provided\"}"
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": -1,
+          "_transferSize": 70,
+          "_error": null,
+          "_fetchedViaServiceWorker": false
+        },
+        "serverIPAddress": "34.111.179.208",
+        "startedDateTime": "2025-11-19T19:31:01.297Z",
+        "time": 104.7649999964051,
+        "timings": {
+          "blocked": 0.9909999890718609,
+          "dns": -1,
+          "ssl": -1,
+          "connect": -1,
+          "send": 0.31499999999999995,
+          "wait": 102.81000001317821,
+          "receive": 0.6489999941550195,
+          "_blocked_queueing": 0.5909999890718609,
+          "_workerStart": -1,
+          "_workerReady": -1,
+          "_workerFetchStart": -1,
+          "_workerRespondWithSettled": -1
+        }
+      },
+      {
+        "_connectionId": "4785",
+        "_initiator": {
+          "type": "script",
+          "stack": {
+            "callFrames": [
+              {
+                "functionName": "Ej",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 43064
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 43792
+              },
+              {
+                "functionName": "s",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 14392
+              },
+              {
+                "functionName": "x",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 9985
+              },
+              {
+                "functionName": "start",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 10444
+              },
+              {
+                "functionName": "fetch",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 15728
+              },
+              {
+                "functionName": "nd",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 36124
+              },
+              {
+                "functionName": "",
+                "scriptId": "5",
+                "url": "https://artivio.ai/assets/index-Bmf5YQtw.js",
+                "lineNumber": 47,
+                "columnNumber": 36823
+              }
+            ]
+          }
+        },
+        "_priority": "High",
+        "_resourceType": "fetch",
+        "cache": {},
+        "connection": "443",
+        "request": {
+          "method": "GET",
+          "url": "https://artivio.ai/api/announcements/active",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": ":authority",
+              "value": "artivio.ai"
+            },
+            {
+              "name": ":method",
+              "value": "GET"
+            },
+            {
+              "name": ":path",
+              "value": "/api/announcements/active"
+            },
+            {
+              "name": ":scheme",
+              "value": "https"
+            },
+            {
+              "name": "accept",
+              "value": "*/*"
+            },
+            {
+              "name": "accept-encoding",
+              "value": "gzip, deflate, br, zstd"
+            },
+            {
+              "name": "accept-language",
+              "value": "en-US,en;q=0.9,en-CA;q=0.8"
+            },
+            {
+              "name": "if-none-match",
+              "value": "W/\"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w\""
+            },
+            {
+              "name": "priority",
+              "value": "u=1, i"
+            },
+            {
+              "name": "referer",
+              "value": "https://artivio.ai/generate/sora"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?1"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Android\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "empty"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-origin"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36 Edg/143.0.0.0"
+            }
+          ],
+          "queryString": [],
+          "cookies": [],
+          "headersSize": -1,
+          "bodySize": 0
+        },
+        "response": {
+          "status": 304,
+          "statusText": "Not Modified",
+          "httpVersion": "h3",
+          "headers": [
+            {
+              "name": "alt-svc",
+              "value": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000"
+            },
+            {
+              "name": "date",
+              "value": "Wed, 19 Nov 2025 19:31:01 GMT"
+            },
+            {
+              "name": "etag",
+              "value": "W/\"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w\""
+            },
+            {
+              "name": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "name": "strict-transport-security",
+              "value": "max-age=63072000; includeSubDomains"
+            },
+            {
+              "name": "via",
+              "value": "1.1 google"
+            },
+            {
+              "name": "x-cloud-trace-context",
+              "value": "afa8e90f50146f5115c8506857088e1b"
+            },
+            {
+              "name": "x-powered-by",
+              "value": "Express"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "size": 2,
+            "mimeType": "application/json",
+            "text": "[]"
+          },
+          "redirectURL": "",
+          "headersSize": -1,
+          "bodySize": 0,
+          "_transferSize": 18,
+          "_error": null,
+          "_fetchedViaServiceWorker": false
+        },
+        "serverIPAddress": "34.111.179.208",
+        "startedDateTime": "2025-11-19T19:31:01.971Z",
+        "time": 199.82099998742342,
+        "timings": {
+          "blocked": 1.744999985029921,
+          "dns": -1,
+          "ssl": -1,
+          "connect": -1,
+          "send": 0.31299999999999994,
+          "wait": 197.19400000621752,
+          "receive": 0.5689999961759895,
+          "_blocked_queueing": 0.7509999850299209,
+          "_workerStart": -1,
+          "_workerReady": -1,
+          "_workerFetchStart": -1,
+          "_workerRespondWithSettled": -1
+        }
+      }
+    ]
+  }
+}
