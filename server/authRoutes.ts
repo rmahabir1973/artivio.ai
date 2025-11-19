@@ -118,15 +118,28 @@ export function registerAuthRoutes(app: Express) {
       const refreshToken = generateRefreshToken();
       const deviceInfo = req.headers["user-agent"] || "unknown";
 
-      // Store refresh token in database
-      const tokenId = await storeRefreshToken(
-        newUser.id,
-        refreshToken,
-        newUser.tokenVersion || 0,
-        deviceInfo
-      );
+      // Store refresh token in database FIRST - catch errors
+      let tokenId;
+      try {
+        tokenId = await storeRefreshToken(
+          newUser.id,
+          refreshToken,
+          newUser.tokenVersion || 0,
+          deviceInfo
+        );
+      } catch (storeError: any) {
+        console.error("[AUTH ERROR] Failed to store refresh token during registration", {
+          error: storeError.message,
+          userId: newUser.id,
+        });
+        // Don't set cookies if database operation failed
+        return res.status(503).json({
+          message: "Database error during registration. Please try again.",
+          code: "TOKEN_STORE_ERROR",
+        });
+      }
 
-      // Set refresh token in httpOnly cookie
+      // Only set cookies AFTER successful database storage
       const useSecureCookies = isSecureRequest(req);
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -147,7 +160,8 @@ export function registerAuthRoutes(app: Express) {
 
       console.log("[AUTH] ✓ JWT tokens generated and stored", {
         userId: newUser.id,
-        tokenId,
+        email: newUser.email,
+        tokenId: tokenId?.substring(0, 8),
       });
 
       // Return access token and user data
@@ -237,15 +251,28 @@ export function registerAuthRoutes(app: Express) {
         const refreshToken = generateRefreshToken();
         const deviceInfo = req.headers["user-agent"] || "unknown";
 
-        // Store refresh token in database
-        const tokenId = await storeRefreshToken(
-          user.id,
-          refreshToken,
-          user.tokenVersion || 0,
-          deviceInfo
-        );
+        // Store refresh token in database FIRST - catch errors
+        let tokenId;
+        try {
+          tokenId = await storeRefreshToken(
+            user.id,
+            refreshToken,
+            user.tokenVersion || 0,
+            deviceInfo
+          );
+        } catch (storeError: any) {
+          console.error("[AUTH ERROR] Failed to store refresh token during login", {
+            error: storeError.message,
+            userId: user.id,
+          });
+          // Don't set cookies if database operation failed
+          return res.status(503).json({
+            message: "Database error during login. Please try again.",
+            code: "TOKEN_STORE_ERROR",
+          });
+        }
 
-        // Set refresh token in httpOnly cookie
+        // Only set cookies AFTER successful database storage
         const useSecureCookies = isSecureRequest(req);
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
@@ -266,7 +293,8 @@ export function registerAuthRoutes(app: Express) {
 
         console.log("[AUTH] ✓ Login successful - JWT tokens generated", {
           userId: user.id,
-          tokenId,
+          email: user.email,
+          tokenId: tokenId?.substring(0, 8),
           isAdmin,
         });
 
@@ -352,15 +380,25 @@ export function registerAuthRoutes(app: Express) {
         const refreshToken = generateRefreshToken();
         const deviceInfo = req.headers["user-agent"] || "unknown";
 
-        // Store refresh token in database
-        const tokenId = await storeRefreshToken(
-          user.id,
-          refreshToken,
-          user.tokenVersion || 0,
-          deviceInfo
-        );
+        // Store refresh token in database FIRST - catch errors
+        let tokenId;
+        try {
+          tokenId = await storeRefreshToken(
+            user.id,
+            refreshToken,
+            user.tokenVersion || 0,
+            deviceInfo
+          );
+        } catch (storeError: any) {
+          console.error("[AUTH ERROR] Failed to store refresh token during OAuth", {
+            error: storeError.message,
+            userId: user.id,
+          });
+          // Don't set cookies if database operation failed
+          return res.redirect("/?error=token_store_failed");
+        }
 
-        // Set refresh token in httpOnly cookie
+        // Only set cookies AFTER successful database storage
         const useSecureCookies = isSecureRequest(req);
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
@@ -381,7 +419,8 @@ export function registerAuthRoutes(app: Express) {
 
         console.log("[AUTH] ✓ OAuth successful - JWT tokens generated and cookies set", {
           userId: user.id,
-          tokenId,
+          email: user.email,
+          tokenId: tokenId?.substring(0, 8),
           isAdmin,
         });
 
@@ -399,51 +438,104 @@ export function registerAuthRoutes(app: Express) {
 
   // Refresh Token endpoint
   app.post("/api/auth/refresh", async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    const tokenId = req.cookies.tokenId;
+
     try {
-      console.log("[AUTH] Refresh token request");
+      console.log("[AUTH] Refresh token request", {
+        hasRefreshToken: !!refreshToken,
+        hasTokenId: !!tokenId,
+        tokenIdPreview: tokenId?.substring(0, 8),
+      });
 
-      // Get refresh token and tokenId from cookies
-      const refreshToken = req.cookies.refreshToken;
-      const tokenId = req.cookies.tokenId;
-
+      // Check for required cookies
       if (!refreshToken || !tokenId) {
-        console.log("[AUTH] Refresh failed - missing cookies", {
-          hasRefreshToken: !!refreshToken,
-          hasTokenId: !!tokenId,
-        });
+        console.log("[AUTH] Refresh failed - missing cookies");
+        res.clearCookie("refreshToken", { path: "/" });
+        res.clearCookie("tokenId", { path: "/" });
         return res.status(401).json({
           message: "No refresh token found. Please log in again.",
+          code: "MISSING_REFRESH_TOKEN",
         });
       }
 
-      // Validate refresh token
-      const validationResult = await validateRefreshToken(refreshToken, tokenId);
+      // Validate refresh token - catch any database errors
+      let validationResult;
+      try {
+        validationResult = await validateRefreshToken(refreshToken, tokenId);
+      } catch (dbError: any) {
+        console.error("[AUTH ERROR] Database error during token validation", {
+          error: dbError.message,
+          tokenId: tokenId?.substring(0, 8),
+        });
+        res.clearCookie("refreshToken", { path: "/" });
+        res.clearCookie("tokenId", { path: "/" });
+        return res.status(401).json({
+          message: "Token validation failed. Please log in again.",
+          code: "VALIDATION_ERROR",
+        });
+      }
 
       if (!validationResult) {
         console.log("[AUTH] Refresh failed - invalid or expired token", {
-          tokenId,
+          tokenId: tokenId?.substring(0, 8),
         });
-        // Clear invalid cookies
         res.clearCookie("refreshToken", { path: "/" });
         res.clearCookie("tokenId", { path: "/" });
         return res.status(401).json({
           message: "Invalid or expired refresh token. Please log in again.",
+          code: "INVALID_REFRESH_TOKEN",
         });
       }
 
       const { userId, tokenVersion } = validationResult;
 
-      // Get user data for access token
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+      // Validate tokenVersion - protect against undefined/null
+      if (typeof tokenVersion !== 'number') {
+        console.error("[AUTH ERROR] Invalid tokenVersion in refresh", {
+          userId,
+          tokenVersion,
+          tokenId: tokenId?.substring(0, 8),
+        });
+        res.clearCookie("refreshToken", { path: "/" });
+        res.clearCookie("tokenId", { path: "/" });
+        return res.status(401).json({
+          message: "Invalid token version. Please log in again.",
+          code: "INVALID_TOKEN_VERSION",
+        });
+      }
+
+      // Get user data for access token - catch database errors
+      let user;
+      try {
+        [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+      } catch (dbError: any) {
+        console.error("[AUTH ERROR] Database error fetching user during refresh", {
+          error: dbError.message,
+          userId,
+        });
+        res.clearCookie("refreshToken", { path: "/" });
+        res.clearCookie("tokenId", { path: "/" });
+        return res.status(503).json({
+          message: "Database error. Please try again.",
+          code: "DB_ERROR",
+        });
+      }
 
       if (!user) {
-        console.error("[AUTH ERROR] User not found during refresh", { userId });
+        console.error("[AUTH ERROR] User not found during refresh", {
+          userId,
+          tokenId: tokenId?.substring(0, 8),
+        });
+        res.clearCookie("refreshToken", { path: "/" });
+        res.clearCookie("tokenId", { path: "/" });
         return res.status(404).json({
           message: "User not found. Please log in again.",
+          code: "USER_NOT_FOUND",
         });
       }
 
@@ -456,14 +548,31 @@ export function registerAuthRoutes(app: Express) {
       ];
       const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || "");
 
-      // Rotate refresh token for security
-      const deviceInfo = req.headers["user-agent"] || "unknown";
-      const { token: newRefreshToken, tokenId: newTokenId } = await rotateRefreshToken(
-        tokenId,
-        userId,
-        tokenVersion,
-        deviceInfo
-      );
+      // Rotate refresh token for security - catch database errors
+      let newRefreshToken, newTokenId;
+      try {
+        const deviceInfo = req.headers["user-agent"] || "unknown";
+        const rotationResult = await rotateRefreshToken(
+          tokenId,
+          userId,
+          tokenVersion, // Now guaranteed to be a valid number
+          deviceInfo
+        );
+        newRefreshToken = rotationResult.token;
+        newTokenId = rotationResult.tokenId;
+      } catch (rotationError: any) {
+        console.error("[AUTH ERROR] Token rotation failed", {
+          error: rotationError.message,
+          userId,
+          tokenId: tokenId?.substring(0, 8),
+        });
+        // Don't clear cookies here - the old token is still valid
+        // Return 503 to indicate temporary issue
+        return res.status(503).json({
+          message: "Token rotation failed. Please try again.",
+          code: "ROTATION_ERROR",
+        });
+      }
 
       // Generate new access token
       const accessToken = generateAccessToken({
@@ -493,7 +602,9 @@ export function registerAuthRoutes(app: Express) {
 
       console.log("[AUTH] ✓ Token refresh successful", {
         userId: user.id,
-        newTokenId,
+        email: user.email,
+        newTokenId: newTokenId?.substring(0, 8),
+        isAdmin,
       });
 
       // Return new access token
@@ -502,11 +613,20 @@ export function registerAuthRoutes(app: Express) {
         accessToken,
       });
     } catch (error: any) {
-      console.error("[AUTH ERROR] Token refresh error", {
+      // Catch-all for any unexpected errors
+      console.error("[AUTH ERROR] Unexpected token refresh error", {
         error: error.message,
+        stack: error.stack,
+        tokenId: tokenId?.substring(0, 8),
       });
+
+      // Clear cookies on unexpected errors
+      res.clearCookie("refreshToken", { path: "/" });
+      res.clearCookie("tokenId", { path: "/" });
+
       res.status(500).json({
-        message: "Failed to refresh token. Please try again.",
+        message: "An unexpected error occurred. Please log in again.",
+        code: "INTERNAL_ERROR",
       });
     }
   });
