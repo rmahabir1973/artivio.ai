@@ -16,7 +16,8 @@ const SALT_ROUNDS = 10;
 // Session configuration
 function getSession() {
   const isProduction = process.env.NODE_ENV === "production";
-  const isHttps = process.env.REPLIT_DOMAINS !== undefined || isProduction;
+  // Only use secure cookies in production - this allows session cookies to work in dev/test environments
+  const useSecureCookies = isProduction;
   
   const sessionConfig = {
     store: new PgSession({
@@ -36,14 +37,13 @@ function getSession() {
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       httpOnly: true,
-      secure: isHttps,
-      sameSite: (isHttps ? "lax" : "lax") as "lax",
+      secure: useSecureCookies,
+      sameSite: "lax" as "lax",
     },
   };
 
   console.log("[SESSION CONFIG]", {
     isProduction,
-    isHttps,
     secureCookies: sessionConfig.cookie.secure,
     sameSite: sessionConfig.cookie.sameSite,
   });

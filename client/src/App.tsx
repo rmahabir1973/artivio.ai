@@ -11,6 +11,8 @@ import { Loader2 } from "lucide-react";
 
 // Pages
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
 import Pricing from "@/pages/pricing";
 import Affiliates from "@/pages/affiliates";
 import Home from "@/pages/home";
@@ -60,6 +62,8 @@ function Router() {
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
           <Route path="/pricing" component={Pricing} />
         </>
       ) : (

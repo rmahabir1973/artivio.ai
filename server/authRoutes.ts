@@ -10,6 +10,7 @@ import { z } from "zod";
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  name: z.string().min(1, "Name is required").optional(),
   firstName: z.string().min(1, "First name is required").optional(),
   lastName: z.string().min(1, "Last name is required").optional(),
 });
@@ -29,7 +30,17 @@ export function registerAuthRoutes(app: Express) {
 
       // Validate request body
       const validatedData = registerSchema.parse(req.body);
-      const { email, password, firstName, lastName } = validatedData;
+      const { email, password, name, firstName, lastName } = validatedData;
+
+      // Split name into firstName and lastName if provided
+      let finalFirstName = firstName || "";
+      let finalLastName = lastName || "";
+      
+      if (name && !firstName && !lastName) {
+        const nameParts = name.trim().split(/\s+/);
+        finalFirstName = nameParts[0] || "";
+        finalLastName = nameParts.slice(1).join(" ") || "";
+      }
 
       // Check if user already exists
       const [existingUser] = await db
@@ -43,7 +54,7 @@ export function registerAuthRoutes(app: Express) {
           email: email.toLowerCase(),
         });
         return res.status(400).json({
-          message: "An account with this email already exists. Please log in instead.",
+          error: "An account with this email already exists. Please log in instead.",
         });
       }
 
@@ -57,8 +68,8 @@ export function registerAuthRoutes(app: Express) {
           email: email.toLowerCase(),
           password: hashedPassword,
           authProvider: "local",
-          firstName: firstName || "",
-          lastName: lastName || "",
+          firstName: finalFirstName,
+          lastName: finalLastName,
           credits: 0, // Will be set during onboarding
         })
         .returning();

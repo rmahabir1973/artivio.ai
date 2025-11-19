@@ -44,8 +44,8 @@ export default function Pricing() {
           throw new Error('Failed to store plan selection');
         }
 
-        // Redirect to authentication
-        window.location.href = '/api/login';
+        // Redirect to registration for new users
+        window.location.href = '/register';
       } else {
         // Paid plan: redirect to Stripe checkout
         const response = await fetch('/api/billing/checkout', {
