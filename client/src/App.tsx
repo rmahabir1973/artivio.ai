@@ -120,15 +120,10 @@ function AppContent() {
     }
   }, [location]);
 
-  // Handle login - invalidate cache to fetch fresh data
-  useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      console.log('[AUTH] Login detected - invalidating cache to fetch fresh data');
-      
-      // Invalidate all queries to force fresh data fetch
-      queryClient.invalidateQueries();
-    }
-  }, [isAuthenticated, isLoading]);
+  // REMOVED: Blanket cache invalidation on login caused race condition
+  // where queries refetched before access token was available in authContextRef,
+  // resulting in 401 errors. Individual components now handle their own
+  // cache invalidation after mutations.
 
   if (isLoading) {
     return (
