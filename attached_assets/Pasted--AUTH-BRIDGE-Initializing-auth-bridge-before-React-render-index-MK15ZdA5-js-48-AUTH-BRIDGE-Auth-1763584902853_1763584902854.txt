@@ -1,0 +1,55 @@
+[AUTH BRIDGE] Initializing auth bridge before React render
+index-MK15ZdA5.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-MK15ZdA5.js:618 [AUTH] Initializing auth - attempting to refresh token
+index-MK15ZdA5.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-MK15ZdA5.js:618 [AUTH] Access token refreshed successfully
+index-MK15ZdA5.js:618 [AUTH] Token obtained - fetching user data
+index-MK15ZdA5.js:618 [AUTH] User data loaded successfully
+6index-MK15ZdA5.js:48 [QUERY CLIENT] Adding Authorization header, token: eyJhbGciOiJIUzI1NiIs...
+index-MK15ZdA5.js:48   GET https://artivio.ai/api/generations 500 (Internal Server Error)
+kj @ index-MK15ZdA5.js:48
+(anonymous) @ index-MK15ZdA5.js:48
+s @ index-MK15ZdA5.js:48
+x @ index-MK15ZdA5.js:48
+start @ index-MK15ZdA5.js:48
+fetch @ index-MK15ZdA5.js:48
+rd @ index-MK15ZdA5.js:48
+onSubscribe @ index-MK15ZdA5.js:48
+subscribe @ index-MK15ZdA5.js:48
+(anonymous) @ index-MK15ZdA5.js:48
+g_ @ index-MK15ZdA5.js:38
+Qg @ index-MK15ZdA5.js:40
+Vl @ index-MK15ZdA5.js:40
+hC @ index-MK15ZdA5.js:40
+Ms @ index-MK15ZdA5.js:38
+mz @ index-MK15ZdA5.js:40
+Xs @ index-MK15ZdA5.js:40
+K_ @ index-MK15ZdA5.js:40
+j @ index-MK15ZdA5.js:25
+B @ index-MK15ZdA5.js:25
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+index-MK15ZdA5.js:48 [QUERY CLIENT] Adding Authorization header, token: eyJhbGciOiJIUzI1NiIs...
+index-MK15ZdA5.js:48   GET https://artivio.ai/api/generations 500 (Internal Server Error)
+kj @ index-MK15ZdA5.js:48
+(anonymous) @ index-MK15ZdA5.js:48
+s @ index-MK15ZdA5.js:48
+x @ index-MK15ZdA5.js:48
+start @ index-MK15ZdA5.js:48
+fetch @ index-MK15ZdA5.js:48
+rd @ index-MK15ZdA5.js:48
+onSubscribe @ index-MK15ZdA5.js:48
+subscribe @ index-MK15ZdA5.js:48
+(anonymous) @ index-MK15ZdA5.js:48
+g_ @ index-MK15ZdA5.js:38
+Qg @ index-MK15ZdA5.js:40
+Vl @ index-MK15ZdA5.js:40
+mz @ index-MK15ZdA5.js:40
+Xs @ index-MK15ZdA5.js:40
+hC @ index-MK15ZdA5.js:40
+Ms @ index-MK15ZdA5.js:38
+(anonymous) @ index-MK15ZdA5.js:40
+index-MK15ZdA5.js:48 [QUERY CLIENT] Adding Authorization header, token: eyJhbGciOiJIUzI1NiIs...
