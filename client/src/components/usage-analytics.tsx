@@ -59,14 +59,7 @@ export function UsageAnalytics() {
   const [selectedPeriod, setSelectedPeriod] = useState<7 | 30 | 90>(30);
 
   const { data: analytics, isLoading } = useQuery<AnalyticsData>({
-    queryKey: ['/api/analytics', { days: selectedPeriod }],
-    queryFn: async () => {
-      const response = await fetch(`/api/analytics?days=${selectedPeriod}`, {
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Failed to fetch analytics');
-      return response.json();
-    },
+    queryKey: [`/api/analytics?days=${selectedPeriod}`],
   });
 
   if (isLoading) {

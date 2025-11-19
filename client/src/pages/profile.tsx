@@ -169,11 +169,11 @@ export default function Profile() {
                 <div>
                   <p className="font-semibold">Current Plan</p>
                   <p className="text-sm text-muted-foreground">
-                    {subscription.planName}
+                    {subscription.plan?.displayName || subscription.plan?.name || "Unknown Plan"}
                   </p>
-                  {subscription.monthlyCredits && (
+                  {subscription.plan?.creditsPerMonth && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {subscription.monthlyCredits.toLocaleString()} credits/month
+                      {subscription.plan.creditsPerMonth.toLocaleString()} credits/month
                     </p>
                   )}
                 </div>
@@ -182,9 +182,9 @@ export default function Profile() {
                 </Badge>
               </div>
 
-              {subscription?.nextBillingDate && (
+              {subscription?.currentPeriodEnd && (
                 <div className="text-sm text-muted-foreground">
-                  Next billing date: {format(new Date(subscription.nextBillingDate), "MMMM d, yyyy")}
+                  Next billing date: {format(new Date(subscription.currentPeriodEnd), "MMMM d, yyyy")}
                 </div>
               )}
 
@@ -192,9 +192,9 @@ export default function Profile() {
                 <p className="text-sm text-muted-foreground">
                   Artivio AI uses a credit-based system. Each AI generation costs credits based on the feature and complexity.
                 </p>
-                {subscription?.planName ? (
+                {subscription?.plan?.displayName ? (
                   <p className="text-sm text-muted-foreground">
-                    Your {subscription.planName} plan includes {subscription.monthlyCredits?.toLocaleString()} credits per month.
+                    Your {subscription.plan.displayName} plan includes {subscription.plan.creditsPerMonth?.toLocaleString()} credits per month.
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -207,7 +207,7 @@ export default function Profile() {
                 <Button asChild variant="default" data-testid="button-manage-subscription">
                   <Link href="/pricing">
                     <CreditCard className="h-4 w-4 mr-2" />
-                    {subscription?.planName ? "Manage Subscription" : "Subscribe Now"}
+                    {subscription?.plan?.name ? "Manage Subscription" : "Subscribe Now"}
                   </Link>
                 </Button>
               </div>

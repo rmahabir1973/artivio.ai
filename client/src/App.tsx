@@ -58,13 +58,13 @@ function Router() {
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />
+      <Route path="/pricing" component={Pricing} /> {/* Available to all users */}
 
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
-          <Route path="/pricing" component={Pricing} />
         </>
       ) : (
         <>
