@@ -254,7 +254,7 @@ export function ModernHeader() {
                     data-testid="desktop-nav-logout"
                     onClick={() => {
                       // Force full page navigation for mobile Safari compatibility
-                      window.location.href = '/api/logout';
+                      window.location.href = '/api/auth/logout';
                     }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -373,7 +373,7 @@ export function ModernHeader() {
                     data-testid="mobile-nav-logout"
                     onClick={() => {
                       // Force full page navigation for mobile Safari compatibility
-                      window.location.href = '/api/logout';
+                      window.location.href = '/api/auth/logout';
                     }}
                   >
                     <LogOut className="h-5 w-5" />

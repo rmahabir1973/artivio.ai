@@ -3,9 +3,8 @@ import express from "express";
 import { createServer, type Server } from "http";
 import axios from "axios";
 import { storage } from "./storage";
-import { setupAuth } from "./customAuth";
-import { isAuthenticated, registerAuthRoutes } from "./authRoutes";
-import { checkTrialExpiration } from "./replitAuth";
+import { registerAuthRoutes } from "./authRoutes";
+import { requireJWT, requireAdmin } from "./jwtMiddleware";
 import { 
   generateVideo, 
   generateImage, 
@@ -680,7 +679,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize auth - fail-fast if this doesn't work
   // Auth is critical; without it, all protected routes will fail
   try {
-    await setupAuth(app);
     registerAuthRoutes(app); // Register custom auth routes (register, login, Google OAuth, logout)
     console.log('✓ Authentication initialized successfully');
   } catch (error) {
@@ -1009,9 +1007,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Video Generation
-  app.post('/api/generate/video', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
+  app.post('/api/generate/video', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Validate request body
       const validationResult = generateVideoRequestSchema.safeParse(req.body);
@@ -1063,9 +1061,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image Generation
-  app.post('/api/generate/image', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
+  app.post('/api/generate/image', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Validate request body
       const validationResult = generateImageRequestSchema.safeParse(req.body);
@@ -1118,9 +1116,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Topaz AI Image Upscaling
-  app.post('/api/upscale/image', isAuthenticated, async (req: any, res) => {
+  app.post('/api/upscale/image', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const validationResult = upscaleImageRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -1186,9 +1184,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Topaz AI Video Upscaling
-  app.post('/api/upscale/video', isAuthenticated, async (req: any, res) => {
+  app.post('/api/upscale/video', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const validationResult = upscaleVideoRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -1254,9 +1252,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Music Generation
-  app.post('/api/generate/music', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
+  app.post('/api/generate/music', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Validate request body
       const validationResult = generateMusicRequestSchema.safeParse(req.body);
@@ -1296,9 +1294,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Extend Music
-  app.post('/api/generate/extend-music', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
+  app.post('/api/generate/extend-music', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const validationResult = extendMusicRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -1336,9 +1334,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate Lyrics
-  app.post('/api/generate/lyrics', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate/lyrics', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const validationResult = generateLyricsRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -1373,9 +1371,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload & Cover
-  app.post('/api/generate/upload-cover', isAuthenticated, checkTrialExpiration, async (req: any, res) => {
+  app.post('/api/generate/upload-cover', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const validationResult = uploadCoverRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -1420,9 +1418,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload & Extend
-  app.post('/api/generate/upload-extend', isAuthenticated, async (req: any, res) => {
+  app.post('/api/generate/upload-extend', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const validationResult = uploadExtendRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -1467,15 +1465,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user generations
-  app.get('/api/generations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/generations', requireJWT, async (req: any, res) => {
     try {
       // Guard: Check if user exists (session might be cleared after middleware)
-      if (!req.user || !req.user.claims) {
+      if (!req.user || !req.user) {
         console.log('[/api/generations] No user in request - session likely cleared');
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const generations = await storage.getUserGenerations(userId);
       
       // Check for stuck generations (processing for more than 10 minutes = 600,000ms)
@@ -1510,9 +1508,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download generation file (proxy to avoid CORS issues)
-  app.get('/api/generations/:id/download', isAuthenticated, async (req: any, res) => {
+  app.get('/api/generations/:id/download', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { id } = req.params;
 
       // Verify the generation belongs to the user
@@ -1557,9 +1555,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent generations
-  app.get('/api/generations/recent', isAuthenticated, async (req: any, res) => {
+  app.get('/api/generations/recent', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const generations = await storage.getRecentGenerations(userId, 6);
       res.json(generations);
     } catch (error) {
@@ -1569,9 +1567,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cancel/Delete a generation
-  app.delete('/api/generations/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/generations/:id', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { id } = req.params;
 
       // First, verify the generation belongs to the user
@@ -1605,9 +1603,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user stats
-  app.get('/api/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stats', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getUserStats(userId);
       res.json(stats);
     } catch (error) {
@@ -1617,9 +1615,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user analytics
-  app.get('/api/analytics', isAuthenticated, async (req: any, res) => {
+  app.get('/api/analytics', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const days = req.query.days ? parseInt(req.query.days as string) : 30;
       const analytics = await storage.getUserAnalytics(userId, days);
       res.json(analytics);
@@ -1632,9 +1630,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== FAVORITE WORKFLOW ROUTES ==========
 
   // Get user's favorite workflows
-  app.get('/api/favorites', isAuthenticated, async (req: any, res) => {
+  app.get('/api/favorites', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const favorites = await storage.getUserFavoriteWorkflows(userId);
       res.json(favorites);
     } catch (error) {
@@ -1644,9 +1642,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add workflow to favorites
-  app.post('/api/favorites', isAuthenticated, async (req: any, res) => {
+  app.post('/api/favorites', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { workflowId, workflowTitle } = req.body;
 
       if (!workflowId || !workflowTitle) {
@@ -1662,9 +1660,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Remove workflow from favorites
-  app.delete('/api/favorites/:workflowId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/favorites/:workflowId', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const workflowId = parseInt(req.params.workflowId);
 
       if (isNaN(workflowId)) {
@@ -1680,9 +1678,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Check if workflow is favorited
-  app.get('/api/favorites/:workflowId/check', isAuthenticated, async (req: any, res) => {
+  app.get('/api/favorites/:workflowId/check', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const workflowId = parseInt(req.params.workflowId);
 
       if (isNaN(workflowId)) {
@@ -1700,9 +1698,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== REFERRAL ROUTES ==========
 
   // Get user's referral code
-  app.get('/api/referral/code', isAuthenticated, async (req: any, res) => {
+  app.get('/api/referral/code', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const code = await storage.getUserReferralCode(userId);
       res.json({ code });
     } catch (error) {
@@ -1712,9 +1710,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's referral statistics
-  app.get('/api/referral/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/referral/stats', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getUserReferralStats(userId);
       res.json(stats);
     } catch (error) {
@@ -1756,9 +1754,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== GENERATION TEMPLATE ROUTES ==========
 
   // Get user templates (optionally filtered by feature type)
-  app.get('/api/templates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/templates', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const featureType = req.query.featureType as string | undefined;
       const templates = await storage.getUserTemplates(userId, featureType);
       res.json(templates);
@@ -1781,7 +1779,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get specific template
-  app.get('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/templates/:id', requireJWT, async (req: any, res) => {
     try {
       const { id } = req.params;
       const template = await storage.getTemplate(id);
@@ -1791,7 +1789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user owns the template or it's public
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       if (template.userId !== userId && !template.isPublic) {
         return res.status(403).json({ message: "Unauthorized access to template" });
       }
@@ -1804,9 +1802,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new template
-  app.post('/api/templates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/templates', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { name, description, prompt, model, parameters, featureType, isPublic } = req.body;
 
       if (!name || !prompt || !featureType) {
@@ -1832,9 +1830,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update template
-  app.patch('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/templates/:id', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { id } = req.params;
 
       // Verify ownership
@@ -1864,9 +1862,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete template
-  app.delete('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/templates/:id', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { id } = req.params;
 
       // Verify ownership
@@ -1887,7 +1885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Increment template usage count
-  app.post('/api/templates/:id/use', isAuthenticated, async (req: any, res) => {
+  app.post('/api/templates/:id/use', requireJWT, async (req: any, res) => {
     try {
       const { id } = req.params;
       await storage.incrementTemplateUsage(id);
@@ -1901,9 +1899,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== ONBOARDING ROUTES ==========
 
   // Get or create onboarding progress
-  app.get('/api/onboarding', isAuthenticated, async (req: any, res) => {
+  app.get('/api/onboarding', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const onboarding = await storage.getOrCreateOnboarding(userId);
       res.json(onboarding);
     } catch (error) {
@@ -1913,9 +1911,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update onboarding progress
-  app.patch('/api/onboarding', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/onboarding', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Validate request body with zod schema
       const { updateUserOnboardingSchema } = await import('@shared/schema');
@@ -1947,9 +1945,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== CHAT ROUTES ==========
 
   // Get user conversations
-  app.get('/api/chat/conversations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/chat/conversations', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const conversations = await storage.getUserConversations(userId);
       res.json(conversations);
     } catch (error) {
@@ -1959,7 +1957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get conversation messages
-  app.get('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/chat/conversations/:conversationId', requireJWT, async (req: any, res) => {
     try {
       const { conversationId } = req.params;
       const messages = await storage.getConversationMessages(conversationId);
@@ -1971,9 +1969,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send message (with streaming support)
-  app.post('/api/chat/send', isAuthenticated, async (req: any, res) => {
+  app.post('/api/chat/send', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Validate request
       const validationResult = sendMessageRequestSchema.safeParse(req.body);
@@ -2077,7 +2075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete conversation
-  app.delete('/api/chat/conversations/:conversationId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/chat/conversations/:conversationId', requireJWT, async (req: any, res) => {
     try {
       const { conversationId } = req.params;
       await storage.deleteConversation(conversationId);
@@ -2089,7 +2087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update conversation title
-  app.patch('/api/chat/conversations/:conversationId/title', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/chat/conversations/:conversationId/title', requireJWT, async (req: any, res) => {
     try {
       const { conversationId } = req.params;
       const { title } = req.body;
@@ -2104,7 +2102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== VOICE CLONING ROUTES ==========
 
   // Clone a voice
-  app.post('/api/voice-clone', isAuthenticated, async (req: any, res) => {
+  app.post('/api/voice-clone', requireJWT, async (req: any, res) => {
     // Feature gate: ElevenLabs Voice Cloning API not available through Kie.ai
     return res.status(503).json({
       message: "Voice Cloning service is temporarily unavailable. This feature requires ElevenLabs API integration which is not currently supported through our provider. Please check back later or contact support for alternatives.",
@@ -2115,7 +2113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let hostedAudioUrls: string[] | undefined;
     
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Validate request
       const validationResult = cloneVoiceRequestSchema.safeParse(req.body);
@@ -2197,9 +2195,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's cloned voices
-  app.get('/api/voice-clones', isAuthenticated, async (req: any, res) => {
+  app.get('/api/voice-clones', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const voices = await storage.getUserVoiceClones(userId);
       res.json(voices);
     } catch (error) {
@@ -2209,9 +2207,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Toggle voice clone active status
-  app.patch('/api/voice-clones/:voiceId/toggle', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/voice-clones/:voiceId/toggle', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { voiceId } = req.params;
       const { isActive } = req.body;
 
@@ -2233,9 +2231,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete voice clone
-  app.delete('/api/voice-clones/:voiceId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/voice-clones/:voiceId', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { voiceId } = req.params;
 
       // Verify ownership
@@ -2258,9 +2256,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== TEXT-TO-SPEECH ROUTES ==========
 
   // Generate TTS
-  app.post('/api/tts/generate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/tts/generate', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Validate request
       const validationResult = generateTTSRequestSchema.safeParse(req.body);
@@ -2345,9 +2343,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's TTS generations
-  app.get('/api/tts/generations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/tts/generations', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const generations = await storage.getUserTtsGenerations(userId);
       res.json(generations);
     } catch (error) {
@@ -2359,7 +2357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== SPEECH-TO-TEXT ROUTES ==========
 
   // Transcribe audio (STT) - SYNCHRONOUS processing
-  app.post('/api/stt/transcribe', isAuthenticated, async (req: any, res) => {
+  app.post('/api/stt/transcribe', requireJWT, async (req: any, res) => {
     // Feature gate: ElevenLabs Speech-to-Text API not available through Kie.ai
     return res.status(503).json({
       message: "Speech-to-Text service is temporarily unavailable. This feature requires ElevenLabs API integration which is not currently supported through our provider. Please check back later or contact support for alternatives.",
@@ -2371,7 +2369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let sttGeneration: any = undefined; // Hoist to outer scope for error handling
     
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Validate request
       const validationResult = generateSTTRequestSchema.safeParse(req.body);
@@ -2480,9 +2478,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's STT transcriptions
-  app.get('/api/stt/transcriptions', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stt/transcriptions', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const transcriptions = await storage.getUserSttGenerations(userId);
       res.json(transcriptions);
     } catch (error) {
@@ -2494,9 +2492,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== AI TALKING AVATAR ROUTES ==========
 
   // Generate talking avatar
-  app.post('/api/avatar/generate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/avatar/generate', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       const validationResult = generateAvatarRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -2578,9 +2576,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's avatar generations
-  app.get('/api/avatar/generations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/avatar/generations', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const avatars = await storage.getUserAvatarGenerations(userId);
       res.json(avatars);
     } catch (error) {
@@ -2591,9 +2589,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== AUDIO CONVERSION ROUTES ==========
 
   // Convert audio
-  app.post('/api/audio/convert', isAuthenticated, async (req: any, res) => {
+  app.post('/api/audio/convert', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       const validationResult = convertAudioRequestSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -2670,9 +2668,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's audio conversions
-  app.get('/api/audio/conversions', isAuthenticated, async (req: any, res) => {
+  app.get('/api/audio/conversions', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const conversions = await storage.getUserAudioConversions(userId);
       res.json(conversions);
     } catch (error) {
@@ -2683,9 +2681,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== ADMIN ROUTES ==========
 
   // Admin: Get all users
-  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/users', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2701,9 +2699,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update user credits
-  app.patch('/api/admin/users/:userId/credits', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/users/:userId/credits', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -2722,9 +2720,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete user
-  app.delete('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/users/:userId', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -2741,9 +2739,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all API keys
-  app.get('/api/admin/api-keys', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/api-keys', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2759,9 +2757,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Add API key
-  app.post('/api/admin/api-keys', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/api-keys', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2783,9 +2781,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Toggle API key status
-  app.patch('/api/admin/api-keys/:keyId', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/api-keys/:keyId', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2804,9 +2802,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete API key
-  app.delete('/api/admin/api-keys/:keyId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/api-keys/:keyId', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2823,9 +2821,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get analytics dashboard data
-  app.get('/api/admin/analytics', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/analytics', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2881,9 +2879,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/pricing', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/pricing', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2898,9 +2896,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/pricing/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/pricing/:id', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2925,9 +2923,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/pricing', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/pricing', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2948,9 +2946,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== SUBSCRIPTION PLAN ROUTES ==========
 
   // Admin: Get all subscription plans
-  app.get('/api/admin/plans', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/plans', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -2966,9 +2964,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update user subscription (assign plan)
-  app.patch('/api/admin/users/:userId/subscription', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/users/:userId/subscription', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -3012,9 +3010,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Create new plan
-  app.post('/api/admin/plans', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/plans', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -3061,9 +3059,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update plan (all fields)
-  app.patch('/api/admin/plans/:planId', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/plans/:planId', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -3112,9 +3110,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete plan
-  app.delete('/api/admin/plans/:planId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/plans/:planId', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -3137,9 +3135,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Reorder plan (move up or down)
-  app.patch('/api/admin/plans/:planId/reorder', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/plans/:planId/reorder', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -3187,9 +3185,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update plan Stripe IDs
-  app.patch('/api/admin/plans/:planId/stripe', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/plans/:planId/stripe', requireJWT, async (req: any, res) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
       
       if (!isUserAdmin(admin)) {
@@ -3249,9 +3247,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get home page content
-  app.get('/api/admin/homepage', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/homepage', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3267,9 +3265,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update home page content
-  app.patch('/api/admin/homepage', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/homepage', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3296,8 +3294,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get user's plan if authenticated
       let userPlanName: string | undefined = undefined;
-      if (req.isAuthenticated && req.isAuthenticated()) {
-        const userId = req.user.claims.sub;
+      if (req.requireJWT && req.requireJWT()) {
+        const userId = req.user.id;
         const user = await storage.getUser(userId);
         if (user) {
           const subscription = await storage.getUserSubscription(userId);
@@ -3314,9 +3312,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all announcements
-  app.get('/api/admin/announcements', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/announcements', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3332,9 +3330,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Create announcement
-  app.post('/api/admin/announcements', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/announcements', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3367,9 +3365,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update announcement
-  app.patch('/api/admin/announcements/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/announcements/:id', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3394,9 +3392,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete announcement
-  app.delete('/api/admin/announcements/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/announcements/:id', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3415,9 +3413,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== LOOPS.SO EMAIL INTEGRATION ==========
 
   // Admin: Get all Loops.so mailing lists
-  app.get('/api/admin/loops/lists', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/loops/lists', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3433,9 +3431,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Test adding a contact to the 7-day funnel
-  app.post('/api/admin/loops/test', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/loops/test', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!isUserAdmin(user)) {
@@ -3472,12 +3470,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== IMAGE ANALYSIS ROUTES ==========
 
   // Analyze image - SYNCHRONOUS processing
-  app.post('/api/image-analysis/analyze', isAuthenticated, async (req: any, res) => {
+  app.post('/api/image-analysis/analyze', requireJWT, async (req: any, res) => {
     let imageAnalysis: any = undefined;
     let creditsDeducted = false;
     
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       console.log(`[Image Analysis] Request received from user ${userId}`);
       console.log(`[Image Analysis] Request body keys:`, Object.keys(req.body));
 
@@ -3622,9 +3620,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's image analyses
-  app.get('/api/image-analysis/results', isAuthenticated, async (req: any, res) => {
+  app.get('/api/image-analysis/results', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const analyses = await storage.getUserImageAnalyses(userId);
       res.json(analyses);
     } catch (error) {
@@ -3636,9 +3634,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== VIDEO COMBINATION ROUTES ====================
 
   // Combine multiple videos into one
-  app.post('/api/combine-videos', isAuthenticated, async (req: any, res) => {
+  app.post('/api/combine-videos', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Validate request
       const validationResult = combineVideosRequestSchema.safeParse(req.body);
@@ -3744,9 +3742,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's video combinations
-  app.get('/api/video-combinations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/video-combinations', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const combinations = await storage.getUserVideoCombinations(userId);
       res.json(combinations);
     } catch (error) {
@@ -3769,9 +3767,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current user's subscription
-  app.get('/api/subscriptions/current', isAuthenticated, async (req: any, res) => {
+  app.get('/api/subscriptions/current', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const subscription = await storage.getUserSubscription(userId);
       
       if (!subscription) {
@@ -3830,7 +3828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Create Checkout Session for subscription purchase
-  app.post('/api/billing/checkout', isAuthenticated, async (req: any, res) => {
+  app.post('/api/billing/checkout', requireJWT, async (req: any, res) => {
     try {
       const { planId } = req.body;
       
@@ -3848,7 +3846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Cannot purchase trial plans via Stripe. Please use the free signup flow.' });
       }
 
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
@@ -3872,9 +3870,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create Customer Portal Session for managing subscription
-  app.post('/api/billing/portal', isAuthenticated, async (req: any, res) => {
+  app.post('/api/billing/portal', requireJWT, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || !user.stripeCustomerId) {
