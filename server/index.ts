@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializePassportStrategies } from "./customAuth";
 
 // Validate critical environment variables at startup
 const requiredEnvVars = ['DATABASE_URL', 'SESSION_SECRET'];
@@ -80,6 +81,9 @@ app.use((req, res, next) => {
   cleanupOldUploads(24 * 60 * 60 * 1000).catch((err) => {
     console.error('Startup cleanup failed:', err);
   });
+  
+  // Initialize Passport strategies for authentication
+  initializePassportStrategies();
   
   const server = await registerRoutes(app);
 

@@ -85,11 +85,11 @@ export default function Register() {
 
       toast({
         title: "Account created!",
-        description: "Welcome to Artivio AI. You're now logged in.",
+        description: "Welcome to Artivio AI. Please select a subscription plan to get started.",
       });
 
-      // Use wouter's setLocation instead of window.location
-      setLocation("/");
+      // Redirect to pricing page to select subscription plan (including Free Trial)
+      setLocation("/pricing");
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({

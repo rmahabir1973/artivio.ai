@@ -43,7 +43,7 @@ import { CreditDisplay } from "@/components/credit-display";
 
 export function ModernHeader() {
   const [location] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAdmin = (user as any)?.isAdmin;
@@ -252,9 +252,9 @@ export function ModernHeader() {
                   <DropdownMenuItem 
                     className="cursor-pointer text-destructive"
                     data-testid="desktop-nav-logout"
-                    onClick={() => {
-                      // Force full page navigation for mobile Safari compatibility
-                      window.location.href = '/api/auth/logout';
+                    onClick={async () => {
+                      await logout();
+                      window.location.href = '/';
                     }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -371,9 +371,9 @@ export function ModernHeader() {
                     variant="ghost"
                     className="w-full justify-start gap-3 text-destructive hover:text-destructive"
                     data-testid="mobile-nav-logout"
-                    onClick={() => {
-                      // Force full page navigation for mobile Safari compatibility
-                      window.location.href = '/api/auth/logout';
+                    onClick={async () => {
+                      await logout();
+                      window.location.href = '/';
                     }}
                   >
                     <LogOut className="h-5 w-5" />

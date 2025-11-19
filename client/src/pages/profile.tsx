@@ -9,10 +9,19 @@ import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { UsageAnalytics } from "@/components/usage-analytics";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  
+  // Fetch current subscription
+  const { data: subscription, isLoading: subLoading, isError: subError } = useQuery<any>({
+    queryKey: ["/api/subscriptions/current"],
+    enabled: !!user,
+    retry: 1, // Only retry once to avoid long waits
+  });
 
   const handleRefreshData = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -122,29 +131,88 @@ export default function Profile() {
           <CardDescription>Manage your subscription plan and credits</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-            <div>
-              <p className="font-semibold">Current Plan</p>
-              <p className="text-sm text-muted-foreground">Credit-based system (Pay-as-you-go)</p>
+          {subLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-            <Badge variant="secondary">Active</Badge>
-          </div>
+          ) : subError || !subscription ? (
+            <>
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="font-semibold">Current Plan</p>
+                  <p className="text-sm text-muted-foreground">No active subscription</p>
+                </div>
+                <Badge variant="secondary">Inactive</Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Artivio AI uses a credit-based system. Each AI generation costs credits based on the feature and complexity.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Subscribe to a plan to receive monthly credits and access all features.
+                </p>
+              </div>
 
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Artivio AI uses a credit-based system. Each AI generation costs credits based on the feature and complexity.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Contact an administrator to purchase additional credits or upgrade your plan.
-            </p>
-          </div>
+              <div className="flex gap-2">
+                <Button asChild variant="default" data-testid="button-subscribe">
+                  <Link href="/pricing">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Subscribe Now
+                  </Link>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="font-semibold">Current Plan</p>
+                  <p className="text-sm text-muted-foreground">
+                    {subscription.planName}
+                  </p>
+                  {subscription.monthlyCredits && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {subscription.monthlyCredits.toLocaleString()} credits/month
+                    </p>
+                  )}
+                </div>
+                <Badge variant={subscription.status === "active" ? "default" : subscription.status === "trialing" ? "default" : "secondary"}>
+                  {subscription.status === "active" ? "Active" : subscription.status === "trialing" ? "Trial" : "Inactive"}
+                </Badge>
+              </div>
 
-          <div className="p-4 border border-dashed rounded-lg text-center space-y-2">
-            <p className="text-sm font-medium">Premium Plans Coming Soon</p>
-            <p className="text-xs text-muted-foreground">
-              We're working on subscription tiers with monthly credit allowances and exclusive features.
-            </p>
-          </div>
+              {subscription?.nextBillingDate && (
+                <div className="text-sm text-muted-foreground">
+                  Next billing date: {format(new Date(subscription.nextBillingDate), "MMMM d, yyyy")}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Artivio AI uses a credit-based system. Each AI generation costs credits based on the feature and complexity.
+                </p>
+                {subscription?.planName ? (
+                  <p className="text-sm text-muted-foreground">
+                    Your {subscription.planName} plan includes {subscription.monthlyCredits?.toLocaleString()} credits per month.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Subscribe to a plan to receive monthly credits and access all features.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button asChild variant="default" data-testid="button-manage-subscription">
+                  <Link href="/pricing">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    {subscription?.planName ? "Manage Subscription" : "Subscribe Now"}
+                  </Link>
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
