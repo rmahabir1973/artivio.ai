@@ -5,6 +5,7 @@ import axios from "axios";
 import { storage } from "./storage";
 import { setupAuth } from "./customAuth";
 import { isAuthenticated, registerAuthRoutes } from "./authRoutes";
+import { checkTrialExpiration } from "./replitAuth";
 import { 
   generateVideo, 
   generateImage, 
