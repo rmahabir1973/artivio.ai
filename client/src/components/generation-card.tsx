@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Generation } from "@shared/schema";
 import { useLocation } from "wouter";
 import { UpscaleModal } from "@/components/upscale-modal";
+import { fetchWithAuth } from "@/lib/authBridge";
 
 interface GenerationCardProps {
   generation: Generation;
@@ -57,7 +58,8 @@ export function GenerationCard({ generation }: GenerationCardProps) {
     
     try {
       // Use the backend proxy endpoint to avoid CORS issues
-      const response = await fetch(`/api/generations/${generation.id}/download`, {
+      // fetchWithAuth automatically adds Authorization header and retries on 401
+      const response = await fetchWithAuth(`/api/generations/${generation.id}/download`, {
         credentials: 'include',
       });
       
@@ -86,9 +88,21 @@ export function GenerationCard({ generation }: GenerationCardProps) {
       });
     } catch (error) {
       console.error('Download failed:', error);
+      
+      // Handle session expiration
+      if (error instanceof Error && error.message === "SESSION_EXPIRED") {
+        toast({
+          title: "Session expired",
+          description: "Please log in again to continue",
+          variant: "destructive",
+        });
+        setTimeout(() => window.location.href = "/login", 1500);
+        return;
+      }
+      
       toast({
         title: "Download failed",
-        description: "Could not download the file. Please try again.",
+        description: error instanceof Error ? error.message : "Could not download the file. Please try again.",
         variant: "destructive",
       });
     }

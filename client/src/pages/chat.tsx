@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { CreditDisplay } from "@/components/credit-display";
+import { fetchWithAuth } from "@/lib/authBridge";
 
 type Message = {
   id: string;
@@ -144,7 +145,8 @@ export default function Chat() {
         requestBody.conversationId = selectedConversationId;
       }
 
-      const response = await fetch('/api/chat/send', {
+      // fetchWithAuth automatically adds Authorization header and retries on 401
+      const response = await fetchWithAuth('/api/chat/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

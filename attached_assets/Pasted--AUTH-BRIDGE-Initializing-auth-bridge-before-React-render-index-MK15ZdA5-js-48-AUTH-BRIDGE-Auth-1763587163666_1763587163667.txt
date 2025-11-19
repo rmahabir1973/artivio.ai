@@ -1,0 +1,65 @@
+[AUTH BRIDGE] Initializing auth bridge before React render
+index-MK15ZdA5.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-MK15ZdA5.js:618 [AUTH] Initializing auth - attempting to refresh token
+index-MK15ZdA5.js:618   POST https://artivio.ai/api/auth/refresh 401 (Unauthorized)
+(anonymous) @ index-MK15ZdA5.js:618
+(anonymous) @ index-MK15ZdA5.js:618
+(anonymous) @ index-MK15ZdA5.js:618
+Qg @ index-MK15ZdA5.js:40
+Vl @ index-MK15ZdA5.js:40
+hC @ index-MK15ZdA5.js:40
+Ms @ index-MK15ZdA5.js:38
+mz @ index-MK15ZdA5.js:40
+Xs @ index-MK15ZdA5.js:40
+K_ @ index-MK15ZdA5.js:40
+j @ index-MK15ZdA5.js:25
+B @ index-MK15ZdA5.js:25
+index-MK15ZdA5.js:618 [AUTH] Token refresh failed: 401
+index-MK15ZdA5.js:618 [AUTH] No valid refresh token - user not authenticated
+index-MK15ZdA5.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-MK15ZdA5.js:48 [QUERY CLIENT] Adding Authorization header, token: eyJhbGciOiJIUzI1NiIs...
+6index-MK15ZdA5.js:48 [QUERY CLIENT] Adding Authorization header, token: eyJhbGciOiJIUzI1NiIs...
+3index-MK15ZdA5.js:48 [QUERY CLIENT] Adding Authorization header, token: eyJhbGciOiJIUzI1NiIs...
+index-MK15ZdA5.js:906   GET https://artivio.ai/api/generations/ec314354-d84f-4de0-a950-92cee518d7a7/download 401 (Unauthorized)
+g @ index-MK15ZdA5.js:906
+M8 @ index-MK15ZdA5.js:37
+$8 @ index-MK15ZdA5.js:37
+R8 @ index-MK15ZdA5.js:37
+DS @ index-MK15ZdA5.js:37
+e_ @ index-MK15ZdA5.js:37
+(anonymous) @ index-MK15ZdA5.js:37
+pj @ index-MK15ZdA5.js:40
+ST @ index-MK15ZdA5.js:37
+ay @ index-MK15ZdA5.js:37
+V1 @ index-MK15ZdA5.js:37
+Z8 @ index-MK15ZdA5.js:37
+index-MK15ZdA5.js:906  Download failed: Error: Download failed
+    at g (index-MK15ZdA5.js:906:13785)
+g @ index-MK15ZdA5.js:906
+await in g
+M8 @ index-MK15ZdA5.js:37
+$8 @ index-MK15ZdA5.js:37
+R8 @ index-MK15ZdA5.js:37
+DS @ index-MK15ZdA5.js:37
+e_ @ index-MK15ZdA5.js:37
+(anonymous) @ index-MK15ZdA5.js:37
+pj @ index-MK15ZdA5.js:40
+ST @ index-MK15ZdA5.js:37
+ay @ index-MK15ZdA5.js:37
+V1 @ index-MK15ZdA5.js:37
+Z8 @ index-MK15ZdA5.js:37
+index-MK15ZdA5.js:906   GET https://artivio.ai/api/generations/ec314354-d84f-4de0-a950-92cee518d7a7/download 401 (Unauthorized)
+g @ index-MK15ZdA5.js:906
+M8 @ index-MK15ZdA5.js:37
+$8 @ index-MK15ZdA5.js:37
+R8 @ index-MK15ZdA5.js:37
+DS @ index-MK15ZdA5.js:37
+e_ @ index-MK15ZdA5.js:37
+(anonymous) @ index-MK15ZdA5.js:37
+pj @ index-MK15ZdA5.js:40
+ST @ index-MK15ZdA5.js:37
+ay @ index-MK15ZdA5.js:37
+V1 @ index-MK15ZdA5.js:37
+Z8 @ index-MK15ZdA5.js:37
+index-MK15ZdA5.js:906  Download failed: Error: Download failed
+    at g (index-MK15ZdA5.js:906:13785)

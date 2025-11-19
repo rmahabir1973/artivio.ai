@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import { setAccessToken as bridgeSetAccessToken, getAccessToken as bridgeGetAccessToken } from "@/lib/authBridge";
+import { setAccessToken as bridgeSetAccessToken, getAccessToken as bridgeGetAccessToken, setRefreshTokenFn, setLogoutFn } from "@/lib/authBridge";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -80,6 +80,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return null;
     }
   }, []);
+  
+  // Register the refresh and logout functions in authBridge
+  useEffect(() => {
+    setRefreshTokenFn(refreshAccessToken);
+    setLogoutFn(logout);
+    return () => {
+      setRefreshTokenFn(null);
+      setLogoutFn(null);
+    };
+  }, [refreshAccessToken, logout]);
 
   // Use bridge for getAccessToken
   const getAccessToken = useCallback(() => {

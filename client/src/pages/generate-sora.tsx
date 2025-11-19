@@ -202,23 +202,14 @@ export default function GenerateSora() {
         model = 'sora-2-image-to-video';
       }
 
-      const response = await fetch("/api/generate/video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model,
-          prompt: finalPrompt,
-          referenceImages: uploadedImages,
-          parameters
-        })
+      const data = await apiRequest("POST", "/api/generate/video", {
+        model,
+        prompt: finalPrompt,
+        referenceImages: uploadedImages,
+        parameters
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to generate video");
-      }
-
-      return await response.json();
+      return data;
     },
     onSuccess: () => {
       toast({

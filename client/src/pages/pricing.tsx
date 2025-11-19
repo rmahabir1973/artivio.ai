@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Footer } from "@/components/footer";
 import { useQuery } from "@tanstack/react-query";
 import type { SubscriptionPlan } from "@shared/schema";
+import { fetchWithAuth } from "@/lib/authBridge";
 
 interface PlanWithPopular extends SubscriptionPlan {
   popular?: boolean;
@@ -48,9 +49,12 @@ export default function Pricing() {
         window.location.href = '/register';
       } else {
         // Paid plan: redirect to Stripe checkout
-        const response = await fetch('/api/billing/checkout', {
+        // fetchWithAuth automatically adds Authorization header and retries on 401
+        const response = await fetchWithAuth('/api/billing/checkout', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+          },
           credentials: 'include',
           body: JSON.stringify({ 
             planId: plan.id,
