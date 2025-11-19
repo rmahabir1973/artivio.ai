@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { getAccessToken } from "./authBridge";
+import { fetchWithAuth as authBridgeFetchWithAuth } from "./authBridge";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -21,30 +21,18 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Legacy wrapper for backwards compatibility
+ * Now uses authBridge's fetchWithAuth which includes retry-on-401 logic
+ */
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const headers: Record<string, string> = {
-    ...((options.headers as Record<string, string>) || {}),
-  };
-
-  // CRITICAL: Get token from auth bridge (initialized before React)
-  const token = getAccessToken();
-  if (token) {
-    console.log("[QUERY CLIENT] Adding Authorization header, token:", token.substring(0, 20) + "...");
-    headers["Authorization"] = `Bearer ${token}`;
-  } else {
-    console.log("[QUERY CLIENT] No access token available");
-  }
-
-  const response = await fetch(url, {
+  return authBridgeFetchWithAuth(url, {
     ...options,
-    headers,
     credentials: "include",
   });
-
-  return response;
 }
 
 export async function apiRequest(
