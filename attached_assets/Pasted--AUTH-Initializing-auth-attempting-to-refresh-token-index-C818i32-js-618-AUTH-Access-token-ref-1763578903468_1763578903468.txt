@@ -1,0 +1,58 @@
+[AUTH] Initializing auth - attempting to refresh token
+index-C818i32-.js:618 [AUTH] Access token refreshed successfully
+index-C818i32-.js:618 [AUTH] Token obtained - fetching user data
+index-C818i32-.js:618 [AUTH] User data loaded successfully
+/api/generations:1   Failed to load resource: the server responded with a status of 500 ()
+/profile:1  Tracking Prevention blocked access to storage for https://lh3.googleusercontent.com/a/ACg8ocJisvcStEUvq-A0TBFKXUVbESvSXhXNMNkPHd09eLN-ZUfaEQ=s96-c.
+/profile:1  Tracking Prevention blocked access to storage for https://lh3.googleusercontent.com/a/ACg8ocJisvcStEUvq-A0TBFKXUVbESvSXhXNMNkPHd09eLN-ZUfaEQ=s96-c.
+/profile:1  Tracking Prevention blocked access to storage for https://lh3.googleusercontent.com/a/ACg8ocJisvcStEUvq-A0TBFKXUVbESvSXhXNMNkPHd09eLN-ZUfaEQ=s96-c.
+/profile:1  Tracking Prevention blocked access to storage for https://lh3.googleusercontent.com/a/ACg8ocJisvcStEUvq-A0TBFKXUVbESvSXhXNMNkPHd09eLN-ZUfaEQ=s96-c.
+/api/generations:1   Failed to load resource: the server responded with a status of 500 ()
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+index-C818i32-.js:889   POST https://artivio.ai/api/generate/video 401 (Unauthorized)
+mutationFn @ index-C818i32-.js:889
+fn @ index-C818i32-.js:48
+x @ index-C818i32-.js:48
+start @ index-C818i32-.js:48
+execute @ index-C818i32-.js:48
+await in execute
+mutate @ index-C818i32-.js:48
+(anonymous) @ index-C818i32-.js:48
+R @ index-C818i32-.js:889
+_8 @ index-C818i32-.js:37
+I8 @ index-C818i32-.js:37
+$8 @ index-C818i32-.js:37
+LS @ index-C818i32-.js:37
+t_ @ index-C818i32-.js:37
+(anonymous) @ index-C818i32-.js:37
+gj @ index-C818i32-.js:40
+CT @ index-C818i32-.js:37
+sy @ index-C818i32-.js:37
+W1 @ index-C818i32-.js:37
+X8 @ index-C818i32-.js:37
+index-C818i32-.js:889   POST https://artivio.ai/api/generate/video 401 (Unauthorized)
+mutationFn @ index-C818i32-.js:889
+fn @ index-C818i32-.js:48
+x @ index-C818i32-.js:48
+start @ index-C818i32-.js:48
+execute @ index-C818i32-.js:48
+await in execute
+mutate @ index-C818i32-.js:48
+(anonymous) @ index-C818i32-.js:48
+R @ index-C818i32-.js:889
+_8 @ index-C818i32-.js:37
+I8 @ index-C818i32-.js:37
+$8 @ index-C818i32-.js:37
+LS @ index-C818i32-.js:37
+t_ @ index-C818i32-.js:37
+(anonymous) @ index-C818i32-.js:37
+gj @ index-C818i32-.js:40
+CT @ index-C818i32-.js:37
+sy @ index-C818i32-.js:37
+W1 @ index-C818i32-.js:37
+X8 @ index-C818i32-.js:37
+index-C818i32-.js:889   POST https://artivio.ai/api/generate/video 401 (Unauthorized)
