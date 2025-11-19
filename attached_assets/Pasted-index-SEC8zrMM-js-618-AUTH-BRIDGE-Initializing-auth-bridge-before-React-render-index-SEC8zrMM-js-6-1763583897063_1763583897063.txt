@@ -1,0 +1,45 @@
+index-SEC8zrMM.js:618 [AUTH BRIDGE] Initializing auth bridge before React render
+index-SEC8zrMM.js:618 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-SEC8zrMM.js:618 [AUTH] Initializing auth - attempting to refresh token
+index-SEC8zrMM.js:618 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-SEC8zrMM.js:618 [AUTH] Access token refreshed successfully
+index-SEC8zrMM.js:618 [AUTH] Token obtained - fetching user data
+index-SEC8zrMM.js:618 [AUTH] User data loaded successfully
+2index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...
+api/generations:1   Failed to load resource: the server responded with a status of 500 ()
+index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...
+4index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...
+api/chat/send:1   Failed to load resource: the server responded with a status of 401 ()
+index-SEC8zrMM.js:906  Chat error: Error: Failed to send message
+    at O (index-SEC8zrMM.js:905:9493)
+O @ index-SEC8zrMM.js:906
+index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...
+api/generations:1   Failed to load resource: the server responded with a status of 500 ()
+index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+3index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...
+2index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...
+index-SEC8zrMM.js:48   GET https://artivio.ai/api/generations 500 (Internal Server Error)
+_j @ index-SEC8zrMM.js:48
+(anonymous) @ index-SEC8zrMM.js:48
+s @ index-SEC8zrMM.js:48
+x @ index-SEC8zrMM.js:48
+start @ index-SEC8zrMM.js:48
+fetch @ index-SEC8zrMM.js:48
+nd @ index-SEC8zrMM.js:48
+onSubscribe @ index-SEC8zrMM.js:48
+subscribe @ index-SEC8zrMM.js:48
+(anonymous) @ index-SEC8zrMM.js:48
+y_ @ index-SEC8zrMM.js:38
+Jg @ index-SEC8zrMM.js:40
+Wl @ index-SEC8zrMM.js:40
+pz @ index-SEC8zrMM.js:40
+Xs @ index-SEC8zrMM.js:40
+gC @ index-SEC8zrMM.js:40
+Ms @ index-SEC8zrMM.js:38
+(anonymous) @ index-SEC8zrMM.js:40
+index-SEC8zrMM.js:618 [AUTH BRIDGE] getAccessToken called, token: eyJhbGciOiJIUzI1NiIs...

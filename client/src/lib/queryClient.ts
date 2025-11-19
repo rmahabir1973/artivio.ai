@@ -1,21 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-
-// Auth context reference for accessing token and refresh logic
-interface AuthContextRef {
-  getAccessToken: () => string | null;
-  refreshAccessToken: () => Promise<string | null>;
-  logout: () => Promise<void>;
-}
-
-let authContextRef: AuthContextRef | null = null;
-
-// Set the auth context reference (called from AuthProvider)
-export function setAuthContext(context: AuthContextRef) {
-  authContextRef = context;
-}
-
-// Promise to prevent multiple concurrent refresh requests
-let refreshPromise: Promise<string | null> | null = null;
+import { getAccessToken } from "./authBridge";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -45,12 +29,13 @@ export async function fetchWithAuth(
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  // Add Authorization header if we have an access token
-  if (authContextRef) {
-    const token = authContextRef.getAccessToken();
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+  // CRITICAL: Get token from auth bridge (initialized before React)
+  const token = getAccessToken();
+  if (token) {
+    console.log("[QUERY CLIENT] Adding Authorization header, token:", token.substring(0, 20) + "...");
+    headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    console.log("[QUERY CLIENT] No access token available");
   }
 
   const response = await fetch(url, {
@@ -58,44 +43,6 @@ export async function fetchWithAuth(
     headers,
     credentials: "include",
   });
-
-  // Handle 401 Unauthorized - try to refresh token
-  if (response.status === 401 && authContextRef) {
-    console.log("[AUTH] 401 response - attempting token refresh");
-
-    // Prevent multiple concurrent refresh requests
-    if (!refreshPromise) {
-      refreshPromise = authContextRef.refreshAccessToken().finally(() => {
-        refreshPromise = null;
-      });
-    }
-
-    const newToken = await refreshPromise;
-
-    if (newToken) {
-      console.log("[AUTH] Token refreshed successfully - retrying request");
-      
-      // Retry the original request with the new token
-      headers["Authorization"] = `Bearer ${newToken}`;
-      
-      const retryResponse = await fetch(url, {
-        ...options,
-        headers,
-        credentials: "include",
-      });
-
-      return retryResponse;
-    } else {
-      console.log("[AUTH] Token refresh failed - redirecting to login");
-      
-      // Refresh failed - logout and redirect to login
-      await authContextRef.logout();
-      window.location.href = "/login";
-      
-      // Return the original 401 response
-      return response;
-    }
-  }
 
   return response;
 }
