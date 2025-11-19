@@ -424,8 +424,9 @@ export function registerAuthRoutes(app: Express) {
           isAdmin,
         });
 
-        // Redirect to home page with login success
-        res.redirect("/?login=success");
+        // Redirect to home page with access token in URL fragment (for security)
+        // Fragment (#) is not sent to server, only accessible by JavaScript
+        res.redirect(`/?login=success#token=${accessToken}`);
       } catch (error) {
         console.error("[AUTH ERROR] Failed to generate JWT tokens after OAuth", {
           error,

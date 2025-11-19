@@ -1,0 +1,153 @@
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"x-replit-user-name": "",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"costTime": 180,
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"server-timing": "depproxy;dur=1763588854162, pid1req;dur=1763588854177",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+},
+2025-11-19 16:47:34.18
+1e7eb308
+User
+}
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"x-replit-user-roles": "",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"x-replit-user-url": ""
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"content-type": "application/json;charset=UTF-8",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"accept-language": "zh-CN,zh;q=0.8",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"createTime": 1763588674000,
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"content-length": "846",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+Generation ID: 39cdb48b-ded1-486b-bd65-63ce427fc238
+2025-11-19 16:47:34.18
+1e7eb308
+User
+Callback Data: {
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"via": "1.1 google",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"host": "artivio.ai",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"x-forwarded-for": "47.251.174.249, 34.111.179.208, 35.191.73.177,34.44.227.96",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"updateTime": 1763588854000
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"state": "success",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+🔔 ===== RECEIVED KIE.AI CALLBACK =====
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"param": "{\"input\":{\"remove_watermark\":true,\"aspect_ratio\":\"landscape\",\"n_frames\":\"10\",\"prompt\":\"Create a video of a puppy chasing a kitten by the beach\"},\"callBackUrl\":\"https://artivio.ai/api/callback/kie/39cdb48b-ded1-486b-bd65-63ce427fc238\",\"model\":\"sora-2-text-to-video\"}",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 Hutool",
+2025-11-19 16:47:34.18
+1e7eb308
+User
+"model": "sora-2-text-to-video",
+2025-11-19 16:47:34.30
+1e7eb308
+User
+✓ [finalizeGeneration] Generation 39cdb48b-ded1-486b-bd65-63ce427fc238 finalized as success
+2025-11-19 16:47:34.41
+1e7eb308
+User
+✓ Generation 39cdb48b-ded1-486b-bd65-63ce427fc238 completed successfully with URL: https://tempfile.aiquickdraw.com/f/8bc53bd445bedb447fc9760508125b5a/1260a0a3-75ff-4779-b484-b2b2a45f7c81.mp4
+2025-11-19 16:47:34.41
+1e7eb308
+User
+9:47:34 PM [express] POST /api/callback/kie/39cdb48b-ded1-486b-bd65-63ce427fc238 200 in 233ms :: {"s…
+2025-11-19 16:47:49.14
+1e7eb308
+User
+9:47:49 PM [express] GET /api/announcements/active 304 in 131ms :: []
+2025-11-19 16:48:20.77
+1e7eb308
+User
+9:48:20 PM [express] GET /api/pricing 304 in 95ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-19 16:48:44.96
+1e7eb308
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:48:48.73
+1e7eb308
+User
+9:48:48 PM [express] GET /api/generations 200 in 3632ms :: [{"id":"c8bea92c-acbf-4bcd-a1ea-38b07c09d…
+2025-11-19 16:48:49.24
+1e7eb308
+User
+9:48:49 PM [express] GET /api/announcements/active 304 in 28ms :: []
+2025-11-19 16:49:18.42
+1e7eb308
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:49:21.50
+1e7eb308
+User
+9:49:21 PM [express] GET /api/analytics 200 in 3188ms :: {"totalCreditsSpent":23700,"totalGeneration…
+2025-11-19 16:49:26.81
+1e7eb308
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-19 16:49:30.42
+1e7eb308
+User
+9:49:30 PM [express] GET /api/generations 200 in 3397ms :: [{"id":"c8bea92c-acbf-4bcd-a1ea-38b07c09d…
+
+2025-11-19 16:49:49.42
+1e7eb308
+User
+9:49:49 PM [express] GET /api/announcements/active 304 in 99ms :: []
+2025-11-19 16:50:49.64
+1e7eb308
+User
+9:50:49 PM [express] GET /api/announcements/active 304 in 104ms :: []
+2025-11-19 16:51:49.86
+1e7eb308
+User
+9:51:49 PM [express] GET /api/announcements/active 304 in 110ms :: []
+2025-11-19 16:52:50.08
+1e7eb308
+User
+9:52:50 PM [express] GET /api/announcements/active 304 in 107ms :: []

@@ -102,6 +102,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         console.log("[AUTH] Initializing auth - attempting to refresh token");
         
+        // Check for OAuth token in URL fragment (e.g., #token=xxx after Google login)
+        const hash = window.location.hash;
+        if (hash.includes('token=')) {
+          const tokenMatch = hash.match(/token=([^&]+)/);
+          if (tokenMatch && tokenMatch[1]) {
+            const oauthToken = tokenMatch[1];
+            console.log("[AUTH] Found OAuth token in URL fragment");
+            
+            // Store the token
+            setAccessTokenState(oauthToken);
+            bridgeSetAccessToken(oauthToken);
+            
+            // Clean up URL
+            window.location.hash = '';
+            const searchParams = new URLSearchParams(window.location.search);
+            searchParams.delete('login');
+            const newSearch = searchParams.toString();
+            const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+            window.history.replaceState({}, '', newUrl);
+            
+            // Fetch user data with the OAuth token
+            const userResponse = await fetch("/api/auth/user", {
+              headers: {
+                Authorization: `Bearer ${oauthToken}`,
+              },
+              credentials: "include",
+            });
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              setUser(userData);
+              console.log("[AUTH] OAuth login successful - user data loaded");
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+        
         // Try to refresh the access token using the httpOnly refresh token cookie
         const token = await refreshAccessToken();
         
