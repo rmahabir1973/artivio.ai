@@ -17,6 +17,14 @@ import {
 } from "./jwtUtils";
 import { requireJWT } from "./jwtMiddleware";
 
+// Helper to determine if request is over HTTPS
+function isSecureRequest(req: Request): boolean {
+  // Check if request is over HTTPS
+  // In production with proxy (like Replit), check X-Forwarded-Proto header
+  const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+  return protocol === 'https';
+}
+
 // Validation schemas
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -119,10 +127,10 @@ export function registerAuthRoutes(app: Express) {
       );
 
       // Set refresh token in httpOnly cookie
-      const isProduction = process.env.NODE_ENV === "production";
+      const useSecureCookies = isSecureRequest(req);
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: isProduction,
+        secure: useSecureCookies,
         sameSite: "lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: "/",
@@ -131,7 +139,7 @@ export function registerAuthRoutes(app: Express) {
       // Store tokenId in cookie for validation
       res.cookie("tokenId", tokenId, {
         httpOnly: true,
-        secure: isProduction,
+        secure: useSecureCookies,
         sameSite: "lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: "/",
@@ -238,10 +246,10 @@ export function registerAuthRoutes(app: Express) {
         );
 
         // Set refresh token in httpOnly cookie
-        const isProduction = process.env.NODE_ENV === "production";
+        const useSecureCookies = isSecureRequest(req);
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          secure: isProduction,
+          secure: useSecureCookies,
           sameSite: "lax",
           maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
           path: "/",
@@ -250,7 +258,7 @@ export function registerAuthRoutes(app: Express) {
         // Store tokenId in cookie for validation
         res.cookie("tokenId", tokenId, {
           httpOnly: true,
-          secure: isProduction,
+          secure: useSecureCookies,
           sameSite: "lax",
           maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
           path: "/",
@@ -353,10 +361,10 @@ export function registerAuthRoutes(app: Express) {
         );
 
         // Set refresh token in httpOnly cookie
-        const isProduction = process.env.NODE_ENV === "production";
+        const useSecureCookies = isSecureRequest(req);
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          secure: isProduction,
+          secure: useSecureCookies,
           sameSite: "lax",
           maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
           path: "/",
@@ -365,7 +373,7 @@ export function registerAuthRoutes(app: Express) {
         // Store tokenId in cookie for validation
         res.cookie("tokenId", tokenId, {
           httpOnly: true,
-          secure: isProduction,
+          secure: useSecureCookies,
           sameSite: "lax",
           maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
           path: "/",
@@ -466,10 +474,10 @@ export function registerAuthRoutes(app: Express) {
       });
 
       // Set new refresh token cookies
-      const isProduction = process.env.NODE_ENV === "production";
+      const useSecureCookies = isSecureRequest(req);
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
-        secure: isProduction,
+        secure: useSecureCookies,
         sameSite: "lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: "/",
@@ -477,7 +485,7 @@ export function registerAuthRoutes(app: Express) {
 
       res.cookie("tokenId", newTokenId, {
         httpOnly: true,
-        secure: isProduction,
+        secure: useSecureCookies,
         sameSite: "lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: "/",
