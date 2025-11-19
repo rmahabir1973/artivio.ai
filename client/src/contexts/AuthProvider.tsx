@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { setAuthContext } from "@/lib/queryClient";
 
 interface AuthContextType {
@@ -24,6 +24,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  // Use ref to always get current token value
+  const accessTokenRef = useRef<string | null>(null);
+  accessTokenRef.current = accessToken;
 
   const setAccessToken = useCallback((token: string | null) => {
     setAccessTokenState(token);
@@ -76,18 +80,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  // Use ref to avoid stale closure - this callback never changes
   const getAccessToken = useCallback(() => {
-    return accessToken;
-  }, [accessToken]);
+    console.log("[AUTH] getAccessToken called, current token:", accessTokenRef.current ? "EXISTS" : "NULL");
+    return accessTokenRef.current;
+  }, []); // No dependencies - always returns current ref value
 
-  // Set the auth context reference in queryClient on mount
+  // Set the auth context reference in queryClient ONCE on mount
   useEffect(() => {
+    console.log("[AUTH] Setting auth context reference in queryClient");
     setAuthContext({
       getAccessToken,
       refreshAccessToken,
       logout,
     });
-  }, [getAccessToken, refreshAccessToken, logout]);
+  }, []); // Only run once on mount - callbacks are stable
 
   // Fetch user data on mount using refresh token
   useEffect(() => {
