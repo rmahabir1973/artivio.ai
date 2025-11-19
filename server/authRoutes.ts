@@ -25,6 +25,20 @@ function isSecureRequest(req: Request): boolean {
   return protocol === 'https';
 }
 
+// Get cookie options for production
+function getCookieOptions(req: Request) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isSecure = isSecureRequest(req);
+  
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: 'none' as const, // CRITICAL: Use 'none' for cross-site cookies in production
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    path: '/',
+  };
+}
+
 // Validation schemas
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -140,23 +154,9 @@ export function registerAuthRoutes(app: Express) {
       }
 
       // Only set cookies AFTER successful database storage
-      const useSecureCookies = isSecureRequest(req);
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: useSecureCookies,
-        sameSite: "lax",
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: "/",
-      });
-
-      // Store tokenId in cookie for validation
-      res.cookie("tokenId", tokenId, {
-        httpOnly: true,
-        secure: useSecureCookies,
-        sameSite: "lax",
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: "/",
-      });
+      const cookieOptions = getCookieOptions(req);
+      res.cookie("refreshToken", refreshToken, cookieOptions);
+      res.cookie("tokenId", tokenId, cookieOptions);
 
       console.log("[AUTH] ✓ JWT tokens generated and stored", {
         userId: newUser.id,
