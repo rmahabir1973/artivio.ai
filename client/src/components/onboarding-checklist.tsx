@@ -60,26 +60,13 @@ export function OnboardingChecklist() {
 
   const { data: progress, isLoading, isError, error } = useQuery<OnboardingProgress>({
     queryKey: ['/api/onboarding'],
-    queryFn: async () => {
-      const response = await fetch('/api/onboarding', {
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Failed to fetch onboarding progress');
-      return response.json();
-    },
     retry: 2,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<OnboardingProgress>) => {
-      const response = await fetch('/api/onboarding', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(updates),
-      });
-      if (!response.ok) throw new Error('Failed to update onboarding');
+      const response = await apiRequest('PATCH', '/api/onboarding', updates);
       return response.json();
     },
     onSuccess: () => {

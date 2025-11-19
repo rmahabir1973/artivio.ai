@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 
 type OnboardingStep = 'exploredWorkflows' | 'triedTemplate' | 'completedFirstGeneration';
 
@@ -25,17 +25,7 @@ export function useOnboarding() {
         return;
       }
 
-      const response = await fetch('/api/onboarding', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ [step]: true }),
-      });
-
-      if (!response.ok) {
-        console.error(`Failed to mark ${step} complete:`, await response.text());
-        return;
-      }
+      await apiRequest('PATCH', '/api/onboarding', { [step]: true });
 
       // Invalidate cache to refresh UI
       await queryClient.invalidateQueries({ queryKey: ['/api/onboarding'] });
