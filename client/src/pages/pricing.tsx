@@ -8,6 +8,7 @@ import { Footer } from "@/components/footer";
 import { useQuery } from "@tanstack/react-query";
 import type { SubscriptionPlan } from "@shared/schema";
 import { fetchWithAuth } from "@/lib/authBridge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PlanWithPopular extends SubscriptionPlan {
   popular?: boolean;
@@ -17,10 +18,29 @@ export default function Pricing() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: plansData, isLoading } = useQuery<SubscriptionPlan[]>({
     queryKey: ['/api/plans'],
   });
+
+  // Fetch current subscription to check which plan user is on (only for authenticated users)
+  const { data: subscription, isLoading: isLoadingSubscription, isError: isSubscriptionError } = useQuery<any>({
+    queryKey: ['/api/subscriptions/current'],
+    queryFn: async () => {
+      const response = await fetchWithAuth('/api/subscriptions/current');
+      if (!response.ok) {
+        throw new Error('Failed to fetch subscription');
+      }
+      return response.json();
+    },
+    enabled: !!user, // Only fetch if user is logged in
+    retry: false, // Don't retry on failure to avoid 401 errors
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    gcTime: 0, // Don't cache for too long
+  });
+
+  const currentPlanId = subscription?.planId;
 
   const plans: PlanWithPopular[] = plansData?.map(plan => ({
     ...plan,
@@ -28,6 +48,16 @@ export default function Pricing() {
   })) || [];
 
   const handleSelectPlan = async (plan: PlanWithPopular) => {
+    // Prevent selecting current plan
+    if (plan.id === currentPlanId) {
+      toast({
+        title: "Already subscribed",
+        description: "You are already on this plan.",
+        variant: "default",
+      });
+      return;
+    }
+
     setSelectedPlan(plan.name);
     setIsSubmitting(true);
 
@@ -119,6 +149,8 @@ export default function Pricing() {
               {plans.map((plan) => {
                 const features = Array.isArray(plan.features) ? plan.features : [];
                 const isTrial = plan.billingPeriod === 'trial';
+                // Only mark as current plan if we successfully loaded subscription and it matches
+                const isCurrentPlan = user && !isLoadingSubscription && !isSubscriptionError && plan.id === currentPlanId;
                 
                 return (
                   <Card 
@@ -127,6 +159,8 @@ export default function Pricing() {
                       plan.popular ? 'border-primary shadow-lg' : ''
                     } ${
                       selectedPlan === plan.name ? 'ring-2 ring-primary' : ''
+                    } ${
+                      isCurrentPlan ? 'opacity-70' : ''
                     }`}
                     data-testid={`card-plan-${plan.name}`}
                   >
@@ -171,13 +205,15 @@ export default function Pricing() {
                     <CardFooter>
                       <Button
                         onClick={() => handleSelectPlan(plan)}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isCurrentPlan}
                         className="w-full"
-                        variant={plan.popular ? "default" : "outline"}
+                        variant={isCurrentPlan ? "secondary" : plan.popular ? "default" : "outline"}
                         size="lg"
                         data-testid={`button-select-${plan.name}`}
                       >
-                        {isSubmitting && selectedPlan === plan.name ? (
+                        {isCurrentPlan ? (
+                          "Current Plan"
+                        ) : isSubmitting && selectedPlan === plan.name ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             {plan.price === 0 ? "Starting Trial..." : "Processing..."}
