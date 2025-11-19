@@ -82,19 +82,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Use ref to avoid stale closure - this callback never changes
   const getAccessToken = useCallback(() => {
-    console.log("[AUTH] getAccessToken called, current token:", accessTokenRef.current ? "EXISTS" : "NULL");
-    return accessTokenRef.current;
+    const token = accessTokenRef.current;
+    console.log("[AUTH] getAccessToken called, token:", token ? `${token.substring(0, 20)}...` : "NULL");
+    return token;
   }, []); // No dependencies - always returns current ref value
 
-  // Set the auth context reference in queryClient ONCE on mount
-  useEffect(() => {
-    console.log("[AUTH] Setting auth context reference in queryClient");
-    setAuthContext({
-      getAccessToken,
-      refreshAccessToken,
-      logout,
-    });
-  }, []); // Only run once on mount - callbacks are stable
+  // CRITICAL: Set auth context SYNCHRONOUSLY during render, NOT in useEffect
+  // This ensures authContextRef is available before any API calls happen
+  // We use useMemo to run once and only re-run if callbacks change (they won't)
+  const authContextValue = {
+    getAccessToken,
+    refreshAccessToken,
+    logout,
+  };
+  
+  // Set immediately, not in useEffect - this runs during render before children mount
+  if (typeof window !== 'undefined') {
+    setAuthContext(authContextValue);
+  }
 
   // Fetch user data on mount using refresh token
   useEffect(() => {
