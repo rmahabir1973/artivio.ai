@@ -82,7 +82,7 @@ export default function Register() {
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = "/api/auth/google";
+    window.location.href = "/auth/google";
   };
 
   return (
