@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthProvider";
 import { Loader2, Sparkles } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { login, setUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -63,13 +65,31 @@ export default function Register() {
         throw new Error(data.error || "Registration failed");
       }
 
+      // Store the access token in AuthProvider
+      if (data.accessToken) {
+        login(data.accessToken);
+
+        // Fetch user data with the access token
+        const userResponse = await fetch("/api/auth/user", {
+          headers: {
+            Authorization: `Bearer ${data.accessToken}`,
+          },
+          credentials: "include",
+        });
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser(userData);
+        }
+      }
+
       toast({
         title: "Account created!",
         description: "Welcome to Artivio AI. You're now logged in.",
       });
 
-      // Redirect to home page (user is automatically logged in after registration)
-      window.location.href = "/";
+      // Use wouter's setLocation instead of window.location
+      setLocation("/");
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({

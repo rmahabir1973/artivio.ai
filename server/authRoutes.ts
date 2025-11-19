@@ -1,10 +1,20 @@
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { hashPassword } from "./customAuth";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  storeRefreshToken,
+  validateRefreshToken,
+  revokeRefreshToken,
+  revokeAllUserTokens,
+  rotateRefreshToken,
+  JWTPayload,
+} from "./jwtUtils";
 
 // Validation schemas
 const registerSchema = z.object({
@@ -79,27 +89,69 @@ export function registerAuthRoutes(app: Express) {
         email: newUser.email,
       });
 
-      // Log user in automatically after registration
-      req.login(newUser, (err) => {
-        if (err) {
-          console.error("[AUTH] Auto-login after registration failed", {
-            error: err,
-          });
-          return res.status(500).json({
-            message: "Registration successful, but auto-login failed. Please log in manually.",
-          });
-        }
+      // Admin email whitelist
+      const ADMIN_EMAILS = [
+        "ryan.mahabir@outlook.com",
+        "admin@artivio.ai",
+        "joe@joecodeswell.com",
+        "jordanlambrecht@gmail.com",
+      ];
+      const isAdmin = ADMIN_EMAILS.includes(newUser.email?.toLowerCase() || "");
 
-        console.log("[AUTH] ✓ Auto-login successful after registration");
-        res.json({
-          message: "Registration successful",
-          user: {
-            id: newUser.id,
-            email: newUser.email,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
-          },
-        });
+      // Generate JWT tokens
+      const accessToken = generateAccessToken({
+        userId: newUser.id,
+        email: newUser.email || email.toLowerCase(),
+        tokenVersion: newUser.tokenVersion || 0,
+        isAdmin,
+      });
+
+      const refreshToken = generateRefreshToken();
+      const deviceInfo = req.headers["user-agent"] || "unknown";
+
+      // Store refresh token in database
+      const tokenId = await storeRefreshToken(
+        newUser.id,
+        refreshToken,
+        newUser.tokenVersion || 0,
+        deviceInfo
+      );
+
+      // Set refresh token in httpOnly cookie
+      const isProduction = process.env.NODE_ENV === "production";
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: "/",
+      });
+
+      // Store tokenId in cookie for validation
+      res.cookie("tokenId", tokenId, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: "/",
+      });
+
+      console.log("[AUTH] ✓ JWT tokens generated and stored", {
+        userId: newUser.id,
+        tokenId,
+      });
+
+      // Return access token and user data
+      res.json({
+        message: "Registration successful",
+        accessToken,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          isAdmin,
+        },
       });
     } catch (error: any) {
       console.error("[AUTH ERROR] Registration error", {
@@ -133,7 +185,7 @@ export function registerAuthRoutes(app: Express) {
       // Validate request body
       const validatedData = loginSchema.parse(req.body);
 
-      passport.authenticate("local", (err: any, user: any, info: any) => {
+      passport.authenticate("local", async (err: any, user: any, info: any) => {
         if (err) {
           console.error("[AUTH ERROR] Login error", { error: err });
           return res.status(500).json({
@@ -151,30 +203,75 @@ export function registerAuthRoutes(app: Express) {
           });
         }
 
-        req.login(user, (loginErr) => {
-          if (loginErr) {
-            console.error("[AUTH ERROR] Session creation failed", {
-              error: loginErr,
-            });
-            return res.status(500).json({
-              message: "Login failed. Please try again.",
-            });
-          }
+        console.log("[AUTH] ✓ Authentication successful", {
+          userId: user.id,
+          email: user.email,
+        });
 
-          console.log("[AUTH] ✓ Login successful", {
-            userId: user.id,
+        // Admin email whitelist
+        const ADMIN_EMAILS = [
+          "ryan.mahabir@outlook.com",
+          "admin@artivio.ai",
+          "joe@joecodeswell.com",
+          "jordanlambrecht@gmail.com",
+        ];
+        const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || "");
+
+        // Generate JWT tokens
+        const accessToken = generateAccessToken({
+          userId: user.id,
+          email: user.email,
+          tokenVersion: user.tokenVersion || 0,
+          isAdmin,
+        });
+
+        const refreshToken = generateRefreshToken();
+        const deviceInfo = req.headers["user-agent"] || "unknown";
+
+        // Store refresh token in database
+        const tokenId = await storeRefreshToken(
+          user.id,
+          refreshToken,
+          user.tokenVersion || 0,
+          deviceInfo
+        );
+
+        // Set refresh token in httpOnly cookie
+        const isProduction = process.env.NODE_ENV === "production";
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          path: "/",
+        });
+
+        // Store tokenId in cookie for validation
+        res.cookie("tokenId", tokenId, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          path: "/",
+        });
+
+        console.log("[AUTH] ✓ Login successful - JWT tokens generated", {
+          userId: user.id,
+          tokenId,
+          isAdmin,
+        });
+
+        // Return access token and user data
+        res.json({
+          message: "Login successful",
+          accessToken,
+          user: {
+            id: user.id,
             email: user.email,
-          });
-
-          res.json({
-            message: "Login successful",
-            user: {
-              id: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-            },
-          });
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isAdmin,
+          },
         });
       })(req, res, next);
     } catch (error: any) {
@@ -207,9 +304,9 @@ export function registerAuthRoutes(app: Express) {
     })
   );
 
-  // Google OAuth - Callback (with explicit session save to prevent race condition)
+  // Google OAuth - Callback
   app.get("/auth/callback", (req, res, next) => {
-    passport.authenticate("google", (err: any, user: any, info: any) => {
+    passport.authenticate("google", async (err: any, user: any, info: any) => {
       if (err) {
         console.error("[AUTH ERROR] Google OAuth error", { error: err });
         return res.redirect("/?error=auth_failed");
@@ -223,45 +320,186 @@ export function registerAuthRoutes(app: Express) {
       console.log("[AUTH] Google OAuth authentication successful", {
         userId: user.id,
         email: user.email,
-        sessionID: req.sessionID,
       });
 
-      // Manually log the user in
-      req.login(user, (loginErr) => {
-        if (loginErr) {
-          console.error("[AUTH ERROR] Failed to establish session after OAuth", {
-            error: loginErr,
-          });
-          return res.redirect("/?error=session_failed");
-        }
+      try {
+        // Admin email whitelist
+        const ADMIN_EMAILS = [
+          "ryan.mahabir@outlook.com",
+          "admin@artivio.ai",
+          "joe@joecodeswell.com",
+          "jordanlambrecht@gmail.com",
+        ];
+        const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || "");
 
-        console.log("[AUTH] Session login successful, saving session...", {
+        // Generate JWT tokens
+        const accessToken = generateAccessToken({
           userId: user.id,
-          sessionID: req.sessionID,
+          email: user.email,
+          tokenVersion: user.tokenVersion || 0,
+          isAdmin,
         });
 
-        // CRITICAL: Explicitly save session to database before redirecting
-        // This prevents race condition where redirect happens before session is persisted
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error("[AUTH ERROR] Failed to save session to database", {
-              error: saveErr,
-              userId: user.id,
-            });
-            return res.redirect("/?error=session_save_failed");
-          }
+        const refreshToken = generateRefreshToken();
+        const deviceInfo = req.headers["user-agent"] || "unknown";
 
-          console.log("[AUTH] ✓ Session saved successfully to database", {
-            userId: user.id,
-            email: user.email,
-            sessionID: req.sessionID,
-          });
+        // Store refresh token in database
+        const tokenId = await storeRefreshToken(
+          user.id,
+          refreshToken,
+          user.tokenVersion || 0,
+          deviceInfo
+        );
 
-          // Now it's safe to redirect - session is guaranteed to be in database
-          res.redirect("/?login=success");
+        // Set refresh token in httpOnly cookie
+        const isProduction = process.env.NODE_ENV === "production";
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          path: "/",
         });
-      });
+
+        // Store tokenId in cookie for validation
+        res.cookie("tokenId", tokenId, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          path: "/",
+        });
+
+        console.log("[AUTH] ✓ OAuth successful - JWT tokens generated and cookies set", {
+          userId: user.id,
+          tokenId,
+          isAdmin,
+        });
+
+        // Redirect to home page with login success
+        res.redirect("/?login=success");
+      } catch (error) {
+        console.error("[AUTH ERROR] Failed to generate JWT tokens after OAuth", {
+          error,
+          userId: user.id,
+        });
+        return res.redirect("/?error=token_generation_failed");
+      }
     })(req, res, next);
+  });
+
+  // Refresh Token endpoint
+  app.post("/api/auth/refresh", async (req, res) => {
+    try {
+      console.log("[AUTH] Refresh token request");
+
+      // Get refresh token and tokenId from cookies
+      const refreshToken = req.cookies.refreshToken;
+      const tokenId = req.cookies.tokenId;
+
+      if (!refreshToken || !tokenId) {
+        console.log("[AUTH] Refresh failed - missing cookies", {
+          hasRefreshToken: !!refreshToken,
+          hasTokenId: !!tokenId,
+        });
+        return res.status(401).json({
+          message: "No refresh token found. Please log in again.",
+        });
+      }
+
+      // Validate refresh token
+      const validationResult = await validateRefreshToken(refreshToken, tokenId);
+
+      if (!validationResult) {
+        console.log("[AUTH] Refresh failed - invalid or expired token", {
+          tokenId,
+        });
+        // Clear invalid cookies
+        res.clearCookie("refreshToken", { path: "/" });
+        res.clearCookie("tokenId", { path: "/" });
+        return res.status(401).json({
+          message: "Invalid or expired refresh token. Please log in again.",
+        });
+      }
+
+      const { userId, tokenVersion } = validationResult;
+
+      // Get user data for access token
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!user) {
+        console.error("[AUTH ERROR] User not found during refresh", { userId });
+        return res.status(404).json({
+          message: "User not found. Please log in again.",
+        });
+      }
+
+      // Admin email whitelist
+      const ADMIN_EMAILS = [
+        "ryan.mahabir@outlook.com",
+        "admin@artivio.ai",
+        "joe@joecodeswell.com",
+        "jordanlambrecht@gmail.com",
+      ];
+      const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || "");
+
+      // Rotate refresh token for security
+      const deviceInfo = req.headers["user-agent"] || "unknown";
+      const { token: newRefreshToken, tokenId: newTokenId } = await rotateRefreshToken(
+        tokenId,
+        userId,
+        tokenVersion,
+        deviceInfo
+      );
+
+      // Generate new access token
+      const accessToken = generateAccessToken({
+        userId: user.id,
+        email: user.email || "",
+        tokenVersion,
+        isAdmin,
+      });
+
+      // Set new refresh token cookies
+      const isProduction = process.env.NODE_ENV === "production";
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: "/",
+      });
+
+      res.cookie("tokenId", newTokenId, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: "/",
+      });
+
+      console.log("[AUTH] ✓ Token refresh successful", {
+        userId: user.id,
+        newTokenId,
+      });
+
+      // Return new access token
+      res.json({
+        message: "Token refreshed successfully",
+        accessToken,
+      });
+    } catch (error: any) {
+      console.error("[AUTH ERROR] Token refresh error", {
+        error: error.message,
+      });
+      res.status(500).json({
+        message: "Failed to refresh token. Please try again.",
+      });
+    }
   });
 
   // Get current user
@@ -306,48 +544,38 @@ export function registerAuthRoutes(app: Express) {
   });
 
   // Logout
-  app.get("/api/logout", (req, res) => {
-    console.log("[AUTH] Logout initiated", {
-      userId: (req.user as any)?.id,
-      sessionID: req.sessionID,
-    });
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      console.log("[AUTH] Logout initiated");
 
-    req.logout((err) => {
-      if (err) {
-        console.error("[AUTH] Logout error:", err);
+      // Get tokenId from cookie
+      const tokenId = req.cookies.tokenId;
+
+      if (tokenId) {
+        // Revoke refresh token in database
+        await revokeRefreshToken(tokenId);
+        console.log("[AUTH] Refresh token revoked", { tokenId });
+      } else {
+        console.log("[AUTH] No tokenId found in cookies");
       }
 
-      // Build the correct redirect URL
-      const protocol =
-        req.headers["x-forwarded-proto"] || (req.secure ? "https" : "http");
-      const host = req.get("host") || req.hostname;
-      const baseUrl = `${protocol}://${host}`;
-      const redirectUrl = `${baseUrl}?logout=success`;
+      // Clear JWT cookies
+      res.clearCookie("refreshToken", { path: "/" });
+      res.clearCookie("tokenId", { path: "/" });
 
-      // Destroy the session in the database (if it exists)
-      if (req.session) {
-        req.session.destroy((destroyErr) => {
-          if (destroyErr) {
-            console.error("[AUTH] Session destroy error:", destroyErr);
-          }
-        });
-      }
+      console.log("[AUTH] ✓ Logout successful - cookies cleared");
 
-      // Clear the session cookie explicitly
-      res.clearCookie("artivio.sid", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production" || process.env.PRODUCTION_URL?.startsWith("https://"),
-        sameSite: "lax",
-        path: "/",
+      res.json({
+        message: "Logout successful",
       });
-
-      console.log("[AUTH] ✓ Logout complete - session destroyed and cookie cleared", {
-        redirectUrl,
+    } catch (error: any) {
+      console.error("[AUTH ERROR] Logout error", {
+        error: error.message,
       });
-
-      // Redirect to home page with logout success query param
-      res.redirect(redirectUrl);
-    });
+      res.status(500).json({
+        message: "Logout failed. Please try again.",
+      });
+    }
   });
 }
 

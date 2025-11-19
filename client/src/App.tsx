@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ModernHeader } from "@/components/modern-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { useAuth } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/contexts/AuthProvider";
 import { Loader2 } from "lucide-react";
 
 // Pages
@@ -156,10 +156,12 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppContent />
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <AppContent />
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

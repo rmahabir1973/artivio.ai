@@ -40,12 +40,37 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").notNull().default(false),
   referralCode: varchar("referral_code").unique(), // Unique code for sharing with friends
   referredBy: varchar("referred_by"), // ID of user who referred them
+  tokenVersion: integer("token_version").notNull().default(0), // For forced logout / token invalidation
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Refresh tokens table for JWT authentication
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenId: varchar("token_id").notNull().unique(), // Unique identifier for this refresh token
+  tokenHash: text("token_hash").notNull(), // Hashed refresh token value
+  tokenVersion: integer("token_version").notNull(), // Must match user's tokenVersion to be valid
+  deviceInfo: text("device_info"), // User agent or device identifier
+  expiresAt: timestamp("expires_at").notNull(), // 30 days from creation
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("user_id_idx").on(table.userId),
+  index("token_id_idx").on(table.tokenId),
+  index("expires_at_idx").on(table.expiresAt),
+]);
+
+export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
+export type RefreshToken = typeof refreshTokens.$inferSelect;
 
 // Referrals table for tracking referral program
 export const referrals = pgTable("referrals", {
