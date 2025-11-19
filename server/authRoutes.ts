@@ -207,22 +207,62 @@ export function registerAuthRoutes(app: Express) {
     })
   );
 
-  // Google OAuth - Callback
-  app.get(
-    "/auth/callback",
-    passport.authenticate("google", {
-      failureRedirect: "/?error=auth_failed",
-    }),
-    (req, res) => {
-      console.log("[AUTH] ✓ Google OAuth successful", {
-        userId: (req.user as any)?.id,
-        email: (req.user as any)?.email,
+  // Google OAuth - Callback (with explicit session save to prevent race condition)
+  app.get("/auth/callback", (req, res, next) => {
+    passport.authenticate("google", (err: any, user: any, info: any) => {
+      if (err) {
+        console.error("[AUTH ERROR] Google OAuth error", { error: err });
+        return res.redirect("/?error=auth_failed");
+      }
+
+      if (!user) {
+        console.log("[AUTH] Google OAuth failed - no user", { info });
+        return res.redirect("/?error=auth_failed");
+      }
+
+      console.log("[AUTH] Google OAuth authentication successful", {
+        userId: user.id,
+        email: user.email,
+        sessionID: req.sessionID,
       });
 
-      // Redirect to home page on success
-      res.redirect("/?login=success");
-    }
-  );
+      // Manually log the user in
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error("[AUTH ERROR] Failed to establish session after OAuth", {
+            error: loginErr,
+          });
+          return res.redirect("/?error=session_failed");
+        }
+
+        console.log("[AUTH] Session login successful, saving session...", {
+          userId: user.id,
+          sessionID: req.sessionID,
+        });
+
+        // CRITICAL: Explicitly save session to database before redirecting
+        // This prevents race condition where redirect happens before session is persisted
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("[AUTH ERROR] Failed to save session to database", {
+              error: saveErr,
+              userId: user.id,
+            });
+            return res.redirect("/?error=session_save_failed");
+          }
+
+          console.log("[AUTH] ✓ Session saved successfully to database", {
+            userId: user.id,
+            email: user.email,
+            sessionID: req.sessionID,
+          });
+
+          // Now it's safe to redirect - session is guaranteed to be in database
+          res.redirect("/?login=success");
+        });
+      });
+    })(req, res, next);
+  });
 
   // Get current user
   app.get("/api/auth/user", async (req: any, res) => {
