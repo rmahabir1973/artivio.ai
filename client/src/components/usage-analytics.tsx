@@ -28,6 +28,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchWithAuth } from "@/lib/queryClient";
 
 type AnalyticsData = {
   totalCreditsSpent: number;
@@ -57,9 +59,16 @@ const FEATURE_LABELS: Record<string, string> = {
 
 export function UsageAnalytics() {
   const [selectedPeriod, setSelectedPeriod] = useState<7 | 30 | 90>(30);
+  const { user } = useAuth();
 
   const { data: analytics, isLoading } = useQuery<AnalyticsData>({
-    queryKey: [`/api/analytics?days=${selectedPeriod}`],
+    queryKey: ["/api/analytics", { days: selectedPeriod }],
+    queryFn: async () => {
+      const res = await fetchWithAuth(`/api/analytics?days=${selectedPeriod}`);
+      if (!res.ok) throw new Error("Failed to fetch analytics");
+      return res.json();
+    },
+    enabled: !!user,
   });
 
   if (isLoading) {
