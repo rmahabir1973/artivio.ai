@@ -399,56 +399,37 @@ export function registerAuthRoutes(app: Express) {
           return res.redirect("/?error=token_store_failed");
         }
 
-        // Safari/iOS incognito blocks cookies during cross-site redirects (even with sameSite: lax)
-        // Solution: Create a one-time login ticket and have frontend call /api/auth/finalize
-        // to set cookies via same-origin POST request (which Safari accepts)
-        const ticketId = generateRefreshToken(); // Reuse same random generator
-        const ticketExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+        // Safari/iOS blocks cookies on 302 redirects (even with sameSite: lax)
+        // Solution: Send 200 OK with HTML meta refresh instead of 302 redirect
+        // Safari accepts cookies in 200 OK responses, just not in redirect responses
+        const cookieOptions = getCookieOptions(req);
+        res.cookie("refreshToken", refreshToken, cookieOptions);
+        res.cookie("tokenId", tokenId, cookieOptions);
 
-        try {
-          await db.insert(loginTickets).values({
-            ticketId,
-            userId: user.id,
-            refreshTokenId: tokenId,
-            refreshToken, // Temporary storage for 5 minutes
-            expiresAt: ticketExpiresAt,
-            used: false,
-          });
+        console.log("[AUTH] ✓ OAuth successful - cookies set via HTML response", {
+          userId: user.id,
+          email: user.email,
+          tokenId: tokenId?.substring(0, 8),
+          isAdmin,
+        });
 
-          console.log("[AUTH] ✓ OAuth successful - login ticket created", {
-            userId: user.id,
-            email: user.email,
-            ticketId: ticketId.substring(0, 8),
-            tokenId: tokenId?.substring(0, 8),
-            isAdmin,
-          });
-
-          // Redirect with both access token (in fragment) and login ticket (in query)
-          // Frontend will call /api/auth/finalize with the ticket to set cookies
-          res.redirect(`/?ticket=${ticketId}#token=${accessToken}`);
-        } catch (ticketError: any) {
-          console.error("[AUTH ERROR] Failed to create login ticket", {
-            error: ticketError.message,
-            userId: user.id,
-          });
-          // Fallback: Try setting cookies directly (works for non-Safari browsers)
-          const useSecureCookies = isSecureRequest(req);
-          res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: useSecureCookies,
-            sameSite: "lax",
-            maxAge: 30 * 24 * 60 * 60 * 1000,
-            path: "/",
-          });
-          res.cookie("tokenId", tokenId, {
-            httpOnly: true,
-            secure: useSecureCookies,
-            sameSite: "lax",
-            maxAge: 30 * 24 * 60 * 60 * 1000,
-            path: "/",
-          });
-          res.redirect(`/?login=success#token=${accessToken}`);
-        }
+        // Send HTML with meta refresh instead of 302 redirect
+        // This allows Safari to accept the cookies we just set
+        const redirectUrl = `/?login=success#token=${accessToken}`;
+        res.status(200).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+            <title>Redirecting...</title>
+          </head>
+          <body>
+            <p>Authentication successful. Redirecting...</p>
+            <script>window.location.href = "${redirectUrl}";</script>
+          </body>
+          </html>
+        `);
       } catch (error) {
         console.error("[AUTH ERROR] Failed to generate JWT tokens after OAuth", {
           error,
@@ -457,82 +438,6 @@ export function registerAuthRoutes(app: Express) {
         return res.redirect("/?error=token_generation_failed");
       }
     })(req, res, next);
-  });
-
-  // Finalize OAuth login endpoint - sets cookies via same-origin POST (Safari/iOS workaround)
-  // SECURITY: Atomically marks ticket as used to prevent replay attacks
-  app.post("/api/auth/finalize", async (req, res) => {
-    const { ticket } = req.body;
-
-    try {
-      console.log("[AUTH] Finalize login request", {
-        hasTicket: !!ticket,
-        ticketPreview: ticket?.substring(0, 8),
-      });
-
-      if (!ticket) {
-        return res.status(400).json({
-          message: "Missing login ticket",
-          code: "MISSING_TICKET",
-        });
-      }
-
-      // SECURITY: Atomic update - only succeeds if ticket is unused and not expired
-      // This prevents replay attacks by ensuring one-time use
-      const now = new Date();
-      const result = await db
-        .update(loginTickets)
-        .set({ used: true })
-        .where(
-          and(
-            eq(loginTickets.ticketId, ticket),
-            eq(loginTickets.used, false)
-          )
-        )
-        .returning();
-
-      // Check if ticket was found and updated
-      if (!result || result.length === 0) {
-        console.log("[AUTH] Finalize failed - invalid or already used ticket");
-        return res.status(401).json({
-          message: "Invalid or already used login ticket",
-          code: "INVALID_TICKET",
-        });
-      }
-
-      const loginTicket = result[0];
-
-      // Check if ticket is expired
-      if (now > loginTicket.expiresAt) {
-        console.log("[AUTH] Finalize failed - ticket expired");
-        return res.status(401).json({
-          message: "Login ticket has expired",
-          code: "TICKET_EXPIRED",
-        });
-      }
-
-      // Set cookies with the stored refresh token
-      const cookieOptions = getCookieOptions(req);
-      res.cookie("refreshToken", loginTicket.refreshToken, cookieOptions);
-      res.cookie("tokenId", loginTicket.refreshTokenId, cookieOptions);
-
-      console.log("[AUTH] ✓ Login finalized - cookies set via same-origin POST", {
-        userId: loginTicket.userId,
-        tokenId: loginTicket.refreshTokenId.substring(0, 8),
-      });
-
-      res.json({
-        success: true,
-        message: "Login finalized successfully",
-      });
-    } catch (error: any) {
-      console.error("[AUTH ERROR] Finalize login failed", {
-        error: error.message,
-      });
-      res.status(500).json({
-        message: "Failed to finalize login. Please try again.",
-      });
-    }
   });
 
   // Refresh Token endpoint
