@@ -12,10 +12,13 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Video, Upload, X, Info } from "lucide-react";
+import { Loader2, Video, Upload, X, Info, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
+import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { PreviewPanel } from "@/components/preview-panel";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1": ["16:9", "9:16"],
@@ -395,19 +398,8 @@ export default function GenerateVideo() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="space-y-2 mb-8">
-        <h1 className="text-4xl font-bold flex items-center gap-3">
-          <Video className="h-10 w-10 text-primary" />
-          AI Video Generation
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Create stunning videos from text or reference images
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Controls */}
+    <ThreeColumnLayout
+      form={
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between gap-2">
@@ -648,50 +640,55 @@ export default function GenerateVideo() {
                 <>Generate Video ({selectedModel?.cost} credits)</>
               )}
             </Button>
+            {/* Model Comparison - Collapsible */}
+            <Collapsible className="mt-6">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full" data-testid="button-toggle-models">
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  View All Models
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-3">
+                {VIDEO_MODELS.map((m) => (
+                  <Card 
+                    key={m.value} 
+                    className={`hover-elevate active-elevate-2 cursor-pointer transition-colors ${model === m.value ? "border-primary" : ""}`}
+                    onClick={() => setModel(m.value)}
+                    data-testid={`card-model-${m.value}`}
+                  >
+                    <CardHeader className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <CardTitle className="text-base">{m.label}</CardTitle>
+                          <CardDescription className="text-xs">{m.description}</CardDescription>
+                        </div>
+                        {m.supportsImages && (
+                          <Badge variant="secondary" className="shrink-0 text-xs">
+                            {m.maxImages === 1 ? "1 img" : `${m.maxImages} imgs`}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-bold">{m.cost} credits</span>
+                        <span className="text-muted-foreground text-xs">{m.duration}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
-
-        {/* Model Comparison */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Available Models</h2>
-          <div className="space-y-4">
-            {VIDEO_MODELS.map((m) => (
-              <Card 
-                key={m.value} 
-                className={`hover-elevate active-elevate-2 cursor-pointer transition-colors ${model === m.value ? "border-primary" : ""}`}
-                onClick={() => setModel(m.value)}
-                data-testid={`card-model-${m.value}`}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <CardTitle className="text-lg">{m.label}</CardTitle>
-                      <CardDescription>{m.description}</CardDescription>
-                    </div>
-                    {m.supportsImages && (
-                      <Badge variant="secondary" className="shrink-0">
-                        {m.maxImages === 1 ? "1 img" : `${m.maxImages} imgs`}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold">{m.cost}</span>
-                      <span className="text-sm text-muted-foreground">credits</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Duration:</span>
-                      <span className="font-medium">{m.duration}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+      }
+      preview={
+        <PreviewPanel
+          status="idle"
+          title="Video Preview"
+          description="Your generated video will appear here"
+        />
+      }
+    />
   );
 }

@@ -12,9 +12,12 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Image as ImageIcon, Upload, X } from "lucide-react";
+import { Loader2, Image as ImageIcon, Upload, X, ChevronDown } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
+import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { PreviewPanel } from "@/components/preview-panel";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const IMAGE_MODEL_INFO = [
   { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
@@ -251,30 +254,13 @@ export default function GenerateImage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="space-y-2 mb-8">
-        <h1 className="text-4xl font-bold flex items-center gap-3">
-          <ImageIcon className="h-10 w-10 text-primary" />
-          Image Generation
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Create and edit high-quality images with AI-powered models
-        </p>
-      </div>
-
-      <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="text-to-image" data-testid="tab-text-to-image">Text to Image</TabsTrigger>
-          <TabsTrigger value="image-editing" data-testid="tab-image-editing">Image Editing</TabsTrigger>
-        </TabsList>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Controls */}
-          <Card>
+    <ThreeColumnLayout
+      form={
+        <Card>
             <CardHeader>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <CardTitle>Generation Settings</CardTitle>
+                  <CardTitle>Image Generation</CardTitle>
                   <CardDescription>
                     {mode === "text-to-image" 
                       ? "Configure your image parameters" 
@@ -289,6 +275,17 @@ export default function GenerateImage() {
                   currentParameters={{ aspectRatio, style, outputFormat, quality }}
                 />
               </div>
+              {/* Mode Tabs */}
+              <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="mt-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="text-to-image" data-testid="tab-text-to-image">
+                    Text to Image
+                  </TabsTrigger>
+                  <TabsTrigger value="image-editing" data-testid="tab-image-editing">
+                    Image Editing
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Model Selection */}
@@ -479,31 +476,50 @@ export default function GenerateImage() {
                   <>{mode === "text-to-image" ? "Generate Image" : "Edit Image"} ({selectedModel?.cost} credits)</>
                 )}
               </Button>
+
+              {/* Model Comparison - Collapsible */}
+              <Collapsible className="mt-6">
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full" data-testid="button-toggle-models">
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    View All Models
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-3">
+                  {IMAGE_MODELS.map((m) => (
+                    <Card 
+                      key={m.value} 
+                      className={`hover-elevate active-elevate-2 cursor-pointer transition-colors ${model === m.value ? "border-primary" : ""}`}
+                      onClick={() => setModel(m.value)}
+                      data-testid={`card-model-${m.value}`}
+                    >
+                      <CardHeader className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <CardTitle className="text-base">{m.label}</CardTitle>
+                            <CardDescription className="text-xs">{m.description}</CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-bold">{m.cost} credits</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
             </CardContent>
           </Card>
-
-          {/* Model Comparison */}
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Available Models</h2>
-            <div className="space-y-4">
-              {IMAGE_MODELS.map((m) => (
-                <Card key={m.value} className={model === m.value ? "border-primary" : ""}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{m.label}</CardTitle>
-                    <CardDescription>{m.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold">{m.cost}</span>
-                      <span className="text-sm text-muted-foreground">credits per image</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Tabs>
-    </div>
+      }
+      preview={
+        <PreviewPanel
+          status="idle"
+          title="Image Preview"
+          description="Your generated image will appear here"
+        />
+      }
+    />
   );
 }
