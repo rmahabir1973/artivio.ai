@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Footer } from "@/components/footer";
 import { useQuery } from "@tanstack/react-query";
 import type { SubscriptionPlan } from "@shared/schema";
 import { fetchWithAuth } from "@/lib/authBridge";
@@ -299,8 +298,6 @@ export default function Pricing() {
         )}
       </section>
 
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

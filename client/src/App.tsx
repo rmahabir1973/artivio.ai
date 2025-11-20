@@ -145,7 +145,7 @@ function AppContent() {
       <main className="flex-1 overflow-y-auto">
         <Router />
       </main>
-      {isAuthenticated && <Footer />}
+      <Footer />
     </div>
   );
 }

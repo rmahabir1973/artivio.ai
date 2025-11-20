@@ -4,7 +4,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, HelpCircle, Bug, Lightbulb, MessageSquare, BookOpen, Zap } from "lucide-react";
-import { Footer } from "@/components/footer";
 
 export default function Support() {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -254,8 +253,6 @@ export default function Support() {
         </Card>
       </div>
 
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

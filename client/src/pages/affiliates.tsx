@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Check, DollarSign, Users, TrendingUp, Mail, Copy, ExternalLink, Sparkles, Gift, Target, Zap } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Footer } from "@/components/footer";
 
 const AFFILIATE_LINK = "https://artivio-ai.getrewardful.com/signup?campaign=artivio-affiliate-team&code=F4Ng9WuVZ9mhUHVjYMpAxkqM";
 
@@ -731,8 +730,6 @@ Questions? Reply to this email or check out our Affiliate FAQ: https://artivio.a
         </div>
       </section>
 
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

@@ -153,9 +153,9 @@ export function ModernHeader() {
             {/* Affiliate link for all users */}
             <Link href="/affiliates">
               <Button
-                variant={location === "/affiliates" ? "default" : "ghost"}
+                variant="default"
                 size="sm"
-                className="gap-2"
+                className="gap-2 font-bold bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
                 data-testid="nav-affiliates"
               >
                 <DollarSign className="h-4 w-4" />
@@ -407,8 +407,8 @@ export function ModernHeader() {
 
                 <Link href="/affiliates">
                   <Button
-                    variant={location === "/affiliates" ? "default" : "ghost"}
-                    className="w-full justify-start gap-3"
+                    variant="default"
+                    className="w-full justify-start gap-3 font-bold bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
                     onClick={() => setMobileMenuOpen(false)}
                     data-testid="mobile-nav-affiliates"
                   >

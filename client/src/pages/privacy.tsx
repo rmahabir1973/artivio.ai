@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
-import { Footer } from "@/components/footer";
 
 export default function Privacy() {
   return (
@@ -225,8 +224,6 @@ export default function Privacy() {
         </div>
       </div>
 
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }
