@@ -1,0 +1,152 @@
+2025-11-20 11:23:10.13
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:23:10.14
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:23:10.14
+b4fe9195
+User
+[/api/generations] ✓ JWT_SECRET_FIX_DEPLOYED - Request received { userId: '49729939', hasUser: true }
+2025-11-20 11:23:10.14
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:23:10.15
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:23:10.15
+b4fe9195
+User
+4:23:10 PM [express] GET /api/pricing 200 in 111ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132",…
+2025-11-20 11:23:10.15
+b4fe9195
+User
+4:23:10 PM [express] GET /api/onboarding 200 in 132ms :: {"id":"94d37fba-091b-4e62-9023-6a268c1916b4…
+2025-11-20 11:23:10.18
+b4fe9195
+User
+4:23:10 PM [express] GET /api/favorites 200 in 138ms :: []
+2025-11-20 11:23:10.18
+b4fe9195
+User
+4:23:10 PM [express] GET /api/subscriptions/current 200 in 151ms :: {"id":"7069d11e-8eea-4517-952c-7…
+2025-11-20 11:23:14.50
+b4fe9195
+User
+4:23:14 PM [express] GET /api/generations 200 in 4308ms :: [{"id":"5ce583af-8fa0-443c-919b-7fc54574e…
+2025-11-20 11:23:18.86
+b4fe9195
+User
+[/api/generations] ✓ JWT_SECRET_FIX_DEPLOYED - Request received { userId: '49729939', hasUser: true }
+2025-11-20 11:23:18.86
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:23:22.97
+b4fe9195
+User
+4:23:22 PM [express] GET /api/generations 200 in 3983ms :: [{"id":"5ce583af-8fa0-443c-919b-7fc54574e…
+2025-11-20 11:23:58.03
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:23:58.03
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:23:58.06
+b4fe9195
+User
+4:23:58 PM [express] GET /api/referral/code 200 in 152ms :: {"code":"9G1YQOR7"}
+2025-11-20 11:23:58.06
+b4fe9195
+User
+4:23:58 PM [express] GET /api/referral/stats 200 in 133ms :: {"totalReferrals":0,"convertedReferrals…
+2025-11-20 11:24:00.10
+b4fe9195
+User
+4:24:00 PM [express] GET /api/referral/leaderboard 200 in 29ms :: []
+2025-11-20 11:24:05.79
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:24:05.80
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:24:05.82
+b4fe9195
+User
+4:24:05 PM [express] GET /api/avatar/generations 200 in 47ms :: []
+2025-11-20 11:24:05.83
+b4fe9195
+User
+4:24:05 PM [express] GET /api/voice-clones 200 in 51ms :: []
+2025-11-20 11:24:10.19
+b4fe9195
+User
+4:24:10 PM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-11-20 11:24:10.96
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:24:11.01
+b4fe9195
+User
+4:24:11 PM [express] GET /api/image-analysis/results 200 in 71ms :: [{"id":"aa2de9a8-1df9-40ef-9ae3-…
+2025-11-20 11:24:11.01
+b4fe9195
+User
+4:24:11 PM [express] GET /api/pricing 304 in 22ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-20 11:24:18.05
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:24:18.07
+b4fe9195
+User
+4:24:18 PM [express] GET /api/tts/generations 200 in 51ms :: []
+2025-11-20 11:24:19.98
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:24:20.01
+b4fe9195
+User
+4:24:20 PM [express] GET /api/audio/conversions 200 in 48ms :: []
+2025-11-20 11:24:22.04
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:24:22.06
+b4fe9195
+User
+4:24:22 PM [express] GET /api/chat/conversations 200 in 49ms :: [{"id":"2e8eb0ff-5568-4991-a3c4-80b2…
+2025-11-20 11:24:43.67
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:25:03.84
+b4fe9195
+User
+4:25:03 PM [express] POST /api/chat/send 200 in 20276ms
+2025-11-20 11:25:05.27
+b4fe9195
+User
+[/api/generations] ✓ JWT_SECRET_FIX_DEPLOYED - Request received { userId: '49729939', hasUser: true }
+2025-11-20 11:25:05.27
+b4fe9195
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 11:25:09.60
+b4fe9195
+User
+4:25:09 PM [express] GET /api/generations 200 in 4200ms :: [{"id":"5ce583af-8fa0-443c-919b-7fc54574e…
+2025-11-20 11:25:10.29
+b4fe9195
+User
+4:25:10 PM [express] GET /api/announcements/active 304 in 33ms :: []
