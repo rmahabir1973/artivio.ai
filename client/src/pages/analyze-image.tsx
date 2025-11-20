@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, Image as ImageIcon, Upload, Sparkles, Clock } from "lucide-react";
@@ -148,7 +149,9 @@ export default function AnalyzeImage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl space-y-6">
+    <SidebarInset>
+      <div className="h-full overflow-y-auto">
+        <div className="container mx-auto p-6 max-w-7xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold" data-testid="text-heading">Image Analysis</h1>
         <p className="text-muted-foreground">Upload an image and get AI-powered detailed analysis</p>
@@ -351,6 +354,8 @@ export default function AnalyzeImage() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </SidebarInset>
   );
 }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { Download, QrCode, Upload, Trash2 } from "lucide-react";
 import QRCodeStyling from "qr-code-styling";
@@ -193,7 +194,9 @@ export default function QRGenerator() {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto p-6 space-y-6">
+    <SidebarInset>
+      <div className="h-full overflow-y-auto">
+        <div className="container max-w-7xl mx-auto p-6 space-y-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <QrCode className="h-8 w-8" />
@@ -425,6 +428,8 @@ export default function QRGenerator() {
           </Card>
         </div>
       </div>
-    </div>
+        </div>
+      </div>
+    </SidebarInset>
   );
 }

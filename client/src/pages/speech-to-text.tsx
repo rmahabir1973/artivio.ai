@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, FileAudio, Upload, Copy, Check, Clock } from "lucide-react";
@@ -158,7 +159,9 @@ export default function SpeechToText() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl space-y-6">
+    <SidebarInset>
+      <div className="h-full overflow-y-auto">
+        <div className="container mx-auto p-6 max-w-7xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold" data-testid="text-heading">Speech-to-Text</h1>
         <p className="text-muted-foreground">Transcribe audio files with AI-powered speech recognition</p>
@@ -406,6 +409,8 @@ export default function SpeechToText() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </SidebarInset>
   );
 }

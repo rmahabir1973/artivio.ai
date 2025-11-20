@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, Volume2, Download, Mic, Clock } from "lucide-react";
@@ -148,7 +149,9 @@ export default function TextToSpeech() {
   const selectedModel = TTS_MODELS.find(m => m.value === model);
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl space-y-6">
+    <SidebarInset>
+      <div className="h-full overflow-y-auto">
+        <div className="container mx-auto p-6 max-w-7xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold" data-testid="text-heading">Text-to-Speech</h1>
         <p className="text-muted-foreground">Generate natural-sounding speech from text using AI voices</p>
@@ -438,6 +441,8 @@ export default function TextToSpeech() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </SidebarInset>
   );
 }

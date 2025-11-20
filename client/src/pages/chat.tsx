@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { Trash2, Plus, Send, Sparkles, Square } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
@@ -248,7 +249,8 @@ export default function Chat() {
   const currentCost = PROVIDER_MODELS[provider].find(m => m.value === model)?.cost || 10;
 
   return (
-    <div className="flex h-full">
+    <SidebarInset>
+      <div className="flex h-full">
       {/* Conversations Sidebar */}
       <div className="w-80 border-r bg-card flex flex-col">
         <div className="p-4 border-b">
@@ -453,6 +455,7 @@ export default function Chat() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </SidebarInset>
   );
 }

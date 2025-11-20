@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { Loader2, Image as ImageIcon, Video, Upload } from "lucide-react";
@@ -157,7 +158,9 @@ export default function TalkingAvatars() {
   const cost = provider === "kling-ai" ? getModelCost("kling-ai", 350) : getModelCost("infinite-talk", 300);
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl space-y-6">
+    <SidebarInset>
+      <div className="h-full overflow-y-auto">
+        <div className="container mx-auto p-6 max-w-7xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold" data-testid="text-heading">AI Talking Avatars</h1>
         <p className="text-muted-foreground">Transform static images into dynamic talking avatars</p>
@@ -401,6 +404,8 @@ export default function TalkingAvatars() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </SidebarInset>
   );
 }

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { useAuth } from "@/hooks/useAuth";
@@ -385,7 +386,9 @@ export default function VoiceClone() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <SidebarInset>
+      <div className="h-full overflow-y-auto">
+        <div className="p-8 max-w-7xl mx-auto">
       <div className="space-y-2 mb-8">
         <h1 className="text-4xl font-bold flex items-center gap-3">
           <Mic className="h-10 w-10 text-primary" />
@@ -702,6 +705,8 @@ export default function VoiceClone() {
           </CardContent>
         </Card>
       </div>
-    </div>
+        </div>
+      </div>
+    </SidebarInset>
   );
 }

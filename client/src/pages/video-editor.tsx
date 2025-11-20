@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SidebarInset } from "@/components/ui/sidebar";
 
 interface Generation {
   id: string;
@@ -353,7 +354,9 @@ export default function VideoEditor() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl space-y-6">
+    <SidebarInset>
+      <div className="h-full overflow-y-auto">
+        <div className="container mx-auto p-6 max-w-7xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold" data-testid="text-heading">Video Editor</h1>
         <p className="text-muted-foreground">Combine multiple AI-generated videos into longer content</p>
@@ -934,6 +937,8 @@ export default function VideoEditor() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </SidebarInset>
   );
 }
