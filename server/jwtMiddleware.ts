@@ -85,8 +85,12 @@ export async function requireJWT(
 
     next();
   } catch (error) {
-    console.error("[JWT MIDDLEWARE ERROR]", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("[JWT MIDDLEWARE ERROR] Unexpected error during token verification:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      authHeader: req.headers.authorization?.substring(0, 30) + "...",
+    });
+    res.status(500).json({ message: "Internal server error during authentication" });
   }
 }
 
