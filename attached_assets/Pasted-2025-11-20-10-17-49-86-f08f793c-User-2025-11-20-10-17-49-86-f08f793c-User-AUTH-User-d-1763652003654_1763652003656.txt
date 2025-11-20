@@ -1,0 +1,90 @@
+2025-11-20 10:17:49.86
+f08f793c
+User
+}
+
+2025-11-20 10:17:49.86
+f08f793c
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-20 10:17:49.86
+f08f793c
+User
+isAdmin: true
+2025-11-20 10:17:49.86
+f08f793c
+User
+userId: '49729939',
+2025-11-20 10:17:49.86
+f08f793c
+User
+3:17:49 PM [express] GET /api/auth/user 200 in 85ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-20 10:17:49.98
+f08f793c
+User
+3:17:49 PM [express] GET /api/announcements/active 200 in 24ms :: []
+2025-11-20 10:17:50.05
+f08f793c
+User
+3:17:50 PM [express] GET /api/pricing 200 in 91ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-20 10:17:50.05
+f08f793c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 10:17:50.06
+f08f793c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 10:17:50.07
+f08f793c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 10:17:50.07
+f08f793c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 10:17:50.08
+f08f793c
+User
+3:17:50 PM [express] GET /api/onboarding 200 in 114ms :: {"id":"94d37fba-091b-4e62-9023-6a268c1916b4…
+2025-11-20 10:17:50.09
+f08f793c
+User
+3:17:50 PM [express] GET /api/favorites 200 in 124ms :: []
+2025-11-20 10:17:50.10
+f08f793c
+User
+3:17:50 PM [express] GET /api/subscriptions/current 200 in 145ms :: {"id":"7069d11e-8eea-4517-952c-7…
+2025-11-20 10:17:55.11
+f08f793c
+User
+3:17:55 PM [express] GET /api/generations 200 in 4880ms :: [{"id":"cfdceb4c-9327-46c9-8417-476801b40…
+2025-11-20 10:18:00.30
+f08f793c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 10:18:05.08
+f08f793c
+User
+3:18:05 PM [express] GET /api/generations 200 in 4526ms :: [{"id":"cfdceb4c-9327-46c9-8417-476801b40…
+2025-11-20 10:18:50.22
+f08f793c
+User
+3:18:50 PM [express] GET /api/announcements/active 304 in 114ms :: []
+2025-11-20 10:19:15.63
+f08f793c
+User
+3:19:15 PM [express] GET /api/pricing 304 in 99ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-20 10:19:22.61
+f08f793c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 10:19:33.02
+f08f793c
+User
+3:19:33 PM [express] GET /api/generations 200 in 5098ms :: [{"id":"cfdceb4c-9327-46c9-8417-476801b40…
+2025-11-20 10:19:37.06
+f08f793c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+
