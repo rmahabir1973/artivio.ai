@@ -15,6 +15,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Sparkles, Upload, X, Info, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
+import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { PreviewPanel } from "@/components/preview-panel";
 
 interface Scene {
   id: string;
@@ -289,18 +291,24 @@ export default function GenerateSora() {
   const estimatedCost = mode === "storyboard" ? 500 : 300;
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Sparkles className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold">Sora 2 Pro</h1>
-          <Badge variant="default" className="text-xs">Premium</Badge>
-        </div>
-        <p className="text-muted-foreground">
-          Create stunning videos with OpenAI's Sora 2 - Advanced text-to-video, image-to-video, and multi-scene storyboard generation
-        </p>
-      </div>
-
+    <ThreeColumnLayout
+      form={
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-6 h-6 text-primary" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle>Sora 2 Pro</CardTitle>
+                  <Badge variant="default" className="text-xs">Premium</Badge>
+                </div>
+                <CardDescription>
+                  Advanced text-to-video, image-to-video, and multi-scene storyboard generation
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
       <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="text-to-video" data-testid="tab-text-to-video">
@@ -660,47 +668,53 @@ export default function GenerateSora() {
         </TabsContent>
       </Tabs>
 
-      <Card className="mt-6">
-        <CardContent className="pt-6">
-          <CreditCostWarning 
-            cost={estimatedCost} 
-            featureName={mode === "storyboard" ? "Sora 2 Pro Storyboard" : "Sora 2 Pro"} 
-          />
-          
-          <div className="flex gap-3 mt-6">
-            <Button
-              onClick={handleGenerate}
-              disabled={generateMutation.isPending}
-              className="flex-1"
-              size="lg"
-              data-testid="button-generate"
-            >
-              {generateMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Video ({estimatedCost} credits)
-                </>
-              )}
-            </Button>
-          </div>
+              <div className="mt-6 space-y-4">
+                <CreditCostWarning 
+                  cost={estimatedCost} 
+                  featureName={mode === "storyboard" ? "Sora 2 Pro Storyboard" : "Sora 2 Pro"} 
+                />
+                
+                <Button
+                  onClick={handleGenerate}
+                  disabled={generateMutation.isPending}
+                  className="w-full"
+                  size="lg"
+                  data-testid="button-generate"
+                >
+                  {generateMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Video ({estimatedCost} credits)
+                    </>
+                  )}
+                </Button>
 
-          <div className="mt-4 p-4 bg-muted rounded-lg">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p><strong>Premium Feature:</strong> Sora 2 Pro offers the highest quality AI video generation</p>
-                <p><strong>Storyboard Mode:</strong> Create complex multi-scene videos with precise timing control</p>
-                <p><strong>Duration:</strong> Generate videos up to 25 seconds with storyboard mode</p>
+                <div className="p-4 bg-muted rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Info className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p><strong>Premium Feature:</strong> Sora 2 Pro offers the highest quality AI video generation</p>
+                      <p><strong>Storyboard Mode:</strong> Create complex multi-scene videos with precise timing control</p>
+                      <p><strong>Duration:</strong> Generate videos up to 25 seconds with storyboard mode</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      }
+      preview={
+        <PreviewPanel
+          status="idle"
+          title="Video Preview"
+          description="Your generated Sora 2 video will appear here"
+        />
+      }
+    />
   );
 }
