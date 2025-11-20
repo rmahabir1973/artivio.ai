@@ -21,28 +21,44 @@ export default function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Create mailto link
-    const mailtoLink = `mailto:hello@artivio.ai?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-    )}`;
+    try {
+      const response = await fetch('/api/public/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    // Open mailto
-    window.location.href = mailtoLink;
+      const data = await response.json();
 
-    toast({
-      title: "Opening Email Client",
-      description: "Your default email client should open with your message pre-filled.",
-    });
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send message');
+      }
 
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: ""
-    });
+      toast({
+        title: "Message Sent!",
+        description: data.message || "Thank you for your message! We will be in touch soon.",
+      });
 
-    setIsSubmitting(false);
+      // Reset form on success
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+
+    } catch (error: any) {
+      console.error('Contact form error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

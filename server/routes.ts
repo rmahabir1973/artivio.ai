@@ -60,9 +60,11 @@ import {
   createAnnouncementSchema,
   updateAnnouncementSchema,
   loopsTestContactRequestSchema,
+  contactFormRequestSchema,
   type InsertSubscriptionPlan
 } from "@shared/schema";
 import { getBaseUrl } from "./urlUtils";
+import { ServerClient } from "postmark";
 
 // Safe JSON stringifier to prevent circular reference errors
 function safeStringify(obj: any): string {
@@ -767,6 +769,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error storing referral code:', error);
       res.status(500).json({ message: "Failed to store referral code" });
+    }
+  });
+
+  // Contact form submission (public endpoint)
+  app.post('/api/public/contact', async (req, res) => {
+    try {
+      // Validate request body
+      const validatedData = contactFormRequestSchema.parse(req.body);
+      const { name, email, subject, message } = validatedData;
+
+      console.log('[CONTACT FORM] Submission received:', { name, email, subject });
+
+      // Check if Postmark is configured
+      if (!process.env.POSTMARK_SERVER_TOKEN) {
+        console.error('[CONTACT FORM] POSTMARK_SERVER_TOKEN not configured');
+        return res.status(500).json({ 
+          message: 'Email service is not configured. Please contact support directly at hello@artivio.ai' 
+        });
+      }
+
+      // Send email via Postmark
+      const postmarkClient = new ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+      
+      await postmarkClient.sendEmail({
+        From: 'hello@artivio.ai',
+        To: 'hello@artivio.ai',
+        Subject: `Contact Form: ${subject}`,
+        TextBody: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+        ReplyTo: email,
+      });
+
+      console.log('[CONTACT FORM] Email sent successfully');
+      
+      res.json({ 
+        success: true, 
+        message: 'Thank you for your message! We will be in touch soon.' 
+      });
+
+    } catch (error: any) {
+      console.error('[CONTACT FORM] Submission error:', error);
+      
+      // Handle validation errors
+      if (error.name === 'ZodError') {
+        return res.status(400).json({
+          message: 'Invalid input',
+          errors: error.errors?.map((e: any) => ({ 
+            field: e.path.join('.'), 
+            message: e.message 
+          }))
+        });
+      }
+
+      // Handle Postmark errors
+      if (error.statusCode) {
+        return res.status(500).json({ 
+          message: 'Failed to send email. Please try again later.' 
+        });
+      }
+
+      res.status(500).json({ 
+        message: 'Failed to submit your message. Please try again later.' 
+      });
     }
   });
   
