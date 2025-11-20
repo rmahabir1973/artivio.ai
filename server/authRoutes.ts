@@ -25,15 +25,15 @@ function isSecureRequest(req: Request): boolean {
   return protocol === 'https';
 }
 
-// Get cookie options for production
+// Get cookie options - using 'lax' for Safari/iOS compatibility
+// Safari/iOS rejects sameSite:'none' cookies without Secure=true (HTTP/dev environments)
 function getCookieOptions(req: Request) {
-  const isProduction = process.env.NODE_ENV === 'production';
   const isSecure = isSecureRequest(req);
   
   return {
     httpOnly: true,
     secure: isSecure,
-    sameSite: 'none' as const, // CRITICAL: Use 'none' for cross-site cookies in production
+    sameSite: 'lax' as const, // Use 'lax' for Safari/iOS compatibility
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     path: '/',
   };
