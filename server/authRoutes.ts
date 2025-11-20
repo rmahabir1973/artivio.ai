@@ -2,7 +2,7 @@ import { Express, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { hashPassword } from "./customAuth";
 import { db } from "./db";
-import { users, loginTickets, refreshTokens } from "@shared/schema";
+import { users, refreshTokens } from "@shared/schema";
 import { eq, and, lt } from "drizzle-orm";
 import { z } from "zod";
 import {
