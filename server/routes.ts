@@ -1467,7 +1467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user generations
   app.get('/api/generations', requireJWT, async (req: any, res) => {
     try {
-      console.log('[/api/generations] ✓ JWT_SECRET_FIX_DEPLOYED - Request received', {
+      console.log('[/api/generations] ✓ Optimized - Request received', {
         userId: req.user?.id,
         hasUser: !!req.user
       });
@@ -1481,7 +1481,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const generations = await storage.getUserGenerations(userId);
       
-      // Check for stuck generations (processing for more than 10 minutes = 600,000ms)
+      // OPTIMIZATION: Check for timeouts in-memory only (no database writes)
+      // Background job will handle actual cleanup
       const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
       const now = Date.now();
       
@@ -1491,16 +1492,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const elapsedMs = now - createdTime;
           
           if (elapsedMs > TIMEOUT_MS) {
-            console.warn(`⏱️  Generation ${gen.id} timed out after ${Math.round(elapsedMs / 60000)} minutes`);
-            
-            // Mark as failed due to timeout
-            await storage.finalizeGeneration(gen.id, 'failure', {
-              errorMessage: `Generation timed out after ${Math.round(elapsedMs / 60000)} minutes. The provider may have failed without sending a callback. Please try again.`,
-            });
-            
-            // Update the generation object in the array so the response reflects the change
+            console.warn(`⏱️  Generation ${gen.id} appears timed out - will be handled by background cleanup`);
+            // Just update in-memory for this response - don't write to DB during request
             gen.status = 'failed';
-            gen.errorMessage = `Generation timed out after ${Math.round(elapsedMs / 60000)} minutes. The provider may have failed without sending a callback. Please try again.`;
+            gen.errorMessage = `Generation timed out after ${Math.round(elapsedMs / 60000)} minutes. Please try again.`;
+            
+            // Queue background cleanup (non-blocking)
+            setImmediate(async () => {
+              try {
+                await storage.finalizeGeneration(gen.id, 'failure', {
+                  errorMessage: `Generation timed out after ${Math.round(elapsedMs / 60000)} minutes.`,
+                });
+              } catch (err) {
+                console.error('Background timeout cleanup failed:', err);
+              }
+            });
           }
         }
       }
