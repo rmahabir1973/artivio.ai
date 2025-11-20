@@ -208,7 +208,7 @@ export function registerAuthRoutes(app: Express) {
       // Validate request body
       const validatedData = loginSchema.parse(req.body);
 
-      passport.authenticate("local", async (err: any, user: any, info: any) => {
+      passport.authenticate("local", { session: false }, async (err: any, user: any, info: any) => {
         if (err) {
           console.error("[AUTH ERROR] Login error", { error: err });
           return res.status(500).json({
@@ -338,12 +338,13 @@ export function registerAuthRoutes(app: Express) {
     "/auth/google",
     passport.authenticate("google", {
       scope: ["profile", "email"],
+      session: false, // Stateless auth - we use JWT instead of sessions
     })
   );
 
   // Google OAuth - Callback
   app.get("/auth/callback", (req, res, next) => {
-    passport.authenticate("google", async (err: any, user: any, info: any) => {
+    passport.authenticate("google", { session: false }, async (err: any, user: any, info: any) => {
       if (err) {
         console.error("[AUTH ERROR] Google OAuth error", { error: err });
         return res.redirect("/?error=auth_failed");

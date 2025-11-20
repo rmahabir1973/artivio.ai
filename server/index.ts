@@ -82,8 +82,8 @@ app.use((req, res, next) => {
     console.error('Startup cleanup failed:', err);
   });
   
-  // Initialize Passport strategies for authentication
-  initializePassportStrategies();
+  // Initialize Passport strategies and middleware for authentication
+  initializePassportStrategies(app);
   
   const server = await registerRoutes(app);
 
