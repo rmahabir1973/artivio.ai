@@ -252,7 +252,7 @@ export default function Chat() {
     <SidebarInset>
       <div className="flex h-full">
       {/* Conversations Sidebar */}
-      <div className="w-80 border-r bg-card flex flex-col">
+      <div className="hidden lg:flex lg:w-80 border-r bg-card flex-col">
         <div className="p-4 border-b">
           <Button
             data-testid="button-new-chat"
