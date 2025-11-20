@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { GenerationsQueue } from "@/components/generations-queue";
-import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { 
   Video, 
   Image as ImageIcon, 
@@ -31,7 +30,8 @@ import {
   ArrowRight,
   DollarSign,
   Gift,
-  ExternalLink
+  ExternalLink,
+  QrCode
 } from "lucide-react";
 
 interface FeatureCard {
@@ -141,6 +141,17 @@ export default function Home() {
       modelCost: 'veo-3.1'
     },
     {
+      id: 'sora-pro',
+      title: 'Sora 2 Pro',
+      description: 'Next-generation video creation with OpenAI Sora 2 Pro and Storyboard',
+      icon: Sparkles,
+      route: '/generate/sora',
+      category: 'video',
+      featured: true,
+      badge: 'Premium',
+      modelCost: 'sora-2-pro'
+    },
+    {
       id: 'image-gen',
       title: 'Image Generation',
       description: 'Generate images with 4o Image, Flux Kontext, and Nano Banana',
@@ -230,6 +241,15 @@ export default function Home() {
       icon: Mic2,
       route: '/speech-to-text',
       category: 'audio'
+    },
+    {
+      id: 'qr-generator',
+      title: 'QR Code Generator',
+      description: 'Create custom QR codes with logos and styling',
+      icon: QrCode,
+      route: '/qr-generator',
+      category: 'tools',
+      badge: 'Free'
     },
     {
       id: 'history',
@@ -322,18 +342,6 @@ export default function Home() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Generations Queue Widget */}
-        <div className="mb-8">
-          <GenerationsQueue />
-        </div>
-
-        {/* Onboarding Checklist */}
-        {isAuthenticated && (
-          <div className="mb-8">
-            <OnboardingChecklist />
-          </div>
-        )}
-
         {/* Affiliate Promotion Cards */}
         <div className="mb-8 grid md:grid-cols-2 gap-6">
           {/* Main Affiliate CTA Card */}
@@ -592,7 +600,7 @@ export default function Home() {
         )}
 
         {/* All Features Grid */}
-        <div>
+        <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">
               {selectedCategory === 'all' ? 'All Features' : categories.find(c => c.id === selectedCategory)?.label}
@@ -639,6 +647,11 @@ export default function Home() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Recent Generations */}
+        <div className="mb-8">
+          <GenerationsQueue />
         </div>
       </div>
     </div>

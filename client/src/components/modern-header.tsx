@@ -50,18 +50,16 @@ export function ModernHeader() {
 
   const featureCategories = [
     {
-      label: "Video Tools",
+      label: "Video",
       features: [
         { label: "Video Generation", href: "/generate/video", icon: Video },
-        { label: "Sora 2 Pro", href: "/generate/sora", icon: Sparkles },
         { label: "Talking Avatars", href: "/talking-avatars", icon: UserCircle },
       ]
     },
     {
-      label: "Image Tools",
+      label: "Sora 2",
       features: [
-        { label: "Image Generation", href: "/generate/image", icon: ImageIcon },
-        { label: "Image Analysis", href: "/analyze-image", icon: ScanEye },
+        { label: "Sora 2 Pro", href: "/generate/sora", icon: Sparkles },
       ]
     },
     {
@@ -75,18 +73,15 @@ export function ModernHeader() {
       ]
     },
     {
-      label: "AI & Utilities",
+      label: "Utilities",
       features: [
+        { label: "Image Generation", href: "/generate/image", icon: ImageIcon },
+        { label: "Image Analysis", href: "/analyze-image", icon: ScanEye },
         { label: "AI Chat", href: "/chat", icon: MessageSquare },
         { label: "Video Editor", href: "/video-editor", icon: Scissors },
         { label: "QR Generator", href: "/qr-generator", icon: QrCode },
         { label: "History", href: "/history", icon: HistoryIcon },
         { label: "Workflows", href: "/workflows", icon: Sparkles },
-      ]
-    },
-    {
-      label: "Rewards & Social",
-      features: [
         { label: "Referrals", href: "/referrals", icon: Users },
         { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
       ]

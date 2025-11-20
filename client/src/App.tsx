@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ModernHeader } from "@/components/modern-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
+import { Footer } from "@/components/footer";
 import { AuthProvider, useAuth } from "@/contexts/AuthProvider";
 import { Loader2 } from "lucide-react";
 
@@ -138,12 +139,13 @@ function AppContent() {
 
   // Show header and announcement for all users (authenticated and unauthenticated)
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
       <ModernHeader />
       {isAuthenticated && <AnnouncementBar />}
       <main className="flex-1 overflow-y-auto">
         <Router />
       </main>
+      {isAuthenticated && <Footer />}
     </div>
   );
 }

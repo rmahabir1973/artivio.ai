@@ -24,23 +24,44 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/workflows">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-workflows">
-                    Workflows
+                <Link href="/generate/video">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-video">
+                    Video Generation
                   </a>
                 </Link>
               </li>
               <li>
-                <Link href="/pricing">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-pricing">
-                    Pricing
+                <Link href="/generate/sora">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-sora">
+                    Sora 2 Pro
                   </a>
                 </Link>
               </li>
               <li>
-                <Link href="/support">
-                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-support">
-                    Support
+                <Link href="/generate/image">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-image">
+                    Image Generation
+                  </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/generate/music">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-music">
+                    Music Generation
+                  </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/chat">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-chat">
+                    AI Chat
+                  </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/qr-generator">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-qr">
+                    QR Generator
                   </a>
                 </Link>
               </li>
@@ -51,6 +72,27 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-3 text-sm">
+              <li>
+                <Link href="/pricing">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-pricing">
+                    Pricing
+                  </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/affiliates">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-affiliates">
+                    Affiliates
+                  </a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/support">
+                  <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-support">
+                    Support
+                  </a>
+                </Link>
+              </li>
               <li>
                 <Link href="/contact">
                   <a className="text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-contact">
