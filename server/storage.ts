@@ -114,6 +114,7 @@ export interface IStorage {
   cancelGeneration(generationId: string): Promise<{ refunded: boolean; amount: number } | undefined>;
   getUserGenerations(userId: string): Promise<Generation[]>;
   getRecentGenerations(userId: string, limit?: number): Promise<Generation[]>;
+  getUserGenerationsPage(userId: string, limit: number, cursor?: { createdAt: Date; id: string }): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }>;
   deleteGeneration(id: string): Promise<void>;
   getUserStats(userId: string): Promise<{
     totalGenerations: number;
@@ -603,6 +604,37 @@ export class DatabaseStorage implements IStorage {
       .where(eq(generations.userId, userId))
       .orderBy(desc(generations.createdAt))
       .limit(limit);
+  }
+
+  async getUserGenerationsPage(
+    userId: string, 
+    limit: number, 
+    cursor?: { createdAt: Date; id: string }
+  ): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }> {
+    // Build query with cursor-based pagination
+    const query = db
+      .select()
+      .from(generations)
+      .where(
+        cursor
+          ? and(
+              eq(generations.userId, userId),
+              sql`(${generations.createdAt}, ${generations.id}) < (${cursor.createdAt}, ${cursor.id})`
+            )
+          : eq(generations.userId, userId)
+      )
+      .orderBy(desc(generations.createdAt), desc(generations.id))
+      .limit(limit + 1); // Fetch one extra to determine if there's a next page
+
+    const results = await query;
+    const hasMore = results.length > limit;
+    const items = hasMore ? results.slice(0, limit) : results;
+    
+    const nextCursor = hasMore && items.length > 0
+      ? { createdAt: items[items.length - 1].createdAt, id: items[items.length - 1].id }
+      : null;
+
+    return { items, nextCursor };
   }
 
   async deleteGeneration(id: string): Promise<void> {

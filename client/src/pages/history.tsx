@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState, useMemo } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,14 +27,43 @@ export default function History() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  const { data: generations = [], isLoading } = useQuery<Generation[]>({
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ["/api/generations"],
+    queryFn: async ({ pageParam }: { pageParam?: string }) => {
+      const url = pageParam 
+        ? `/api/generations?cursor=${encodeURIComponent(pageParam)}`
+        : '/api/generations';
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch generations');
+      }
+      
+      return response.json() as Promise<{ items: Generation[]; nextCursor: string | null }>;
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: isAuthenticated,
   });
 
+  const allGenerations = useMemo(() => {
+    return data?.pages.flatMap(page => page.items) ?? [];
+  }, [data]);
+
   const filteredGenerations = activeTab === "all" 
-    ? generations 
-    : generations.filter(g => g.type === activeTab);
+    ? allGenerations 
+    : allGenerations.filter(g => g.type === activeTab);
 
   if (authLoading) {
     return (
@@ -95,6 +124,27 @@ export default function History() {
                   <GenerationCard key={generation.id} generation={generation} />
                 ))}
               </div>
+
+              {hasNextPage && (
+                <div className="flex justify-center mt-8">
+                  <Button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    variant="outline"
+                    size="lg"
+                    data-testid="button-load-more"
+                  >
+                    {isFetchingNextPage ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More'
+                    )}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </TabsContent>
