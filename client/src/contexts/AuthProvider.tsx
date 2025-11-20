@@ -105,7 +105,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Check for OAuth token in URL fragment (e.g., #token=xxx after Google login)
         const hash = window.location.hash;
         const searchParams = new URLSearchParams(window.location.search);
-        const loginTicket = searchParams.get('ticket');
         
         if (hash.includes('token=')) {
           const tokenMatch = hash.match(/token=([^&]+)/);
@@ -117,33 +116,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setAccessTokenState(oauthToken);
             bridgeSetAccessToken(oauthToken);
             
-            // If there's a login ticket, finalize the login to set cookies (Safari/iOS workaround)
-            if (loginTicket) {
-              console.log("[AUTH] Found login ticket - finalizing login to set cookies");
-              try {
-                const finalizeResponse = await fetch("/api/auth/finalize", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  credentials: "include",
-                  body: JSON.stringify({ ticket: loginTicket }),
-                });
-
-                if (finalizeResponse.ok) {
-                  console.log("[AUTH] Login finalized successfully - cookies set");
-                } else {
-                  console.warn("[AUTH] Failed to finalize login - cookies may not persist");
-                }
-              } catch (finalizeError) {
-                console.error("[AUTH] Error finalizing login:", finalizeError);
-              }
-            }
-            
-            // Clean up URL
+            // Clean up URL (remove OAuth artifacts)
             window.location.hash = '';
             searchParams.delete('login');
-            searchParams.delete('ticket');
             const newSearch = searchParams.toString();
             const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
             window.history.replaceState({}, '', newUrl);
