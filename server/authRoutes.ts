@@ -2,8 +2,8 @@ import { Express, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { hashPassword } from "./customAuth";
 import { db } from "./db";
-import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { users, loginTickets, refreshTokens } from "@shared/schema";
+import { eq, and, lt } from "drizzle-orm";
 import { z } from "zod";
 import {
   generateAccessToken,
@@ -399,35 +399,56 @@ export function registerAuthRoutes(app: Express) {
           return res.redirect("/?error=token_store_failed");
         }
 
-        // Only set cookies AFTER successful database storage
-        const useSecureCookies = isSecureRequest(req);
-        res.cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-          secure: useSecureCookies,
-          sameSite: "lax",
-          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-          path: "/",
-        });
+        // Safari/iOS incognito blocks cookies during cross-site redirects (even with sameSite: lax)
+        // Solution: Create a one-time login ticket and have frontend call /api/auth/finalize
+        // to set cookies via same-origin POST request (which Safari accepts)
+        const ticketId = generateRefreshToken(); // Reuse same random generator
+        const ticketExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-        // Store tokenId in cookie for validation
-        res.cookie("tokenId", tokenId, {
-          httpOnly: true,
-          secure: useSecureCookies,
-          sameSite: "lax",
-          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-          path: "/",
-        });
+        try {
+          await db.insert(loginTickets).values({
+            ticketId,
+            userId: user.id,
+            refreshTokenId: tokenId,
+            refreshToken, // Temporary storage for 5 minutes
+            expiresAt: ticketExpiresAt,
+            used: false,
+          });
 
-        console.log("[AUTH] ✓ OAuth successful - JWT tokens generated and cookies set", {
-          userId: user.id,
-          email: user.email,
-          tokenId: tokenId?.substring(0, 8),
-          isAdmin,
-        });
+          console.log("[AUTH] ✓ OAuth successful - login ticket created", {
+            userId: user.id,
+            email: user.email,
+            ticketId: ticketId.substring(0, 8),
+            tokenId: tokenId?.substring(0, 8),
+            isAdmin,
+          });
 
-        // Redirect to home page with access token in URL fragment (for security)
-        // Fragment (#) is not sent to server, only accessible by JavaScript
-        res.redirect(`/?login=success#token=${accessToken}`);
+          // Redirect with both access token (in fragment) and login ticket (in query)
+          // Frontend will call /api/auth/finalize with the ticket to set cookies
+          res.redirect(`/?ticket=${ticketId}#token=${accessToken}`);
+        } catch (ticketError: any) {
+          console.error("[AUTH ERROR] Failed to create login ticket", {
+            error: ticketError.message,
+            userId: user.id,
+          });
+          // Fallback: Try setting cookies directly (works for non-Safari browsers)
+          const useSecureCookies = isSecureRequest(req);
+          res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: useSecureCookies,
+            sameSite: "lax",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            path: "/",
+          });
+          res.cookie("tokenId", tokenId, {
+            httpOnly: true,
+            secure: useSecureCookies,
+            sameSite: "lax",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            path: "/",
+          });
+          res.redirect(`/?login=success#token=${accessToken}`);
+        }
       } catch (error) {
         console.error("[AUTH ERROR] Failed to generate JWT tokens after OAuth", {
           error,
@@ -436,6 +457,82 @@ export function registerAuthRoutes(app: Express) {
         return res.redirect("/?error=token_generation_failed");
       }
     })(req, res, next);
+  });
+
+  // Finalize OAuth login endpoint - sets cookies via same-origin POST (Safari/iOS workaround)
+  // SECURITY: Atomically marks ticket as used to prevent replay attacks
+  app.post("/api/auth/finalize", async (req, res) => {
+    const { ticket } = req.body;
+
+    try {
+      console.log("[AUTH] Finalize login request", {
+        hasTicket: !!ticket,
+        ticketPreview: ticket?.substring(0, 8),
+      });
+
+      if (!ticket) {
+        return res.status(400).json({
+          message: "Missing login ticket",
+          code: "MISSING_TICKET",
+        });
+      }
+
+      // SECURITY: Atomic update - only succeeds if ticket is unused and not expired
+      // This prevents replay attacks by ensuring one-time use
+      const now = new Date();
+      const result = await db
+        .update(loginTickets)
+        .set({ used: true })
+        .where(
+          and(
+            eq(loginTickets.ticketId, ticket),
+            eq(loginTickets.used, false)
+          )
+        )
+        .returning();
+
+      // Check if ticket was found and updated
+      if (!result || result.length === 0) {
+        console.log("[AUTH] Finalize failed - invalid or already used ticket");
+        return res.status(401).json({
+          message: "Invalid or already used login ticket",
+          code: "INVALID_TICKET",
+        });
+      }
+
+      const loginTicket = result[0];
+
+      // Check if ticket is expired
+      if (now > loginTicket.expiresAt) {
+        console.log("[AUTH] Finalize failed - ticket expired");
+        return res.status(401).json({
+          message: "Login ticket has expired",
+          code: "TICKET_EXPIRED",
+        });
+      }
+
+      // Set cookies with the stored refresh token
+      const cookieOptions = getCookieOptions(req);
+      res.cookie("refreshToken", loginTicket.refreshToken, cookieOptions);
+      res.cookie("tokenId", loginTicket.refreshTokenId, cookieOptions);
+
+      console.log("[AUTH] ✓ Login finalized - cookies set via same-origin POST", {
+        userId: loginTicket.userId,
+        tokenId: loginTicket.refreshTokenId.substring(0, 8),
+      });
+
+      res.json({
+        success: true,
+        message: "Login finalized successfully",
+      });
+    } catch (error: any) {
+      console.error("[AUTH ERROR] Finalize login failed", {
+        error: error.message,
+      });
+      res.status(500).json({
+        message: "Failed to finalize login. Please try again.",
+      });
+    }
   });
 
   // Refresh Token endpoint

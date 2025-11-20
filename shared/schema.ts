@@ -72,6 +72,25 @@ export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
 export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 
+// Login tickets table for Safari/iOS OAuth cookie workaround
+// These are short-lived one-time tickets used to set cookies via same-origin POST
+// SECURITY: Stores refresh token temporarily (5 min TTL) with atomic one-time use protection
+export const loginTickets = pgTable("login_tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").notNull().unique(), // One-time ticket identifier
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  refreshTokenId: varchar("refresh_token_id").notNull(), // The tokenId to set in cookie
+  refreshToken: text("refresh_token").notNull(), // Temporary storage for cookie value
+  expiresAt: timestamp("expires_at").notNull(), // Short-lived: 5 minutes
+  used: boolean("used").notNull().default(false), // One-time use only (atomic check)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("ticket_id_idx").on(table.ticketId),
+  index("login_ticket_expires_at_idx").on(table.expiresAt),
+]);
+
+export type LoginTicket = typeof loginTickets.$inferSelect;
+
 // Referrals table for tracking referral program
 export const referrals = pgTable("referrals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
