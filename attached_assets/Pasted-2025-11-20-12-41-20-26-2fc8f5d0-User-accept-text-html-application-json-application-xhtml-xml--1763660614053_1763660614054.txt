@@ -1,0 +1,156 @@
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"accept": "text/html,application/json,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+}
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-replit-user-teams": "",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"host": "artivio.ai",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-replit-user-bio": "",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"code": 200,
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-replit-user-url": ""
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"content-type": "application/json;charset=UTF-8",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+]
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-replit-user-roles": "",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"info": {
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-forwarded-proto": "https",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"accept-encoding": "gzip, deflate",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"https://tempfile.aiquickdraw.com/s/8cc92669b4cda3fdf7fca37bca862074_0_1763660479_2398.png"
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+Callback Data: {
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"taskId": "8cc92669b4cda3fdf7fca37bca862074"
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+},
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-cloud-trace-context": "636ebdfd9aeb8a119df1aa5ea2f98341/471721619084358640",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"traceparent": "00-636ebdfd9aeb8a119df1aa5ea2f98341-068be450326533f0-00",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-replit-user-profile-image": "",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"server-timing": "depproxy;dur=1763660480236, pid1req;dur=1763660480258",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"accept-language": "zh-CN,zh;q=0.8",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+Request Headers: {
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-forwarded-host": "artivio.ai",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-replit-user-name": "",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+Generation ID: cd6a979b-469b-4863-8279-653a413a80ad
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"result_urls": [
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"content-length": "226",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-replit-user-id": "",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"cache-control": "no-cache",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"via": "1.1 google",
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+======================================
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+},
+2025-11-20 12:41:20.26
+2fc8f5d0
+User
+"x-forwarded-for": "47.254.71.23, 34.111.179.208, 35.191.76.9,34.44.227.96",
+2025-11-20 12:41:20.31
+2fc8f5d0
+User
+✓ [finalizeGeneration] Generation cd6a979b-469b-4863-8279-653a413a80ad finalized as success
+2025-11-20 12:41:20.43
+2fc8f5d0
+User
+✓ Generation cd6a979b-469b-4863-8279-653a413a80ad completed successfully with URL: https://tempfile.aiquickdraw.com/s/8cc92669b4cda3fdf7fca37bca862074_0_1763660479_2398.png
+2025-11-20 12:41:20.43
+2fc8f5d0
+User
+5:41:20 PM [express] POST /api/callback/kie/cd6a979b-469b-4863-8279-653a413a80ad 200 in 176ms :: {"s…
+2025-11-20 12:42:11.92
+2fc8f5d0
+User
+5:42:11 PM [express] GET /api/announcements/active 304 in 108ms :: []
+2025-11-20 12:43:12.27
+2fc8f5d0
+User
+5:43:12 PM [express] GET /api/announcements/active 304 in 111ms :: []
