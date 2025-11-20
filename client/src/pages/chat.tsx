@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { Trash2, Plus, Send, Sparkles, Square } from "lucide-react";
+import { Trash2, Plus, Send, Sparkles, Square, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -54,6 +55,7 @@ export default function Chat() {
   const [streamingMessage, setStreamingMessage] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [optimisticUserMessage, setOptimisticUserMessage] = useState('');
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -248,57 +250,80 @@ export default function Chat() {
 
   const currentCost = PROVIDER_MODELS[provider].find(m => m.value === model)?.cost || 10;
 
+  // Shared conversations list component
+  const ConversationsList = ({ onConversationSelect }: { onConversationSelect?: () => void }) => (
+    <>
+      <div className="p-4 border-b">
+        <Button
+          data-testid="button-new-chat"
+          onClick={() => {
+            handleNewChat();
+            onConversationSelect?.();
+          }}
+          className="w-full"
+          variant="default"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Chat
+        </Button>
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-2 space-y-1">
+          {conversations.map((conv) => (
+            <Card
+              key={conv.id}
+              data-testid={`conversation-${conv.id}`}
+              className={`p-3 cursor-pointer hover-elevate active-elevate-2 ${
+                selectedConversationId === conv.id ? 'bg-accent' : ''
+              }`}
+              onClick={() => {
+                setSelectedConversationId(conv.id);
+                onConversationSelect?.();
+              }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{conv.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {conv.provider === 'deepseek' ? 'Deepseek' : 'OpenAI'} • {conv.model}
+                  </p>
+                </div>
+                <Button
+                  data-testid={`button-delete-conversation-${conv.id}`}
+                  size="icon"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteConversation.mutate(conv.id);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </ScrollArea>
+    </>
+  );
+
   return (
     <SidebarInset>
       <div className="flex h-full">
-      {/* Conversations Sidebar */}
-      <div className="hidden lg:flex lg:w-80 border-r bg-card flex-col">
-        <div className="p-4 border-b">
-          <Button
-            data-testid="button-new-chat"
-            onClick={handleNewChat}
-            className="w-full"
-            variant="default"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Chat
-          </Button>
-        </div>
+      {/* Mobile Conversations Sheet */}
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        <SheetContent side="left" className="w-80 p-0 flex flex-col lg:hidden">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Conversations</SheetTitle>
+          </SheetHeader>
+          <ConversationsList onConversationSelect={() => setMobileSheetOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
-        <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
-            {conversations.map((conv) => (
-              <Card
-                key={conv.id}
-                data-testid={`conversation-${conv.id}`}
-                className={`p-3 cursor-pointer hover-elevate active-elevate-2 ${
-                  selectedConversationId === conv.id ? 'bg-accent' : ''
-                }`}
-                onClick={() => setSelectedConversationId(conv.id)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{conv.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {conv.provider === 'deepseek' ? 'Deepseek' : 'OpenAI'} • {conv.model}
-                    </p>
-                  </div>
-                  <Button
-                    data-testid={`button-delete-conversation-${conv.id}`}
-                    size="icon"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteConversation.mutate(conv.id);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
+      {/* Desktop Conversations Sidebar */}
+      <div className="hidden lg:flex lg:w-80 border-r bg-card flex-col">
+        <ConversationsList />
       </div>
 
       {/* Chat Area */}
@@ -306,6 +331,16 @@ export default function Chat() {
         {/* Header */}
         <div className="p-4 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {/* Mobile conversations trigger */}
+            <Button
+              data-testid="button-mobile-conversations"
+              size="icon"
+              variant="ghost"
+              className="lg:hidden"
+              onClick={() => setMobileSheetOpen(true)}
+            >
+              <MessageSquare className="w-5 h-5" />
+            </Button>
             <Sparkles className="w-5 h-5 text-primary" />
             <h1 className="text-xl font-semibold">AI Chat</h1>
           </div>
