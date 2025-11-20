@@ -1481,8 +1481,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       console.log(`[/api/generations] Querying database for userId: ${userId}`);
       
-      // OPTIMIZATION: Limit to recent 50 generations to avoid timeout
-      const limit = parseInt(req.query.limit as string) || 50;
+      // OPTIMIZATION: Limit to recent 15 generations to avoid Cloud Run 4s timeout
+      const limit = parseInt(req.query.limit as string) || 15;
       
       const startTime = Date.now();
       const generations = await storage.getRecentGenerations(userId, limit);

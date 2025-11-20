@@ -29,6 +29,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Generation Queue System**: Real-time dashboard widget tracking AI generations with status indicators and quick actions.
 -   **Smart Credit Warnings**: Pre-generation credit cost preview system with tiered warnings and burn rate display.
 -   **Download Proxy System**: CORS-safe backend proxy for authenticated downloads of generated content.
+-   **Generations Pagination**: `/api/generations` endpoint limited to 15 most recent entries to prevent Google Cloud Run 4-second timeout with high-volume users (database index: `generations_user_created_idx` on `user_id, created_at DESC`).
 
 ### Feature Specifications
 -   **AI Video Generation**: Supports Veo 3.1, Runway Aleph, Seedance, Wan 2.5, Kling 2.5 Turbo, Grok Imagine, and Sora 2 Pro models with image-to-video capabilities. Model-specific aspect ratio and duration support with frontend filtering and backend validation. Includes advanced features like Sora 2 Pro Storyboard for multi-scene videos.
