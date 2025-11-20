@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { GenerationCard } from "@/components/generation-card";
 import { Loader2, History as HistoryIcon } from "lucide-react";
 import type { Generation } from "@shared/schema";
+import { fetchWithAuth } from "@/lib/queryClient";
 
 export default function History() {
   const { toast } = useToast();
@@ -40,10 +41,9 @@ export default function History() {
       const cursor = pageParam || '';
       const url = `/api/generations?cursor=${encodeURIComponent(cursor)}`;
       
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
+      // Use fetchWithAuth which handles authentication and token refresh automatically
+      const response = await fetchWithAuth(url, {
+        method: 'GET',
       });
       
       if (!response.ok) {
