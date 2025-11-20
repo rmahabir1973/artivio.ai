@@ -289,11 +289,11 @@ export function ModernHeader() {
 
       {/* Mobile Menu Sheet */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+        <SheetContent side="right" className="w-[300px] sm:w-[400px] flex flex-col">
           <SheetHeader>
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
-          <div className="flex flex-col gap-4 mt-8">
+          <div className="flex flex-col gap-4 mt-8 overflow-y-auto flex-1 pr-2">
             {/* Authenticated users - show credits, features, profile, etc */}
             {isAuthenticated && (
               <>
