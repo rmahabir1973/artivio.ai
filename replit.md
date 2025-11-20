@@ -15,7 +15,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI, Wouter, TanStack Query.
 -   **Backend**: Express.js and Node.js with TypeScript.
 -   **Database**: PostgreSQL (Neon) with Drizzle ORM.
--   **Authentication & Onboarding**: JWT-based authentication system with access tokens (memory) and refresh tokens (httpOnly cookies). Google OAuth and local (email/password) authentication supported. New users redirected to /pricing for subscription selection. Production-ready flow with credit assignment and robust error recovery.
+-   **Authentication & Onboarding**: JWT-based authentication system with access tokens (memory) and refresh tokens (httpOnly cookies). Google OAuth and local (email/password) authentication supported. Safari/iOS OAuth cookie fix uses HTML meta refresh (200 OK) instead of 302 redirect to bypass ITP restrictions. New users redirected to /pricing for subscription selection. Production-ready flow with credit assignment and robust error recovery.
 -   **Asynchronous Operations**: Kie.ai integrations use webhook-based callbacks for real-time status updates, intelligent filtering of intermediate states, and comprehensive error detection across various model APIs (Runway, Veo, Bytedance models, Suno). Includes 10-minute timeout protection for generations.
 -   **Centralized URL Management**: Production-safe URL generation via `server/urlUtils.ts` prioritizes a single production URL for all webhooks and callbacks.
 -   **Credit Management**: Automatic credit refund system for failed generations and atomic job cancellation with race-condition-safe refunds.
