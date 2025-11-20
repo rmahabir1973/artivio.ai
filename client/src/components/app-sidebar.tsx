@@ -27,6 +27,7 @@ import {
   Sparkles,
   Mic2,
   QrCode,
+  Zap,
   History as HistoryIcon,
   Users,
   Trophy,
@@ -57,6 +58,7 @@ const menuSections = [
     label: "Audio & Music",
     items: [
       { title: "Music Generation", url: "/generate/music", icon: Music },
+      { title: "Sound Effects", url: "/sound-effects", icon: Zap },
       { title: "Voice Cloning", url: "/voice-clone", icon: Mic },
       { title: "Text to Speech", url: "/text-to-speech", icon: Headphones },
       { title: "Speech to Text", url: "/speech-to-text", icon: Mic2 },

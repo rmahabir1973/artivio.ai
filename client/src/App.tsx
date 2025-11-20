@@ -33,6 +33,7 @@ import GenerateVideo from "@/pages/generate-video";
 import GenerateSora from "@/pages/generate-sora";
 import GenerateImage from "@/pages/generate-image";
 import GenerateMusic from "@/pages/generate-music";
+import SoundEffects from "@/pages/sound-effects";
 import VoiceClone from "@/pages/voice-clone";
 import TextToSpeech from "@/pages/text-to-speech";
 import SpeechToText from "@/pages/speech-to-text";
@@ -86,6 +87,7 @@ function Router() {
           <Route path="/generate/sora" component={GenerateSora} />
           <Route path="/generate/image" component={GenerateImage} />
           <Route path="/generate/music" component={GenerateMusic} />
+          <Route path="/sound-effects" component={SoundEffects} />
           <Route path="/voice-clone" component={VoiceClone} />
           <Route path="/text-to-speech" component={TextToSpeech} />
           <Route path="/speech-to-text" component={SpeechToText} />
