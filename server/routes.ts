@@ -1479,7 +1479,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const userId = req.user.id;
+      console.log(`[/api/generations] Querying database for userId: ${userId}`);
+      
+      const startTime = Date.now();
       const generations = await storage.getUserGenerations(userId);
+      const queryTime = Date.now() - startTime;
+      
+      console.log(`[/api/generations] Query completed in ${queryTime}ms, found ${generations.length} generations`);
       
       // OPTIMIZATION: Check for timeouts in-memory only (no database writes)
       // Background job will handle actual cleanup

@@ -1,0 +1,137 @@
+2025-11-20 12:13:11.87
+6ef7efa4
+User
+[AUTH] Refresh token request {
+2025-11-20 12:13:11.87
+6ef7efa4
+User
+}
+2025-11-20 12:13:11.87
+6ef7efa4
+User
+tokenIdPreview: undefined
+2025-11-20 12:13:11.87
+6ef7efa4
+User
+hasTokenId: false,
+2025-11-20 12:13:11.87
+6ef7efa4
+User
+[AUTH] Refresh failed - missing cookies
+2025-11-20 12:13:11.87
+6ef7efa4
+User
+5:13:11 PM [express] POST /api/auth/refresh 401 in 1ms :: {"message":"No refresh token found. Please…
+2025-11-20 12:13:16.68
+6ef7efa4
+User
+googleId: '114873054131675022964',
+2025-11-20 12:13:16.68
+6ef7efa4
+User
+email: 'ryan.mahabir@outlook.com'
+2025-11-20 12:13:16.68
+6ef7efa4
+User
+[AUTH DEBUG] Google OAuth - callback received {
+2025-11-20 12:13:16.68
+6ef7efa4
+User
+}
+2025-11-20 12:13:16.70
+6ef7efa4
+User
+[AUTH DEBUG] Google OAuth - existing user found by Google ID { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:13:16.70
+6ef7efa4
+User
+[AUTH] Google OAuth authentication successful { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:13:16.73
+6ef7efa4
+User
+[AUTH] ✓ OAuth successful - cookies set via HTML response {
+2025-11-20 12:13:16.73
+6ef7efa4
+User
+[JWT] Refresh token stored in database { userId: '49729939', tokenId: '47b5aef9-df31-4194-90ed-4a2c156f51ad' }
+2025-11-20 12:13:16.73
+6ef7efa4
+User
+isAdmin: true
+2025-11-20 12:13:16.73
+6ef7efa4
+User
+userId: '49729939',
+2025-11-20 12:13:16.73
+6ef7efa4
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-20 12:13:16.73
+6ef7efa4
+User
+}
+
+2025-11-20 12:13:16.73
+6ef7efa4
+User
+tokenId: '47b5aef9',
+2025-11-20 12:13:17.02
+6ef7efa4
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-20 12:13:17.02
+6ef7efa4
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:13:17.04
+6ef7efa4
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-20 12:13:17.04
+6ef7efa4
+User
+userId: '49729939',
+2025-11-20 12:13:17.04
+6ef7efa4
+User
+}
+2025-11-20 12:13:17.04
+6ef7efa4
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-20 12:13:17.04
+6ef7efa4
+User
+isAdmin: true
+2025-11-20 12:13:17.05
+6ef7efa4
+User
+5:13:17 PM [express] GET /api/auth/user 200 in 45ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-20 12:13:17.16
+6ef7efa4
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:13:17.18
+6ef7efa4
+User
+5:13:17 PM [express] GET /api/subscriptions/current 200 in 45ms :: {"id":"7069d11e-8eea-4517-952c-7a…
+2025-11-20 12:13:17.24
+6ef7efa4
+User
+5:13:17 PM [express] GET /api/pricing 304 in 99ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-20 12:13:17.25
+6ef7efa4
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:13:17.25
+6ef7efa4
+User
+[/api/generations] ✓ Optimized - Request received { userId: '49729939', hasUser: true }
+2025-11-20 12:13:17.25
+6ef7efa4
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:13:17.25
+6ef7efa4
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
