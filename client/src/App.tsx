@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Link } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,8 +7,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ModernHeader } from "@/components/modern-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { Footer } from "@/components/footer";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AuthProvider, useAuth } from "@/contexts/AuthProvider";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, LogOut } from "lucide-react";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -99,7 +111,7 @@ function Router() {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
   const [location, setLocation] = useLocation();
 
   // Handle logout - clear React Query cache when redirected after logout
@@ -137,11 +149,72 @@ function AppContent() {
     );
   }
 
-  // Show header and announcement for all users (authenticated and unauthenticated)
+  // Authenticated users: Sidebar layout
+  if (isAuthenticated) {
+    const sidebarStyle = {
+      "--sidebar-width": "16rem",
+      "--sidebar-width-icon": "3rem",
+    } as React.CSSProperties;
+
+    return (
+      <SidebarProvider style={sidebarStyle}>
+        <div className="flex h-screen w-full">
+          <AppSidebar />
+          <div className="flex flex-col flex-1">
+            <header className="flex items-center justify-between p-3 border-b h-14 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger data-testid="button-sidebar-toggle" />
+              </div>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" data-testid="button-user-menu">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>
+                      {user ? (user as any).email : "My Account"}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" data-testid="menu-profile">
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/billing" data-testid="menu-billing">
+                        Billing
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={logout}
+                      className="text-destructive focus:text-destructive"
+                      data-testid="menu-logout"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </header>
+            {isAuthenticated && <AnnouncementBar />}
+            <main className="flex-1 overflow-hidden">
+              <Router />
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  // Unauthenticated users: Traditional header layout
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <ModernHeader />
-      {isAuthenticated && <AnnouncementBar />}
       <main className="flex-1 overflow-y-auto">
         <Router />
       </main>
