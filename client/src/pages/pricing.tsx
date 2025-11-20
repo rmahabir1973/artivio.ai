@@ -173,7 +173,12 @@ export default function Pricing() {
                     
                     <CardHeader className="text-center pt-8">
                       <CardTitle className="text-2xl mb-2">{plan.displayName}</CardTitle>
-                      <CardDescription>{plan.description}</CardDescription>
+                      {plan.description && (
+                        <div 
+                          className="text-sm text-muted-foreground"
+                          dangerouslySetInnerHTML={{ __html: plan.description }}
+                        />
+                      )}
                       <div className="mt-4">
                         <span className="text-4xl font-bold">
                           ${(() => {
