@@ -1,0 +1,71 @@
+[AUTH BRIDGE] Initializing auth bridge before React render index-BkPEm0zg.js:48:42786
+[AUTH BRIDGE] ✓ Auth bridge initialized index-BkPEm0zg.js:48:42860
+[AUTH] Initializing auth - attempting to refresh token index-BkPEm0zg.js:618:24571
+[AUTH] Found OAuth token in URL fragment index-BkPEm0zg.js:618:24799
+[AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs... index-BkPEm0zg.js:48:42943
+[AUTH] OAuth login successful - user data loaded index-BkPEm0zg.js:618:25145
+“google.ca” has been classified as a bounce tracker. If it does not receive user activation within the next 3,600 seconds it will have its state purged.
+
+XHRGET
+https://artivio.ai/api/generations
+[HTTP/3 500  3889ms]
+
+	
+GET
+	https://artivio.ai/api/generations
+Status
+500
+VersionHTTP/3
+Transferred320 B (0 B size)
+Referrer Policystrict-origin-when-cross-origin
+Request PriorityHighest
+DNS ResolutionDNS over HTTPS
+
+	
+alt-svc
+	h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+content-length
+	0
+content-type
+	text/html
+date
+	Thu, 20 Nov 2025 15:52:43 GMT
+server
+	Google Frontend
+strict-transport-security
+	max-age=63072000; includeSubDomains
+via
+	1.1 google
+x-cloud-trace-context
+	54f3a31ca1e6cc038c39b63e9b30015d;o=1
+	
+Accept
+	*/*
+Accept-Encoding
+	gzip, deflate, br, zstd
+Accept-Language
+	en-US,en;q=0.5
+Alt-Used
+	artivio.ai
+authorization
+	Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI0OTcyOTkzOSIsImVtYWlsIjoicnlhbi5tYWhhYmlyQG91dGxvb2suY29tIiwidG9rZW5WZXJzaW9uIjowLCJpc0FkbWluIjp0cnVlLCJpYXQiOjE3NjM2NTM4ODcsImV4cCI6MTc2MzY1NDQ4NywiYXVkIjoiYXJ0aXZpby1haS1jbGllbnQiLCJpc3MiOiJhcnRpdmlvLWFpIn0.SAFmTpcSPa4hoa-tMHcKAg2yCAjaM1XrGD-KKXKEa8s
+Connection
+	keep-alive
+Cookie
+	refreshToken=cd50f1d4f4fba86a6038ef23931a62e0776cfc36fc7a33a45861700229d6e29cc38ba3211ab90be521db3a64cae8202d2181048b9ba682ed05b310c5c4342e66; tokenId=8c00419e-d527-409e-af94-63c4c4d88955
+Host
+	artivio.ai
+Priority
+	u=0
+Referer
+	https://artivio.ai/
+Sec-Fetch-Dest
+	empty
+Sec-Fetch-Mode
+	cors
+Sec-Fetch-Site
+	same-origin
+TE
+	trailers
+User-Agent
+	Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0

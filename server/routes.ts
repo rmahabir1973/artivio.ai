@@ -1467,6 +1467,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user generations
   app.get('/api/generations', requireJWT, async (req: any, res) => {
     try {
+      console.log('[/api/generations] ✓ JWT_SECRET_FIX_DEPLOYED - Request received', {
+        userId: req.user?.id,
+        hasUser: !!req.user
+      });
+      
       // Guard: Check if user exists (session might be cleared after middleware)
       if (!req.user || !req.user) {
         console.log('[/api/generations] No user in request - session likely cleared');
