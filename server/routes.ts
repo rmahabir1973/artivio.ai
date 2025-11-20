@@ -1464,12 +1464,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user generations with cursor-based pagination
+  // Get user generations (supports both array and paginated formats)
   app.get('/api/generations', requireJWT, async (req: any, res) => {
     try {
-      console.log('[/api/generations] ✓ Paginated - Request received', {
+      const isPaginated = req.query.cursor !== undefined;
+      console.log('[/api/generations] Request received', {
         userId: req.user?.id,
         hasUser: !!req.user,
+        isPaginated,
         cursor: req.query.cursor
       });
       
@@ -1486,26 +1488,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limitParam = Number.parseInt(req.query.limit as string);
       const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 15, 1), 30);
       
-      // Parse cursor if provided
-      let cursor: { createdAt: Date; id: string } | undefined;
-      if (req.query.cursor) {
-        try {
-          const decoded = JSON.parse(Buffer.from(req.query.cursor as string, 'base64').toString());
-          cursor = { createdAt: new Date(decoded.createdAt), id: decoded.id };
-        } catch (err) {
-          console.error('Invalid cursor:', err);
-          return res.status(400).json({ message: "Invalid cursor" });
+      // Check if cursor-based pagination is requested
+      if (isPaginated) {
+        // Parse cursor if provided
+        let cursor: { createdAt: Date; id: string } | undefined;
+        if (req.query.cursor && req.query.cursor !== '') {
+          try {
+            const decoded = JSON.parse(Buffer.from(req.query.cursor as string, 'base64').toString());
+            cursor = { createdAt: new Date(decoded.createdAt), id: decoded.id };
+          } catch (err) {
+            console.error('Invalid cursor:', err);
+            return res.status(400).json({ message: "Invalid cursor" });
+          }
         }
+        
+        const startTime = Date.now();
+        const { items, nextCursor } = await storage.getUserGenerationsPage(userId, limit, cursor);
+        const queryTime = Date.now() - startTime;
+        
+        console.log(`[/api/generations] Paginated query completed in ${queryTime}ms, found ${items.length} generations, hasMore: ${!!nextCursor}`);
+        
+        // Apply timeout check
+        applyTimeoutCheck(items);
+        
+        // Encode nextCursor as base64 for frontend
+        const encodedCursor = nextCursor 
+          ? Buffer.from(JSON.stringify({ createdAt: nextCursor.createdAt.toISOString(), id: nextCursor.id })).toString('base64')
+          : null;
+        
+        return res.json({ items, nextCursor: encodedCursor });
+      } else {
+        // Legacy array format for backward compatibility
+        const startTime = Date.now();
+        const generations = await storage.getRecentGenerations(userId, limit);
+        const queryTime = Date.now() - startTime;
+        
+        console.log(`[/api/generations] Array query completed in ${queryTime}ms, found ${generations.length} generations`);
+        
+        // Apply timeout check
+        applyTimeoutCheck(generations);
+        
+        return res.json(generations);
       }
-      
-      const startTime = Date.now();
-      const { items, nextCursor } = await storage.getUserGenerationsPage(userId, limit, cursor);
-      const queryTime = Date.now() - startTime;
-      
-      console.log(`[/api/generations] Query completed in ${queryTime}ms, found ${items.length} generations, hasMore: ${!!nextCursor}`);
-      
-      // OPTIMIZATION: Check for timeouts in-memory only (no database writes)
-      // Background job will handle actual cleanup
+    } catch (error) {
+      console.error('Error fetching generations:', error);
+      res.status(500).json({ message: "Failed to fetch generations" });
+    }
+    
+    // Helper function to check for timeouts
+    function applyTimeoutCheck(items: any[]) {
       const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
       const now = Date.now();
       
@@ -1533,16 +1564,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-      
-      // Encode nextCursor as base64 for frontend
-      const encodedCursor = nextCursor 
-        ? Buffer.from(JSON.stringify({ createdAt: nextCursor.createdAt.toISOString(), id: nextCursor.id })).toString('base64')
-        : null;
-      
-      res.json({ items, nextCursor: encodedCursor });
-    } catch (error) {
-      console.error('Error fetching generations:', error);
-      res.status(500).json({ message: "Failed to fetch generations" });
     }
   });
 

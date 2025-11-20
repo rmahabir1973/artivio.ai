@@ -34,11 +34,11 @@ export default function History() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: ["/api/generations"],
+    queryKey: ["/api/generations", { paginated: true }],
     queryFn: async ({ pageParam }: { pageParam?: string }) => {
-      const url = pageParam 
-        ? `/api/generations?cursor=${encodeURIComponent(pageParam)}`
-        : '/api/generations';
+      // Always include cursor parameter to trigger paginated mode (empty string for first page)
+      const cursor = pageParam || '';
+      const url = `/api/generations?cursor=${encodeURIComponent(cursor)}`;
       
       const response = await fetch(url, {
         headers: {
@@ -52,7 +52,7 @@ export default function History() {
       
       return response.json() as Promise<{ items: Generation[]; nextCursor: string | null }>;
     },
-    initialPageParam: undefined,
+    initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: isAuthenticated,
   });
