@@ -1,0 +1,156 @@
+2025-11-20 10:43:31.04
+515aa1c6
+User
+email: 'test3@mahabir.pro',
+2025-11-20 10:43:31.04
+515aa1c6
+User
+}
+2025-11-20 10:43:31.04
+515aa1c6
+User
+isAdmin: false
+2025-11-20 10:43:31.04
+515aa1c6
+User
+3:43:31 PM [express] GET /api/auth/user 200 in 46ms :: {"id":"2dffc302-dd01-4544-990f-e4d75cb5c4bd",…
+2025-11-20 10:43:31.13
+515aa1c6
+User
+3:43:31 PM [express] GET /api/homepage 200 in 27ms :: {"id":"homepage","heroTitle":"Make Any Video Y…
+2025-11-20 10:43:31.16
+515aa1c6
+User
+}
+2025-11-20 10:43:31.16
+515aa1c6
+User
+userId: '2dffc302-dd01-4544-990f-e4d75cb5c4bd',
+2025-11-20 10:43:31.16
+515aa1c6
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-11-20 10:43:31.16
+515aa1c6
+User
+email: 'test3@mahabir.pro'
+2025-11-20 10:43:31.18
+515aa1c6
+User
+3:43:31 PM [express] GET /api/generations 200 in 44ms :: [{"id":"39cdb48b-ded1-486b-bd65-63ce427fc23…
+2025-11-20 10:43:31.24
+515aa1c6
+User
+3:43:31 PM [express] GET /api/pricing 304 in 96ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-20 10:43:31.24
+515aa1c6
+User
+}
+2025-11-20 10:43:31.24
+515aa1c6
+User
+userId: '2dffc302-dd01-4544-990f-e4d75cb5c4bd',
+2025-11-20 10:43:31.24
+515aa1c6
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-11-20 10:43:31.24
+515aa1c6
+User
+email: 'test3@mahabir.pro'
+2025-11-20 10:43:31.24
+515aa1c6
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-11-20 10:43:31.24
+515aa1c6
+User
+userId: '2dffc302-dd01-4544-990f-e4d75cb5c4bd',
+2025-11-20 10:43:31.24
+515aa1c6
+User
+}
+2025-11-20 10:43:31.24
+515aa1c6
+User
+email: 'test3@mahabir.pro'
+2025-11-20 10:43:31.25
+515aa1c6
+User
+3:43:31 PM [express] GET /api/announcements/active 304 in 110ms :: []
+2025-11-20 10:43:31.25
+515aa1c6
+User
+userId: '2dffc302-dd01-4544-990f-e4d75cb5c4bd',
+2025-11-20 10:43:31.25
+515aa1c6
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-11-20 10:43:31.25
+515aa1c6
+User
+}
+2025-11-20 10:43:31.25
+515aa1c6
+User
+email: 'test3@mahabir.pro'
+2025-11-20 10:43:31.26
+515aa1c6
+User
+3:43:31 PM [express] GET /api/onboarding 200 in 118ms :: {"id":"9ea8b2bc-ec95-4f0a-95a0-51952743e019…
+2025-11-20 10:43:31.27
+515aa1c6
+User
+3:43:31 PM [express] GET /api/favorites 304 in 123ms :: []
+2025-11-20 10:43:31.27
+515aa1c6
+User
+3:43:31 PM [express] GET /api/subscriptions/current 200 in 128ms :: {"id":"f2394ab5-0171-47c5-b0b1-2…
+2025-11-20 10:43:37.79
+515aa1c6
+User
+}
+2025-11-20 10:43:37.79
+515aa1c6
+User
+userId: '2dffc302-dd01-4544-990f-e4d75cb5c4bd',
+2025-11-20 10:43:37.79
+515aa1c6
+User
+[AUTH] Fetching user data { userId: '2dffc302-dd01-4544-990f-e4d75cb5c4bd' }
+2025-11-20 10:43:37.79
+515aa1c6
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-11-20 10:43:37.79
+515aa1c6
+User
+email: 'test3@mahabir.pro'
+2025-11-20 10:43:37.81
+515aa1c6
+User
+email: 'test3@mahabir.pro',
+2025-11-20 10:43:37.81
+515aa1c6
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-20 10:43:37.81
+515aa1c6
+User
+userId: '2dffc302-dd01-4544-990f-e4d75cb5c4bd',
+2025-11-20 10:43:37.81
+515aa1c6
+User
+}
+2025-11-20 10:43:37.81
+515aa1c6
+User
+isAdmin: false
+2025-11-20 10:43:37.82
+515aa1c6
+User
+3:43:37 PM [express] GET /api/auth/user 200 in 46ms :: {"id":"2dffc302-dd01-4544-990f-e4d75cb5c4bd",…
+2025-11-20 10:44:31.49
+515aa1c6
+User
+3:44:31 PM [express] GET /api/announcements/active 304 in 155ms :: []
