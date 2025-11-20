@@ -11,6 +11,14 @@ I prefer simple language and detailed explanations. I want an iterative developm
 ### UI/UX Decisions
 The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, responsive interface with full dark mode support. Public-facing landing pages feature admin-managed dynamic content.
 
+**Dashboard Redesign (In Progress)**:
+The platform is undergoing a major UI transformation from marketing-style layout to a professional 3-column app interface (left sidebar + center form + right preview panel) similar to Viddo AI for improved navigation and UX.
+
+- **Phase 1 (Complete)**: Foundation components created - AppSidebar with full navigation, ThreeColumnLayout wrapper, and PreviewPanel component with idle/generating/completed/failed states
+- **Phase 2 (Complete)**: All generation pages (Video, Image, Sora) redesigned with unified 3-column layout, collapsible model comparison sections, and consistent UX
+- **Phase 3 (In Progress)**: Home page and remaining tool pages (Music, Chat, Voice Clone, etc.) to be updated with consistent layout
+- **Phase 4 (Pending)**: Mobile responsive design and end-to-end testing across all pages and devices
+
 ### Technical Implementations
 -   **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI, Wouter, TanStack Query.
 -   **Backend**: Express.js and Node.js with TypeScript.
