@@ -179,7 +179,9 @@ export const generations = pgTable("generations", {
   apiKeyUsed: varchar("api_key_used"), // Which API key was used
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
-});
+}, (table) => [
+  index("generations_user_created_idx").on(table.userId, table.createdAt),
+]);
 
 export const insertGenerationSchema = createInsertSchema(generations).omit({
   id: true,

@@ -1,0 +1,152 @@
+2025-11-20 12:27:10.36
+6be674ca
+User
+[AUTH DEBUG] Google OAuth - callback received {
+2025-11-20 12:27:10.36
+6be674ca
+User
+}
+2025-11-20 12:27:10.45
+6be674ca
+User
+[AUTH DEBUG] Google OAuth - existing user found by Google ID { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:27:10.45
+6be674ca
+User
+[AUTH] Google OAuth authentication successful { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:27:10.49
+6be674ca
+User
+isAdmin: true
+2025-11-20 12:27:10.49
+6be674ca
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-20 12:27:10.49
+6be674ca
+User
+tokenId: '1180d5b4',
+2025-11-20 12:27:10.49
+6be674ca
+User
+}
+2025-11-20 12:27:10.49
+6be674ca
+User
+userId: '49729939',
+2025-11-20 12:27:10.49
+6be674ca
+User
+[JWT] Refresh token stored in database { userId: '49729939', tokenId: '1180d5b4-9289-4a45-87f2-dc06514c0612' }
+2025-11-20 12:27:10.49
+6be674ca
+User
+[AUTH] ✓ OAuth successful - cookies set via HTML response {
+2025-11-20 12:27:10.87
+6be674ca
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:27:10.87
+6be674ca
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-20 12:27:10.90
+6be674ca
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-20 12:27:10.90
+6be674ca
+User
+}
+2025-11-20 12:27:10.90
+6be674ca
+User
+userId: '49729939',
+2025-11-20 12:27:10.90
+6be674ca
+User
+isAdmin: true
+2025-11-20 12:27:10.90
+6be674ca
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-20 12:27:10.90
+6be674ca
+User
+5:27:10 PM [express] GET /api/auth/user 200 in 46ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-20 12:27:11.00
+6be674ca
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:27:11.03
+6be674ca
+User
+5:27:11 PM [express] GET /api/onboarding 200 in 45ms :: {"id":"94d37fba-091b-4e62-9023-6a268c1916b4"…
+2025-11-20 12:27:11.08
+6be674ca
+User
+5:27:11 PM [express] GET /api/announcements/active 200 in 97ms :: []
+2025-11-20 12:27:11.10
+6be674ca
+User
+5:27:11 PM [express] GET /api/pricing 200 in 97ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-20 12:27:11.10
+6be674ca
+User
+[/api/generations] ✓ Optimized - Request received { userId: '49729939', hasUser: true }
+2025-11-20 12:27:11.10
+6be674ca
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:27:11.10
+6be674ca
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-20 12:27:11.11
+6be674ca
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:27:11.11
+6be674ca
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:27:11.14
+6be674ca
+User
+5:27:11 PM [express] GET /api/favorites 200 in 126ms :: []
+2025-11-20 12:27:11.14
+6be674ca
+User
+5:27:11 PM [express] GET /api/subscriptions/current 200 in 129ms :: {"id":"7069d11e-8eea-4517-952c-7…
+2025-11-20 12:27:14.93
+6be674ca
+User
+[/api/generations] Query completed in 3826ms, found 78 generations
+2025-11-20 12:27:17.40
+6be674ca
+User
+5:27:17 PM [express] GET /api/generations 200 in 4362ms :: [{"id":"5ce583af-8fa0-443c-919b-7fc54574e…
+2025-11-20 12:28:00.19
+6be674ca
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-20 12:28:00.19
+6be674ca
+User
+[/api/generations] ✓ Optimized - Request received { userId: '49729939', hasUser: true }
+2025-11-20 12:28:00.19
+6be674ca
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-20 12:28:03.32
+6be674ca
+User
+[/api/generations] Query completed in 3133ms, found 78 generations
+2025-11-20 12:28:11.16
+6be674ca
+User
+5:28:11 PM [express] GET /api/generations 200 in 3644ms :: [{"id":"5ce583af-8fa0-443c-919b-7fc54574e…
+2025-11-20 12:28:11.19
+6be674ca
+User
+5:28:11 PM [express] GET /api/announcements/active 304 in 23ms :: []
