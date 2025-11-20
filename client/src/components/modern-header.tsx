@@ -80,7 +80,6 @@ export function ModernHeader() {
         { label: "AI Chat", href: "/chat", icon: MessageSquare },
         { label: "Video Editor", href: "/video-editor", icon: Scissors },
         { label: "QR Generator", href: "/qr-generator", icon: QrCode },
-        { label: "History", href: "/history", icon: HistoryIcon },
         { label: "Workflows", href: "/workflows", icon: Sparkles },
         { label: "Referrals", href: "/referrals", icon: Users },
         { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
@@ -148,6 +147,21 @@ export function ModernHeader() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+
+            {/* History - standalone prominent button for authenticated users */}
+            {isAuthenticated && (
+              <Link href="/history">
+                <Button
+                  variant={location === "/history" ? "default" : "ghost"}
+                  size="sm"
+                  className="gap-2"
+                  data-testid="nav-history"
+                >
+                  <HistoryIcon className="h-4 w-4" />
+                  History
+                </Button>
+              </Link>
             )}
 
             {/* Affiliate link for all users */}
@@ -300,6 +314,21 @@ export function ModernHeader() {
                     Home
                   </Button>
                 </Link>
+
+                {/* History - Prominent standalone button */}
+                <Link href="/history">
+                  <Button
+                    variant={location === "/history" ? "default" : "ghost"}
+                    className="w-full justify-start gap-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                    data-testid="mobile-nav-history"
+                  >
+                    <HistoryIcon className="h-5 w-5" />
+                    History
+                  </Button>
+                </Link>
+
+                <div className="border-t pt-4" />
 
                 {/* Features by Category */}
                 {featureCategories.map((category) => (
