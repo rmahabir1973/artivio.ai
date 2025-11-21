@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -157,6 +157,11 @@ export default function GenerateVideo() {
   const [duration, setDuration] = useState(5);
   const [quality, setQuality] = useState("1080p");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  
+  // Generation result state
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedVideo, setGeneratedVideo] = useState<any>(null);
 
   // Load template handler
   const handleLoadTemplate = (template: any) => {
@@ -183,6 +188,33 @@ export default function GenerateVideo() {
       }, 500);
     }
   }, [isAuthenticated, authLoading, toast]);
+
+  // Poll for generation result when generationId is set
+  const { data: pollData } = useQuery<any>({
+    queryKey: ["/api/generations", generationId],
+    enabled: !!generationId && isGenerating,
+    refetchInterval: 2000, // Poll every 2 seconds while generating
+    refetchOnWindowFocus: false,
+  });
+
+  // Update generatedVideo when poll data arrives with resultUrl
+  useEffect(() => {
+    if (pollData?.resultUrl) {
+      setGeneratedVideo(pollData);
+      setIsGenerating(false);
+      toast({
+        title: "Video Generated!",
+        description: "Your video is ready to view and download.",
+      });
+    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+      setIsGenerating(false);
+      toast({
+        title: "Generation Failed",
+        description: pollData?.errorMessage || "Failed to generate video",
+        variant: "destructive",
+      });
+    }
+  }, [pollData, toast]);
 
   const selectedModel = VIDEO_MODELS.find(m => m.value === model);
   const maxImages = selectedModel?.maxImages || 1;
@@ -237,14 +269,15 @@ export default function GenerateVideo() {
     mutationFn: async (data: any) => {
       return await apiRequest("POST", "/api/generate/video", data);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      setGenerationId(data.generationId);
+      setIsGenerating(true);
+      setGeneratedVideo(null);
       toast({
         title: "Generation Started",
-        description: "Your video is being generated. Check the history page for progress.",
+        description: "Your video is being generated. Watch the preview panel for progress.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
-      setPrompt("");
-      setReferenceImages([]);
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -684,9 +717,22 @@ export default function GenerateVideo() {
       }
       preview={
         <PreviewPanel
-          status="idle"
+          status={
+            isGenerating ? "generating" :
+            generatedVideo?.resultUrl ? "completed" :
+            generatedVideo?.status === 'failed' ? "failed" :
+            "idle"
+          }
           title="Video Preview"
           description="Your generated video will appear here"
+          resultUrl={generatedVideo?.resultUrl}
+          resultType="video"
+          errorMessage={generatedVideo?.errorMessage}
+          onDownload={() => {
+            if (generatedVideo?.id) {
+              window.location.href = `/api/generations/${generatedVideo.id}/download`;
+            }
+          }}
         />
       }
     />
