@@ -272,23 +272,40 @@ export default function SoundEffects() {
           </div>
         }
         preview={
-          <PreviewPanel
-            status={
-              isGenerating
-                ? "generating"
-                : generatedAudio
-                  ? "completed"
-                  : "idle"
-            }
-            resultUrl={generatedAudio?.resultUrl}
-            resultType="audio"
-            errorMessage={generatedAudio?.errorMessage}
-            onDownload={() => {
-              if (generatedAudio?.id) {
-                window.location.href = `/api/generations/${generatedAudio.id}/download`;
-              }
-            }}
-          />
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-6">
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Generating Sound Effect...</h3>
+                  <p className="text-sm text-muted-foreground">This may take a moment</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-48 h-48 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center">
+                  <Wand2 className="h-24 w-24 text-primary" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold">Sound Effects Generator</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    Your generated sound effects will be saved to your History page where you can play and download them.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  asChild
+                  className="mt-4"
+                  data-testid="button-view-history"
+                >
+                  <a href="/history">
+                    View History
+                  </a>
+                </Button>
+              </>
+            )}
+          </div>
         }
       />
     </SidebarInset>

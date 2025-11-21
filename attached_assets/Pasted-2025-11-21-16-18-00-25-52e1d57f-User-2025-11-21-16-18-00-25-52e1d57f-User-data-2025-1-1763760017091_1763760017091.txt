@@ -1,0 +1,156 @@
+2025-11-21 16:18:00.25
+52e1d57f
+User
+}
+2025-11-21 16:18:00.25
+52e1d57f
+User
+"data": {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+"status": 404,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+"timestamp": 1763759880212,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+Full error details: {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+statusText: 'Not Found',
+2025-11-21 16:18:00.25
+52e1d57f
+User
+message: 'No message available',
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at async generateTTS (file:///home/runner/workspace/dist/index.js:3031:10)
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-21 16:18:00.25
+52e1d57f
+User
+status: 404,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+},
+2025-11-21 16:18:00.25
+52e1d57f
+User
+error: 'Not Found',
+2025-11-21 16:18:00.25
+52e1d57f
+User
+}
+2025-11-21 16:18:00.25
+52e1d57f
+User
+path: '/api/v1/elevenlabs/tts'
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at async file:///home/runner/workspace/dist/index.js:7331:30 {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at callKieApi (file:///home/runner/workspace/dist/index.js:2611:27)
+2025-11-21 16:18:00.25
+52e1d57f
+User
+status: 404,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+timestamp: 1763759880212,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+}
+2025-11-21 16:18:00.25
+52e1d57f
+User
+kieaiDetails: {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+TTS generation error: Error: AI service endpoint not found (/api/v1/elevenlabs/tts). This feature may not be available yet.
+2025-11-21 16:18:00.25
+52e1d57f
+User
+data: {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+error: 'Not Found',
+2025-11-21 16:18:00.25
+52e1d57f
+User
+},
+2025-11-21 16:18:00.25
+52e1d57f
+User
+status: 404,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at async generateTTS (file:///home/runner/workspace/dist/index.js:3031:10)
+2025-11-21 16:18:00.25
+52e1d57f
+User
+message: 'No message available',
+2025-11-21 16:18:00.25
+52e1d57f
+User
+statusText: 'Not Found',
+2025-11-21 16:18:00.25
+52e1d57f
+User
+data: {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+TTS generation error: Error: AI service endpoint not found (/api/v1/elevenlabs/tts). This feature may not be available yet.
+2025-11-21 16:18:00.25
+52e1d57f
+User
+kieaiDetails: {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+}
+2025-11-21 16:18:00.25
+52e1d57f
+User
+timestamp: 1763759880212,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+status: 404,
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at callKieApi (file:///home/runner/workspace/dist/index.js:2611:27)
+2025-11-21 16:18:00.25
+52e1d57f
+User
+at async file:///home/runner/workspace/dist/index.js:7331:30 {
+2025-11-21 16:18:00.25
+52e1d57f
+User
+path: '/api/v1/elevenlabs/tts'
+2025-11-21 16:18:00.25
+52e1d57f
+User
+}
