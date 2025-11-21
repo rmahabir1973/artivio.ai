@@ -307,6 +307,66 @@ async function generateImageInBackground(
   }
 }
 
+async function generateSoundEffectsInBackground(generationId: string, description: string, duration: number, model: string, parameters: any) {
+  try {
+    await storage.updateGeneration(generationId, { status: 'processing' });
+    
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for sound effects ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await generateSoundEffects({ 
+      description, 
+      duration,
+      model,
+      parameters: { ...parameters, callBackUrl: callbackUrl } 
+    });
+    
+    // Parse response
+    const { taskId, audioUrl, errorMessage } = parseSunoResponse(result);
+    
+    if (errorMessage) {
+      await storage.finalizeGeneration(generationId, 'failure', {
+        errorMessage: errorMessage,
+      });
+      console.log(`❌ Sound effects API returned error: ${errorMessage}`);
+      return;
+    }
+    
+    if (audioUrl) {
+      await storage.finalizeGeneration(generationId, 'success', {
+        resultUrl: audioUrl,
+        apiKeyUsed: keyName,
+        statusDetail: 'completed',
+      });
+      console.log(`✓ Sound effects generation completed: ${audioUrl}`);
+      return;
+    }
+    
+    if (taskId) {
+      await storage.updateGeneration(generationId, {
+        status: 'processing',
+        apiKeyUsed: keyName,
+        externalTaskId: taskId,
+        statusDetail: 'queued',
+      });
+      console.log(`📋 Sound effects generation task queued: ${taskId}`);
+      return;
+    }
+    
+    console.warn(`⚠️ Sound effects API response has no taskId or URL for ${generationId}`);
+    await storage.updateGeneration(generationId, {
+      status: 'processing',
+      apiKeyUsed: keyName,
+      statusDetail: 'awaiting_callback',
+    });
+  } catch (error: any) {
+    console.error('Background sound effects generation failed:', error);
+    await storage.finalizeGeneration(generationId, 'failure', { 
+      errorMessage: error.message || 'Unknown error during sound effects generation' 
+    });
+  }
+}
+
 async function generateMusicInBackground(generationId: string, model: string, prompt: string, parameters: any) {
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
@@ -1394,6 +1454,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Extend music error:', error);
       res.status(500).json({ message: error.message || "Failed to extend music" });
+    }
+  });
+
+  // Generate Sound Effects
+  app.post('/api/generate/sound-effects', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const validationResult = generateSoundEffectsRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { description, duration, model, parameters } = validationResult.data;
+      const cost = await getModelCost(model);
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'sound-effects',
+        model,
+        prompt: description,
+        parameters: { duration, ...parameters } || {},
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      generateSoundEffectsInBackground(generation.id, description, duration, model, parameters || {});
+
+      res.json({ generationId: generation.id, message: "Sound effects generation started" });
+    } catch (error: any) {
+      console.error('Sound effects generation error:', error);
+      res.status(500).json({ message: error.message || "Failed to generate sound effects" });
     }
   });
 

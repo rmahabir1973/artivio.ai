@@ -653,6 +653,16 @@ export const generateLyricsRequestSchema = z.object({
   prompt: z.string().min(1).max(200),
 });
 
+// Generate Sound Effects Request
+export const generateSoundEffectsRequestSchema = z.object({
+  description: z.string().min(1).max(500),
+  duration: z.number().min(1).max(30).default(5),
+  model: z.enum(['kling-sound', 'sound-effects']).default('kling-sound'),
+  parameters: z.object({
+    quality: z.enum(['low', 'medium', 'high']).optional(),
+  }).optional(),
+});
+
 export type GenerateVideoRequest = z.infer<typeof generateVideoRequestSchema>;
 export type GenerateImageRequest = z.infer<typeof generateImageRequestSchema>;
 export type GenerateMusicRequest = z.infer<typeof generateMusicRequestSchema>;
@@ -666,6 +676,7 @@ export type ConvertToWavRequest = z.infer<typeof convertToWavRequestSchema>;
 export type GetTimestampedLyricsRequest = z.infer<typeof getTimestampedLyricsRequestSchema>;
 export type CreateMusicVideoRequest = z.infer<typeof createMusicVideoRequestSchema>;
 export type GenerateLyricsRequest = z.infer<typeof generateLyricsRequestSchema>;
+export type GenerateSoundEffectsRequest = z.infer<typeof generateSoundEffectsRequestSchema>;
 
 // Conversations table for AI chat
 export const conversations = pgTable("conversations", {

@@ -765,6 +765,23 @@ export async function generateLyrics(params: {
   });
 }
 
+// Generate Sound Effects
+export async function generateSoundEffects(params: {
+  description: string;
+  duration: number;
+  model: string;
+  parameters: any;
+}): Promise<{ result: any; keyName: string }> {
+  const parameters = params.parameters || {};
+  
+  return await callKieApi('/api/v1/sound-effects/generate', {
+    prompt: params.description,
+    duration: params.duration,
+    quality: parameters.quality || 'medium',
+    callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid',
+  });
+}
+
 // Upload & Cover - Generate music cover from uploaded audio
 export async function uploadCover(params: {
   prompt: string;
