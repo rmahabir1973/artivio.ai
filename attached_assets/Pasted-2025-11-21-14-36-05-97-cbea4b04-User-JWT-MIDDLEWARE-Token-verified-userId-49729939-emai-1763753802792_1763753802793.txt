@@ -1,0 +1,156 @@
+2025-11-21 14:36:05.97
+cbea4b04
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-21 14:36:06.00
+cbea4b04
+User
+7:36:06 PM [express] GET /api/favorites 200 in 48ms :: []
+2025-11-21 14:36:06.04
+cbea4b04
+User
+7:36:06 PM [express] GET /api/announcements/active 200 in 92ms :: []
+2025-11-21 14:36:06.04
+cbea4b04
+User
+userId: '49729939',
+2025-11-21 14:36:06.04
+cbea4b04
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-21 14:36:06.04
+cbea4b04
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-21 14:36:06.04
+cbea4b04
+User
+cursor: undefined
+2025-11-21 14:36:06.04
+cbea4b04
+User
+hasUser: true,
+2025-11-21 14:36:06.04
+cbea4b04
+User
+}
+2025-11-21 14:36:06.04
+cbea4b04
+User
+[/api/generations] Request received {
+2025-11-21 14:36:06.04
+cbea4b04
+User
+isPaginated: false,
+2025-11-21 14:36:06.06
+cbea4b04
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-21 14:36:06.07
+cbea4b04
+User
+[/api/generations] ERROR: {
+2025-11-21 14:36:06.07
+cbea4b04
+User
+' at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74\n' +
+2025-11-21 14:36:06.07
+cbea4b04
+User
+' at async file:///home/runner/workspace/dist/index.js:6652:30',
+2025-11-21 14:36:06.07
+cbea4b04
+User
+stack: 'error: column "thumbnail_url" does not exist\n' +
+2025-11-21 14:36:06.07
+cbea4b04
+User
+}
+2025-11-21 14:36:06.07
+cbea4b04
+User
+' at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+2025-11-21 14:36:06.07
+cbea4b04
+User
+' at async DatabaseStorage.getRecentGenerations (file:///home/runner/workspace/dist/index.js:1678:16)\n' +
+2025-11-21 14:36:06.07
+cbea4b04
+User
+' at async NeonPreparedQuery.execute (file:///home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.js:76:20)\n' +
+2025-11-21 14:36:06.07
+cbea4b04
+User
+error: 'column "thumbnail_url" does not exist',
+2025-11-21 14:36:06.07
+cbea4b04
+User
+7:36:06 PM [express] GET /api/pricing 200 in 96ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-21 14:36:06.07
+cbea4b04
+User
+7:36:06 PM [express] GET /api/pricing 200 in 96ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132","…
+2025-11-21 14:36:11.49
+cbea4b04
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-21 14:36:11.49
+cbea4b04
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-21 14:36:11.49
+cbea4b04
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-21 14:36:11.51
+cbea4b04
+User
+' at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+2025-11-21 14:36:11.51
+cbea4b04
+User
+}
+2025-11-21 14:36:11.51
+cbea4b04
+User
+[/api/generations] ERROR: {
+2025-11-21 14:36:11.51
+cbea4b04
+User
+stack: 'error: column "thumbnail_url" does not exist\n' +
+2025-11-21 14:36:11.51
+cbea4b04
+User
+userId: '49729939'
+2025-11-21 14:36:11.51
+cbea4b04
+User
+' at async DatabaseStorage.getUserGenerationsPage (file:///home/runner/workspace/dist/index.js:1687:25)\n' +
+2025-11-21 14:36:11.51
+cbea4b04
+User
+' at async NeonPreparedQuery.execute (file:///home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.js:76:20)\n' +
+2025-11-21 14:36:11.51
+cbea4b04
+User
+' at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74\n' +
+2025-11-21 14:36:11.51
+cbea4b04
+User
+' at async file:///home/runner/workspace/dist/index.js:6644:39',
+2025-11-21 14:36:11.51
+cbea4b04
+User
+error: 'column "thumbnail_url" does not exist',
+2025-11-21 14:36:11.51
+cbea4b04
+User
+7:36:11 PM [express] GET /api/generations 500 in 48ms :: {"message":"Failed to fetch generations"}
+2025-11-21 14:36:11.51
+cbea4b04
+User
+7:36:11 PM [express] GET /api/generations 500 in 48ms :: {"message":"Failed to fetch generations"}
+2025-11-21 14:36:11.51
+cbea4b04
+User
+7:36:11 PM [express] GET /api/generations 500 in 48ms :: {"message":"Failed to fetch generations"}
