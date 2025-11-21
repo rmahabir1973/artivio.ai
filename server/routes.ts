@@ -3260,6 +3260,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== PLAN ECONOMICS ROUTES ==========
+  
+  // Admin: Get plan economics settings
+  app.get('/api/admin/plan-economics', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const economics = await storage.getPlanEconomics();
+      // If no economics exist yet, return defaults
+      if (!economics) {
+        return res.json({
+          kiePurchaseAmount: 50,
+          kieCreditAmount: 10000,
+          userCreditAmount: 15000,
+          profitMargin: 50,
+        });
+      }
+      
+      res.json(economics);
+    } catch (error) {
+      console.error('Error fetching plan economics:', error);
+      res.status(500).json({ message: "Failed to fetch plan economics" });
+    }
+  });
+
+  // Admin: Update plan economics settings
+  app.patch('/api/admin/plan-economics', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { updatePlanEconomicsSchema } = await import("@shared/schema");
+      const validatedData = updatePlanEconomicsSchema.parse(req.body);
+
+      const updated = await storage.upsertPlanEconomics(validatedData);
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating plan economics:', error);
+      res.status(400).json({ message: 'Failed to update plan economics', error: error.message });
+    }
+  });
+
   // ========== SUBSCRIPTION PLAN ROUTES ==========
 
   // Admin: Get all subscription plans
