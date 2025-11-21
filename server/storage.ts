@@ -2,6 +2,7 @@ import {
   users,
   apiKeys,
   pricing,
+  planEconomics,
   generations,
   conversations,
   messages,
@@ -31,6 +32,9 @@ import {
   type Pricing,
   type InsertPricing,
   type UpdatePricing,
+  type PlanEconomics,
+  type InsertPlanEconomics,
+  type UpdatePlanEconomics,
   type Generation,
   type InsertGeneration,
   type Conversation,
@@ -101,6 +105,10 @@ export interface IStorage {
   getPricingById(id: string): Promise<Pricing | undefined>;
   createPricing(pricing: InsertPricing): Promise<Pricing>;
   updatePricing(id: string, updates: UpdatePricing): Promise<Pricing | undefined>;
+
+  // Plan Economics operations (singleton)
+  getPlanEconomics(): Promise<PlanEconomics | undefined>;
+  upsertPlanEconomics(economics: UpdatePlanEconomics): Promise<PlanEconomics>;
 
   // Generation operations
   getAllGenerations(): Promise<Generation[]>;
@@ -432,6 +440,42 @@ export class DatabaseStorage implements IStorage {
       .where(eq(pricing.id, id))
       .returning();
     return price;
+  }
+
+  // Plan Economics operations (singleton)
+  async getPlanEconomics(): Promise<PlanEconomics | undefined> {
+    const [economics] = await db.select().from(planEconomics).limit(1);
+    return economics;
+  }
+
+  async upsertPlanEconomics(economics: UpdatePlanEconomics): Promise<PlanEconomics> {
+    // Check if row exists (singleton)
+    const existing = await this.getPlanEconomics();
+    
+    if (existing) {
+      // Update existing row
+      const [updated] = await db
+        .update(planEconomics)
+        .set({
+          ...economics,
+          updatedAt: new Date(),
+        })
+        .where(eq(planEconomics.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Insert new row with defaults
+      const [created] = await db
+        .insert(planEconomics)
+        .values({
+          kiePurchaseAmount: economics.kiePurchaseAmount ?? 50,
+          kieCreditAmount: economics.kieCreditAmount ?? 10000,
+          userCreditAmount: economics.userCreditAmount ?? 15000,
+          profitMargin: economics.profitMargin ?? 50,
+        })
+        .returning();
+      return created;
+    }
   }
 
   // Generation operations

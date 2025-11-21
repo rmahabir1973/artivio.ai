@@ -131,6 +131,7 @@ export const pricing = pgTable("pricing", {
   feature: varchar("feature").notNull(), // 'video', 'image', 'music', 'chat', 'voice-cloning', 'stt', 'tts', 'avatar', 'audio-converter'
   model: varchar("model").notNull(), // 'veo-3.1', 'flux-kontext', 'suno-v4', 'gpt-4o'
   creditCost: integer("credit_cost").notNull(),
+  kieCreditCost: integer("kie_credit_cost"), // What Kie.ai charges for this model (nullable for backward compatibility)
   category: varchar("category").notNull(), // 'generation', 'chat', 'voice', 'audio'
   description: text("description"), // Optional human-readable description
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -149,6 +150,7 @@ export const updatePricingSchema = z.object({
   feature: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
   creditCost: z.number().int().min(0).optional(),
+  kieCreditCost: z.number().int().min(0).optional(),
   category: z.string().min(1).optional(),
   description: z.string().optional(),
 });
@@ -159,6 +161,34 @@ export type Pricing = typeof pricing.$inferSelect;
 
 // Pricing entry for frontend consumption (matches backend Pricing type)
 export type PricingEntry = Pricing;
+
+// Plan Economics table for pricing calculator settings (singleton table)
+export const planEconomics = pgTable("plan_economics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  kiePurchaseAmount: integer("kie_purchase_amount").notNull().default(50), // Amount paid to Kie.ai (e.g., $50)
+  kieCreditAmount: integer("kie_credit_amount").notNull().default(10000), // Credits received from Kie.ai (e.g., 10,000)
+  userCreditAmount: integer("user_credit_amount").notNull().default(15000), // Credits sold to users (e.g., 15,000)
+  profitMargin: integer("profit_margin").notNull().default(50), // Desired profit margin percentage (e.g., 50%)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export const insertPlanEconomicsSchema = createInsertSchema(planEconomics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updatePlanEconomicsSchema = z.object({
+  kiePurchaseAmount: z.number().int().min(1).optional(),
+  kieCreditAmount: z.number().int().min(1).optional(),
+  userCreditAmount: z.number().int().min(1).optional(),
+  profitMargin: z.number().int().min(0).max(100).optional(),
+});
+
+export type InsertPlanEconomics = z.infer<typeof insertPlanEconomicsSchema>;
+export type UpdatePlanEconomics = z.infer<typeof updatePlanEconomicsSchema>;
+export type PlanEconomics = typeof planEconomics.$inferSelect;
 
 // Generations table for tracking all AI generations
 export const generations = pgTable("generations", {
