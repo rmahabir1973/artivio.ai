@@ -1752,6 +1752,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single generation by ID
+  app.get('/api/generations/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+
+      const generation = await storage.getGeneration(id);
+
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+
+      // Verify the generation belongs to the user
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(generation);
+    } catch (error) {
+      console.error('Error fetching generation:', error);
+      res.status(500).json({ message: "Failed to fetch generation" });
+    }
+  });
+
   // Download generation file (proxy to avoid CORS issues)
   app.get('/api/generations/:id/download', requireJWT, async (req: any, res) => {
     try {
@@ -1782,6 +1806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         video: { ext: 'mp4', contentType: 'video/mp4' },
         image: { ext: 'png', contentType: 'image/png' },
         music: { ext: 'mp3', contentType: 'audio/mpeg' },
+        'sound-effects': { ext: 'mp3', contentType: 'audio/mpeg' },
       };
 
       const fileInfo = extensionMap[generation.type] || { ext: 'bin', contentType: 'application/octet-stream' };

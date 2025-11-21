@@ -104,6 +104,7 @@ export interface IStorage {
 
   // Generation operations
   getAllGenerations(): Promise<Generation[]>;
+  getGeneration(id: string): Promise<Generation | undefined>;
   createGeneration(generation: InsertGeneration): Promise<Generation>;
   updateGeneration(id: string, updates: Partial<Generation>): Promise<Generation | undefined>;
   finalizeGeneration(
@@ -587,6 +588,15 @@ export class DatabaseStorage implements IStorage {
       console.log(`✓ [cancelGeneration] Generation ${generationId} marked as cancelled (no credits to refund)`);
       return { refunded: false, amount: 0 };
     });
+  }
+
+  async getGeneration(id: string): Promise<Generation | undefined> {
+    const results = await db
+      .select()
+      .from(generations)
+      .where(eq(generations.id, id))
+      .limit(1);
+    return results[0];
   }
 
   async getUserGenerations(userId: string): Promise<Generation[]> {

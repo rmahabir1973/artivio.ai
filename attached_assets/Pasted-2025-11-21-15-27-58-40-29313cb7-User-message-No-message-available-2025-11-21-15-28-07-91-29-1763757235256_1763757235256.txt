@@ -1,0 +1,140 @@
+2025-11-21 15:27:58.40
+29313cb7
+User
+message: 'No message available',
+2025-11-21 15:28:07.91
+29313cb7
+User
+8:28:07 PM [express] GET /api/announcements/active 304 in 22ms :: []
+2025-11-21 15:28:41.68
+29313cb7
+User
+8:28:41 PM [express] GET /api/pricing 304 in 130ms :: [{"id":"fe3f9683-fdf9-43c4-adc3-64748524c132",…
+2025-11-21 15:29:08.19
+29313cb7
+User
+8:29:08 PM [express] GET /api/announcements/active 304 in 144ms :: []
+2025-11-21 15:29:41.42
+29313cb7
+User
+8:29:41 PM [express] GET /api/announcements/active 304 in 91ms :: []
+2025-11-21 15:29:44.27
+3d590366
+System
+starting up user application
+2025-11-21 15:29:44.27
+3d590366
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
+2025-11-21 15:29:44.27
+3d590366
+System
+forwarding local port 5000 to external port 80 (mapped as 1104)
+2025-11-21 15:29:45.84
+3d590366
+User
+> rest-express@1.0.0 start
+2025-11-21 15:29:45.84
+3d590366
+User
+> NODE_ENV=production node dist/index.js
+2025-11-21 15:29:47.67
+3d590366
+User
+[JWT CONFIG] JWT_SECRET initialized: Using env JWT_SECRET
+2025-11-21 15:29:47.68
+3d590366
+User
+✓ Passport middleware initialized
+2025-11-21 15:29:47.68
+3d590366
+User
+📋 Initializing Passport strategies...
+2025-11-21 15:29:47.68
+3d590366
+User
+📋 Initializing Passport middleware...
+2025-11-21 15:29:47.68
+3d590366
+User
+✓ Passport strategies initialized successfully
+2025-11-21 15:29:47.68
+3d590366
+User
+✓ Google OAuth initialized successfully
+2025-11-21 15:29:47.68
+3d590366
+User
+✓ Authentication initialized successfully
+2025-11-21 15:29:47.83
+3d590366
+User
+✓ API keys initialized successfully
+2025-11-21 15:29:47.83
+3d590366
+User
+📋 Initializing subscription plans...
+2025-11-21 15:29:47.88
+3d590366
+User
+✓ Updated plan: 7 Day Free Trial
+2025-11-21 15:29:47.92
+3d590366
+User
+✓ Updated plan: Starter
+2025-11-21 15:29:47.97
+3d590366
+User
+✓ Subscription plans initialized successfully
+2025-11-21 15:29:47.97
+3d590366
+User
+✓ Updated plan: Pro
+2025-11-21 15:29:48.06
+3d590366
+User
+8:29:47 PM [express] serving on port 5000
+2025-11-21 15:30:08.44
+3d590366
+User
+8:30:08 PM [express] GET /api/announcements/active 304 in 110ms :: []
+2025-11-21 15:30:41.71
+3d590366
+User
+8:30:41 PM [express] GET /api/announcements/active 304 in 96ms :: []
+2025-11-21 15:31:08.69
+3d590366
+User
+8:31:08 PM [express] GET /api/announcements/active 304 in 116ms :: []
+2025-11-21 15:31:08.69
+3d590366
+User
+8:31:08 PM [express] GET /api/announcements/active 304 in 116ms :: []
+2025-11-21 15:32:42.23
+3d590366
+User
+8:32:42 PM [express] GET /api/announcements/active 304 in 112ms :: []
+2025-11-21 15:32:53.54
+3d590366
+User
+[AUTH] Refresh failed - missing cookies
+2025-11-21 15:32:53.54
+3d590366
+User
+hasTokenId: false,
+2025-11-21 15:32:53.54
+3d590366
+User
+[AUTH] Refresh token request {
+2025-11-21 15:32:53.54
+3d590366
+User
+tokenIdPreview: undefined
+2025-11-21 15:32:53.54
+3d590366
+User
+hasRefreshToken: false,
+2025-11-21 15:32:53.54
+3d590366
+User
+}

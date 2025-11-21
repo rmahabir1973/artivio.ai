@@ -64,13 +64,8 @@ export default function SoundEffects() {
   }, [isAuthenticated, authLoading, toast]);
 
   // Poll for generation result when generationId is set
-  const { data: pollData } = useQuery({
+  const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
-    queryFn: async () => {
-      if (!generationId) return null;
-      const response = await apiRequest("GET", `/api/generations/${generationId}`);
-      return response;
-    },
     enabled: !!generationId && isGenerating,
     refetchInterval: 2000, // Poll every 2 seconds while generating
     refetchOnWindowFocus: false,
@@ -81,7 +76,7 @@ export default function SoundEffects() {
     if (pollData?.resultUrl) {
       setGeneratedAudio(pollData);
       setIsGenerating(false);
-    } else if (pollData?.status === 'failure') {
+    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
       setIsGenerating(false);
       toast({
         title: "Generation Failed",
@@ -108,10 +103,9 @@ export default function SoundEffects() {
 
       return response;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setGenerationId(data.generationId);
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
-      markStepComplete("generate_content");
       toast({
         title: "Generation Started",
         description: "Your sound effect is being generated...",
@@ -280,14 +274,8 @@ export default function SoundEffects() {
             resultType="audio"
             errorMessage={generatedAudio?.errorMessage}
             onDownload={() => {
-              if (generatedAudio?.resultUrl) {
-                const url = generatedAudio.resultUrl;
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', '');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+              if (generatedAudio?.id) {
+                window.location.href = `/api/generations/${generatedAudio.id}/download`;
               }
             }}
           />
