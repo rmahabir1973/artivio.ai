@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,8 +20,17 @@ import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
 
-const SOUND_EFFECTS_MODELS = [
-  { value: "sound-effects-v1", label: "Sound Effects V1", description: "High-quality sound effect generation" },
+const OUTPUT_FORMATS = [
+  { value: "mp3_44100_128", label: "MP3 44.1kHz 128kbps (Recommended)" },
+  { value: "mp3_44100_192", label: "MP3 44.1kHz 192kbps (High Quality)" },
+  { value: "mp3_44100_96", label: "MP3 44.1kHz 96kbps" },
+  { value: "mp3_44100_64", label: "MP3 44.1kHz 64kbps" },
+  { value: "mp3_44100_32", label: "MP3 44.1kHz 32kbps" },
+  { value: "mp3_22050_32", label: "MP3 22.05kHz 32kbps" },
+  { value: "opus_48000_128", label: "Opus 48kHz 128kbps" },
+  { value: "opus_48000_96", label: "Opus 48kHz 96kbps" },
+  { value: "pcm_44100", label: "PCM 44.1kHz (Uncompressed)" },
+  { value: "pcm_24000", label: "PCM 24kHz" },
 ];
 
 export default function SoundEffects() {
@@ -28,9 +40,12 @@ export default function SoundEffects() {
   const { getModelCost } = usePricing();
   const { markStepComplete } = useOnboarding();
   
-  const [model, setModel] = useState("sound-effects-v1");
-  const [description, setDescription] = useState("");
-  const [duration, setDuration] = useState("5");
+  const model = "elevenlabs/sound-effect-v2";
+  const [text, setText] = useState("");
+  const [loop, setLoop] = useState(false);
+  const [durationSeconds, setDurationSeconds] = useState<number | undefined>(5);
+  const [promptInfluence, setPromptInfluence] = useState(0.3);
+  const [outputFormat, setOutputFormat] = useState("mp3_44100_128");
   const [generatedAudio, setGeneratedAudio] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -49,14 +64,17 @@ export default function SoundEffects() {
 
   const generateSoundEffectsMutation = useMutation({
     mutationFn: async () => {
-      if (!description.trim()) {
+      if (!text.trim()) {
         throw new Error("Please describe the sound effect you want to generate");
       }
 
       const response = await apiRequest("POST", "/api/generate/sound-effects", {
         model,
-        description,
-        duration: parseInt(duration),
+        text,
+        loop,
+        duration_seconds: durationSeconds,
+        prompt_influence: promptInfluence,
+        output_format: outputFormat,
       });
 
       return response;
@@ -66,8 +84,8 @@ export default function SoundEffects() {
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
       markStepComplete("generate_content");
       toast({
-        title: "Success",
-        description: "Sound effect generated successfully!",
+        title: "Generation Started",
+        description: "Your sound effect is being generated. Check the history page for progress.",
       });
     },
     onError: (error: any) => {
@@ -76,7 +94,7 @@ export default function SoundEffects() {
         return;
       }
       toast({
-        title: "Error",
+        title: "Generation Failed",
         description: error.message || "Failed to generate sound effect",
         variant: "destructive",
       });
@@ -89,7 +107,7 @@ export default function SoundEffects() {
     setTimeout(() => setIsGenerating(false), 1000);
   };
 
-  const modelCost = getModelCost(model, 5);
+  const modelCost = getModelCost(model, durationSeconds || 5);
 
   if (authLoading) {
     return (
@@ -115,44 +133,80 @@ export default function SoundEffects() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger id="model" data-testid="select-model">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SOUND_EFFECTS_MODELS.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Describe the Sound Effect</Label>
+                <Label htmlFor="text">Describe the Sound Effect</Label>
                 <Textarea
-                  id="description"
-                  data-testid="input-description"
+                  id="text"
+                  data-testid="input-text"
                   placeholder="e.g., 'sci-fi laser gun sound', 'heavy rain with thunder', 'retro game beep sound'"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
                   className="min-h-24"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Up to 5000 characters. Describe the sound effect you want in detail.
+                </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="duration">Duration (seconds)</Label>
-                <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger id="duration" data-testid="select-duration">
+                <Label htmlFor="duration">Duration (seconds, optional)</Label>
+                <Input
+                  id="duration"
+                  data-testid="input-duration"
+                  type="number"
+                  min="0.5"
+                  max="22"
+                  step="0.1"
+                  value={durationSeconds || ""}
+                  onChange={(e) => setDurationSeconds(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  placeholder="Auto (optimal duration)"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Range: 0.5 - 22 seconds. Leave empty for optimal duration.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="loop"
+                  data-testid="checkbox-loop"
+                  checked={loop}
+                  onCheckedChange={(checked) => setLoop(checked as boolean)}
+                />
+                <Label htmlFor="loop" className="cursor-pointer">
+                  Create loopable sound effect
+                </Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="promptInfluence">
+                  Prompt Influence: {promptInfluence.toFixed(2)}
+                </Label>
+                <Slider
+                  id="promptInfluence"
+                  data-testid="slider-prompt-influence"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={[promptInfluence]}
+                  onValueChange={(value) => setPromptInfluence(value[0])}
+                />
+                <p className="text-xs text-muted-foreground">
+                  How closely to follow the prompt (0-1). Higher = less variation.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="outputFormat">Output Format</Label>
+                <Select value={outputFormat} onValueChange={setOutputFormat}>
+                  <SelectTrigger id="outputFormat" data-testid="select-output-format">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="3">3 seconds</SelectItem>
-                    <SelectItem value="5">5 seconds</SelectItem>
-                    <SelectItem value="10">10 seconds</SelectItem>
-                    <SelectItem value="15">15 seconds</SelectItem>
+                    {OUTPUT_FORMATS.map((format) => (
+                      <SelectItem key={format.value} value={format.value}>
+                        {format.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -165,7 +219,7 @@ export default function SoundEffects() {
               <Button
                 data-testid="button-generate"
                 onClick={handleGenerate}
-                disabled={!description.trim() || generateSoundEffectsMutation.isPending}
+                disabled={!text.trim() || generateSoundEffectsMutation.isPending}
                 className="w-full"
               >
                 {generateSoundEffectsMutation.isPending ? (
@@ -176,7 +230,7 @@ export default function SoundEffects() {
                 ) : (
                   <>
                     <Wand2 className="w-4 h-4 mr-2" />
-                    Generate Sound Effect
+                    Generate Sound Effect ({modelCost} credits)
                   </>
                 )}
               </Button>

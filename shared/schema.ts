@@ -654,14 +654,34 @@ export const generateLyricsRequestSchema = z.object({
   prompt: z.string().min(1).max(200),
 });
 
-// Generate Sound Effects Request
+// Generate Sound Effects Request - ElevenLabs Sound Effect V2
 export const generateSoundEffectsRequestSchema = z.object({
-  description: z.string().min(1).max(500),
-  duration: z.number().min(1).max(30).default(5),
-  model: z.enum(['kling-sound', 'sound-effects']).default('kling-sound'),
-  parameters: z.object({
-    quality: z.enum(['low', 'medium', 'high']).optional(),
-  }).optional(),
+  model: z.enum(['elevenlabs/sound-effect-v2']).default('elevenlabs/sound-effect-v2'),
+  text: z.string().min(1).max(5000),
+  loop: z.boolean().optional().default(false),
+  duration_seconds: z.number().min(0.5).max(22).optional(),
+  prompt_influence: z.number().min(0).max(1).optional().default(0.3),
+  output_format: z.enum([
+    'mp3_22050_32',
+    'mp3_44100_32',
+    'mp3_44100_64',
+    'mp3_44100_96',
+    'mp3_44100_128',
+    'mp3_44100_192',
+    'pcm_8000',
+    'pcm_16000',
+    'pcm_22050',
+    'pcm_24000',
+    'pcm_44100',
+    'pcm_48000',
+    'ulaw_8000',
+    'alaw_8000',
+    'opus_48000_32',
+    'opus_48000_64',
+    'opus_48000_96',
+    'opus_48000_128',
+    'opus_48000_192',
+  ]).optional().default('mp3_44100_128'),
 });
 
 export type GenerateVideoRequest = z.infer<typeof generateVideoRequestSchema>;

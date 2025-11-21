@@ -309,7 +309,15 @@ async function generateImageInBackground(
   }
 }
 
-async function generateSoundEffectsInBackground(generationId: string, description: string, duration: number, model: string, parameters: any) {
+async function generateSoundEffectsInBackground(
+  generationId: string, 
+  text: string, 
+  loop?: boolean, 
+  duration_seconds?: number, 
+  prompt_influence?: number, 
+  output_format?: string,
+  model?: string
+) {
   try {
     await storage.updateGeneration(generationId, { status: 'processing' });
     
@@ -317,50 +325,40 @@ async function generateSoundEffectsInBackground(generationId: string, descriptio
     console.log(`📞 Sending callback URL to Kie.ai for sound effects ${generationId}: ${callbackUrl}`);
     
     const { result, keyName } = await generateSoundEffects({ 
-      description, 
-      duration,
-      model,
-      parameters: { ...parameters, callBackUrl: callbackUrl } 
+      text, 
+      loop,
+      duration_seconds,
+      prompt_influence,
+      output_format,
+      callBackUrl: callbackUrl
     });
     
-    // Parse response
-    const { taskId, audioUrl, errorMessage } = parseSunoResponse(result);
-    
-    if (errorMessage) {
-      await storage.finalizeGeneration(generationId, 'failure', {
-        errorMessage: errorMessage,
-      });
-      console.log(`❌ Sound effects API returned error: ${errorMessage}`);
-      return;
+    // ElevenLabs Sound Effect V2 uses Bytedance/Playground format: result.data.taskId
+    const taskId = result?.data?.taskId;
+    if (!taskId) {
+      // If we got direct URL (older API format), use it
+      const resultUrl = result?.url || result?.audioUrl || result?.data?.url;
+      if (resultUrl) {
+        await storage.finalizeGeneration(generationId, 'success', {
+          resultUrl,
+          apiKeyUsed: keyName,
+          statusDetail: 'completed',
+        });
+        console.log(`✓ Sound effects generation completed immediately: ${resultUrl}`);
+        return;
+      }
+      throw new Error('API response missing taskId or audio URL');
     }
     
-    if (audioUrl) {
-      await storage.finalizeGeneration(generationId, 'success', {
-        resultUrl: audioUrl,
-        apiKeyUsed: keyName,
-        statusDetail: 'completed',
-      });
-      console.log(`✓ Sound effects generation completed: ${audioUrl}`);
-      return;
-    }
-    
-    if (taskId) {
-      await storage.updateGeneration(generationId, {
-        status: 'processing',
-        apiKeyUsed: keyName,
-        externalTaskId: taskId,
-        statusDetail: 'queued',
-      });
-      console.log(`📋 Sound effects generation task queued: ${taskId}`);
-      return;
-    }
-    
-    console.warn(`⚠️ Sound effects API response has no taskId or URL for ${generationId}`);
+    // Store taskId in externalTaskId field for webhook matching
     await storage.updateGeneration(generationId, {
       status: 'processing',
       apiKeyUsed: keyName,
-      statusDetail: 'awaiting_callback',
+      externalTaskId: taskId,
+      statusDetail: 'queued',
     });
+    
+    console.log(`📋 Sound effects generation task queued: ${taskId} (waiting for callback)`);
   } catch (error: any) {
     console.error('Background sound effects generation failed:', error);
     await storage.finalizeGeneration(generationId, 'failure', { 
@@ -1476,7 +1474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate Sound Effects
+  // Generate Sound Effects - ElevenLabs Sound Effect V2
   app.post('/api/generate/sound-effects', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1489,7 +1487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { description, duration, model, parameters } = validationResult.data;
+      const { model, text, loop, duration_seconds, prompt_influence, output_format } = validationResult.data;
       const cost = await getModelCost(model);
 
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -1501,13 +1499,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'sound-effects',
         model,
-        prompt: description,
-        parameters: { duration, ...parameters } || {},
+        prompt: text,
+        parameters: { loop, duration_seconds, prompt_influence, output_format },
         status: 'pending',
         creditsCost: cost,
       });
 
-      generateSoundEffectsInBackground(generation.id, description, duration, model, parameters || {});
+      generateSoundEffectsInBackground(generation.id, text, loop, duration_seconds, prompt_influence, output_format, model);
 
       res.json({ generationId: generation.id, message: "Sound effects generation started" });
     } catch (error: any) {

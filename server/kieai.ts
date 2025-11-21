@@ -765,20 +765,26 @@ export async function generateLyrics(params: {
   });
 }
 
-// Generate Sound Effects
+// Generate Sound Effects - ElevenLabs Sound Effect V2
+// Uses /api/v1/jobs/createTask with nested input object (Bytedance/Playground format)
 export async function generateSoundEffects(params: {
-  description: string;
-  duration: number;
-  model: string;
-  parameters: any;
+  text: string;
+  loop?: boolean;
+  duration_seconds?: number;
+  prompt_influence?: number;
+  output_format?: string;
+  callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
-  const parameters = params.parameters || {};
-  
-  return await callKieApi('/api/v1/sound-effects/generate', {
-    prompt: params.description,
-    duration: params.duration,
-    quality: parameters.quality || 'medium',
-    callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid',
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: 'elevenlabs/sound-effect-v2',
+    callBackUrl: params.callBackUrl,
+    input: {
+      text: params.text,
+      loop: params.loop,
+      duration_seconds: params.duration_seconds,
+      prompt_influence: params.prompt_influence,
+      output_format: params.output_format,
+    },
   });
 }
 
