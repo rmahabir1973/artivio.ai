@@ -23,6 +23,7 @@ interface TimelinePreviewProps {
 
 interface ClipMetadata {
   id: string;
+  url: string; // Cache by both ID and URL
   duration: number;
   loaded: boolean;
 }
@@ -35,9 +36,10 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
   const [totalDuration, setTotalDuration] = useState(0);
   const [clipMetadata, setClipMetadata] = useState<Map<string, ClipMetadata>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
+  const [metadataError, setMetadataError] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Load metadata for all clips with cancellation support
+  // Load metadata for all clips with cancellation support - keyed by both ID and URL
   useEffect(() => {
     if (clips.length === 0) {
       setIsLoading(false);
@@ -53,10 +55,14 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     abortControllerRef.current = abortController;
     
     setIsLoading(true);
+    setMetadataError(false);
     const metadata = new Map<string, ClipMetadata>();
 
     const loadClipMetadata = async () => {
       const promises = clips.map((clip) => {
+        // Create cache key from both ID and URL for better deduplication
+        const cacheKey = `${clip.id}-${clip.url}`;
+        
         return new Promise<void>((resolve) => {
           if (abortController.signal.aborted) {
             resolve();
@@ -71,10 +77,11 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
             video.load();
           };
 
-          video.onloadedmetadata = () => {
-            if (!abortController.signal.aborted) {
-              metadata.set(clip.id, {
+          const handleSuccess = () => {
+            if (!abortController.signal.aborted && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+              metadata.set(cacheKey, {
                 id: clip.id,
+                url: clip.url,
                 duration: video.duration,
                 loaded: true,
               });
@@ -83,18 +90,35 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
             resolve();
           };
 
-          video.onerror = () => {
+          const handleError = () => {
             if (!abortController.signal.aborted) {
-              // Fallback to provided duration or default to 10s
-              metadata.set(clip.id, {
-                id: clip.id,
-                duration: clip.duration || 10,
-                loaded: false,
-              });
+              // Try to use provided duration, but don't default to 10s
+              if (clip.duration && clip.duration > 0) {
+                metadata.set(cacheKey, {
+                  id: clip.id,
+                  url: clip.url,
+                  duration: clip.duration,
+                  loaded: false,
+                });
+              }
+              // If no metadata available at all, mark as error
+              if (!clip.duration) {
+                setMetadataError(true);
+              }
             }
             cleanup();
             resolve();
           };
+
+          video.onloadedmetadata = handleSuccess;
+          video.onerror = handleError;
+          
+          // Add timeout to prevent hanging
+          setTimeout(() => {
+            if (!metadata.has(cacheKey)) {
+              handleError();
+            }
+          }, 5000);
 
           video.src = clip.url;
         });
@@ -116,15 +140,32 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     };
   }, [clips]);
 
-  // Get clip duration from metadata or fallback
-  const getClipDuration = (clip: VideoClip): number => {
-    const meta = clipMetadata.get(clip.id);
-    return meta?.duration || clip.duration || 10;
+  // Get clip duration from metadata - no fallback to 10s
+  const getClipDuration = (clip: VideoClip): number | null => {
+    const cacheKey = `${clip.id}-${clip.url}`;
+    const meta = clipMetadata.get(cacheKey);
+    
+    if (meta?.duration) {
+      return meta.duration;
+    }
+    
+    // Return provided duration if available
+    if (clip.duration && clip.duration > 0) {
+      return clip.duration;
+    }
+    
+    // Return null if no duration available (will show error state)
+    return null;
   };
 
   // Get effective trim with proper defaults (handle endSeconds=0 case)
-  const getEffectiveTrim = (clip: VideoClip): { startSeconds: number; endSeconds: number } => {
+  const getEffectiveTrim = (clip: VideoClip): { startSeconds: number; endSeconds: number } | null => {
     const clipDuration = getClipDuration(clip);
+    
+    // Can't determine trim if duration is unknown
+    if (clipDuration === null) {
+      return null;
+    }
     
     if (!clip.trim) {
       return { startSeconds: 0, endSeconds: clipDuration };
@@ -135,23 +176,33 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     
     return {
       startSeconds: clip.trim.startSeconds || 0,
-      endSeconds: endSeconds,
+      endSeconds: Math.min(endSeconds, clipDuration), // Clamp to actual duration
     };
   };
 
   // Calculate total timeline duration accounting for trims and speed
   useEffect(() => {
-    if (clipMetadata.size === 0) return;
+    if (clipMetadata.size === 0 || isLoading) return;
 
-    const total = clips.reduce((sum, clip) => {
+    let total = 0;
+    let hasInvalidClip = false;
+
+    for (const clip of clips) {
       const trim = getEffectiveTrim(clip);
+      if (!trim) {
+        hasInvalidClip = true;
+        break;
+      }
+      
       const trimmedDuration = Math.max(0, trim.endSeconds - trim.startSeconds);
       const adjustedDuration = trimmedDuration / (clip.speedFactor || 1);
-      return sum + adjustedDuration;
-    }, 0);
+      total += adjustedDuration;
+    }
     
-    setTotalDuration(total);
-  }, [clips, clipMetadata]);
+    if (!hasInvalidClip) {
+      setTotalDuration(total);
+    }
+  }, [clips, clipMetadata, isLoading]);
 
   // Handle video playback
   const togglePlayPause = () => {
@@ -175,6 +226,8 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     for (let i = 0; i < clips.length; i++) {
       const clip = clips[i];
       const trim = getEffectiveTrim(clip);
+      if (!trim) continue;
+      
       const trimmedDuration = Math.max(0, trim.endSeconds - trim.startSeconds);
       const adjustedDuration = trimmedDuration / (clip.speedFactor || 1);
       
@@ -198,9 +251,23 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     }
   };
 
-  // Advance to next clip
+  // Advance to next clip with proper timeline synchronization
   const advanceToNextClip = () => {
     if (currentClipIndex < clips.length - 1) {
+      // Calculate accumulated time up to the new clip
+      let accumulatedTime = 0;
+      for (let i = 0; i <= currentClipIndex; i++) {
+        const clip = clips[i];
+        const trim = getEffectiveTrim(clip);
+        if (!trim) continue;
+        
+        const trimmedDuration = Math.max(0, trim.endSeconds - trim.startSeconds);
+        const adjustedDuration = trimmedDuration / (clip.speedFactor || 1);
+        accumulatedTime += adjustedDuration;
+      }
+      
+      // Set currentTime to the start of the next clip
+      setCurrentTime(accumulatedTime);
       setCurrentClipIndex(currentClipIndex + 1);
     } else {
       // End of timeline
@@ -222,6 +289,8 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
       if (!clip) return;
 
       const trim = getEffectiveTrim(clip);
+      if (!trim) return;
+      
       const videoTime = video.currentTime;
       
       // Check if we've reached the end of the trimmed section
@@ -235,6 +304,8 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
       for (let i = 0; i < currentClipIndex; i++) {
         const c = clips[i];
         const t = getEffectiveTrim(c);
+        if (!t) continue;
+        
         const trimmedDuration = Math.max(0, t.endSeconds - t.startSeconds);
         accumulatedTime += trimmedDuration / (c.speedFactor || 1);
       }
@@ -264,10 +335,11 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
 
     const clip = clips[currentClipIndex];
     const trim = getEffectiveTrim(clip);
+    if (!trim) return;
     
     video.src = clip.url;
     video.currentTime = trim.startSeconds;
-    video.playbackRate = clip.speedFactor || 1; // Set playback speed
+    video.playbackRate = clip.speedFactor || 1;
     
     if (isPlaying) {
       video.play().catch(console.error);
@@ -322,9 +394,45 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     );
   }
 
+  if (metadataError) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="text-lg">Timeline Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64 bg-muted rounded-md">
+            <div className="flex flex-col items-center gap-2 text-center p-4">
+              <p className="text-sm text-destructive font-medium">Unable to load video metadata</p>
+              <p className="text-xs text-muted-foreground">
+                Some videos could not be loaded. Please check that all video URLs are valid and accessible.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const currentClip = clips[currentClipIndex];
   const currentClipDuration = getClipDuration(currentClip);
   const currentClipTrim = getEffectiveTrim(currentClip);
+
+  // Don't render if we can't get duration for current clip
+  if (!currentClipDuration || !currentClipTrim) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="text-lg">Timeline Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64 bg-muted rounded-md">
+            <p className="text-muted-foreground">Loading clip information...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>
@@ -375,6 +483,18 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
             variant="outline"
             onClick={() => {
               if (currentClipIndex > 0) {
+                // Calculate accumulated time up to previous clip
+                let accumulatedTime = 0;
+                for (let i = 0; i < currentClipIndex - 1; i++) {
+                  const c = clips[i];
+                  const t = getEffectiveTrim(c);
+                  if (!t) continue;
+                  
+                  const trimmedDuration = Math.max(0, t.endSeconds - t.startSeconds);
+                  accumulatedTime += trimmedDuration / (c.speedFactor || 1);
+                }
+                
+                setCurrentTime(accumulatedTime);
                 setCurrentClipIndex(currentClipIndex - 1);
               }
             }}
@@ -395,11 +515,7 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
           <Button
             size="icon"
             variant="outline"
-            onClick={() => {
-              if (currentClipIndex < clips.length - 1) {
-                setCurrentClipIndex(currentClipIndex + 1);
-              }
-            }}
+            onClick={advanceToNextClip}
             disabled={currentClipIndex === clips.length - 1}
             data-testid="button-next-clip"
           >
