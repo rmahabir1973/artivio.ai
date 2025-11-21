@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, Video, Plus, X, ArrowUp, ArrowDown, Combine, Music, Type, Zap, Sparkles, Clock, Scissors } from "lucide-react";
+import { Loader2, Video, Plus, X, Combine, Music, Type, Zap, Sparkles, Clock, ArrowDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -16,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimelinePreview } from "@/components/TimelinePreview";
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { DraggableClip } from "@/components/DraggableTimeline";
 
 interface Generation {
   id: string;
@@ -223,19 +226,24 @@ export default function VideoEditor() {
     }
   };
 
-  const handleMoveUp = (index: number) => {
-    if (index > 0) {
-      const newOrder = [...selectedVideoIds];
-      [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
-      setSelectedVideoIds(newOrder);
-    }
-  };
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require dragging 8px before activating (prevents accidental drags)
+      },
+    })
+  );
 
-  const handleMoveDown = (index: number) => {
-    if (index < selectedVideoIds.length - 1) {
-      const newOrder = [...selectedVideoIds];
-      [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
-      setSelectedVideoIds(newOrder);
+  // Handle drag end to reorder clips
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = selectedVideoIds.indexOf(active.id as string);
+      const newIndex = selectedVideoIds.indexOf(over.id as string);
+
+      setSelectedVideoIds(arrayMove(selectedVideoIds, oldIndex, newIndex));
     }
   };
 
@@ -457,109 +465,53 @@ export default function VideoEditor() {
 
                 <Separator />
 
-                <div className="space-y-3">
-                  {selectedVideoIds.map((videoId, index) => {
-                    const video = getVideoById(videoId);
-                    if (!video) return null;
+                {/* Draggable Timeline */}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={selectedVideoIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2" data-testid="sortable-timeline">
+                      {selectedVideoIds.map((videoId, index) => {
+                        const video = getVideoById(videoId);
+                        if (!video) return null;
 
-                    const trim = enhancements.clipTrims?.[videoId] || { startSeconds: 0, endSeconds: 0 };
+                        // Clone trim object to prevent frozen state issues
+                        const trim = { ...(enhancements.clipTrims?.[videoId] ?? { startSeconds: 0, endSeconds: 0 }) };
 
-                    return (
-                      <div key={videoId} className="p-4 bg-muted rounded-lg space-y-3" data-testid={`row-selected-video-${index}`}>
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-col gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleMoveUp(index)}
-                              disabled={index === 0}
-                              data-testid={`button-move-up-${index}`}
-                              className="h-6 w-6"
-                            >
-                              <ArrowUp className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleMoveDown(index)}
-                              disabled={index === selectedVideoIds.length - 1}
-                              data-testid={`button-move-down-${index}`}
-                              className="h-6 w-6"
-                            >
-                              <ArrowDown className="w-3 h-3" />
-                            </Button>
-                          </div>
-
-                          <Badge variant="outline" data-testid={`badge-position-${index + 1}`}>#{index + 1}</Badge>
-
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{video.model}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-1">{video.prompt}</p>
-                          </div>
-
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleRemoveFromSelection(videoId)}
-                            data-testid={`button-remove-${index}`}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        {/* Trim Controls */}
-                        <div className="pl-12 space-y-2 p-3 bg-background rounded">
-                          <div className="flex items-center gap-2">
-                            <Scissors className="w-4 h-4 text-muted-foreground" />
-                            <Label className="text-xs font-semibold">Trim Duration</Label>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label className="text-xs">Start (s)</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.1"
-                                value={trim.startSeconds}
-                                onChange={(e) => {
-                                  setEnhancements(prev => ({
-                                    ...prev,
-                                    clipTrims: {
-                                      ...prev.clipTrims,
-                                      [videoId]: { ...trim, startSeconds: parseFloat(e.target.value) || 0 }
-                                    }
-                                  }));
-                                }}
-                                data-testid={`input-trim-start-${index}`}
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-xs">End (s)</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.1"
-                                value={trim.endSeconds}
-                                onChange={(e) => {
-                                  setEnhancements(prev => ({
-                                    ...prev,
-                                    clipTrims: {
-                                      ...prev.clipTrims,
-                                      [videoId]: { ...trim, endSeconds: parseFloat(e.target.value) || 0 }
-                                    }
-                                  }));
-                                }}
-                                data-testid={`input-trim-end-${index}`}
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        return (
+                          <DraggableClip
+                            key={videoId}
+                            id={videoId}
+                            index={index}
+                            video={{
+                              id: video.id,
+                              model: video.model,
+                              prompt: video.prompt,
+                              resultUrl: video.resultUrl || '',
+                              thumbnailUrl: video.thumbnailUrl,
+                            }}
+                            trim={trim}
+                            onRemove={() => handleRemoveFromSelection(videoId)}
+                            onTrimChange={(newTrim) => {
+                              setEnhancements(prev => ({
+                                ...prev,
+                                clipTrims: {
+                                  ...(prev.clipTrims ?? {}),
+                                  [videoId]: newTrim
+                                }
+                              }));
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
 
                 <Separator />
 
