@@ -4,11 +4,20 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
+// Custom user type for JWT
+export interface JWTUser {
+  id: string;
+  userId: string;
+  email: string;
+  tokenVersion: number;
+  isAdmin?: boolean;
+}
+
 // Extend Express Request to include user from JWT
 declare global {
   namespace Express {
     interface Request {
-      user?: JWTPayload & { id: string };
+      user?: JWTUser;
       isAuthenticated?: () => boolean;
     }
   }
@@ -67,20 +76,21 @@ export async function requireJWT(
     }
 
     // Attach user to request
-    req.user = {
+    const jwtUser: JWTUser = {
       id: decoded.userId,
       userId: decoded.userId,
       email: decoded.email,
       tokenVersion: decoded.tokenVersion,
       isAdmin: decoded.isAdmin,
     };
+    req.user = jwtUser;
 
     // Add isAuthenticated method for backward compatibility
     req.isAuthenticated = () => true;
 
     console.log("[JWT MIDDLEWARE] ✓ Token verified", {
-      userId: req.user.id,
-      email: req.user.email,
+      userId: jwtUser.id,
+      email: jwtUser.email,
     });
 
     next();
@@ -121,7 +131,7 @@ export async function optionalJWT(
       return next();
     }
 
-    // Verify user exists
+    // Verify user exists  
     const [user] = await db
       .select()
       .from(users)
@@ -129,13 +139,14 @@ export async function optionalJWT(
       .limit(1);
 
     if (user && user.tokenVersion === decoded.tokenVersion) {
-      req.user = {
+      const jwtUser: JWTUser = {
         id: decoded.userId,
         userId: decoded.userId,
         email: decoded.email,
         tokenVersion: decoded.tokenVersion,
         isAdmin: decoded.isAdmin,
       };
+      req.user = jwtUser;
       req.isAuthenticated = () => true;
     } else {
       req.isAuthenticated = () => false;
