@@ -515,9 +515,10 @@ export default function GenerateImage() {
       }
       preview={
         <PreviewPanel
-          status="idle"
+          status={generateMutation.isPending ? "generating" : generateMutation.isSuccess ? "completed" : "idle"}
           title="Image Preview"
           description="Your generated image will appear here"
+          resultType="image"
         />
       }
     />

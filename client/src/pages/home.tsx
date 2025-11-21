@@ -259,6 +259,31 @@ export default function Home() {
       icon: History,
       route: '/history',
       category: 'tools'
+    },
+    {
+      id: 'workflows',
+      title: 'Workflows',
+      description: 'Explore pre-built workflow templates to automate your content creation',
+      icon: Zap,
+      route: '/workflows',
+      category: 'community',
+      badge: 'Community'
+    },
+    {
+      id: 'referrals',
+      title: 'Referral Program',
+      description: 'Earn 30% recurring commission by referring friends and grow your income',
+      icon: Gift,
+      route: '/referrals',
+      category: 'community'
+    },
+    {
+      id: 'leaderboard',
+      title: 'Leaderboard',
+      description: 'See top creators and community members on our leaderboard',
+      icon: TrendingUp,
+      route: '/leaderboard',
+      category: 'community'
     }
   ];
 
@@ -268,7 +293,8 @@ export default function Home() {
     { id: 'image', label: 'Image', icon: ImageIcon },
     { id: 'audio', label: 'Audio', icon: Music },
     { id: 'ai', label: 'AI Tools', icon: Zap },
-    { id: 'tools', label: 'Utilities', icon: TrendingUp }
+    { id: 'tools', label: 'Utilities', icon: TrendingUp },
+    { id: 'community', label: 'Community', icon: Users }
   ];
 
   const filteredFeatures = features.filter(feature => {

@@ -321,13 +321,13 @@ export default function Chat() {
         </SheetContent>
       </Sheet>
 
-      {/* Desktop Conversations Sidebar */}
-      <div className="hidden lg:flex lg:w-80 border-r bg-card flex-col">
+      {/* Desktop Conversations Sidebar - Sticky */}
+      <div className="hidden lg:flex lg:w-80 border-r bg-card flex-col sticky top-0 h-screen overflow-hidden">
         <ConversationsList />
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
