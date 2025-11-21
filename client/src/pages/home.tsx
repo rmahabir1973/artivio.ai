@@ -307,21 +307,22 @@ export default function Home() {
 
   const featuredFeatures = features.filter(f => f.featured);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center space-y-4">
-          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading...</p>
+  // Guard: Wait for auth to complete AND user data to load
+  if (isLoading || !isAuthenticated || !user) {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center space-y-4">
+            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
+      );
+    }
     return null;
   }
 
+  // Safe: user is guaranteed to be non-null here
   const userCredits = (user as any)?.credits ?? 0;
   const userFirstName = (user as any)?.firstName ?? 'Creator';
 
