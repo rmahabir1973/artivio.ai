@@ -327,25 +327,25 @@ export default function Home() {
   const userFirstName = (user as any)?.firstName ?? 'Creator';
 
   return (
-    <SidebarInset>
-      <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
+    <SidebarInset className="overflow-x-hidden">
+      <div className="flex flex-col min-h-screen w-full">
         {/* Hero Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-purple-500/10 border-b">
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-purple-500/10 border-b w-full">
         <div className="absolute inset-0 bg-grid-white/5 bg-[size:20px_20px]" style={{ maskImage: 'linear-gradient(to bottom, transparent, black, transparent)' }} />
-        <div className="relative max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="relative max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center space-y-4 sm:space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Welcome back, {userFirstName}</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight break-words px-2">
               <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
                 Create Anything
               </span>
               <br />
               <span className="text-foreground">with AI Power</span>
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
               12+ powerful AI tools at your fingertips. Generate videos, images, music, voices, and more.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
@@ -374,7 +374,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
         {/* Affiliate Promotion Cards */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Main Affiliate CTA Card */}
@@ -391,24 +391,25 @@ export default function Home() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground break-words">
                 Share Artivio AI with your audience and earn <span className="font-bold text-foreground">30% recurring commission</span> for every paying customer. Average affiliates earn $500-$2,000/month!
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
                   asChild 
                   size="lg"
-                  className="flex-1"
+                  className="flex-1 whitespace-nowrap"
                   data-testid="button-join-affiliate-dashboard"
                 >
                   <a 
                     href="https://artivio-ai.getrewardful.com/signup?campaign=artivio-affiliate-team&code=F4Ng9WuVZ9mhUHVjYMpAxkqM" 
                     target="_blank" 
                     rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center"
                   >
-                    <Gift className="mr-2 h-5 w-5" />
-                    Join Program Free
-                    <ExternalLink className="ml-2 h-4 w-4" />
+                    <Gift className="mr-2 h-5 w-5 shrink-0" />
+                    <span className="truncate">Join Program Free</span>
+                    <ExternalLink className="ml-2 h-4 w-4 shrink-0" />
                   </a>
                 </Button>
                 <Button 
@@ -534,7 +535,7 @@ export default function Home() {
           </div>
 
           {/* Category Tabs - Scrollable on mobile */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {categories.map((cat) => (
               <Button
                 key={cat.id}
