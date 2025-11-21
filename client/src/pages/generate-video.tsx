@@ -192,6 +192,10 @@ export default function GenerateVideo() {
   // Poll for generation result when generationId is set
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
+    queryFn: async () => {
+      if (!generationId) return null;
+      return await apiRequest("GET", `/api/generations/${generationId}`);
+    },
     enabled: !!generationId && isGenerating,
     refetchInterval: 2000, // Poll every 2 seconds while generating
     refetchOnWindowFocus: false,
@@ -207,7 +211,9 @@ export default function GenerateVideo() {
         description: "Your video is ready to view and download.",
       });
     } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+      setGeneratedVideo(pollData);
       setIsGenerating(false);
+      setGenerationId(null); // Stop polling
       toast({
         title: "Generation Failed",
         description: pollData?.errorMessage || "Failed to generate video",

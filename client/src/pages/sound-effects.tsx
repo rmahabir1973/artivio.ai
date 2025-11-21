@@ -66,6 +66,10 @@ export default function SoundEffects() {
   // Poll for generation result when generationId is set
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
+    queryFn: async () => {
+      if (!generationId) return null;
+      return await apiRequest("GET", `/api/generations/${generationId}`);
+    },
     enabled: !!generationId && isGenerating,
     refetchInterval: 2000, // Poll every 2 seconds while generating
     refetchOnWindowFocus: false,
@@ -76,8 +80,14 @@ export default function SoundEffects() {
     if (pollData?.resultUrl) {
       setGeneratedAudio(pollData);
       setIsGenerating(false);
+      toast({
+        title: "Sound Effect Generated!",
+        description: "Your sound effect is ready to play and download.",
+      });
     } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+      setGeneratedAudio(pollData);
       setIsGenerating(false);
+      setGenerationId(null); // Stop polling
       toast({
         title: "Generation Failed",
         description: pollData?.errorMessage || "Failed to generate sound effect",
