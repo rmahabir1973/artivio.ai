@@ -135,6 +135,38 @@ async function getVideoMetadata(filepath: string): Promise<VideoMetadata> {
 }
 
 /**
+ * Get audio file duration in seconds
+ */
+async function getAudioDuration(filepath: string): Promise<number> {
+  try {
+    const stats = await fs.stat(filepath);
+    if (stats.size === 0) {
+      throw new Error('Audio file is empty');
+    }
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      throw new Error(`Audio file not found`);
+    }
+    throw new Error(`Cannot access audio file: ${error.message}`);
+  }
+
+  const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filepath}"`;
+  
+  try {
+    const { stdout } = await execAsync(command, { timeout: 10000 });
+    const duration = parseFloat(stdout.trim());
+    
+    if (isNaN(duration) || duration <= 0) {
+      throw new Error('Invalid audio duration');
+    }
+    
+    return duration;
+  } catch (error: any) {
+    throw new Error(`Failed to read audio duration: ${error.message}`);
+  }
+}
+
+/**
  * Normalize video to standard format (MP4 with H.264 + AAC)
  */
 async function normalizeVideo(inputPath: string, outputPath: string): Promise<void> {
@@ -455,17 +487,44 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       let finalAudioLabel = '[aout]';
       
       if (musicPath && enhancements?.backgroundMusic) {
+        // Get actual music duration using ffprobe
+        const musicDuration = await getAudioDuration(musicPath);
+        
         const volume = enhancements.backgroundMusic.volume || 0.3;
         const fadeIn = enhancements.backgroundMusic.fadeInSeconds || 0;
         const fadeOut = enhancements.backgroundMusic.fadeOutSeconds || 0;
+        const trimStart = Math.max(0, enhancements.backgroundMusic.trimStartSeconds || 0);
+        const trimEnd = enhancements.backgroundMusic.trimEndSeconds || 0;
         const musicStreamIdx = normalizedPaths.length;
 
-        let musicFilter = `[${musicStreamIdx}:a]atrim=0:${totalDuration},asetpts=PTS-STARTPTS,volume=${volume}`;
+        // Clamp trimStart to music duration
+        const safeTrimStart = Math.min(trimStart, Math.max(0, musicDuration - 0.1));
+        
+        // Build atrim filter and calculate effective duration
+        let musicFilter: string;
+        let effectiveDuration: number;
+        
+        if (trimEnd > 0) {
+          // User specified trim end - clamp to actual music duration
+          const safeTrimEnd = Math.min(trimEnd, musicDuration);
+          const actualTrimEnd = Math.max(safeTrimStart + 0.1, safeTrimEnd);
+          effectiveDuration = actualTrimEnd - safeTrimStart;
+          musicFilter = `[${musicStreamIdx}:a]atrim=${safeTrimStart}:${actualTrimEnd},asetpts=PTS-STARTPTS,volume=${volume}`;
+        } else {
+          // Auto mode - use full audio from trimStart to end
+          effectiveDuration = Math.max(0.1, musicDuration - safeTrimStart);
+          musicFilter = `[${musicStreamIdx}:a]atrim=start=${safeTrimStart},asetpts=PTS-STARTPTS,volume=${volume}`;
+        }
+        
+        // Apply fades within the effective duration
         if (fadeIn > 0) {
-          musicFilter += `,afade=t=in:st=0:d=${fadeIn}`;
+          const effectiveFadeIn = Math.min(fadeIn, effectiveDuration / 2);
+          musicFilter += `,afade=t=in:st=0:d=${effectiveFadeIn}`;
         }
         if (fadeOut > 0) {
-          musicFilter += `,afade=t=out:st=${totalDuration - fadeOut}:d=${fadeOut}`;
+          const effectiveFadeOut = Math.min(fadeOut, effectiveDuration / 2);
+          const fadeOutStart = Math.max(0, effectiveDuration - effectiveFadeOut);
+          musicFilter += `,afade=t=out:st=${fadeOutStart}:d=${effectiveFadeOut}`;
         }
         musicFilter += `[music]`;
 

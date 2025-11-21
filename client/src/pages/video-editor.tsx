@@ -77,6 +77,8 @@ interface BackgroundMusic {
   volume?: number;
   fadeInSeconds?: number;
   fadeOutSeconds?: number;
+  trimStartSeconds?: number;
+  trimEndSeconds?: number;
 }
 
 interface Enhancements {
@@ -134,6 +136,42 @@ export default function VideoEditor() {
   const availableMusicTracks = generations.filter(
     g => g.type === 'music' && g.status === 'completed' && g.resultUrl
   );
+
+  // Initialize backgroundMusic when Suno track is selected
+  useEffect(() => {
+    if (selectedSunoTrack) {
+      const sunoTrack = availableMusicTracks.find(t => t.id === selectedSunoTrack);
+      if (sunoTrack?.resultUrl) {
+        setEnhancements(prev => {
+          // Only update if audioUrl has changed to prevent infinite loop
+          if (prev.backgroundMusic?.audioUrl === sunoTrack.resultUrl) {
+            return prev;
+          }
+          return {
+            ...prev,
+            backgroundMusic: {
+              audioUrl: sunoTrack.resultUrl,
+              volume: prev.backgroundMusic?.volume ?? 0.3,
+              fadeInSeconds: prev.backgroundMusic?.fadeInSeconds ?? 0,
+              fadeOutSeconds: prev.backgroundMusic?.fadeOutSeconds ?? 0,
+              trimStartSeconds: prev.backgroundMusic?.trimStartSeconds ?? 0,
+              trimEndSeconds: prev.backgroundMusic?.trimEndSeconds ?? 0,
+            }
+          };
+        });
+      }
+    } else {
+      // Clear backgroundMusic when no track is selected
+      setEnhancements(prev => {
+        // Only update if backgroundMusic exists to prevent infinite loop
+        if (!prev.backgroundMusic) {
+          return prev;
+        }
+        const { backgroundMusic, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [selectedSunoTrack, availableMusicTracks]);
 
   // Combine videos mutation
   const combineMutation = useMutation({
@@ -296,7 +334,11 @@ export default function VideoEditor() {
       if (sunoTrack?.resultUrl) {
         enhancementsData.backgroundMusic = {
           audioUrl: sunoTrack.resultUrl,
-          volume: 0.3
+          volume: enhancements.backgroundMusic?.volume ?? 0.3,
+          fadeInSeconds: enhancements.backgroundMusic?.fadeInSeconds ?? 0,
+          fadeOutSeconds: enhancements.backgroundMusic?.fadeOutSeconds ?? 0,
+          trimStartSeconds: enhancements.backgroundMusic?.trimStartSeconds ?? 0,
+          trimEndSeconds: enhancements.backgroundMusic?.trimEndSeconds ?? 0,
         };
       }
     }
@@ -605,7 +647,7 @@ export default function VideoEditor() {
                       {availableMusicTracks.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No Suno tracks generated yet. Create some music first!</p>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <Select value={selectedSunoTrack || ''} onValueChange={(v) => setSelectedSunoTrack(v || null)}>
                             <SelectTrigger data-testid="select-suno-track">
                               <SelectValue placeholder="Select a music track" />
@@ -618,13 +660,132 @@ export default function VideoEditor() {
                               ))}
                             </SelectContent>
                           </Select>
-                          {selectedSunoTrack && (
-                            <div className="p-3 bg-muted rounded">
-                              <audio controls className="w-full h-8">
-                                <source src={availableMusicTracks.find(t => t.id === selectedSunoTrack)?.resultUrl} />
-                              </audio>
+                          {selectedSunoTrack && (() => {
+                            const currentTrack = availableMusicTracks.find(t => t.id === selectedSunoTrack);
+                            const trackAudioUrl = currentTrack?.resultUrl || '';
+                            
+                            return (
+                              <div className="space-y-3 p-3 bg-muted rounded-md">
+                                <audio controls className="w-full h-8">
+                                  <source src={trackAudioUrl} />
+                                </audio>
+                                
+                                {/* Audio Trim Controls */}
+                                <div className="space-y-2 pt-2 border-t">
+                                  <Label className="text-sm font-medium">Audio Trim</Label>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs text-muted-foreground">Start (s)</Label>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        value={enhancements.backgroundMusic?.trimStartSeconds ?? 0}
+                                        onChange={(e) => {
+                                          setEnhancements(prev => ({
+                                            ...prev,
+                                            backgroundMusic: {
+                                              ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
+                                              trimStartSeconds: parseFloat(e.target.value) || 0
+                                            }
+                                          }));
+                                        }}
+                                      className="h-8 text-sm"
+                                      data-testid="input-audio-trim-start"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">End (s)</Label>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="0.1"
+                                      value={enhancements.backgroundMusic?.trimEndSeconds ?? 0}
+                                      onChange={(e) => {
+                                        setEnhancements(prev => ({
+                                          ...prev,
+                                          backgroundMusic: {
+                                            ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
+                                            trimEndSeconds: parseFloat(e.target.value) || 0
+                                          }
+                                        }));
+                                      }}
+                                      className="h-8 text-sm"
+                                      placeholder="Auto"
+                                      data-testid="input-audio-trim-end"
+                                    />
+                                  </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Leave end time at 0 to use full track duration
+                                </p>
+                              </div>
+
+                              {/* Volume Control */}
+                              <div className="space-y-2">
+                                <Label className="text-sm">Volume: {((enhancements.backgroundMusic?.volume ?? 0.3) * 100).toFixed(0)}%</Label>
+                                <Slider
+                                  value={[(enhancements.backgroundMusic?.volume ?? 0.3) * 100]}
+                                  onValueChange={([value]) => {
+                                    setEnhancements(prev => ({
+                                      ...prev,
+                                      backgroundMusic: {
+                                        ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
+                                        volume: value / 100
+                                      }
+                                    }));
+                                  }}
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  data-testid="slider-music-volume"
+                                />
+                              </div>
+
+                              {/* Fade Controls */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                  <Label className="text-sm">Fade In: {enhancements.backgroundMusic?.fadeInSeconds ?? 0}s</Label>
+                                  <Slider
+                                    value={[enhancements.backgroundMusic?.fadeInSeconds ?? 0]}
+                                    onValueChange={([value]) => {
+                                      setEnhancements(prev => ({
+                                        ...prev,
+                                        backgroundMusic: {
+                                          ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
+                                          fadeInSeconds: value
+                                        }
+                                      }));
+                                    }}
+                                    min={0}
+                                    max={5}
+                                    step={0.1}
+                                    data-testid="slider-fade-in"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-sm">Fade Out: {enhancements.backgroundMusic?.fadeOutSeconds ?? 0}s</Label>
+                                  <Slider
+                                    value={[enhancements.backgroundMusic?.fadeOutSeconds ?? 0]}
+                                    onValueChange={([value]) => {
+                                      setEnhancements(prev => ({
+                                        ...prev,
+                                        backgroundMusic: {
+                                          ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
+                                          fadeOutSeconds: value
+                                        }
+                                      }));
+                                    }}
+                                    min={0}
+                                    max={5}
+                                    step={0.1}
+                                    data-testid="slider-fade-out"
+                                  />
+                                </div>
+                              </div>
                             </div>
-                          )}
+                          );
+                          })()}
                         </div>
                       )}
                     </TabsContent>
