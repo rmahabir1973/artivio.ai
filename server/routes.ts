@@ -839,6 +839,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.warn('Warning: Failed to initialize subscription plans:', error);
   }
 
+  // Initialize pricing data
+  try {
+    const { seedPricing } = await import('./seedPricing');
+    await seedPricing();
+  } catch (error) {
+    console.warn('Warning: Failed to initialize pricing data:', error);
+  }
+
   // Hardcoded admin emails for access control
   const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai', 'joe@joecodeswell.com', 'jordanlambrecht@gmail.com', 'admin@example.com'];
   
