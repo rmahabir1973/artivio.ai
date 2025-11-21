@@ -3,6 +3,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { GenerationCard } from "@/components/generation-card";
@@ -76,16 +77,17 @@ export default function History() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <div className="space-y-2 mb-8">
-        <h1 className="text-4xl font-bold flex items-center gap-3">
-          <HistoryIcon className="h-10 w-10 text-primary" />
-          Generation History
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          View and manage all your AI generations
-        </p>
-      </div>
+    <SidebarInset>
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="space-y-2 mb-8">
+          <h1 className="text-4xl font-bold flex items-center gap-3">
+            <HistoryIcon className="h-10 w-10 text-primary" />
+            Generation History
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            View and manage all your AI generations
+          </p>
+        </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-8">
@@ -149,6 +151,7 @@ export default function History() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </SidebarInset>
   );
 }
