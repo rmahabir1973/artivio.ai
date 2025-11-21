@@ -42,7 +42,7 @@ interface FeatureCard {
   description: string;
   icon: any;
   route: string;
-  category: 'video' | 'image' | 'audio' | 'ai' | 'tools';
+  category: 'video' | 'image' | 'audio' | 'ai' | 'tools' | 'community';
   featured?: boolean;
   badge?: string;
   modelCost?: string;
