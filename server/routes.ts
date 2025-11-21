@@ -1714,7 +1714,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(generations);
       }
     } catch (error) {
-      console.error('Error fetching generations:', error);
+      console.error('[/api/generations] ERROR:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: req.user?.id,
+      });
       res.status(500).json({ message: "Failed to fetch generations" });
     }
     

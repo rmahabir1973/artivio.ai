@@ -5,10 +5,13 @@ import { refreshTokens, users } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
 
 // JWT Configuration
-const ACCESS_TOKEN_SECRET = process.env.JWT_SECRET || "fallback-secret-change-in-production";
-const REFRESH_TOKEN_SECRET = process.env.JWT_SECRET + "-refresh" || "fallback-refresh-secret";
+const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-change-in-production";
+const ACCESS_TOKEN_SECRET = JWT_SECRET;
+const REFRESH_TOKEN_SECRET = JWT_SECRET + "-refresh";
 const ACCESS_TOKEN_EXPIRY = "10m"; // 10 minutes
 const REFRESH_TOKEN_EXPIRY_DAYS = 30; // 30 days
+
+console.log("[JWT CONFIG] JWT_SECRET initialized:", JWT_SECRET === "fallback-secret-change-in-production" ? "USING FALLBACK" : "Using env JWT_SECRET");
 
 // JWT Payload Interface
 export interface JWTPayload {

@@ -1,0 +1,118 @@
+[AUTH BRIDGE] Initializing auth bridge before React render
+index-CXx4CVtb.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-CXx4CVtb.js:653 [AUTH] Initializing auth - attempting to refresh token
+/api/auth/refresh:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+index-CXx4CVtb.js:653 [AUTH] Token refresh failed: 401
+index-CXx4CVtb.js:653 [AUTH] No valid refresh token - user not authenticated
+index-CXx4CVtb.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+/api/generations:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-CXx4CVtb.js:48  GET https://artivio.ai/api/generations?cursor= 500 (Internal Server Error)
+jf @ index-CXx4CVtb.js:48
+await in jf
+Vv @ index-CXx4CVtb.js:48
+queryFn @ index-CXx4CVtb.js:939
+x @ index-CXx4CVtb.js:48
+u @ index-CXx4CVtb.js:48
+v @ index-CXx4CVtb.js:48
+start @ index-CXx4CVtb.js:48
+fetch @ index-CXx4CVtb.js:48
+Pd @ index-CXx4CVtb.js:48
+onSubscribe @ index-CXx4CVtb.js:48
+subscribe @ index-CXx4CVtb.js:48
+(anonymous) @ index-CXx4CVtb.js:48
+J4 @ index-CXx4CVtb.js:38
+$v @ index-CXx4CVtb.js:40
+fc @ index-CXx4CVtb.js:40
+hU @ index-CXx4CVtb.js:40
+So @ index-CXx4CVtb.js:40
+$A @ index-CXx4CVtb.js:40
+oo @ index-CXx4CVtb.js:38
+(anonymous) @ index-CXx4CVtb.js:40Understand this error
+index-CXx4CVtb.js:48 Fetch failed loading: GET "https://artivio.ai/api/generations?cursor=".
+jf @ index-CXx4CVtb.js:48
+await in jf
+Vv @ index-CXx4CVtb.js:48
+queryFn @ index-CXx4CVtb.js:939
+x @ index-CXx4CVtb.js:48
+u @ index-CXx4CVtb.js:48
+v @ index-CXx4CVtb.js:48
+start @ index-CXx4CVtb.js:48
+fetch @ index-CXx4CVtb.js:48
+Pd @ index-CXx4CVtb.js:48
+onSubscribe @ index-CXx4CVtb.js:48
+subscribe @ index-CXx4CVtb.js:48
+(anonymous) @ index-CXx4CVtb.js:48
+J4 @ index-CXx4CVtb.js:38
+$v @ index-CXx4CVtb.js:40
+fc @ index-CXx4CVtb.js:40
+hU @ index-CXx4CVtb.js:40
+So @ index-CXx4CVtb.js:40
+$A @ index-CXx4CVtb.js:40
+oo @ index-CXx4CVtb.js:38
+(anonymous) @ index-CXx4CVtb.js:40
+index-CXx4CVtb.js:48  GET https://artivio.ai/api/generations?cursor= 500 (Internal Server Error)
+jf @ index-CXx4CVtb.js:48
+await in jf
+Vv @ index-CXx4CVtb.js:48
+queryFn @ index-CXx4CVtb.js:939
+x @ index-CXx4CVtb.js:48
+u @ index-CXx4CVtb.js:48
+v @ index-CXx4CVtb.js:48
+start @ index-CXx4CVtb.js:48
+fetch @ index-CXx4CVtb.js:48
+Pd @ index-CXx4CVtb.js:48
+onSubscribe @ index-CXx4CVtb.js:48
+subscribe @ index-CXx4CVtb.js:48
+(anonymous) @ index-CXx4CVtb.js:48
+J4 @ index-CXx4CVtb.js:38
+$v @ index-CXx4CVtb.js:40
+fc @ index-CXx4CVtb.js:40
+hU @ index-CXx4CVtb.js:40
+So @ index-CXx4CVtb.js:40
+$A @ index-CXx4CVtb.js:40
+oo @ index-CXx4CVtb.js:38
+(anonymous) @ index-CXx4CVtb.js:40Understand this error
+index-CXx4CVtb.js:48 Fetch failed loading: GET "https://artivio.ai/api/generations?cursor=".
+jf @ index-CXx4CVtb.js:48
+await in jf
+Vv @ index-CXx4CVtb.js:48
+queryFn @ index-CXx4CVtb.js:939
+x @ index-CXx4CVtb.js:48
+u @ index-CXx4CVtb.js:48
+v @ index-CXx4CVtb.js:48
+start @ index-CXx4CVtb.js:48
+fetch @ index-CXx4CVtb.js:48
+Pd @ index-CXx4CVtb.js:48
+onSubscribe @ index-CXx4CVtb.js:48
+subscribe @ index-CXx4CVtb.js:48
+(anonymous) @ index-CXx4CVtb.js:48
+J4 @ index-CXx4CVtb.js:38
+$v @ index-CXx4CVtb.js:40
+fc @ index-CXx4CVtb.js:40
+hU @ index-CXx4CVtb.js:40
+So @ index-CXx4CVtb.js:40
+$A @ index-CXx4CVtb.js:40
+oo @ index-CXx4CVtb.js:38
+(anonymous) @ index-CXx4CVtb.js:40
+index-CXx4CVtb.js:48  GET https://artivio.ai/api/generations 500 (Internal Server Error)
+jf @ index-CXx4CVtb.js:48
+await in jf
+Vv @ index-CXx4CVtb.js:48
+(anonymous) @ index-CXx4CVtb.js:48
+s @ index-CXx4CVtb.js:48
+v @ index-CXx4CVtb.js:48
+start @ index-CXx4CVtb.js:48
+fetch @ index-CXx4CVtb.js:48
+Pd @ index-CXx4CVtb.js:48
+onSubscribe @ index-CXx4CVtb.js:48
+subscribe @ index-CXx4CVtb.js:48
+(anonymous) @ index-CXx4CVtb.js:48
+J4 @ index-CXx4CVtb.js:38
+$v @ index-CXx4CVtb.js:40
+fc @ index-CXx4CVtb.js:40
+hU @ index-CXx4CVtb.js:40
+So @ index-CXx4CVtb.js:40
+$A @ index-CXx4CVtb.js:40
+oo @ index-CXx4CVtb.js:38
+(anonymous) @ index-CXx4CVtb.js:40Understand this error
+index-CXx4CVtb.js:48 Fetch failed loading: GET "https://artivio.ai/api/generations".
