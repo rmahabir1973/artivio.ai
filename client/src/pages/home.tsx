@@ -297,7 +297,7 @@ export default function Home() {
 
   return (
     <SidebarInset>
-      <div className="h-full overflow-y-auto">
+      <div className="flex-1 overflow-auto">
         {/* Hero Section */}
         <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-purple-500/10 border-b">
         <div className="absolute inset-0 bg-grid-white/5 bg-[size:20px_20px]" style={{ maskImage: 'linear-gradient(to bottom, transparent, black, transparent)' }} />
@@ -345,7 +345,7 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Affiliate Promotion Cards */}
-        <div className="mb-8 grid md:grid-cols-2 gap-6">
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Main Affiliate CTA Card */}
           <Card className="hover-elevate border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-purple-500/5">
             <CardHeader>
