@@ -309,6 +309,79 @@ async function generateImageInBackground(
   }
 }
 
+async function generateTTSInBackground(
+  generationId: string,
+  text: string,
+  voiceId: string,
+  voiceName?: string,
+  model?: string,
+  parameters?: any
+) {
+  try {
+    await storage.updateGeneration(generationId, { status: 'processing' });
+    
+    const callbackUrl = getCallbackUrl(generationId);
+    console.log(`📞 Sending callback URL to Kie.ai for TTS ${generationId}: ${callbackUrl}`);
+    
+    const { result, keyName } = await generateTTS({
+      text,
+      voiceId,
+      voiceName,
+      model,
+      parameters,
+      callBackUrl: callbackUrl
+    });
+    
+    // ElevenLabs TTS uses same format as Sound Effects: result.data.taskId
+    const taskId = result?.data?.taskId;
+    if (!taskId) {
+      // If we got direct URL (older API format), use it
+      const resultUrl = result?.url || result?.audioUrl || result?.data?.url || 
+                       (result?.data?.data && Array.isArray(result.data.data) && result.data.data[0]?.audioUrl) ||
+                       result?.data?.data?.audioUrl;
+      if (resultUrl) {
+        await storage.finalizeGeneration(generationId, 'success', {
+          resultUrl,
+          apiKeyUsed: keyName,
+          statusDetail: 'completed',
+        });
+        console.log(`✓ TTS generation completed immediately: ${resultUrl}`);
+        return;
+      }
+      throw new Error('API response missing taskId or audio URL');
+    }
+    
+    // Store taskId in externalTaskId field for webhook matching
+    await storage.updateGeneration(generationId, {
+      status: 'processing',
+      apiKeyUsed: keyName,
+      externalTaskId: taskId,
+      statusDetail: 'queued',
+    });
+    
+    console.log(`📋 TTS generation task queued: ${taskId} (waiting for callback)`);
+  } catch (error: any) {
+    console.error(`❌ TTS generation failed for ${generationId}:`, error);
+    
+    // Get generation to retrieve creditsCost for refund
+    const generation = await storage.getGeneration(generationId);
+    if (generation && generation.creditsCost) {
+      // Refund credits atomically
+      const userId = generation.userId;
+      const currentUser = await storage.getUser(userId);
+      if (currentUser) {
+        await storage.updateUserCredits(userId, currentUser.credits + generation.creditsCost);
+        console.log(`💰 Refunded ${generation.creditsCost} credits to user ${userId} for failed TTS generation`);
+      }
+    }
+    
+    await storage.finalizeGeneration(generationId, 'failure', {
+      statusDetail: 'api_error',
+      errorMessage: error.message || 'TTS generation failed'
+    });
+  }
+}
+
 async function generateSoundEffectsInBackground(
   generationId: string, 
   text: string, 
@@ -926,12 +999,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Suno, others
+      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Suno, ElevenLabs, others
       const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string
                        callbackData.data?.video_url ||    // Runway uses snake_case
                        (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) || // Veo nested
                        callbackData.data?.videoUrl ||     // Other models camelCase
                        sunoAudioUrl ||                    // Suno audio
+                       (callbackData.data?.data && Array.isArray(callbackData.data.data) && callbackData.data.data[0]?.audioUrl) || // ElevenLabs TTS/Sound Effects array format
+                       callbackData.data?.data?.audioUrl || // ElevenLabs TTS/Sound Effects object format
+                       (callbackData.data?.data && Array.isArray(callbackData.data.data) && callbackData.data.data[0]?.audio_url) || // ElevenLabs snake_case
+                       callbackData.data?.data?.audio_url || // ElevenLabs snake_case object
+                       callbackData.data?.output_url ||   // ElevenLabs output format
                        (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) ||
                        (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) ||
                        (callbackData.data?.result_urls && callbackData.data.result_urls[0]) ||
@@ -2548,62 +2626,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Insufficient credits" });
       }
 
-      // Create TTS generation record
-      const ttsGeneration = await storage.createTtsGeneration({
+      // Create generation record (use generations table, not ttsGenerations)
+      const generation = await storage.createGeneration({
         userId,
-        text,
-        voiceId,
-        voiceName: voiceName || voiceId,
+        type: 'text-to-speech',
         model,
-        parameters: parameters || null,
-        status: 'processing',
-        resultUrl: null,
-        errorMessage: null,
+        prompt: text,
+        parameters: { voiceId, voiceName, ...parameters },
+        status: 'pending',
         creditsCost: cost,
       });
 
-      // Generate TTS in background
-      (async () => {
-        try {
-          const { result } = await generateTTS({
-            text,
-            voiceId,
-            voiceName,
-            model,
-            parameters,
-          });
-
-          // Extract audio URL from result
-          const audioUrl = result?.data?.audioUrl || result?.audioUrl || result?.url;
-          if (!audioUrl) {
-            throw new Error('TTS generation failed - no audio URL returned');
-          }
-
-          await storage.updateTtsGeneration(ttsGeneration.id, {
-            status: 'completed',
-            resultUrl: audioUrl,
-            completedAt: new Date(),
-          });
-        } catch (error: any) {
-          console.error('TTS generation error:', error);
-          
-          // Refund credits on failure
-          const currentUser = await storage.getUser(userId);
-          if (currentUser) {
-            await storage.updateUserCredits(userId, currentUser.credits + cost);
-          }
-
-          await storage.updateTtsGeneration(ttsGeneration.id, {
-            status: 'failed',
-            errorMessage: error.message || 'TTS generation failed',
-            completedAt: new Date(),
-          });
-        }
-      })();
+      // Generate TTS in background with webhook callbacks
+      generateTTSInBackground(generation.id, text, voiceId, voiceName, model, parameters);
 
       res.json({ 
         success: true, 
-        generationId: ttsGeneration.id,
+        generationId: generation.id,
         message: "TTS generation started" 
       });
     } catch (error: any) {

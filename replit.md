@@ -26,7 +26,7 @@ The platform underwent a major UI transformation from marketing-style layout to 
 -   **Backend**: Express.js and Node.js with TypeScript.
 -   **Database**: PostgreSQL (Neon) with Drizzle ORM.
 -   **Authentication & Onboarding**: JWT-based authentication system with access tokens (memory) and refresh tokens (httpOnly cookies). Google OAuth and local (email/password) authentication supported. Safari/iOS OAuth cookie fix uses HTML meta refresh (200 OK) instead of 302 redirect to bypass ITP restrictions. New users redirected to /pricing for subscription selection. Production-ready flow with credit assignment and robust error recovery.
--   **Asynchronous Operations**: Kie.ai integrations use webhook-based callbacks for real-time status updates, intelligent filtering of intermediate states, and comprehensive error detection across various model APIs (Runway, Veo, Bytedance models, Suno). Includes 10-minute timeout protection for generations.
+-   **Asynchronous Operations**: Kie.ai integrations use webhook-based callbacks for real-time status updates, intelligent filtering of intermediate states, and comprehensive error detection across various model APIs (Runway, Veo, Bytedance models, Suno, ElevenLabs TTS, ElevenLabs Sound Effects). All ElevenLabs services (TTS, Sound Effects) use `/api/v1/jobs/createTask` endpoint with unified webhook callback system. Includes 10-minute timeout protection for generations.
 -   **Centralized URL Management**: Production-safe URL generation via `server/urlUtils.ts` prioritizes a single production URL for all webhooks and callbacks.
 -   **Credit Management**: Automatic credit refund system for failed generations and atomic job cancellation with race-condition-safe refunds.
 -   **Image Hosting**: Temporary system for user-uploaded images, converting base64 to public URLs with validation and cleanup.
@@ -45,6 +45,8 @@ The platform underwent a major UI transformation from marketing-style layout to 
 -   **AI Video Generation**: Supports Veo 3.1, Runway Aleph, Seedance, Wan 2.5, Kling 2.5 Turbo, Grok Imagine, and Sora 2 Pro models with image-to-video capabilities. Model-specific aspect ratio and duration support with frontend filtering and backend validation. Includes advanced features like Sora 2 Pro Storyboard for multi-scene videos.
 -   **AI Image Generation**: Integrates Seedream 4.0, 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads.
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, V4.5, V4.5 Plus, and V5, supporting custom lyrics, extended durations, and 57 diverse genre options.
+-   **AI Sound Effects**: ElevenLabs Sound Effect V2 with customizable duration (1-22s), prompt influence, loop option, and multiple output formats (MP3, Opus, PCM).
+-   **AI Text-to-Speech**: ElevenLabs TTS Multilingual V2 with 20+ pre-made voices, adjustable stability/similarity/style/speed parameters, and multi-language support.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis.
 -   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine AI-generated videos with a drag-and-drop interface.
 -   **QR Code Generator**: Client-side QR code generator with logo embedding, customization, live preview, and PNG/SVG download (no credits required).

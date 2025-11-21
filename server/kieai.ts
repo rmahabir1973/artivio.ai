@@ -841,6 +841,7 @@ export async function cloneVoice(params: {
 }
 
 // ElevenLabs Text-to-Speech - Generate speech from text
+// Uses /api/v1/jobs/createTask with nested input object (similar to Sound Effects)
 export async function generateTTS(params: {
   text: string;
   voiceId: string; // Voice ID or pre-made voice name (Rachel, Aria, etc.)
@@ -853,22 +854,27 @@ export async function generateTTS(params: {
     speed?: number; // 0.7-1.2, default 1
     languageCode?: string; // ISO 639-1 code
   };
+  callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
   
-  const payload: any = {
+  const input: any = {
     text: params.text,
-    voice: params.voiceId, // Map voiceId to voice for Kie.ai API
+    voice: params.voiceId,
   };
   
   // Add optional parameters
-  if (parameters.stability !== undefined) payload.stability = parameters.stability;
-  if (parameters.similarityBoost !== undefined) payload.similarity_boost = parameters.similarityBoost;
-  if (parameters.style !== undefined) payload.style = parameters.style;
-  if (parameters.speed !== undefined) payload.speed = parameters.speed;
-  if (parameters.languageCode) payload.language_code = parameters.languageCode;
+  if (parameters.stability !== undefined) input.stability = parameters.stability;
+  if (parameters.similarityBoost !== undefined) input.similarity_boost = parameters.similarityBoost;
+  if (parameters.style !== undefined) input.style = parameters.style;
+  if (parameters.speed !== undefined) input.speed = parameters.speed;
+  if (parameters.languageCode) input.language_code = parameters.languageCode;
   
-  return await callKieApi('/api/v1/elevenlabs/tts', payload);
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: 'elevenlabs/text-to-speech-multilingual-v2',
+    callBackUrl: params.callBackUrl,
+    input,
+  });
 }
 
 // ElevenLabs Speech-to-Text (Scribe v1) - Transcribe audio with diarization
