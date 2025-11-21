@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +40,44 @@ export default function GenerateSora() {
     { id: "2", prompt: "", duration: 8 }
   ]);
   const [totalDuration, setTotalDuration] = useState<"10" | "15" | "25">("15");
+  
+  // Generation result state
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedVideo, setGeneratedVideo] = useState<any>(null);
+
+  // Poll for generation result when generationId is set
+  const { data: pollData } = useQuery<any>({
+    queryKey: ["/api/generations", generationId],
+    queryFn: async () => {
+      if (!generationId) return null;
+      return await apiRequest("GET", `/api/generations/${generationId}`);
+    },
+    enabled: !!generationId && isGenerating,
+    refetchInterval: 2000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Update generatedVideo when poll data arrives
+  useEffect(() => {
+    if (pollData?.resultUrl) {
+      setGeneratedVideo(pollData);
+      setIsGenerating(false);
+      toast({
+        title: "Video Generated!",
+        description: "Your Sora 2 Pro video is ready to view and download.",
+      });
+    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+      setGeneratedVideo(pollData);
+      setIsGenerating(false);
+      setGenerationId(null);
+      toast({
+        title: "Generation Failed",
+        description: pollData?.errorMessage || "Failed to generate video",
+        variant: "destructive",
+      });
+    }
+  }, [pollData, toast]);
 
   // Update scene durations when total duration changes (not scene count)
   useEffect(() => {
@@ -213,26 +251,18 @@ export default function GenerateSora() {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      setGenerationId(data.generationId);
+      setIsGenerating(true);
+      setGeneratedVideo(null);
+      
       toast({
         title: "Generation started",
-        description: "Your Sora 2 video is being generated. Check your dashboard for progress."
+        description: "Your Sora 2 video is being generated. Watch the preview panel for progress."
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-
-      setPrompt("");
-      setUploadedImages([]);
-      if (mode === "storyboard") {
-        // Reset to 2 scenes with evenly distributed durations
-        const total = parseInt(totalDuration);
-        const durations = redistributeSceneDurations(2, total);
-        setScenes([
-          { id: "1", prompt: "", duration: durations[0] },
-          { id: "2", prompt: "", duration: durations[1] }
-        ]);
-      }
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -710,9 +740,22 @@ export default function GenerateSora() {
       }
       preview={
         <PreviewPanel
-          status="idle"
+          status={
+            isGenerating ? "generating" :
+            generatedVideo?.resultUrl ? "completed" :
+            generatedVideo?.status === 'failed' ? "failed" :
+            "idle"
+          }
           title="Video Preview"
           description="Your generated Sora 2 video will appear here"
+          resultUrl={generatedVideo?.resultUrl}
+          resultType="video"
+          errorMessage={generatedVideo?.errorMessage}
+          onDownload={() => {
+            if (generatedVideo?.id) {
+              window.location.href = `/api/generations/${generatedVideo.id}/download`;
+            }
+          }}
         />
       }
     />
