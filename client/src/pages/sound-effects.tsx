@@ -104,8 +104,8 @@ export default function SoundEffects() {
   return (
     <SidebarInset>
       <ThreeColumnLayout
-        leftPanel={
-          <div className="space-y-6 p-4 md:p-6">
+        form={
+          <div className="space-y-6">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold">Generate Sound Effects</h2>
               <p className="text-sm text-muted-foreground">
@@ -159,7 +159,6 @@ export default function SoundEffects() {
 
               <CreditCostWarning
                 cost={modelCost}
-                userCredits={user?.credits || 0}
                 featureName="Sound effect generation"
               />
 
@@ -184,24 +183,24 @@ export default function SoundEffects() {
             </div>
           </div>
         }
-        rightPanel={
+        preview={
           <PreviewPanel
-            state={
+            status={
               isGenerating
                 ? "generating"
                 : generatedAudio
                   ? "completed"
                   : "idle"
             }
-            content={
+            customContent={
               generatedAudio ? (
-                <div className="space-y-4">
-                  {generatedAudio.audioUrl && (
+                <div className="space-y-4 p-4">
+                  {generatedAudio.resultUrl && (
                     <>
                       <audio
                         data-testid="audio-player"
                         controls
-                        src={generatedAudio.audioUrl}
+                        src={generatedAudio.resultUrl}
                         className="w-full"
                       />
                       <Button
@@ -210,7 +209,7 @@ export default function SoundEffects() {
                         className="w-full"
                         asChild
                       >
-                        <a href={generatedAudio.audioUrl} download>
+                        <a href={generatedAudio.resultUrl} download>
                           <Download className="w-4 h-4 mr-2" />
                           Download Audio
                         </a>
