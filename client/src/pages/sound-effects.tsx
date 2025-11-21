@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +48,7 @@ export default function SoundEffects() {
   const [outputFormat, setOutputFormat] = useState("mp3_44100_128");
   const [generatedAudio, setGeneratedAudio] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationId, setGenerationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -61,6 +62,34 @@ export default function SoundEffects() {
       }, 500);
     }
   }, [isAuthenticated, authLoading, toast]);
+
+  // Poll for generation result when generationId is set
+  const { data: pollData } = useQuery({
+    queryKey: ["/api/generations", generationId],
+    queryFn: async () => {
+      if (!generationId) return null;
+      const response = await apiRequest("GET", `/api/generations/${generationId}`);
+      return response;
+    },
+    enabled: !!generationId && isGenerating,
+    refetchInterval: 2000, // Poll every 2 seconds while generating
+    refetchOnWindowFocus: false,
+  });
+
+  // Update generatedAudio when poll data arrives with resultUrl
+  useEffect(() => {
+    if (pollData?.resultUrl) {
+      setGeneratedAudio(pollData);
+      setIsGenerating(false);
+    } else if (pollData?.status === 'failure') {
+      setIsGenerating(false);
+      toast({
+        title: "Generation Failed",
+        description: pollData?.errorMessage || "Failed to generate sound effect",
+        variant: "destructive",
+      });
+    }
+  }, [pollData, toast]);
 
   const generateSoundEffectsMutation = useMutation({
     mutationFn: async () => {
@@ -80,12 +109,12 @@ export default function SoundEffects() {
       return response;
     },
     onSuccess: (data) => {
-      setGeneratedAudio(data);
+      setGenerationId(data.generationId);
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
       markStepComplete("generate_content");
       toast({
         title: "Generation Started",
-        description: "Your sound effect is being generated. Check the history page for progress.",
+        description: "Your sound effect is being generated...",
       });
     },
     onError: (error: any) => {
@@ -93,6 +122,7 @@ export default function SoundEffects() {
         window.location.href = "/login";
         return;
       }
+      setIsGenerating(false);
       toast({
         title: "Generation Failed",
         description: error.message || "Failed to generate sound effect",
@@ -246,33 +276,20 @@ export default function SoundEffects() {
                   ? "completed"
                   : "idle"
             }
-            customContent={
-              generatedAudio ? (
-                <div className="space-y-4 p-4">
-                  {generatedAudio.resultUrl && (
-                    <>
-                      <audio
-                        data-testid="audio-player"
-                        controls
-                        src={generatedAudio.resultUrl}
-                        className="w-full"
-                      />
-                      <Button
-                        data-testid="button-download"
-                        variant="outline"
-                        className="w-full"
-                        asChild
-                      >
-                        <a href={generatedAudio.resultUrl} download>
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Audio
-                        </a>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              ) : null
-            }
+            resultUrl={generatedAudio?.resultUrl}
+            resultType="audio"
+            errorMessage={generatedAudio?.errorMessage}
+            onDownload={() => {
+              if (generatedAudio?.resultUrl) {
+                const url = generatedAudio.resultUrl;
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', '');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }
+            }}
           />
         }
       />
