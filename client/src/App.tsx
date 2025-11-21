@@ -160,9 +160,9 @@ function AppContent() {
 
     return (
       <SidebarProvider style={sidebarStyle}>
-        <div className="flex h-screen w-full">
+        <div className="flex h-screen w-full overflow-x-hidden">
           <AppSidebar />
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 min-w-0">
             <header className="flex items-center justify-between p-3 border-b h-14 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
@@ -204,7 +204,7 @@ function AppContent() {
               </div>
             </header>
             {isAuthenticated && <AnnouncementBar />}
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden">
               <Router />
             </main>
           </div>
