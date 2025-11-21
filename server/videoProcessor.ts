@@ -12,6 +12,7 @@ const execAsync = promisify(exec);
 // Configuration
 const TEMP_DIR = path.join(process.cwd(), 'temp', 'video-processing');
 const OUTPUT_DIR = path.join(process.cwd(), 'public', 'video-combinations');
+const THUMBNAIL_DIR = path.join(process.cwd(), 'public', 'thumbnails');
 const MAX_CONCURRENT_JOBS = 3;
 const FFMPEG_TIMEOUT = 600000;
 
@@ -51,6 +52,7 @@ function releaseJobSlot(): void {
 async function ensureDirectories(): Promise<void> {
   await fs.mkdir(TEMP_DIR, { recursive: true });
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
+  await fs.mkdir(THUMBNAIL_DIR, { recursive: true });
 }
 
 async function downloadVideo(url: string, tempDir: string, index: number): Promise<string> {
@@ -563,5 +565,65 @@ export async function cleanupOldCombinations(maxAgeHours: number = 72): Promise<
     }
   } catch (error) {
     console.error('Cleanup error:', error);
+  }
+}
+
+export interface GenerateThumbnailOptions {
+  videoUrl: string;
+  generationId: string;
+  timestampSeconds?: number;
+}
+
+export interface GenerateThumbnailResult {
+  thumbnailUrl: string;
+  thumbnailPath: string;
+}
+
+export async function generateThumbnail(options: GenerateThumbnailOptions): Promise<GenerateThumbnailResult> {
+  const { videoUrl, generationId, timestampSeconds = 2 } = options;
+  
+  await fs.mkdir(THUMBNAIL_DIR, { recursive: true });
+  
+  const tempDir = path.join(TEMP_DIR, `thumb-${nanoid()}`);
+  await fs.mkdir(tempDir, { recursive: true });
+  
+  let tempVideoPath: string | null = null;
+  
+  try {
+    tempVideoPath = await downloadVideo(videoUrl, tempDir, 0);
+    
+    const thumbnailFilename = `${generationId}.jpg`;
+    const thumbnailPath = path.join(THUMBNAIL_DIR, thumbnailFilename);
+    const thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
+    
+    const command = `ffmpeg -ss ${timestampSeconds} -i "${tempVideoPath}" -frames:v 1 -q:v 2 "${thumbnailPath}" -y`;
+    
+    const { stderr } = await execAsync(command, { 
+      timeout: 30000,
+      maxBuffer: 10 * 1024 * 1024 
+    });
+    
+    const stats = await fs.stat(thumbnailPath);
+    if (stats.size === 0) {
+      throw new Error('Generated thumbnail is empty');
+    }
+    
+    console.log(`✓ Generated thumbnail for ${generationId}: ${thumbnailPath}`);
+    
+    return {
+      thumbnailUrl,
+      thumbnailPath,
+    };
+  } catch (error: any) {
+    console.error(`✗ Thumbnail generation failed for ${generationId}:`, error.message);
+    throw new Error(`Failed to generate thumbnail: ${error.message}`);
+  } finally {
+    if (tempVideoPath) {
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      }
+    }
   }
 }

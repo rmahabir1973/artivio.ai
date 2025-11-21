@@ -172,6 +172,7 @@ export const generations = pgTable("generations", {
   parameters: jsonb("parameters"), // Store generation parameters
   status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
   resultUrl: text("result_url"), // URL to generated content
+  thumbnailUrl: text("thumbnail_url"), // URL to video thumbnail (auto-generated for videos)
   externalTaskId: varchar("external_task_id"), // Provider's task/job ID for tracking
   statusDetail: text("status_detail"), // Detailed status message from provider
   errorMessage: text("error_message"),

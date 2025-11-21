@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, Video, Plus, X, ArrowUp, ArrowDown, Combine, Music, Type, Zap, Sparkles, Clock, Trim } from "lucide-react";
+import { Loader2, Video, Plus, X, ArrowUp, ArrowDown, Combine, Music, Type, Zap, Sparkles, Clock, Scissors } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TimelinePreview } from "@/components/TimelinePreview";
 
 interface Generation {
   id: string;
@@ -436,6 +437,26 @@ export default function VideoEditor() {
                 <CardDescription>Reorder videos and set trim points for precision editing</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Timeline Preview */}
+                <TimelinePreview
+                  clips={selectedVideoIds.map((videoId) => {
+                    const video = getVideoById(videoId);
+                    if (!video) return null;
+                    
+                    const trim = enhancements.clipTrims?.[videoId];
+                    const speedData = enhancements.speed?.perClip?.find(s => s.clipIndex === selectedVideoIds.indexOf(videoId));
+                    
+                    return {
+                      id: video.id,
+                      url: video.resultUrl || '',
+                      trim: trim,
+                      speedFactor: speedData?.factor || enhancements.speed?.globalFactor || 1,
+                    };
+                  }).filter(Boolean) as any[]}
+                />
+
+                <Separator />
+
                 <div className="space-y-3">
                   {selectedVideoIds.map((videoId, index) => {
                     const video = getVideoById(videoId);
@@ -489,7 +510,7 @@ export default function VideoEditor() {
                         {/* Trim Controls */}
                         <div className="pl-12 space-y-2 p-3 bg-background rounded">
                           <div className="flex items-center gap-2">
-                            <Trim className="w-4 h-4 text-muted-foreground" />
+                            <Scissors className="w-4 h-4 text-muted-foreground" />
                             <Label className="text-xs font-semibold">Trim Duration</Label>
                           </div>
                           <div className="grid grid-cols-2 gap-2">

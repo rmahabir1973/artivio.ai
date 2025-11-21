@@ -27,7 +27,7 @@ import { analyzeImageWithVision } from "./openaiVision";
 import { processImageInputs, saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
-import { combineVideos } from "./videoProcessor";
+import { combineVideos, generateThumbnail } from "./videoProcessor";
 import { LoopsService } from "./loops";
 import { logger } from "./logger";
 import { 
@@ -1040,6 +1040,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             resultUrl,
           });
           console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+          
+          // Generate thumbnail for video generations (async, don't block callback)
+          const generation = await storage.getGeneration(generationId);
+          if (generation && generation.type === 'video' && resultUrl) {
+            generateThumbnail({
+              videoUrl: resultUrl,
+              generationId: generationId,
+              timestampSeconds: 2,
+            }).then(async (result) => {
+              await storage.updateGeneration(generationId, {
+                thumbnailUrl: result.thumbnailUrl,
+              });
+              console.log(`✓ Thumbnail generated for ${generationId}: ${result.thumbnailUrl}`);
+            }).catch((error) => {
+              console.error(`⚠️  Thumbnail generation failed for ${generationId}:`, error.message);
+            });
+          }
         } else {
           // Success status but no media URL - mark as failed with debugging info
           console.error(`❌ Generation ${generationId} marked complete but no media URL found in callback`);
