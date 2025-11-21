@@ -32,7 +32,8 @@ import {
   DollarSign,
   Gift,
   ExternalLink,
-  QrCode
+  QrCode,
+  Users
 } from "lucide-react";
 
 interface FeatureCard {
@@ -84,7 +85,7 @@ export default function Home() {
 
   const { data: favoriteWorkflows = [] } = useQuery<FavoriteWorkflow[]>({
     queryKey: ["/api/favorites"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!user,
   });
 
   // Map workflow ID to route for deep-linking
@@ -317,9 +318,12 @@ export default function Home() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return null;
   }
+
+  const userCredits = (user as any)?.credits ?? 0;
+  const userFirstName = (user as any)?.firstName ?? 'Creator';
 
   return (
     <SidebarInset>
@@ -331,7 +335,7 @@ export default function Home() {
           <div className="text-center space-y-4 sm:space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Welcome back, {(user as any)?.firstName || 'Creator'}</span>
+              <span className="text-sm font-medium">Welcome back, {userFirstName}</span>
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -346,7 +350,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card border">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="font-medium">{(user as any)?.credits || 0} credits</span>
+                <span className="font-medium">{userCredits} credits</span>
               </div>
               {subscription?.plan && (
                 <Badge variant="outline" className="px-4 py-2 text-sm font-medium">
