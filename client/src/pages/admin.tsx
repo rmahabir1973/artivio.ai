@@ -14,9 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, PlanEconomics } from "@shared/schema";
 
 interface UserWithSubscription extends User {
@@ -45,9 +46,9 @@ export default function Admin() {
   const [newKeyName, setNewKeyName] = useState("");
   const [newKeyValue, setNewKeyValue] = useState("");
   const [editingPricingId, setEditingPricingId] = useState<string | null>(null);
-  const [editPricing, setEditPricing] = useState({ feature: "", model: "", category: "", creditCost: "", description: "" });
+  const [editPricing, setEditPricing] = useState({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
   const [addingPricing, setAddingPricing] = useState(false);
-  const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "", description: "" });
+  const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
   const [editingEconomics, setEditingEconomics] = useState(false);
   const [economicsForm, setEconomicsForm] = useState({ 
     kiePurchaseAmount: "50", 
@@ -205,6 +206,25 @@ export default function Admin() {
     }
   }, [planEconomicsData, editingEconomics]);
 
+  const calculateSuggestedCredits = (kieCost: number, economics: PlanEconomics | undefined) => {
+    if (!kieCost || !economics) return null;
+    const kieRate = economics.kiePurchaseAmount / economics.kieCreditAmount;
+    const yourCost = kieCost * kieRate;
+    const withMargin = yourCost * (1 + economics.profitMargin / 100);
+    const userRate = economics.kiePurchaseAmount / economics.userCreditAmount;
+    const suggestedUserCredits = Math.ceil(withMargin / userRate);
+    return {
+      yourCost,
+      withMargin,
+      suggestedUserCredits,
+      details: {
+        kieRate: kieRate.toFixed(4),
+        userRate: userRate.toFixed(4),
+        margin: economics.profitMargin,
+      }
+    };
+  };
+
   const updateCreditsMutation = useMutation({
     mutationFn: async ({ userId, credits }: { userId: string; credits: number }) => {
       return await apiRequest("PATCH", `/api/admin/users/${userId}/credits`, { credits });
@@ -281,12 +301,12 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pricing"] });
       setEditingPricingId(null);
-      setEditPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
+      setEditPricing({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
       toast({ title: "Success", description: "Pricing updated successfully" });
     },
     onError: (error: Error) => {
       setEditingPricingId(null);
-      setEditPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
+      setEditPricing({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
       toast({ 
         title: "Error", 
         description: error.message || "Failed to update pricing", 
@@ -296,13 +316,13 @@ export default function Admin() {
   });
 
   const addPricingMutation = useMutation({
-    mutationFn: async (data: { feature: string; model: string; category: string; creditCost: number; description?: string }) => {
+    mutationFn: async (data: { feature: string; model: string; category: string; creditCost: number; kieCreditCost?: number; description?: string }) => {
       return await apiRequest("POST", "/api/admin/pricing", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pricing"] });
       setAddingPricing(false);
-      setNewPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
+      setNewPricing({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
       toast({ title: "Success", description: "Pricing entry added successfully" });
     },
     onError: (error: Error) => {
@@ -1010,6 +1030,7 @@ export default function Admin() {
                                 model: pricing.model,
                                 category: pricing.category,
                                 creditCost: pricing.creditCost.toString(),
+                                kieCreditCost: pricing.kieCreditCost?.toString() || "",
                                 description: pricing.description || "",
                               });
                             }}
@@ -2127,7 +2148,7 @@ export default function Admin() {
       <Dialog open={editingPricingId !== null} onOpenChange={(open) => {
         if (!open) {
           setEditingPricingId(null);
-          setEditPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
+          setEditPricing({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
         }
       }}>
         <DialogContent>
@@ -2169,6 +2190,49 @@ export default function Admin() {
               />
             </div>
             <div>
+              <Label htmlFor="edit-kieCreditCost">Kie Credit Cost</Label>
+              <Input
+                id="edit-kieCreditCost"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g., 35"
+                value={editPricing.kieCreditCost}
+                onChange={(e) => setEditPricing({ ...editPricing, kieCreditCost: e.target.value })}
+                data-testid="input-edit-kie-credit-cost"
+              />
+            </div>
+            {editPricing.kieCreditCost && Number(editPricing.kieCreditCost) > 0 && (
+              <div className="p-4 bg-muted/5 rounded-lg border space-y-2">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-sm">Auto-Calculator</h4>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Based on your Plan Economics settings</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                {planEconomicsData ? (
+                  (() => {
+                    const calc = calculateSuggestedCredits(Number(editPricing.kieCreditCost), planEconomicsData);
+                    return calc ? (
+                      <div className="space-y-1 text-sm">
+                        <p className="text-muted-foreground">Input: Kie charges {editPricing.kieCreditCost} credits</p>
+                        <p className="text-muted-foreground">Your cost: ${calc.yourCost.toFixed(4)}</p>
+                        <p className="text-muted-foreground">With {calc.details.margin}% margin: ${calc.withMargin.toFixed(4)}</p>
+                        <p className="font-semibold text-primary">→ Suggested: {calc.suggestedUserCredits} user credits</p>
+                      </div>
+                    ) : null;
+                  })()
+                ) : (
+                  <p className="text-sm text-muted-foreground">Configure Plan Economics first</p>
+                )}
+              </div>
+            )}
+            <div>
               <Label htmlFor="edit-creditCost">Credit Cost</Label>
               <Input
                 id="edit-creditCost"
@@ -2195,11 +2259,12 @@ export default function Admin() {
           <DialogFooter>
             <Button
               onClick={() => {
-                const { feature, model, category, creditCost, description } = editPricing;
+                const { feature, model, category, creditCost, kieCreditCost, description } = editPricing;
                 const trimmedFeature = feature.trim();
                 const trimmedModel = model.trim();
                 const trimmedCategory = category.trim();
                 const trimmedCost = creditCost.trim();
+                const trimmedKieCost = kieCreditCost.trim();
                 const trimmedDescription = description.trim();
                 
                 if (!trimmedFeature || !trimmedModel || !trimmedCategory || !trimmedCost) {
@@ -2219,6 +2284,15 @@ export default function Admin() {
                   category: trimmedCategory,
                   creditCost: cost,
                 };
+                
+                if (trimmedKieCost) {
+                  const kieCost = Number(trimmedKieCost);
+                  if (!Number.isFinite(kieCost) || !Number.isInteger(kieCost) || kieCost < 0) {
+                    toast({ title: "Error", description: "Please enter a valid whole number for Kie credit cost", variant: "destructive" });
+                    return;
+                  }
+                  updates.kieCreditCost = kieCost;
+                }
                 
                 if (trimmedDescription) {
                   updates.description = trimmedDescription;
@@ -2285,6 +2359,49 @@ export default function Admin() {
               />
             </div>
             <div>
+              <Label htmlFor="kieCreditCost">Kie Credit Cost</Label>
+              <Input
+                id="kieCreditCost"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g., 35"
+                value={newPricing.kieCreditCost}
+                onChange={(e) => setNewPricing({ ...newPricing, kieCreditCost: e.target.value })}
+                data-testid="input-kie-credit-cost"
+              />
+            </div>
+            {newPricing.kieCreditCost && Number(newPricing.kieCreditCost) > 0 && (
+              <div className="p-4 bg-muted/5 rounded-lg border space-y-2">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-sm">Auto-Calculator</h4>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Based on your Plan Economics settings</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                {planEconomicsData ? (
+                  (() => {
+                    const calc = calculateSuggestedCredits(Number(newPricing.kieCreditCost), planEconomicsData);
+                    return calc ? (
+                      <div className="space-y-1 text-sm">
+                        <p className="text-muted-foreground">Input: Kie charges {newPricing.kieCreditCost} credits</p>
+                        <p className="text-muted-foreground">Your cost: ${calc.yourCost.toFixed(4)}</p>
+                        <p className="text-muted-foreground">With {calc.details.margin}% margin: ${calc.withMargin.toFixed(4)}</p>
+                        <p className="font-semibold text-primary">→ Suggested: {calc.suggestedUserCredits} user credits</p>
+                      </div>
+                    ) : null;
+                  })()
+                ) : (
+                  <p className="text-sm text-muted-foreground">Configure Plan Economics first</p>
+                )}
+              </div>
+            )}
+            <div>
               <Label htmlFor="creditCost">Credit Cost</Label>
               <Input
                 id="creditCost"
@@ -2311,11 +2428,12 @@ export default function Admin() {
           <DialogFooter>
             <Button
               onClick={() => {
-                const { feature, model, category, creditCost, description } = newPricing;
+                const { feature, model, category, creditCost, kieCreditCost, description } = newPricing;
                 const trimmedFeature = feature.trim();
                 const trimmedModel = model.trim();
                 const trimmedCategory = category.trim();
                 const trimmedCost = creditCost.trim();
+                const trimmedKieCost = kieCreditCost.trim();
                 const trimmedDescription = description.trim();
                 
                 if (!trimmedFeature || !trimmedModel || !trimmedCategory || !trimmedCost) {
@@ -2329,13 +2447,24 @@ export default function Admin() {
                   return;
                 }
                 
-                addPricingMutation.mutate({
+                const mutationData: any = {
                   feature: trimmedFeature,
                   model: trimmedModel,
                   category: trimmedCategory,
                   creditCost: cost,
                   description: trimmedDescription || undefined,
-                });
+                };
+                
+                if (trimmedKieCost) {
+                  const kieCost = Number(trimmedKieCost);
+                  if (!Number.isFinite(kieCost) || !Number.isInteger(kieCost) || kieCost < 0) {
+                    toast({ title: "Error", description: "Please enter a valid whole number for Kie credit cost", variant: "destructive" });
+                    return;
+                  }
+                  mutationData.kieCreditCost = kieCost;
+                }
+                
+                addPricingMutation.mutate(mutationData);
               }}
               disabled={addPricingMutation.isPending}
               data-testid="button-submit-new-pricing"
