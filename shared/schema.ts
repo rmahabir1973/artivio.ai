@@ -146,8 +146,10 @@ export const insertPricingSchema = createInsertSchema(pricing).omit({
 });
 
 export const updatePricingSchema = z.object({
+  feature: z.string().min(1).optional(),
+  model: z.string().min(1).optional(),
   creditCost: z.number().int().min(0).optional(),
-  category: z.string().optional(),
+  category: z.string().min(1).optional(),
   description: z.string().optional(),
 });
 

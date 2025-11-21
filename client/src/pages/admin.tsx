@@ -45,9 +45,9 @@ export default function Admin() {
   const [newKeyName, setNewKeyName] = useState("");
   const [newKeyValue, setNewKeyValue] = useState("");
   const [editingPricingId, setEditingPricingId] = useState<string | null>(null);
-  const [editPricingCost, setEditPricingCost] = useState("");
+  const [editPricing, setEditPricing] = useState({ feature: "", model: "", category: "", creditCost: "", description: "" });
   const [addingPricing, setAddingPricing] = useState(false);
-  const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "" });
+  const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "", description: "" });
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editPlanData, setEditPlanData] = useState({
     name: "",
@@ -252,18 +252,18 @@ export default function Admin() {
   });
 
   const updatePricingMutation = useMutation({
-    mutationFn: async ({ id, creditCost }: { id: string; creditCost: number }) => {
-      return await apiRequest("PATCH", `/api/admin/pricing/${id}`, { creditCost });
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      return await apiRequest("PATCH", `/api/admin/pricing/${id}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pricing"] });
       setEditingPricingId(null);
-      setEditPricingCost("");
+      setEditPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
       toast({ title: "Success", description: "Pricing updated successfully" });
     },
     onError: (error: Error) => {
       setEditingPricingId(null);
-      setEditPricingCost("");
+      setEditPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
       toast({ 
         title: "Error", 
         description: error.message || "Failed to update pricing", 
@@ -273,13 +273,13 @@ export default function Admin() {
   });
 
   const addPricingMutation = useMutation({
-    mutationFn: async (data: { feature: string; model: string; category: string; creditCost: number }) => {
+    mutationFn: async (data: { feature: string; model: string; category: string; creditCost: number; description?: string }) => {
       return await apiRequest("POST", "/api/admin/pricing", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pricing"] });
       setAddingPricing(false);
-      setNewPricing({ feature: "", model: "", category: "", creditCost: "" });
+      setNewPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
       toast({ title: "Success", description: "Pricing entry added successfully" });
     },
     onError: (error: Error) => {
@@ -886,77 +886,28 @@ export default function Admin() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          {editingPricingId === pricing.id ? (
-                            <Input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={editPricingCost}
-                              onChange={(e) => setEditPricingCost(e.target.value)}
-                              className="w-24 text-right"
-                              data-testid={`input-pricing-cost-${pricing.id}`}
-                              autoFocus
-                            />
-                          ) : (
-                            <span className="font-semibold" data-testid={`text-pricing-cost-value-${pricing.id}`}>
-                              {pricing.creditCost.toLocaleString()}
-                            </span>
-                          )}
+                          <span className="font-semibold" data-testid={`text-pricing-cost-value-${pricing.id}`}>
+                            {pricing.creditCost.toLocaleString()}
+                          </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          {editingPricingId === pricing.id ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => {
-                                  const trimmed = editPricingCost.trim();
-                                  if (trimmed === '') {
-                                    toast({ title: "Error", description: "Cost cannot be empty", variant: "destructive" });
-                                    return;
-                                  }
-                                  const cost = Number(trimmed);
-                                  if (!Number.isFinite(cost) || !Number.isInteger(cost) || cost < 0) {
-                                    toast({ title: "Error", description: "Please enter a valid whole number (0 or greater)", variant: "destructive" });
-                                    return;
-                                  }
-                                  updatePricingMutation.mutate({ id: pricing.id, creditCost: cost });
-                                }}
-                                disabled={updatePricingMutation.isPending}
-                                data-testid={`button-save-pricing-${pricing.id}`}
-                              >
-                                {updatePricingMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Save className="h-4 w-4" />
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingPricingId(null);
-                                  setEditPricingCost("");
-                                }}
-                                disabled={updatePricingMutation.isPending}
-                                data-testid={`button-cancel-pricing-${pricing.id}`}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setEditingPricingId(pricing.id);
-                                setEditPricingCost(pricing.creditCost.toString());
-                              }}
-                              data-testid={`button-edit-pricing-${pricing.id}`}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingPricingId(pricing.id);
+                              setEditPricing({
+                                feature: pricing.feature,
+                                model: pricing.model,
+                                category: pricing.category,
+                                creditCost: pricing.creditCost.toString(),
+                                description: pricing.description || "",
+                              });
+                            }}
+                            data-testid={`button-edit-pricing-${pricing.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1891,6 +1842,127 @@ export default function Admin() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Pricing Dialog */}
+      <Dialog open={editingPricingId !== null} onOpenChange={(open) => {
+        if (!open) {
+          setEditingPricingId(null);
+          setEditPricing({ feature: "", model: "", category: "", creditCost: "", description: "" });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Pricing Entry</DialogTitle>
+            <DialogDescription>
+              Update pricing configuration for this model
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-feature">Feature</Label>
+              <Input
+                id="edit-feature"
+                placeholder="e.g., video, image, music, chat"
+                value={editPricing.feature}
+                onChange={(e) => setEditPricing({ ...editPricing, feature: e.target.value })}
+                data-testid="input-edit-pricing-feature"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-model">Model Name</Label>
+              <Input
+                id="edit-model"
+                placeholder="e.g., veo-3.1, gpt-4o"
+                value={editPricing.model}
+                onChange={(e) => setEditPricing({ ...editPricing, model: e.target.value })}
+                data-testid="input-edit-pricing-model"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-category">Category</Label>
+              <Input
+                id="edit-category"
+                placeholder="e.g., generation, chat, voice, audio"
+                value={editPricing.category}
+                onChange={(e) => setEditPricing({ ...editPricing, category: e.target.value })}
+                data-testid="input-edit-pricing-category"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-creditCost">Credit Cost</Label>
+              <Input
+                id="edit-creditCost"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g., 100"
+                value={editPricing.creditCost}
+                onChange={(e) => setEditPricing({ ...editPricing, creditCost: e.target.value })}
+                data-testid="input-edit-pricing-cost"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-description">Description (Optional)</Label>
+              <Input
+                id="edit-description"
+                placeholder="e.g., High-quality video generation"
+                value={editPricing.description}
+                onChange={(e) => setEditPricing({ ...editPricing, description: e.target.value })}
+                data-testid="input-edit-pricing-description"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                const { feature, model, category, creditCost, description } = editPricing;
+                const trimmedFeature = feature.trim();
+                const trimmedModel = model.trim();
+                const trimmedCategory = category.trim();
+                const trimmedCost = creditCost.trim();
+                const trimmedDescription = description.trim();
+                
+                if (!trimmedFeature || !trimmedModel || !trimmedCategory || !trimmedCost) {
+                  toast({ title: "Error", description: "Feature, Model, Category, and Cost are required", variant: "destructive" });
+                  return;
+                }
+                
+                const cost = Number(trimmedCost);
+                if (!Number.isFinite(cost) || !Number.isInteger(cost) || cost < 0) {
+                  toast({ title: "Error", description: "Please enter a valid whole number for cost", variant: "destructive" });
+                  return;
+                }
+                
+                const updates: any = {
+                  feature: trimmedFeature,
+                  model: trimmedModel,
+                  category: trimmedCategory,
+                  creditCost: cost,
+                };
+                
+                if (trimmedDescription) {
+                  updates.description = trimmedDescription;
+                }
+                
+                if (editingPricingId) {
+                  updatePricingMutation.mutate({ id: editingPricingId, updates });
+                }
+              }}
+              disabled={updatePricingMutation.isPending}
+              data-testid="button-submit-edit-pricing"
+            >
+              {updatePricingMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Pricing"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Add Pricing Dialog */}
       <Dialog open={addingPricing} onOpenChange={setAddingPricing}>
         <DialogContent>
@@ -1944,18 +2016,29 @@ export default function Admin() {
                 data-testid="input-new-pricing-cost"
               />
             </div>
+            <div>
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Input
+                id="description"
+                placeholder="e.g., High-quality video generation"
+                value={newPricing.description}
+                onChange={(e) => setNewPricing({ ...newPricing, description: e.target.value })}
+                data-testid="input-new-pricing-description"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button
               onClick={() => {
-                const { feature, model, category, creditCost } = newPricing;
+                const { feature, model, category, creditCost, description } = newPricing;
                 const trimmedFeature = feature.trim();
                 const trimmedModel = model.trim();
                 const trimmedCategory = category.trim();
                 const trimmedCost = creditCost.trim();
+                const trimmedDescription = description.trim();
                 
                 if (!trimmedFeature || !trimmedModel || !trimmedCategory || !trimmedCost) {
-                  toast({ title: "Error", description: "All fields are required and cannot be empty", variant: "destructive" });
+                  toast({ title: "Error", description: "Feature, Model, Category, and Cost are required", variant: "destructive" });
                   return;
                 }
                 
@@ -1970,6 +2053,7 @@ export default function Admin() {
                   model: trimmedModel,
                   category: trimmedCategory,
                   creditCost: cost,
+                  description: trimmedDescription || undefined,
                 });
               }}
               disabled={addPricingMutation.isPending}

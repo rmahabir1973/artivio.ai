@@ -16,6 +16,7 @@ const INITIAL_PRICING = [
   { feature: 'video', model: 'wan-2.5', creditCost: 250, category: 'generation', description: 'Wan 2.5 - Audio sync & lip-sync' },
   { feature: 'video', model: 'kling-2.5-turbo', creditCost: 150, category: 'generation', description: 'Kling 2.5 Turbo - Fast generation' },
   { feature: 'video', model: 'kling-2.1', creditCost: 250, category: 'generation', description: 'Kling 2.1 - Professional quality' },
+  { feature: 'video', model: 'grok-imagine', creditCost: 200, category: 'generation', description: 'Grok Imagine image-to-video' },
   
   // Video Enhancements (Video Combiner)
   { feature: 'video-enhancement', model: 'crossfade-transitions', creditCost: 25, category: 'editing', description: 'Crossfade transitions between clips' },
@@ -34,6 +35,8 @@ const INITIAL_PRICING = [
   { feature: 'music', model: 'suno-v3.5', creditCost: 200, category: 'generation', description: 'Suno V3.5 music generation' },
   { feature: 'music', model: 'suno-v4', creditCost: 250, category: 'generation', description: 'Suno V4 music generation' },
   { feature: 'music', model: 'suno-v4.5', creditCost: 300, category: 'generation', description: 'Suno V4.5 music generation' },
+  { feature: 'music', model: 'suno-v4.5-plus', creditCost: 350, category: 'generation', description: 'Suno V4.5 Plus - Premium quality' },
+  { feature: 'music', model: 'suno-v5', creditCost: 400, category: 'generation', description: 'Suno V5 - Latest cutting-edge AI' },
   
   // Chat Models
   { feature: 'chat', model: 'deepseek-chat', creditCost: 5, category: 'chat', description: 'Deepseek Chat' },
@@ -50,8 +53,17 @@ const INITIAL_PRICING = [
   // STT Models
   { feature: 'stt', model: 'scribe-v1', creditCost: 25, category: 'voice', description: 'ElevenLabs Scribe V1' },
   
+  // Sound Effects
+  { feature: 'sound-effects', model: 'elevenlabs-sound-effect-v2', creditCost: 30, category: 'voice', description: 'ElevenLabs Sound Effect V2' },
+  
   // Voice Cloning
   { feature: 'voice-cloning', model: 'elevenlabs-clone', creditCost: 100, category: 'voice', description: 'ElevenLabs Voice Cloning' },
+  
+  // Image Analysis
+  { feature: 'image-analysis', model: 'gpt-4o', creditCost: 20, category: 'analysis', description: 'GPT-4o Vision image analysis' },
+  
+  // Video Editor/Combiner
+  { feature: 'video-editor', model: 'combine-videos', creditCost: 50, category: 'editing', description: 'Combine multiple videos (base cost)' },
   
   // Avatar Models
   { feature: 'avatar', model: 'kling-ai', creditCost: 350, category: 'generation', description: 'Kling AI Talking Avatar' },
