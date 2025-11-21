@@ -275,8 +275,9 @@ export default function GenerateImage() {
                   currentParameters={{ aspectRatio, style, outputFormat, quality }}
                 />
               </div>
-              {/* Mode Tabs */}
-              <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="mt-4">
+            </CardHeader>
+            <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
+              <div className="px-6 pt-4">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="text-to-image" data-testid="tab-text-to-image">
                     Text to Image
@@ -285,8 +286,7 @@ export default function GenerateImage() {
                     Image Editing
                   </TabsTrigger>
                 </TabsList>
-              </Tabs>
-            </CardHeader>
+              </div>
             <CardContent className="space-y-6">
               {/* Model Selection */}
               <div className="space-y-2">
@@ -511,6 +511,7 @@ export default function GenerateImage() {
                 </CollapsibleContent>
               </Collapsible>
             </CardContent>
+            </Tabs>
           </Card>
       }
       preview={
