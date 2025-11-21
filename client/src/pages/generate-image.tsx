@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,18 +102,57 @@ export default function GenerateImage() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
+  // Generation result state
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<any>(null);
+
+  // Poll for generation result when generationId is set
+  const { data: pollData } = useQuery<any>({
+    queryKey: ["/api/generations", generationId],
+    queryFn: async () => {
+      if (!generationId) return null;
+      return await apiRequest("GET", `/api/generations/${generationId}`);
+    },
+    enabled: !!generationId && isGenerating,
+    refetchInterval: 2000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Update generatedImage when poll data arrives
+  useEffect(() => {
+    if (pollData?.resultUrl) {
+      setGeneratedImage(pollData);
+      setIsGenerating(false);
+      toast({
+        title: "Image Generated!",
+        description: "Your image is ready to view and download.",
+      });
+    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+      setGeneratedImage(pollData);
+      setIsGenerating(false);
+      setGenerationId(null);
+      toast({
+        title: "Generation Failed",
+        description: pollData?.errorMessage || "Failed to generate image",
+        variant: "destructive",
+      });
+    }
+  }, [pollData, toast]);
+
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest("POST", "/api/generate/image", data);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      setGenerationId(data.generationId);
+      setIsGenerating(true);
+      setGeneratedImage(null);
       toast({
         title: "Generation Started",
-        description: "Your image is being generated. Check the history page for progress.",
+        description: "Your image is being generated. Watch the preview panel for progress.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
-      setPrompt("");
-      setReferenceImages([]);
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -516,10 +555,22 @@ export default function GenerateImage() {
       }
       preview={
         <PreviewPanel
-          status={generateMutation.isPending ? "generating" : generateMutation.isSuccess ? "completed" : "idle"}
+          status={
+            isGenerating ? "generating" :
+            generatedImage?.resultUrl ? "completed" :
+            generatedImage?.status === 'failed' ? "failed" :
+            "idle"
+          }
           title="Image Preview"
           description="Your generated image will appear here"
+          resultUrl={generatedImage?.resultUrl}
           resultType="image"
+          errorMessage={generatedImage?.errorMessage}
+          onDownload={() => {
+            if (generatedImage?.id) {
+              window.location.href = `/api/generations/${generatedImage.id}/download`;
+            }
+          }}
         />
       }
     />
