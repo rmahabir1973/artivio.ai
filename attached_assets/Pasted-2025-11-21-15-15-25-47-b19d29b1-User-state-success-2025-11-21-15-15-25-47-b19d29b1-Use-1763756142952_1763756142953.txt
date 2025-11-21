@@ -1,0 +1,105 @@
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"state": "success",
+
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"updateTime": 1763756125000
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"x-replit-user-roles": "",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"pragma": "no-cache",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"cache-control": "no-cache",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"x-replit-user-teams": "",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+},
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"content-type": "application/json;charset=UTF-8",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"host": "artivio.ai",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 Hutool",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"resultJson": "{\"resultUrls\":[\"https://tempfile.aiquickdraw.com/f/8c4fc8d026cc33dd4a04f17b73e0ae79_1763756123_02qnihcl.ogg\"]}",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+Generation ID: 5094087c-b69f-474f-ab3c-6b73f82c7b58
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"x-forwarded-proto": "https",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"completeTime": 1763756125000,
+2025-11-21 15:15:25.47
+b19d29b1
+User
+}
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"x-cloud-trace-context": "2ae15c26eb7dd6536258e9a018d08f32/13047094732283640012;o=1",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"content-length": "676",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+"accept-language": "zh-CN,zh;q=0.8",
+2025-11-21 15:15:25.47
+b19d29b1
+User
+Callback Data: {
+2025-11-21 15:15:25.51
+b19d29b1
+User
+✓ [finalizeGeneration] Generation 5094087c-b69f-474f-ab3c-6b73f82c7b58 finalized as success
+2025-11-21 15:15:25.63
+b19d29b1
+User
+at file:///home/runner/workspace/dist/index.js:6155:44
+2025-11-21 15:15:25.63
+b19d29b1
+User
+Callback processing error: TypeError: storage.getGeneration is not a function
+2025-11-21 15:15:25.63
+b19d29b1
+User
+✓ Generation 5094087c-b69f-474f-ab3c-6b73f82c7b58 completed successfully with URL: https://tempfile.aiquickdraw.com/f/8c4fc8d026cc33dd4a04f17b73e0ae79_1763756123_02qnihcl.ogg
+2025-11-21 15:15:25.63
+b19d29b1
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-21 15:15:25.63
+b19d29b1
+User
+8:15:25 PM [express] POST /api/callback/kie/5094087c-b69f-474f-ab3c-6b73f82c7b58 500 in 167ms :: {"m…
+2025-11-21 15:15:25.63
+b19d29b1
+User
+8:15:25 PM [express] POST /api/callback/kie/5094087c-b69f-474f-ab3c-6b73f82c7b58 500 in 167ms :: {"m…
