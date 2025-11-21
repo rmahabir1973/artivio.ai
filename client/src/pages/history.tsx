@@ -78,7 +78,7 @@ export default function History() {
 
   return (
     <SidebarInset>
-      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="min-h-screen w-full overflow-x-hidden p-4 md:p-8 max-w-7xl mx-auto">
         <div className="space-y-2 mb-8">
           <h1 className="text-4xl font-bold flex items-center gap-3">
             <HistoryIcon className="h-10 w-10 text-primary" />

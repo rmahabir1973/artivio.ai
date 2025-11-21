@@ -18,13 +18,13 @@ export function ThreeColumnLayout({
 }: ThreeColumnLayoutProps) {
   return (
     <SidebarInset>
-      <div className="flex h-full">
+      <div className="flex min-h-screen w-full overflow-x-hidden">
         {/* Optional Left Sidebar (for additional navigation/filters) */}
         {sidebar && (
           <aside className="w-64 border-r flex-shrink-0 hidden lg:block">
-            <ScrollArea className="h-full">
+            <div className="min-h-screen overflow-y-auto">
               <div className="p-4">{sidebar}</div>
-            </ScrollArea>
+            </div>
           </aside>
         )}
 
@@ -34,15 +34,15 @@ export function ThreeColumnLayout({
             showPreview ? "lg:max-w-xl xl:max-w-2xl" : ""
           } border-r`}
         >
-          <ScrollArea className="h-full">
+          <div className="min-h-screen overflow-y-auto">
             <div className="p-6">{form}</div>
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Right Preview Panel */}
         {showPreview && preview && (
           <div className="hidden lg:block flex-1">
-            <div className="h-full flex items-center justify-center bg-muted/20">
+            <div className="min-h-screen flex items-center justify-center bg-muted/20">
               {preview}
             </div>
           </div>
