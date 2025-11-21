@@ -12,10 +12,9 @@ const execAsync = promisify(exec);
 // Configuration
 const TEMP_DIR = path.join(process.cwd(), 'temp', 'video-processing');
 const OUTPUT_DIR = path.join(process.cwd(), 'public', 'video-combinations');
-const MAX_CONCURRENT_JOBS = 3; // Limit concurrent FFmpeg jobs
-const FFMPEG_TIMEOUT = 600000; // 10 minutes timeout (increased for re-encoding)
+const MAX_CONCURRENT_JOBS = 3;
+const FFMPEG_TIMEOUT = 600000;
 
-// Semaphore for concurrency control
 let activeJobs = 0;
 
 interface VideoMetadata {
@@ -33,14 +32,11 @@ export interface CombineVideosOptions {
 }
 
 export interface CombineVideosResult {
-  outputPath: string; // Relative path from public directory
+  outputPath: string;
   durationSeconds: number;
-  tempFiles: string[]; // For cleanup tracking
+  tempFiles: string[];
 }
 
-/**
- * Wait for an available job slot
- */
 async function acquireJobSlot(): Promise<void> {
   while (activeJobs >= MAX_CONCURRENT_JOBS) {
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -48,97 +44,76 @@ async function acquireJobSlot(): Promise<void> {
   activeJobs++;
 }
 
-/**
- * Release a job slot
- */
 function releaseJobSlot(): void {
   activeJobs = Math.max(0, activeJobs - 1);
 }
 
-/**
- * Ensure directories exist
- */
 async function ensureDirectories(): Promise<void> {
   await fs.mkdir(TEMP_DIR, { recursive: true });
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
 }
 
-/**
- * Download video from URL to temp directory
- */
 async function downloadVideo(url: string, tempDir: string, index: number): Promise<string> {
   const ext = path.extname(new URL(url).pathname) || '.mp4';
   const filename = `input_${index}${ext}`;
   const filepath = path.join(tempDir, filename);
 
-  const response = await axios({
-    method: 'GET',
-    url,
-    responseType: 'stream',
-    timeout: 60000, // 60 second timeout
-  });
-
-  const writer = createWriteStream(filepath);
-  response.data.pipe(writer);
-
-  await new Promise<void>((resolve, reject) => {
-    writer.on('finish', () => resolve());
-    writer.on('error', reject);
-  });
-
-  // Ensure file is fully written and accessible
   try {
+    const response = await axios({
+      method: 'GET',
+      url,
+      responseType: 'stream',
+      timeout: 60000,
+    });
+
+    const writer = createWriteStream(filepath);
+    response.data.pipe(writer);
+
+    await new Promise<void>((resolve, reject) => {
+      writer.on('finish', () => resolve());
+      writer.on('error', reject);
+    });
+
     const stats = await fs.stat(filepath);
     if (stats.size === 0) {
       throw new Error('Downloaded file is empty');
     }
     console.log(`✓ Downloaded video ${index}: ${filepath} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
-  } catch (error) {
-    throw new Error(`Failed to verify downloaded video: ${error}`);
-  }
 
-  return filepath;
+    return filepath;
+  } catch (error: any) {
+    throw new Error(`Failed to download video ${index + 1}: ${error.message}`);
+  }
 }
 
-/**
- * Get video metadata using ffprobe
- */
 async function getVideoMetadata(filepath: string): Promise<VideoMetadata> {
-  // First, verify file exists and is readable
   try {
     const stats = await fs.stat(filepath);
-    console.log(`Probing video: ${filepath} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
-    
     if (stats.size === 0) {
-      throw new Error('Video file is empty (0 bytes)');
+      throw new Error('Video file is empty');
     }
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      throw new Error(`Video file not found: ${filepath}`);
+      throw new Error(`Video file not found`);
     }
     throw new Error(`Cannot access video file: ${error.message}`);
   }
 
-  // Probe for both video and audio streams
   const command = `ffprobe -v error -show_entries stream=codec_type,codec_name,width,height,duration -of json "${filepath}"`;
   
   try {
     const { stdout, stderr } = await execAsync(command, { timeout: 10000 });
     
-    if (stderr) {
-      console.warn(`ffprobe stderr: ${stderr}`);
-    }
-    
     const data = JSON.parse(stdout);
     const streams = data.streams || [];
 
     if (streams.length === 0) {
-      throw new Error('No streams found in video file - file may be corrupted');
+      throw new Error('No streams found in video');
     }
 
     const videoStream = streams.find((s: any) => s.codec_type === 'video');
     if (!videoStream) {
-      throw new Error(`No video stream found. Available streams: ${streams.map((s: any) => s.codec_type).join(', ')}`);
+      throw new Error('No video stream found');
     }
 
     const audioStream = streams.find((s: any) => s.codec_type === 'audio');
@@ -151,25 +126,35 @@ async function getVideoMetadata(filepath: string): Promise<VideoMetadata> {
       hasAudio: !!audioStream,
     };
 
-    console.log(`✓ Video metadata: ${metadata.width}x${metadata.height}, ${metadata.duration}s, codec: ${metadata.codec}, audio: ${metadata.hasAudio}`);
-    
     return metadata;
   } catch (error: any) {
-    throw new Error(`Failed to probe video metadata: ${error.message}`);
+    throw new Error(`Failed to read video metadata: ${error.message}`);
   }
 }
 
 /**
- * Create FFmpeg concat file
+ * Normalize video to standard format (MP4 with H.264 + AAC)
  */
+async function normalizeVideo(inputPath: string, outputPath: string): Promise<void> {
+  try {
+    const command = `ffmpeg -i "${inputPath}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -y "${outputPath}"`;
+    
+    await execAsync(command, {
+      timeout: 300000,
+      maxBuffer: 50 * 1024 * 1024,
+    });
+
+    console.log(`✓ Normalized video: ${outputPath}`);
+  } catch (error: any) {
+    throw new Error(`Failed to normalize video: ${error.message}`);
+  }
+}
+
 async function createConcatFile(videoPaths: string[], concatFilePath: string): Promise<void> {
   const lines = videoPaths.map(p => `file '${p}'`).join('\n');
   await fs.writeFile(concatFilePath, lines, 'utf-8');
 }
 
-/**
- * Download audio file for background music
- */
 async function downloadAudio(url: string, tempDir: string): Promise<string> {
   const ext = path.extname(new URL(url).pathname) || '.mp3';
   const filename = `background_music${ext}`;
@@ -191,9 +176,6 @@ async function downloadAudio(url: string, tempDir: string): Promise<string> {
   });
 }
 
-/**
- * Build FFmpeg filter graph for video enhancements
- */
 function buildFilterGraph(
   videoCount: number,
   enhancements: VideoEnhancements | undefined,
@@ -204,7 +186,6 @@ function buildFilterGraph(
   const audioFilterSteps: string[] = [];
   const adjustedDurations: number[] = [];
   
-  // Apply speed adjustments first and track adjusted durations
   let videoStreams: string[] = [];
   let audioStreamLabels: string[] = [];
   
@@ -213,16 +194,13 @@ function buildFilterGraph(
     const originalDuration = metadataList[i].duration;
     const hasAudio = metadataList[i].hasAudio;
     
-    // Calculate adjusted duration
     const adjustedDuration = originalDuration / speedFactor;
     adjustedDurations.push(adjustedDuration);
     
     if (speedFactor !== 1.0) {
-      // Apply speed to video
       videoFilterSteps.push(`[${i}:v]setpts=${(1.0 / speedFactor).toFixed(3)}*PTS[v${i}s]`);
       videoStreams.push(`[v${i}s]`);
       
-      // Apply speed to audio only if it exists
       if (hasAudio) {
         const aSpeed = speedFactor <= 2.0
           ? `[${i}:a]atempo=${speedFactor.toFixed(3)}[a${i}s]`
@@ -230,7 +208,6 @@ function buildFilterGraph(
         audioFilterSteps.push(aSpeed);
         audioStreamLabels.push(`[a${i}s]`);
       } else {
-        // Create silence for clip without audio
         audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${adjustedDuration.toFixed(2)}[a${i}s]`);
         audioStreamLabels.push(`[a${i}s]`);
       }
@@ -239,34 +216,28 @@ function buildFilterGraph(
       if (hasAudio) {
         audioStreamLabels.push(`[${i}:a]`);
       } else {
-        // Create silence for clip without audio
         audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${originalDuration.toFixed(2)}[a${i}s]`);
         audioStreamLabels.push(`[a${i}s]`);
       }
     }
   }
 
-  // Apply crossfade transitions using ADJUSTED durations
   if (enhancements?.transitions?.mode === 'crossfade' && videoCount > 1) {
     const duration = enhancements.transitions.durationSeconds || 1.0;
     let currentStream = videoStreams[0];
     
     for (let i = 1; i < videoCount; i++) {
-      // Calculate offset using adjusted durations
       const offset = adjustedDurations.slice(0, i).reduce((sum, d) => sum + d, 0) - duration;
       const nextLabel = i === videoCount - 1 ? 'vout' : `v${i}xf`;
       videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=fade:duration=${duration}:offset=${offset.toFixed(2)}[${nextLabel}]`);
       currentStream = `[${nextLabel}]`;
     }
   } else if (videoCount > 1) {
-    // No transitions - simple concatenation
     videoFilterSteps.push(`${videoStreams.join('')}concat=n=${videoCount}:v=1:a=0[vout]`);
   } else {
-    // Single video - use null filter (no-op passthrough)
     videoFilterSteps.push(`${videoStreams[0]}null[vout]`);
   }
 
-  // Add text overlays
   const totalDuration = adjustedDurations.reduce((sum, d) => sum + d, 0);
   if (enhancements?.textOverlays && enhancements.textOverlays.length > 0) {
     let textFilter = '[vout]';
@@ -281,7 +252,6 @@ function buildFilterGraph(
       const fontcolor = overlay.colorHex || '#FFFFFF';
       const fontfile = overlay.fontFamily ? `fontfile='${overlay.fontFamily}':` : '';
       
-      // Determine timing using adjusted total duration
       let enableClause = '';
       if (overlay.timing === 'intro') {
         const dur = overlay.displaySeconds || 3;
@@ -297,11 +267,9 @@ function buildFilterGraph(
       textFilter = `[${outputLabel}]`;
     }
   } else {
-    // No text overlays - use null filter (no-op passthrough)
     videoFilterSteps.push('[vout]null[vfinal]');
   }
 
-  // Normalize sample rates to 44100 Hz before concatenation (handles mixed rates)
   const resampledLabels: string[] = [];
   for (let i = 0; i < audioStreamLabels.length; i++) {
     const resampledLabel = `[ar${i}]`;
@@ -309,9 +277,7 @@ function buildFilterGraph(
     resampledLabels.push(resampledLabel);
   }
 
-  // Handle audio to match video transitions
   if (videoCount > 1 && enhancements?.transitions?.mode === 'crossfade') {
-    // Apply audio crossfade to match video transitions
     const duration = enhancements.transitions.durationSeconds || 1.0;
     let currentAudioStream = resampledLabels[0];
     
@@ -321,10 +287,8 @@ function buildFilterGraph(
       currentAudioStream = nextLabel;
     }
   } else if (videoCount > 1) {
-    // No transitions - concatenate audio sequentially
     audioFilterSteps.push(`${resampledLabels.join('')}concat=n=${videoCount}:v=0:a=1[aout]`);
   } else {
-    // Single video - use anull filter (no-op passthrough for audio)
     audioFilterSteps.push(`${resampledLabels[0]}anull[aout]`);
   }
 
@@ -334,9 +298,6 @@ function buildFilterGraph(
   return { videoFilters, audioFilters, adjustedDurations };
 }
 
-/**
- * Get speed factor for a specific clip
- */
 function getSpeedFactorForClip(
   clipIndex: number,
   speedConfig: VideoEnhancements['speed'] | undefined
@@ -357,9 +318,6 @@ function getSpeedFactorForClip(
   return 1.0;
 }
 
-/**
- * Get text position for drawtext filter
- */
 function getTextPosition(
   position: 'top' | 'center' | 'bottom' | 'custom',
   customPosition?: { xPercent: number; yPercent: number }
@@ -383,58 +341,69 @@ function getTextPosition(
   }
 }
 
-/**
- * Combine videos using FFmpeg with optional enhancements
- */
 export async function combineVideos(options: CombineVideosOptions): Promise<CombineVideosResult> {
   const { videoUrls, enhancements, onProgress } = options;
 
-  // Validate input
   if (!videoUrls || videoUrls.length < 2) {
-    throw new Error('At least 2 videos are required for combination');
+    throw new Error('At least 2 videos are required');
   }
 
   if (videoUrls.length > 20) {
-    throw new Error('Cannot combine more than 20 videos at once');
+    throw new Error('Cannot combine more than 20 videos');
   }
 
-  // Acquire job slot (concurrency control)
   await acquireJobSlot();
   
   let tempDir: string | null = null;
   const tempFiles: string[] = [];
 
   try {
-    // Ensure directories exist
     await ensureDirectories();
 
-    // Create unique temp directory for this job
     const jobId = nanoid(10);
     tempDir = path.join(TEMP_DIR, jobId);
     await fs.mkdir(tempDir, { recursive: true });
 
-    onProgress?.('download', 'Downloading videos...');
+    onProgress?.('download', `Downloading ${videoUrls.length} videos...`);
 
-    // Download all videos
     const downloadedPaths: string[] = [];
     for (let i = 0; i < videoUrls.length; i++) {
-      const url = videoUrls[i];
       onProgress?.('download', `Downloading video ${i + 1}/${videoUrls.length}...`);
-      const filepath = await downloadVideo(url, tempDir, i);
+      const filepath = await downloadVideo(videoUrls[i], tempDir, i);
       downloadedPaths.push(filepath);
       tempFiles.push(filepath);
     }
 
-    onProgress?.('validate', 'Validating videos...');
+    onProgress?.('validate', 'Validating and normalizing videos...');
 
-    // Validate all videos and collect metadata
     const metadataList: VideoMetadata[] = [];
-    for (const filepath of downloadedPaths) {
-      const metadata = await getVideoMetadata(filepath);
-      metadataList.push(metadata);
+    const normalizedPaths: string[] = [];
+
+    // Normalize all videos to ensure compatibility
+    for (let i = 0; i < downloadedPaths.length; i++) {
+      try {
+        onProgress?.('validate', `Processing video ${i + 1}/${downloadedPaths.length}...`);
+        
+        const metadata = await getVideoMetadata(downloadedPaths[i]);
+        metadataList.push(metadata);
+
+        // Check if normalization is needed
+        const needsNormalization = metadata.codec !== 'h264' || !metadata.hasAudio;
+        
+        if (needsNormalization) {
+          onProgress?.('normalize', `Video ${i + 1} needs format conversion...`);
+          const normalizedPath = path.join(tempDir, `normalized_${i}.mp4`);
+          await normalizeVideo(downloadedPaths[i], normalizedPath);
+          normalizedPaths.push(normalizedPath);
+          tempFiles.push(normalizedPath);
+        } else {
+          normalizedPaths.push(downloadedPaths[i]);
+        }
+      } catch (error: any) {
+        throw new Error(`Video ${i + 1}: ${error.message}`);
+      }
     }
 
-    // Download background music if specified
     let musicPath: string | undefined;
     if (enhancements?.backgroundMusic?.audioUrl) {
       onProgress?.('download', 'Downloading background music...');
@@ -442,15 +411,14 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       tempFiles.push(musicPath);
     }
 
-    // Determine if we need enhancements (re-encoding required)
     const hasEnhancements = !!(
       enhancements?.transitions?.mode === 'crossfade' ||
       enhancements?.backgroundMusic ||
       (enhancements?.textOverlays && enhancements.textOverlays.length > 0) ||
-      (enhancements?.speed && enhancements.speed.mode !== 'none')
+      (enhancements?.speed && enhancements.speed.mode !== 'none') ||
+      (enhancements?.clipTrims && Object.keys(enhancements.clipTrims).length > 0)
     );
 
-    // Generate output filename
     const outputFilename = `combined_${jobId}.mp4`;
     const outputPath = path.join(OUTPUT_DIR, outputFilename);
     tempFiles.push(outputPath);
@@ -459,34 +427,28 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     let ffmpegCommand: string;
 
     if (!hasEnhancements) {
-      // Fast path: simple concatenation with no re-encoding
       onProgress?.('process', 'Combining videos (fast mode)...');
       
       const concatFilePath = path.join(tempDir, 'concat.txt');
-      await createConcatFile(downloadedPaths, concatFilePath);
+      await createConcatFile(normalizedPaths, concatFilePath);
       tempFiles.push(concatFilePath);
 
       ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -c copy "${outputPath}"`;
     } else {
-      // Enhanced path: build filter graph and re-encode
-      onProgress?.('process', 'Applying enhancements and combining videos...');
+      onProgress?.('process', 'Applying enhancements and combining...');
 
-      // Build input flags
-      const inputFlags = downloadedPaths.map(p => `-i "${p}"`).join(' ');
+      const inputFlags = normalizedPaths.map(p => `-i "${p}"`).join(' ');
       const musicInputFlag = musicPath ? `-i "${musicPath}"` : '';
 
-      // Build filter graphs (returns separate video and audio filters)
       const { videoFilters, audioFilters, adjustedDurations } = buildFilterGraph(
-        downloadedPaths.length,
+        normalizedPaths.length,
         enhancements,
         metadataList,
         !!musicPath
       );
 
-      // Update total duration with adjusted durations
       totalDuration = adjustedDurations.reduce((sum, d) => sum + d, 0);
 
-      // Build complete audio filter chain with optional background music
       let completeAudioFilter = audioFilters;
       let finalAudioLabel = '[aout]';
       
@@ -494,10 +456,8 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
         const volume = enhancements.backgroundMusic.volume || 0.3;
         const fadeIn = enhancements.backgroundMusic.fadeInSeconds || 0;
         const fadeOut = enhancements.backgroundMusic.fadeOutSeconds || 0;
-        const musicStreamIdx = downloadedPaths.length;
+        const musicStreamIdx = normalizedPaths.length;
 
-        // Apply volume, trim to match video duration, and fades to music
-        // CRITICAL: atrim ensures music duration exactly matches video duration to prevent amix errors
         let musicFilter = `[${musicStreamIdx}:a]atrim=0:${totalDuration},asetpts=PTS-STARTPTS,volume=${volume}`;
         if (fadeIn > 0) {
           musicFilter += `,afade=t=in:st=0:d=${fadeIn}`;
@@ -507,14 +467,12 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
         }
         musicFilter += `[music]`;
 
-        // Mix video audio with background music (both streams now have identical duration)
         completeAudioFilter += `;${musicFilter};[aout][music]amix=inputs=2:duration=first:dropout_transition=0[afinal]`;
         finalAudioLabel = '[afinal]';
       }
 
       const fullFilterComplex = videoFilters + ';' + completeAudioFilter;
 
-      // Build FFmpeg command with filter_complex
       ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 192k "${outputPath}"`;
     }
 
@@ -522,12 +480,11 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     
     await execAsync(ffmpegCommand, {
       timeout: FFMPEG_TIMEOUT,
-      maxBuffer: 50 * 1024 * 1024, // 50MB buffer
+      maxBuffer: 50 * 1024 * 1024,
     });
 
     onProgress?.('complete', 'Video combination complete!');
 
-    // Return relative path (from public directory)
     const relativePath = `/video-combinations/${outputFilename}`;
 
     return {
@@ -537,30 +494,58 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     };
 
   } catch (error: any) {
-    onProgress?.('error', error.message || 'Video combination failed');
-    throw new Error(`Video combination failed: ${error.message}`);
+    const errorMsg = error.message || 'Video combination failed';
+    const friendlyError = formatFFmpegError(errorMsg);
+    onProgress?.('error', friendlyError);
+    throw new Error(friendlyError);
   } finally {
     releaseJobSlot();
 
-    // Clean up temp directory (but not output file)
     if (tempDir) {
       try {
-        // Remove only the temp directory and downloaded inputs, not the output
         const filesToClean = tempFiles.filter(f => !f.startsWith(OUTPUT_DIR));
         for (const file of filesToClean) {
           await fs.unlink(file).catch(() => {});
         }
         await fs.rmdir(tempDir).catch(() => {});
       } catch (cleanupError) {
-        console.error('Temp cleanup error:', cleanupError);
+        console.error('Cleanup error:', cleanupError);
       }
     }
   }
 }
 
 /**
- * Clean up old combination files (for maintenance)
+ * Convert raw FFmpeg errors to user-friendly messages
  */
+function formatFFmpegError(error: string): string {
+  const lowerError = error.toLowerCase();
+
+  if (lowerError.includes('codec') || lowerError.includes('format')) {
+    return 'Video format incompatibility detected. Videos were automatically converted to a compatible format. Please try again.';
+  }
+  if (lowerError.includes('timeout')) {
+    return 'Video processing took too long. Try combining fewer videos or shorter clips.';
+  }
+  if (lowerError.includes('no space')) {
+    return 'Insufficient storage space. Please try again later.';
+  }
+  if (lowerError.includes('permission')) {
+    return 'Permission denied. Please check file access.';
+  }
+  if (lowerError.includes('connection') || lowerError.includes('download')) {
+    return 'Failed to download video. Please check your internet connection and try again.';
+  }
+  if (lowerError.includes('invalid') || lowerError.includes('corrupt')) {
+    return 'One or more videos appear to be corrupted. Please re-generate and try again.';
+  }
+  if (lowerError.includes('filter')) {
+    return 'Video enhancement filter failed. Try reducing the number of text overlays or effects.';
+  }
+
+  return 'Video combination failed. Please check your videos and try again.';
+}
+
 export async function cleanupOldCombinations(maxAgeHours: number = 72): Promise<void> {
   try {
     const files = await fs.readdir(OUTPUT_DIR);

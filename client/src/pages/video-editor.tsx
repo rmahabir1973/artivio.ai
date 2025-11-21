@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, Video, Plus, X, ArrowUp, ArrowDown, Combine, Music, Type, Zap, Sparkles } from "lucide-react";
+import { Loader2, Video, Plus, X, ArrowUp, ArrowDown, Combine, Music, Type, Zap, Sparkles, Clock, Trim } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Generation {
   id: string;
@@ -47,14 +48,19 @@ interface TextOverlay {
   color: string;
 }
 
+interface ClipTrim {
+  startSeconds: number;
+  endSeconds: number;
+}
+
 interface Speed {
   mode: 'none' | 'custom';
-  multipliers?: number[]; // For backend API
+  multipliers?: number[];
 }
 
 interface SpeedState {
   mode: 'none' | 'custom';
-  values?: Record<string, number>; // Internal state keyed by videoId
+  values?: Record<string, number>;
 }
 
 interface Transitions {
@@ -73,7 +79,8 @@ interface Enhancements {
   transitions?: Transitions;
   backgroundMusic?: BackgroundMusic;
   textOverlays?: TextOverlay[];
-  speed?: SpeedState; // Internal state uses Record
+  speed?: SpeedState;
+  clipTrims?: Record<string, ClipTrim>;
 }
 
 type EditorStep = 'select' | 'arrange' | 'enhance';
@@ -83,20 +90,17 @@ export default function VideoEditor() {
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<EditorStep>('select');
   const [enhancements, setEnhancements] = useState<Enhancements>({});
-  const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [selectedSunoTrack, setSelectedSunoTrack] = useState<string | null>(null);
 
-  // Synchronize speed values with selectedVideoIds to prevent orphaned entries
+  // Synchronize speed values with selectedVideoIds
   useEffect(() => {
     if (enhancements.speed?.mode === 'custom' && enhancements.speed.values) {
       const currentValues = enhancements.speed.values;
       const validVideoIds = new Set(selectedVideoIds);
-      
-      // Check if any videoId in values is not in selectedVideoIds
       const valueKeys = Object.keys(currentValues);
       const hasOrphans = valueKeys.some(id => !validVideoIds.has(id));
       
       if (hasOrphans) {
-        // Remove orphaned entries while preserving valid ones
         const cleanedValues = Object.fromEntries(
           Object.entries(currentValues).filter(([id]) => validVideoIds.has(id))
         );
@@ -118,9 +122,13 @@ export default function VideoEditor() {
     queryKey: ['/api/video-combinations'],
   });
 
-  // Filter only completed videos
+  // Filter videos and music tracks
   const availableVideos = generations.filter(
     g => g.type === 'video' && g.status === 'completed' && g.resultUrl
+  );
+
+  const availableMusicTracks = generations.filter(
+    g => g.type === 'music' && g.status === 'completed' && g.resultUrl
   );
 
   // Combine videos mutation
@@ -135,11 +143,10 @@ export default function VideoEditor() {
         title: "Video Combination Started",
         description: "Your videos are being combined. This may take a few minutes.",
       });
-      // Reset selection
       setSelectedVideoIds([]);
       setCurrentStep('select');
       setEnhancements({});
-      setMusicFile(null);
+      setSelectedSunoTrack(null);
     },
     onError: (error: any) => {
       toast({
@@ -150,22 +157,20 @@ export default function VideoEditor() {
     },
   });
 
-  // Calculate dynamic cost based on enhancements
   const calculateCost = () => {
-    let cost = 75; // Base cost
+    let cost = 75;
     if (enhancements.transitions?.mode === 'crossfade') cost += 25;
-    if (musicFile) cost += 25;
+    if (selectedSunoTrack) cost += 25;
     if (enhancements.textOverlays && enhancements.textOverlays.length > 0) {
-      cost += 25 * enhancements.textOverlays.length; // 25 credits per overlay
+      cost += 25 * enhancements.textOverlays.length;
     }
     if (enhancements.speed?.mode === 'custom') cost += 25;
+    if (enhancements.clipTrims && Object.keys(enhancements.clipTrims).length > 0) cost += 10;
     return cost;
   };
 
-  // Helper to get speed map
   const getSpeedMap = () => enhancements.speed?.values ?? {};
 
-  // Validate enhancements before submission
   const validateEnhancements = (): string | null => {
     if (enhancements.textOverlays) {
       for (let i = 0; i < enhancements.textOverlays.length; i++) {
@@ -189,9 +194,7 @@ export default function VideoEditor() {
 
   const handleToggleVideo = (videoId: string) => {
     if (selectedVideoIds.includes(videoId)) {
-      // Deselecting - remove video and clean up its speed multiplier
       setSelectedVideoIds(selectedVideoIds.filter(id => id !== videoId));
-      
       if (enhancements.speed?.mode === 'custom' && enhancements.speed.values) {
         const { [videoId]: _, ...remainingValues } = enhancements.speed.values;
         setEnhancements(prev => ({
@@ -199,8 +202,14 @@ export default function VideoEditor() {
           speed: { mode: 'custom', values: remainingValues }
         }));
       }
+      if (enhancements.clipTrims?.[videoId]) {
+        const { [videoId]: _, ...remainingTrims } = enhancements.clipTrims;
+        setEnhancements(prev => ({
+          ...prev,
+          clipTrims: remainingTrims
+        }));
+      }
     } else {
-      // Selecting - add video
       if (selectedVideoIds.length >= 20) {
         toast({
           title: "Maximum Reached",
@@ -218,7 +227,6 @@ export default function VideoEditor() {
       const newOrder = [...selectedVideoIds];
       [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
       setSelectedVideoIds(newOrder);
-      // Speed multipliers stay associated with videoIds automatically
     }
   };
 
@@ -227,19 +235,23 @@ export default function VideoEditor() {
       const newOrder = [...selectedVideoIds];
       [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
       setSelectedVideoIds(newOrder);
-      // Speed multipliers stay associated with videoIds automatically
     }
   };
 
   const handleRemoveFromSelection = (videoId: string) => {
     setSelectedVideoIds(selectedVideoIds.filter(id => id !== videoId));
-
-    // Clean up speed multiplier for removed video
     if (enhancements.speed?.mode === 'custom' && enhancements.speed.values) {
       const { [videoId]: _, ...remainingValues } = enhancements.speed.values;
       setEnhancements(prev => ({
         ...prev,
         speed: { mode: 'custom', values: remainingValues }
+      }));
+    }
+    if (enhancements.clipTrims?.[videoId]) {
+      const { [videoId]: _, ...remainingTrims } = enhancements.clipTrims;
+      setEnhancements(prev => ({
+        ...prev,
+        clipTrims: remainingTrims
       }));
     }
   };
@@ -254,7 +266,6 @@ export default function VideoEditor() {
       return;
     }
 
-    // Validate enhancements
     const validationError = validateEnhancements();
     if (validationError) {
       toast({
@@ -265,46 +276,20 @@ export default function VideoEditor() {
       return;
     }
 
-    // Upload music file if present
-    let musicUrl: string | undefined;
-    if (musicFile) {
-      const formData = new FormData();
-      formData.append('file', musicFile);
-      try {
-        const response = await apiRequest('POST', '/api/upload-temp-file', formData) as { url: string };
-        musicUrl = response.url;
-      } catch (error: any) {
-        toast({
-          title: "Music Upload Failed",
-          description: error.message || "Failed to upload background music",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    // Construct enhancements payload - ONLY include enabled features (omit disabled)
-    // Backend API expects mode: 'perClip' with perClip array, not 'custom' with multipliers
-    const enhancementsData: {
-      transitions?: Transitions;
-      backgroundMusic?: BackgroundMusic;
-      textOverlays?: TextOverlay[];
-      speed?: {
-        mode: 'perClip';
-        perClip: Array<{ clipIndex: number; factor: number }>;
-      };
-    } = {};
+    const enhancementsData: any = {};
 
     if (enhancements.transitions?.mode === 'crossfade') {
       enhancementsData.transitions = enhancements.transitions;
     }
 
-    if (musicUrl) {
-      enhancementsData.backgroundMusic = {
-        audioUrl: musicUrl,
-        volume: 0.3
-        // fadeInSeconds and fadeOutSeconds are optional - omit to use backend defaults
-      };
+    if (selectedSunoTrack) {
+      const sunoTrack = availableMusicTracks.find(t => t.id === selectedSunoTrack);
+      if (sunoTrack?.resultUrl) {
+        enhancementsData.backgroundMusic = {
+          audioUrl: sunoTrack.resultUrl,
+          volume: 0.3
+        };
+      }
     }
 
     if (enhancements.textOverlays && enhancements.textOverlays.length > 0) {
@@ -320,9 +305,13 @@ export default function VideoEditor() {
       enhancementsData.speed = { mode: 'perClip', perClip };
     }
 
-    // Only send enhancements if at least one feature is enabled
-    const finalEnhancements = Object.keys(enhancementsData).length > 0 ? enhancementsData : undefined;
+    if (enhancements.clipTrims && Object.keys(enhancements.clipTrims).length > 0) {
+      enhancementsData.clipTrims = Object.fromEntries(
+        selectedVideoIds.map((id, index) => [index, enhancements.clipTrims![id] || { startSeconds: 0, endSeconds: 0 }])
+      );
+    }
 
+    const finalEnhancements = Object.keys(enhancementsData).length > 0 ? enhancementsData : undefined;
     combineMutation.mutate({ videoIds: selectedVideoIds, enhancements: finalEnhancements });
   };
 
@@ -357,586 +346,649 @@ export default function VideoEditor() {
     <SidebarInset>
       <div className="h-full overflow-y-auto">
         <div className="container mx-auto p-6 max-w-7xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold" data-testid="text-heading">Video Editor</h1>
-        <p className="text-muted-foreground">Combine multiple AI-generated videos into longer content</p>
-      </div>
+          <div>
+            <h1 className="text-3xl font-bold" data-testid="text-heading">Video Editor</h1>
+            <p className="text-muted-foreground">Combine multiple AI-generated videos into longer content with professional enhancements</p>
+          </div>
 
-      {/* Selection Panel */}
-      {currentStep === 'select' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Step 1: Select Videos</CardTitle>
-            <CardDescription>Choose 2-20 videos to combine (in order)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {availableVideos.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No completed videos available for combination</p>
-                <p className="text-sm mt-2">Generate some videos first!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {availableVideos.map((video) => {
-                  const isSelected = selectedVideoIds.includes(video.id);
-                  const selectionIndex = selectedVideoIds.indexOf(video.id);
-
-                  return (
-                    <Card
-                      key={video.id}
-                      className={`cursor-pointer transition-all hover-elevate ${
-                        isSelected ? 'ring-2 ring-primary' : ''
-                      }`}
-                      onClick={() => handleToggleVideo(video.id)}
-                      data-testid={`card-video-${video.id}`}
-                    >
-                      <CardContent className="p-4 space-y-2">
-                        <div className="aspect-video bg-muted rounded-md overflow-hidden">
-                          {video.resultUrl && (
-                            <video
-                              src={video.resultUrl}
-                              className="w-full h-full object-cover"
-                              controls={false}
-                              muted
-                            />
-                          )}
-                        </div>
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{video.model}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">{video.prompt}</p>
-                          </div>
-                          {isSelected && (
-                            <Badge variant="default" data-testid={`badge-order-${selectionIndex + 1}`}>
-                              #{selectionIndex + 1}
-                            </Badge>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-
-            {selectedVideoIds.length > 0 && (
-              <div className="sticky bottom-0 bg-background border-t pt-4 mt-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {selectedVideoIds.length} video{selectedVideoIds.length !== 1 ? 's' : ''} selected
-                  </p>
-                  <Button 
-                    onClick={() => setCurrentStep('arrange')}
-                    data-testid="button-continue"
-                  >
-                    Continue to Arrange <ArrowDown className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Arrangement Panel */}
-      {currentStep === 'arrange' && selectedVideoIds.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Step 2: Arrange Order</CardTitle>
-            <CardDescription>Drag to reorder your videos before combining</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              {selectedVideoIds.map((videoId, index) => {
-                const video = getVideoById(videoId);
-                if (!video) return null;
-
-                return (
-                  <div
-                    key={videoId}
-                    className="flex items-center gap-3 p-3 bg-muted rounded-md"
-                    data-testid={`row-selected-video-${index}`}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleMoveUp(index)}
-                        disabled={index === 0}
-                        data-testid={`button-move-up-${index}`}
-                        className="h-6 w-6"
-                      >
-                        <ArrowUp className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleMoveDown(index)}
-                        disabled={index === selectedVideoIds.length - 1}
-                        data-testid={`button-move-down-${index}`}
-                        className="h-6 w-6"
-                      >
-                        <ArrowDown className="w-3 h-3" />
-                      </Button>
-                    </div>
-
-                    <Badge variant="outline" data-testid={`badge-position-${index + 1}`}>#{index + 1}</Badge>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{video.model}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{video.prompt}</p>
-                    </div>
-
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleRemoveFromSelection(videoId)}
-                      data-testid={`button-remove-${index}`}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+          {/* Selection Panel */}
+          {currentStep === 'select' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 1: Select Videos</CardTitle>
+                <CardDescription>Choose 2-20 videos to combine (in order)</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {availableVideos.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No completed videos available for combination</p>
+                    <p className="text-sm mt-2">Generate some videos first!</p>
                   </div>
-                );
-              })}
-            </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {availableVideos.map((video) => {
+                      const isSelected = selectedVideoIds.includes(video.id);
+                      const selectionIndex = selectedVideoIds.indexOf(video.id);
 
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => setCurrentStep('select')}
-                data-testid="button-back"
-              >
-                Back to Selection
-              </Button>
-              <Button
-                onClick={() => setCurrentStep('enhance')}
-                data-testid="button-continue-enhance"
-              >
-                Continue to Enhancements <ArrowDown className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Enhancements Panel */}
-      {currentStep === 'enhance' && selectedVideoIds.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Step 3: Configure Enhancements (Optional)</CardTitle>
-            <CardDescription>Add professional polish to your combined video</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Transitions */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <Label className="text-base font-semibold">Crossfade Transitions</Label>
-                  <Badge variant="outline">+25 credits</Badge>
-                </div>
-                <Switch
-                  checked={enhancements.transitions?.mode === 'crossfade'}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setEnhancements(prev => ({
-                        ...prev,
-                        transitions: { mode: 'crossfade', durationSeconds: 1.0 }
-                      }));
-                    } else {
-                      // Remove transitions enhancement entirely when disabled
-                      const { transitions, ...rest } = enhancements;
-                      setEnhancements(rest);
-                    }
-                  }}
-                  data-testid="switch-transitions"
-                />
-              </div>
-              {enhancements.transitions?.mode === 'crossfade' && (
-                <div className="pl-7 space-y-2">
-                  <Label className="text-sm">Duration: {enhancements.transitions.durationSeconds || 1.0}s</Label>
-                  <Slider
-                    value={[enhancements.transitions.durationSeconds || 1.0]}
-                    onValueChange={([value]) => {
-                      setEnhancements(prev => ({
-                        ...prev,
-                        transitions: { mode: 'crossfade', durationSeconds: value }
-                      }));
-                    }}
-                    min={0.5}
-                    max={3.0}
-                    step={0.1}
-                    data-testid="slider-transition-duration"
-                  />
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Background Music */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Music className="w-5 h-5 text-primary" />
-                  <Label className="text-base font-semibold">Background Music</Label>
-                  <Badge variant="outline">+25 credits</Badge>
-                </div>
-              </div>
-              <div className="pl-7">
-                <Input
-                  type="file"
-                  accept="audio/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setMusicFile(file);
-                    }
-                  }}
-                  data-testid="input-music-file"
-                />
-                {musicFile && (
-                  <p className="text-sm text-muted-foreground mt-2">Selected: {musicFile.name}</p>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Text Overlays */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Type className="w-5 h-5 text-primary" />
-                  <Label className="text-base font-semibold">Text Overlays</Label>
-                  <Badge variant="outline">+30 credits</Badge>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const newOverlay: TextOverlay = {
-                      text: '',
-                      timing: 'all',
-                      x: 50,
-                      y: 50,
-                      fontSize: 48,
-                      color: '#FFFFFF'
-                    };
-                    setEnhancements(prev => ({
-                      ...prev,
-                      textOverlays: [...(prev.textOverlays || []), newOverlay]
-                    }));
-                  }}
-                  data-testid="button-add-overlay"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Overlay
-                </Button>
-              </div>
-              {enhancements.textOverlays && enhancements.textOverlays.length > 0 && (
-                <div className="pl-7 space-y-4">
-                  {enhancements.textOverlays.map((overlay, index) => (
-                    <div key={index} className="p-4 bg-muted rounded-md space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="font-medium">Overlay #{index + 1}</Label>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => {
-                            setEnhancements(prev => ({
-                              ...prev,
-                              textOverlays: prev.textOverlays?.filter((_, i) => i !== index)
-                            }));
-                          }}
-                          data-testid={`button-remove-overlay-${index}`}
+                      return (
+                        <Card
+                          key={video.id}
+                          className={`cursor-pointer transition-all hover-elevate ${
+                            isSelected ? 'ring-2 ring-primary' : ''
+                          }`}
+                          onClick={() => handleToggleVideo(video.id)}
+                          data-testid={`card-video-${video.id}`}
                         >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
-                          <Label className="text-sm">Text</Label>
-                          <Textarea
-                            value={overlay.text}
-                            onChange={(e) => {
-                              setEnhancements(prev => ({
-                                ...prev,
-                                textOverlays: prev.textOverlays?.map((o, i) =>
-                                  i === index ? { ...o, text: e.target.value } : o
-                                )
-                              }));
-                            }}
-                            placeholder="Enter overlay text..."
-                            data-testid={`textarea-overlay-text-${index}`}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-sm">Timing</Label>
-                          <Select
-                            value={overlay.timing}
-                            onValueChange={(value: 'intro' | 'outro' | 'all') => {
-                              setEnhancements(prev => ({
-                                ...prev,
-                                textOverlays: prev.textOverlays?.map((o, i) =>
-                                  i === index ? { ...o, timing: value } : o
-                                )
-                              }));
-                            }}
-                          >
-                            <SelectTrigger data-testid={`select-timing-${index}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="intro">Intro (first 3s)</SelectItem>
-                              <SelectItem value="outro">Outro (last 3s)</SelectItem>
-                              <SelectItem value="all">Always visible</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-sm">Font Size</Label>
-                          <Input
-                            type="number"
-                            value={overlay.fontSize}
-                            onChange={(e) => {
-                              setEnhancements(prev => ({
-                                ...prev,
-                                textOverlays: prev.textOverlays?.map((o, i) =>
-                                  i === index ? { ...o, fontSize: parseInt(e.target.value) || 48 } : o
-                                )
-                              }));
-                            }}
-                            min={12}
-                            max={200}
-                            data-testid={`input-font-size-${index}`}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-sm">X Position (%)</Label>
-                          <Input
-                            type="number"
-                            value={overlay.x}
-                            onChange={(e) => {
-                              setEnhancements(prev => ({
-                                ...prev,
-                                textOverlays: prev.textOverlays?.map((o, i) =>
-                                  i === index ? { ...o, x: parseInt(e.target.value) || 50 } : o
-                                )
-                              }));
-                            }}
-                            min={0}
-                            max={100}
-                            data-testid={`input-x-position-${index}`}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-sm">Y Position (%)</Label>
-                          <Input
-                            type="number"
-                            value={overlay.y}
-                            onChange={(e) => {
-                              setEnhancements(prev => ({
-                                ...prev,
-                                textOverlays: prev.textOverlays?.map((o, i) =>
-                                  i === index ? { ...o, y: parseInt(e.target.value) || 50 } : o
-                                )
-                              }));
-                            }}
-                            min={0}
-                            max={100}
-                            data-testid={`input-y-position-${index}`}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Speed Control */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-primary" />
-                  <Label className="text-base font-semibold">Speed Control</Label>
-                  <Badge variant="outline">+25 credits</Badge>
-                </div>
-                <Switch
-                  checked={enhancements.speed?.mode === 'custom'}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      // Create Record keyed by videoId with default 1.0
-                      const speedMap = getSpeedMap();
-                      const values = Object.fromEntries(
-                        selectedVideoIds.map(id => [id, speedMap[id] ?? 1.0])
+                          <CardContent className="p-4 space-y-2">
+                            <div className="aspect-video bg-muted rounded-md overflow-hidden">
+                              {video.resultUrl && (
+                                <video
+                                  src={video.resultUrl}
+                                  className="w-full h-full object-cover"
+                                  controls={false}
+                                  muted
+                                />
+                              )}
+                            </div>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{video.model}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-2">{video.prompt}</p>
+                              </div>
+                              {isSelected && (
+                                <Badge variant="default" data-testid={`badge-order-${selectionIndex + 1}`}>
+                                  #{selectionIndex + 1}
+                                </Badge>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
                       );
-                      setEnhancements(prev => ({
-                        ...prev,
-                        speed: { mode: 'custom', values }
-                      }));
-                    } else {
-                      // Remove speed enhancement entirely when disabled
-                      const { speed, ...rest } = enhancements;
-                      setEnhancements(rest);
-                    }
-                  }}
-                  data-testid="switch-speed"
-                />
-              </div>
-              {enhancements.speed?.mode === 'custom' && (
-                <div className="pl-7 space-y-3">
+                    })}
+                  </div>
+                )}
+
+                {selectedVideoIds.length > 0 && (
+                  <div className="sticky bottom-0 bg-background border-t pt-4 mt-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        {selectedVideoIds.length} video{selectedVideoIds.length !== 1 ? 's' : ''} selected
+                      </p>
+                      <Button 
+                        onClick={() => setCurrentStep('arrange')}
+                        data-testid="button-continue"
+                      >
+                        Continue to Arrange <ArrowDown className="ml-2 w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Arrangement Panel */}
+          {currentStep === 'arrange' && selectedVideoIds.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 2: Arrange & Trim</CardTitle>
+                <CardDescription>Reorder videos and set trim points for precision editing</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
                   {selectedVideoIds.map((videoId, index) => {
                     const video = getVideoById(videoId);
-                    const speedMap = getSpeedMap();
-                    const multiplier = speedMap[videoId] ?? 1.0;
+                    if (!video) return null;
+
+                    const trim = enhancements.clipTrims?.[videoId] || { startSeconds: 0, endSeconds: 0 };
+
                     return (
-                      <div key={videoId} className="space-y-2">
-                        <Label className="text-sm">
-                          Clip #{index + 1}: {video?.model} - {multiplier.toFixed(2)}x
-                        </Label>
-                        <Slider
-                          value={[multiplier]}
-                          onValueChange={([value]) => {
-                            const newSpeedMap = { ...(enhancements.speed?.values ?? {}) };
-                            newSpeedMap[videoId] = value;
-                            setEnhancements(prev => ({
-                              ...prev,
-                              speed: { mode: 'custom', values: newSpeedMap }
-                            }));
-                          }}
-                          min={0.25}
-                          max={4.0}
-                          step={0.25}
-                          data-testid={`slider-speed-${index}`}
-                        />
+                      <div key={videoId} className="p-4 bg-muted rounded-lg space-y-3" data-testid={`row-selected-video-${index}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleMoveUp(index)}
+                              disabled={index === 0}
+                              data-testid={`button-move-up-${index}`}
+                              className="h-6 w-6"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleMoveDown(index)}
+                              disabled={index === selectedVideoIds.length - 1}
+                              data-testid={`button-move-down-${index}`}
+                              className="h-6 w-6"
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </Button>
+                          </div>
+
+                          <Badge variant="outline" data-testid={`badge-position-${index + 1}`}>#{index + 1}</Badge>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{video.model}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{video.prompt}</p>
+                          </div>
+
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleRemoveFromSelection(videoId)}
+                            data-testid={`button-remove-${index}`}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        {/* Trim Controls */}
+                        <div className="pl-12 space-y-2 p-3 bg-background rounded">
+                          <div className="flex items-center gap-2">
+                            <Trim className="w-4 h-4 text-muted-foreground" />
+                            <Label className="text-xs font-semibold">Trim Duration</Label>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">Start (s)</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={trim.startSeconds}
+                                onChange={(e) => {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    clipTrims: {
+                                      ...prev.clipTrims,
+                                      [videoId]: { ...trim, startSeconds: parseFloat(e.target.value) || 0 }
+                                    }
+                                  }));
+                                }}
+                                data-testid={`input-trim-start-${index}`}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">End (s)</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                value={trim.endSeconds}
+                                onChange={(e) => {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    clipTrims: {
+                                      ...prev.clipTrims,
+                                      [videoId]: { ...trim, endSeconds: parseFloat(e.target.value) || 0 }
+                                    }
+                                  }));
+                                }}
+                                data-testid={`input-trim-end-${index}`}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </div>
 
-            <Separator />
+                <Separator />
 
-            <div className="flex items-center justify-between pt-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setCurrentStep('arrange')}
-                data-testid="button-back-arrange"
-              >
-                Back to Arrangement
-              </Button>
-              <div className="flex items-center gap-3">
-                <p className="text-sm text-muted-foreground">
-                  Total Cost: <span className="font-bold text-foreground">{calculateCost()} credits</span>
-                </p>
-                <Button
-                  onClick={handleCombine}
-                  disabled={combineMutation.isPending || selectedVideoIds.length < 2}
-                  data-testid="button-combine-final"
-                >
-                  {combineMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                      Combining...
-                    </>
-                  ) : (
-                    <>
-                      <Combine className="mr-2 w-4 h-4" />
-                      Combine Videos
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setCurrentStep('select')}
+                    data-testid="button-back"
+                  >
+                    Back to Selection
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentStep('enhance')}
+                    data-testid="button-continue-enhance"
+                  >
+                    Continue to Enhancements <ArrowDown className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Combinations History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Video Combinations</CardTitle>
-          <CardDescription>Previously combined videos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingCombinations ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin" />
-            </div>
-          ) : combinations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No video combinations yet</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {combinations.map((combo) => (
-                <div
-                  key={combo.id}
-                  className="flex items-center gap-4 p-4 bg-muted rounded-md"
-                  data-testid={`combination-${combo.id}`}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {getStatusBadge(combo.status)}
-                      <Badge variant="outline">
-                        {combo.sourceVideoIds.length} videos
-                      </Badge>
-                      {combo.durationSeconds && (
-                        <Badge variant="outline">
-                          {combo.durationSeconds}s
-                        </Badge>
-                      )}
+          {/* Enhancements Panel */}
+          {currentStep === 'enhance' && selectedVideoIds.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Step 3: Configure Enhancements (Optional)</CardTitle>
+                <CardDescription>Add professional polish to your combined video</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Transitions */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                      <Label className="text-base font-semibold">Crossfade Transitions</Label>
+                      <Badge variant="outline">+25 credits</Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Created: {formatDate(combo.createdAt)}
-                    </p>
-                    {combo.errorMessage && (
-                      <p className="text-xs text-destructive mt-1">{combo.errorMessage}</p>
-                    )}
+                    <Switch
+                      checked={enhancements.transitions?.mode === 'crossfade'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setEnhancements(prev => ({
+                            ...prev,
+                            transitions: { mode: 'crossfade', durationSeconds: 1.0 }
+                          }));
+                        } else {
+                          const { transitions, ...rest } = enhancements;
+                          setEnhancements(rest);
+                        }
+                      }}
+                      data-testid="switch-transitions"
+                    />
                   </div>
-
-                  {combo.status === 'completed' && combo.outputPath && (
-                    <div className="flex gap-2">
-                      <a
-                        href={combo.outputPath}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        data-testid={`link-view-${combo.id}`}
-                      >
-                        <Button size="sm">
-                          <Video className="mr-2 w-3 h-3" />
-                          View
-                        </Button>
-                      </a>
-                      <a
-                        href={combo.outputPath}
-                        download
-                        data-testid={`link-download-${combo.id}`}
-                      >
-                        <Button size="sm" variant="outline">
-                          Download
-                        </Button>
-                      </a>
+                  {enhancements.transitions?.mode === 'crossfade' && (
+                    <div className="pl-7 space-y-2">
+                      <Label className="text-sm">Duration: {enhancements.transitions.durationSeconds || 1.0}s</Label>
+                      <Slider
+                        value={[enhancements.transitions.durationSeconds || 1.0]}
+                        onValueChange={([value]) => {
+                          setEnhancements(prev => ({
+                            ...prev,
+                            transitions: { mode: 'crossfade', durationSeconds: value }
+                          }));
+                        }}
+                        min={0.5}
+                        max={3.0}
+                        step={0.1}
+                        data-testid="slider-transition-duration"
+                      />
                     </div>
-                  )}
-
-                  {combo.status === 'processing' && (
-                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                   )}
                 </div>
-              ))}
-            </div>
+
+                <Separator />
+
+                {/* Background Music - Now with Suno Integration */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Music className="w-5 h-5 text-primary" />
+                      <Label className="text-base font-semibold">Background Music</Label>
+                      <Badge variant="outline">+25 credits</Badge>
+                    </div>
+                  </div>
+                  <Tabs defaultValue="suno" className="pl-7">
+                    <TabsList className="grid w-full grid-cols-1">
+                      <TabsTrigger value="suno">Suno Library</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="suno" className="space-y-3">
+                      {availableMusicTracks.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No Suno tracks generated yet. Create some music first!</p>
+                      ) : (
+                        <div className="space-y-2">
+                          <Select value={selectedSunoTrack || ''} onValueChange={(v) => setSelectedSunoTrack(v || null)}>
+                            <SelectTrigger data-testid="select-suno-track">
+                              <SelectValue placeholder="Select a music track" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableMusicTracks.map((track) => (
+                                <SelectItem key={track.id} value={track.id}>
+                                  {track.prompt.substring(0, 50)}... ({new Date(track.createdAt).toLocaleDateString()})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {selectedSunoTrack && (
+                            <div className="p-3 bg-muted rounded">
+                              <audio controls className="w-full h-8">
+                                <source src={availableMusicTracks.find(t => t.id === selectedSunoTrack)?.resultUrl} />
+                              </audio>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </div>
+
+                <Separator />
+
+                {/* Text Overlays */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Type className="w-5 h-5 text-primary" />
+                      <Label className="text-base font-semibold">Text Overlays</Label>
+                      <Badge variant="outline">+30 credits</Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const newOverlay: TextOverlay = {
+                          text: '',
+                          timing: 'all',
+                          x: 50,
+                          y: 50,
+                          fontSize: 48,
+                          color: '#FFFFFF'
+                        };
+                        setEnhancements(prev => ({
+                          ...prev,
+                          textOverlays: [...(prev.textOverlays || []), newOverlay]
+                        }));
+                      }}
+                      data-testid="button-add-overlay"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Overlay
+                    </Button>
+                  </div>
+                  {enhancements.textOverlays && enhancements.textOverlays.length > 0 && (
+                    <div className="pl-7 space-y-4">
+                      {enhancements.textOverlays.map((overlay, index) => (
+                        <div key={index} className="p-4 bg-muted rounded-md space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="font-medium">Overlay #{index + 1}</Label>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  textOverlays: prev.textOverlays?.filter((_, i) => i !== index)
+                                }));
+                              }}
+                              data-testid={`button-remove-overlay-${index}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="col-span-2">
+                              <Label className="text-sm">Text</Label>
+                              <Textarea
+                                value={overlay.text}
+                                onChange={(e) => {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    textOverlays: prev.textOverlays?.map((o, i) =>
+                                      i === index ? { ...o, text: e.target.value } : o
+                                    )
+                                  }));
+                                }}
+                                placeholder="Enter overlay text..."
+                                data-testid={`textarea-overlay-text-${index}`}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">Timing</Label>
+                              <Select
+                                value={overlay.timing}
+                                onValueChange={(value: 'intro' | 'outro' | 'all') => {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    textOverlays: prev.textOverlays?.map((o, i) =>
+                                      i === index ? { ...o, timing: value } : o
+                                    )
+                                  }));
+                                }}
+                              >
+                                <SelectTrigger data-testid={`select-timing-${index}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="intro">Intro (first 3s)</SelectItem>
+                                  <SelectItem value="outro">Outro (last 3s)</SelectItem>
+                                  <SelectItem value="all">Always visible</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">Font Size</Label>
+                              <Input
+                                type="number"
+                                value={overlay.fontSize}
+                                onChange={(e) => {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    textOverlays: prev.textOverlays?.map((o, i) =>
+                                      i === index ? { ...o, fontSize: parseInt(e.target.value) || 48 } : o
+                                    )
+                                  }));
+                                }}
+                                min={12}
+                                max={200}
+                                data-testid={`input-font-size-${index}`}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">X Position (%)</Label>
+                              <Input
+                                type="number"
+                                value={overlay.x}
+                                onChange={(e) => {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    textOverlays: prev.textOverlays?.map((o, i) =>
+                                      i === index ? { ...o, x: parseInt(e.target.value) || 50 } : o
+                                    )
+                                  }));
+                                }}
+                                min={0}
+                                max={100}
+                                data-testid={`input-x-position-${index}`}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">Y Position (%)</Label>
+                              <Input
+                                type="number"
+                                value={overlay.y}
+                                onChange={(e) => {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    textOverlays: prev.textOverlays?.map((o, i) =>
+                                      i === index ? { ...o, y: parseInt(e.target.value) || 50 } : o
+                                    )
+                                  }));
+                                }}
+                                min={0}
+                                max={100}
+                                data-testid={`input-y-position-${index}`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Speed Control */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-primary" />
+                      <Label className="text-base font-semibold">Speed Control</Label>
+                      <Badge variant="outline">+25 credits</Badge>
+                    </div>
+                    <Switch
+                      checked={enhancements.speed?.mode === 'custom'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          const speedMap = getSpeedMap();
+                          const values = Object.fromEntries(
+                            selectedVideoIds.map(id => [id, speedMap[id] ?? 1.0])
+                          );
+                          setEnhancements(prev => ({
+                            ...prev,
+                            speed: { mode: 'custom', values }
+                          }));
+                        } else {
+                          const { speed, ...rest } = enhancements;
+                          setEnhancements(rest);
+                        }
+                      }}
+                      data-testid="switch-speed"
+                    />
+                  </div>
+                  {enhancements.speed?.mode === 'custom' && (
+                    <div className="pl-7 space-y-3">
+                      {selectedVideoIds.map((videoId, index) => {
+                        const video = getVideoById(videoId);
+                        const speedMap = getSpeedMap();
+                        const multiplier = speedMap[videoId] ?? 1.0;
+                        return (
+                          <div key={videoId} className="space-y-2">
+                            <Label className="text-sm">
+                              Clip #{index + 1}: {video?.model} - {multiplier.toFixed(2)}x
+                            </Label>
+                            <Slider
+                              value={[multiplier]}
+                              onValueChange={([value]) => {
+                                const newSpeedMap = { ...(enhancements.speed?.values ?? {}) };
+                                newSpeedMap[videoId] = value;
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  speed: { mode: 'custom', values: newSpeedMap }
+                                }));
+                              }}
+                              min={0.25}
+                              max={4.0}
+                              step={0.25}
+                              data-testid={`slider-speed-${index}`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between pt-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setCurrentStep('arrange')}
+                    data-testid="button-back-arrange"
+                  >
+                    Back to Arrangement
+                  </Button>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      Total Cost: <span className="font-bold text-foreground">{calculateCost()} credits</span>
+                    </p>
+                    <Button
+                      onClick={handleCombine}
+                      disabled={combineMutation.isPending || selectedVideoIds.length < 2}
+                      data-testid="button-combine-final"
+                    >
+                      {combineMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                          Combining...
+                        </>
+                      ) : (
+                        <>
+                          <Combine className="mr-2 w-4 h-4" />
+                          Combine Videos
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Combinations History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Video Combinations</CardTitle>
+              <CardDescription>Previously combined videos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingCombinations ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : combinations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No video combinations yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {combinations.map((combo) => (
+                    <div
+                      key={combo.id}
+                      className="flex items-center gap-4 p-4 bg-muted rounded-md"
+                      data-testid={`combination-${combo.id}`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {getStatusBadge(combo.status)}
+                          <Badge variant="outline">
+                            {combo.sourceVideoIds.length} videos
+                          </Badge>
+                          {combo.durationSeconds && (
+                            <Badge variant="outline">
+                              {combo.durationSeconds}s
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Created: {formatDate(combo.createdAt)}
+                        </p>
+                        {combo.errorMessage && (
+                          <p className="text-xs text-destructive mt-1 max-w-md">{combo.errorMessage}</p>
+                        )}
+                      </div>
+
+                      {combo.status === 'completed' && combo.outputPath && (
+                        <div className="flex gap-2">
+                          <a
+                            href={combo.outputPath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-testid={`link-view-${combo.id}`}
+                          >
+                            <Button size="sm">
+                              <Video className="mr-2 w-3 h-3" />
+                              View
+                            </Button>
+                          </a>
+                          <a
+                            href={combo.outputPath}
+                            download
+                            data-testid={`link-download-${combo.id}`}
+                          >
+                            <Button size="sm" variant="outline">
+                              Download
+                            </Button>
+                          </a>
+                        </div>
+                      )}
+
+                      {combo.status === 'processing' && (
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </SidebarInset>
