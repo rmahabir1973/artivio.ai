@@ -4421,6 +4421,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get showcase videos for the models page
+  app.get('/api/showcase-videos', async (req: any, res) => {
+    try {
+      const allGenerations = await storage.getAllGenerations();
+      
+      // Filter to only completed videos, sort by newest first, take top 6
+      const showcaseVideos = allGenerations
+        .filter((gen: any) => gen.type === 'video' && gen.status === 'completed' && gen.resultUrl)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 6);
+      
+      res.json(showcaseVideos);
+    } catch (error: any) {
+      console.error('Showcase videos error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
