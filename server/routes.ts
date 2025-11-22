@@ -1027,12 +1027,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Suno, Image models (Nano Banana/4o-image/Flux), ElevenLabs, others
-      const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string
+      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Bytedance models (output_url, videoUrl), Suno, Image models, ElevenLabs, others
+      const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string (resultJson with resultUrls array)
                        callbackData.data?.video_url ||    // Runway uses snake_case
                        (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) || // Veo nested
-                       callbackData.data?.videoUrl ||     // Other models camelCase
+                       callbackData.data?.output_url ||   // Bytedance models (Wan, Kling, Grok, Sora) use output_url
+                       callbackData.data?.outputUrl ||    // Alternative camelCase for Bytedance models
+                       callbackData.data?.videoUrl ||     // Other video models camelCase
                        sunoAudioUrl ||                    // Suno audio
+                       (callbackData.data?.videoUrls && Array.isArray(callbackData.data.videoUrls) && callbackData.data.videoUrls[0]) || // Video URL array
+                       (callbackData.data?.urls && Array.isArray(callbackData.data.urls) && callbackData.data.urls[0]) || // Generic URLs array
                        callbackData.data?.imageUrl ||     // Image models (Nano Banana, 4o-image, Flux Kontext) - camelCase
                        callbackData.data?.image_url ||    // Image models - snake_case
                        (callbackData.data?.images && Array.isArray(callbackData.data.images) && callbackData.data.images[0]) || // Array of images
@@ -1041,7 +1045,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        callbackData.data?.data?.audioUrl || // ElevenLabs TTS/Sound Effects object format
                        (callbackData.data?.data && Array.isArray(callbackData.data.data) && callbackData.data.data[0]?.audio_url) || // ElevenLabs snake_case
                        callbackData.data?.data?.audio_url || // ElevenLabs snake_case object
-                       callbackData.data?.output_url ||   // ElevenLabs output format
                        (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) ||
                        (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) ||
                        (callbackData.data?.result_urls && callbackData.data.result_urls[0]) ||
@@ -1054,16 +1057,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        callbackData.data?.url ||
                        callbackData.data?.audioUrl;
       
-      // Log what we extracted (for debugging image model issues)
+      // Load generation to identify model type for logging
+      const generation = await storage.getGeneration(generationId);
+      const modelType = generation?.model || 'unknown';
+      
+      // Log what we extracted (for debugging model-specific issues)
       if (resultUrl) {
-        console.log(`✅ Extracted resultUrl: ${resultUrl}`);
+        console.log(`✅ [${modelType}] Extracted resultUrl: ${resultUrl}`);
       } else {
-        console.log(`⚠️  No resultUrl extracted. Checking callback structure for debugging:`);
+        console.log(`⚠️  [${modelType}] No resultUrl extracted. Checking callback structure for debugging:`);
+        console.log(`   - callbackData.data?.video_url (Runway): ${callbackData.data?.video_url}`);
+        console.log(`   - callbackData.data?.output_url (Bytedance): ${callbackData.data?.output_url}`);
+        console.log(`   - callbackData.data?.videoUrl: ${callbackData.data?.videoUrl}`);
+        console.log(`   - callbackData.data?.resultJson (Seedance): ${callbackData.data?.resultJson ? 'present' : 'absent'}`);
         console.log(`   - callbackData.data?.imageUrl: ${callbackData.data?.imageUrl}`);
         console.log(`   - callbackData.data?.image_url: ${callbackData.data?.image_url}`);
         console.log(`   - callbackData.data?.url: ${callbackData.data?.url}`);
-        console.log(`   - callbackData.data?.images (array): ${JSON.stringify(callbackData.data?.images)}`);
-        console.log(`   - callbackData.data?.results (array): ${JSON.stringify(callbackData.data?.results)}`);
         console.log(`   - Full data structure keys: ${Object.keys(callbackData.data || {}).join(', ')}`);
       }
       
