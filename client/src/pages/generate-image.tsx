@@ -19,6 +19,7 @@ import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SeedControl } from "@/components/SeedControl";
+import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 
 const IMAGE_MODEL_INFO = [
   { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
@@ -503,12 +504,25 @@ export default function GenerateImage() {
 
               {/* Seed Control - Only show for models that support it */}
               {modelSupportsSeed() && (
-                <SeedControl
-                  seed={seed}
-                  onSeedChange={setSeed}
-                  locked={seedLocked}
-                  onLockChange={setSeedLocked}
-                />
+                <>
+                  <SeedControl
+                    seed={seed}
+                    onSeedChange={setSeed}
+                    locked={seedLocked}
+                    onLockChange={setSeedLocked}
+                  />
+                  
+                  {/* Seed Library Actions */}
+                  <div className="flex gap-2">
+                    <SavedSeedsLibrary
+                      currentSeed={seed}
+                      onApplySeed={(appliedSeed) => {
+                        setSeed(appliedSeed);
+                        setSeedLocked(true); // Lock when applying a saved seed
+                      }}
+                    />
+                  </div>
+                </>
               )}
 
               {/* Credit Cost Warning */}
