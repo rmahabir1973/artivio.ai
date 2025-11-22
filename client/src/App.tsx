@@ -32,6 +32,7 @@ import Affiliates from "@/pages/affiliates";
 import Home from "@/pages/home";
 import GenerateVideo from "@/pages/generate-video";
 import GenerateSora from "@/pages/generate-sora";
+import GenerateGrok from "@/pages/generate-grok";
 import GenerateImage from "@/pages/generate-image";
 import GenerateMusic from "@/pages/generate-music";
 import SoundEffects from "@/pages/sound-effects";
@@ -96,6 +97,9 @@ function Router() {
       </Route>
       <Route path="/generate/sora">
         <ProtectedRoute><GenerateSora /></ProtectedRoute>
+      </Route>
+      <Route path="/generate/grok">
+        <ProtectedRoute><GenerateGrok /></ProtectedRoute>
       </Route>
       <Route path="/generate/image">
         <ProtectedRoute><GenerateImage /></ProtectedRoute>
