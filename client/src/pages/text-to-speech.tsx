@@ -9,7 +9,8 @@ import { Slider } from "@/components/ui/slider";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
-import { Volume2, Mic } from "lucide-react";
+import { Volume2, Mic, Download, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -303,6 +304,50 @@ export default function TextToSpeech() {
                 </div>
               </div>
             )}
+
+            {/* Tips & Best Practices */}
+            <Collapsible className="mt-6">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Tips & Best Practices
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-3">
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Choose the Right Voice</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Select voices based on tone and audience. Test different voices to find the best fit for your content.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Fine-tune Stability & Similarity</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Higher stability (0.7-1.0) ensures consistent voice. Increase similarity (0.75+) for more natural reproductions of cloned voices.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Adjust Speaking Speed</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Use 0.7-0.9x for dramatic effect, 1.0x for normal speech, and 1.1-1.2x for faster presentations.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Multilingual Support</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">The Multilingual v2 model supports 29+ languages. Test pronunciation on important terms beforehand.</p>
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
           <CardFooter>
             <Button

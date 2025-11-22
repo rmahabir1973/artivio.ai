@@ -9,7 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
-import { Loader2, FileAudio, Upload, Copy, Check, Clock } from "lucide-react";
+import { Loader2, FileAudio, Upload, Copy, Check, Clock, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { SttGeneration } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -260,6 +261,50 @@ export default function SpeechToText() {
               </div>
               <p className="text-xs text-muted-foreground ml-6">Add time markers to the transcription</p>
             </div>
+
+            {/* Tips & Best Practices */}
+            <Collapsible className="mt-6">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Tips & Best Practices
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-3">
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Ensure Clean Audio Quality</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Record in quiet environments. Use noise-reduction tools to remove background sounds for better transcription accuracy.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Select Correct Language</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Specify the primary language used in your audio. Leave blank for auto-detection of 95+ supported languages.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Clear Speaker Clarity</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Speakers should speak clearly at moderate pace. Mumbling, accents, or rapid speech may reduce accuracy.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Use Diarization for Multiple Speakers</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Enable diarization to identify different speakers in your audio. Perfect for interviews, meetings, and podcasts.</p>
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
           <CardFooter>
             <Button

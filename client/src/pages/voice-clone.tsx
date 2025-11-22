@@ -15,7 +15,8 @@ import { usePricing } from "@/hooks/use-pricing";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Mic, Upload, Trash2, ToggleLeft, ToggleRight, Square, Play, Pause, FileText, Radio } from "lucide-react";
+import { Loader2, Mic, Upload, Trash2, ToggleLeft, ToggleRight, Square, Play, Pause, FileText, Radio, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Professional 2-minute voice cloning script (phonetically diverse)
 const VOICE_SCRIPT = `Hello! I'm excited to help you create a high-quality voice clone. This script is designed to capture the full range of your voice, including different tones, emotions, and phonetic sounds.
@@ -631,6 +632,50 @@ export default function VoiceClone() {
                 </>
               )}
             </Button>
+
+            {/* Tips & Best Practices */}
+            <Collapsible className="mt-6">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Tips & Best Practices
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-3">
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Recording Quality is Key</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Record in a quiet environment using a good microphone. Clear audio without background noise ensures better voice clones.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Use Supported Audio Formats</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">MP3, WAV, and M4A formats work best. Ensure audio is under 10MB per file and 60+ seconds total for optimal results.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Minimize Background Noise</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Remove ambient sound, echo, and interference. Use voice isolation tools if needed before uploading.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Voice Distinctiveness Matters</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Record with varied emotions and tones. This helps the model capture your unique vocal characteristics.</p>
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
 

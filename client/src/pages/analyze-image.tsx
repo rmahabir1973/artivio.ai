@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
-import { Loader2, Image as ImageIcon, Upload, Sparkles, Clock } from "lucide-react";
+import { Loader2, Image as ImageIcon, Upload, Sparkles, Clock, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { ImageAnalysis } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -226,6 +227,50 @@ export default function AnalyzeImage() {
                 {customPrompt.length}/500 characters. Leave blank for comprehensive analysis.
               </p>
             </div>
+
+            {/* Tips & Best Practices */}
+            <Collapsible className="mt-6">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Tips & Best Practices
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-3">
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Ensure Image Clarity</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Use sharp, well-lit images for best results. Blurry or low-contrast images may produce less accurate analysis.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Higher Resolution Works Better</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Submit images with sufficient resolution (1000px minimum for detailed analysis). Small images limit detection capability.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Be Specific with Custom Prompts</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Guide analysis with specific questions. Example: "Identify all objects and describe their arrangement" yields better results than generic requests.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Leave Blank for Full Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Skip the custom prompt for comprehensive analysis covering subjects, composition, colors, mood, and artistic style.</p>
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
           <CardFooter>
             <Button

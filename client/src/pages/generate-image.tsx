@@ -605,6 +605,50 @@ export default function GenerateImage() {
                   ))}
                 </CollapsibleContent>
               </Collapsible>
+
+              {/* Tips & Best Practices */}
+              <Collapsible className="mt-6">
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    Tips & Best Practices
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-3">
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Write Clear, Detailed Prompts</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Be specific about what you want: composition, style, colors, mood. Longer descriptions yield better results than vague prompts.</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Choose Appropriate Aspect Ratios</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Square (1:1) for general use, 16:9 for landscape images, 9:16 for portrait/mobile. Match the output format to your needs.</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Use Seed for Consistency</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Lock seeds to regenerate similar images with minor prompt variations. Great for creating variations of a concept.</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Reference Artistic Styles</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Mention styles like "oil painting," "3D render," "photorealistic," or "anime" to guide the visual output.</p>
+                    </CardContent>
+                  </Card>
+                </CollapsibleContent>
+              </Collapsible>
             </CardContent>
             </Tabs>
           </Card>

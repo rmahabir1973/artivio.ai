@@ -15,7 +15,8 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Wand2, Download } from "lucide-react";
+import { Loader2, Wand2, Download, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
@@ -268,6 +269,50 @@ export default function SoundEffects() {
                   </>
                 )}
               </Button>
+
+              {/* Tips & Best Practices */}
+              <Collapsible className="mt-6">
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    Tips & Best Practices
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-3">
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Duration Settings Matter</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Specify your desired length (in seconds) to generate sounds of the right duration. Shorter sounds are faster to generate.</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Adjust Prompt Influence</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Lower values (0-0.5) create more experimental variations, while higher values (0.7-1.0) stick closer to your prompt description.</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Use Loop Option for Seamless Audio</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Enable looping to create sounds that repeat seamlessly, perfect for background ambience or game audio.</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-sm">Choose Quality Format</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-xs text-muted-foreground">Use MP3 192kbps for quality audio, or lower bitrates for smaller file sizes. Opus format offers excellent compression.</p>
+                    </CardContent>
+                  </Card>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </div>
         }

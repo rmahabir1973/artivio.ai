@@ -4,7 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, Video, Plus, X, Combine, Music, Type, Zap, Sparkles, Clock, ArrowDown } from "lucide-react";
+import { Loader2, Video, Plus, X, Combine, Music, Type, Zap, Sparkles, Clock, ArrowDown, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -1053,6 +1054,50 @@ export default function VideoEditor() {
                 </div>
 
                 <Separator />
+
+                {/* Tips & Best Practices */}
+                <Collapsible className="mt-6">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <ChevronDown className="mr-2 h-4 w-4" />
+                      Tips & Best Practices
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4 space-y-3">
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Organize Timeline Properly</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Arrange clips in logical order before combining. Reorder using drag-and-drop to match your desired sequence for better storytelling.</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Trim with Precision</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Use exact trim points to remove unwanted footage. Test different trim values to ensure smooth transitions between clips.</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Sync Audio Carefully</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Add background music at appropriate volume levels. Use fade-in/fade-out to blend audio smoothly with video transitions.</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Enhance for Quality</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Use crossfade transitions for professional feel. Add text overlays to introduce sections. Adjust speed for dramatic effects.</p>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
 
                 <div className="flex items-center justify-between pt-2">
                   <Button 

@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
-import { Loader2, Image as ImageIcon, Video, Upload } from "lucide-react";
+import { Loader2, Image as ImageIcon, Video, Upload, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { AvatarGeneration, VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -292,6 +293,50 @@ export default function TalkingAvatars() {
                 data-testid="input-emotion"
               />
             </div>
+
+            {/* Tips & Best Practices */}
+            <Collapsible className="mt-6">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Tips & Best Practices
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-3">
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Choose High-Quality Source Images</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Use clear, front-facing images with good lighting. Avoid glasses, heavy makeup, or extreme angles for best results.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Specify Emotion for Natural Expressions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Descriptors like "professional," "friendly," or "excited" help match the avatar's expressions to your script tone.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Pick the Right Provider</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Kling AI offers best quality but slower processing. Infinite Talk generates faster results with good lip-sync.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-sm">Video Quality Selection</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground">Use 720p for social media and web. 1080p offers premium quality for professional presentations and marketing.</p>
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
           <CardFooter>
             <Button

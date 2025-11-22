@@ -967,6 +967,50 @@ export default function GenerateMusic() {
                     <>Generate Music ({selectedModel?.cost} credits)</>
                   )}
                 </Button>
+
+                {/* Tips & Best Practices */}
+                <Collapsible className="mt-6">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <ChevronDown className="mr-2 h-4 w-4" />
+                      Tips & Best Practices
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4 space-y-3">
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Select Right Genre & Style</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Choose a specific genre to narrow down the sound direction. Add style tags like "upbeat," "dark," "cinematic" for better control.</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Structure Lyrics Properly</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Format lyrics with clear verse/chorus/bridge sections. Include line breaks for better rhythm generation and more natural flow.</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Use Custom Mode for Precision</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Enable custom mode and adjust style weight, creativity, and audio weight. Higher creativity produces more experimental results.</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-sm">Leverage Model Strengths</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground">Try different models with the same prompt. Some excel at vocals, others at instrumentals. Compare results to find your best fit.</p>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
             </Card>
 

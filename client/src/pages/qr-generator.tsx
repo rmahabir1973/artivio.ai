@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
-import { Download, QrCode, Upload, Trash2 } from "lucide-react";
+import { Download, QrCode, Upload, Trash2, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import QRCodeStyling from "qr-code-styling";
 import {
   Select,
@@ -414,18 +415,49 @@ export default function QRGenerator() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Tips</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>• Use high error correction (default) when adding a logo</p>
-              <p>• Keep logo size reasonable for best scanning results</p>
-              <p>• Test your QR code with multiple scanners before printing</p>
-              <p>• SVG format is best for print materials</p>
-              <p>• PNG format works well for digital use</p>
-            </CardContent>
-          </Card>
+          {/* Tips & Best Practices */}
+          <Collapsible className="mt-6">
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full">
+                <ChevronDown className="mr-2 h-4 w-4" />
+                Tips & Best Practices
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4 space-y-3">
+              <Card>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm">Logo Sizing Matters</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-xs text-muted-foreground">Keep logos at 20-30% of QR code size. Use high error correction when adding logos to maintain scannability.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm">Ensure Color Contrast</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-xs text-muted-foreground">Use dark colors for dots and light backgrounds. Avoid low-contrast combinations that reduce scan reliability.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm">Control Data Density</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-xs text-muted-foreground">Shorter URLs generate simpler, more reliable codes. Complex data requires larger QR codes for proper scanning.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm">Test Before Deployment</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-xs text-muted-foreground">Scan with multiple devices and apps before printing. Verify links work correctly and test from various distances.</p>
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
         </div>
