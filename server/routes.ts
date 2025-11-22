@@ -129,6 +129,19 @@ function getCallbackUrl(generationId: string): string {
   return `${baseUrl}/api/callback/kie/${generationId}`;
 }
 
+// Helper to generate a random seed for reproducible AI generation
+function generateRandomSeed(): number {
+  return Math.floor(Math.random() * 2147483647) + 1;
+}
+
+// Helper to check if a model supports seed parameters
+function modelSupportsSeed(model: string): boolean {
+  return model.startsWith('veo-') || 
+         model.startsWith('seedance-') || 
+         model.startsWith('wan-') ||
+         model === 'seedream-4';
+}
+
 // Background generation functions
 async function generateVideoInBackground(
   generationId: string, 
@@ -1245,7 +1258,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Insufficient credits" });
       }
 
-      // Create generation record with image-to-video support
+      // Pre-generate seed for models that support it
+      let finalParameters = parameters || {};
+      if (modelSupportsSeed(model)) {
+        // For Veo: Use seeds array (plural), for others: use seed (singular)
+        if (model.startsWith('veo-')) {
+          if (!finalParameters.seeds || !Array.isArray(finalParameters.seeds) || finalParameters.seeds.length === 0) {
+            finalParameters.seeds = [generateRandomSeed()];
+          }
+        } else {
+          // Seedance, Wan, and other models use singular 'seed'
+          if (finalParameters.seed === undefined) {
+            finalParameters.seed = generateRandomSeed();
+          }
+        }
+      }
+
+      // Create generation record with image-to-video support and seed
       const generation = await storage.createGeneration({
         userId,
         type: 'video',
@@ -1253,12 +1282,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         model,
         prompt,
         referenceImages,
-        parameters: parameters || {},
+        parameters: finalParameters,
         status: 'pending',
         creditsCost: cost,
+        seed: model.startsWith('veo-') 
+          ? (finalParameters.seeds?.[0] || null) 
+          : (finalParameters.seed || null),
       });
 
-      // Start generation in background (fire and forget)
+      // Start generation in background (fire and forget) with updated parameters including seed
       generateVideoInBackground(
         generation.id, 
         model, 
@@ -1266,7 +1298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generationType, 
         referenceImages,
         veoSubtype,
-        parameters || {}
+        finalParameters
       );
 
       res.json({ generationId: generation.id, message: "Video generation started" });
@@ -1303,25 +1335,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Insufficient credits" });
       }
 
+      // Pre-generate seed for models that support it
+      let finalParameters = parameters || {};
+      if (modelSupportsSeed(model)) {
+        if (finalParameters.seed === undefined) {
+          finalParameters.seed = generateRandomSeed();
+        }
+      }
+
       const generation = await storage.createGeneration({
         userId,
         type: 'image',
         model,
         prompt,
         referenceImages,
-        parameters: parameters || {},
+        parameters: finalParameters,
         status: 'pending',
         creditsCost: cost,
+        seed: finalParameters.seed || null,
       });
 
-      // Only pass referenceImages to background processing if mode is editing
+      // Only pass referenceImages to background processing if mode is editing, with updated parameters including seed
       generateImageInBackground(
         generation.id, 
         model, 
         prompt, 
         mode,
         mode === 'image-editing' ? referenceImages : undefined,
-        parameters || {}
+        finalParameters
       );
 
       res.json({ generationId: generation.id, message: "Image generation started" });

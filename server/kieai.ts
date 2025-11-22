@@ -3,6 +3,14 @@ import { storage } from "./storage";
 
 const KIE_API_BASE = "https://api.kie.ai";
 
+// Helper function to generate a random seed for reproducible AI generation
+// Seeds are positive integers that models use to initialize their random number generators
+function generateRandomSeed(): number {
+  // Generate a random integer between 1 and 2147483647 (max 32-bit signed int)
+  // Most AI models use 32-bit seeds, so we stay within that range
+  return Math.floor(Math.random() * 2147483647) + 1;
+}
+
 // Safe JSON stringifier to prevent circular reference errors
 function safeStringify(obj: any): string {
   const seen = new WeakSet();
@@ -335,13 +343,16 @@ export async function generateVideo(params: {
       }
     }
     
+    // Auto-generate seed if not provided (Veo uses array of seeds, one per image for REFERENCE_2_VIDEO)
+    const seeds = parameters.seeds || [generateRandomSeed()];
+    
     return await callKieApi('/api/v1/veo/generate', {
       prompt: params.prompt,
       model: kieModel,
       generationType: veoGenerationType,
       imageUrls: referenceImages.length > 0 ? referenceImages : undefined,
       aspectRatio: parameters.aspectRatio || '16:9',
-      seeds: parameters.seeds,
+      seeds,
       watermark: parameters.watermark,
       callBackUrl: parameters.callBackUrl,
       enableTranslation: true, // Enable automatic prompt translation for better results
@@ -385,7 +396,8 @@ export async function generateVideo(params: {
     const resolution = parameters.resolution || '720p';
     const duration = parameters.duration ? String(parameters.duration) : '10';
     const cameraFixed = parameters.cameraFixed !== undefined ? parameters.cameraFixed : false;
-    const seed = parameters.seed !== undefined ? parameters.seed : -1;
+    // Auto-generate seed if not provided (instead of using -1)
+    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
     const aspectRatio = parameters.aspectRatio || '16:9';
     
     // Validate aspect ratio for Seedance models (21:9, 16:9, 9:16, 1:1, 4:3, 3:4 supported)
@@ -440,6 +452,9 @@ export async function generateVideo(params: {
     const isImageToVideo = referenceImages.length > 0;
     const wanModel = isImageToVideo ? 'wan/2-5-image-to-video' : 'wan/2-5-text-to-video';
     
+    // Auto-generate seed if not provided
+    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
+    
     // Build input object
     const inputPayload: any = {
       prompt: params.prompt,
@@ -447,7 +462,7 @@ export async function generateVideo(params: {
       resolution,
       negative_prompt: parameters.negativePrompt,
       enable_prompt_expansion: parameters.enablePromptExpansion !== undefined ? parameters.enablePromptExpansion : true,
-      seed: parameters.seed,
+      seed,
     };
     
     // For image-to-video: add image_url to input (Wan requires single image)
@@ -621,7 +636,8 @@ export async function generateImage(params: {
     const imageResolution = parameters.imageResolution || '1K';
     const imageSize = parameters.imageSize || 'square_hd';
     const maxImages = parameters.maxImages || 1;
-    const seed = parameters.seed;
+    // Auto-generate seed if not provided
+    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
     
     // Build input object
     const inputPayload: any = {
