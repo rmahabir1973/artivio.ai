@@ -91,6 +91,36 @@ interface Enhancements {
 
 type EditorStep = 'select' | 'arrange' | 'enhance';
 
+// Translate technical errors to user-friendly messages
+const getUserFriendlyErrorMessage = (technicalError: string | null): string => {
+  if (!technicalError) return "An error occurred during video combination.";
+  
+  const errorLower = technicalError.toLowerCase();
+  
+  // FFmpeg/video processing errors
+  if (errorLower.includes('ffprobe') || errorLower.includes('probe video metadata')) {
+    return "Unable to read video file. The video format may be corrupted or unsupported. Please try with a different video.";
+  }
+  if (errorLower.includes('ffmpeg') || errorLower.includes('command failed')) {
+    return "Video processing failed. This may be due to incompatible video formats or corrupted files. Please try again with different videos.";
+  }
+  if (errorLower.includes('format incompatibility')) {
+    return "Video format is not supported. Please use standard video formats like MP4, WebM, or MOV.";
+  }
+  if (errorLower.includes('codec')) {
+    return "Video codec is not supported. Please use videos with common codecs like H.264 or VP9.";
+  }
+  if (errorLower.includes('timeout') || errorLower.includes('exceeded')) {
+    return "Video processing took too long and was cancelled. Please try with shorter videos.";
+  }
+  if (errorLower.includes('memory') || errorLower.includes('out of memory')) {
+    return "Processing ran out of memory. Please try with shorter videos or fewer effects.";
+  }
+  
+  // Default fallback
+  return "Video combination failed. Please try again with different videos or fewer effects.";
+};
+
 export default function VideoEditor() {
   const { toast } = useToast();
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
@@ -1085,7 +1115,7 @@ export default function VideoEditor() {
                           Created: {formatDate(combo.createdAt)}
                         </p>
                         {combo.errorMessage && (
-                          <p className="text-xs text-destructive mt-1 max-w-md">{combo.errorMessage}</p>
+                          <p className="text-xs text-destructive mt-1 max-w-md">{getUserFriendlyErrorMessage(combo.errorMessage)}</p>
                         )}
                       </div>
 
