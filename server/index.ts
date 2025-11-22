@@ -82,6 +82,10 @@ app.use((req, res, next) => {
     console.error('Startup cleanup failed:', err);
   });
   
+  // Initialize subscription plans (creates default plans if they don't exist)
+  const { initializePlans } = await import('./seedPlans');
+  await initializePlans();
+  
   // Initialize Passport strategies and middleware for authentication
   initializePassportStrategies(app);
   

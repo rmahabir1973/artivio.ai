@@ -19,9 +19,14 @@ export default function Pricing() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const { data: plansData, isLoading } = useQuery<SubscriptionPlan[]>({
+  const { data: plansData, isLoading, error } = useQuery<SubscriptionPlan[]>({
     queryKey: ['/api/plans'],
   });
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[Pricing] Plans query state:', { isLoading, plansCount: plansData?.length, error });
+  }, [isLoading, plansData, error]);
 
   // Fetch current subscription to check which plan user is on (only for authenticated users)
   const { data: subscription, isLoading: isLoadingSubscription, isError: isSubscriptionError } = useQuery<any>({
@@ -141,6 +146,17 @@ export default function Pricing() {
         {isLoading ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loader-plans" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <p className="text-destructive font-semibold mb-2">Failed to load pricing plans</p>
+            <p className="text-muted-foreground text-sm mb-4">{error instanceof Error ? error.message : 'An error occurred'}</p>
+            <Button onClick={() => window.location.reload()}>Reload Page</Button>
+          </div>
+        ) : !plansData || plansData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <p className="text-muted-foreground font-semibold mb-2">No pricing plans available</p>
+            <p className="text-muted-foreground text-sm">Please contact support if this persists.</p>
           </div>
         ) : (
           <>

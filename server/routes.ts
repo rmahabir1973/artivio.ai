@@ -4439,6 +4439,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/plans', async (req, res) => {
     try {
       const plans = await storage.getAllPlans();
+      console.log('[API] /api/plans - Retrieved plans:', plans.length, 'plans');
+      if (plans.length > 0) {
+        console.log('[API] /api/plans - First plan:', JSON.stringify(plans[0], null, 2));
+      }
       res.json(plans);
     } catch (error) {
       console.error('Error fetching plans:', error);
