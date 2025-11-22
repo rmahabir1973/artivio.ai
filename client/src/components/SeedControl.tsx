@@ -54,7 +54,13 @@ export function SeedControl({
           </Label>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              <button
+                type="button"
+                className="inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                data-testid="button-seed-info"
+              >
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </button>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               <p className="text-sm">
