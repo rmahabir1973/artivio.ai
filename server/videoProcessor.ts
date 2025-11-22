@@ -171,15 +171,24 @@ async function getAudioDuration(filepath: string): Promise<number> {
  */
 async function normalizeVideo(inputPath: string, outputPath: string): Promise<void> {
   try {
-    const command = `ffmpeg -i "${inputPath}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -y "${outputPath}"`;
+    // Get metadata first to check for audio
+    const metadata = await getVideoMetadata(inputPath);
+    
+    // Build audio encoding based on whether video has audio
+    const audioFlags = metadata.hasAudio 
+      ? '-c:a aac -b:a 128k' 
+      : '-an'; // No audio output if input has no audio
+    
+    const command = `ffmpeg -i "${inputPath}" -c:v libx264 -preset fast -crf 23 ${audioFlags} -y "${outputPath}"`;
     
     await execAsync(command, {
       timeout: 300000,
       maxBuffer: 50 * 1024 * 1024,
     });
 
-    console.log(`✓ Normalized video: ${outputPath}`);
+    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'})`);
   } catch (error: any) {
+    console.error(`Normalization error for ${inputPath}:`, error.message);
     throw new Error(`Failed to normalize video: ${error.message}`);
   }
 }
