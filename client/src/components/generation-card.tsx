@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Edit3, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -17,6 +17,24 @@ import { fetchWithAuth } from "@/lib/authBridge";
 interface GenerationCardProps {
   generation: Generation;
 }
+
+// Get fallback display for types without preview images
+const getFallbackDisplay = (type: string): { icon: React.ReactNode; bgColor: string; label: string } => {
+  const fallbacks: Record<string, { icon: React.ReactNode; bgColor: string; label: string }> = {
+    'sound-effect': { icon: <Volume2 className="h-12 w-12" />, bgColor: 'from-orange-900/20 to-red-900/20', label: 'Sound Effect' },
+    'text-to-speech': { icon: <Volume2 className="h-12 w-12" />, bgColor: 'from-blue-900/20 to-cyan-900/20', label: 'Text-to-Speech' },
+    'voice-clone': { icon: <Mic className="h-12 w-12" />, bgColor: 'from-purple-900/20 to-pink-900/20', label: 'Voice Clone' },
+    'speech-to-text': { icon: <Mic className="h-12 w-12" />, bgColor: 'from-indigo-900/20 to-blue-900/20', label: 'Speech-to-Text' },
+    'analyze-image': { icon: <Zap className="h-12 w-12" />, bgColor: 'from-yellow-900/20 to-orange-900/20', label: 'Image Analysis' },
+    'audio-converter': { icon: <FileAudio className="h-12 w-12" />, bgColor: 'from-green-900/20 to-teal-900/20', label: 'Audio Converter' },
+    'talking-avatar': { icon: <Users className="h-12 w-12" />, bgColor: 'from-rose-900/20 to-pink-900/20', label: 'Talking Avatar' },
+    'qr-generator': { icon: <QrCode className="h-12 w-12" />, bgColor: 'from-slate-900/20 to-gray-900/20', label: 'QR Code' },
+    'chat': { icon: <MessageSquare className="h-12 w-12" />, bgColor: 'from-emerald-900/20 to-green-900/20', label: 'Chat' },
+    'video-editor': { icon: <Edit3 className="h-12 w-12" />, bgColor: 'from-fuchsia-900/20 to-purple-900/20', label: 'Video Editor' },
+  };
+  
+  return fallbacks[type] || { icon: <Music className="h-12 w-12" />, bgColor: 'from-gray-900/20 to-slate-900/20', label: 'Generated Content' };
+};
 
 export function GenerationCard({ generation }: GenerationCardProps) {
   const { toast } = useToast();
@@ -258,11 +276,17 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             </div>
           )}
           
-          {!generation.resultUrl && generation.status === 'completed' && (
-            <div className="aspect-video rounded-md bg-muted flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">No result available</p>
-            </div>
-          )}
+          {!generation.resultUrl && generation.status === 'completed' && (() => {
+            const fallback = getFallbackDisplay(generation.type);
+            return (
+              <div className={`aspect-video rounded-md bg-gradient-to-br ${fallback.bgColor} flex flex-col items-center justify-center`}>
+                <div className="text-muted-foreground opacity-70">
+                  {fallback.icon}
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">{fallback.label}</p>
+              </div>
+            );
+          })()}
 
           {(generation.status === 'pending' || generation.status === 'processing') && (
             <div className="aspect-video rounded-md bg-muted flex items-center justify-center">
