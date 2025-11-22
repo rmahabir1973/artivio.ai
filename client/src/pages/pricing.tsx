@@ -114,12 +114,6 @@ export default function Pricing() {
   };
 
   const getDisplayPrice = (plan: SubscriptionPlan): number => {
-    if (billingPeriod === "annual" && plan.annualPrice) {
-      return plan.annualPrice;
-    }
-    if (billingPeriod === "monthly" && plan.monthlyPrice) {
-      return plan.monthlyPrice;
-    }
     return plan.price;
   };
 
@@ -183,7 +177,7 @@ export default function Pricing() {
                 </button>
                 <button
                   onClick={() => setBillingPeriod("annual")}
-                  className={`px-6 py-2 rounded-md font-medium transition-all relative ${
+                  className={`px-6 py-2 rounded-md font-medium transition-all ${
                     billingPeriod === "annual"
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "text-muted-foreground hover:text-foreground"
@@ -191,11 +185,6 @@ export default function Pricing() {
                   data-testid="button-annual"
                 >
                   Annual
-                  {plans.some(p => p.savingsPercentage && p.savingsPercentage > 0) && (
-                    <span className="absolute -top-3 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      {plans[0]?.savingsPercentage}% OFF
-                    </span>
-                  )}
                 </button>
               </div>
             </div>
@@ -203,16 +192,12 @@ export default function Pricing() {
             {/* Plans Grid */}
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
               {plans
-                .filter(p => {
-                  if (billingPeriod === "trial") return p.billingPeriod === "trial";
-                  return p.billingPeriod !== "trial";
-                })
+                .filter(p => p.billingPeriod === billingPeriod)
                 .map((plan) => {
                   const features = Array.isArray(plan.features) ? plan.features : [];
                   const isTrial = plan.billingPeriod === 'trial';
                   const isCurrentPlan = user && !isLoadingSubscription && !isSubscriptionError && plan.id === currentPlanId;
                   const displayPrice = getDisplayPrice(plan);
-                  const savingsText = billingPeriod === "annual" && plan.savingsPercentage ? `Save ${plan.savingsPercentage}%` : null;
                   
                   return (
                     <Card 
@@ -232,12 +217,6 @@ export default function Pricing() {
                             <Zap className="w-3 h-3" />
                             Most Popular
                           </span>
-                        </div>
-                      )}
-
-                      {savingsText && (
-                        <div className="absolute -top-3 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                          {savingsText}
                         </div>
                       )}
                       

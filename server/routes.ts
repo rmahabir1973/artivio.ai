@@ -3711,7 +3711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const { name, displayName, description, price, monthlyPrice, annualPrice, savingsPercentage, creditsPerMonth, billingPeriod, features, sortOrder } = req.body;
+      const { name, displayName, description, price, creditsPerMonth, billingPeriod, features, sortOrder } = req.body;
 
       // Validate required fields
       if (!name || !displayName || price === undefined || creditsPerMonth === undefined) {
@@ -3728,27 +3728,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Credits per month must be a positive number" });
       }
 
-      // Validate optional pricing fields
-      if (monthlyPrice !== undefined && (typeof monthlyPrice !== 'number' || monthlyPrice < 0)) {
-        return res.status(400).json({ message: "Monthly price must be a positive number (in cents)" });
-      }
-
-      if (annualPrice !== undefined && (typeof annualPrice !== 'number' || annualPrice < 0)) {
-        return res.status(400).json({ message: "Annual price must be a positive number (in cents)" });
-      }
-
-      if (savingsPercentage !== undefined && (typeof savingsPercentage !== 'number' || savingsPercentage < 0 || savingsPercentage > 100)) {
-        return res.status(400).json({ message: "Savings percentage must be between 0 and 100" });
-      }
-
       const created = await storage.createPlan({
         name,
         displayName,
         description: description || null,
         price,
-        monthlyPrice: monthlyPrice || null,
-        annualPrice: annualPrice || null,
-        savingsPercentage: savingsPercentage || null,
         creditsPerMonth,
         billingPeriod: billingPeriod || 'monthly',
         features: features || null,
@@ -3788,24 +3772,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Price must be a positive number (in cents)" });
         }
         updates.price = req.body.price;
-      }
-      if (req.body.monthlyPrice !== undefined) {
-        if (typeof req.body.monthlyPrice !== 'number' || req.body.monthlyPrice < 0) {
-          return res.status(400).json({ message: "Monthly price must be a positive number (in cents)" });
-        }
-        updates.monthlyPrice = req.body.monthlyPrice || null;
-      }
-      if (req.body.annualPrice !== undefined) {
-        if (typeof req.body.annualPrice !== 'number' || req.body.annualPrice < 0) {
-          return res.status(400).json({ message: "Annual price must be a positive number (in cents)" });
-        }
-        updates.annualPrice = req.body.annualPrice || null;
-      }
-      if (req.body.savingsPercentage !== undefined) {
-        if (typeof req.body.savingsPercentage !== 'number' || req.body.savingsPercentage < 0 || req.body.savingsPercentage > 100) {
-          return res.status(400).json({ message: "Savings percentage must be between 0 and 100" });
-        }
-        updates.savingsPercentage = req.body.savingsPercentage || null;
       }
       if (req.body.creditsPerMonth !== undefined) {
         if (typeof req.body.creditsPerMonth !== 'number' || req.body.creditsPerMonth < 0) {
