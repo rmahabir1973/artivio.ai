@@ -61,7 +61,7 @@ export default function Landing() {
               <a href="#pricing" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-pricing">
                 Pricing
               </a>
-              <a href="#showcase" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-showcase">
+              <a href="/video-models" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-showcase">
                 Showcase
               </a>
               <a href="#faq" className="text-gray-300 hover:text-white transition-colors" data-testid="nav-faq">

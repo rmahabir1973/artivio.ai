@@ -57,6 +57,7 @@ import Terms from "@/pages/terms";
 import Contact from "@/pages/contact";
 import Referrals from "@/pages/referrals";
 import Leaderboard from "@/pages/leaderboard";
+import VideoModelsShowcase from "@/pages/video-models-showcase";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/templates" component={Workflows} /> {/* Alias for /workflows */}
       <Route path="/affiliates" component={Affiliates} />
       <Route path="/leaderboard" component={Leaderboard} />
+      <Route path="/video-models" component={VideoModelsShowcase} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />
