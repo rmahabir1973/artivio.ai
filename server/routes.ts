@@ -811,6 +811,11 @@ async function uploadExtendInBackground(generationId: string, prompt: string, au
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add lightweight health check endpoint - responds immediately for deployment health checks
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
+
   // Initialize auth - fail-fast if this doesn't work
   // Auth is critical; without it, all protected routes will fail
   try {
@@ -829,22 +834,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (error) {
     console.warn('Warning: Failed to initialize API keys from environment:', error);
     console.warn('API keys can be configured later via the admin panel.');
-  }
-
-  // Initialize subscription plans
-  try {
-    const { initializePlans } = await import('./seedPlans');
-    await initializePlans();
-  } catch (error) {
-    console.warn('Warning: Failed to initialize subscription plans:', error);
-  }
-
-  // Initialize pricing data
-  try {
-    const { seedPricing } = await import('./seedPricing');
-    await seedPricing();
-  } catch (error) {
-    console.warn('Warning: Failed to initialize pricing data:', error);
   }
 
   // Hardcoded admin emails for access control
