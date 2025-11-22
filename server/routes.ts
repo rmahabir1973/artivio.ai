@@ -1972,9 +1972,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         image: { ext: 'png', contentType: 'image/png' },
         music: { ext: 'mp3', contentType: 'audio/mpeg' },
         'sound-effects': { ext: 'mp3', contentType: 'audio/mpeg' },
+        upscaling: { ext: 'png', contentType: 'image/png' }, // Default to image for upscaling
       };
 
-      const fileInfo = extensionMap[generation.type] || { ext: 'bin', contentType: 'application/octet-stream' };
+      let fileInfo = extensionMap[generation.type];
+      
+      // For upscaling, check if it's video or image based on the model name
+      if (generation.type === 'upscaling' && generation.model) {
+        if (generation.model.includes('video')) {
+          fileInfo = { ext: 'mp4', contentType: 'video/mp4' };
+        } else {
+          fileInfo = { ext: 'png', contentType: 'image/png' };
+        }
+      }
+      
+      fileInfo = fileInfo || { ext: 'bin', contentType: 'application/octet-stream' };
       const filename = `artivio-${generation.type}-${generation.id}.${fileInfo.ext}`;
 
       // Set response headers for download
