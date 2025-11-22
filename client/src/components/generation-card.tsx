@@ -273,6 +273,26 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   />
                 </div>
               )}
+              {generation.type === 'sound-effect' && (
+                <div className="flex items-center justify-center h-full bg-gradient-to-br from-orange-900/20 to-red-900/20">
+                  <audio 
+                    src={generation.resultUrl} 
+                    controls 
+                    className="w-full px-4"
+                    data-testid={`audio-result-${generation.id}`}
+                  />
+                </div>
+              )}
+              {generation.type === 'text-to-speech' && (
+                <div className="flex items-center justify-center h-full bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
+                  <audio 
+                    src={generation.resultUrl} 
+                    controls 
+                    className="w-full px-4"
+                    data-testid={`audio-result-${generation.id}`}
+                  />
+                </div>
+              )}
             </div>
           )}
           
