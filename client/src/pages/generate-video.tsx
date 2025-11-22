@@ -21,6 +21,7 @@ import { PreviewPanel } from "@/components/preview-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
+import { useLocation } from "wouter";
 
 const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1": ["16:9", "9:16"],
@@ -144,6 +145,7 @@ export default function GenerateVideo() {
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
   const { markStepComplete } = useOnboarding();
+  const [, navigate] = useLocation();
   
   const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
   const [model, setModel] = useState("veo-3.1");
@@ -742,9 +744,9 @@ export default function GenerateVideo() {
             {/* Model Comparison - Collapsible */}
             <Collapsible className="mt-6">
               <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full" data-testid="button-toggle-models">
+                <Button variant="outline" className="w-full" onClick={() => navigate("/video-models")} data-testid="button-view-all-models">
                   <ChevronDown className="mr-2 h-4 w-4" />
-                  View All Models
+                  View All Models & Showcase
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-4 space-y-3">
