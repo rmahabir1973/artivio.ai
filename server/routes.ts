@@ -1058,8 +1058,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        callbackData.data?.audioUrl;
       
       // Load generation to identify model type for logging
-      const generation = await storage.getGeneration(generationId);
-      const modelType = generation?.model || 'unknown';
+      // Try avatar generation first, then fall back to regular generation
+      const avatarGen = await storage.db.query.avatarGenerations.findFirst({
+        where: (fields, { eq }) => eq(fields.id, generationId),
+      }).catch(() => undefined);
+      
+      const generation = avatarGen || (await storage.getGeneration(generationId));
+      const isAvatarGeneration = !!avatarGen;
+      const modelType = generation?.model || (isAvatarGeneration ? 'talking-avatar' : 'unknown');
       
       // Log what we extracted (for debugging model-specific issues)
       if (resultUrl) {
@@ -1209,26 +1215,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Prepare updates object with resultUrl and optional seed
-          const updates: any = { resultUrl };
+          const updates: any = { resultUrl, status: 'completed', completedAt: new Date() };
           if (seedValue !== undefined && seedValue !== null) {
             updates.seed = seedValue;
             console.log(`📍 Captured seed value for ${generationId}: ${seedValue}`);
           }
           
-          await storage.finalizeGeneration(generationId, 'success', updates);
-          console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+          // Update appropriate table based on generation type
+          if (isAvatarGeneration) {
+            await storage.updateAvatarGeneration(generationId, updates);
+            console.log(`✓ Avatar Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+          } else {
+            await storage.finalizeGeneration(generationId, 'success', updates);
+            console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+          }
           
           // Generate thumbnail for video generations (async, don't block callback)
-          const generation = await storage.getGeneration(generationId);
-          if (generation && generation.type === 'video' && resultUrl) {
+          const gen = await storage.getGeneration(generationId);
+          if (gen && gen.type === 'video' && resultUrl) {
             generateThumbnail({
               videoUrl: resultUrl,
               generationId: generationId,
               timestampSeconds: 2,
             }).then(async (result) => {
-              await storage.updateGeneration(generationId, {
-                thumbnailUrl: result.thumbnailUrl,
-              });
+              if (isAvatarGeneration) {
+                await storage.updateAvatarGeneration(generationId, { resultUrl: result.thumbnailUrl });
+              } else {
+                await storage.updateGeneration(generationId, { thumbnailUrl: result.thumbnailUrl });
+              }
               console.log(`✓ Thumbnail generated for ${generationId}: ${result.thumbnailUrl}`);
             }).catch((error) => {
               console.error(`⚠️  Thumbnail generation failed for ${generationId}:`, error.message);
@@ -1240,9 +1254,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`Full callback data:`, safeStringify(callbackData));
           
           // Finalize as failed so it doesn't stay stuck in processing
-          await storage.finalizeGeneration(generationId, 'failure', {
-            errorMessage: 'Generation completed but result URL could not be extracted from callback. Please contact support with generation ID.',
-          });
+          const errorMsg = 'Generation completed but result URL could not be extracted from callback. Please contact support with generation ID.';
+          if (isAvatarGeneration) {
+            await storage.updateAvatarGeneration(generationId, {
+              status: 'failed',
+              errorMessage: errorMsg,
+            });
+          } else {
+            await storage.finalizeGeneration(generationId, 'failure', { errorMessage: errorMsg });
+          }
           console.log(`✗ Generation ${generationId} marked as failed due to missing result URL`);
         }
       } else if (finalStatus === 'failed') {
@@ -1264,9 +1284,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
                            (hasErrorCode ? `Error code: ${hasErrorCode}` : null) ||
                            'Generation failed - error indicated by provider';
         
-        await storage.finalizeGeneration(generationId, 'failure', {
-          errorMessage: String(errorMessage),
-        });
+        if (isAvatarGeneration) {
+          // Refund credits for failed avatar generation
+          if (avatarGen?.creditsCost && avatarGen.userId) {
+            const creditCost = avatarGen.creditsCost;
+            const user = await storage.getUser(avatarGen.userId);
+            if (user) {
+              await storage.updateUserCredits(avatarGen.userId, user.credits + creditCost);
+              console.log(`💰 Refunded ${creditCost} credits to user ${avatarGen.userId} for failed avatar generation`);
+            }
+          }
+          await storage.updateAvatarGeneration(generationId, {
+            status: 'failed',
+            errorMessage: String(errorMessage),
+          });
+        } else {
+          await storage.finalizeGeneration(generationId, 'failure', {
+            errorMessage: String(errorMessage),
+          });
+        }
         console.log(`✗ Generation ${generationId} failed: ${errorMessage}`);
       }
       
