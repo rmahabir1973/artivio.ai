@@ -1,0 +1,59 @@
+index-eYsBTP8C.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-eYsBTP8C.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-eYsBTP8C.js:673 [AUTH] Initializing auth - attempting to refresh token
+index-eYsBTP8C.js:673 [AUTH] Found OAuth token in URL fragment
+index-eYsBTP8C.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-eYsBTP8C.js:673 [AUTH] OAuth login successful - user data loaded
+api/admin/plan-economics:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+api/admin/plan-economics:1  Failed to load resource: the server responded with a status of 400 ()Understand this error
+index-eYsBTP8C.js:48  PATCH https://artivio.ai/api/admin/plan-economics 400 (Bad Request)
+Uf @ index-eYsBTP8C.js:48
+await in Uf
+dx @ index-eYsBTP8C.js:48
+_e @ index-eYsBTP8C.js:48
+mutationFn @ index-eYsBTP8C.js:1033
+fn @ index-eYsBTP8C.js:48
+v @ index-eYsBTP8C.js:48
+start @ index-eYsBTP8C.js:48
+execute @ index-eYsBTP8C.js:48
+await in execute
+mutate @ index-eYsBTP8C.js:48
+(anonymous) @ index-eYsBTP8C.js:48
+onClick @ index-eYsBTP8C.js:1033
+nU @ index-eYsBTP8C.js:37
+aU @ index-eYsBTP8C.js:37
+sU @ index-eYsBTP8C.js:37
+xA @ index-eYsBTP8C.js:37
+Z4 @ index-eYsBTP8C.js:37
+(anonymous) @ index-eYsBTP8C.js:37
+zN @ index-eYsBTP8C.js:40
+j4 @ index-eYsBTP8C.js:37
+w0 @ index-eYsBTP8C.js:37
+mN @ index-eYsBTP8C.js:37
+jU @ index-eYsBTP8C.js:37Understand this error
+index-eYsBTP8C.js:48 Fetch failed loading: PATCH "https://artivio.ai/api/admin/plan-economics".
+Uf @ index-eYsBTP8C.js:48
+await in Uf
+dx @ index-eYsBTP8C.js:48
+_e @ index-eYsBTP8C.js:48
+mutationFn @ index-eYsBTP8C.js:1033
+fn @ index-eYsBTP8C.js:48
+v @ index-eYsBTP8C.js:48
+start @ index-eYsBTP8C.js:48
+execute @ index-eYsBTP8C.js:48
+await in execute
+mutate @ index-eYsBTP8C.js:48
+(anonymous) @ index-eYsBTP8C.js:48
+onClick @ index-eYsBTP8C.js:1033
+nU @ index-eYsBTP8C.js:37
+aU @ index-eYsBTP8C.js:37
+sU @ index-eYsBTP8C.js:37
+xA @ index-eYsBTP8C.js:37
+Z4 @ index-eYsBTP8C.js:37
+(anonymous) @ index-eYsBTP8C.js:37
+zN @ index-eYsBTP8C.js:40
+j4 @ index-eYsBTP8C.js:37
+w0 @ index-eYsBTP8C.js:37
+mN @ index-eYsBTP8C.js:37
+jU @ index-eYsBTP8C.js:37
+index-eYsBTP8C.js:48 Fetch finished loading: GET "https://artivio.ai/api/announcements/active".
