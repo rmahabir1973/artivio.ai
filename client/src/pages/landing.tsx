@@ -8,8 +8,253 @@ import {
   Award, DollarSign, Droplet, Monitor, Smartphone, Tablet, Check, Star, Laptop
 } from "lucide-react";
 import { SiApple, SiAndroid, SiIos } from "react-icons/si";
-import type { HomePageContent } from "@shared/schema";
+import type { HomePageContent, SubscriptionPlan } from "@shared/schema";
 import { normalizeVimeoUrl } from "@/lib/vimeo";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { fetchWithAuth } from "@/lib/authBridge";
+
+// Pricing Section Component
+function PricingSection() {
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual" | "trial">("monthly");
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  const { data: plansData, isLoading, error } = useQuery<SubscriptionPlan[]>({
+    queryKey: ['/api/plans'],
+  });
+
+  const plans = plansData?.map(plan => ({
+    ...plan,
+    popular: plan.name === 'starter',
+  })) || [];
+
+  const handleSelectPlan = async (plan: SubscriptionPlan & { popular?: boolean }) => {
+    setSelectedPlan(plan.name);
+    setIsSubmitting(true);
+
+    try {
+      if (!user) {
+        // Redirect unauthenticated users to register with plan selection
+        if (plan.price === 0) {
+          const response = await fetch('/api/public/plan-selection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ planName: plan.name }),
+          });
+          if (response.ok) {
+            window.location.href = '/register';
+          }
+        } else {
+          window.location.href = '/login';
+        }
+      } else {
+        // Authenticated users go to checkout
+        const response = await fetchWithAuth('/api/billing/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ planId: plan.id }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create checkout session');
+        }
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL returned');
+        }
+      }
+    } catch (error: any) {
+      console.error('Error selecting plan:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to select plan. Please try again.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
+  };
+
+  const getPriceDisplay = (priceInCents: number): string => {
+    const price = priceInCents / 100;
+    return price % 1 === 0 ? price.toFixed(0) : price.toFixed(2);
+  };
+
+  const isTrial = (plan: SubscriptionPlan) => plan.billingPeriod === 'trial';
+
+  return (
+    <section id="pricing" className="py-20 px-6">
+      <div className="container mx-auto">
+        <div className="text-center mb-16">
+          <div className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold px-4 py-2 rounded-full mb-4">
+            SIMPLE, TRANSPARENT PRICING
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Plans Built for Every Creator
+          </h2>
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            Choose the perfect plan to unlock unlimited AI-powered content creation. Start free, upgrade anytime.
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-500" data-testid="loader-pricing" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <p className="text-red-400 font-semibold mb-2">Failed to load pricing plans</p>
+            <p className="text-gray-400 text-sm mb-4">Please refresh the page to try again</p>
+          </div>
+        ) : (
+          <>
+            {/* Billing Period Toggle */}
+            <div className="flex justify-center mb-12">
+              <div className="inline-flex items-center gap-2 p-1 bg-[#1A1A1A]/50 border border-white/10 rounded-lg">
+                <button
+                  onClick={() => setBillingPeriod("monthly")}
+                  className={`px-6 py-2 rounded-md font-medium transition-all ${
+                    billingPeriod === "monthly"
+                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md"
+                      : "text-gray-400 hover:text-gray-200"
+                  }`}
+                  data-testid="button-pricing-monthly"
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingPeriod("annual")}
+                  className={`px-6 py-2 rounded-md font-medium transition-all ${
+                    billingPeriod === "annual"
+                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md"
+                      : "text-gray-400 hover:text-gray-200"
+                  }`}
+                  data-testid="button-pricing-annual"
+                >
+                  Annual
+                </button>
+              </div>
+            </div>
+
+            {/* Plans Grid */}
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {plans
+                .filter(p => p.billingPeriod === billingPeriod)
+                .map((plan) => {
+                  const features = Array.isArray(plan.features) ? plan.features : [];
+                  return (
+                    <Card 
+                      key={plan.id}
+                      className={`relative hover-elevate transition-all flex flex-col border ${
+                        plan.popular 
+                          ? 'border-purple-500/50 bg-gradient-to-br from-purple-900/20 to-blue-900/20 md:scale-105 shadow-xl' 
+                          : 'border-white/10 bg-[#1A1A1A]'
+                      } ${
+                        selectedPlan === plan.name ? 'ring-2 ring-purple-500' : ''
+                      }`}
+                      data-testid={`pricing-card-${plan.name}`}
+                    >
+                      {plan.popular && (
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                          <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                            <Zap className="w-3 h-3" />
+                            Most Popular
+                          </span>
+                        </div>
+                      )}
+                      
+                      <CardHeader className="text-center pt-8 pb-4">
+                        <CardTitle className="text-2xl mb-2">{plan.displayName}</CardTitle>
+                        {plan.description && (
+                          <CardDescription className="text-sm text-gray-400">
+                            {plan.description}
+                          </CardDescription>
+                        )}
+                        
+                        <div className="mt-6 flex flex-col items-center gap-2">
+                          {plan.price === 0 ? (
+                            <div className="text-4xl font-bold text-purple-400">
+                              FREE
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-5xl font-bold text-purple-400">
+                                ${getPriceDisplay(plan.price)}
+                              </div>
+                              <p className="text-gray-400 text-sm">
+                                {isTrial(plan) ? 'one-time' : billingPeriod === 'annual' ? '/year' : '/month'}
+                              </p>
+                            </>
+                          )}
+                          <p className="text-sm text-gray-400 mt-2">
+                            <span className="text-lg font-semibold text-purple-400">{plan.creditsPerMonth.toLocaleString()}</span>
+                            {' '}credits {isTrial(plan) ? '(one-time)' : 'per month'}
+                          </p>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="flex-1">
+                        <ul className="space-y-3">
+                          {features.map((feature: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <Check className="h-5 w-5 text-purple-400 shrink-0 mt-0.5" />
+                              <span className="text-sm text-gray-300">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+
+                      <CardFooter className="pt-4">
+                        <Button
+                          onClick={() => handleSelectPlan(plan)}
+                          disabled={isSubmitting}
+                          className={`w-full ${
+                            plan.popular
+                              ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
+                              : ''
+                          }`}
+                          variant={plan.popular ? "default" : "outline"}
+                          size="lg"
+                          data-testid={`button-pricing-select-${plan.name}`}
+                        >
+                          {isSubmitting && selectedPlan === plan.name ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              {plan.price === 0 ? "Starting..." : "Processing..."}
+                            </>
+                          ) : (
+                            plan.price === 0 ? "Start Free" : "Get Started"
+                          )}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+            </div>
+
+            {/* Features Info */}
+            <div className="mt-16 max-w-4xl mx-auto text-center">
+              <p className="text-gray-300 mb-4">
+                All plans include full access to every AI model and tool. No credit card required to start.
+              </p>
+              <Button variant="ghost" asChild data-testid="button-view-standalone-pricing">
+                <a href="/pricing" className="text-purple-400 hover:text-purple-300">
+                  View detailed pricing page →
+                </a>
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export default function Landing() {
   const [videoLoadFailed, setVideoLoadFailed] = useState(false);
@@ -445,49 +690,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Simple Get Started CTA */}
-      <section id="pricing" className="py-20 px-6">
-        <div className="container mx-auto max-w-4xl">
-          <Card className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border-purple-500/30">
-            <CardContent className="p-12 text-center space-y-6">
-              <div className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold px-4 py-2 rounded-full">
-                FREE TO START
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold">
-                Get Started For Free
-              </h2>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                Start creating amazing content today with 1,000 free credits per month. 
-                No credit card required. Upgrade anytime for more credits and premium features.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Button 
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 h-14"
-                  asChild
-                  data-testid="button-get-started-free"
-                >
-                  <a href="/pricing">
-                    Get Started Free
-                    <ChevronRight className="ml-2 h-5 w-5" />
-                  </a>
-                </Button>
-                <Button 
-                  size="lg"
-                  variant="outline"
-                  className="border-white/30 text-lg px-8 h-14"
-                  asChild
-                  data-testid="button-view-all-plans"
-                >
-                  <a href="/pricing">
-                    View All Plans
-                  </a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      {/* Pricing Section */}
+      <PricingSection />
 
       {/* 3 Easy Steps - UPDATE #7 */}
       <section className="py-20 px-6 bg-[#1A1A1A]/30">
