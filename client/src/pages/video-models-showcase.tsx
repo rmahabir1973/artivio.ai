@@ -162,11 +162,8 @@ const VIDEO_MODELS = [
 export default function VideoModelsShowcase() {
   const [, navigate] = useLocation();
 
-  const { data: showcaseVideos, isLoading } = useQuery({
+  const { data: showcaseVideos = [], isLoading } = useQuery({
     queryKey: ["/api/showcase-videos"],
-    queryFn: async () => {
-      return await apiRequest("GET", "/api/showcase-videos");
-    }
   });
 
   const handleSelectModel = (modelValue: string) => {

@@ -71,6 +71,7 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
 
           const video = document.createElement('video');
           video.preload = 'metadata';
+          video.crossOrigin = 'anonymous';
           
           const cleanup = () => {
             video.src = '';
