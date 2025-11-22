@@ -460,8 +460,17 @@ export function GenerationCard({ generation }: GenerationCardProps) {
               className="w-full text-destructive hover:text-destructive"
               data-testid={`button-delete-${generation.id}`}
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete
+              {generation.status === 'processing' || generation.status === 'pending' ? (
+                <>
+                  <RotateCw className="h-4 w-4 mr-1" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </>
+              )}
             </Button>
           </div>
         </CardFooter>
@@ -552,18 +561,24 @@ export function GenerationCard({ generation }: GenerationCardProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete/Cancel Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Generation?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {generation.status === 'processing' || generation.status === 'pending' 
+                ? "Cancel Generation?" 
+                : "Delete Generation?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this generation? This action cannot be undone.
+              {generation.status === 'processing' || generation.status === 'pending'
+                ? `This will cancel the generation and refund ${generation.creditsCost} credits back to your account.`
+                : "Are you sure you want to delete this generation? This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid={`button-cancel-delete-${generation.id}`}>
-              Cancel
+              Back
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
@@ -571,7 +586,9 @@ export function GenerationCard({ generation }: GenerationCardProps) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid={`button-confirm-delete-${generation.id}`}
             >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending 
+                ? (generation.status === 'processing' || generation.status === 'pending' ? "Cancelling..." : "Deleting...")
+                : (generation.status === 'processing' || generation.status === 'pending' ? "Cancel Generation" : "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
