@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { setAccessToken as bridgeSetAccessToken, getAccessToken as bridgeGetAccessToken, setRefreshTokenFn, setLogoutFn } from "@/lib/authBridge";
+import { queryClient } from "@/lib/queryClient";
 
 interface AuthContextType {
   accessToken: string | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
   isLoading: boolean;
   setUser: (user: any | null) => void;
   setIsLoading: (loading: boolean) => void;
+  isManualLogout: boolean; // Track if logout was manually triggered
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +26,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isManualLogout, setIsManualLogout] = useState<boolean>(false);
+  
+  // Auto-reset isManualLogout after a short delay to prevent it from blocking subsequent redirects
+  useEffect(() => {
+    if (isManualLogout) {
+      const timer = setTimeout(() => {
+        setIsManualLogout(false);
+      }, 100); // Short delay to allow ProtectedRoute to check the flag
+      return () => clearTimeout(timer);
+    }
+  }, [isManualLogout]);
 
   const setAccessToken = useCallback((token: string | null) => {
     setAccessTokenState(token);
@@ -34,10 +47,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = useCallback((token: string) => {
     setAccessTokenState(token);
     bridgeSetAccessToken(token);
+    setIsManualLogout(false); // Reset manual logout flag on login
   }, []);
 
   const logout = useCallback(async () => {
     try {
+      // Mark this as a manual logout to prevent "Session Expired" toast
+      setIsManualLogout(true);
+      
       // Call backend logout endpoint to clear httpOnly cookies
       await fetch("/api/auth/logout", {
         method: "POST",
@@ -50,6 +67,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAccessTokenState(null);
       bridgeSetAccessToken(null);
       setUser(null);
+      
+      // Clear ALL React Query cache on logout
+      console.log('[AUTH] Logout - clearing all cached data');
+      queryClient.clear();
+      console.log('[AUTH] ✓ Cache cleared');
+      
+      // Navigate to login page using SPA navigation
+      window.history.pushState({}, '', '/login');
+      // Trigger a popstate event to make wouter detect the change
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
   }, []);
 
@@ -191,6 +218,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     setUser,
     setIsLoading,
+    isManualLogout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AuthProvider, useAuth } from "@/contexts/AuthProvider";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Loader2, User, LogOut } from "lucide-react";
 
 // Pages
@@ -72,41 +73,90 @@ function Router() {
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />
-      <Route path="/pricing" component={Pricing} /> {/* Available to all users */}
+      <Route path="/pricing" component={Pricing} />
 
-      {!isAuthenticated ? (
+      {/* Auth routes - only show when not authenticated */}
+      {!isAuthenticated && (
         <>
-          <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
         </>
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/generate/video" component={GenerateVideo} />
-          <Route path="/generate/sora" component={GenerateSora} />
-          <Route path="/generate/image" component={GenerateImage} />
-          <Route path="/generate/music" component={GenerateMusic} />
-          <Route path="/sound-effects" component={SoundEffects} />
-          <Route path="/voice-clone" component={VoiceClone} />
-          <Route path="/text-to-speech" component={TextToSpeech} />
-          <Route path="/speech-to-text" component={SpeechToText} />
-          <Route path="/analyze-image" component={AnalyzeImage} />
-          <Route path="/talking-avatars" component={TalkingAvatars} />
-          <Route path="/audio-converter" component={AudioConverter} />
-          <Route path="/video-editor" component={VideoEditor} />
-          <Route path="/qr-generator" component={QRGenerator} />
-          <Route path="/chat" component={Chat} />
-          <Route path="/history" component={History} />
-          <Route path="/generations" component={History} /> {/* Alias for /history */}
-          <Route path="/profile" component={Profile} />
-          <Route path="/referrals" component={Referrals} />
-          <Route path="/admin" component={Admin} />
-          <Route path="/billing" component={Billing} />
-          <Route path="/billing/success" component={BillingSuccess} />
-          <Route path="/billing/canceled" component={BillingCanceled} />
-        </>
       )}
+
+      {/* Home route - Landing for guests, Dashboard for authenticated */}
+      <Route path="/">
+        {isAuthenticated ? <Home /> : <Landing />}
+      </Route>
+
+      {/* Protected routes - require authentication */}
+      <Route path="/generate/video">
+        <ProtectedRoute><GenerateVideo /></ProtectedRoute>
+      </Route>
+      <Route path="/generate/sora">
+        <ProtectedRoute><GenerateSora /></ProtectedRoute>
+      </Route>
+      <Route path="/generate/image">
+        <ProtectedRoute><GenerateImage /></ProtectedRoute>
+      </Route>
+      <Route path="/generate/music">
+        <ProtectedRoute><GenerateMusic /></ProtectedRoute>
+      </Route>
+      <Route path="/sound-effects">
+        <ProtectedRoute><SoundEffects /></ProtectedRoute>
+      </Route>
+      <Route path="/voice-clone">
+        <ProtectedRoute><VoiceClone /></ProtectedRoute>
+      </Route>
+      <Route path="/text-to-speech">
+        <ProtectedRoute><TextToSpeech /></ProtectedRoute>
+      </Route>
+      <Route path="/speech-to-text">
+        <ProtectedRoute><SpeechToText /></ProtectedRoute>
+      </Route>
+      <Route path="/analyze-image">
+        <ProtectedRoute><AnalyzeImage /></ProtectedRoute>
+      </Route>
+      <Route path="/talking-avatars">
+        <ProtectedRoute><TalkingAvatars /></ProtectedRoute>
+      </Route>
+      <Route path="/audio-converter">
+        <ProtectedRoute><AudioConverter /></ProtectedRoute>
+      </Route>
+      <Route path="/video-editor">
+        <ProtectedRoute><VideoEditor /></ProtectedRoute>
+      </Route>
+      <Route path="/qr-generator">
+        <ProtectedRoute><QRGenerator /></ProtectedRoute>
+      </Route>
+      <Route path="/chat">
+        <ProtectedRoute><Chat /></ProtectedRoute>
+      </Route>
+      <Route path="/history">
+        <ProtectedRoute><History /></ProtectedRoute>
+      </Route>
+      <Route path="/generations">
+        <ProtectedRoute><History /></ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute><Profile /></ProtectedRoute>
+      </Route>
+      <Route path="/referrals">
+        <ProtectedRoute><Referrals /></ProtectedRoute>
+      </Route>
+      <Route path="/admin">
+        <ProtectedRoute><Admin /></ProtectedRoute>
+      </Route>
+      <Route path="/billing">
+        <ProtectedRoute><Billing /></ProtectedRoute>
+      </Route>
+      <Route path="/billing/success">
+        <ProtectedRoute><BillingSuccess /></ProtectedRoute>
+      </Route>
+      <Route path="/billing/canceled">
+        <ProtectedRoute><BillingCanceled /></ProtectedRoute>
+      </Route>
+
+      {/* 404 - Always at the end */}
       <Route component={NotFound} />
     </Switch>
   );
