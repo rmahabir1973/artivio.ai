@@ -504,9 +504,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateGeneration(id: string, updates: Partial<Generation>): Promise<Generation | undefined> {
+    // Explicitly handle field mapping for Drizzle ORM
+    const updateObj: any = {};
+    if ('isShowcase' in updates) {
+      updateObj.isShowcase = updates.isShowcase;
+    }
+    if ('status' in updates) {
+      updateObj.status = updates.status;
+    }
+    if ('resultUrl' in updates) {
+      updateObj.resultUrl = updates.resultUrl;
+    }
+    if ('statusDetail' in updates) {
+      updateObj.statusDetail = updates.statusDetail;
+    }
+    if ('errorMessage' in updates) {
+      updateObj.errorMessage = updates.errorMessage;
+    }
+    if ('completedAt' in updates) {
+      updateObj.completedAt = updates.completedAt;
+    }
+    if ('processingStage' in updates) {
+      updateObj.processingStage = updates.processingStage;
+    }
+    if ('thumbnailUrl' in updates) {
+      updateObj.thumbnailUrl = updates.thumbnailUrl;
+    }
+    if ('externalTaskId' in updates) {
+      updateObj.externalTaskId = updates.externalTaskId;
+    }
+    if ('parameters' in updates) {
+      updateObj.parameters = updates.parameters;
+    }
+
     const [generation] = await db
       .update(generations)
-      .set(updates)
+      .set(updateObj)
       .where(eq(generations.id, id))
       .returning();
     return generation;
