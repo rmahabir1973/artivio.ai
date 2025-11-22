@@ -858,11 +858,25 @@ export async function cloneVoice(params: {
   });
 }
 
+// ElevenLabs pre-made voice IDs (name -> UUID mapping)
+const ELEVENLABS_VOICE_IDS: Record<string, string> = {
+  'Rachel': '21m00Tcm4TlvDq8ikWAM',
+  'Aria': 'jBpfuIE2acCO8z3wKNLl',
+  'Clyde': '2EiwWnXFnvU5JabPgLCL',
+  'Dave': 'CZu28rHgowwuK7YYn3hy',
+  'Drew': '29vD33N1CtxCmqQRPOHJ',
+  'Fin': 'D38z5RcWu1voky8WS1d4',
+  'Freya': 'EXAVITQu4vr4xnSDxMaL',
+  'Gigi': 'jsCqWAovK2LkvIQuEKAH',
+  'Glinda': 'z9f4UES4z5qFZrXQ5QIW',
+  'Harry': 'SOYHLrjzK2X1ezoYZXXB',
+};
+
 // ElevenLabs Text-to-Speech - Generate speech from text
 // Uses /api/v1/jobs/createTask with nested input object (similar to Sound Effects)
 export async function generateTTS(params: {
   text: string;
-  voiceId: string; // Voice ID or pre-made voice name (Rachel, Aria, etc.)
+  voiceId: string; // Voice ID (UUID) or pre-made voice name (Rachel, Aria, etc.)
   voiceName?: string; // Display name
   model?: string; // TTS model
   parameters?: {
@@ -876,9 +890,16 @@ export async function generateTTS(params: {
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
   
+  // Convert voice name to UUID if it's a pre-made voice
+  let voiceUUID = params.voiceId;
+  if (params.voiceId in ELEVENLABS_VOICE_IDS) {
+    voiceUUID = ELEVENLABS_VOICE_IDS[params.voiceId];
+    console.log(`📞 Mapping voice name "${params.voiceId}" to UUID: ${voiceUUID}`);
+  }
+  
   const input: any = {
     text: params.text,
-    voice: params.voiceId,
+    voice_id: voiceUUID,
   };
   
   // Add optional parameters

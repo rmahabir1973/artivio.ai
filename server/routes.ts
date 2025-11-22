@@ -379,12 +379,14 @@ async function generateTTSInBackground(
     // Get generation to retrieve creditsCost for refund
     const generation = await storage.getGeneration(generationId);
     if (generation && generation.creditsCost) {
-      // Refund credits atomically
+      // Refund credits atomically using the safe addCreditsAtomic function
       const userId = generation.userId;
-      const currentUser = await storage.getUser(userId);
-      if (currentUser) {
-        await storage.updateUserCredits(userId, currentUser.credits + generation.creditsCost);
+      try {
+        await storage.addCreditsAtomic(userId, generation.creditsCost);
         console.log(`💰 Refunded ${generation.creditsCost} credits to user ${userId} for failed TTS generation`);
+      } catch (refundError) {
+        console.error(`❌ CRITICAL: Failed to refund credits for TTS generation ${generationId}:`, refundError);
+        // Continue - will also be refunded by finalizeGeneration as a backup
       }
     }
     
@@ -447,8 +449,24 @@ async function generateSoundEffectsInBackground(
     console.log(`📋 Sound effects generation task queued: ${taskId} (waiting for callback)`);
   } catch (error: any) {
     console.error('Background sound effects generation failed:', error);
+    
+    // Get generation to retrieve creditsCost for refund
+    const generation = await storage.getGeneration(generationId);
+    if (generation && generation.creditsCost) {
+      // Refund credits atomically using the safe addCreditsAtomic function
+      const userId = generation.userId;
+      try {
+        await storage.addCreditsAtomic(userId, generation.creditsCost);
+        console.log(`💰 Refunded ${generation.creditsCost} credits to user ${userId} for failed sound effects generation`);
+      } catch (refundError) {
+        console.error(`❌ CRITICAL: Failed to refund credits for sound effects generation ${generationId}:`, refundError);
+        // Continue - will also be refunded by finalizeGeneration as a backup
+      }
+    }
+    
     await storage.finalizeGeneration(generationId, 'failure', { 
-      errorMessage: error.message || 'Unknown error during sound effects generation' 
+      statusDetail: 'api_error',
+      errorMessage: error.message || 'Sound effects generation failed' 
     });
   }
 }
