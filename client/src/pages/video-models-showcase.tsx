@@ -170,7 +170,13 @@ export default function VideoModelsShowcase() {
   });
 
   const handleSelectModel = (modelValue: string) => {
-    navigate("/video");
+    // Sora has its own separate page
+    if (modelValue === "sora-2-pro") {
+      navigate("/generate/sora");
+    } else {
+      // All other models use the main video generation page
+      navigate("/generate/video");
+    }
     sessionStorage.setItem("selectedModel", modelValue);
   };
 
