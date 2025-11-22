@@ -1027,12 +1027,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Suno, ElevenLabs, others
+      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Suno, Image models (Nano Banana/4o-image/Flux), ElevenLabs, others
       const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string
                        callbackData.data?.video_url ||    // Runway uses snake_case
                        (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) || // Veo nested
                        callbackData.data?.videoUrl ||     // Other models camelCase
                        sunoAudioUrl ||                    // Suno audio
+                       callbackData.data?.imageUrl ||     // Image models (Nano Banana, 4o-image, Flux Kontext) - camelCase
+                       callbackData.data?.image_url ||    // Image models - snake_case
+                       (callbackData.data?.images && Array.isArray(callbackData.data.images) && callbackData.data.images[0]) || // Array of images
+                       (callbackData.data?.results && Array.isArray(callbackData.data.results) && callbackData.data.results[0]) || // Array of results
                        (callbackData.data?.data && Array.isArray(callbackData.data.data) && callbackData.data.data[0]?.audioUrl) || // ElevenLabs TTS/Sound Effects array format
                        callbackData.data?.data?.audioUrl || // ElevenLabs TTS/Sound Effects object format
                        (callbackData.data?.data && Array.isArray(callbackData.data.data) && callbackData.data.data[0]?.audio_url) || // ElevenLabs snake_case
@@ -1048,9 +1052,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        callbackData.audioUrl || 
                        callbackData.url || 
                        callbackData.data?.url ||
-                       callbackData.data?.imageUrl ||
-                       callbackData.data?.image_url ||   // Runway image cover
                        callbackData.data?.audioUrl;
+      
+      // Log what we extracted (for debugging image model issues)
+      if (resultUrl) {
+        console.log(`✅ Extracted resultUrl: ${resultUrl}`);
+      } else {
+        console.log(`⚠️  No resultUrl extracted. Checking callback structure for debugging:`);
+        console.log(`   - callbackData.data?.imageUrl: ${callbackData.data?.imageUrl}`);
+        console.log(`   - callbackData.data?.image_url: ${callbackData.data?.image_url}`);
+        console.log(`   - callbackData.data?.url: ${callbackData.data?.url}`);
+        console.log(`   - callbackData.data?.images (array): ${JSON.stringify(callbackData.data?.images)}`);
+        console.log(`   - callbackData.data?.results (array): ${JSON.stringify(callbackData.data?.results)}`);
+        console.log(`   - Full data structure keys: ${Object.keys(callbackData.data || {}).join(', ')}`);
+      }
       
       // Check for explicit status from Kie.ai
       const kieStatus = (sunoStatus || callbackData.status)?.toLowerCase();
