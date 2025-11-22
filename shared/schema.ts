@@ -211,6 +211,7 @@ export const generations = pgTable("generations", {
   creditsCost: integer("credits_cost").notNull(),
   apiKeyUsed: varchar("api_key_used"), // Which API key was used
   seed: integer("seed"), // Random seed for reproducibility (supported by Veo 3.1, Wan 2.5, Seedance)
+  isShowcase: boolean("is_showcase").notNull().default(false), // User opt-in to display in public showcase
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 }, (table) => [
