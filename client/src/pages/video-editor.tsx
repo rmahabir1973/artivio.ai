@@ -614,6 +614,19 @@ export default function VideoEditor() {
                 <CardDescription>Add professional polish to your combined video</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Rendering Time Warning */}
+                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <div className="flex gap-3">
+                    <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-sm text-blue-900 dark:text-blue-200 mb-1">Rendering may take up to 20 minutes</h4>
+                      <p className="text-xs text-blue-800 dark:text-blue-300">
+                        Video combination and processing times depend on video length and selected enhancements. You can continue using Artivio while your video renders in the background.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Transitions */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
