@@ -198,19 +198,21 @@ export default function GenerateVideo() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  // Load seed from sessionStorage (from history "Use Seed" button)
+  // Load seed from sessionStorage (from history "Use Seed" button) - only once on mount
   useEffect(() => {
     const savedSeed = sessionStorage.getItem('regenerateSeed');
     if (savedSeed) {
       const seedValue = parseInt(savedSeed, 10);
-      if (!isNaN(seedValue)) {
+      // Always apply valid seeds, regardless of current model (user can change model later)
+      if (!isNaN(seedValue) && seedValue >= 1 && seedValue <= 2147483647) {
         setSeed(seedValue);
         setSeedLocked(true); // Lock the seed when loading from history
       }
-      // Clear the stored seed after loading it
+      // Always clear the stored seed after consuming it (even if invalid)
       sessionStorage.removeItem('regenerateSeed');
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - run only once on mount
 
   // Poll for generation result when generationId is set
   const { data: pollData } = useQuery<any>({

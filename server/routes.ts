@@ -1122,9 +1122,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (finalStatus === 'completed') {
         if (resultUrl) {
-          await storage.finalizeGeneration(generationId, 'success', {
-            resultUrl,
-          });
+          // Extract seed value from callback data (varies by model)
+          let seedValue: number | undefined;
+          
+          // Helper to safely convert to integer
+          const toInt = (val: any): number | undefined => {
+            if (val === null || val === undefined) return undefined;
+            const num = Array.isArray(val) ? val[0] : val;
+            const parsed = typeof num === 'string' ? parseInt(num, 10) : Number(num);
+            return !isNaN(parsed) && isFinite(parsed) && parsed >= 1 && parsed <= 2147483647 ? Math.floor(parsed) : undefined;
+          };
+          
+          // Try to extract seed from various possible locations (check all paths, prioritize most specific)
+          // Veo models: data.info.result.seeds (array), data.info.result.seed (singular), data.info.seeds
+          if (callbackData.data?.info?.result?.seeds) {
+            seedValue = toInt(callbackData.data.info.result.seeds);
+          } else if (callbackData.data?.info?.result?.seed !== undefined) {
+            seedValue = toInt(callbackData.data.info.result.seed);
+          } else if (callbackData.data?.info?.seeds) {
+            seedValue = toInt(callbackData.data.info.seeds);
+          }
+          // Seedance/Wan models: data.info.seed, data.seed
+          else if (callbackData.data?.info?.seed !== undefined) {
+            seedValue = toInt(callbackData.data.info.seed);
+          } else if (callbackData.data?.seed !== undefined) {
+            seedValue = toInt(callbackData.data.seed);
+          }
+          // Try resultJson (Seedance uses JSON string) - check both seed and seeds[]
+          else if (callbackData.data?.resultJson) {
+            try {
+              const resultData = JSON.parse(callbackData.data.resultJson);
+              if (resultData.seeds && Array.isArray(resultData.seeds)) {
+                seedValue = toInt(resultData.seeds);
+              } else if (resultData.seed !== undefined) {
+                seedValue = toInt(resultData.seed);
+              }
+            } catch (e) {
+              console.warn('Failed to parse seed from resultJson:', e);
+            }
+          }
+          // Generic fallback
+          else if (callbackData.seed !== undefined) {
+            seedValue = toInt(callbackData.seed);
+          }
+          
+          // Prepare updates object with resultUrl and optional seed
+          const updates: any = { resultUrl };
+          if (seedValue !== undefined && seedValue !== null) {
+            updates.seed = seedValue;
+            console.log(`📍 Captured seed value for ${generationId}: ${seedValue}`);
+          }
+          
+          await storage.finalizeGeneration(generationId, 'success', updates);
           console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
           
           // Generate thumbnail for video generations (async, don't block callback)

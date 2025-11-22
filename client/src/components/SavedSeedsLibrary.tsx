@@ -58,9 +58,10 @@ export function SavedSeedsLibrary({
   const [seedDescription, setSeedDescription] = useState("");
 
   // Fetch saved seeds
-  const { data: savedSeeds = [], isLoading } = useQuery<SavedSeed[]>({
+  const { data: savedSeeds = [], isLoading, isError, error, refetch, isFetching } = useQuery<SavedSeed[]>({
     queryKey: ["/api/saved-seeds"],
     enabled: open,
+    retry: 2, // Retry failed requests twice
   });
 
   // Save seed mutation
@@ -260,6 +261,25 @@ export function SavedSeedsLibrary({
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">
                 Loading seeds...
+              </div>
+            ) : isError ? (
+              <div className="text-center py-8 space-y-4">
+                <p className="text-destructive font-medium">
+                  Failed to load saved seeds
+                </p>
+                {error && (
+                  <p className="text-sm text-muted-foreground">
+                    {error instanceof Error ? error.message : 'An unknown error occurred'}
+                  </p>
+                )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                  data-testid="button-retry-seeds"
+                >
+                  {isFetching ? 'Retrying...' : 'Try Again'}
+                </Button>
               </div>
             ) : filteredSeeds.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">

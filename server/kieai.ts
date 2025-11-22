@@ -8,7 +8,9 @@ const KIE_API_BASE = "https://api.kie.ai";
 function generateRandomSeed(): number {
   // Generate a random integer between 1 and 2147483647 (max 32-bit signed int)
   // Most AI models use 32-bit seeds, so we stay within that range
-  return Math.floor(Math.random() * 2147483647) + 1;
+  // Use Math.max/min to deterministically clamp within valid range (handles floating point edge cases)
+  const raw = Math.floor(Math.random() * 2147483647) + 1;
+  return Math.max(1, Math.min(2147483647, raw));
 }
 
 // Safe JSON stringifier to prevent circular reference errors
