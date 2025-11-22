@@ -74,6 +74,9 @@ export async function ensureValidToken(): Promise<string | null> {
  * Wrapper around fetch that automatically adds Authorization header and handles 401 errors
  * Similar to apiRequest but supports raw fetch for special cases like blob downloads and SSE
  * 
+ * IMPORTANT: This now allows unauthenticated access to PUBLIC endpoints (like /api/plans)
+ * Protected endpoints will return 401 if accessed without auth, which is handled below
+ * 
  * @param url The URL to fetch
  * @param options Fetch options
  * @param retryOn401 Whether to retry with refreshed token on 401 (default: true)
@@ -87,15 +90,14 @@ export async function fetchWithAuth(
   // Get or refresh the access token
   let token = await ensureValidToken();
   
-  if (!token) {
-    throw new Error("Not authenticated. Please log in.");
+  // Add Authorization header only if we have a token
+  // Public endpoints will work without auth, protected ones will return 401
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
   
-  // Add Authorization header
-  const headers = new Headers(options.headers || {});
-  headers.set("Authorization", `Bearer ${token}`);
-  
-  // Make the request
+  // Make the request (with or without auth)
   const response = await fetch(url, {
     ...options,
     headers,
@@ -117,7 +119,7 @@ export async function fetchWithAuth(
       if (logoutFn) {
         await logoutFn();
       }
-      throw new Error("SESSION_EXPIRED");
+      throw new Error("Not authenticated. Please log in.");
     }
     
     // Retry with new token
