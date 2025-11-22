@@ -4,6 +4,7 @@ import {
   pricing,
   planEconomics,
   generations,
+  savedSeeds,
   conversations,
   messages,
   voiceClones,
@@ -37,6 +38,9 @@ import {
   type UpdatePlanEconomics,
   type Generation,
   type InsertGeneration,
+  type SavedSeed,
+  type InsertSavedSeed,
+  type UpdateSavedSeed,
   type Conversation,
   type InsertConversation,
   type Message,
@@ -138,6 +142,14 @@ export interface IStorage {
     byModel: Array<{ model: string; count: number; credits: number }>;
     dailyTrends: Array<{ date: string; credits: number; count: number }>;
   }>;
+
+  // Saved Seeds operations (seed library)
+  getUserSavedSeeds(userId: string): Promise<SavedSeed[]>;
+  getSavedSeed(id: string): Promise<SavedSeed | undefined>;
+  createSavedSeed(seed: InsertSavedSeed): Promise<SavedSeed>;
+  updateSavedSeed(id: string, updates: UpdateSavedSeed): Promise<SavedSeed | undefined>;
+  incrementSeedUsage(id: string): Promise<SavedSeed | undefined>;
+  deleteSavedSeed(id: string): Promise<void>;
 
   // Chat operations
   createConversation(conversation: InsertConversation): Promise<Conversation>;
@@ -808,6 +820,56 @@ export class DatabaseStorage implements IStorage {
       byModel: byModel as any,
       dailyTrends,
     };
+  }
+
+  // Saved Seeds operations (seed library)
+  async getUserSavedSeeds(userId: string): Promise<SavedSeed[]> {
+    return await db
+      .select()
+      .from(savedSeeds)
+      .where(eq(savedSeeds.userId, userId))
+      .orderBy(desc(savedSeeds.createdAt));
+  }
+
+  async getSavedSeed(id: string): Promise<SavedSeed | undefined> {
+    const [seed] = await db
+      .select()
+      .from(savedSeeds)
+      .where(eq(savedSeeds.id, id));
+    return seed;
+  }
+
+  async createSavedSeed(seed: InsertSavedSeed): Promise<SavedSeed> {
+    const [savedSeed] = await db
+      .insert(savedSeeds)
+      .values(seed)
+      .returning();
+    return savedSeed;
+  }
+
+  async updateSavedSeed(id: string, updates: UpdateSavedSeed): Promise<SavedSeed | undefined> {
+    const [seed] = await db
+      .update(savedSeeds)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(savedSeeds.id, id))
+      .returning();
+    return seed;
+  }
+
+  async incrementSeedUsage(id: string): Promise<SavedSeed | undefined> {
+    const [seed] = await db
+      .update(savedSeeds)
+      .set({ 
+        usageCount: sql`${savedSeeds.usageCount} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(savedSeeds.id, id))
+      .returning();
+    return seed;
+  }
+
+  async deleteSavedSeed(id: string): Promise<void> {
+    await db.delete(savedSeeds).where(eq(savedSeeds.id, id));
   }
 
   // Chat operations

@@ -1972,6 +1972,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== SAVED SEEDS ROUTES ==========
+
+  // Get user's saved seeds
+  app.get('/api/saved-seeds', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const seeds = await storage.getUserSavedSeeds(userId);
+      res.json(seeds);
+    } catch (error) {
+      console.error('Error fetching saved seeds:', error);
+      res.status(500).json({ message: "Failed to fetch saved seeds" });
+    }
+  });
+
+  // Create a new saved seed
+  app.post('/api/saved-seeds', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { insertSavedSeedSchema } = await import("@shared/schema");
+      
+      const validatedData = insertSavedSeedSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const seed = await storage.createSavedSeed(validatedData);
+      res.json(seed);
+    } catch (error: any) {
+      console.error('Error creating saved seed:', error);
+      res.status(400).json({ message: error.message || "Failed to create saved seed" });
+    }
+  });
+
+  // Update a saved seed
+  app.patch('/api/saved-seeds/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { updateSavedSeedSchema } = await import("@shared/schema");
+
+      // Verify the seed belongs to the user
+      const existingSeed = await storage.getSavedSeed(id);
+      if (!existingSeed) {
+        return res.status(404).json({ message: "Saved seed not found" });
+      }
+      if (existingSeed.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const validatedData = updateSavedSeedSchema.parse(req.body);
+      const updated = await storage.updateSavedSeed(id, validatedData);
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating saved seed:', error);
+      res.status(400).json({ message: error.message || "Failed to update saved seed" });
+    }
+  });
+
+  // Delete a saved seed
+  app.delete('/api/saved-seeds/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+
+      // Verify the seed belongs to the user
+      const existingSeed = await storage.getSavedSeed(id);
+      if (!existingSeed) {
+        return res.status(404).json({ message: "Saved seed not found" });
+      }
+      if (existingSeed.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteSavedSeed(id);
+      res.json({ success: true, message: "Saved seed deleted" });
+    } catch (error) {
+      console.error('Error deleting saved seed:', error);
+      res.status(500).json({ message: "Failed to delete saved seed" });
+    }
+  });
+
   // ========== FAVORITE WORKFLOW ROUTES ==========
 
   // Get user's favorite workflows
