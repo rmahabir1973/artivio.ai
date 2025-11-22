@@ -9,8 +9,8 @@ import { Slider } from "@/components/ui/slider";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
-import { Loader2, Volume2, Download, Mic, Clock } from "lucide-react";
-import type { TtsGeneration, VoiceClone } from "@shared/schema";
+import { Volume2, Mic } from "lucide-react";
+import type { VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 // Pre-made ElevenLabs voices
@@ -57,11 +57,6 @@ export default function TextToSpeech() {
     queryKey: ["/api/voice-clones"],
   });
 
-  // Fetch TTS generations
-  const { data: generations = [], isLoading } = useQuery<TtsGeneration[]>({
-    queryKey: ["/api/tts/generations"],
-  });
-
   // Generate TTS mutation
   const generateMutation = useMutation({
     mutationFn: async (params: {
@@ -81,7 +76,7 @@ export default function TextToSpeech() {
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "TTS generation started! It will appear in your generations below.",
+        description: "TTS generation started! Check your Generation History to access your audio file when complete.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/tts/generations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -368,79 +363,6 @@ export default function TextToSpeech() {
         </Card>
       </div>
 
-      {/* TTS Generations History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Generations</CardTitle>
-          <CardDescription>View and download your TTS audio files</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : generations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Volume2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No TTS generations yet</p>
-              <p className="text-sm">Generate your first speech above!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {generations.map((gen) => (
-                <Card key={gen.id} data-testid={`card-generation-${gen.id}`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base truncate">{gen.voiceName}</CardTitle>
-                        <CardDescription className="text-sm">
-                          {gen.model} • {gen.creditsCost} credits
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {gen.status === "processing" && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Processing
-                          </div>
-                        )}
-                        {gen.status === "completed" && gen.resultUrl && (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            asChild
-                            data-testid={`button-download-${gen.id}`}
-                          >
-                            <a href={gen.resultUrl} download target="_blank" rel="noopener noreferrer">
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </a>
-                          </Button>
-                        )}
-                        {gen.status === "failed" && (
-                          <div className="text-sm text-destructive">Failed</div>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{gen.text}</p>
-                    {gen.status === "failed" && gen.errorMessage && (
-                      <p className="text-xs text-destructive">{gen.errorMessage}</p>
-                    )}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(gen.createdAt)}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
         </div>
       </div>
     </SidebarInset>
