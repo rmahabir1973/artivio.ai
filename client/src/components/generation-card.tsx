@@ -133,9 +133,25 @@ export function GenerationCard({ generation }: GenerationCardProps) {
   const handleRegenerate = () => {
     const route = typeRoutes[generation.type];
     if (route) {
-      // Store the prompt in sessionStorage to pre-fill the form
+      // Store the prompt and seed in sessionStorage to pre-fill the form
       sessionStorage.setItem('regeneratePrompt', generation.prompt);
       sessionStorage.setItem('regenerateModel', generation.model);
+      if (generation.seed) {
+        sessionStorage.setItem('regenerateSeed', generation.seed.toString());
+      }
+      setLocation(route);
+    }
+  };
+
+  const handleReuseSeed = () => {
+    const route = typeRoutes[generation.type];
+    if (route && generation.seed) {
+      // Store only the seed in sessionStorage to pre-fill the form
+      sessionStorage.setItem('regenerateSeed', generation.seed.toString());
+      toast({
+        title: "Seed Ready",
+        description: `Seed ${generation.seed} is ready to use in your next generation`,
+      });
       setLocation(route);
     }
   };
@@ -198,7 +214,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   src={generation.resultUrl} 
                   alt={generation.prompt} 
                   className="w-full h-full object-cover cursor-pointer"
-                  onClick={() => window.open(generation.resultUrl, '_blank')}
+                  onClick={() => generation.resultUrl && window.open(generation.resultUrl, '_blank')}
                   data-testid={`img-result-${generation.id}`}
                 />
               )}
@@ -240,6 +256,14 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             <Sparkles className="h-4 w-4" />
             <span>{generation.model}</span>
           </div>
+          
+          {generation.seed && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-mono bg-muted px-2 py-1 rounded" data-testid={`seed-value-${generation.id}`}>
+                Seed: {generation.seed}
+              </span>
+            </div>
+          )}
           
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
@@ -302,7 +326,13 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             )}
           </div>
 
-          <div className={canRegenerate ? "grid grid-cols-2 gap-2 w-full" : "w-full"}>
+          <div className={
+            canRegenerate && generation.seed 
+              ? "grid grid-cols-3 gap-2 w-full" 
+              : canRegenerate 
+                ? "grid grid-cols-2 gap-2 w-full" 
+                : "w-full"
+          }>
             {canRegenerate && (
               <Button 
                 variant="outline" 
@@ -313,6 +343,18 @@ export function GenerationCard({ generation }: GenerationCardProps) {
               >
                 <RotateCw className="h-4 w-4 mr-1" />
                 Regenerate
+              </Button>
+            )}
+            {generation.seed && canRegenerate && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleReuseSeed}
+                className="w-full"
+                data-testid={`button-reuse-seed-${generation.id}`}
+              >
+                <Copy className="h-4 w-4 mr-1" />
+                Use Seed
               </Button>
             )}
             <Button 

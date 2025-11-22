@@ -198,6 +198,20 @@ export default function GenerateVideo() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
+  // Load seed from sessionStorage (from history "Use Seed" button)
+  useEffect(() => {
+    const savedSeed = sessionStorage.getItem('regenerateSeed');
+    if (savedSeed) {
+      const seedValue = parseInt(savedSeed, 10);
+      if (!isNaN(seedValue)) {
+        setSeed(seedValue);
+        setSeedLocked(true); // Lock the seed when loading from history
+      }
+      // Clear the stored seed after loading it
+      sessionStorage.removeItem('regenerateSeed');
+    }
+  }, []);
+
   // Poll for generation result when generationId is set
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],

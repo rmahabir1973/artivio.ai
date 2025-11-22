@@ -111,6 +111,20 @@ export default function GenerateImage() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
+  // Load seed from sessionStorage (from history "Use Seed" button)
+  useEffect(() => {
+    const savedSeed = sessionStorage.getItem('regenerateSeed');
+    if (savedSeed) {
+      const seedValue = parseInt(savedSeed, 10);
+      if (!isNaN(seedValue)) {
+        setSeed(seedValue);
+        setSeedLocked(true); // Lock the seed when loading from history
+      }
+      // Clear the stored seed after loading it
+      sessionStorage.removeItem('regenerateSeed');
+    }
+  }, []);
+
   // Generation result state
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
