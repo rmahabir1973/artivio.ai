@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Shuffle, Lock, LockOpen, Info } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
@@ -52,8 +53,8 @@ export function SeedControl({
           <Label htmlFor="seed-input" className="text-sm font-medium">
             Seed
           </Label>
-          <Tooltip>
-            <TooltipTrigger asChild>
+          <Popover>
+            <PopoverTrigger asChild>
               <button
                 type="button"
                 className="inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
@@ -61,15 +62,18 @@ export function SeedControl({
               >
                 <Info className="h-4 w-4 text-muted-foreground" />
               </button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p className="text-sm">
-                Seeds enable reproducible AI generation. Using the same seed with identical
-                parameters will generate similar results. Lock the seed to keep it the same
-                across multiple generations, or unlock to auto-generate new seeds each time.
-              </p>
-            </TooltipContent>
-          </Tooltip>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="start">
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none">About Seeds</h4>
+                <p className="text-sm text-muted-foreground">
+                  Seeds enable reproducible AI generation. Using the same seed with identical
+                  parameters will generate similar results. Lock the seed to keep it the same
+                  across multiple generations, or unlock to auto-generate new seeds each time.
+                </p>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="flex items-center gap-2">
           <Tooltip>
