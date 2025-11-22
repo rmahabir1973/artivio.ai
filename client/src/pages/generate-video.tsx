@@ -19,6 +19,7 @@ import { TemplateManager } from "@/components/template-manager";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SeedControl } from "@/components/SeedControl";
 
 const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1": ["16:9", "9:16"],
@@ -157,11 +158,18 @@ export default function GenerateVideo() {
   const [duration, setDuration] = useState(5);
   const [quality, setQuality] = useState("1080p");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [seed, setSeed] = useState<number | undefined>(undefined);
+  const [seedLocked, setSeedLocked] = useState(false);
   
   // Generation result state
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
+  
+  // Helper to check if current model supports seeds
+  const modelSupportsSeed = () => {
+    return model.startsWith('veo-') || model.startsWith('seedance-') || model.startsWith('wan-');
+  };
 
   // Load template handler
   const handleLoadTemplate = (template: any) => {
@@ -413,16 +421,28 @@ export default function GenerateVideo() {
       return;
     }
 
+    // Build parameters with seed support (Veo uses array 'seeds', others use singular 'seed')
+    const parameters: any = {
+      duration,
+      quality,
+      aspectRatio,
+    };
+    
+    // Add seed if model supports it and seed is provided
+    if (modelSupportsSeed() && seed) {
+      if (model.startsWith('veo-')) {
+        parameters.seeds = [seed]; // Veo uses array format
+      } else {
+        parameters.seed = seed; // Seedance/Wan use singular
+      }
+    }
+    
     generateMutation.mutate({
       model,
       prompt,
       generationType,
       referenceImages: generationType === "image-to-video" ? referenceImages : undefined,
-      parameters: {
-        duration,
-        quality,
-        aspectRatio,
-      },
+      parameters,
     });
   };
 
@@ -648,6 +668,16 @@ export default function GenerateVideo() {
                 </p>
               )}
             </div>
+
+            {/* Seed Control - Only show for models that support it */}
+            {modelSupportsSeed() && (
+              <SeedControl
+                seed={seed}
+                onSeedChange={setSeed}
+                locked={seedLocked}
+                onLockChange={setSeedLocked}
+              />
+            )}
 
             {/* Credit Cost Warning */}
             {selectedModel && (

@@ -18,6 +18,7 @@ import { TemplateManager } from "@/components/template-manager";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SeedControl } from "@/components/SeedControl";
 
 const IMAGE_MODEL_INFO = [
   { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
@@ -61,6 +62,13 @@ export default function GenerateImage() {
   const [outputFormat, setOutputFormat] = useState("PNG");
   const [quality, setQuality] = useState("standard");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [seed, setSeed] = useState<number | undefined>(undefined);
+  const [seedLocked, setSeedLocked] = useState(false);
+  
+  // Helper to check if current model supports seeds (currently only Seedream 4)
+  const modelSupportsSeed = () => {
+    return model === 'seedream-4';
+  };
 
   // Load template handler
   const handleLoadTemplate = (template: any) => {
@@ -248,17 +256,25 @@ export default function GenerateImage() {
       return;
     }
 
+    // Build parameters with seed support (only Seedream 4 supports seeds)
+    const parameters: any = {
+      aspectRatio,
+      style,
+      outputFormat,
+      quality,
+    };
+    
+    // Add seed if model supports it and seed is provided
+    if (modelSupportsSeed() && seed) {
+      parameters.seed = seed;
+    }
+    
     // Ensure referenceImages is only sent in image-editing mode
     const payload: any = {
       model,
       prompt,
       mode,
-      parameters: {
-        aspectRatio,
-        style,
-        outputFormat,
-        quality,
-      },
+      parameters,
     };
 
     // Only include referenceImages in editing mode
@@ -484,6 +500,16 @@ export default function GenerateImage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Seed Control - Only show for models that support it */}
+              {modelSupportsSeed() && (
+                <SeedControl
+                  seed={seed}
+                  onSeedChange={setSeed}
+                  locked={seedLocked}
+                  onLockChange={setSeedLocked}
+                />
+              )}
 
               {/* Credit Cost Warning */}
               {selectedModel && (

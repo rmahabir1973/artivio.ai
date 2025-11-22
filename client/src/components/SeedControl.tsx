@@ -1,0 +1,126 @@
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Shuffle, Lock, LockOpen, Info } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+
+interface SeedControlProps {
+  seed?: number;
+  onSeedChange: (seed: number | undefined) => void;
+  locked?: boolean;
+  onLockChange?: (locked: boolean) => void;
+  className?: string;
+}
+
+export function SeedControl({
+  seed,
+  onSeedChange,
+  locked = false,
+  onLockChange,
+  className = "",
+}: SeedControlProps) {
+  const [isLocked, setIsLocked] = useState(locked);
+
+  const generateRandomSeed = () => {
+    const newSeed = Math.floor(Math.random() * 2147483647) + 1;
+    onSeedChange(newSeed);
+  };
+
+  const handleLockToggle = (checked: boolean) => {
+    setIsLocked(checked);
+    onLockChange?.(checked);
+  };
+
+  const handleSeedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === "") {
+      onSeedChange(undefined);
+    } else {
+      const numValue = parseInt(value, 10);
+      if (!isNaN(numValue) && numValue > 0 && numValue <= 2147483647) {
+        onSeedChange(numValue);
+      }
+    }
+  };
+
+  return (
+    <div className={`space-y-2 ${className}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="seed-input" className="text-sm font-medium">
+            Seed
+          </Label>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-sm">
+                Seeds enable reproducible AI generation. Using the same seed with identical
+                parameters will generate similar results. Lock the seed to keep it the same
+                across multiple generations, or unlock to auto-generate new seeds each time.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                {isLocked ? (
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <LockOpen className="h-4 w-4 text-muted-foreground" />
+                )}
+                <Switch
+                  checked={isLocked}
+                  onCheckedChange={handleLockToggle}
+                  data-testid="switch-lock-seed"
+                  aria-label="Lock seed"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-sm">
+                {isLocked
+                  ? "Seed locked - will stay the same"
+                  : "Seed unlocked - will auto-generate"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          id="seed-input"
+          type="number"
+          value={seed || ""}
+          onChange={handleSeedInputChange}
+          placeholder="Auto-generate"
+          min={1}
+          max={2147483647}
+          className="flex-1"
+          data-testid="input-seed"
+        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={generateRandomSeed}
+              data-testid="button-generate-seed"
+            >
+              <Shuffle className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-sm">Generate random seed</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  );
+}
