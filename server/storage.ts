@@ -504,45 +504,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateGeneration(id: string, updates: Partial<Generation>): Promise<Generation | undefined> {
-    // Explicitly handle field mapping for Drizzle ORM
+    // Build update object with only provided fields
     const updateObj: any = {};
-    if ('isShowcase' in updates) {
-      updateObj.isShowcase = updates.isShowcase;
+    
+    // Map all potential fields
+    const fieldMap: Record<string, keyof typeof updates> = {
+      'isShowcase': 'isShowcase',
+      'status': 'status',
+      'resultUrl': 'resultUrl',
+      'statusDetail': 'statusDetail',
+      'errorMessage': 'errorMessage',
+      'completedAt': 'completedAt',
+      'processingStage': 'processingStage',
+      'thumbnailUrl': 'thumbnailUrl',
+      'externalTaskId': 'externalTaskId',
+      'parameters': 'parameters',
+    };
+    
+    for (const [key, updateKey] of Object.entries(fieldMap)) {
+      if (updateKey in updates) {
+        updateObj[key] = updates[updateKey as keyof typeof updates];
+      }
     }
-    if ('status' in updates) {
-      updateObj.status = updates.status;
-    }
-    if ('resultUrl' in updates) {
-      updateObj.resultUrl = updates.resultUrl;
-    }
-    if ('statusDetail' in updates) {
-      updateObj.statusDetail = updates.statusDetail;
-    }
-    if ('errorMessage' in updates) {
-      updateObj.errorMessage = updates.errorMessage;
-    }
-    if ('completedAt' in updates) {
-      updateObj.completedAt = updates.completedAt;
-    }
-    if ('processingStage' in updates) {
-      updateObj.processingStage = updates.processingStage;
-    }
-    if ('thumbnailUrl' in updates) {
-      updateObj.thumbnailUrl = updates.thumbnailUrl;
-    }
-    if ('externalTaskId' in updates) {
-      updateObj.externalTaskId = updates.externalTaskId;
-    }
-    if ('parameters' in updates) {
-      updateObj.parameters = updates.parameters;
+    
+    // If no fields to update, return the existing generation
+    if (Object.keys(updateObj).length === 0) {
+      return await this.getGeneration(id);
     }
 
-    const [generation] = await db
+    const results = await db
       .update(generations)
       .set(updateObj)
       .where(eq(generations.id, id))
       .returning();
-    return generation;
+    
+    return results?.[0];
   }
 
   /**
