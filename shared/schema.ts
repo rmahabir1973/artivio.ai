@@ -210,6 +210,7 @@ export const generations = pgTable("generations", {
   errorMessage: text("error_message"),
   creditsCost: integer("credits_cost").notNull(),
   apiKeyUsed: varchar("api_key_used"), // Which API key was used
+  seed: integer("seed"), // Random seed for reproducibility (supported by Veo 3.1, Wan 2.5, Seedance)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 }, (table) => [
@@ -224,6 +225,40 @@ export const insertGenerationSchema = createInsertSchema(generations).omit({
 
 export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type Generation = typeof generations.$inferSelect;
+
+// Saved Seeds table for user's seed library (for reproducible AI generations)
+export const savedSeeds = pgTable("saved_seeds", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar("name").notNull(), // User-defined name (e.g., "cyberpunk_theme", "character_v1")
+  seed: integer("seed").notNull(), // The actual seed value
+  description: text("description"), // Optional description
+  previewImageUrl: text("preview_image_url"), // Optional thumbnail from a generation using this seed
+  generationId: varchar("generation_id"), // Optional link to the generation this seed came from
+  usageCount: integer("usage_count").notNull().default(0), // Track how many times this seed has been used
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("saved_seeds_user_idx").on(table.userId),
+  index("saved_seeds_user_created_idx").on(table.userId, table.createdAt),
+]);
+
+export const insertSavedSeedSchema = createInsertSchema(savedSeeds).omit({
+  id: true,
+  usageCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateSavedSeedSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().optional(),
+  previewImageUrl: z.string().optional(),
+});
+
+export type InsertSavedSeed = z.infer<typeof insertSavedSeedSchema>;
+export type UpdateSavedSeed = z.infer<typeof updateSavedSeedSchema>;
+export type SavedSeed = typeof savedSeeds.$inferSelect;
 
 // Image Analysis table for AI-powered image understanding
 export const imageAnalyses = pgTable("image_analyses", {
