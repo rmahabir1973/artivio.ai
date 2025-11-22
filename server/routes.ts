@@ -4658,6 +4658,25 @@ async function combineVideosInBackground(combinationId: string, videoUrls: strin
       },
     });
 
+    // Also create a generation record so it shows up in history
+    const combination = await storage.getVideoCombinationById(combinationId);
+    if (combination) {
+      await storage.createGeneration({
+        userId: combination.userId,
+        type: 'video-editor',
+        status: 'completed',
+        resultUrl: result.outputPath,
+        model: 'video-editor',
+        prompt: 'Video Editor Combination',
+        parameters: {
+          sourceVideoIds: combination.sourceVideoIds,
+          enhancements: combination.enhancements,
+        },
+        creditsCost: combination.creditsCost,
+        processingStage: 'completed',
+      });
+    }
+
     console.log(`Video combination ${combinationId} completed: ${result.outputPath}`);
 
   } catch (error: any) {
