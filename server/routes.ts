@@ -2037,6 +2037,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Toggle showcase status for a generation
+  app.post('/api/generations/:id/showcase', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      // Validate request body
+      const bodySchema = z.object({
+        isShowcase: z.boolean()
+      });
+      
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+      
+      const { isShowcase } = validationResult.data;
+
+      // Verify the generation belongs to the user
+      const generation = await storage.getGeneration(id);
+
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own generations" });
+      }
+
+      // Only completed video generations with resultUrl can be showcased
+      if (generation.status !== 'completed') {
+        return res.status(400).json({ message: "Only completed generations can be showcased" });
+      }
+      
+      if (generation.type !== 'video') {
+        return res.status(400).json({ message: "Only video generations can be showcased" });
+      }
+      
+      if (!generation.resultUrl) {
+        return res.status(400).json({ message: "Generation must have a valid result URL" });
+      }
+
+      // Update the showcase status
+      const updated = await storage.updateGeneration(id, { isShowcase });
+
+      if (!updated) {
+        return res.status(500).json({ message: "Failed to update showcase status" });
+      }
+
+      res.json({ 
+        success: true, 
+        isShowcase: updated.isShowcase,
+        message: updated.isShowcase ? "Added to showcase" : "Removed from showcase"
+      });
+    } catch (error) {
+      console.error('Error toggling showcase status:', error);
+      res.status(500).json({ message: "Failed to update showcase status" });
+    }
+  });
+
   // Get user stats
   app.get('/api/stats', requireJWT, async (req: any, res) => {
     try {
@@ -3344,6 +3407,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get all generations for showcase management
+  app.get('/api/admin/generations', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const generations = await storage.getAllGenerations();
+      
+      // Filter to only video generations, sort by newest first
+      const videoGenerations = generations
+        .filter((g: any) => g.type === 'video' && g.status === 'completed' && g.resultUrl)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(videoGenerations);
+    } catch (error) {
+      console.error('Error fetching generations for admin:', error);
+      res.status(500).json({ message: "Failed to fetch generations" });
+    }
+  });
+
+  // Admin: Toggle showcase status for any generation
+  app.patch('/api/admin/generations/:id/showcase', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { id } = req.params;
+      
+      // Validate request body
+      const bodySchema = z.object({
+        isShowcase: z.boolean()
+      });
+      
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+      
+      const { isShowcase } = validationResult.data;
+
+      // Verify the generation exists
+      const generation = await storage.getGeneration(id);
+
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+
+      // Only completed video generations with resultUrl can be showcased
+      if (generation.status !== 'completed') {
+        return res.status(400).json({ message: "Only completed generations can be showcased" });
+      }
+      
+      if (generation.type !== 'video') {
+        return res.status(400).json({ message: "Only video generations can be showcased" });
+      }
+      
+      if (!generation.resultUrl) {
+        return res.status(400).json({ message: "Generation must have a valid result URL" });
+      }
+
+      // Update the showcase status
+      const updated = await storage.updateGeneration(id, { isShowcase });
+
+      if (!updated) {
+        return res.status(500).json({ message: "Failed to update showcase status" });
+      }
+
+      res.json({ 
+        success: true, 
+        isShowcase: updated.isShowcase,
+        message: updated.isShowcase ? "Added to showcase" : "Removed from showcase"
+      });
+    } catch (error) {
+      console.error('Error toggling showcase status (admin):', error);
+      res.status(500).json({ message: "Failed to update showcase status" });
+    }
+  });
+
   // Admin Pricing Management Routes
   // Public: Get all pricing configurations (for frontend display)
   app.get('/api/pricing', async (req, res) => {
@@ -4426,9 +4578,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const allGenerations = await storage.getAllGenerations();
       
-      // Filter to only completed videos, sort by newest first, take top 6
+      // Filter to only completed videos that are marked as showcase, sort by newest first, take top 6
       const showcaseVideos = allGenerations
-        .filter((gen: any) => gen.type === 'video' && gen.status === 'completed' && gen.resultUrl)
+        .filter((gen: any) => gen.type === 'video' && gen.status === 'completed' && gen.resultUrl && gen.isShowcase === true)
         .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 6);
       

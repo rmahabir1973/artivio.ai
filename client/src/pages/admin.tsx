@@ -14,11 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, PlanEconomics } from "@shared/schema";
+import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, PlanEconomics, Generation } from "@shared/schema";
 
 interface UserWithSubscription extends User {
   subscription: {
@@ -172,6 +172,11 @@ export default function Admin() {
 
   const { data: announcements = [], isLoading: announcementsLoading } = useQuery<Announcement[]>({
     queryKey: ["/api/admin/announcements"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const { data: adminGenerations = [], isLoading: generationsLoading } = useQuery<Generation[]>({
+    queryKey: ["/api/admin/generations"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
@@ -528,6 +533,10 @@ export default function Admin() {
           <TabsTrigger value="announcements" data-testid="tab-announcements">
             <Activity className="h-4 w-4 mr-2" />
             Announcements
+          </TabsTrigger>
+          <TabsTrigger value="showcase" data-testid="tab-showcase">
+            <Eye className="h-4 w-4 mr-2" />
+            Showcase
           </TabsTrigger>
         </TabsList>
 
@@ -1735,6 +1744,98 @@ export default function Admin() {
                     </Card>
                   ))}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="showcase">
+          <Card>
+            <CardHeader>
+              <CardTitle>Showcase Management</CardTitle>
+              <CardDescription>Manage which videos appear on the Video Models showcase page</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {generationsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : adminGenerations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No completed video generations found
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4 text-sm text-muted-foreground">
+                    {adminGenerations.filter(g => g.isShowcase).length} of {adminGenerations.length} videos in showcase
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Preview</TableHead>
+                        <TableHead>Prompt</TableHead>
+                        <TableHead>Model</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead className="text-center">Showcase</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {adminGenerations.map((generation) => (
+                        <TableRow key={generation.id}>
+                          <TableCell>
+                            <video 
+                              src={generation.resultUrl || ''} 
+                              className="w-20 h-12 object-cover rounded"
+                              muted
+                              data-testid={`video-preview-${generation.id}`}
+                            />
+                          </TableCell>
+                          <TableCell className="max-w-md">
+                            <div className="line-clamp-2 text-sm">{generation.prompt}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{generation.model}</Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground font-mono">
+                            {generation.userId.slice(0, 8)}...
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDistanceToNow(new Date(generation.createdAt), { addSuffix: true })}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              variant={generation.isShowcase ? "default" : "outline"}
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  await apiRequest("PATCH", `/api/admin/generations/${generation.id}/showcase`, {
+                                    isShowcase: !generation.isShowcase
+                                  });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/admin/generations"] });
+                                  queryClient.invalidateQueries({ queryKey: ["/api/showcase-videos"] });
+                                  toast({
+                                    title: "Success",
+                                    description: generation.isShowcase ? "Removed from showcase" : "Added to showcase",
+                                  });
+                                } catch (error: any) {
+                                  toast({
+                                    title: "Error",
+                                    description: error.message || "Failed to update showcase status",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              data-testid={`button-toggle-showcase-${generation.id}`}
+                            >
+                              {generation.isShowcase ? "Remove" : "Add"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
               )}
             </CardContent>
           </Card>

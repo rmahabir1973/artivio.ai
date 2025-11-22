@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -25,6 +25,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showUpscaleModal, setShowUpscaleModal] = useState(false);
+  const [showShowcaseDialog, setShowShowcaseDialog] = useState(false);
   
   const statusColors = {
     pending: "secondary",
@@ -48,6 +49,27 @@ export function GenerationCard({ generation }: GenerationCardProps) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete generation",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const showcaseMutation = useMutation({
+    mutationFn: async (isShowcase: boolean) => {
+      return await apiRequest("POST", `/api/generations/${generation.id}/showcase`, { isShowcase });
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/showcase-videos"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update showcase status",
         variant: "destructive",
       });
     },
@@ -111,6 +133,11 @@ export function GenerationCard({ generation }: GenerationCardProps) {
   const handleDeleteConfirm = () => {
     deleteMutation.mutate();
     setShowDeleteDialog(false);
+  };
+
+  const handleShowcaseToggle = () => {
+    showcaseMutation.mutate(!generation.isShowcase);
+    setShowShowcaseDialog(false);
   };
 
   const handleCopyPrompt = () => {
@@ -326,6 +353,30 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             )}
           </div>
 
+          {/* Showcase toggle for completed videos */}
+          {generation.status === 'completed' && generation.type === 'video' && generation.resultUrl && (
+            <Button 
+              variant={generation.isShowcase ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowShowcaseDialog(true)}
+              disabled={showcaseMutation.isPending}
+              className="w-full"
+              data-testid={`button-showcase-${generation.id}`}
+            >
+              {generation.isShowcase ? (
+                <>
+                  <Eye className="h-4 w-4 mr-1" />
+                  In Showcase
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-4 w-4 mr-1" />
+                  Add to Showcase
+                </>
+              )}
+            </Button>
+          )}
+
           <div className={
             canRegenerate && generation.seed 
               ? "grid grid-cols-3 gap-2 w-full" 
@@ -477,6 +528,40 @@ export function GenerationCard({ generation }: GenerationCardProps) {
               data-testid={`button-confirm-delete-${generation.id}`}
             >
               {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Showcase Confirmation Dialog */}
+      <AlertDialog open={showShowcaseDialog} onOpenChange={setShowShowcaseDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {generation.isShowcase ? "Remove from Showcase?" : "Add to Showcase?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {generation.isShowcase 
+                ? "This will remove your video from the public showcase on the Video Models page."
+                : "This will display your video on the public Video Models showcase page. Your video will be visible to all visitors."
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid={`button-cancel-showcase-${generation.id}`}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleShowcaseToggle}
+              disabled={showcaseMutation.isPending}
+              data-testid={`button-confirm-showcase-${generation.id}`}
+            >
+              {showcaseMutation.isPending 
+                ? "Updating..." 
+                : generation.isShowcase 
+                  ? "Remove from Showcase" 
+                  : "Add to Showcase"
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
