@@ -9,10 +9,13 @@ const defaultPlans = [
     displayName: "7 Day Free Trial",
     description: "Try all features free for 7 days",
     price: 0,
+    monthlyPrice: 0,
+    annualPrice: 0,
     billingPeriod: "trial",
     trialDays: 7,
     creditsPerMonth: 1000,
     creditRolloverLimit: 0,
+    savingsPercentage: 0,
     features: [
       "1,000 credits (one-time)",
       "Full access to all AI models",
@@ -28,9 +31,12 @@ const defaultPlans = [
     displayName: "Starter",
     description: "Perfect for individuals and small projects",
     price: 1999, // $19.99
+    monthlyPrice: 1999, // $19.99/month
+    annualPrice: 14393, // $143.93/year (40% off: $19.99 * 12 * 0.6)
     billingPeriod: "monthly",
     creditsPerMonth: 5000,
     creditRolloverLimit: 2500,
+    savingsPercentage: 40, // 40% off when paying annually
     features: [
       "5,000 credits per month",
       "All AI models access",
@@ -46,9 +52,12 @@ const defaultPlans = [
     displayName: "Pro",
     description: "For professionals and growing teams",
     price: 4999, // $49.99
+    monthlyPrice: 4999, // $49.99/month
+    annualPrice: 35993, // $359.93/year (40% off: $49.99 * 12 * 0.6)
     billingPeriod: "monthly",
     creditsPerMonth: 15000,
     creditRolloverLimit: 7500,
+    savingsPercentage: 40, // 40% off when paying annually
     features: [
       "15,000 credits per month",
       "All AI models access",

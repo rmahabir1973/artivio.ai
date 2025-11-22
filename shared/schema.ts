@@ -968,12 +968,15 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   description: text("description"),
   stripeProductId: varchar("stripe_product_id"), // Stripe Product ID (e.g., prod_xxx)
   stripePriceId: varchar("stripe_price_id").unique(), // Stripe Price ID (e.g., price_xxx)
-  price: integer("price").notNull(), // Price in cents (e.g., 1999 for $19.99)
+  price: integer("price").notNull(), // Price in cents (e.g., 1999 for $19.99) - kept for backward compatibility
+  monthlyPrice: integer("monthly_price"), // Monthly billing price in cents (e.g., 1999 for $19.99)
+  annualPrice: integer("annual_price"), // Annual billing price in cents (e.g., 19990 for $199.90 = $16.66/month)
   billingPeriod: varchar("billing_period").notNull().default('monthly'), // 'monthly', 'annual', 'trial'
   trialDays: integer("trial_days").default(0), // Days for trial period
   features: jsonb("features"), // List of features/limits
   creditsPerMonth: integer("credits_per_month").notNull(), // Monthly credit allocation
   creditRolloverLimit: integer("credit_rollover_limit").default(0), // Max credits that can rollover
+  savingsPercentage: integer("savings_percentage"), // Savings % when paying annually (e.g., 40 for 40% off)
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0), // For display ordering
   createdAt: timestamp("created_at").defaultNow().notNull(),

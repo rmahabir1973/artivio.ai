@@ -62,6 +62,9 @@ export default function Admin() {
     displayName: "",
     description: "",
     price: "",
+    monthlyPrice: "",
+    annualPrice: "",
+    savingsPercentage: "",
     creditsPerMonth: "",
     stripePriceId: "",
     stripeProductId: ""
@@ -72,6 +75,9 @@ export default function Admin() {
     displayName: "",
     description: "",
     price: "",
+    monthlyPrice: "",
+    annualPrice: "",
+    savingsPercentage: "",
     creditsPerMonth: "",
   });
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
@@ -2588,7 +2594,7 @@ export default function Admin() {
         if (!open) {
           setCreatingPlan(false);
           setEditingPlanId(null);
-          setEditPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
+          setEditPlanData({ name: "", displayName: "", description: "", price: "", monthlyPrice: "", annualPrice: "", savingsPercentage: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
         }
       }}>
         <DialogContent className="max-w-2xl">
@@ -2643,7 +2649,7 @@ export default function Admin() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="plan-price">Price (USD/month)</Label>
+                <Label htmlFor="plan-price">Price (USD/month) - Legacy</Label>
                 <Input
                   id="plan-price"
                   type="number"
@@ -2672,6 +2678,57 @@ export default function Admin() {
                     : setEditPlanData({ ...editPlanData, creditsPerMonth: e.target.value })
                   }
                   data-testid="input-plan-credits"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+              <div>
+                <Label htmlFor="plan-monthly-price">Monthly Price (USD)</Label>
+                <Input
+                  id="plan-monthly-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="19.99"
+                  value={creatingPlan ? newPlanData.monthlyPrice : editPlanData.monthlyPrice}
+                  onChange={(e) => creatingPlan
+                    ? setNewPlanData({ ...newPlanData, monthlyPrice: e.target.value })
+                    : setEditPlanData({ ...editPlanData, monthlyPrice: e.target.value })
+                  }
+                  data-testid="input-plan-monthly-price"
+                />
+              </div>
+              <div>
+                <Label htmlFor="plan-annual-price">Annual Price (USD)</Label>
+                <Input
+                  id="plan-annual-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="199.90"
+                  value={creatingPlan ? newPlanData.annualPrice : editPlanData.annualPrice}
+                  onChange={(e) => creatingPlan
+                    ? setNewPlanData({ ...newPlanData, annualPrice: e.target.value })
+                    : setEditPlanData({ ...editPlanData, annualPrice: e.target.value })
+                  }
+                  data-testid="input-plan-annual-price"
+                />
+              </div>
+              <div>
+                <Label htmlFor="plan-savings">Savings % (off annual)</Label>
+                <Input
+                  id="plan-savings"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  placeholder="40"
+                  value={creatingPlan ? newPlanData.savingsPercentage : editPlanData.savingsPercentage}
+                  onChange={(e) => creatingPlan
+                    ? setNewPlanData({ ...newPlanData, savingsPercentage: e.target.value })
+                    : setEditPlanData({ ...editPlanData, savingsPercentage: e.target.value })
+                  }
+                  data-testid="input-plan-savings"
                 />
               </div>
             </div>
@@ -2708,8 +2765,8 @@ export default function Admin() {
               onClick={() => {
                 setCreatingPlan(false);
                 setEditingPlanId(null);
-                setEditPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
-                setNewPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "" });
+                setEditPlanData({ name: "", displayName: "", description: "", price: "", monthlyPrice: "", annualPrice: "", savingsPercentage: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
+                setNewPlanData({ name: "", displayName: "", description: "", price: "", monthlyPrice: "", annualPrice: "", savingsPercentage: "", creditsPerMonth: "" });
               }}
               disabled={createPlanMutation.isPending || updatePlanMutation.isPending}
               data-testid="button-cancel-plan-dialog"
@@ -2744,15 +2801,45 @@ export default function Admin() {
                 }
 
                 const priceInCents = Math.round(price * 100);
+                
+                // Parse new pricing fields (optional)
+                let monthlyPriceInCents: number | null = null;
+                let annualPriceInCents: number | null = null;
+                let savingsPercentage: number | null = null;
+                
+                if (data.monthlyPrice) {
+                  const monthlyPrice = parseFloat(data.monthlyPrice);
+                  if (!isNaN(monthlyPrice) && monthlyPrice >= 0) {
+                    monthlyPriceInCents = Math.round(monthlyPrice * 100);
+                  }
+                }
+                
+                if (data.annualPrice) {
+                  const annualPrice = parseFloat(data.annualPrice);
+                  if (!isNaN(annualPrice) && annualPrice >= 0) {
+                    annualPriceInCents = Math.round(annualPrice * 100);
+                  }
+                }
+                
+                if (data.savingsPercentage) {
+                  const savings = parseInt(data.savingsPercentage);
+                  if (!isNaN(savings) && savings >= 0 && savings <= 100) {
+                    savingsPercentage = savings;
+                  }
+                }
 
                 if (creatingPlan) {
-                  createPlanMutation.mutate({
+                  const createData: any = {
                     name,
                     displayName,
                     description,
                     price: priceInCents,
                     creditsPerMonth: credits,
-                  });
+                  };
+                  if (monthlyPriceInCents !== null) createData.monthlyPrice = monthlyPriceInCents;
+                  if (annualPriceInCents !== null) createData.annualPrice = annualPriceInCents;
+                  if (savingsPercentage !== null) createData.savingsPercentage = savingsPercentage;
+                  createPlanMutation.mutate(createData);
                 } else {
                   const updates: any = {
                     planId: editingPlanId!,
@@ -2762,6 +2849,10 @@ export default function Admin() {
                     price: priceInCents,
                     creditsPerMonth: credits,
                   };
+                  
+                  if (monthlyPriceInCents !== null) updates.monthlyPrice = monthlyPriceInCents;
+                  if (annualPriceInCents !== null) updates.annualPrice = annualPriceInCents;
+                  if (savingsPercentage !== null) updates.savingsPercentage = savingsPercentage;
                   
                   const stripePriceId = editPlanData.stripePriceId.trim();
                   const stripeProductId = editPlanData.stripeProductId.trim();
