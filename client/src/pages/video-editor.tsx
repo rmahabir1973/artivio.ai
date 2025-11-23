@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient, apiRequest, fetchWithAuth } from "@/lib/queryClient";
 import { Loader2, Video, Plus, X, Combine, Music, Type, Zap, Sparkles, Clock, ArrowDown, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
@@ -163,38 +163,47 @@ export default function VideoEditor() {
     queryKey: ['/api/video-combinations'],
   });
 
-  // Load all pages of generations when component mounts using queryClient.fetchQuery
+  // Load all pages of generations when component mounts using fetchWithAuth
   useEffect(() => {
     const fetchAllGenerations = async () => {
+      console.log('[VIDEO EDITOR] Starting pagination fetch for all generations...');
       try {
         let allGens: Generation[] = [];
         let cursor: string | undefined = undefined;
         let hasMore = true;
+        let pageCount = 0;
 
-        // Fetch all paginated pages using queryClient.fetchQuery (properly authenticated)
+        // Fetch all paginated pages using fetchWithAuth (handles 401 retries automatically)
         while (hasMore) {
-          // queryClient's default queryFn joins queryKey with "/" so we need to include the full URL
           const url = cursor ? `/api/generations?cursor=${cursor}` : '/api/generations';
+          console.log(`[VIDEO EDITOR] Fetching page ${pageCount + 1}:`, url);
           
-          // Use queryClient.fetchQuery which uses the authenticated queryFn
-          const response: any = await queryClient.fetchQuery({
-            queryKey: [url],
-          });
+          // Use fetchWithAuth directly - it includes authBridge's retry-on-401 logic
+          const res = await fetchWithAuth(url, { method: 'GET' });
           
-          // Handle response - API returns either array or object with data property
+          if (!res.ok) {
+            throw new Error(`Failed to fetch page ${pageCount + 1}: ${res.status} ${res.statusText}`);
+          }
+          
+          const response: any = await res.json();
+          
+          // Handle response - API returns object with data property
           const pageData = Array.isArray(response) ? response : (response.data || []);
           const pageItems = Array.isArray(pageData) ? pageData : [];
           
+          console.log(`[VIDEO EDITOR] Page ${pageCount + 1} loaded: ${pageItems.length} items, nextCursor:`, response.nextCursor);
           allGens = [...allGens, ...pageItems];
+          pageCount++;
           
           // Check if there's a next page
           cursor = response.nextCursor;
           hasMore = !!cursor;
         }
 
+        console.log(`[VIDEO EDITOR] ✓ Pagination complete: ${pageCount} pages, ${allGens.length} total generations`);
         setAllGenerations(allGens);
       } catch (error) {
-        console.error('Failed to fetch all generations:', error);
+        console.error('[VIDEO EDITOR] ✗ Pagination failed:', error);
         // Fallback to first page data
         const pageData = Array.isArray(firstPageData) ? firstPageData : (firstPageData?.data || []);
         setAllGenerations(Array.isArray(pageData) ? pageData : []);
