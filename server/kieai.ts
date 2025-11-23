@@ -718,29 +718,35 @@ export async function generateImage(params: {
     });
   }
   else if (params.model === '4o-image' || params.model === 'flux-kontext') {
-    // Existing models: 4o Image, Flux Kontext
-    const payload: any = {
-      prompt: params.prompt,
-      size: parameters.aspectRatio || '1:1',
-      nVariants: parameters.nVariants || 1,
-      isEnhance: parameters.isEnhance || false,
-      callBackUrl: parameters.callBackUrl,
+    // 4o Image and Flux Kontext - uses /api/v1/jobs/createTask (unified endpoint)
+    const modelMap = {
+      '4o-image': 'openai/gpt-4o-image',
+      'flux-kontext': 'black-forest-labs/flux-kontext'
     };
     
-    // Add reference images for editing mode
+    const modelName = modelMap[params.model as keyof typeof modelMap] || params.model;
+    const aspectRatio = parameters.aspectRatio || '1:1';
+    const quality = parameters.quality || 'standard';
+    const outputFormat = parameters.outputFormat || 'JPEG';
+    
+    // Build input object
+    const inputPayload: any = {
+      prompt: params.prompt,
+      aspect_ratio: aspectRatio,
+      quality: quality,
+      output_format: outputFormat,
+    };
+    
+    // Add reference images for image-to-image/editing mode
     if (mode === 'image-editing' && referenceImages.length > 0) {
-      payload.filesUrl = referenceImages;
+      inputPayload.image_input = referenceImages;
     }
     
-    // Add output format and quality if specified
-    if (parameters.outputFormat) {
-      payload.outputFormat = parameters.outputFormat;
-    }
-    if (parameters.quality) {
-      payload.quality = parameters.quality;
-    }
-    
-    return await callKieApi('/api/v1/gpt4o-image/generate', payload);
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: modelName,
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
   }
   
   throw new Error(`Unsupported image model: ${params.model}. Supported models: 4o-image, flux-kontext, nano-banana, seedream-4, midjourney-v7`);
