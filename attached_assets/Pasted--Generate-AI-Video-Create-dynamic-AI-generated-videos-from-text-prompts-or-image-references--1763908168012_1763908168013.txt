@@ -1,0 +1,231 @@
+# Generate AI Video
+
+> Create dynamic AI-generated videos from text prompts or image references.
+
+## OpenAPI
+
+````yaml runway-api/runway-api.json post /api/v1/runway/generate
+paths:
+  path: /api/v1/runway/generate
+  method: post
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              prompt:
+                allOf:
+                  - type: string
+                    description: >-
+                      Descriptive text that guides the AI video generation. Be
+                      specific about subject, action, style, and setting. When
+                      used with an image, describes how to animate or modify the
+                      image content. Maximum length is 1800 characters.
+                    example: >-
+                      A fluffy orange cat dancing energetically in a colorful
+                      room with disco lights
+              imageUrl:
+                allOf:
+                  - type: string
+                    description: >-
+                      Optional reference image URL to base the video on. When
+                      provided, the AI will create a video animating or
+                      extending this image.
+                    example: https://example.com/cat-image.jpg
+              duration:
+                allOf:
+                  - type: number
+                    description: >-
+                      Video duration, optional values are 5 or 10. If 10-second
+                      video is selected, 1080p resolution cannot be used
+                    example: '5'
+              quality:
+                allOf:
+                  - type: string
+                    description: >-
+                      Video resolution, optional values are 720p or 1080p. If
+                      1080p is selected, 10-second video cannot be generated
+                    example: 720p
+              aspectRatio:
+                allOf:
+                  - type: string
+                    enum:
+                      - '16:9'
+                      - '4:3'
+                      - '1:1'
+                      - '3:4'
+                      - '9:16'
+                    description: >-
+                      Video aspect ratio parameter. **Required parameter for
+                      text-to-video generation requests. This parameter is
+                      invalid when imageUrl is passed, and the aspect ratio will
+                      ultimately be determined by the provided image.**
+                    example: '9:16'
+              waterMark:
+                allOf:
+                  - type: string
+                    description: >-
+                      Video watermark text content. An empty string indicates no
+                      watermark, while a non-empty string will display the
+                      specified text as a watermark in the bottom right corner
+                      of the video.
+                    example: kie.ai
+              callBackUrl:
+                allOf:
+                  - type: string
+                    description: >-
+                      The URL to receive AI video generation task completion
+                      updates. Required for all video generation requests.
+
+
+                      - System will POST task status and results to this URL
+                      when video generation completes
+
+                      - Callback includes generated video URLs, cover images,
+                      and task information
+
+                      - Your callback endpoint should accept POST requests with
+                      JSON payload containing video results
+
+                      - For detailed callback format and implementation guide,
+                      see [Video Generation
+                      Callbacks](./generate-ai-video-callbacks)
+
+                      - Alternatively, use the Get AI Video Details endpoint to
+                      poll task status
+                    example: https://api.example.com/callback
+            required: true
+            requiredProperties:
+              - prompt
+              - duration
+              - quality
+        examples:
+          example:
+            value:
+              prompt: >-
+                A fluffy orange cat dancing energetically in a colorful room
+                with disco lights
+              imageUrl: https://example.com/cat-image.jpg
+              model: runway-duration-5-generate
+              waterMark: kie.ai
+              callBackUrl: https://api.example.com/callback
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 404
+                      - 422
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks.The request parameters are
+                      incorrect, please check the parameters.
+
+                      - **451**: Unauthorized - Failed to fetch the image.
+                      Kindly verify any access limits set by you or your service
+                      provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: >-
+                          Unique identifier for the generation task, can be used
+                          with `Get AI Video Details` to query task status
+                        example: ee603959-debb-48d1-98c4-a6d1c717eba6
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: ee603959-debb-48d1-98c4-a6d1c717eba6
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

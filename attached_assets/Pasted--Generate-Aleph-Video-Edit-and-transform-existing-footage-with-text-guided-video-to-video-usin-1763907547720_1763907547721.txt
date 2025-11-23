@@ -1,0 +1,234 @@
+# Generate Aleph Video
+
+> Edit and transform existing footage with text-guided video-to-video using Runway Aleph. 
+
+## OpenAPI
+
+````yaml runway-api/runway-aleph-api.json post /api/v1/aleph/generate
+paths:
+  path: /api/v1/aleph/generate
+  method: post
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              prompt:
+                allOf:
+                  - type: string
+                    description: >-
+                      Descriptive text that guides the AI video generation. Be
+                      specific about subject, action, style, and setting.
+                      Describes how to animate or modify the reference image
+                      content.
+                    example: >-
+                      A majestic eagle soaring through mountain clouds at sunset
+                      with cinematic camera movement
+              videoUrl:
+                allOf:
+                  - type: string
+                    description: >-
+                      Reference video URL to base the video-to-video generation
+                      on. The AI will transform and enhance this video according
+                      to the prompt.
+                    example: https://example.com/input-video.mp4
+              callBackUrl:
+                allOf:
+                  - type: string
+                    description: >-
+                      The URL to receive AI video generation task completion
+                      updates.
+
+
+                      - System will POST task status and results to this URL
+                      when video generation completes
+
+                      - Callback includes generated video URLs, cover images,
+                      and task information
+
+                      - Your callback endpoint should accept POST requests with
+                      JSON payload containing video results
+
+                      - For detailed callback format and implementation guide,
+                      see [Aleph Video Generation
+                      Callbacks](./generate-aleph-video-callbacks)
+
+                      - Alternatively, use the Get Aleph Video Details endpoint
+                      to poll task status
+                    example: https://api.example.com/callback
+              waterMark:
+                allOf:
+                  - type: string
+                    description: >-
+                      Optional watermark text content. An empty string indicates
+                      no watermark, while a non-empty string will display the
+                      specified text as a watermark in the video.
+                    example: kie.ai
+              uploadCn:
+                allOf:
+                  - type: boolean
+                    description: >-
+                      Upload method selection. Default value is false (S3/R2),
+                      set to true for Alibaba Cloud OSS upload, set to false for
+                      overseas R2 server upload.
+                    example: false
+                    default: false
+              aspectRatio:
+                allOf:
+                  - type: string
+                    description: Video aspect ratio.
+                    enum:
+                      - '16:9'
+                      - '9:16'
+                      - '4:3'
+                      - '3:4'
+                      - '1:1'
+                      - '21:9'
+                    example: '16:9'
+              seed:
+                allOf:
+                  - type: integer
+                    description: Random seed. Set for reproducible generation.
+                    example: 123456
+              referenceImage:
+                allOf:
+                  - type: string
+                    format: uri
+                    description: >-
+                      Reference image URL to influence the style or content of
+                      the output.
+                    example: https://example.com/reference.jpg
+            required: true
+            requiredProperties:
+              - prompt
+              - videoUrl
+        examples:
+          example:
+            value:
+              prompt: >-
+                A majestic eagle soaring through mountain clouds at sunset with
+                cinematic camera movement
+              videoUrl: https://example.com/input-video.mp4
+              callBackUrl: https://api.example.com/callback
+              waterMark: kie.ai
+              uploadCn: false
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 404
+                      - 422
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks.The request parameters are
+                      incorrect, please check the parameters.
+
+                      - **451**: Unauthorized - Failed to fetch the image.
+                      Kindly verify any access limits set by you or your service
+                      provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Error message when code != 200
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: >-
+                          Unique identifier for the generation task, can be used
+                          with `Get Aleph Video Details` to query task status
+                        example: ee603959-debb-48d1-98c4-a6d1c717eba6
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: ee603959-debb-48d1-98c4-a6d1c717eba6
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

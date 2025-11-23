@@ -54,33 +54,18 @@ const VIDEO_MODELS = [
   },
   {
     value: "runway-gen3-alpha-turbo",
-    label: "Runway Gen-3 Alpha Turbo",
-    description: "Fast, high-quality video generation",
+    label: "Runway Gen-3",
+    description: "HD quality video generation",
     duration: "5s, 10s",
     supportsImages: true,
     icon: <Wand2 className="w-5 h-5" />,
     features: [
       "Advanced scene reasoning and camera control",
-      "Professional-quality video generation",
-      "Multi-aspect ratio support",
+      "Professional HD quality (720p)",
+      "Multi-aspect ratio support (16:9, 4:3, 1:1, 3:4, 9:16)",
       "Realistic physics simulation"
     ],
     useCases: ["Visual Storytellers & Artists", "Social Media Creators", "Product Designers & Brand Marketers"]
-  },
-  {
-    value: "runway-aleph",
-    label: "Runway Aleph",
-    description: "Advanced scene reasoning and camera control",
-    duration: "5s, 10s",
-    supportsImages: true,
-    icon: <RotateCcw className="w-5 h-5" />,
-    features: [
-      "Advanced scene reasoning and camera control",
-      "Professional-quality video generation",
-      "Multi-aspect ratio support",
-      "Realistic physics simulation"
-    ],
-    useCases: ["Product Designers & Brand Marketers", "Wedding & Portrait Photographers", "Visual Storytellers & Artists"]
   },
   {
     value: "seedance-1-pro",

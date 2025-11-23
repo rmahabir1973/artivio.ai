@@ -27,8 +27,7 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1": ["16:9", "9:16"],
   "veo-3.1-fast": ["16:9", "9:16"],
   "veo-3": ["16:9", "9:16"],
-  "runway-gen3-alpha-turbo": ["16:9", "9:16"],
-  "runway-aleph": ["16:9", "9:16"],
+  "runway-gen3-alpha-turbo": ["16:9", "4:3", "1:1", "3:4", "9:16"],
   "seedance-1-pro": ["16:9", "9:16", "1:1", "4:3"],
   "seedance-1-lite": ["16:9", "9:16", "1:1", "4:3"],
   "wan-2.5": ["16:9", "9:16", "1:1"],
@@ -42,7 +41,6 @@ const DURATION_SUPPORT: Record<string, number[]> = {
   "veo-3.1-fast": [8],
   "veo-3": [8],
   "runway-gen3-alpha-turbo": [5, 10],
-  "runway-aleph": [5, 10],
   "seedance-1-pro": [10],
   "seedance-1-lite": [10],
   "wan-2.5": [10],
@@ -54,8 +52,9 @@ const DURATION_SUPPORT: Record<string, number[]> = {
 const ASPECT_RATIO_LABELS: Record<string, string> = {
   "16:9": "16:9 (Landscape)",
   "9:16": "9:16 (Portrait)",
-  "1:1": "1:1 (Square)",
   "4:3": "4:3 (Classic)",
+  "1:1": "1:1 (Square)",
+  "3:4": "3:4 (Portrait)",
 };
 
 const VIDEO_MODEL_INFO = [
@@ -85,16 +84,8 @@ const VIDEO_MODEL_INFO = [
   },
   { 
     value: "runway-gen3-alpha-turbo", 
-    label: "Runway Gen-3 Alpha Turbo", 
-    description: "Fast, high-quality video generation", 
-    duration: "5s, 10s",
-    supportsImages: true,
-    maxImages: 1 
-  },
-  { 
-    value: "runway-aleph", 
-    label: "Runway Aleph", 
-    description: "Advanced scene reasoning and camera control", 
+    label: "Runway Gen-3", 
+    description: "HD quality video generation", 
     duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 

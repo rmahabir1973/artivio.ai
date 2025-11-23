@@ -348,7 +348,7 @@ export async function generateVideo(params: {
   else if (params.model === 'runway-gen3-alpha-turbo') {
     // Runway Gen-3 - uses /api/v1/runway/generate
     const duration = parameters.duration || 5;
-    const quality = parameters.quality || '720p';
+    const quality = '720p'; // Always use 720p (HD quality) for both 5s and 10s
     const aspectRatio = parameters.aspectRatio || '16:9';
     
     // Validate aspect ratio for Runway Gen-3 (supports 16:9, 4:3, 1:1, 3:4, 9:16)
@@ -369,41 +369,6 @@ export async function generateVideo(params: {
       waterMark: parameters.watermark || '', // Runway uses waterMark (capital M)
       callBackUrl: parameters.callBackUrl,
     });
-  }
-  else if (params.model === 'runway-aleph') {
-    // Runway Aleph - uses /api/v1/aleph/generate (video-to-video editing)
-    const aspectRatio = parameters.aspectRatio || '16:9';
-    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
-    
-    // Validate aspect ratio for Runway Aleph (supports 16:9, 9:16, 4:3, 3:4, 1:1, 21:9)
-    if (!['16:9', '9:16', '4:3', '3:4', '1:1', '21:9'].includes(aspectRatio)) {
-      throw new Error(`Runway Aleph supports 16:9, 9:16, 4:3, 3:4, 1:1, and 21:9 aspect ratios. Received: ${aspectRatio}`);
-    }
-    
-    // For Runway Aleph: videoUrl (NOT imageUrl) from first reference image
-    const videoUrl = referenceImages.length > 0 ? referenceImages[0] : undefined;
-    
-    // Build Aleph request payload
-    const alephPayload: any = {
-      prompt: params.prompt,
-      callBackUrl: parameters.callBackUrl,
-      waterMark: parameters.watermark || '',
-      uploadCn: parameters.uploadCn || false, // Upload to China server (optional)
-      aspectRatio,
-      seed,
-    };
-    
-    // Add videoUrl if present
-    if (videoUrl) {
-      alephPayload.videoUrl = videoUrl;
-    }
-    
-    // Add referenceImage if provided (separate from videoUrl)
-    if (parameters.referenceImage) {
-      alephPayload.referenceImage = parameters.referenceImage;
-    }
-    
-    return await callKieApi('/api/v1/aleph/generate', alephPayload);
   }
   else if (params.model.startsWith('seedance-')) {
     // Seedance 1.0 Pro/Lite - uses /api/v1/jobs/createTask (Bytedance API)
@@ -629,7 +594,7 @@ export async function generateVideo(params: {
   }
   
   // Reject unknown models instead of falling back
-  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, runway-aleph, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, grok-imagine, sora-2, sora-2-image-to-video, sora-2-pro-storyboard`);
+  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, grok-imagine, sora-2, sora-2-image-to-video, sora-2-pro-storyboard`);
 }
 
 // Image Generation
