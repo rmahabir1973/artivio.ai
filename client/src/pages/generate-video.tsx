@@ -61,8 +61,8 @@ const ASPECT_RATIO_LABELS: Record<string, string> = {
 const VIDEO_MODEL_INFO = [
   { 
     value: "veo-3.1", 
-    label: "Veo 3.1", 
-    description: "1080p quality with synchronized audio", 
+    label: "Veo 3.1 Quality", 
+    description: "HD quality with synchronized audio", 
     duration: "8s",
     supportsImages: false,
     maxImages: 0 
@@ -318,6 +318,19 @@ export default function GenerateVideo() {
     }
   }, [model, aspectRatio, toast, selectedModel?.label]);
 
+  // Auto-switch to text-to-video when model doesn't support images
+  useEffect(() => {
+    if (selectedModel && !selectedModel.supportsImages && generationType === "image-to-video") {
+      setGenerationType("text-to-video");
+      setReferenceImages([]);
+      toast({
+        title: "Mode switched to Text to Video",
+        description: `${selectedModel.label} does not support Referenced Images. Use Veo 3.1 Fast for image-to-video generation.`,
+        variant: "default",
+      });
+    }
+  }, [model, selectedModel, generationType, toast]);
+
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest("POST", "/api/generate/video", data);
@@ -521,8 +534,12 @@ export default function GenerateVideo() {
                 <TabsTrigger value="text-to-video" data-testid="tab-text-to-video">
                   Text to Video
                 </TabsTrigger>
-                <TabsTrigger value="image-to-video" data-testid="tab-image-to-video">
-                  Image to Video
+                <TabsTrigger 
+                  value="image-to-video" 
+                  data-testid="tab-image-to-video"
+                  disabled={!selectedModel?.supportsImages}
+                >
+                  Image to Video {!selectedModel?.supportsImages && "(Not available for this model)"}
                 </TabsTrigger>
               </TabsList>
 
