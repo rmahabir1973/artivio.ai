@@ -10,12 +10,14 @@ import type { PricingEntry } from "@shared/schema";
  * Memoizes pricing map to avoid O(n) rebuilds on every render.
  */
 export function usePricing() {
-  const { data: pricingData = [], isLoading, error } = useQuery<PricingEntry[]>({
+  const pricingQuery = useQuery<PricingEntry[]>({
     queryKey: ["/api/pricing"],
     staleTime: 60 * 1000, // 60 seconds - pricing rarely changes
     gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     refetchOnWindowFocus: true, // Detect admin changes when user returns to tab
   });
+
+  const { data: pricingData = [], isLoading, error, dataUpdatedAt } = pricingQuery;
 
   // Memoize pricing map for O(1) lookups - only rebuild when data changes
   const pricingMap = useMemo(() => {
@@ -77,8 +79,10 @@ export function usePricing() {
     pricingMap,
     isLoading,
     error,
+    dataUpdatedAt,
     getModelCost,
     getPricingByFeature,
     getPricingByCategory,
+    pricingQuery,
   };
 }
