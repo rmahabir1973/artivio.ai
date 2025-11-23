@@ -4500,8 +4500,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Combination job created',
       });
 
-      // Start combination in background with enhancements
-      combineVideosInBackground(combination.id, videoUrls, enhancements);
+      // Start combination in background with enhancements (with proper error handling)
+      combineVideosInBackground(combination.id, videoUrls, enhancements).catch(error => {
+        console.error(`Background video combination failed for ${combination.id}:`, error);
+      });
 
       res.json({
         combinationId: combination.id,
