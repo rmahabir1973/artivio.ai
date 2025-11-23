@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -170,11 +170,28 @@ export default function GenerateVideo() {
   const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
   const [model, setModel] = useState("veo-3.1");
 
-  // Merge model info with dynamic pricing
-  const VIDEO_MODELS = VIDEO_MODEL_INFO.map(m => ({
+  // Merge model info with dynamic pricing - cached in state to ensure stability
+  // Always include all models with fallback cost to prevent undefined during pricing load
+  const [videoModels, setVideoModels] = useState(() => VIDEO_MODEL_INFO.map(m => ({
     ...m,
-    cost: getModelCost(m.value, 400),
-  }));
+    cost: 0,
+  })));
+  
+  // Update video models when pricing changes, but only if costs actually changed
+  useEffect(() => {
+    const updatedModels = VIDEO_MODEL_INFO.map(m => ({
+      ...m,
+      cost: getModelCost(m.value, 400) || 0,
+    }));
+    
+    // Only update if costs have actually changed (prevents unnecessary re-renders)
+    const costsChanged = updatedModels.some((m, i) => m.cost !== videoModels[i]?.cost);
+    if (costsChanged) {
+      setVideoModels(updatedModels);
+    }
+  }, [getModelCost, videoModels]);
+  
+  const VIDEO_MODELS = videoModels;
   const [prompt, setPrompt] = useState("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -192,6 +209,20 @@ export default function GenerateVideo() {
   // Helper to check if current model supports seeds
   const modelSupportsSeed = () => {
     return model.startsWith('veo-') || model.startsWith('seedance-') || model.startsWith('wan-');
+  };
+  
+  // Model selection handler with Grok auto-switch enforcement
+  const handleModelChange = (newModel: string) => {
+    setModel(newModel);
+    
+    // Grok Imagine requires image-to-video mode - enforce synchronously
+    if (newModel === 'grok-imagine' && generationType !== 'image-to-video') {
+      setGenerationType('image-to-video');
+      toast({
+        title: "Mode Switched",
+        description: "Grok Imagine requires image-to-video mode. Mode switched automatically.",
+      });
+    }
   };
 
   // Load template handler
@@ -318,24 +349,17 @@ export default function GenerateVideo() {
     }
   }, [model, aspectRatio, toast, selectedModel?.label]);
 
-  // Auto-switch to image-to-video mode for image-only models like Grok
+  // Centralized Grok enforcement - catches all model changes (Select, templates, restores, etc.)
+  // Synchronous (no setTimeout) to avoid race with Tabs, but React batches the updates
   useEffect(() => {
-    if (selectedModel && selectedModel.supportsImages && !selectedModel.maxImages) {
-      // This shouldn't happen, but skip if maxImages is 0
-      return;
+    if (model === 'grok-imagine' && generationType !== 'image-to-video') {
+      setGenerationType('image-to-video');
+      toast({
+        title: "Mode Switched",
+        description: "Grok Imagine requires image-to-video mode. Mode switched automatically.",
+      });
     }
-    
-    // Grok Imagine requires image-to-video mode exclusively
-    if (model === 'grok-imagine') {
-      if (generationType !== 'image-to-video') {
-        setGenerationType('image-to-video');
-        toast({
-          title: "Mode Switched",
-          description: "Grok Imagine requires image-to-video mode. Mode switched automatically.",
-        });
-      }
-    }
-  }, [model, generationType, selectedModel, toast]);
+  }, [model, generationType, toast]);
 
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -630,7 +654,7 @@ export default function GenerateVideo() {
             {/* Model Selection */}
             <div className="space-y-2">
               <Label htmlFor="model">AI Model</Label>
-              <Select value={model} onValueChange={setModel}>
+              <Select value={model} onValueChange={handleModelChange}>
                 <SelectTrigger id="model" data-testid="select-video-model">
                   <SelectValue />
                 </SelectTrigger>
@@ -642,7 +666,7 @@ export default function GenerateVideo() {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedModel && (
+              {selectedModel?.description && (
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">{selectedModel.description}</p>
                   <p className="text-xs text-muted-foreground">
