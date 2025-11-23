@@ -61,7 +61,13 @@ export function GenerationCard({ generation }: GenerationCardProps) {
         title: "Success",
         description: "Generation deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      // Invalidate ALL /api/generations queries (including paginated ones with different query keys)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.startsWith('/api/generations');
+        }
+      });
     },
     onError: (error: any) => {
       toast({
@@ -81,7 +87,13 @@ export function GenerationCard({ generation }: GenerationCardProps) {
         title: "Success",
         description: data.message,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      // Invalidate ALL /api/generations queries (including paginated ones with different query keys)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.startsWith('/api/generations');
+        }
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/showcase-videos"] });
     },
     onError: (error: any) => {
