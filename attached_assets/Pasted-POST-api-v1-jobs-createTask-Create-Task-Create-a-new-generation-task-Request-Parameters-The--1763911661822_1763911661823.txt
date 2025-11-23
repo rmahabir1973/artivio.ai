@@ -1,0 +1,168 @@
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"kling/v2-5-turbo-image-to-video-pro"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.prompt
+Required
+string
+Text description for the video generation
+
+Max length: 2500 characters
+Example:
+
+"Astronaut instantly teleports through a glowing magical wooden door. Handheld tracking, camera stays 5–10 meters above and behind, smooth third-person chase. Hyper-realistic base, each scene with distinct art style, instant scene flashes with bright portal glow, high detail, 8K, epic orchestral undertones. High-frame interpolation for smooth motion and sharp instant transitions. Close-up: astronaut in white suit falls rapidly through glowing portal underfoot.\nFirst transition: LEGO Alps, high-saturation daylight, snowy peaks and valleys below, astronaut falls, next portal opens.\nSecond transition: Amazon rainforest, dense canopy and rivers below, astronaut falls, next portal opens.\nThird transition: Ancient Egypt, Giza pyramids in mural style, desert and Nile below, astronaut falls, next portal opens.\nFourth transition: abstract black-and-white ink style, Chinese Great Wall below, astronaut falls, final portal opens.\nFifth transition: New York night, realistic dark skyline, glowing city lights, Empire State Building, astronaut hovers elegantly. Camera maintains constant distance, slight orbit, smooth third-person tracking throughout. Each portal transition is a sharp flash, emphasizing speed and magical journey, abrupt style and location shifts."
+input.image_url
+Required
+string(URL)
+URL of the image to be used for the video
+
+File URL after upload, not file content; Accepted types: image/jpeg, image/png, image/webp; Max size: 10.0MB
+Example:
+
+"https://file.aiquickdraw.com/custom-page/akr/section-images/1759211376283gfcw5zcy.png"
+input.duration
+Optional
+string
+The duration of the generated video in seconds
+
+Available options:
+
+5
+-
+5 seconds
+10
+-
+10 seconds
+Example:
+
+"5"
+input.negative_prompt
+Optional
+string
+Elements to avoid in the video
+
+Max length: 2496 characters
+Example:
+
+"blur, distort, and low quality"
+input.cfg_scale
+Optional
+number
+The CFG (Classifier Free Guidance) scale is a measure of how close you want the model to stick to your prompt
+
+Min: 0, Max: 1, Step: 0.1
+Example:
+
+0.5
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "kling/v2-5-turbo-image-to-video-pro",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "prompt": "Astronaut instantly teleports through a glowing magical wooden door. Handheld tracking, camera stays 5–10 meters above and behind, smooth third-person chase. Hyper-realistic base, each scene with distinct art style, instant scene flashes with bright portal glow, high detail, 8K, epic orchestral undertones. High-frame interpolation for smooth motion and sharp instant transitions. Close-up: astronaut in white suit falls rapidly through glowing portal underfoot.\nFirst transition: LEGO Alps, high-saturation daylight, snowy peaks and valleys below, astronaut falls, next portal opens.\nSecond transition: Amazon rainforest, dense canopy and rivers below, astronaut falls, next portal opens.\nThird transition: Ancient Egypt, Giza pyramids in mural style, desert and Nile below, astronaut falls, next portal opens.\nFourth transition: abstract black-and-white ink style, Chinese Great Wall below, astronaut falls, final portal opens.\nFifth transition: New York night, realistic dark skyline, glowing city lights, Empire State Building, astronaut hovers elegantly. Camera maintains constant distance, slight orbit, smooth third-person tracking throughout. Each portal transition is a sharp flash, emphasizing speed and magical journey, abrupt style and location shifts.",
+      "image_url": "https://file.aiquickdraw.com/custom-page/akr/section-images/1759211376283gfcw5zcy.png",
+      "duration": "5",
+      "negative_prompt": "blur, distort, and low quality",
+      "cfg_scale": 0.5
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "kling/v2-5-turbo-image-to-video-pro",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"kling/v2-5-turbo-image-to-video-pro\",\"input\":{\"prompt\":\"Astronaut instantly teleports through a glowing magical wooden door. Handheld tracking, camera stays 5–10 meters above and behind, smooth third-person chase. Hyper-realistic base, each scene with distinct art style, instant scene flashes with bright portal glow, high detail, 8K, epic orchestral undertones. High-frame interpolation for smooth motion and sharp instant transitions. Close-up: astronaut in white suit falls rapidly through glowing portal underfoot.\nFirst transition: LEGO Alps, high-saturation daylight, snowy peaks and valleys below, astronaut falls, next portal opens.\nSecond transition: Amazon rainforest, dense canopy and rivers below, astronaut falls, next portal opens.\nThird transition: Ancient Egypt, Giza pyramids in mural style, desert and Nile below, astronaut falls, next portal opens.\nFourth transition: abstract black-and-white ink style, Chinese Great Wall below, astronaut falls, final portal opens.\nFifth transition: New York night, realistic dark skyline, glowing city lights, Empire State Building, astronaut hovers elegantly. Camera maintains constant distance, slight orbit, smooth third-person tracking throughout. Each portal transition is a sharp flash, emphasizing speed and magical journey, abrupt style and location shifts.\",\"image_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1759211376283gfcw5zcy.png\",\"duration\":\"5\",\"negative_prompt\":\"blur, distort, and low quality\",\"cfg_scale\":0.5}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "kling/v2-5-turbo-image-to-video-pro",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"kling/v2-5-turbo-image-to-video-pro\",\"input\":{\"prompt\":\"Astronaut instantly teleports through a glowing magical wooden door. Handheld tracking, camera stays 5–10 meters above and behind, smooth third-person chase. Hyper-realistic base, each scene with distinct art style, instant scene flashes with bright portal glow, high detail, 8K, epic orchestral undertones. High-frame interpolation for smooth motion and sharp instant transitions. Close-up: astronaut in white suit falls rapidly through glowing portal underfoot.\nFirst transition: LEGO Alps, high-saturation daylight, snowy peaks and valleys below, astronaut falls, next portal opens.\nSecond transition: Amazon rainforest, dense canopy and rivers below, astronaut falls, next portal opens.\nThird transition: Ancient Egypt, Giza pyramids in mural style, desert and Nile below, astronaut falls, next portal opens.\nFourth transition: abstract black-and-white ink style, Chinese Great Wall below, astronaut falls, final portal opens.\nFifth transition: New York night, realistic dark skyline, glowing city lights, Empire State Building, astronaut hovers elegantly. Camera maintains constant distance, slight orbit, smooth third-person tracking throughout. Each portal transition is a sharp flash, emphasizing speed and magical journey, abrupt style and location shifts.\",\"image_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1759211376283gfcw5zcy.png\",\"duration\":\"5\",\"negative_prompt\":\"blur, distort, and low quality\",\"cfg_scale\":0.5}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section
+If callBackUrl is not provided, no callback notifications will be sent

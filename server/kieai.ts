@@ -394,8 +394,16 @@ export async function generateVideo(params: {
       // Text-to-video mode: validate and use aspect ratio
       const validatedAspectRatio = parameters.aspectRatio || '16:9';
       
-      if (!['16:9', '4:3', '1:1', '3:4', '9:16', '9:21'].includes(validatedAspectRatio)) {
-        throw new Error(`Seedance models support 16:9, 4:3, 1:1, 3:4, 9:16, and 9:21 aspect ratios. Received: ${validatedAspectRatio}`);
+      // Seedance Pro supports 21:9, 16:9, 4:3, 1:1, 3:4, 9:16
+      // Seedance Lite supports 16:9, 4:3, 1:1, 3:4, 9:16, 9:21
+      const isPro = params.model === 'seedance-1-pro';
+      const supportedRatios = isPro 
+        ? ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16']
+        : ['16:9', '4:3', '1:1', '3:4', '9:16', '9:21'];
+      
+      if (!supportedRatios.includes(validatedAspectRatio)) {
+        const modelName = isPro ? 'Seedance Pro' : 'Seedance Lite';
+        throw new Error(`${modelName} supports ${supportedRatios.join(', ')} aspect ratios. Received: ${validatedAspectRatio}`);
       }
       
       aspectRatio = validatedAspectRatio;

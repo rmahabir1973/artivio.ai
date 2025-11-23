@@ -10,7 +10,16 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'video', model: 'veo-3.1-fast', creditCost: 300, kieCreditCost: 60, category: 'generation', description: 'Google Veo 3.1 Fast - Faster generation, great quality (8s)' },
   { feature: 'video', model: 'veo-3', creditCost: 450, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3 - High-quality video generation (8s)' },
   { feature: 'video', model: 'runway-gen3-alpha-turbo', creditCost: 350, kieCreditCost: null, category: 'generation', description: 'Runway Gen-3 - HD quality video generation (5s-10s)' },
-  { feature: 'video', model: 'seedance-1-pro', creditCost: 500, kieCreditCost: null, category: 'generation', description: 'Seedance 1.0 Pro - 1080p cinematic quality with camera control (10s)' },
+  
+  // Seedance Pro - Duration and resolution-based pricing (5s, 10s × 480p, 720p, 1080p)
+  { feature: 'video', model: 'seedance-1-pro-5s-480p', creditCost: 70, kieCreditCost: 14, category: 'generation', description: 'Seedance 1.0 Pro - 480p cinematic quality (5s)' },
+  { feature: 'video', model: 'seedance-1-pro-5s-720p', creditCost: 150, kieCreditCost: 30, category: 'generation', description: 'Seedance 1.0 Pro - 720p cinematic quality (5s)' },
+  { feature: 'video', model: 'seedance-1-pro-5s-1080p', creditCost: 350, kieCreditCost: 70, category: 'generation', description: 'Seedance 1.0 Pro - 1080p cinematic quality (5s)' },
+  { feature: 'video', model: 'seedance-1-pro-10s-480p', creditCost: 140, kieCreditCost: 28, category: 'generation', description: 'Seedance 1.0 Pro - 480p cinematic quality (10s)' },
+  { feature: 'video', model: 'seedance-1-pro-10s-720p', creditCost: 300, kieCreditCost: 60, category: 'generation', description: 'Seedance 1.0 Pro - 720p cinematic quality (10s)' },
+  { feature: 'video', model: 'seedance-1-pro-10s-1080p', creditCost: 700, kieCreditCost: 140, category: 'generation', description: 'Seedance 1.0 Pro - 1080p cinematic quality (10s)' },
+  
+  // Seedance Lite - Resolution-based pricing (10s only)
   { feature: 'video', model: 'seedance-1-lite-480p', creditCost: 50, kieCreditCost: 10, category: 'generation', description: 'Seedance 1.0 Lite - 480p fast generation (10s)' },
   { feature: 'video', model: 'seedance-1-lite-720p', creditCost: 113, kieCreditCost: 22.5, category: 'generation', description: 'Seedance 1.0 Lite - 720p balanced quality (10s)' },
   { feature: 'video', model: 'seedance-1-lite-1080p', creditCost: 250, kieCreditCost: 50, category: 'generation', description: 'Seedance 1.0 Lite - 1080p high quality (10s)' },

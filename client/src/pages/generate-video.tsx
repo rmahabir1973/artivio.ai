@@ -29,7 +29,7 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1-fast": ["16:9", "9:16"],
   "veo-3": ["16:9", "9:16"],
   "runway-gen3-alpha-turbo": ["16:9", "4:3", "1:1", "3:4", "9:16"],
-  "seedance-1-pro": ["16:9", "4:3", "1:1", "3:4", "9:16", "9:21"],
+  "seedance-1-pro": ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
   "seedance-1-lite": ["16:9", "4:3", "1:1", "3:4", "9:16", "9:21"],
   "wan-2.5": ["16:9", "9:16", "1:1"],
   "kling-2.5-turbo": ["16:9", "9:16", "1:1"],
@@ -42,7 +42,7 @@ const DURATION_SUPPORT: Record<string, number[]> = {
   "veo-3.1-fast": [8],
   "veo-3": [8],
   "runway-gen3-alpha-turbo": [5, 10],
-  "seedance-1-pro": [10],
+  "seedance-1-pro": [5, 10],
   "seedance-1-lite": [10],
   "wan-2.5": [10],
   "kling-2.5-turbo": [5, 10],
@@ -51,6 +51,7 @@ const DURATION_SUPPORT: Record<string, number[]> = {
 };
 
 const ASPECT_RATIO_LABELS: Record<string, string> = {
+  "21:9": "21:9 (Ultrawide)",
   "16:9": "16:9 (Landscape)",
   "9:16": "9:16 (Portrait)",
   "4:3": "4:3 (Classic)",
@@ -95,8 +96,8 @@ const VIDEO_MODEL_INFO = [
   { 
     value: "seedance-1-pro", 
     label: "Seedance 1.0 Pro", 
-    description: "1080p cinematic quality with camera control", 
-    duration: "10s",
+    description: "Cinematic quality with camera control", 
+    duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -164,18 +165,20 @@ export default function GenerateVideo() {
   })));
   
   useEffect(() => {
-    // Update videoModels whenever pricing data changes or resolution changes (for Seedance Lite)
+    // Update videoModels whenever pricing data changes, resolution, or duration changes
     // pricingQuery.dataUpdatedAt only changes when TanStack refetches, so no infinite loop
     const nextModels = VIDEO_MODEL_INFO.map(m => ({
       ...m,
-      // For Seedance Lite, append resolution to model name for pricing lookup
-      cost: m.value === 'seedance-1-lite' 
-        ? (getModelCost(`seedance-1-lite-${resolution}`, 400) || 0)
-        : (getModelCost(m.value, 400) || 0),
+      // For Seedance Pro and Lite, use composite keys for pricing lookup
+      cost: m.value === 'seedance-1-pro' 
+        ? (getModelCost(`seedance-1-pro-${duration}s-${resolution}`, 400) || 0)
+        : m.value === 'seedance-1-lite' 
+          ? (getModelCost(`seedance-1-lite-${resolution}`, 400) || 0)
+          : (getModelCost(m.value, 400) || 0),
     }));
     
     setVideoModels(nextModels);
-  }, [pricingQuery.dataUpdatedAt, getModelCost, resolution]);
+  }, [pricingQuery.dataUpdatedAt, getModelCost, resolution, duration]);
   
   const VIDEO_MODELS = videoModels;
   
