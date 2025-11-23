@@ -503,6 +503,7 @@ export const generateVideoRequestSchema = z.object({
     nFrames: z.string().optional(), // Sora duration ('10', '15', '25')
     removeWatermark: z.boolean().optional(), // Sora watermark removal
     mode: z.enum(['fun', 'normal', 'spicy']).optional(), // Grok Imagine mode
+    seed: z.number().optional(), // Random seed for reproducible generation
   }).optional(),
 });
 
@@ -552,6 +553,7 @@ export const generateImageRequestSchema = z.object({
     style: z.string().optional(),
     outputFormat: z.enum(['PNG', 'JPEG', 'WEBP']).optional(),
     quality: z.enum(['standard', 'hd']).optional(),
+    seed: z.number().optional(), // Random seed for reproducible generation
   }).optional(),
 }).refine(
   (data) => {

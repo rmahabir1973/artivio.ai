@@ -1388,16 +1388,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Pre-generate seed for models that support it
       let finalParameters = parameters || {};
       if (modelSupportsSeed(model)) {
-        // For Veo: Use seeds array (plural), for others: use seed (singular)
-        if (model.startsWith('veo-')) {
-          if (!finalParameters.seeds || !Array.isArray(finalParameters.seeds) || finalParameters.seeds.length === 0) {
-            finalParameters.seeds = [generateRandomSeed()];
-          }
-        } else {
-          // Seedance, Wan, and other models use singular 'seed'
-          if (finalParameters.seed === undefined) {
-            finalParameters.seed = generateRandomSeed();
-          }
+        // All models (Veo, Seedance, Wan, etc.) use singular 'seed' scalar value
+        if (finalParameters.seed === undefined) {
+          const generatedSeed = generateRandomSeed();
+          finalParameters.seed = generatedSeed;
+          console.log(`🌱 Pre-generated seed for ${model}: ${generatedSeed}`);
         }
       }
 
@@ -1412,9 +1407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         parameters: finalParameters,
         status: 'pending',
         creditsCost: cost,
-        seed: model.startsWith('veo-') 
-          ? (finalParameters.seeds?.[0] || null) 
-          : (finalParameters.seed || null),
+        seed: finalParameters.seed || null,
       });
 
       // Start generation in background (fire and forget) with updated parameters including seed

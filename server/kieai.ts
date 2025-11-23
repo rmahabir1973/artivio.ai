@@ -345,8 +345,10 @@ export async function generateVideo(params: {
       }
     }
     
-    // Auto-generate seed if not provided (Veo uses array of seeds, one per image for REFERENCE_2_VIDEO)
-    const seeds = parameters.seeds || [generateRandomSeed()];
+    // Auto-generate seed if not provided (Veo API expects scalar seed value, not array)
+    const seed = parameters.seed || generateRandomSeed();
+    
+    console.log(`🌱 Veo seed format: sending scalar seed=${seed} (not array)`);
     
     return await callKieApi('/api/v1/veo/generate', {
       prompt: params.prompt,
@@ -354,7 +356,7 @@ export async function generateVideo(params: {
       generationType: veoGenerationType,
       imageUrls: referenceImages.length > 0 ? referenceImages : undefined,
       aspectRatio: parameters.aspectRatio || '16:9',
-      seeds,
+      seed,
       watermark: parameters.watermark,
       callBackUrl: parameters.callBackUrl,
       enableTranslation: true, // Enable automatic prompt translation for better results

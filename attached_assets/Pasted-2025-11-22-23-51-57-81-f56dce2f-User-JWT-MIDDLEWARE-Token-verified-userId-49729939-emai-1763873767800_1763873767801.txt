@@ -1,0 +1,152 @@
+2025-11-22 23:51:57.81
+f56dce2f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-22 23:51:57.89
+f56dce2f
+User
+4:51:57 AM [express] POST /api/generate/video 200 in 174ms :: {"generationId":"1bd5d4ca-8343-44e8-a7…
+2025-11-22 23:51:57.92
+f56dce2f
+User
+📞 Sending callback URL to Kie.ai for video 1bd5d4ca-8343-44e8-a727-0d3469885ea7: https://artivio.ai/api/callback/kie/1bd5d4ca-8343-44e8-a727-0d3469885ea7
+2025-11-22 23:51:57.96
+f56dce2f
+User
+"generationType": "TEXT_2_VIDEO",
+2025-11-22 23:51:57.96
+f56dce2f
+User
+"aspectRatio": "16:9",
+2025-11-22 23:51:57.96
+f56dce2f
+User
+],
+2025-11-22 23:51:57.96
+f56dce2f
+User
+🔵 Kie.ai API Request to /api/v1/veo/generate: {
+2025-11-22 23:51:57.96
+f56dce2f
+User
+"callBackUrl": "https://artivio.ai/api/callback/kie/1bd5d4ca-8343-44e8-a727-0d3469885ea7",
+2025-11-22 23:51:57.96
+f56dce2f
+User
+}
+2025-11-22 23:51:57.96
+f56dce2f
+User
+"model": "veo3",
+2025-11-22 23:51:57.96
+f56dce2f
+User
+"prompt": "Futuristic Advertisement for Artivio.ai",
+2025-11-22 23:51:57.96
+f56dce2f
+User
+"seeds": [
+2025-11-22 23:51:57.96
+f56dce2f
+User
+1263925308
+2025-11-22 23:51:57.96
+f56dce2f
+User
+"enableTranslation": true
+2025-11-22 23:51:58.10
+f56dce2f
+User
+"code": 422,
+2025-11-22 23:51:58.10
+f56dce2f
+User
+"msg": "The parameter type is not valid.",
+2025-11-22 23:51:58.10
+f56dce2f
+User
+}
+2025-11-22 23:51:58.10
+f56dce2f
+User
+Background video generation failed: {}
+2025-11-22 23:51:58.10
+f56dce2f
+User
+✅ Kie.ai API Response from /api/v1/veo/generate: {
+2025-11-22 23:51:58.10
+f56dce2f
+User
+"data": null
+2025-11-22 23:51:58.18
+f56dce2f
+User
+✓ [finalizeGeneration] Generation 1bd5d4ca-8343-44e8-a727-0d3469885ea7 finalized as failure
+2025-11-22 23:51:58.18
+f56dce2f
+User
+✓ [CREDIT REFUND] Refunded 300 credits to user 49729939 for failed generation 1bd5d4ca-8343-44e8-a727-0d3469885ea7
+2025-11-22 23:52:11.47
+f56dce2f
+User
+4:52:11 AM [express] GET /api/announcements/active 304 in 104ms :: []
+2025-11-22 23:52:54.02
+f56dce2f
+User
+4:52:54 AM [express] GET /api/pricing 304 in 121ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-11-22 23:54:14.94
+f56dce2f
+User
+4:54:14 AM [express] GET /api/pricing 304 in 2491ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6"…
+2025-11-22 23:54:16.12
+f56dce2f
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-22 23:54:16.12
+f56dce2f
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-22 23:54:16.12
+f56dce2f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-22 23:54:16.50
+f56dce2f
+User
+[/api/generations] Paginated query completed in 374ms, found 15 generations, hasMore: true
+2025-11-22 23:54:16.52
+f56dce2f
+User
+4:54:16 AM [express] GET /api/generations 200 in 430ms :: {"items":[{"id":"1bd5d4ca-8343-44e8-a727-0…
+2025-11-22 23:54:16.72
+f56dce2f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-22 23:54:16.72
+f56dce2f
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-22 23:54:16.74
+f56dce2f
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-22 23:54:16.74
+f56dce2f
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-22 23:54:16.74
+f56dce2f
+User
+isAdmin: true
+2025-11-22 23:54:16.74
+f56dce2f
+User
+userId: '49729939',
+2025-11-22 23:54:16.74
+f56dce2f
+User
+}
+2025-11-22 23:54:16.75
+f56dce2f
+User
+4:54:16 AM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
