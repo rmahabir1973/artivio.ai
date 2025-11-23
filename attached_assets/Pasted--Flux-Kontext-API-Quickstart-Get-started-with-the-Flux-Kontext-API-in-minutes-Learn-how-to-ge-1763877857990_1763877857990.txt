@@ -1,0 +1,873 @@
+# Flux Kontext API Quickstart
+
+> Get started with the Flux Kontext API in minutes. Learn how to generate images from text and edit existing images using AI.
+
+## Welcome to the Flux Kontext API!
+
+This quickstart guide will walk you through the essential steps to start generating and editing images using state-of-the-art AI models.
+
+## Overview
+
+<CardGroup cols={2}>
+  <Card title="Text-to-Image Generation" icon="wand-magic-sparkles" href="/flux-kontext-api/generate-or-edit-image">
+    Create stunning AI images from detailed text descriptions or images
+  </Card>
+
+  <Card title="Task Details" icon="clock" href="/flux-kontext-api/get-image-details">
+    Real-time status tracking and webhook callback notifications
+  </Card>
+</CardGroup>
+
+<Info>
+  Generated images are stored for **14 days** and automatically expire after that period.
+</Info>
+
+## Authentication
+
+All API requests require authentication via Bearer Token.
+
+<Steps>
+  <Step title="Get Your API Key">
+    Visit the [API Key Management Page](https://kie.ai/api-key) to obtain your API key.
+  </Step>
+
+  <Step title="Add to Request Headers">
+    Include your API key in all requests:
+
+    ```bash  theme={null}
+    Authorization: Bearer YOUR_API_KEY
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Keep your API key secure and never share it publicly. If compromised, reset it immediately in the management page.
+</Warning>
+
+## Basic Usage
+
+### 1. Generate an Image from Text
+
+Start by creating your first text-to-image generation task:
+
+<CodeGroup>
+  ```bash cURL theme={null}
+  curl -X POST "https://api.kie.ai/api/v1/flux/kontext/generate" \
+    -H "Authorization: Bearer YOUR_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "prompt": "A serene mountain landscape at sunset with a lake reflecting the orange sky",
+      "aspectRatio": "16:9",
+      "model": "flux-kontext-pro"
+    }'
+  ```
+
+  ```javascript Node.js theme={null}
+  async function generateImage() {
+    try {
+      const response = await fetch('https://api.kie.ai/api/v1/flux/kontext/generate', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer YOUR_API_KEY',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: 'A serene mountain landscape at sunset with a lake reflecting the orange sky',
+          aspectRatio: '16:9',
+          model: 'flux-kontext-pro'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.code === 200) {
+        console.log('Task submitted:', result);
+        console.log('Task ID:', result.data.taskId);
+        return result.data.taskId;
+      } else {
+        console.error('Request failed:', result.msg || 'Unknown error');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+      return null;
+    }
+  }
+
+  generateImage();
+  ```
+
+  ```python Python theme={null}
+  import requests
+
+  def generate_image():
+      url = "https://api.kie.ai/api/v1/flux/kontext/generate"
+      headers = {
+          "Authorization": "Bearer YOUR_API_KEY",
+          "Content-Type": "application/json"
+      }
+      data = {
+          "prompt": "A serene mountain landscape at sunset with a lake reflecting the orange sky",
+          "aspectRatio": "16:9",
+          "model": "flux-kontext-pro"
+      }
+      
+      try:
+          response = requests.post(url, headers=headers, json=data)
+          result = response.json()
+          
+          if response.ok and result.get('code') == 200:
+              print(f"Task submitted: {result}")
+              print(f"Task ID: {result['data']['taskId']}")
+              return result['data']['taskId']
+          else:
+              print(f"Request failed: {result.get('msg', 'Unknown error')}")
+              return None
+      except requests.exceptions.RequestException as e:
+          print(f"Error: {e}")
+          return None
+
+  generate_image()
+  ```
+</CodeGroup>
+
+**Response:**
+
+```json  theme={null}
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "task_flux_abc123"
+  }
+}
+```
+
+### 2. Edit an Existing Image
+
+Modify an existing image using text prompts:
+
+<CodeGroup>
+  ```bash cURL theme={null}
+  curl -X POST "https://api.kie.ai/api/v1/flux/kontext/generate" \
+    -H "Authorization: Bearer YOUR_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "prompt": "Add colorful hot air balloons floating in the sky",
+      "inputImage": "https://example.com/landscape.jpg",
+      "aspectRatio": "16:9"
+    }'
+  ```
+
+  ```javascript Node.js theme={null}
+  async function editImage() {
+    try {
+      const response = await fetch('https://api.kie.ai/api/v1/flux/kontext/generate', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer YOUR_API_KEY',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: 'Add colorful hot air balloons floating in the sky',
+          inputImage: 'https://example.com/landscape.jpg',
+          aspectRatio: '16:9'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.code === 200) {
+        console.log('Task submitted:', result);
+        console.log('Task ID:', result.data.taskId);
+        return result.data.taskId;
+      } else {
+        console.error('Request failed:', result.msg || 'Unknown error');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+      return null;
+    }
+  }
+
+  editImage();
+  ```
+
+  ```python Python theme={null}
+  import requests
+
+  def edit_image():
+      url = "https://api.kie.ai/api/v1/flux/kontext/generate"
+      headers = {
+          "Authorization": "Bearer YOUR_API_KEY",
+          "Content-Type": "application/json"
+      }
+      data = {
+          "prompt": "Add colorful hot air balloons floating in the sky",
+          "inputImage": "https://example.com/landscape.jpg",
+          "aspectRatio": "16:9"
+      }
+      
+      try:
+          response = requests.post(url, headers=headers, json=data)
+          result = response.json()
+          
+          if response.ok and result.get('code') == 200:
+              print(f"Task submitted: {result}")
+              print(f"Task ID: {result['data']['taskId']}")
+              return result['data']['taskId']
+          else:
+              print(f"Request failed: {result.get('msg', 'Unknown error')}")
+              return None
+      except requests.exceptions.RequestException as e:
+          print(f"Error: {e}")
+          return None
+
+  edit_image()
+  ```
+</CodeGroup>
+
+### 3. Check Generation Status
+
+Use the returned `taskId` to monitor progress:
+
+<CodeGroup>
+  ```bash cURL theme={null}
+  curl -X GET "https://api.kie.ai/api/v1/flux/kontext/record-info?taskId=task_flux_abc123" \
+    -H "Authorization: Bearer YOUR_API_KEY"
+  ```
+
+  ```javascript Node.js theme={null}
+  async function checkStatus(taskId) {
+    try {
+      const response = await fetch(`https://api.kie.ai/api/v1/flux/kontext/record-info?taskId=${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer YOUR_API_KEY'
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.code === 200) {
+        const taskData = result.data;
+        
+        switch (taskData.successFlag) {
+          case 0:
+            console.log('Task is generating...');
+            console.log('Create time:', taskData.createTime);
+            return taskData;
+            
+          case 1:
+            console.log('Task generation successful!');
+            console.log('Result image:', taskData.response?.resultImageUrl);
+            console.log('Original image URL (valid 10 min):', taskData.response?.originImageUrl);
+            console.log('Complete time:', taskData.completeTime);
+            return taskData;
+            
+          case 2:
+            console.log('Create task failed');
+            if (taskData.errorMessage) {
+              console.error('Error message:', taskData.errorMessage);
+            }
+            if (taskData.errorCode) {
+              console.error('Error code:', taskData.errorCode);
+            }
+            return taskData;
+            
+          case 3:
+            console.log('Generation failed - task created successfully but generation failed');
+            if (taskData.errorMessage) {
+              console.error('Error message:', taskData.errorMessage);
+            }
+            if (taskData.errorCode) {
+              console.error('Error code:', taskData.errorCode);
+            }
+            return taskData;
+            
+          default:
+            console.log('Unknown status:', taskData.successFlag);
+            if (taskData.errorMessage) {
+              console.error('Error message:', taskData.errorMessage);
+            }
+            return taskData;
+        }
+      } else {
+        console.error('Query failed:', result.msg || 'Unknown error');
+        return null;
+      }
+    } catch (error) {
+      console.error('Status check failed:', error.message);
+      return null;
+    }
+  }
+
+  // Usage
+  const status = await checkStatus('task_flux_abc123');
+  ```
+
+  ```python Python theme={null}
+  import requests
+
+  def check_status(task_id):
+      url = f"https://api.kie.ai/api/v1/flux/kontext/record-info?taskId={task_id}"
+      headers = {"Authorization": "Bearer YOUR_API_KEY"}
+      
+      try:
+          response = requests.get(url, headers=headers)
+          result = response.json()
+          
+          if response.ok and result.get('code') == 200:
+              task_data = result['data']
+              success_flag = task_data['successFlag']
+              
+              if success_flag == 0:
+                  print("Task is generating...")
+                  print(f"Create time: {task_data['createTime']}")
+                  return task_data
+              elif success_flag == 1:
+                  print("Task generation successful!")
+                  print(f"Result image: {task_data.get('response', {}).get('resultImageUrl', '')}")
+                  print(f"Original image URL (valid 10 min): {task_data.get('response', {}).get('originImageUrl', '')}")
+                  print(f"Complete time: {task_data['completeTime']}")
+                  return task_data
+              elif success_flag == 2:
+                  print("Create task failed")
+                  if task_data.get('errorMessage'):
+                      print(f"Error message: {task_data['errorMessage']}")
+                  if task_data.get('errorCode'):
+                      print(f"Error code: {task_data['errorCode']}")
+                  return task_data
+              elif success_flag == 3:
+                  print("Generation failed - task created successfully but generation failed")
+                  if task_data.get('errorMessage'):
+                      print(f"Error message: {task_data['errorMessage']}")
+                  if task_data.get('errorCode'):
+                      print(f"Error code: {task_data['errorCode']}")
+                  return task_data
+              else:
+                  print(f"Unknown status: {success_flag}")
+                  if task_data.get('errorMessage'):
+                      print(f"Error message: {task_data['errorMessage']}")
+                  return task_data
+          else:
+              print(f"Query failed: {result.get('msg', 'Unknown error')}")
+              return None
+      except requests.exceptions.RequestException as e:
+          print(f"Status check failed: {e}")
+          return None
+
+  # Usage
+  status = check_status('task_flux_abc123')
+  ```
+</CodeGroup>
+
+**Status Values:**
+
+* `0`: GENERATING - Task is currently being processed
+* `1`: SUCCESS - Task completed successfully
+* `2`: CREATE\_TASK\_FAILED - Failed to create the task
+* `3`: GENERATE\_FAILED - Task creation succeeded but generation failed
+
+## Complete Workflow Example
+
+Here's a complete example that generates an image and waits for completion:
+
+<Tabs>
+  <Tab title="JavaScript">
+    ```javascript  theme={null}
+    class FluxKontextAPI {
+      constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.baseUrl = 'https://api.kie.ai/api/v1/flux/kontext';
+      }
+      
+      async generateImage(prompt, options = {}) {
+        const response = await fetch(`${this.baseUrl}/generate`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            prompt,
+            aspectRatio: options.aspectRatio || '16:9',
+            model: options.model || 'flux-kontext-pro',
+            enableTranslation: options.enableTranslation !== false,
+            outputFormat: options.outputFormat || 'jpeg',
+            ...options
+          })
+        });
+        
+        const result = await response.json();
+        if (!response.ok || result.code !== 200) {
+          throw new Error(`Generation failed: ${result.msg || 'Unknown error'}`);
+        }
+        
+        return result.data.taskId;
+      }
+      
+      async editImage(prompt, inputImage, options = {}) {
+        return this.generateImage(prompt, {
+          ...options,
+          inputImage
+        });
+      }
+      
+      async waitForCompletion(taskId, maxWaitTime = 300000) { // 5 minutes max
+        const startTime = Date.now();
+        
+        while (Date.now() - startTime < maxWaitTime) {
+          const status = await this.getTaskStatus(taskId);
+          
+          switch (status.successFlag) {
+            case 0:
+              console.log('Task is generating, continue waiting...');
+              break;
+              
+            case 1:
+              console.log('Generation completed successfully!');
+              return status.response;
+              
+            case 2:
+              const createError = status.errorMessage || 'Create task failed';
+              console.error('Create task failed:', createError);
+              if (status.errorCode) {
+                console.error('Error code:', status.errorCode);
+              }
+              throw new Error(createError);
+              
+            case 3:
+              const generateError = status.errorMessage || 'Generation failed';
+              console.error('Generation failed:', generateError);
+              if (status.errorCode) {
+                console.error('Error code:', status.errorCode);
+              }
+              throw new Error(generateError);
+              
+            default:
+              console.log(`Unknown status: ${status.successFlag}`);
+              if (status.errorMessage) {
+                console.error('Error message:', status.errorMessage);
+              }
+              break;
+          }
+          
+          // Wait 3 seconds before next check
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+        
+        throw new Error('Generation timeout');
+      }
+      
+      async getTaskStatus(taskId) {
+        const response = await fetch(`${this.baseUrl}/record-info?taskId=${taskId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`
+          }
+        });
+        
+        const result = await response.json();
+        if (!response.ok || result.code !== 200) {
+          throw new Error(`Status check failed: ${result.msg || 'Unknown error'}`);
+        }
+        
+        return result.data;
+      }
+    }
+
+    // Usage Example
+    async function main() {
+      const api = new FluxKontextAPI('YOUR_API_KEY');
+      
+      try {
+        // Text-to-Image Generation
+        console.log('Starting image generation...');
+        const taskId = await api.generateImage(
+          'A futuristic cityscape at night with neon lights and flying cars',
+          { 
+            aspectRatio: '16:9',
+            model: 'flux-kontext-max',
+            promptUpsampling: true
+          }
+        );
+        
+        // Wait for completion
+        console.log(`Task ID: ${taskId}. Waiting for completion...`);
+        const result = await api.waitForCompletion(taskId);
+        
+        console.log('Image generated successfully!');
+        console.log('Result Image URL:', result.resultImageUrl);
+        console.log('Original Image URL (valid 10 min):', result.originImageUrl);
+        
+        // Image Editing Example
+        console.log('\nStarting image editing...');
+        const editTaskId = await api.editImage(
+          'Add rainbow in the sky',
+          result.resultImageUrl,
+          { aspectRatio: '16:9' }
+        );
+        
+        const editResult = await api.waitForCompletion(editTaskId);
+        console.log('Image edited successfully!');
+        console.log('Edited Image URL:', editResult.resultImageUrl);
+        
+      } catch (error) {
+        console.error('Error:', error.message);
+      }
+    }
+
+    main();
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python  theme={null}
+    import requests
+    import time
+
+    class FluxKontextAPI:
+        def __init__(self, api_key):
+            self.api_key = api_key
+            self.base_url = 'https://api.kie.ai/api/v1/flux/kontext'
+            self.headers = {
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            }
+        
+        def generate_image(self, prompt, **options):
+            data = {
+                'prompt': prompt,
+                'aspectRatio': options.get('aspectRatio', '16:9'),
+                'model': options.get('model', 'flux-kontext-pro'),
+                'enableTranslation': options.get('enableTranslation', True),
+                'outputFormat': options.get('outputFormat', 'jpeg'),
+                **options
+            }
+            
+            response = requests.post(f'{self.base_url}/generate', 
+                                   headers=self.headers, json=data)
+            result = response.json()
+            
+            if not response.ok or result.get('code') != 200:
+                raise Exception(f"Generation failed: {result.get('msg', 'Unknown error')}")
+            
+            return result['data']['taskId']
+        
+        def edit_image(self, prompt, input_image, **options):
+            return self.generate_image(prompt, inputImage=input_image, **options)
+        
+        def wait_for_completion(self, task_id, max_wait_time=300):
+            start_time = time.time()
+            
+            while time.time() - start_time < max_wait_time:
+                status = self.get_task_status(task_id)
+                success_flag = status['successFlag']
+                
+                if success_flag == 0:
+                    print("Task is generating, continue waiting...")
+                elif success_flag == 1:
+                    print("Generation completed successfully!")
+                    return status['response']
+                elif success_flag == 2:
+                    create_error = status.get('errorMessage', 'Create task failed')
+                    print(f"Create task failed: {create_error}")
+                    if status.get('errorCode'):
+                        print(f"Error code: {status['errorCode']}")
+                    raise Exception(create_error)
+                elif success_flag == 3:
+                    generate_error = status.get('errorMessage', 'Generation failed')
+                    print(f"Generation failed: {generate_error}")
+                    if status.get('errorCode'):
+                        print(f"Error code: {status['errorCode']}")
+                    raise Exception(generate_error)
+                else:
+                    print(f"Unknown status: {success_flag}")
+                    if status.get('errorMessage'):
+                        print(f"Error message: {status['errorMessage']}")
+                
+                time.sleep(3)  # Wait 3 seconds
+            
+            raise Exception('Generation timeout')
+        
+        def get_task_status(self, task_id):
+            response = requests.get(f'{self.base_url}/record-info?taskId={task_id}',
+                                  headers={'Authorization': f'Bearer {self.api_key}'})
+            result = response.json()
+            
+            if not response.ok or result.get('code') != 200:
+                raise Exception(f"Status check failed: {result.get('msg', 'Unknown error')}")
+            
+            return result['data']
+
+    # Usage Example
+    def main():
+        api = FluxKontextAPI('YOUR_API_KEY')
+        
+        try:
+            # Text-to-Image Generation
+            print('Starting image generation...')
+            task_id = api.generate_image(
+                'A futuristic cityscape at night with neon lights and flying cars',
+                aspectRatio='16:9',
+                model='flux-kontext-max',
+                promptUpsampling=True
+            )
+            
+            # Wait for completion
+            print(f'Task ID: {task_id}. Waiting for completion...')
+            result = api.wait_for_completion(task_id)
+            
+            print('Image generated successfully!')
+            print(f'Result Image URL: {result["resultImageUrl"]}')
+            print(f'Original Image URL (valid 10 min): {result["originImageUrl"]}')
+            
+            # Image Editing Example
+            print('\nStarting image editing...')
+            edit_task_id = api.edit_image(
+                'Add rainbow in the sky',
+                result['resultImageUrl'],
+                aspectRatio='16:9'
+            )
+            
+            edit_result = api.wait_for_completion(edit_task_id)
+            print('Image edited successfully!')
+            print(f'Edited Image URL: {edit_result["resultImageUrl"]}')
+            
+            # Download images
+            download_image(result['resultImageUrl'], 'generated_image.jpg')
+            download_image(edit_result['resultImageUrl'], 'edited_image.jpg')
+            
+        except Exception as error:
+            print(f'Error: {error}')
+
+    def download_image(url, filename):
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+        print(f'Downloaded: {filename}')
+
+    if __name__ == '__main__':
+        main()
+    ```
+  </Tab>
+</Tabs>
+
+## Advanced Features
+
+### Model Selection
+
+Choose the appropriate model based on your needs:
+
+```javascript  theme={null}
+// Standard model for balanced performance
+const taskId = await api.generateImage('Beautiful landscape', {
+  model: 'flux-kontext-pro'
+});
+
+// Enhanced model for complex scenes and higher quality
+const taskId = await api.generateImage('Complex architectural interior with intricate details', {
+  model: 'flux-kontext-max'
+});
+```
+
+### Aspect Ratio Options
+
+Support for various image formats:
+
+```javascript  theme={null}
+const aspectRatios = {
+  'ultra-wide': '21:9',    // Cinematic displays
+  'widescreen': '16:9',    // HD video, desktop wallpapers
+  'standard': '4:3',       // Traditional displays
+  'square': '1:1',         // Social media posts
+  'portrait': '3:4',       // Magazine layouts
+  'mobile': '9:16',        // Smartphone wallpapers
+  'ultra-tall': '16:21'    // Mobile app splash screens
+};
+
+const taskId = await api.generateImage('Modern office space', {
+  aspectRatio: aspectRatios.widescreen
+});
+```
+
+### Prompt Enhancement
+
+Let the AI optimize your prompts:
+
+```javascript  theme={null}
+const taskId = await api.generateImage('sunset', {
+  promptUpsampling: true // AI will enhance the prompt for better results
+});
+```
+
+### Safety Tolerance Control
+
+Adjust content moderation levels:
+
+```javascript  theme={null}
+// For image generation (0-6)
+const taskId = await api.generateImage('Artistic concept', {
+  safetyTolerance: 4 // More permissive for artistic content
+});
+
+// For image editing (0-2)
+const editTaskId = await api.editImage('Stylistic changes', inputImage, {
+  safetyTolerance: 2 // Balanced moderation
+});
+```
+
+### Using Callbacks
+
+Set up webhook callbacks for automatic notifications:
+
+```javascript  theme={null}
+const taskId = await api.generateImage('Digital art masterpiece', {
+  aspectRatio: '1:1',
+  callBackUrl: 'https://your-server.com/flux-callback'
+});
+
+// Your callback endpoint will receive:
+app.post('/flux-callback', (req, res) => {
+  const { code, data } = req.body;
+  
+  if (code === 200) {
+    console.log('Images ready:', data.info.resultImageUrl);
+  } else {
+    console.log('Generation failed:', req.body.msg);
+  }
+  
+  res.status(200).json({ status: 'received' });
+});
+```
+
+<Card title="Learn More About Callbacks" icon="webhook" href="/flux-kontext-api/generate-or-edit-image-callbacks">
+  Set up webhook callbacks to receive automatic notifications when your images are ready.
+</Card>
+
+## Error Handling
+
+Common error scenarios and how to handle them:
+
+<AccordionGroup>
+  <Accordion title="Content Policy Violations (Code 400)">
+    ```javascript  theme={null}
+    try {
+      const taskId = await api.generateImage('inappropriate content');
+    } catch (error) {
+      if (error.data.code === 400) {
+        console.log('Please modify your prompt to comply with content policies');
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Safety Tolerance Out of Range (Code 500)">
+    ```javascript  theme={null}
+    try {
+      const taskId = await api.generateImage('artwork', {
+        safetyTolerance: 7 // Invalid for generation mode (max 6)
+      });
+    } catch (error) {
+      console.log('Safety tolerance should be 0-6 for generation, 0-2 for editing');
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Rate Limiting (Code 429)">
+    ```javascript  theme={null}
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    async function generateWithRetry(prompt, options, maxRetries = 3) {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await api.generateImage(prompt, options);
+        } catch (error) {
+          if (error.data.code === 429 && i < maxRetries - 1) {
+            await delay(Math.pow(2, i) * 1000); // Exponential backoff
+            continue;
+          }
+          throw error;
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<Tip>
+  ### Performance Optimization
+
+  1. **Use Callbacks**: Set up webhook callbacks instead of polling for better performance
+  2. **Model Selection**: Use `flux-kontext-pro` for standard tasks, `flux-kontext-max` for complex scenes
+  3. **Prompt Engineering**: Use detailed, specific prompts for better results
+  4. **Image Preprocessing**: Ensure input images are accessible and optimized
+  5. **Download Management**: Download images promptly as they expire after 14 days
+  6. **Translation Settings**: Set `enableTranslation: false` if your prompts are already in English
+</Tip>
+
+<Warning>
+  ### Important Limitations
+
+  * **Language Support**: Prompts only support English (use `enableTranslation: true` for auto-translation)
+  * **Image Storage**: Generated images expire after 14 days
+  * **Original Image URLs**: Valid for only 10 minutes after generation
+  * **Safety Tolerance**: Generation mode (0-6), Editing mode (0-2)
+  * **Input Images**: Must be publicly accessible URLs
+</Warning>
+
+## Supported Parameters
+
+### Core Parameters
+
+| Parameter      | Type   | Description                                           | Default            |
+| -------------- | ------ | ----------------------------------------------------- | ------------------ |
+| `prompt`       | string | **Required**. Text description for generation/editing | -                  |
+| `aspectRatio`  | string | Output image aspect ratio                             | `16:9`             |
+| `model`        | string | `flux-kontext-pro` or `flux-kontext-max`              | `flux-kontext-pro` |
+| `outputFormat` | string | `jpeg` or `png`                                       | `jpeg`             |
+
+### Optional Parameters
+
+| Parameter           | Type    | Description                        | Default |
+| ------------------- | ------- | ---------------------------------- | ------- |
+| `inputImage`        | string  | URL for image editing mode         | -       |
+| `enableTranslation` | boolean | Auto-translate non-English prompts | `true`  |
+| `promptUpsampling`  | boolean | AI prompt enhancement              | `false` |
+| `safetyTolerance`   | integer | Content moderation level           | `2`     |
+| `callBackUrl`       | string  | Webhook notification URL           | -       |
+| `uploadCn`          | boolean | Use China servers for upload       | `false` |
+| `watermark`         | string  | Watermark identifier               | -       |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Generate or Edit Images" icon="image" href="/flux-kontext-api/generate-or-edit-image">
+    Learn about all generation and editing parameters and advanced options
+  </Card>
+
+  <Card title="Track Progress" icon="chart-line" href="/flux-kontext-api/get-image-details">
+    Monitor task status and retrieve detailed generation information
+  </Card>
+
+  <Card title="Webhook Callbacks" icon="webhook" href="/flux-kontext-api/generate-or-edit-image-callbacks">
+    Set up automatic notifications for task completion
+  </Card>
+</CardGroup>
+
+## Support
+
+Need help? Here are your options:
+
+* **Technical Support**: [support@kie.ai](mailto:support@kie.ai)
+* **API Status**: Monitor service health and announcements
+* **Documentation**: Explore detailed API references
+* **Community**: Join our developer community for tips and examples
+
+Ready to create amazing AI images? Start with the examples above and explore the full API capabilities!

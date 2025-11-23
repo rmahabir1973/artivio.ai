@@ -791,29 +791,42 @@ export async function generateImage(params: {
     return await callKieApi('/api/v1/gpt4o-image/generate', payload);
   }
   else if (params.model === 'flux-kontext') {
-    // Flux Kontext - uses /api/v1/jobs/createTask (unified endpoint)
-    const aspectRatio = parameters.aspectRatio || '1:1';
-    const quality = parameters.quality || 'standard';
-    const outputFormat = parameters.outputFormat || 'JPEG';
+    // Flux Kontext - uses dedicated /api/v1/flux/kontext/generate endpoint (per official API docs)
+    const aspectRatio = parameters.aspectRatio || '16:9'; // Default 16:9
+    const model = parameters.model || 'flux-kontext-pro'; // flux-kontext-pro or flux-kontext-max
+    const outputFormat = parameters.outputFormat || 'jpeg'; // jpeg or png
+    const enableTranslation = parameters.enableTranslation !== undefined ? parameters.enableTranslation : true;
+    const promptUpsampling = parameters.promptUpsampling !== undefined ? parameters.promptUpsampling : false;
+    const safetyTolerance = parameters.safetyTolerance !== undefined ? parameters.safetyTolerance : 2; // 0-6 for generation, 0-2 for editing
     
-    // Build input object
-    const inputPayload: any = {
+    // Build Flux Kontext-specific payload (direct fields, NOT input object)
+    const payload: any = {
       prompt: params.prompt,
-      aspect_ratio: aspectRatio,
-      quality: quality,
-      output_format: outputFormat,
+      aspectRatio,
+      outputFormat,
+      promptUpsampling,
+      model,
+      enableTranslation,
+      safetyTolerance,
+      callBackUrl: parameters.callBackUrl,
     };
     
-    // Add reference images for image-to-image/editing mode
-    if (mode === 'image-editing' && referenceImages.length > 0) {
-      inputPayload.image_input = referenceImages;
+    // Add input image for image editing mode (use inputImage, NOT filesUrl or image_input)
+    if (referenceImages.length > 0) {
+      payload.inputImage = referenceImages[0]; // Flux Kontext only supports single image
     }
     
-    return await callKieApi('/api/v1/jobs/createTask', {
-      model: 'black-forest-labs/flux-kontext',
-      callBackUrl: parameters.callBackUrl,
-      input: inputPayload,
-    });
+    // Add optional watermark
+    if (parameters.watermark) {
+      payload.watermark = parameters.watermark;
+    }
+    
+    // Add optional uploadCn region selection
+    if (parameters.uploadCn !== undefined) {
+      payload.uploadCn = parameters.uploadCn;
+    }
+    
+    return await callKieApi('/api/v1/flux/kontext/generate', payload);
   }
   
   throw new Error(`Unsupported image model: ${params.model}. Supported models: 4o-image, flux-kontext, nano-banana, seedream-4, midjourney-v7`);

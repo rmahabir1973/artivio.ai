@@ -1,0 +1,460 @@
+# Image Generation or Editing Callbacks
+
+> When the image generation task is completed, the system will send the result to your provided callback URL via POST request
+
+When you submit an image generation or editing task to the Flux Kontext API, you can use the `callBackUrl` parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+
+## Callback Mechanism Overview
+
+<Info>
+  The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+</Info>
+
+### Callback Timing
+
+The system will send callback notifications in the following situations:
+
+* Image generation or editing task completed successfully
+* Image generation or editing task failed
+* Errors occurred during task processing
+
+### Callback Method
+
+* **HTTP Method**: POST
+* **Content Type**: application/json
+* **Timeout Setting**: 15 seconds
+
+## Callback Request Format
+
+When the task is completed, the system will send a POST request to your `callBackUrl` in the following format:
+
+<CodeGroup>
+  ```json Success Callback theme={null}
+  {
+    "code": 200,
+    "msg": "BFL image generated successfully.",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "https://example.com/original.jpg",
+        "resultImageUrl": "https://example.com/result.jpg"
+      }
+    }
+  }
+  ```
+
+  ```json Content Policy Violation Callback theme={null}
+  {
+    "code": 400,
+    "msg": "Your prompt was flagged by Website as violating content policies.",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "",
+        "resultImageUrl": ""
+      }
+    }
+  }
+  ```
+
+  ```json Generation Failure Callback theme={null}
+  {
+    "code": 501,
+    "msg": "Image generation task failed",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "",
+        "resultImageUrl": ""
+      }
+    }
+  }
+  ```
+
+  ```json Internal Error Callback theme={null}
+  {
+    "code": 500,
+    "msg": "Internal Error, Please try again later.",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "",
+        "resultImageUrl": ""
+      }
+    }
+  }
+  ```
+</CodeGroup>
+
+## Status Code Description
+
+<ParamField path="code" type="integer" required>
+  Callback status code indicating task processing result:
+
+  | Status Code | Description                                                               |
+  | ----------- | ------------------------------------------------------------------------- |
+  | 200         | Success - Image generation completed successfully                         |
+  | 400         | Failed - Your prompt was flagged by Website as violating content policies |
+  | 500         | Failed - Internal Error, Please try again later                           |
+  | 501         | Failed - Image generation task failed                                     |
+</ParamField>
+
+<ParamField path="msg" type="string" required>
+  Status message providing detailed status description
+</ParamField>
+
+<ParamField path="data.taskId" type="string" required>
+  Task ID, consistent with the taskId returned when you submitted the task
+</ParamField>
+
+<ParamField path="data.info.originImageUrl" type="string">
+  Original image URL, **valid for 10 minutes**. Only present on success.
+</ParamField>
+
+<ParamField path="data.info.resultImageUrl" type="string">
+  Generated image URL on our server. Only present on success.
+</ParamField>
+
+## Callback Reception Examples
+
+Here are example codes for receiving callbacks in popular programming languages:
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript  theme={null}
+    const express = require('express');
+    const fs = require('fs');
+    const https = require('https');
+    const app = express();
+
+    app.use(express.json());
+
+    app.post('/flux-image-callback', (req, res) => {
+      const { code, msg, data } = req.body;
+      
+      console.log('Received Flux image generation callback:', {
+        taskId: data.taskId,
+        status: code,
+        message: msg
+      });
+      
+      if (code === 200) {
+        // Task completed successfully
+        console.log('Flux image generation completed successfully');
+        
+        const { taskId, info } = data;
+        const { originImageUrl, resultImageUrl } = info;
+        
+        console.log(`Original Image URL: ${originImageUrl}`);
+        console.log(`Generated Image URL: ${resultImageUrl}`);
+        console.log('Note: Original image URL is valid for 10 minutes');
+        
+        // Download generated image
+        if (resultImageUrl) {
+          downloadFile(resultImageUrl, `flux_result_${taskId}.jpg`)
+            .then(() => console.log('Generated image downloaded successfully'))
+            .catch(err => console.error('Generated image download failed:', err));
+        }
+        
+        // Download original image (if needed)
+        if (originImageUrl) {
+          downloadFile(originImageUrl, `flux_original_${taskId}.jpg`)
+            .then(() => console.log('Original image downloaded successfully'))
+            .catch(err => console.error('Original image download failed:', err));
+        }
+        
+      } else {
+        // Task failed
+        console.log('Flux image generation failed:', msg);
+        
+        // Handle specific error types
+        if (code === 400) {
+          console.log('Content policy violation - please adjust prompt');
+        } else if (code === 500) {
+          console.log('Internal error - please try again later');
+        } else if (code === 501) {
+          console.log('Generation task failed - may need to adjust parameters');
+        }
+      }
+      
+      // Return 200 status code to confirm callback received
+      res.status(200).json({ status: 'received' });
+    });
+
+    // Helper function to download files
+    function downloadFile(url, filename) {
+      return new Promise((resolve, reject) => {
+        const file = fs.createWriteStream(filename);
+        
+        https.get(url, (response) => {
+          if (response.statusCode === 200) {
+            response.pipe(file);
+            file.on('finish', () => {
+              file.close();
+              resolve();
+            });
+          } else {
+            reject(new Error(`HTTP ${response.statusCode}`));
+          }
+        }).on('error', reject);
+      });
+    }
+
+    app.listen(3000, () => {
+      console.log('Callback server running on port 3000');
+    });
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python  theme={null}
+    from flask import Flask, request, jsonify
+    import requests
+    import os
+
+    app = Flask(__name__)
+
+    @app.route('/flux-image-callback', methods=['POST'])
+    def handle_callback():
+        data = request.json
+        
+        code = data.get('code')
+        msg = data.get('msg')
+        callback_data = data.get('data', {})
+        task_id = callback_data.get('taskId')
+        info = callback_data.get('info', {})
+        origin_image_url = info.get('originImageUrl')
+        result_image_url = info.get('resultImageUrl')
+        
+        print(f"Received Flux image generation callback:")
+        print(f"Task ID: {task_id}")
+        print(f"Status: {code}, Message: {msg}")
+        
+        if code == 200:
+            # Task completed successfully
+            print("Flux image generation completed successfully")
+            
+            print(f"Original Image URL: {origin_image_url}")
+            print(f"Generated Image URL: {result_image_url}")
+            print("Note: Original image URL is valid for 10 minutes")
+            
+            # Download generated image
+            if result_image_url:
+                try:
+                    result_filename = f"flux_result_{task_id}.jpg"
+                    download_file(result_image_url, result_filename)
+                    print(f"Generated image downloaded as {result_filename}")
+                except Exception as e:
+                    print(f"Generated image download failed: {e}")
+            
+            # Download original image (if needed)
+            if origin_image_url:
+                try:
+                    origin_filename = f"flux_original_{task_id}.jpg"
+                    download_file(origin_image_url, origin_filename)
+                    print(f"Original image downloaded as {origin_filename}")
+                except Exception as e:
+                    print(f"Original image download failed: {e}")
+                    
+        else:
+            # Task failed
+            print(f"Flux image generation failed: {msg}")
+            
+            # Handle specific error types
+            if code == 400:
+                print("Content policy violation - please adjust prompt")
+            elif code == 500:
+                print("Internal error - please try again later")
+            elif code == 501:
+                print("Generation task failed - may need to adjust parameters")
+        
+        # Return 200 status code to confirm callback received
+        return jsonify({'status': 'received'}), 200
+
+    def download_file(url, filename):
+        """Download file from URL and save locally"""
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        os.makedirs('downloads', exist_ok=True)
+        filepath = os.path.join('downloads', filename)
+        
+        with open(filepath, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=3000)
+    ```
+  </Tab>
+
+  <Tab title="PHP">
+    ```php  theme={null}
+    <?php
+    header('Content-Type: application/json');
+
+    // Get POST data
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    $code = $data['code'] ?? null;
+    $msg = $data['msg'] ?? '';
+    $callbackData = $data['data'] ?? [];
+    $taskId = $callbackData['taskId'] ?? '';
+    $info = $callbackData['info'] ?? [];
+    $originImageUrl = $info['originImageUrl'] ?? '';
+    $resultImageUrl = $info['resultImageUrl'] ?? '';
+
+    error_log("Received Flux image generation callback:");
+    error_log("Task ID: $taskId");
+    error_log("Status: $code, Message: $msg");
+
+    if ($code === 200) {
+        // Task completed successfully
+        error_log("Flux image generation completed successfully");
+        
+        error_log("Original Image URL: $originImageUrl");
+        error_log("Generated Image URL: $resultImageUrl");
+        error_log("Note: Original image URL is valid for 10 minutes");
+        
+        // Download generated image
+        if (!empty($resultImageUrl)) {
+            try {
+                $resultFilename = "flux_result_{$taskId}.jpg";
+                downloadFile($resultImageUrl, $resultFilename);
+                error_log("Generated image downloaded as $resultFilename");
+            } catch (Exception $e) {
+                error_log("Generated image download failed: " . $e->getMessage());
+            }
+        }
+        
+        // Download original image (if needed)
+        if (!empty($originImageUrl)) {
+            try {
+                $originFilename = "flux_original_{$taskId}.jpg";
+                downloadFile($originImageUrl, $originFilename);
+                error_log("Original image downloaded as $originFilename");
+            } catch (Exception $e) {
+                error_log("Original image download failed: " . $e->getMessage());
+            }
+        }
+        
+    } else {
+        // Task failed
+        error_log("Flux image generation failed: $msg");
+        
+        // Handle specific error types
+        if ($code === 400) {
+            error_log("Content policy violation - please adjust prompt");
+        } elseif ($code === 500) {
+            error_log("Internal error - please try again later");
+        } elseif ($code === 501) {
+            error_log("Generation task failed - may need to adjust parameters");
+        }
+    }
+
+    // Return 200 status code to confirm callback received
+    http_response_code(200);
+    echo json_encode(['status' => 'received']);
+
+    function downloadFile($url, $filename) {
+        $downloadDir = 'downloads';
+        if (!is_dir($downloadDir)) {
+            mkdir($downloadDir, 0755, true);
+        }
+        
+        $filepath = $downloadDir . '/' . $filename;
+        
+        $fileContent = file_get_contents($url);
+        if ($fileContent === false) {
+            throw new Exception("Failed to download file from URL");
+        }
+        
+        $result = file_put_contents($filepath, $fileContent);
+        if ($result === false) {
+            throw new Exception("Failed to save file locally");
+        }
+    }
+    ?>
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+  ### Callback URL Configuration Recommendations
+
+  1. **Use HTTPS**: Ensure your callback URL uses HTTPS protocol for secure data transmission
+  2. **Verify Source**: Verify the legitimacy of the request source in callback processing
+  3. **Idempotent Processing**: The same taskId may receive multiple callbacks, ensure processing logic is idempotent
+  4. **Quick Response**: Callback processing should return a 200 status code as quickly as possible to avoid timeout
+  5. **Asynchronous Processing**: Complex business logic should be processed asynchronously to avoid blocking callback response
+  6. **Timely Download**: Original image URLs are valid for only 10 minutes, download and save files promptly upon success
+</Tip>
+
+<Warning>
+  ### Important Reminders
+
+  * Callback URL must be a publicly accessible address
+  * Server must respond within 15 seconds, otherwise it will be considered a timeout
+  * If 3 consecutive retries fail, the system will stop sending callbacks
+  * **Original image URLs expire after 10 minutes** - download immediately upon receiving callback
+  * Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+  * Need to handle multiple error status codes (400, 500, 501) for complete error handling
+  * Pay attention to content policy violations and adjust prompts accordingly
+</Warning>
+
+## Troubleshooting
+
+If you do not receive callback notifications, please check the following:
+
+<AccordionGroup>
+  <Accordion title="Network Connection Issues">
+    * Confirm that the callback URL is accessible from the public network
+    * Check firewall settings to ensure inbound requests are not blocked
+    * Verify that domain name resolution is correct
+  </Accordion>
+
+  <Accordion title="Server Response Issues">
+    * Ensure the server returns HTTP 200 status code within 15 seconds
+    * Check server logs for error messages
+    * Verify that the interface path and HTTP method are correct
+  </Accordion>
+
+  <Accordion title="Content Format Issues">
+    * Confirm that the received POST request body is in JSON format
+    * Check that Content-Type is application/json
+    * Verify that JSON parsing is correct
+  </Accordion>
+
+  <Accordion title="Image Processing Issues">
+    * Confirm that image URLs are accessible
+    * Check image download permissions and network connections
+    * Verify image save paths and permissions
+    * **Note the 10-minute original image URL expiration** - implement prompt download logic
+    * Handle both generated and original image downloads
+  </Accordion>
+
+  <Accordion title="Content Policy Issues">
+    * Review error messages for content policy violations
+    * Adjust prompts that are flagged by content moderation
+    * Ensure prompts comply with platform content guidelines
+    * Check for sensitive or inappropriate content
+  </Accordion>
+
+  <Accordion title="Task Failure Issues">
+    * Check if generation parameters are reasonable
+    * Verify input image format and quality
+    * Confirm prompt length and format
+    * Consider adjusting generation parameters and retry
+  </Accordion>
+</AccordionGroup>
+
+## Alternative Solution
+
+If you cannot use the callback mechanism, you can also use polling:
+
+<Card title="Poll Query Results" icon="radar" href="/flux-kontext-api/get-image-details">
+  Use the get image details endpoint to regularly query task status. We recommend querying every 30 seconds.
+</Card>

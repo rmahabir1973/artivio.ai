@@ -1031,23 +1031,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string (resultJson with resultUrls array)
                        callbackData.data?.video_url ||    // Runway uses snake_case
                        (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) || // Veo nested
+                       callbackData.data?.info?.resultImageUrl || // Flux Kontext uses data.info.resultImageUrl
+                       (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) || // 4o-Image uses data.info.result_urls array
                        callbackData.data?.output_url ||   // Bytedance models (Wan, Kling, Grok, Sora) use output_url
                        callbackData.data?.outputUrl ||    // Alternative camelCase for Bytedance models
                        callbackData.data?.videoUrl ||     // Other video models camelCase
                        sunoAudioUrl ||                    // Suno audio
                        (callbackData.data?.videoUrls && Array.isArray(callbackData.data.videoUrls) && callbackData.data.videoUrls[0]) || // Video URL array
                        (callbackData.data?.urls && Array.isArray(callbackData.data.urls) && callbackData.data.urls[0]) || // Generic URLs array
-                       callbackData.data?.imageUrl ||     // Image models (Nano Banana, 4o-image, Flux Kontext) - camelCase
+                       callbackData.data?.imageUrl ||     // Image models (Nano Banana) - camelCase
                        callbackData.data?.image_url ||    // Image models - snake_case
                        (callbackData.data?.images && Array.isArray(callbackData.data.images) && callbackData.data.images[0]) || // Array of images
                        (callbackData.data?.results && Array.isArray(callbackData.data.results) && callbackData.data.results[0]) || // Array of results
+                       (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) || // Midjourney uses data.resultUrls array
+                       (callbackData.data?.result_urls && callbackData.data.result_urls[0]) ||
                        (callbackData.data?.data && Array.isArray(callbackData.data.data) && callbackData.data.data[0]?.audioUrl) || // ElevenLabs TTS/Sound Effects array format
                        callbackData.data?.data?.audioUrl || // ElevenLabs TTS/Sound Effects object format
                        (callbackData.data?.data && Array.isArray(callbackData.data.data) && callbackData.data.data[0]?.audio_url) || // ElevenLabs snake_case
                        callbackData.data?.data?.audio_url || // ElevenLabs snake_case object
-                       (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) ||
-                       (callbackData.data?.resultUrls && callbackData.data.resultUrls[0]) ||
-                       (callbackData.data?.result_urls && callbackData.data.result_urls[0]) ||
                        callbackData.resultUrls?.[0] ||
                        callbackData.result_urls?.[0] ||
                        callbackData.videoUrl || 
