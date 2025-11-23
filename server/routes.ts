@@ -1399,7 +1399,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { model, prompt, generationType, referenceImages, veoSubtype, parameters } = validationResult.data;
-      const cost = await getModelCost(model);
+      
+      // Build composite pricing key for models with duration/resolution-based pricing
+      let pricingKey: string = model;
+      if (model === 'runway-gen3-alpha-turbo') {
+        const duration = parameters?.duration || 5;
+        pricingKey = `runway-gen3-alpha-turbo-${duration}s`;
+      } else if (model === 'seedance-1-pro') {
+        const duration = parameters?.duration || 5;
+        const resolution = (parameters as any)?.resolution || '720p';
+        pricingKey = `seedance-1-pro-${duration}s-${resolution}`;
+      } else if (model === 'seedance-1-lite') {
+        const resolution = (parameters as any)?.resolution || '720p';
+        pricingKey = `seedance-1-lite-${resolution}`;
+      } else if (model === 'wan-2.5') {
+        const duration = parameters?.duration || 5;
+        const resolution = (parameters as any)?.resolution || '720p';
+        pricingKey = `wan-2.5-${duration}s-${resolution}`;
+      }
+      
+      const cost = await getModelCost(pricingKey);
 
       // Atomically deduct credits
       const user = await storage.deductCreditsAtomic(userId, cost);

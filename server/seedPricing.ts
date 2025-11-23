@@ -26,7 +26,12 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'video', model: 'seedance-1-lite-480p', creditCost: 100, kieCreditCost: 20, category: 'generation', description: 'Seedance 1.0 Lite - 480p fast generation (10s)' },
   { feature: 'video', model: 'seedance-1-lite-720p', creditCost: 225, kieCreditCost: 45, category: 'generation', description: 'Seedance 1.0 Lite - 720p balanced quality (10s)' },
   { feature: 'video', model: 'seedance-1-lite-1080p', creditCost: 500, kieCreditCost: 100, category: 'generation', description: 'Seedance 1.0 Lite - 1080p high quality (10s)' },
-  { feature: 'video', model: 'wan-2.5', creditCost: 250, kieCreditCost: null, category: 'generation', description: 'Wan 2.5 - Native audio sync & lip-sync support (10s)' },
+  
+  // Wan 2.5 - Duration and resolution-based pricing (5s, 10s × 720p, 1080p)
+  { feature: 'video', model: 'wan-2.5-5s-720p', creditCost: 300, kieCreditCost: 60, category: 'generation', description: 'Wan 2.5 - 720p audio sync & lip-sync (5s)' },
+  { feature: 'video', model: 'wan-2.5-5s-1080p', creditCost: 500, kieCreditCost: 100, category: 'generation', description: 'Wan 2.5 - 1080p audio sync & lip-sync (5s)' },
+  { feature: 'video', model: 'wan-2.5-10s-720p', creditCost: 500, kieCreditCost: 100, category: 'generation', description: 'Wan 2.5 - 720p audio sync & lip-sync (10s)' },
+  { feature: 'video', model: 'wan-2.5-10s-1080p', creditCost: 1000, kieCreditCost: 200, category: 'generation', description: 'Wan 2.5 - 1080p audio sync & lip-sync (10s)' },
   { feature: 'video', model: 'kling-2.5-turbo', creditCost: 150, kieCreditCost: null, category: 'generation', description: 'Kling 2.5 Turbo - Fast, fluid motion with realistic physics (5s-10s)' },
   { feature: 'video', model: 'kling-2.1', creditCost: 250, kieCreditCost: null, category: 'generation', description: 'Kling 2.1 - Professional hyper-realistic video generation (5s-10s)' },
   

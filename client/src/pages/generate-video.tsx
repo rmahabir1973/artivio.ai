@@ -44,7 +44,7 @@ const DURATION_SUPPORT: Record<string, number[]> = {
   "runway-gen3-alpha-turbo": [5, 10],
   "seedance-1-pro": [5, 10],
   "seedance-1-lite": [10],
-  "wan-2.5": [10],
+  "wan-2.5": [5, 10],
   "kling-2.5-turbo": [5, 10],
   "kling-2.1": [5, 10],
   "sora-2-pro": [5, 10, 20],
@@ -113,7 +113,7 @@ const VIDEO_MODEL_INFO = [
     value: "wan-2.5", 
     label: "Wan 2.5", 
     description: "Native audio sync & lip-sync support", 
-    duration: "10s",
+    duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -152,11 +152,13 @@ export default function GenerateVideo() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [duration, setDuration] = useState(5);
   const [quality, setQuality] = useState("720p");
-  const [resolution, setResolution] = useState("720p"); // For Seedance models
+  const [resolution, setResolution] = useState("720p"); // For Seedance and Wan models
   const [cameraFixed, setCameraFixed] = useState(false); // For Seedance models
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [seedLocked, setSeedLocked] = useState(false);
+  const [negativePrompt, setNegativePrompt] = useState(""); // For Wan model
+  const [enablePromptExpansion, setEnablePromptExpansion] = useState(true); // For Wan model
 
   // Merge model info with dynamic pricing
   const [videoModels, setVideoModels] = useState(() => VIDEO_MODEL_INFO.map(m => ({
@@ -169,14 +171,16 @@ export default function GenerateVideo() {
     // pricingQuery.dataUpdatedAt only changes when TanStack refetches, so no infinite loop
     const nextModels = VIDEO_MODEL_INFO.map(m => ({
       ...m,
-      // For Runway, Seedance Pro, and Seedance Lite, use composite/suffix keys for pricing lookup
+      // For Runway, Seedance Pro, Seedance Lite, and Wan 2.5, use composite/suffix keys for pricing lookup
       cost: m.value === 'runway-gen3-alpha-turbo'
         ? (getModelCost(`runway-gen3-alpha-turbo-${duration}s`, 400) || 0)
         : m.value === 'seedance-1-pro' 
           ? (getModelCost(`seedance-1-pro-${duration}s-${resolution}`, 400) || 0)
           : m.value === 'seedance-1-lite' 
             ? (getModelCost(`seedance-1-lite-${resolution}`, 400) || 0)
-            : (getModelCost(m.value, 400) || 0),
+            : m.value === 'wan-2.5'
+              ? (getModelCost(`wan-2.5-${duration}s-${resolution}`, 400) || 0)
+              : (getModelCost(m.value, 400) || 0),
     }));
     
     setVideoModels(nextModels);
@@ -192,6 +196,17 @@ export default function GenerateVideo() {
   // Helper to check if current model supports seeds
   const modelSupportsSeed = () => {
     return model.startsWith('veo-') || model.startsWith('seedance-') || model.startsWith('wan-');
+  };
+
+  // Handle model change with synchronous duration clamping
+  const handleModelChange = (newModel: string) => {
+    setModel(newModel);
+    
+    // Synchronously clamp duration to ensure valid state immediately
+    const supportedDurations = DURATION_SUPPORT[newModel] || [5, 8, 10];
+    if (!supportedDurations.includes(duration)) {
+      setDuration(supportedDurations[0]);
+    }
   };
 
   // Load template handler
@@ -293,19 +308,17 @@ export default function GenerateVideo() {
   useEffect(() => {
     const supportedDurations = DURATION_SUPPORT[model] || [5, 8, 10];
     
-    // If current duration is not supported by the new model, auto-adjust to closest supported duration
+    // If current duration is not supported by the new model, auto-adjust to first supported duration
     if (!supportedDurations.includes(duration)) {
-      // Find the closest supported duration
-      const closestDuration = supportedDurations.reduce((prev, curr) => 
-        Math.abs(curr - duration) < Math.abs(prev - duration) ? curr : prev
-      );
+      // Always use the first supported duration to ensure users see all options
+      const firstDuration = supportedDurations[0];
       
-      setDuration(closestDuration);
+      setDuration(firstDuration);
       
       const modelLabel = VIDEO_MODEL_INFO.find(m => m.value === model)?.label || model;
       toast({
         title: "Duration Adjusted",
-        description: `${modelLabel} supports: ${supportedDurations.join('s, ')}s. Duration set to ${closestDuration}s.`,
+        description: `${modelLabel} supports: ${supportedDurations.join('s, ')}s. Duration set to ${firstDuration}s.`,
       });
     }
   }, [model, duration, toast]);
@@ -505,6 +518,13 @@ export default function GenerateVideo() {
       parameters.cameraFixed = cameraFixed;
     }
     
+    // Add resolution, negativePrompt, and enablePromptExpansion for Wan 2.5
+    if (model === 'wan-2.5') {
+      parameters.resolution = resolution;
+      parameters.negativePrompt = negativePrompt;
+      parameters.enablePromptExpansion = enablePromptExpansion;
+    }
+    
     // Add seed if model supports it and seed is provided
     if (modelSupportsSeed() && seed) {
       if (model.startsWith('veo-')) {
@@ -653,7 +673,7 @@ export default function GenerateVideo() {
             {/* Model Selection */}
             <div className="space-y-2">
               <Label htmlFor="model">AI Model</Label>
-              <Select value={model} onValueChange={setModel}>
+              <Select value={model} onValueChange={handleModelChange}>
                 <SelectTrigger id="model" data-testid="select-video-model">
                   <SelectValue />
                 </SelectTrigger>
@@ -764,6 +784,62 @@ export default function GenerateVideo() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Lock camera position to prevent movement
+                </p>
+              </div>
+            )}
+
+            {/* Resolution - Only for Wan 2.5 */}
+            {model === 'wan-2.5' && (
+              <div className="space-y-2">
+                <Label htmlFor="wan-resolution">Resolution</Label>
+                <Select value={resolution} onValueChange={setResolution}>
+                  <SelectTrigger id="wan-resolution" data-testid="select-wan-resolution">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="720p">720p (Balanced)</SelectItem>
+                    <SelectItem value="1080p">1080p (High Quality)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Higher resolution costs more credits
+                </p>
+              </div>
+            )}
+
+            {/* Negative Prompt - Only for Wan 2.5 */}
+            {model === 'wan-2.5' && (
+              <div className="space-y-2">
+                <Label htmlFor="negative-prompt">Negative Prompt (Optional)</Label>
+                <Textarea
+                  id="negative-prompt"
+                  placeholder="Describe what you want to avoid in the video..."
+                  value={negativePrompt}
+                  onChange={(e) => setNegativePrompt(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  data-testid="textarea-negative-prompt"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Max 500 characters - Describe content to avoid
+                </p>
+              </div>
+            )}
+
+            {/* Enable Prompt Expansion - Only for Wan 2.5 */}
+            {model === 'wan-2.5' && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="prompt-expansion">Enable Prompt Expansion</Label>
+                  <Switch
+                    id="prompt-expansion"
+                    checked={enablePromptExpansion}
+                    onCheckedChange={setEnablePromptExpansion}
+                    data-testid="switch-prompt-expansion"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Use AI to enhance and expand your prompt
                 </p>
               </div>
             )}

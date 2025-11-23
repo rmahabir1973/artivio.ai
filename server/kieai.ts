@@ -456,6 +456,11 @@ export async function generateVideo(params: {
       throw new Error(`Wan models support 5 or 10 second durations. Received: ${duration}`);
     }
     
+    // Validate resolution (720p or 1080p only)
+    if (!['720p', '1080p'].includes(resolution)) {
+      throw new Error(`Wan models support 720p or 1080p resolutions. Received: ${resolution}`);
+    }
+    
     // Determine T2V or I2V based on reference images
     const isImageToVideo = referenceImages.length > 0;
     const wanModel = isImageToVideo ? 'wan/2-5-image-to-video' : 'wan/2-5-text-to-video';
@@ -468,10 +473,18 @@ export async function generateVideo(params: {
       prompt: params.prompt,
       duration,
       resolution,
-      negative_prompt: parameters.negativePrompt,
-      enable_prompt_expansion: parameters.enablePromptExpansion !== undefined ? parameters.enablePromptExpansion : true,
       seed,
     };
+    
+    // Add optional negative_prompt if provided
+    if (parameters.negativePrompt) {
+      inputPayload.negative_prompt = parameters.negativePrompt;
+    }
+    
+    // Add enable_prompt_expansion (defaults to true if not specified)
+    inputPayload.enable_prompt_expansion = parameters.enablePromptExpansion !== undefined 
+      ? parameters.enablePromptExpansion 
+      : true;
     
     // For image-to-video: add image_url to input (Wan requires single image)
     if (isImageToVideo) {
