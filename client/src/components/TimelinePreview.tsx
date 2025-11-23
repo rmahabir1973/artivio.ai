@@ -343,28 +343,60 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     const trim = getEffectiveTrim(clip);
     if (!trim) return;
     
-    video.src = clip.url;
-    video.playbackRate = clip.speedFactor || 1;
+    // Pause first before changing source
+    video.pause();
+    video.currentTime = 0;
     
-    // Wait for metadata to load before seeking and playing
-    const handleLoadedMetadata = () => {
-      video.currentTime = trim.startSeconds;
-      if (isPlaying) {
-        video.play().catch(console.error);
-      }
-    };
+    // Clear any previous error state and reset video element
+    video.error = null;
+    video.src = '';
     
-    if (video.readyState >= 1) {
-      // Metadata already loaded
-      handleLoadedMetadata();
-    } else {
-      // Wait for metadata to load
+    // Wait a tick then set new src to ensure proper reset
+    setTimeout(() => {
+      video.src = clip.url;
+      video.playbackRate = clip.speedFactor || 1;
+      
+      // Trigger load
+      video.load();
+      
+      // Wait for metadata to load before seeking and playing
+      const handleLoadedMetadata = () => {
+        try {
+          video.currentTime = trim.startSeconds;
+          if (isPlaying) {
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+              playPromise.catch((error) => {
+                console.error("Playback error:", error);
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error seeking or playing:", e);
+        }
+      };
+
+      const handleError = () => {
+        console.error("Video error event:", video.error, "for URL:", clip.url);
+      };
+      
       video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
-    }
-    
-    return () => {
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-    };
+      video.addEventListener('error', handleError, { once: true });
+      
+      // Fallback if metadata doesn't load
+      const timeoutId = setTimeout(() => {
+        if (video.readyState < 1) {
+          console.warn("Video metadata failed to load after 3 seconds, attempting playback anyway");
+          handleLoadedMetadata();
+        }
+      }, 3000);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        video.removeEventListener('error', handleError);
+      };
+    }, 0);
   }, [currentClipIndex, clips, clipMetadata, isPlaying]);
 
   // Update playback rate when speed changes
