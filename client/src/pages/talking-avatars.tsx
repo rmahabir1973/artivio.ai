@@ -165,6 +165,10 @@ export default function TalkingAvatars() {
       <div>
         <h1 className="text-3xl font-bold" data-testid="text-heading">AI Talking Avatars</h1>
         <p className="text-muted-foreground">Transform static images into dynamic talking avatars</p>
+        <div className="mt-3 space-y-2">
+          <p className="text-sm text-muted-foreground">Bring your images to life with realistic talking avatars powered by Kling AI and Infinite Talk. Perfect for video marketing, tutorials, presentations, and social media content. Simply upload an image and provide a script to create engaging video content in minutes.</p>
+          <p className="text-xs text-muted-foreground font-medium">Features: Lip-sync animation • Multi-voice support • Custom voice cloning • Professional quality • Social media ready</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
