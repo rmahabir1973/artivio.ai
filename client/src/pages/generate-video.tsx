@@ -139,14 +139,6 @@ const VIDEO_MODEL_INFO = [
     supportsImages: true,
     maxImages: 1 
   },
-  { 
-    value: "sora-2-pro", 
-    label: "Sora 2 Pro", 
-    description: "Premium next-gen realistic video with advanced storytelling, multi-scene narratives, and extended 20s duration. Perfect for complex creative projects and professional content.", 
-    duration: "5s, 10s, 20s",
-    supportsImages: false,
-    maxImages: 0 
-  },
 ];
 
 
