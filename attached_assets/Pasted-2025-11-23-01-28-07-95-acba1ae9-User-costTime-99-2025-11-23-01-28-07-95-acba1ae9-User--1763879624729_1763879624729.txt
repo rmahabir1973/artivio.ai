@@ -1,0 +1,152 @@
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"costTime": 99,
+2025-11-23 01:28:07.95
+acba1ae9
+User
+},
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-forwarded-host": "artivio.ai",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"data": {
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"content-type": "application/json;charset=UTF-8",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"traceparent": "00-8051da2371fd13c0121dc4979c2cfde8-524410c3a4b8a427-01",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"updateTime": 1763879288000
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"completeTime": 1763879288000,
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-forwarded-for": "47.251.174.249, 34.111.179.208, 35.191.76.58,104.154.217.247",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"via": "1.1 google",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-replit-user-bio": "",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"pragma": "no-cache",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"cache-control": "no-cache",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"accept-language": "zh-CN,zh;q=0.8",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"content-length": "748",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-cloud-trace-context": "8051da2371fd13c0121dc4979c2cfde8/5927881441994646567;o=1",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"model": "bytedance/v1-pro-text-to-video",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+}
+2025-11-23 01:28:07.95
+acba1ae9
+User
+Request Headers: {
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"resultJson": "{\"resultUrls\":[\"https://tempfile.aiquickdraw.com/r/978477372f99a2651d36670ce9ac9b65_1763879285_d2jybj4a.mp4\"]}",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-replit-user-id": "",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"server-timing": "depproxy;dur=1763879287923, pid1req;dur=1763879287956",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-replit-user-name": "",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-replit-user-profile-image": "",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-replit-user-url": ""
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"host": "artivio.ai",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"state": "success",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"msg": "Playground task completed successfully."
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"x-replit-user-roles": "",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+}
+2025-11-23 01:28:07.95
+acba1ae9
+User
+Generation ID: 3243a827-7464-49cd-9aaf-021693a1d9de
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"accept-encoding": "gzip, deflate",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+🔔 ===== RECEIVED KIE.AI CALLBACK =====
+2025-11-23 01:28:07.95
+acba1ae9
+User
+"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 Hutool",
+2025-11-23 01:28:07.95
+acba1ae9
+User
+at file:///home/runner/workspace/dist/index.js:6592:42
+2025-11-23 01:28:07.95
+acba1ae9
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-23 01:28:07.95
+acba1ae9
+User
+Callback processing error: TypeError: Cannot read properties of undefined (reading 'query')
+2025-11-23 01:28:07.95
+acba1ae9
+User
+6:28:07 AM [express] POST /api/callback/kie/3243a827-7464-49cd-9aaf-021693a1d9de 500 in 1ms :: {"mes…

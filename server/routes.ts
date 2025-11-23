@@ -3,6 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import axios from "axios";
 import { storage } from "./storage";
+import { db } from "./db";
 import { registerAuthRoutes } from "./authRoutes";
 import { requireJWT, requireAdmin } from "./jwtMiddleware";
 import { 
@@ -1062,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Load generation to identify model type for logging
       // Try avatar generation first, then fall back to regular generation
-      const avatarGen = await storage.db.query.avatarGenerations.findFirst({
+      const avatarGen = await db.query.avatarGenerations.findFirst({
         where: (fields, { eq }) => eq(fields.id, generationId),
       }).catch(() => undefined);
       
