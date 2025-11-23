@@ -1,0 +1,85 @@
+2025-11-22 23:01:02.82
+7cdea77d
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-22 23:01:02.82
+7cdea77d
+User
+}
+2025-11-22 23:01:02.82
+7cdea77d
+User
+4:01:02 AM [express] GET /api/auth/user 200 in 47ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-22 23:01:02.95
+7cdea77d
+User
+4:01:02 AM [express] GET /api/announcements/active 304 in 25ms :: []
+2025-11-22 23:01:03.02
+7cdea77d
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-22 23:01:03.03
+7cdea77d
+User
+userId: '49729939',
+2025-11-22 23:01:03.03
+7cdea77d
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-22 23:01:03.03
+7cdea77d
+User
+isPaginated: false,
+2025-11-22 23:01:03.03
+7cdea77d
+User
+[/api/generations] Request received {
+2025-11-22 23:01:03.03
+7cdea77d
+User
+[/api/generations] Querying database for userId: 49729939
+
+2025-11-22 23:01:03.03
+7cdea77d
+User
+}
+2025-11-22 23:01:03.03
+7cdea77d
+User
+hasUser: true,
+2025-11-22 23:01:03.03
+7cdea77d
+User
+cursor: undefined
+2025-11-22 23:01:03.04
+7cdea77d
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-22 23:01:03.04
+7cdea77d
+User
+4:01:03 AM [express] GET /api/favorites 304 in 116ms :: []
+2025-11-22 23:01:03.06
+7cdea77d
+User
+4:01:03 AM [express] GET /api/pricing 304 in 127ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-11-22 23:01:03.06
+7cdea77d
+User
+4:01:03 AM [express] GET /api/subscriptions/current 200 in 130ms :: {"id":"7069d11e-8eea-4517-952c-7…
+2025-11-22 23:01:03.43
+7cdea77d
+User
+[/api/generations] Array query completed in 400ms, found 15 generations
+2025-11-22 23:01:03.45
+7cdea77d
+User
+4:01:03 AM [express] GET /api/generations 304 in 510ms :: [{"id":"9db5fcdb-016a-4b63-8bd9-28d0060650…
+2025-11-22 23:01:10.74
+7cdea77d
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-22 23:01:10.79
+7cdea77d
+User
+4:01:10 AM [express] GET /api/video-combinations 304 in 66ms :: [{"id":"0d5ab8ce-ceb9-438a-ae83-ee04…

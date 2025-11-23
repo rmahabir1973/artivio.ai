@@ -347,8 +347,7 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     video.pause();
     video.currentTime = 0;
     
-    // Clear any previous error state and reset video element
-    video.error = null;
+    // Reset video element by clearing src
     video.src = '';
     
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
