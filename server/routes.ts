@@ -28,7 +28,7 @@ import { analyzeImageWithVision } from "./openaiVision";
 import { processImageInputs, saveBase64Images } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
-import { combineVideos, generateThumbnail } from "./videoProcessor";
+import { combineVideos, generateThumbnail, reencodeVideoForStreaming } from "./videoProcessor";
 import { LoopsService } from "./loops";
 import { logger } from "./logger";
 import { 
@@ -1240,22 +1240,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
           }
           
-          // Generate thumbnail for video generations (async, don't block callback)
+          // Re-encode and generate thumbnail for video generations (async, don't block callback)
           const gen = await storage.getGeneration(generationId);
           if (gen && gen.type === 'video' && resultUrl) {
-            generateThumbnail({
-              videoUrl: resultUrl,
-              generationId: generationId,
-              timestampSeconds: 2,
-            }).then(async (result) => {
-              if (isAvatarGeneration) {
-                await storage.updateAvatarGeneration(generationId, { resultUrl: result.thumbnailUrl });
-              } else {
-                await storage.updateGeneration(generationId, { thumbnailUrl: result.thumbnailUrl });
+            // Re-encode video for optimized streaming (async background job)
+            (async () => {
+              try {
+                console.log(`🎬 Starting video optimization for ${generationId}...`);
+                const optimizedUrl = await reencodeVideoForStreaming(resultUrl, generationId);
+                
+                // Update generation with optimized URL
+                await storage.updateGeneration(generationId, { resultUrl: optimizedUrl });
+                console.log(`✓ Video optimized and URL updated for ${generationId}: ${optimizedUrl}`);
+                
+                // Generate thumbnail from optimized video
+                const thumbResult = await generateThumbnail({
+                  videoUrl: optimizedUrl,
+                  generationId: generationId,
+                  timestampSeconds: 2,
+                });
+                
+                await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+                console.log(`✓ Thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
+              } catch (error: any) {
+                console.error(`⚠️  Video optimization/thumbnail failed for ${generationId}:`, error.message);
+                // Keep original URL if optimization fails - don't break user experience
               }
-              console.log(`✓ Thumbnail generated for ${generationId}: ${result.thumbnailUrl}`);
-            }).catch((error) => {
-              console.error(`⚠️  Thumbnail generation failed for ${generationId}:`, error.message);
+            })().catch((error) => {
+              console.error(`⚠️  Background video processing error for ${generationId}:`, error);
             });
           }
         } else {
@@ -4721,6 +4733,18 @@ async function combineVideosInBackground(combinationId: string, videoUrls: strin
           metadata: { stage },
         });
       },
+    });
+
+    // Generate thumbnail for the combined video (non-blocking)
+    generateThumbnail({
+      videoPath: result.outputPath,
+      generationId: combinationId,
+      timestampSeconds: 2,
+    }).then(async (thumbResult) => {
+      await storage.updateVideoCombination(combinationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+      console.log(`✓ Thumbnail generated for combination ${combinationId}: ${thumbResult.thumbnailUrl}`);
+    }).catch((error) => {
+      console.error(`⚠️  Thumbnail generation failed for combination ${combinationId}:`, error.message);
     });
 
     // Update with successful result

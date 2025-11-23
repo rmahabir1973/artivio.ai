@@ -180,7 +180,8 @@ async function normalizeVideo(inputPath: string, outputPath: string): Promise<vo
       : '-an'; // No audio output if input has no audio
     
     // Optimize for streaming: limit resolution to 720p and bitrate to 2500k
-    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -preset fast -crf 24 ${audioFlags} -y "${outputPath}"`;
+    // movflags +faststart enables instant playback by moving metadata to start of file
+    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart ${audioFlags} -y "${outputPath}"`;
     
     await execAsync(command, {
       timeout: 300000,
@@ -634,7 +635,8 @@ export async function cleanupOldCombinations(maxAgeHours: number = 72): Promise<
 }
 
 export interface GenerateThumbnailOptions {
-  videoUrl: string;
+  videoUrl?: string;          // Remote URL to download
+  videoPath?: string;         // Local file path (for already-downloaded videos)
   generationId: string;
   timestampSeconds?: number;
 }
@@ -645,17 +647,27 @@ export interface GenerateThumbnailResult {
 }
 
 export async function generateThumbnail(options: GenerateThumbnailOptions): Promise<GenerateThumbnailResult> {
-  const { videoUrl, generationId, timestampSeconds = 2 } = options;
+  const { videoUrl, videoPath, generationId, timestampSeconds = 2 } = options;
+  
+  if (!videoUrl && !videoPath) {
+    throw new Error('Either videoUrl or videoPath must be provided');
+  }
   
   await fs.mkdir(THUMBNAIL_DIR, { recursive: true });
   
-  const tempDir = path.join(TEMP_DIR, `thumb-${nanoid()}`);
-  await fs.mkdir(tempDir, { recursive: true });
-  
   let tempVideoPath: string | null = null;
+  let tempDir: string | null = null;
   
   try {
-    tempVideoPath = await downloadVideo(videoUrl, tempDir, 0);
+    // Use local path if provided, otherwise download from URL
+    if (videoPath) {
+      tempVideoPath = videoPath;
+      tempDir = null; // No temp directory needed for local files
+    } else if (videoUrl) {
+      tempDir = path.join(TEMP_DIR, `thumb-${nanoid()}`);
+      await fs.mkdir(tempDir, { recursive: true });
+      tempVideoPath = await downloadVideo(videoUrl, tempDir, 0);
+    }
     
     const thumbnailFilename = `${generationId}.jpg`;
     const thumbnailPath = path.join(THUMBNAIL_DIR, thumbnailFilename);
@@ -683,12 +695,50 @@ export async function generateThumbnail(options: GenerateThumbnailOptions): Prom
     console.error(`✗ Thumbnail generation failed for ${generationId}:`, error.message);
     throw new Error(`Failed to generate thumbnail: ${error.message}`);
   } finally {
-    if (tempVideoPath) {
+    // Only cleanup temp directory if we created one (for downloaded videos)
+    if (tempDir) {
       try {
         await fs.rm(tempDir, { recursive: true, force: true });
       } catch (cleanupError) {
         console.error('Cleanup error:', cleanupError);
       }
     }
+  }
+}
+
+/**
+ * Re-encode a video from URL for optimized streaming
+ * Downloads, re-encodes with bitrate limits, and saves to public directory
+ */
+export async function reencodeVideoForStreaming(videoUrl: string, generationId: string): Promise<string> {
+  const tempDir = path.join(TEMP_DIR, `reencode-${generationId}`);
+  
+  try {
+    await fs.mkdir(tempDir, { recursive: true });
+    
+    // Download original video
+    console.log(`Downloading video for re-encoding: ${videoUrl}`);
+    const originalPath = await downloadVideo(videoUrl, tempDir, 0);
+    
+    // Re-encode with optimization settings
+    const optimizedFilename = `optimized-${generationId}.mp4`;
+    const optimizedPath = path.join(OUTPUT_DIR, optimizedFilename);
+    
+    console.log(`Re-encoding video for streaming optimization...`);
+    await normalizeVideo(originalPath, optimizedPath);
+    
+    // Clean up temp directory
+    await fs.rm(tempDir, { recursive: true, force: true });
+    
+    // Return public URL path
+    const publicUrl = `/video-combinations/${optimizedFilename}`;
+    console.log(`✓ Video re-encoded and optimized: ${publicUrl}`);
+    return publicUrl;
+  } catch (error: any) {
+    // Clean up on error
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch {}
+    throw new Error(`Failed to re-encode video: ${error.message}`);
   }
 }

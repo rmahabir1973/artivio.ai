@@ -299,6 +299,7 @@ export const videoCombinations = pgTable("video_combinations", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   sourceVideoIds: text("source_video_ids").array().notNull(), // Ordered array of generation IDs
   outputPath: text("output_path"), // Local path or future cloud URL
+  thumbnailUrl: text("thumbnail_url"), // Auto-generated thumbnail for preview
   status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
   errorMessage: text("error_message"),
   creditsCost: integer("credits_cost").notNull(),
