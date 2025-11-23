@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ interface Generation {
   model: string;
   prompt: string;
   resultUrl: string | null;
+  thumbnailUrl?: string | null;
   createdAt: string;
   completedAt: string | null;
 }
@@ -64,8 +65,10 @@ interface Speed {
 }
 
 interface SpeedState {
-  mode: 'none' | 'custom';
+  mode: 'none' | 'custom' | 'perClip';
   values?: Record<string, number>;
+  perClip?: Array<{ clipIndex: number; factor: number }>;
+  globalFactor?: number;
 }
 
 interface Transitions {
@@ -74,7 +77,7 @@ interface Transitions {
 }
 
 interface BackgroundMusic {
-  audioUrl: string;
+  audioUrl: string | null;
   volume?: number;
   fadeInSeconds?: number;
   fadeOutSeconds?: number;
@@ -128,6 +131,7 @@ export default function VideoEditor() {
   const [currentStep, setCurrentStep] = useState<EditorStep>('select');
   const [enhancements, setEnhancements] = useState<Enhancements>({});
   const [selectedSunoTrack, setSelectedSunoTrack] = useState<string | null>(null);
+  const [allGenerations, setAllGenerations] = useState<Generation[]>([]);
 
   // Synchronize speed values with selectedVideoIds
   useEffect(() => {
@@ -149,39 +153,55 @@ export default function VideoEditor() {
     }
   }, [selectedVideoIds]);
 
-  // Fetch user's completed video generations (paginated - fetch all pages)
-  const { data: generationsData, isLoading: loadingGenerations, fetchNextPage, hasNextPage } = useInfiniteQuery({
+  // Fetch user's completed video generations - load ALL pages
+  const { data: firstPageData = { data: [] }, isLoading: loadingGenerations } = useQuery<any>({
     queryKey: ['/api/generations'],
-    queryFn: ({ pageParam }: { pageParam?: string }) => {
-      const url = pageParam ? `/api/generations?cursor=${pageParam}` : '/api/generations';
-      return fetch(url).then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch generations');
-        return res.json();
-      });
-    },
-    getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-    initialPageParam: undefined,
   });
-
-  // Flatten all pages into a single array of generations
-  const generations = generationsData?.pages.flatMap((page: any) => page.data || page) ?? [];
 
   // Fetch user's video combinations
   const { data: combinations = [], isLoading: loadingCombinations } = useQuery<VideoCombination[]>({
     queryKey: ['/api/video-combinations'],
   });
 
-  // Auto-fetch all pages of generations
+  // Load all pages of generations when component mounts
   useEffect(() => {
-    const fetchAllPages = async () => {
-      while (hasNextPage) {
-        await fetchNextPage();
+    const fetchAllGenerations = async () => {
+      try {
+        let allGens: Generation[] = [];
+        let cursor: string | undefined = undefined;
+        let hasMore = true;
+
+        // Fetch all paginated pages
+        while (hasMore) {
+          const url = cursor ? `/api/generations?cursor=${cursor}` : '/api/generations';
+          const response: any = await apiRequest('GET', url);
+          
+          // Handle response - API returns either array or object with data property
+          const pageData = Array.isArray(response) ? response : (response.data || []);
+          const pageItems = Array.isArray(pageData) ? pageData : [];
+          
+          allGens = [...allGens, ...pageItems];
+          
+          // Check if there's a next page
+          cursor = response.nextCursor;
+          hasMore = !!cursor;
+        }
+
+        setAllGenerations(allGens);
+      } catch (error) {
+        console.error('Failed to fetch all generations:', error);
+        // Fallback to first page data
+        const pageData = Array.isArray(firstPageData) ? firstPageData : (firstPageData?.data || []);
+        setAllGenerations(Array.isArray(pageData) ? pageData : []);
       }
     };
-    if (loadingGenerations === false && hasNextPage) {
-      fetchAllPages();
+
+    if (!loadingGenerations) {
+      fetchAllGenerations();
     }
-  }, [hasNextPage, fetchNextPage, loadingGenerations]);
+  }, [loadingGenerations, firstPageData]);
+
+  const generations = allGenerations;
 
   // Filter videos and music tracks
   const availableVideos = generations.filter(
