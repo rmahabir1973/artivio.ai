@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -149,15 +149,39 @@ export default function VideoEditor() {
     }
   }, [selectedVideoIds]);
 
-  // Fetch user's completed video generations
-  const { data: generations = [], isLoading: loadingGenerations } = useQuery<Generation[]>({
+  // Fetch user's completed video generations (paginated - fetch all pages)
+  const { data: generationsData, isLoading: loadingGenerations, fetchNextPage, hasNextPage } = useInfiniteQuery({
     queryKey: ['/api/generations'],
+    queryFn: ({ pageParam }: { pageParam?: string }) => {
+      const url = pageParam ? `/api/generations?cursor=${pageParam}` : '/api/generations';
+      return fetch(url).then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch generations');
+        return res.json();
+      });
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
+    initialPageParam: undefined,
   });
+
+  // Flatten all pages into a single array of generations
+  const generations = generationsData?.pages.flatMap((page: any) => page.data || page) ?? [];
 
   // Fetch user's video combinations
   const { data: combinations = [], isLoading: loadingCombinations } = useQuery<VideoCombination[]>({
     queryKey: ['/api/video-combinations'],
   });
+
+  // Auto-fetch all pages of generations
+  useEffect(() => {
+    const fetchAllPages = async () => {
+      while (hasNextPage) {
+        await fetchNextPage();
+      }
+    };
+    if (loadingGenerations === false && hasNextPage) {
+      fetchAllPages();
+    }
+  }, [hasNextPage, fetchNextPage, loadingGenerations]);
 
   // Filter videos and music tracks
   const availableVideos = generations.filter(
