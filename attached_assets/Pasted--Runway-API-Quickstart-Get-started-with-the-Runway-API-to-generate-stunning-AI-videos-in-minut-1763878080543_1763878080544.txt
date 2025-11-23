@@ -1,0 +1,873 @@
+# Runway API Quickstart
+
+> Get started with the Runway API to generate stunning AI videos in minutes
+
+## Welcome to Runway API
+
+The Runway API enables you to generate high-quality AI videos using the power of Runway's advanced AI models. Whether you're building an app, automating workflows, or creating dynamic content, our API provides simple and reliable access to AI video generation.
+
+<CardGroup cols={2}>
+  <Card title="Text-to-Video" icon="video" href="/runway-api/generate-ai-video">
+    Transform text prompts into dynamic video content
+  </Card>
+
+  <Card title="Image-to-Video" icon="play" href="/runway-api/generate-ai-video">
+    Animate existing images into engaging videos
+  </Card>
+
+  <Card title="Video Extension" icon="plus" href="/runway-api/extend-ai-video">
+    Extend videos to create longer sequences
+  </Card>
+
+  <Card title="Task Management" icon="list-check" href="/runway-api/get-ai-video-details">
+    Track and monitor your video generation tasks
+  </Card>
+</CardGroup>
+
+## Authentication
+
+All API requests require authentication using a Bearer token. Get your API key from the [API Key Management Page](https://kie.ai/api-key).
+
+<Warning>
+  Keep your API key secure and never share it publicly. If compromised, reset it immediately.
+</Warning>
+
+### API Base URL
+
+```
+https://api.kie.ai
+```
+
+### Authentication Header
+
+```http  theme={null}
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Quick Start Guide
+
+### Step 1: Generate Your First Video
+
+Start with a simple text-to-video generation request:
+
+<CodeGroup>
+  ```bash cURL theme={null}
+  curl -X POST "https://api.kie.ai/api/v1/runway/generate" \
+    -H "Authorization: Bearer YOUR_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "prompt": "A fluffy orange cat dancing energetically in a colorful room with disco lights",
+      "duration": 5,
+      "quality": "720p",
+      "aspectRatio": "16:9",
+      "waterMark": ""
+    }'
+  ```
+
+  ```javascript Node.js theme={null}
+  async function generateVideo() {
+    try {
+      const response = await fetch('https://api.kie.ai/api/v1/runway/generate', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer YOUR_API_KEY',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: 'A fluffy orange cat dancing energetically in a colorful room with disco lights',
+          duration: 5,
+          quality: '720p',
+          aspectRatio: '16:9',
+          waterMark: ''
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.code === 200) {
+        console.log('Task submitted:', data);
+        console.log('Task ID:', data.data.taskId);
+        return data.data.taskId;
+      } else {
+        console.error('Request failed:', data.msg || 'Unknown error');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+      return null;
+    }
+  }
+
+  generateVideo();
+  ```
+
+  ```python Python theme={null}
+  import requests
+
+  def generate_video():
+      url = "https://api.kie.ai/api/v1/runway/generate"
+      headers = {
+          "Authorization": "Bearer YOUR_API_KEY",
+          "Content-Type": "application/json"
+      }
+      
+      payload = {
+          "prompt": "A fluffy orange cat dancing energetically in a colorful room with disco lights",
+          "duration": 5,
+          "quality": "720p",
+          "aspectRatio": "16:9",
+          "waterMark": ""
+      }
+      
+      try:
+          response = requests.post(url, json=payload, headers=headers)
+          result = response.json()
+          
+          if response.ok and result.get('code') == 200:
+              print(f"Task submitted: {result}")
+              print(f"Task ID: {result['data']['taskId']}")
+              return result['data']['taskId']
+          else:
+              print(f"Request failed: {result.get('msg', 'Unknown error')}")
+              return None
+      except requests.exceptions.RequestException as e:
+          print(f"Error: {e}")
+          return None
+
+  generate_video()
+  ```
+</CodeGroup>
+
+### Step 2: Check Task Status
+
+Use the returned task ID to check the generation status:
+
+<CodeGroup>
+  ```bash cURL theme={null}
+  curl -X GET "https://api.kie.ai/api/v1/runway/record-detail?taskId=YOUR_TASK_ID" \
+    -H "Authorization: Bearer YOUR_API_KEY"
+  ```
+
+  ```javascript Node.js theme={null}
+  async function checkTaskStatus(taskId) {
+    try {
+      const response = await fetch(`https://api.kie.ai/api/v1/runway/record-detail?taskId=${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer YOUR_API_KEY'
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.code === 200) {
+        const taskData = result.data;
+        
+        switch (taskData.state) {
+          case 'wait':
+            console.log('Task is waiting...');
+            console.log('Create time:', taskData.generateTime);
+            return taskData;
+            
+          case 'queueing':
+            console.log('Task is queueing...');
+            console.log('Create time:', taskData.generateTime);
+            return taskData;
+            
+          case 'generating':
+            console.log('Task is generating...');
+            console.log('Create time:', taskData.generateTime);
+            return taskData;
+            
+          case 'success':
+            console.log('Task generation completed!');
+            console.log('Video URL:', taskData.videoInfo.videoUrl);
+            console.log('Thumbnail URL:', taskData.videoInfo.imageUrl);
+            console.log('Generate time:', taskData.generateTime);
+            console.log('Expire status:', taskData.expireFlag === 0 ? 'Active' : 'Expired');
+            return taskData;
+            
+          case 'fail':
+            console.log('Task generation failed');
+            if (taskData.failMsg) {
+              console.error('Failure reason:', taskData.failMsg);
+            }
+            console.log('Generate time:', taskData.generateTime);
+            return taskData;
+            
+          default:
+            console.log('Unknown status:', taskData.state);
+            if (taskData.failMsg) {
+              console.error('Error message:', taskData.failMsg);
+            }
+            return taskData;
+        }
+      } else {
+        console.error('Query failed:', result.msg || 'Unknown error');
+        return null;
+      }
+    } catch (error) {
+      console.error('Status check failed:', error.message);
+      return null;
+    }
+  }
+
+  // Usage
+  const status = await checkTaskStatus('YOUR_TASK_ID');
+  ```
+
+  ```python Python theme={null}
+  import requests
+  import time
+
+  def check_task_status(task_id, api_key):
+      url = f"https://api.kie.ai/api/v1/runway/record-detail?taskId={task_id}"
+      headers = {"Authorization": f"Bearer {api_key}"}
+      
+      try:
+          response = requests.get(url, headers=headers)
+          result = response.json()
+          
+          if response.ok and result.get('code') == 200:
+              task_data = result['data']
+              state = task_data['state']
+              
+              if state == 'wait':
+                  print("Task is waiting...")
+                  print(f"Create time: {task_data.get('generateTime', '')}")
+                  return task_data
+              elif state == 'queueing':
+                  print("Task is queueing...")
+                  print(f"Create time: {task_data.get('generateTime', '')}")
+                  return task_data
+              elif state == 'generating':
+                  print("Task is generating...")
+                  print(f"Create time: {task_data.get('generateTime', '')}")
+                  return task_data
+              elif state == 'success':
+                  print("Task generation completed!")
+                  video_info = task_data.get('videoInfo', {})
+                  print(f"Video URL: {video_info.get('videoUrl', '')}")
+                  print(f"Thumbnail URL: {video_info.get('imageUrl', '')}")
+                  print(f"Generate time: {task_data.get('generateTime', '')}")
+                  expire_flag = task_data.get('expireFlag', 0)
+                  print(f"Expire status: {'Active' if expire_flag == 0 else 'Expired'}")
+                  return task_data
+              elif state == 'fail':
+                  print("Task generation failed")
+                  if task_data.get('failMsg'):
+                      print(f"Failure reason: {task_data['failMsg']}")
+                  print(f"Generate time: {task_data.get('generateTime', '')}")
+                  return task_data
+              else:
+                  print(f"Unknown status: {state}")
+                  if task_data.get('failMsg'):
+                      print(f"Error message: {task_data['failMsg']}")
+                  return task_data
+          else:
+              print(f"Query failed: {result.get('msg', 'Unknown error')}")
+              return None
+      except requests.exceptions.RequestException as e:
+          print(f"Status check failed: {e}")
+          return None
+
+  # Poll until completion
+  def wait_for_completion(task_id, api_key):
+      while True:
+          result = check_task_status(task_id, api_key)
+          if result and result.get('state') in ['success', 'fail']:  # Final states
+              return result
+          time.sleep(30)  # Wait 30 seconds before checking again
+  ```
+</CodeGroup>
+
+### Response Format
+
+**Successful Response:**
+
+```json  theme={null}
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "ee603959-debb-48d1-98c4-a6d1c717eba6"
+  }
+}
+```
+
+**Task Status Response:**
+
+```json  theme={null}
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "ee603959-debb-48d1-98c4-a6d1c717eba6",
+    "state": "success",
+    "generateTime": "2023-08-15 14:30:45",
+    "videoInfo": {
+      "videoId": "485da89c-7fca-4340-8c04-101025b2ae71",
+      "videoUrl": "https://file.com/k/xxxxxxx.mp4",
+      "imageUrl": "https://file.com/m/xxxxxxxx.png"
+    },
+    "expireFlag": 0
+  }
+}
+```
+
+## Generation Types
+
+<Tabs>
+  <Tab title="Text-to-Video">
+    Generate videos from text descriptions:
+
+    ```json  theme={null}
+    {
+      "prompt": "A majestic eagle soaring through mountain clouds at sunset",
+      "duration": 5,
+      "quality": "720p",
+      "aspectRatio": "16:9"
+    }
+    ```
+  </Tab>
+
+  <Tab title="Image-to-Video">
+    Animate existing images with text prompts:
+
+    ```json  theme={null}
+    {
+      "prompt": "The character starts walking forward with confidence",
+      "imageUrl": "https://example.com/character-image.jpg",
+      "duration": 5,
+      "quality": "720p",
+      "aspectRatio": "16:9"
+    }
+    ```
+  </Tab>
+
+  <Tab title="Video Extension">
+    Extend existing videos to create longer sequences:
+
+    ```json  theme={null}
+    {
+      "taskId": "ee603959-debb-48d1-98c4-a6d1c717eba6",
+      "prompt": "The cat continues dancing with more energy and spins around",
+      "quality": "720p"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Video Quality Options
+
+Choose the right quality for your needs:
+
+<CardGroup cols={2}>
+  <Card title="720p HD" icon="video">
+    **Standard quality**
+
+    Balanced file size and quality, suitable for most applications
+
+    Compatible with both 5-second and 10-second durations
+  </Card>
+
+  <Card title="1080p Full HD" icon="video">
+    **Premium quality**
+
+    Higher resolution for professional content
+
+    Only available for 5-second videos
+  </Card>
+</CardGroup>
+
+## Key Parameters
+
+<ParamField path="prompt" type="string" required>
+  Text description of the desired video content. Be specific about actions, movements, and visual style.
+
+  **Tips for better prompts:**
+
+  * Describe specific actions and movements (e.g., "walking slowly", "spinning rapidly")
+  * Include visual style descriptors (e.g., "cinematic", "animated", "realistic")
+  * Specify camera angles when relevant (e.g., "close-up", "wide shot", "tracking shot")
+  * Add lighting and atmosphere details (e.g., "golden hour lighting", "dramatic shadows")
+</ParamField>
+
+<ParamField path="duration" type="number" required>
+  Video duration in seconds. Choose from:
+
+  * `5` - 5-second video (compatible with both 720p and 1080p)
+  * `10` - 10-second video (only compatible with 720p)
+</ParamField>
+
+<ParamField path="quality" type="string" required>
+  Video resolution quality:
+
+  * `720p` - HD quality, compatible with all durations
+  * `1080p` - Full HD quality, only available for 5-second videos
+</ParamField>
+
+<ParamField path="aspectRatio" type="string" required>
+  Video aspect ratio. Choose from:
+
+  * `16:9` - Widescreen (recommended for landscape content)
+  * `9:16` - Vertical (perfect for mobile and social media)
+  * `1:1` - Square (social media posts)
+  * `4:3` - Traditional format
+  * `3:4` - Portrait orientation
+</ParamField>
+
+<ParamField path="imageUrl" type="string">
+  Optional reference image URL to animate. When provided, the AI will create a video based on this image.
+</ParamField>
+
+<ParamField path="waterMark" type="string">
+  Optional watermark text. Leave empty for no watermark, or provide text to display in the bottom right corner.
+</ParamField>
+
+## Complete Workflow Example
+
+Here's a complete example that generates a video and waits for completion:
+
+<Tabs>
+  <Tab title="JavaScript">
+    ```javascript  theme={null}
+    class RunwayAPI {
+      constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.baseUrl = 'https://api.kie.ai/api/v1/runway';
+      }
+      
+      async generateVideo(options) {
+        const response = await fetch(`${this.baseUrl}/generate`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(options)
+        });
+        
+        const result = await response.json();
+        if (!response.ok || result.code !== 200) {
+          throw new Error(`Generation failed: ${result.msg || 'Unknown error'}`);
+        }
+        
+        return result.data.taskId;
+      }
+      
+      async waitForCompletion(taskId, maxWaitTime = 600000) { // Max wait 10 minutes
+        const startTime = Date.now();
+        
+        while (Date.now() - startTime < maxWaitTime) {
+          const status = await this.getTaskStatus(taskId);
+          
+          switch (status.state) {
+            case 'wait':
+              console.log('Task is waiting, continue waiting...');
+              break;
+              
+            case 'queueing':
+              console.log('Task is queueing, continue waiting...');
+              break;
+              
+            case 'generating':
+              console.log('Task is generating, continue waiting...');
+              break;
+              
+            case 'success':
+              console.log('Generation completed successfully!');
+              return status;
+              
+            case 'fail':
+              const error = status.failMsg || 'Task generation failed';
+              console.error('Task generation failed:', error);
+              throw new Error(error);
+              
+            default:
+              console.log(`Unknown status: ${status.state}`);
+              if (status.failMsg) {
+                console.error('Error message:', status.failMsg);
+              }
+              break;
+          }
+          
+          // Wait 30 seconds before checking again
+          await new Promise(resolve => setTimeout(resolve, 30000));
+        }
+        
+        throw new Error('Generation timeout');
+      }
+      
+      async getTaskStatus(taskId) {
+        const response = await fetch(`${this.baseUrl}/record-detail?taskId=${taskId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`
+          }
+        });
+        
+        const result = await response.json();
+        if (!response.ok || result.code !== 200) {
+          throw new Error(`Status check failed: ${result.msg || 'Unknown error'}`);
+        }
+        
+        return result.data;
+      }
+      
+      async extendVideo(taskId, prompt, quality = '720p') {
+        const response = await fetch(`${this.baseUrl}/extend`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            taskId,
+            prompt,
+            quality
+          })
+        });
+        
+        const result = await response.json();
+        if (!response.ok || result.code !== 200) {
+          throw new Error(`Extension failed: ${result.msg || 'Unknown error'}`);
+        }
+        
+        return result.data.taskId;
+      }
+    }
+
+    // Usage example
+    async function main() {
+      const api = new RunwayAPI('YOUR_API_KEY');
+      
+      try {
+        // Text-to-video generation
+        console.log('Starting video generation...');
+        const taskId = await api.generateVideo({
+          prompt: 'A fluffy orange cat dancing energetically in a colorful room with disco lights',
+          duration: 5,
+          quality: '720p',
+          aspectRatio: '16:9',
+          waterMark: ''
+        });
+        
+        // Wait for completion
+        console.log(`Task ID: ${taskId}. Waiting for completion...`);
+        const result = await api.waitForCompletion(taskId);
+        
+        console.log('Video generation successful!');
+        console.log('Video URL:', result.videoInfo.videoUrl);
+        console.log('Thumbnail URL:', result.videoInfo.imageUrl);
+        
+        // Extend video
+        console.log('\nStarting video extension...');
+        const extendTaskId = await api.extendVideo(taskId, 'The cat spins around with increasing energy and excitement', '720p');
+        
+        const extendResult = await api.waitForCompletion(extendTaskId);
+        console.log('Video extension successful!');
+        console.log('Extended video URL:', extendResult.videoInfo.videoUrl);
+        
+      } catch (error) {
+        console.error('Error:', error.message);
+      }
+    }
+
+    main();
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python  theme={null}
+    import requests
+    import time
+
+    class RunwayAPI:
+        def __init__(self, api_key):
+            self.api_key = api_key
+            self.base_url = 'https://api.kie.ai/api/v1/runway'
+            self.headers = {
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            }
+        
+        def generate_video(self, **options):
+            response = requests.post(f'{self.base_url}/generate', 
+                                   headers=self.headers, json=options)
+            result = response.json()
+            
+            if not response.ok or result.get('code') != 200:
+                raise Exception(f"Generation failed: {result.get('msg', 'Unknown error')}")
+            
+            return result['data']['taskId']
+        
+        def wait_for_completion(self, task_id, max_wait_time=600):
+            start_time = time.time()
+            
+            while time.time() - start_time < max_wait_time:
+                status = self.get_task_status(task_id)
+                state = status['state']
+                
+                if state == 'wait':
+                    print("Task is waiting, continue waiting...")
+                elif state == 'queueing':
+                    print("Task is queueing, continue waiting...")
+                elif state == 'generating':
+                    print("Task is generating, continue waiting...")
+                elif state == 'success':
+                    print("Generation completed successfully!")
+                    return status
+                elif state == 'fail':
+                    error = status.get('failMsg', 'Task generation failed')
+                    print(f"Task generation failed: {error}")
+                    raise Exception(error)
+                else:
+                    print(f"Unknown status: {state}")
+                    if status.get('failMsg'):
+                        print(f"Error message: {status['failMsg']}")
+                
+                time.sleep(30)  # Wait 30 seconds
+            
+            raise Exception('Generation timeout')
+        
+        def get_task_status(self, task_id):
+            response = requests.get(f'{self.base_url}/record-detail?taskId={task_id}',
+                                  headers={'Authorization': f'Bearer {self.api_key}'})
+            result = response.json()
+            
+            if not response.ok or result.get('code') != 200:
+                raise Exception(f"Status check failed: {result.get('msg', 'Unknown error')}")
+            
+            return result['data']
+        
+        def extend_video(self, task_id, prompt, quality='720p'):
+            data = {
+                'taskId': task_id,
+                'prompt': prompt,
+                'quality': quality
+            }
+            
+            response = requests.post(f'{self.base_url}/extend', 
+                                   headers=self.headers, json=data)
+            result = response.json()
+            
+            if not response.ok or result.get('code') != 200:
+                raise Exception(f"Extension failed: {result.get('msg', 'Unknown error')}")
+            
+            return result['data']['taskId']
+
+    # Usage example
+    def main():
+        api = RunwayAPI('YOUR_API_KEY')
+        
+        try:
+            # Text-to-video generation
+            print('Starting video generation...')
+            task_id = api.generate_video(
+                prompt='A fluffy orange cat dancing energetically in a colorful room with disco lights',
+                duration=5,
+                quality='720p',
+                aspectRatio='16:9',
+                waterMark=''
+            )
+            
+            # Wait for completion
+            print(f'Task ID: {task_id}. Waiting for completion...')
+            result = api.wait_for_completion(task_id)
+            
+            print('Video generation successful!')
+            print(f'Video URL: {result["videoInfo"]["videoUrl"]}')
+            print(f'Thumbnail URL: {result["videoInfo"]["imageUrl"]}')
+            
+            # Extend video
+            print('\nStarting video extension...')
+            extend_task_id = api.extend_video(task_id, 'The cat spins around with increasing energy and excitement', '720p')
+            
+            extend_result = api.wait_for_completion(extend_task_id)
+            print('Video extension successful!')
+            print(f'Extended video URL: {extend_result["videoInfo"]["videoUrl"]}')
+            
+        except Exception as error:
+            print(f'Error: {error}')
+
+    if __name__ == '__main__':
+        main()
+    ```
+  </Tab>
+</Tabs>
+
+## Async Processing with Callbacks
+
+For production applications, use callbacks instead of polling:
+
+```json  theme={null}
+{
+  "prompt": "A peaceful garden with cherry blossoms swaying in the breeze",
+  "duration": 5,
+  "quality": "720p",
+  "aspectRatio": "16:9",
+  "callBackUrl": "https://your-app.com/webhook/runway-callback"
+}
+```
+
+The system will POST results to your callback URL when generation completes.
+
+<Card title="Learn More About Callbacks" icon="webhook" href="/runway-api/generate-ai-video-callbacks">
+  Complete guide to implementing and handling Runway API callbacks
+</Card>
+
+## Video Extension Workflow
+
+Create longer video sequences by extending existing videos:
+
+1. **Generate Initial Video**: Create a base video using text or image input
+2. **Check Completion**: Wait for the initial video to complete successfully
+3. **Extend Video**: Use the original task ID to create an extension
+4. **Chain Extensions**: Repeat the process to create even longer sequences
+
+```javascript  theme={null}
+// Step 1: Generate initial video
+const initialResponse = await generateVideo({
+  prompt: "A cat starts dancing in a colorful room",
+  duration: 5,
+  quality: "720p",
+  aspectRatio: "16:9"
+});
+
+// Step 2: Wait for completion and extend
+const extendResponse = await extendVideo({
+  taskId: initialResponse.data.taskId,
+  prompt: "The cat spins around with increasing energy and excitement",
+  quality: "720p"
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Prompt Engineering for Videos">
+    * Focus on actions and movements rather than static descriptions
+    * Include temporal elements (e.g., "gradually", "suddenly", "slowly")
+    * Describe camera movements when relevant (e.g., "zoom in", "pan left")
+    * Be consistent with subject and style throughout extensions
+  </Accordion>
+
+  <Accordion title="Performance Optimization">
+    * Use callbacks instead of frequent polling
+    * Implement proper error handling and retry logic
+    * Consider video duration vs quality trade-offs
+    * Cache results and implement efficient storage solutions
+  </Accordion>
+
+  <Accordion title="Quality and Duration Selection">
+    * Choose 720p for longer videos (10 seconds) or when file size matters
+    * Use 1080p for high-quality short videos (5 seconds only)
+    * Consider your target platform's requirements (social media, web, etc.)
+    * Test different combinations to find optimal settings for your use case
+  </Accordion>
+
+  <Accordion title="Error Handling">
+    * Always check the response status code
+    * Implement exponential backoff for retries
+    * Handle rate limiting gracefully
+    * Monitor task states and handle failures appropriately
+  </Accordion>
+</AccordionGroup>
+
+## Status Codes
+
+<ResponseField name="200" type="Success">
+  Task created successfully or request completed
+</ResponseField>
+
+<ResponseField name="400" type="Bad Request">
+  Invalid request parameters or malformed JSON
+</ResponseField>
+
+<ResponseField name="401" type="Unauthorized">
+  Missing or invalid API key
+</ResponseField>
+
+<ResponseField name="402" type="Insufficient Credits">
+  Account doesn't have enough credits for the operation
+</ResponseField>
+
+<ResponseField name="422" type="Validation Error">
+  Request parameters failed validation checks
+</ResponseField>
+
+<ResponseField name="429" type="Rate Limited">
+  Too many requests - implement backoff strategy
+</ResponseField>
+
+<ResponseField name="500" type="Server Error">
+  Internal server error - contact support if persistent
+</ResponseField>
+
+## Task Status Descriptions
+
+<ResponseField name="state: wait" type="Waiting">
+  Task has been created and is waiting for processing
+</ResponseField>
+
+<ResponseField name="state: queueing" type="Queueing">
+  Task is in queue waiting to be processed
+</ResponseField>
+
+<ResponseField name="state: generating" type="Generating">
+  Task is currently being processed
+</ResponseField>
+
+<ResponseField name="state: success" type="Success">
+  Task completed successfully
+</ResponseField>
+
+<ResponseField name="state: fail" type="Failed">
+  Task generation failed
+</ResponseField>
+
+## Video Storage and Expiration
+
+<Warning>
+  Generated videos are stored for **14 days** before automatic deletion. Download and save your videos within this timeframe.
+</Warning>
+
+* Video URLs remain accessible for 14 days after generation
+* The `expireFlag` in the response indicates if a video has expired (0 = active, 1 = expired)
+* Plan your workflow to download or process videos before expiration
+* Consider implementing automated download systems for production use
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Generate Videos" icon="video" href="/runway-api/generate-ai-video">
+    Complete API reference for video generation
+  </Card>
+
+  <Card title="Extend Videos" icon="plus" href="/runway-api/extend-ai-video">
+    Learn how to extend videos for longer sequences
+  </Card>
+
+  <Card title="Callback Setup" icon="webhook" href="/runway-api/generate-ai-video-callbacks">
+    Implement webhooks for async processing
+  </Card>
+
+  <Card title="Task Details" icon="magnifying-glass" href="/runway-api/get-ai-video-details">
+    Query and monitor task status
+  </Card>
+</CardGroup>
+
+## Support
+
+<Info>
+  Need help? Our technical support team is here to assist you.
+
+  * **Email**: [support@kie.ai](mailto:support@kie.ai)
+  * **Documentation**: [docs.kie.ai](https://docs.kie.ai)
+  * **API Status**: Check our status page for real-time API health
+</Info>
+
+***
+
+Ready to start generating amazing AI videos? [Get your API key](https://kie.ai/api-key) and begin creating today!

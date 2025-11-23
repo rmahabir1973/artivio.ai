@@ -1,0 +1,212 @@
+# Extend AI Video
+
+> Extend existing AI-generated videos to create longer sequences.
+
+## OpenAPI
+
+````yaml runway-api/runway-api.json post /api/v1/runway/extend
+paths:
+  path: /api/v1/runway/extend
+  method: post
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              taskId:
+                allOf:
+                  - type: string
+                    description: >-
+                      Unique identifier of the original video generation task.
+                      Must be a valid task ID from a previously generated video.
+                    example: ee603959-debb-48d1-98c4-a6d1c717eba6
+              prompt:
+                allOf:
+                  - type: string
+                    description: >-
+                      Descriptive text that guides the continuation of the
+                      video. Explain what actions, movements, or developments
+                      should happen next. Be specific but maintain consistency
+                      with the original video content.
+                    example: >-
+                      The cat continues dancing with more energy and excitement,
+                      spinning around with colorful light effects intensifying
+              quality:
+                allOf:
+                  - type: string
+                    description: 'Video resolution, optional values are 720p or 1080p. '
+                    example: 720p
+              waterMark:
+                allOf:
+                  - type: string
+                    description: >-
+                      Video watermark text content. An empty string indicates no
+                      watermark, while a non-empty string will display the
+                      specified text as a watermark in the bottom right corner
+                      of the video.
+                    example: kie.ai
+              callBackUrl:
+                allOf:
+                  - type: string
+                    description: >-
+                      The URL to receive AI video extension task completion
+                      updates. Required for all video extension requests.
+
+
+                      - System will POST task status and results to this URL
+                      when video extension completes
+
+                      - Callback includes extended video URLs, cover images, and
+                      task information
+
+                      - Your callback endpoint should accept POST requests with
+                      JSON payload containing extension results
+
+                      - For detailed callback format and implementation guide,
+                      see [Video Extension
+                      Callbacks](./extend-ai-video-callbacks)
+
+                      - Alternatively, use the Get AI Video Details endpoint to
+                      poll task status
+                    example: https://api.example.com/callback
+            required: true
+            requiredProperties:
+              - taskId
+              - prompt
+              - quality
+        examples:
+          example:
+            value:
+              taskId: ee603959-debb-48d1-98c4-a6d1c717eba6
+              prompt: >-
+                The cat continues dancing with more energy and excitement,
+                spinning around with colorful light effects intensifying
+              imageUrl: https://file.com/m/xxxxxxxx.png
+              expandPrompt: true
+              waterMark: kie.ai
+              callBackUrl: https://api.example.com/callback
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 404
+                      - 422
+                      - 429
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks.The request parameters are
+                      incorrect, please check the parameters.
+
+                      - **429**: Rate Limited - Request limit has been exceeded
+                      for this resource
+
+                      - **451**: Unauthorized - Failed to fetch the image.
+                      Kindly verify any access limits set by you or your service
+                      provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Status message
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: >-
+                          Task ID for tracking task status. Use this ID with the
+                          "Get AI Video Details" endpoint to query extension
+                          task details and results.
+                        example: 5c79****be8e
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: ee603959-debb-48d1-98c4-a6d1c717eba6
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

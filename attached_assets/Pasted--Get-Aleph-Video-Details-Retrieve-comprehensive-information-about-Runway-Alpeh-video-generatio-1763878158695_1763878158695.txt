@@ -1,0 +1,208 @@
+# Get Aleph Video Details
+
+> Retrieve comprehensive information about Runway Alpeh video generation tasks
+
+## OpenAPI
+
+````yaml runway-api/runway-aleph-api.json get /api/v1/aleph/record-info
+paths:
+  path: /api/v1/aleph/record-info
+  method: get
+  servers:
+    - url: https://api.kie.ai
+      description: API Server
+  request:
+    security:
+      - title: BearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: >-
+                All APIs require authentication via Bearer Token.
+
+
+                Get API Key:
+
+                1. Visit [API Key Management Page](https://kie.ai/api-key) to
+                get your API Key
+
+
+                Usage:
+
+                Add to request header:
+
+                Authorization: Bearer YOUR_API_KEY
+
+
+                Note:
+
+                - Keep your API Key secure and do not share it with others
+
+                - If you suspect your API Key has been compromised, reset it
+                immediately in the management page
+          cookie: {}
+    parameters:
+      path: {}
+      query:
+        taskId:
+          schema:
+            - type: string
+              required: true
+              description: >-
+                Unique identifier of the Aleph video generation task. This is
+                the taskId returned when creating an Aleph video.
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              code:
+                allOf:
+                  - type: integer
+                    enum:
+                      - 200
+                      - 401
+                      - 404
+                      - 422
+                      - 429
+                      - 451
+                      - 455
+                      - 500
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **429**: Rate Limited - Request limit has been exceeded
+                      for this resource
+
+                      - **451**: Unauthorized - Failed to fetch the image.
+                      Kindly verify any access limits set by you or your service
+                      provider.
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+              msg:
+                allOf:
+                  - type: string
+                    description: Status message
+                    example: success
+              data:
+                allOf:
+                  - type: object
+                    properties:
+                      taskId:
+                        type: string
+                        description: >-
+                          Unique identifier of the Aleph AI video generation
+                          task
+                        example: ee603959-debb-48d1-98c4-a6d1c717eba6
+                      paramJson:
+                        type: string
+                        description: >-
+                          JSON string containing the original generation request
+                          parameters
+                        example: >-
+                          {"prompt":"A majestic eagle soaring through mountain
+                          clouds","videoUrl":"https://example.com/input-video.mp4"}
+                      response:
+                        type: object
+                        description: Response data containing generated video information
+                        properties:
+                          taskId:
+                            type: string
+                            description: Task ID associated with this generation
+                            example: ee603959-debb-48d1-98c4-a6d1c717eba6
+                          resultVideoUrl:
+                            type: string
+                            description: >-
+                              URL to access and download the generated video,
+                              valid for 14 days
+                            example: https://file.com/k/xxxxxxx.mp4
+                          resultImageUrl:
+                            type: string
+                            description: URL of a thumbnail image from the generated video
+                            example: https://file.com/m/xxxxxxxx.png
+                      completeTime:
+                        type: string
+                        format: date-time
+                        description: Timestamp when the video generation was completed
+                        example: '2023-08-15T14:30:45Z'
+                      createTime:
+                        type: string
+                        format: date-time
+                        description: Timestamp when the task was created
+                        example: '2023-08-15T14:25:00Z'
+                      successFlag:
+                        type: integer
+                        format: int32
+                        description: 'Success status: 1 = success, 0 = failed or in progress'
+                        enum:
+                          - 0
+                          - 1
+                        example: 1
+                      errorCode:
+                        type: integer
+                        format: int32
+                        description: Error code when generation fails (0 if successful)
+                        example: 0
+                      errorMessage:
+                        type: string
+                        description: >-
+                          Detailed error message explaining the reason for
+                          failure (empty if successful)
+                        example: ''
+        examples:
+          example:
+            value:
+              code: 200
+              msg: success
+              data:
+                taskId: ee603959-debb-48d1-98c4-a6d1c717eba6
+                paramJson: >-
+                  {"prompt":"A majestic eagle soaring through mountain clouds at
+                  sunset","videoUrl":"https://example.com/input-video.mp4"}
+                response:
+                  taskId: ee603959-debb-48d1-98c4-a6d1c717eba6
+                  resultVideoUrl: https://file.com/k/xxxxxxx.mp4
+                  resultImageUrl: https://file.com/m/xxxxxxxx.png
+                completeTime: '2023-08-15T14:30:45Z'
+                createTime: '2023-08-15T14:25:00Z'
+                successFlag: 1
+                errorCode: 0
+                errorMessage: ''
+        description: Request successful
+    '500':
+      _mintlify/placeholder:
+        schemaArray:
+          - type: any
+            description: Server Error
+        examples: {}
+        description: Server Error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````
