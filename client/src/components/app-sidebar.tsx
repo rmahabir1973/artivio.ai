@@ -51,7 +51,6 @@ const menuSections = [
     items: [
       { title: "Video Generation", url: "/generate/video", icon: Video },
       { title: "Sora 2 Pro", url: "/generate/sora", icon: Sparkles },
-      { title: "Grok Imagine", url: "/generate/grok", icon: Video },
       { title: "Talking Avatars", url: "/talking-avatars", icon: UserCircle },
     ],
   },
