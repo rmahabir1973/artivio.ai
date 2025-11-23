@@ -753,14 +753,45 @@ export async function generateImage(params: {
       input: inputPayload,
     });
   }
-  else if (params.model === '4o-image' || params.model === 'flux-kontext') {
-    // 4o Image and Flux Kontext - uses /api/v1/jobs/createTask (unified endpoint)
-    const modelMap = {
-      '4o-image': 'openai/gpt-4o-image',
-      'flux-kontext': 'black-forest-labs/flux-kontext'
+  else if (params.model === '4o-image') {
+    // 4o Image - uses dedicated /api/v1/gpt4o-image/generate endpoint (per official API docs)
+    const size = parameters.aspectRatio || '1:1'; // size uses aspect ratio format (1:1, 3:2, 2:3)
+    const nVariants = parameters.nVariants || 1; // 1, 2, or 4
+    const isEnhance = parameters.isEnhance !== undefined ? parameters.isEnhance : false;
+    const enableFallback = parameters.enableFallback !== undefined ? parameters.enableFallback : false;
+    
+    // Build 4o-Image-specific payload (direct fields, NOT input object)
+    const payload: any = {
+      prompt: params.prompt,
+      size,
+      nVariants,
+      isEnhance,
+      enableFallback,
+      callBackUrl: parameters.callBackUrl,
     };
     
-    const modelName = modelMap[params.model as keyof typeof modelMap] || params.model;
+    // Add reference images for image-editing mode (use filesUrl array)
+    if (referenceImages.length > 0) {
+      payload.filesUrl = referenceImages;
+    }
+    
+    // Add mask URL if provided (for precise editing)
+    if (parameters.maskUrl) {
+      payload.maskUrl = parameters.maskUrl;
+    }
+    
+    // Add output format and quality if specified
+    if (parameters.outputFormat) {
+      payload.outputFormat = parameters.outputFormat;
+    }
+    if (parameters.quality) {
+      payload.quality = parameters.quality;
+    }
+    
+    return await callKieApi('/api/v1/gpt4o-image/generate', payload);
+  }
+  else if (params.model === 'flux-kontext') {
+    // Flux Kontext - uses /api/v1/jobs/createTask (unified endpoint)
     const aspectRatio = parameters.aspectRatio || '1:1';
     const quality = parameters.quality || 'standard';
     const outputFormat = parameters.outputFormat || 'JPEG';
@@ -779,7 +810,7 @@ export async function generateImage(params: {
     }
     
     return await callKieApi('/api/v1/jobs/createTask', {
-      model: modelName,
+      model: 'black-forest-labs/flux-kontext',
       callBackUrl: parameters.callBackUrl,
       input: inputPayload,
     });
