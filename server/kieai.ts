@@ -692,8 +692,33 @@ export async function generateImage(params: {
     
     return await callKieApi('/api/v1/mj/generate', payload);
   }
-  else if (params.model === '4o-image' || params.model === 'flux-kontext' || params.model === 'nano-banana') {
-    // Existing models: 4o Image, Flux Kontext, Nano Banana
+  else if (params.model === 'nano-banana') {
+    // Nano Banana - uses /api/v1/jobs/createTask (Bytedance Playground API)
+    const aspectRatio = parameters.aspectRatio || '1:1';
+    const resolution = parameters.resolution || '1K';
+    const outputFormat = parameters.outputFormat || 'png';
+    
+    // Build input object
+    const inputPayload: any = {
+      prompt: params.prompt,
+      aspect_ratio: aspectRatio,
+      resolution: resolution,
+      output_format: outputFormat,
+    };
+    
+    // Add reference images for editing mode
+    if (mode === 'image-editing' && referenceImages.length > 0) {
+      inputPayload.image_input = referenceImages;
+    }
+    
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: 'nano-banana-pro',
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
+  }
+  else if (params.model === '4o-image' || params.model === 'flux-kontext') {
+    // Existing models: 4o Image, Flux Kontext
     const payload: any = {
       prompt: params.prompt,
       size: parameters.aspectRatio || '1:1',
