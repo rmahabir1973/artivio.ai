@@ -690,33 +690,39 @@ export async function generateImage(params: {
     });
   }
   else if (params.model === 'midjourney-v7') {
-    // Midjourney v7 - generates 4 variants with style controls
-    const taskType = mode === 'image-editing' ? 'mj_img2img' : 'mj_txt2img';
+    // Midjourney v7 - uses /api/v1/jobs/createTask (unified endpoint)
+    const aspectRatio = parameters.aspectRatio || '1:1';
     const version = parameters.version || '7';
     const speed = parameters.speed || 'Fast';
-    const aspectRatio = parameters.aspectRatio || '1:1';
     const stylization = parameters.stylization !== undefined ? parameters.stylization : 100;
     const weirdness = parameters.weirdness !== undefined ? parameters.weirdness : 0;
-    const waterMark = parameters.watermark || '';
+    const watermark = parameters.watermark || '';
     
-    const payload: any = {
-      taskType,
+    // Build input object with Midjourney-specific parameters
+    const inputPayload: any = {
       prompt: params.prompt,
+      aspect_ratio: aspectRatio,
       version,
       speed,
-      aspectRatio,
       stylization,
       weirdness,
-      waterMark,
-      callBackUrl: parameters.callBackUrl,
     };
     
-    // Add reference image for img2img
-    if (taskType === 'mj_img2img' && referenceImages.length > 0) {
-      payload.fileUrl = referenceImages[0];
+    // Add watermark if provided
+    if (watermark) {
+      inputPayload.watermark = watermark;
     }
     
-    return await callKieApi('/api/v1/mj/generate', payload);
+    // Add reference image for image-to-image mode
+    if (mode === 'image-editing' && referenceImages.length > 0) {
+      inputPayload.image_input = referenceImages;
+    }
+    
+    return await callKieApi('/api/v1/jobs/createTask', {
+      model: 'midjourney/v7',
+      callBackUrl: parameters.callBackUrl,
+      input: inputPayload,
+    });
   }
   else if (params.model === 'nano-banana') {
     // Nano Banana - uses /api/v1/jobs/createTask (Bytedance Playground API)
