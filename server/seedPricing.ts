@@ -32,8 +32,10 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'video', model: 'wan-2.5-5s-1080p', creditCost: 500, kieCreditCost: 100, category: 'generation', description: 'Wan 2.5 - 1080p audio sync & lip-sync (5s)' },
   { feature: 'video', model: 'wan-2.5-10s-720p', creditCost: 500, kieCreditCost: 100, category: 'generation', description: 'Wan 2.5 - 720p audio sync & lip-sync (10s)' },
   { feature: 'video', model: 'wan-2.5-10s-1080p', creditCost: 1000, kieCreditCost: 200, category: 'generation', description: 'Wan 2.5 - 1080p audio sync & lip-sync (10s)' },
-  { feature: 'video', model: 'kling-2.5-turbo', creditCost: 150, kieCreditCost: null, category: 'generation', description: 'Kling 2.5 Turbo - Fast, fluid motion with realistic physics (5s-10s)' },
-  { feature: 'video', model: 'kling-2.1', creditCost: 250, kieCreditCost: null, category: 'generation', description: 'Kling 2.1 - Professional hyper-realistic video generation (5s-10s)' },
+  // Kling 2.5 Turbo - Generation type and duration-based pricing
+  { feature: 'video', model: 'kling-2.5-turbo-t2v', creditCost: 210, kieCreditCost: 42, category: 'generation', description: 'Kling 2.5 Turbo - Text to Video (no duration variation)' },
+  { feature: 'video', model: 'kling-2.5-turbo-i2v-5s', creditCost: 210, kieCreditCost: 42, category: 'generation', description: 'Kling 2.5 Turbo - Image to Video 5s' },
+  { feature: 'video', model: 'kling-2.5-turbo-i2v-10s', creditCost: 420, kieCreditCost: 84, category: 'generation', description: 'Kling 2.5 Turbo - Image to Video 10s' },
   
   // ========================================
   // SORA VIDEO MODELS (Separate page)

@@ -33,7 +33,6 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "seedance-1-lite": ["16:9", "4:3", "1:1", "3:4", "9:16", "9:21"],
   "wan-2.5": ["16:9", "9:16", "1:1"],
   "kling-2.5-turbo": ["16:9", "9:16", "1:1"],
-  "kling-2.1": ["16:9", "9:16", "1:1"],
   "sora-2-pro": ["16:9", "9:16", "1:1"],
 };
 
@@ -46,7 +45,6 @@ const DURATION_SUPPORT: Record<string, number[]> = {
   "seedance-1-lite": [10],
   "wan-2.5": [5, 10],
   "kling-2.5-turbo": [5, 10],
-  "kling-2.1": [5, 10],
   "sora-2-pro": [5, 10, 20],
 };
 
@@ -125,14 +123,6 @@ const VIDEO_MODEL_INFO = [
     supportsImages: true,
     maxImages: 1 
   },
-  { 
-    value: "kling-2.1", 
-    label: "Kling 2.1", 
-    description: "Professional hyper-realistic video generation", 
-    duration: "5s, 10s",
-    supportsImages: true,
-    maxImages: 1 
-  },
 ];
 
 
@@ -157,8 +147,9 @@ export default function GenerateVideo() {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [seedLocked, setSeedLocked] = useState(false);
-  const [negativePrompt, setNegativePrompt] = useState(""); // For Wan model
+  const [negativePrompt, setNegativePrompt] = useState(""); // For Wan and Kling models
   const [enablePromptExpansion, setEnablePromptExpansion] = useState(true); // For Wan model
+  const [cfgScale, setCfgScale] = useState(0.5); // For Kling model (0-1, step 0.1)
 
   // Merge model info with dynamic pricing
   const [videoModels, setVideoModels] = useState(() => VIDEO_MODEL_INFO.map(m => ({
