@@ -313,6 +313,11 @@ export async function generateVideo(params: {
       modelName = 'veo3';
     }
     
+    // Validate Referenced Image support (only veo3_fast supports REFERENCE_2_VIDEO)
+    if (referenceImages.length > 0 && modelName !== 'veo3_fast') {
+      throw new Error(`Referenced Images are only supported by Veo 3.1 Fast. Please use Veo 3.1 Fast for image-to-video generation.`);
+    }
+    
     // Auto-generate seed if not provided (Veo requires range 10000-99999)
     const seed = parameters.seed || generateRandomSeed();
     
@@ -327,9 +332,10 @@ export async function generateVideo(params: {
       callBackUrl: parameters.callBackUrl,
     };
     
-    // Add image URLs if present (for image-to-video)
+    // Add image URLs if present (for image-to-video on veo3_fast only)
     if (referenceImages.length > 0) {
       payload.imageUrls = referenceImages;
+      payload.generationType = 'REFERENCE_2_VIDEO';
     }
     
     // Add optional watermark parameter
