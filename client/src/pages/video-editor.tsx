@@ -153,7 +153,7 @@ export default function VideoEditor() {
     }
   }, [selectedVideoIds]);
 
-  // Fetch user's completed video generations - load ALL pages
+  // Fetch user's completed video generations - load ALL pages using authenticated fetch
   const { data: firstPageData = { data: [] }, isLoading: loadingGenerations } = useQuery<any>({
     queryKey: ['/api/generations'],
   });
@@ -163,7 +163,7 @@ export default function VideoEditor() {
     queryKey: ['/api/video-combinations'],
   });
 
-  // Load all pages of generations when component mounts
+  // Load all pages of generations when component mounts using queryClient.fetchQuery
   useEffect(() => {
     const fetchAllGenerations = async () => {
       try {
@@ -171,13 +171,15 @@ export default function VideoEditor() {
         let cursor: string | undefined = undefined;
         let hasMore = true;
 
-        // Fetch all paginated pages
+        // Fetch all paginated pages using queryClient.fetchQuery (properly authenticated)
         while (hasMore) {
+          // queryClient's default queryFn joins queryKey with "/" so we need to include the full URL
           const url = cursor ? `/api/generations?cursor=${cursor}` : '/api/generations';
-          const res: any = await apiRequest('GET', url);
           
-          // apiRequest returns a Response object, need to parse JSON
-          const response = await res.json();
+          // Use queryClient.fetchQuery which uses the authenticated queryFn
+          const response: any = await queryClient.fetchQuery({
+            queryKey: [url],
+          });
           
           // Handle response - API returns either array or object with data property
           const pageData = Array.isArray(response) ? response : (response.data || []);
