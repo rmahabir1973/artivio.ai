@@ -344,13 +344,28 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     if (!trim) return;
     
     video.src = clip.url;
-    video.currentTime = trim.startSeconds;
     video.playbackRate = clip.speedFactor || 1;
     
-    if (isPlaying) {
-      video.play().catch(console.error);
+    // Wait for metadata to load before seeking and playing
+    const handleLoadedMetadata = () => {
+      video.currentTime = trim.startSeconds;
+      if (isPlaying) {
+        video.play().catch(console.error);
+      }
+    };
+    
+    if (video.readyState >= 1) {
+      // Metadata already loaded
+      handleLoadedMetadata();
+    } else {
+      // Wait for metadata to load
+      video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
     }
-  }, [currentClipIndex, clips, clipMetadata]);
+    
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [currentClipIndex, clips, clipMetadata, isPlaying]);
 
   // Update playback rate when speed changes
   useEffect(() => {
@@ -462,6 +477,8 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
             ref={videoRef}
             className="w-full h-full"
             data-testid="video-preview"
+            preload="metadata"
+            crossOrigin="anonymous"
           />
         </div>
 
