@@ -127,7 +127,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        console.log("[AUTH] Initializing auth - attempting to refresh token");
+        console.log("[AUTH] Initializing auth");
         
         // Check for OAuth token in URL fragment (e.g., #token=xxx after Google login)
         const hash = window.location.hash;
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const tokenMatch = hash.match(/token=([^&]+)/);
           if (tokenMatch && tokenMatch[1]) {
             const oauthToken = tokenMatch[1];
-            console.log("[AUTH] Found OAuth token in URL fragment");
+            console.log("[AUTH] OAuth flow - found token in URL fragment");
             
             // Store the token
             setAccessTokenState(oauthToken);
@@ -161,43 +161,75 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (userResponse.ok) {
               const userData = await userResponse.json();
               setUser(userData);
-              console.log("[AUTH] OAuth login successful - user data loaded");
+              console.log("[AUTH] ✓ OAuth login successful - user data loaded");
               setIsLoading(false);
               return;
+            } else {
+              console.log("[AUTH] OAuth flow - failed to fetch user data:", userResponse.status);
             }
           }
         }
         
-        // Try to refresh the access token using the httpOnly refresh token cookie
-        const token = await refreshAccessToken();
+        // Try bootstrap endpoint first - validates refresh cookies and returns access token + user
+        console.log("[AUTH] Bootstrap flow - attempting to hydrate from refresh cookies");
+        const bootstrapResponse = await fetch("/api/auth/bootstrap", {
+          method: "GET",
+          credentials: "include",
+        });
         
-        if (token) {
-          console.log("[AUTH] Token obtained - fetching user data");
-          
-          // Fetch user data with the new token
-          const userResponse = await fetch("/api/auth/user", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            credentials: "include",
+        if (bootstrapResponse.ok) {
+          const data = await bootstrapResponse.json();
+          console.log("[AUTH] ✓ Bootstrap successful - auth state hydrated", {
+            hasToken: !!data.accessToken,
+            hasUser: !!data.user,
+            userId: data.user?.id,
           });
+          
+          // Set both access token and user from bootstrap response
+          setAccessTokenState(data.accessToken);
+          bridgeSetAccessToken(data.accessToken);
+          setUser(data.user);
+        } else {
+          console.log("[AUTH] Bootstrap failed, falling back to refresh token flow", {
+            status: bootstrapResponse.status,
+          });
+          
+          // Fall back to refresh token flow in case bootstrap had transient error
+          const token = await refreshAccessToken();
+          
+          if (token) {
+            console.log("[AUTH] ✓ Refresh fallback successful - fetching user data");
+            
+            // Fetch user data with the new token
+            const userResponse = await fetch("/api/auth/user", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              credentials: "include",
+            });
 
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            setUser(userData);
-            console.log("[AUTH] User data loaded successfully");
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              setUser(userData);
+              console.log("[AUTH] ✓ User data loaded via refresh fallback");
+            } else {
+              console.log("[AUTH] Refresh fallback - failed to fetch user data:", userResponse.status);
+              setAccessTokenState(null);
+              bridgeSetAccessToken(null);
+              setUser(null);
+            }
           } else {
-            console.log("[AUTH] Failed to fetch user data:", userResponse.status);
+            console.log("[AUTH] Refresh fallback failed - no valid session");
+            // Clear auth state only if both bootstrap and refresh failed
             setAccessTokenState(null);
+            bridgeSetAccessToken(null);
             setUser(null);
           }
-        } else {
-          console.log("[AUTH] No valid refresh token - user not authenticated");
-          setUser(null);
         }
       } catch (error) {
         console.error("[AUTH] Error initializing auth:", error);
         setAccessTokenState(null);
+        bridgeSetAccessToken(null);
         setUser(null);
       } finally {
         setIsLoading(false);

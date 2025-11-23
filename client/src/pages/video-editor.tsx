@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { queryClient, apiRequest, fetchWithAuth } from "@/lib/queryClient";
 import { Loader2, Video, Plus, X, Combine, Music, Type, Zap, Sparkles, Clock, ArrowDown, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -127,6 +128,7 @@ const getUserFriendlyErrorMessage = (technicalError: string | null): string => {
 
 export default function VideoEditor() {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<EditorStep>('select');
   const [enhancements, setEnhancements] = useState<Enhancements>({});
@@ -164,6 +166,7 @@ export default function VideoEditor() {
   });
 
   // Load all pages of generations when component mounts using fetchWithAuth
+  // ONLY run when user is authenticated to ensure bearer token is available
   useEffect(() => {
     const fetchAllGenerations = async () => {
       console.log('[VIDEO EDITOR] Starting pagination fetch for all generations...');
@@ -210,10 +213,14 @@ export default function VideoEditor() {
       }
     };
 
-    if (!loadingGenerations) {
+    // Only fetch when authenticated to ensure bearer token is available
+    if (!loadingGenerations && isAuthenticated) {
+      console.log('[VIDEO EDITOR] ✓ User authenticated - starting pagination');
       fetchAllGenerations();
+    } else if (!loadingGenerations && !isAuthenticated) {
+      console.log('[VIDEO EDITOR] ⚠️ User not authenticated - skipping pagination');
     }
-  }, [loadingGenerations, firstPageData]);
+  }, [loadingGenerations, firstPageData, isAuthenticated]);
 
   const generations = allGenerations;
 

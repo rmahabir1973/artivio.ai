@@ -476,7 +476,8 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       await createConcatFile(normalizedPaths, concatFilePath);
       tempFiles.push(concatFilePath);
 
-      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -c copy "${outputPath}"`;
+      // Re-encode with HTML5-compatible settings for proper metadata and playback
+      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset medium -crf 23 -c:a aac -b:a 192k "${outputPath}"`;
     } else {
       onProgress?.('process', 'Applying enhancements and combining...');
 
@@ -543,7 +544,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
       const fullFilterComplex = videoFilters + ';' + completeAudioFilter;
 
-      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 192k "${outputPath}"`;
+      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset medium -crf 23 -c:a aac -b:a 192k "${outputPath}"`;
     }
 
     onProgress?.('process', 'Running FFmpeg...');

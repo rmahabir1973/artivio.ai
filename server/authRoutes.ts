@@ -635,6 +635,149 @@ export function registerAuthRoutes(app: Express) {
     }
   });
 
+  // Bootstrap endpoint - validates refresh cookies and returns access token + user data
+  // This is a read-only operation that doesn't rotate tokens (unlike /refresh)
+  app.get("/api/auth/bootstrap", async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    const tokenId = req.cookies.tokenId;
+
+    try {
+      console.log("[AUTH] Bootstrap request", {
+        hasRefreshToken: !!refreshToken,
+        hasTokenId: !!tokenId,
+        tokenIdPreview: tokenId?.substring(0, 8),
+      });
+
+      // Check for required cookies
+      if (!refreshToken || !tokenId) {
+        console.log("[AUTH] Bootstrap failed - missing cookies");
+        return res.status(401).json({
+          message: "No refresh token found",
+          code: "MISSING_REFRESH_TOKEN",
+        });
+      }
+
+      // Validate refresh token - catch any database errors
+      let validationResult;
+      try {
+        validationResult = await validateRefreshToken(refreshToken, tokenId);
+      } catch (dbError: any) {
+        console.error("[AUTH ERROR] Database error during bootstrap token validation", {
+          error: dbError.message,
+          tokenId: tokenId?.substring(0, 8),
+        });
+        return res.status(401).json({
+          message: "Token validation failed",
+          code: "VALIDATION_ERROR",
+        });
+      }
+
+      if (!validationResult) {
+        console.log("[AUTH] Bootstrap failed - invalid or expired token", {
+          tokenId: tokenId?.substring(0, 8),
+        });
+        return res.status(401).json({
+          message: "Invalid or expired refresh token",
+          code: "INVALID_REFRESH_TOKEN",
+        });
+      }
+
+      const { userId, tokenVersion } = validationResult;
+
+      // Validate tokenVersion - protect against undefined/null
+      if (typeof tokenVersion !== 'number') {
+        console.error("[AUTH ERROR] Invalid tokenVersion in bootstrap", {
+          userId,
+          tokenVersion,
+          tokenId: tokenId?.substring(0, 8),
+        });
+        return res.status(401).json({
+          message: "Invalid token version",
+          code: "INVALID_TOKEN_VERSION",
+        });
+      }
+
+      // Get user data - catch database errors
+      let user;
+      try {
+        [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+      } catch (dbError: any) {
+        console.error("[AUTH ERROR] Database error fetching user during bootstrap", {
+          error: dbError.message,
+          userId,
+        });
+        return res.status(503).json({
+          message: "Database error",
+          code: "DB_ERROR",
+        });
+      }
+
+      if (!user) {
+        console.error("[AUTH ERROR] User not found during bootstrap", {
+          userId,
+          tokenId: tokenId?.substring(0, 8),
+        });
+        return res.status(404).json({
+          message: "User not found",
+          code: "USER_NOT_FOUND",
+        });
+      }
+
+      // Admin email whitelist
+      const ADMIN_EMAILS = [
+        "ryan.mahabir@outlook.com",
+        "admin@artivio.ai",
+        "joe@joecodeswell.com",
+        "jordanlambrecht@gmail.com",
+      ];
+      const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || "");
+
+      // Generate access token
+      const accessToken = generateAccessToken({
+        userId: user.id,
+        email: user.email || "",
+        tokenVersion,
+        isAdmin,
+      });
+
+      console.log("[AUTH] ✓ Bootstrap successful", {
+        userId: user.id,
+        email: user.email,
+        tokenId: tokenId?.substring(0, 8),
+        isAdmin,
+      });
+
+      // Return access token AND user data
+      res.json({
+        accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          credits: user.credits,
+          isAdmin,
+        },
+      });
+    } catch (error: any) {
+      // Catch-all for any unexpected errors
+      console.error("[AUTH ERROR] Unexpected bootstrap error", {
+        error: error.message,
+        stack: error.stack,
+        tokenId: tokenId?.substring(0, 8),
+      });
+
+      res.status(500).json({
+        message: "An unexpected error occurred",
+        code: "INTERNAL_ERROR",
+      });
+    }
+  });
+
   // Get current user (JWT-protected endpoint)
   app.get("/api/auth/user", requireJWT, async (req: any, res) => {
     try {
