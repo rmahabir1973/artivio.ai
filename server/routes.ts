@@ -1083,7 +1083,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check for explicit status from Kie.ai
-      const kieStatus = (sunoStatus || callbackData.status)?.toLowerCase();
+      // New unified API (/api/v1/jobs/createTask) uses data.state: 'success' | 'fail'
+      // Old APIs use status or code fields
+      const dataState = callbackData.data?.state?.toLowerCase();
+      const kieStatus = (dataState || sunoStatus || callbackData.status)?.toLowerCase();
       
       // Check for Suno-specific callback stages (text, first, complete)
       const callbackType = callbackData.data?.callbackType || callbackData.callbackType;
@@ -1091,11 +1094,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Kie.ai models use HTTP status codes in 'code' field (Runway, Veo, Seedance)
       const httpStatusCode = callbackData.code;
-      const isKieSuccess = httpStatusCode === 200;
+      const isKieSuccess = httpStatusCode === 200 || dataState === 'success';
       // Veo error codes: 400, 422, 500, 501
       // Runway error codes: 400, 500
-      // Seedance error codes: 501 (uses data.state: 'fail')
-      const isSeedanceError = httpStatusCode === 501 || callbackData.data?.state === 'fail';
+      // Seedance/Unified API error: data.state === 'fail'
+      const isSeedanceError = httpStatusCode === 501 || dataState === 'fail';
       const isKieError = httpStatusCode === 400 || httpStatusCode === 422 || httpStatusCode === 500 || httpStatusCode === 501;
       
       // Comprehensive error detection - catch all possible error formats from Kie.ai
