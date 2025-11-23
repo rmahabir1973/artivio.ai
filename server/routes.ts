@@ -177,7 +177,8 @@ async function generateVideoInBackground(
     });
     
     // Kie.ai returns a taskId for async processing
-    const taskId = result?.data?.taskId;
+    // NOTE: result is already response.data from callKieApi, so taskId is at top level
+    const taskId = result?.data?.taskId || result?.taskId;
     if (!taskId) {
       // If we got direct URL (older API format), use it
       const resultUrl = result?.url || result?.videoUrl || result?.data?.url;
@@ -256,7 +257,8 @@ async function generateImageInBackground(
     });
     
     // Kie.ai may return taskId or direct URL depending on API
-    const taskId = result?.data?.taskId;
+    // NOTE: result is already response.data from callKieApi
+    const taskId = result?.data?.taskId || result?.taskId;
     const directUrl = result?.url || result?.imageUrl || result?.data?.url || result?.data?.imageUrl;
     
     if (directUrl) {
