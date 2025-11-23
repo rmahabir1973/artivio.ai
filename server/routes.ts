@@ -1027,9 +1027,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Priority order: Seedance (resultJson), Runway (video_url), Veo (info.resultUrls), Bytedance models (output_url, videoUrl), Suno, Image models, ElevenLabs, others
+      // Priority order: Seedance (resultJson), Runway Aleph (result_video_url, result_image_url), Runway Gen-3 (video_url), Veo (info.resultUrls), Bytedance models (output_url, videoUrl), Suno, Image models, ElevenLabs, others
       const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string (resultJson with resultUrls array)
-                       callbackData.data?.video_url ||    // Runway uses snake_case
+                       callbackData.data?.result_video_url || // Runway Aleph video result
+                       callbackData.data?.result_image_url || // Runway Aleph image fallback
+                       callbackData.data?.video_url ||    // Runway Gen-3 uses snake_case
                        (callbackData.data?.info?.resultUrls && callbackData.data.info.resultUrls[0]) || // Veo nested
                        callbackData.data?.info?.resultImageUrl || // Flux Kontext uses data.info.resultImageUrl
                        (callbackData.data?.info?.result_urls && callbackData.data.info.result_urls[0]) || // 4o-Image uses data.info.result_urls array
@@ -1073,7 +1075,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`✅ [${modelType}] Extracted resultUrl: ${resultUrl}`);
       } else {
         console.log(`⚠️  [${modelType}] No resultUrl extracted. Checking callback structure for debugging:`);
-        console.log(`   - callbackData.data?.video_url (Runway): ${callbackData.data?.video_url}`);
+        console.log(`   - callbackData.data?.result_video_url (Aleph): ${callbackData.data?.result_video_url}`);
+        console.log(`   - callbackData.data?.result_image_url (Aleph): ${callbackData.data?.result_image_url}`);
+        console.log(`   - callbackData.data?.video_url (Runway Gen-3): ${callbackData.data?.video_url}`);
         console.log(`   - callbackData.data?.output_url (Bytedance): ${callbackData.data?.output_url}`);
         console.log(`   - callbackData.data?.videoUrl: ${callbackData.data?.videoUrl}`);
         console.log(`   - callbackData.data?.resultJson (Seedance): ${callbackData.data?.resultJson ? 'present' : 'absent'}`);

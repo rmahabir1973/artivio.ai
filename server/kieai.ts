@@ -388,38 +388,65 @@ export async function generateVideo(params: {
       input: inputPayload,
     });
   } 
-  else if (params.model.startsWith('runway-')) {
-    // Runway Gen-3, Aleph - uses /api/v1/runway/generate
+  else if (params.model === 'runway-gen3-alpha-turbo') {
+    // Runway Gen-3 - uses /api/v1/runway/generate
     const duration = parameters.duration || 5;
     const quality = parameters.quality || '720p';
     const aspectRatio = parameters.aspectRatio || '16:9';
     
-    // Validate aspect ratio for Runway models (only 16:9 and 9:16 supported)
-    if (!['16:9', '9:16'].includes(aspectRatio)) {
-      throw new Error(`Runway models only support 16:9 and 9:16 aspect ratios. Received: ${aspectRatio}`);
+    // Validate aspect ratio for Runway Gen-3 (supports 16:9, 4:3, 1:1, 3:4, 9:16)
+    if (!['16:9', '4:3', '1:1', '3:4', '9:16'].includes(aspectRatio)) {
+      throw new Error(`Runway Gen-3 supports 16:9, 4:3, 1:1, 3:4, and 9:16 aspect ratios. Received: ${aspectRatio}`);
     }
     
-    // Map frontend model names to Kie.ai Runway model identifiers
-    let runwayModel = 'GEN3_ALPHA_TURBO';
-    if (params.model === 'runway-aleph') {
-      runwayModel = 'ALEPH';
-    } else if (params.model === 'runway-gen3-alpha-turbo') {
-      runwayModel = 'GEN3_ALPHA_TURBO';
-    }
-    
-    // For Runway: single image only (first image from array)
+    // For Runway Gen-3: single image only (first image from array)
     const imageUrl = referenceImages.length > 0 ? referenceImages[0] : undefined;
     
     return await callKieApi('/api/v1/runway/generate', {
       prompt: params.prompt,
-      model: runwayModel, // Include model identifier for Kie.ai routing
       imageUrl,
       duration,
       quality,
-      aspectRatio, // Keep aspectRatio for both text and image-to-video
+      // Only send aspectRatio for text-to-video (exclude when imageUrl is present)
+      ...(imageUrl ? {} : { aspectRatio }),
       waterMark: parameters.watermark || '', // Runway uses waterMark (capital M)
       callBackUrl: parameters.callBackUrl,
     });
+  }
+  else if (params.model === 'runway-aleph') {
+    // Runway Aleph - uses /api/v1/aleph/generate (video-to-video editing)
+    const aspectRatio = parameters.aspectRatio || '16:9';
+    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
+    
+    // Validate aspect ratio for Runway Aleph (supports 16:9, 9:16, 4:3, 3:4, 1:1, 21:9)
+    if (!['16:9', '9:16', '4:3', '3:4', '1:1', '21:9'].includes(aspectRatio)) {
+      throw new Error(`Runway Aleph supports 16:9, 9:16, 4:3, 3:4, 1:1, and 21:9 aspect ratios. Received: ${aspectRatio}`);
+    }
+    
+    // For Runway Aleph: videoUrl (NOT imageUrl) from first reference image
+    const videoUrl = referenceImages.length > 0 ? referenceImages[0] : undefined;
+    
+    // Build Aleph request payload
+    const alephPayload: any = {
+      prompt: params.prompt,
+      callBackUrl: parameters.callBackUrl,
+      waterMark: parameters.watermark || '',
+      uploadCn: parameters.uploadCn || false, // Upload to China server (optional)
+      aspectRatio,
+      seed,
+    };
+    
+    // Add videoUrl if present
+    if (videoUrl) {
+      alephPayload.videoUrl = videoUrl;
+    }
+    
+    // Add referenceImage if provided (separate from videoUrl)
+    if (parameters.referenceImage) {
+      alephPayload.referenceImage = parameters.referenceImage;
+    }
+    
+    return await callKieApi('/api/v1/aleph/generate', alephPayload);
   }
   else if (params.model.startsWith('seedance-')) {
     // Seedance 1.0 Pro/Lite - uses /api/v1/jobs/createTask (Bytedance API)
