@@ -1416,6 +1416,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const duration = parameters?.duration || 5;
         const resolution = (parameters as any)?.resolution || '720p';
         pricingKey = `wan-2.5-${duration}s-${resolution}`;
+      } else if (model === 'kling-2.5-turbo') {
+        const duration = parameters?.duration || 5;
+        pricingKey = generationType === 'text-to-video'
+          ? 'kling-2.5-turbo-t2v'
+          : `kling-2.5-turbo-i2v-${duration}s`;
       }
       
       const cost = await getModelCost(pricingKey);

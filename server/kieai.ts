@@ -502,6 +502,7 @@ export async function generateVideo(params: {
   }
   else if (params.model.startsWith('kling-')) {
     // Kling 2.5 Turbo - uses /api/v1/jobs/createTask (Bytedance Playground API)
+    const isImageToVideo = generationType === 'image-to-video';
     const aspectRatio = parameters.aspectRatio || '16:9';
     const duration = parameters.duration ? String(parameters.duration) : '5';
     
@@ -515,17 +516,37 @@ export async function generateVideo(params: {
       throw new Error(`Kling models support 5 or 10 second durations. Received: ${duration}`);
     }
     
-    // Kling 2.5 Turbo uses kling/v2-5-turbo-text-to-video-pro
-    const klingModel = 'kling/v2-5-turbo-text-to-video-pro';
+    // Kling 2.5 Turbo: different models for text-to-video vs image-to-video
+    const klingModel = isImageToVideo 
+      ? 'kling/v2-5-turbo-image-to-video-pro'
+      : 'kling/v2-5-turbo-text-to-video-pro';
     
     // Build input object
     const inputPayload: any = {
       prompt: params.prompt,
       duration,
-      aspect_ratio: aspectRatio,
-      negative_prompt: parameters.negativePrompt,
-      cfg_scale: parameters.cfgScale !== undefined ? parameters.cfgScale : 0.5,
     };
+    
+    // Add aspect_ratio for text-to-video only (for I2V, aspect ratio is determined by input image)
+    if (!isImageToVideo) {
+      inputPayload.aspect_ratio = aspectRatio;
+    }
+    
+    // Add optional negative_prompt if provided
+    if (parameters.negativePrompt) {
+      inputPayload.negative_prompt = parameters.negativePrompt;
+    }
+    
+    // Add cfg_scale (defaults to 0.5 if not specified)
+    inputPayload.cfg_scale = parameters.cfgScale !== undefined ? parameters.cfgScale : 0.5;
+    
+    // For image-to-video: add image_url to input
+    if (isImageToVideo) {
+      if (referenceImages.length === 0) {
+        throw new Error('Kling image-to-video requires exactly 1 reference image');
+      }
+      inputPayload.image_url = referenceImages[0];
+    }
     
     return await callKieApi('/api/v1/jobs/createTask', {
       model: klingModel,

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -171,11 +172,18 @@ export default function GenerateVideo() {
             ? (getModelCost(`seedance-1-lite-${resolution}`, 400) || 0)
             : m.value === 'wan-2.5'
               ? (getModelCost(`wan-2.5-${duration}s-${resolution}`, 400) || 0)
-              : (getModelCost(m.value, 400) || 0),
+              : m.value === 'kling-2.5-turbo'
+                ? (getModelCost(
+                    generationType === 'text-to-video' 
+                      ? 'kling-2.5-turbo-t2v'
+                      : `kling-2.5-turbo-i2v-${duration}s`, 
+                    400
+                  ) || 0)
+                : (getModelCost(m.value, 400) || 0),
     }));
     
     setVideoModels(nextModels);
-  }, [pricingQuery.dataUpdatedAt, getModelCost, resolution, duration]);
+  }, [pricingQuery.dataUpdatedAt, getModelCost, resolution, duration, generationType]);
   
   const VIDEO_MODELS = videoModels;
   
@@ -516,6 +524,12 @@ export default function GenerateVideo() {
       parameters.enablePromptExpansion = enablePromptExpansion;
     }
     
+    // Add negativePrompt and cfgScale for Kling 2.5
+    if (model === 'kling-2.5-turbo') {
+      parameters.negativePrompt = negativePrompt;
+      parameters.cfgScale = cfgScale;
+    }
+    
     // Add seed if model supports it and seed is provided
     if (modelSupportsSeed() && seed) {
       if (model.startsWith('veo-')) {
@@ -798,8 +812,8 @@ export default function GenerateVideo() {
               </div>
             )}
 
-            {/* Negative Prompt - Only for Wan 2.5 */}
-            {model === 'wan-2.5' && (
+            {/* Negative Prompt - For Wan 2.5 and Kling 2.5 */}
+            {(model === 'wan-2.5' || model === 'kling-2.5-turbo') && (
               <div className="space-y-2">
                 <Label htmlFor="negative-prompt">Negative Prompt (Optional)</Label>
                 <Textarea
@@ -808,11 +822,30 @@ export default function GenerateVideo() {
                   value={negativePrompt}
                   onChange={(e) => setNegativePrompt(e.target.value)}
                   rows={3}
-                  maxLength={500}
+                  maxLength={model === 'kling-2.5-turbo' ? 2496 : 500}
                   data-testid="textarea-negative-prompt"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Max 500 characters - Describe content to avoid
+                  Max {model === 'kling-2.5-turbo' ? '2496' : '500'} characters - Describe content to avoid
+                </p>
+              </div>
+            )}
+
+            {/* CFG Scale - Only for Kling 2.5 */}
+            {model === 'kling-2.5-turbo' && (
+              <div className="space-y-2">
+                <Label htmlFor="cfg-scale">CFG Scale: {cfgScale.toFixed(1)}</Label>
+                <Slider
+                  id="cfg-scale"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={[cfgScale]}
+                  onValueChange={(value) => setCfgScale(value[0])}
+                  data-testid="slider-cfg-scale"
+                />
+                <p className="text-xs text-muted-foreground">
+                  How closely the model follows your prompt (0 = loose, 1 = strict)
                 </p>
               </div>
             )}
