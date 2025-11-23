@@ -144,10 +144,10 @@ const VIDEO_MODEL_INFO = [
   { 
     value: "grok-imagine", 
     label: "Grok Imagine", 
-    description: "Creative video generation with vivid imagination", 
+    description: "Creative video animation from images (image-to-video only)", 
     duration: "6s",
-    supportsImages: false,
-    maxImages: 0 
+    supportsImages: true,
+    maxImages: 1 
   },
   { 
     value: "sora-2-pro", 
@@ -831,7 +831,7 @@ export default function GenerateVideo() {
                     <CardTitle className="text-sm">Use Reference Images Effectively</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
-                    <p className="text-xs text-muted-foreground">Upload clear, high-quality images for image-to-video. They guide the generation but aren't directly animated, so quality matters.</p>
+                    <p className="text-xs text-muted-foreground">Upload clear, high-quality images for image-to-video (Grok, Veo, Runway, etc.). They guide the generation and quality matters significantly.</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -839,7 +839,7 @@ export default function GenerateVideo() {
                     <CardTitle className="text-sm">Choose Model Based on Your Needs</CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
-                    <p className="text-xs text-muted-foreground">Veo 3.1 excels in quality, Runway for speed, Seedance for cinematic control. Test to find your preferred balance of quality vs. speed.</p>
+                    <p className="text-xs text-muted-foreground">Veo 3.1 for quality, Runway for speed, Grok for creative animation, Sora 2 Pro for advanced storytelling. Test to find your preferred balance.</p>
                   </CardContent>
                 </Card>
               </CollapsibleContent>
