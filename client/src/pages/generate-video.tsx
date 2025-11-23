@@ -169,12 +169,14 @@ export default function GenerateVideo() {
     // pricingQuery.dataUpdatedAt only changes when TanStack refetches, so no infinite loop
     const nextModels = VIDEO_MODEL_INFO.map(m => ({
       ...m,
-      // For Seedance Pro and Lite, use composite keys for pricing lookup
-      cost: m.value === 'seedance-1-pro' 
-        ? (getModelCost(`seedance-1-pro-${duration}s-${resolution}`, 400) || 0)
-        : m.value === 'seedance-1-lite' 
-          ? (getModelCost(`seedance-1-lite-${resolution}`, 400) || 0)
-          : (getModelCost(m.value, 400) || 0),
+      // For Runway, Seedance Pro, and Seedance Lite, use composite/suffix keys for pricing lookup
+      cost: m.value === 'runway-gen3-alpha-turbo'
+        ? (getModelCost(`runway-gen3-alpha-turbo-${duration}s`, 400) || 0)
+        : m.value === 'seedance-1-pro' 
+          ? (getModelCost(`seedance-1-pro-${duration}s-${resolution}`, 400) || 0)
+          : m.value === 'seedance-1-lite' 
+            ? (getModelCost(`seedance-1-lite-${resolution}`, 400) || 0)
+            : (getModelCost(m.value, 400) || 0),
     }));
     
     setVideoModels(nextModels);

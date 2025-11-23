@@ -9,7 +9,10 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'video', model: 'veo-3.1', creditCost: 500, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3.1 Quality - HD quality with synchronized audio (8s)' },
   { feature: 'video', model: 'veo-3.1-fast', creditCost: 300, kieCreditCost: 60, category: 'generation', description: 'Google Veo 3.1 Fast - Faster generation, great quality (8s)' },
   { feature: 'video', model: 'veo-3', creditCost: 450, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3 - High-quality video generation (8s)' },
-  { feature: 'video', model: 'runway-gen3-alpha-turbo', creditCost: 350, kieCreditCost: null, category: 'generation', description: 'Runway Gen-3 - HD quality video generation (5s-10s)' },
+  
+  // Runway Gen-3 - Duration-based pricing (5s, 10s)
+  { feature: 'video', model: 'runway-gen3-alpha-turbo-5s', creditCost: 60, kieCreditCost: 12, category: 'generation', description: 'Runway Gen-3 - HD quality video generation (5s)' },
+  { feature: 'video', model: 'runway-gen3-alpha-turbo-10s', creditCost: 150, kieCreditCost: 30, category: 'generation', description: 'Runway Gen-3 - HD quality video generation (10s)' },
   
   // Seedance Pro - Duration and resolution-based pricing (5s, 10s × 480p, 720p, 1080p)
   { feature: 'video', model: 'seedance-1-pro-5s-480p', creditCost: 70, kieCreditCost: 14, category: 'generation', description: 'Seedance 1.0 Pro - 480p cinematic quality (5s)' },
