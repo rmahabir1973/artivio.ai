@@ -174,7 +174,10 @@ export default function VideoEditor() {
         // Fetch all paginated pages
         while (hasMore) {
           const url = cursor ? `/api/generations?cursor=${cursor}` : '/api/generations';
-          const response: any = await apiRequest('GET', url);
+          const res: any = await apiRequest('GET', url);
+          
+          // apiRequest returns a Response object, need to parse JSON
+          const response = await res.json();
           
           // Handle response - API returns either array or object with data property
           const pageData = Array.isArray(response) ? response : (response.data || []);
