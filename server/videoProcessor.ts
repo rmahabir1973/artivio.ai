@@ -167,7 +167,7 @@ async function getAudioDuration(filepath: string): Promise<number> {
 }
 
 /**
- * Normalize video to standard format (MP4 with H.264 + AAC)
+ * Normalize video to standard format (MP4 with H.264 + AAC) with bitrate limiting
  */
 async function normalizeVideo(inputPath: string, outputPath: string): Promise<void> {
   try {
@@ -179,14 +179,15 @@ async function normalizeVideo(inputPath: string, outputPath: string): Promise<vo
       ? '-c:a aac -b:a 128k' 
       : '-an'; // No audio output if input has no audio
     
-    const command = `ffmpeg -i "${inputPath}" -c:v libx264 -preset fast -crf 23 ${audioFlags} -y "${outputPath}"`;
+    // Optimize for streaming: limit resolution to 720p and bitrate to 2500k
+    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -preset fast -crf 24 ${audioFlags} -y "${outputPath}"`;
     
     await execAsync(command, {
       timeout: 300000,
       maxBuffer: 50 * 1024 * 1024,
     });
 
-    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'})`);
+    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'}, resolution: 720p max, bitrate: 2500k)`);
   } catch (error: any) {
     console.error(`Normalization error for ${inputPath}:`, error.message);
     throw new Error(`Failed to normalize video: ${error.message}`);
@@ -468,9 +469,9 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       await createConcatFile(normalizedPaths, concatFilePath);
       tempFiles.push(concatFilePath);
 
-      // Re-encode with HTML5-compatible settings for proper metadata and playback
-      // Using 'fast' preset and CRF 24 for speed while maintaining quality
-      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 192k "${outputPath}"`;
+      // Re-encode with HTML5-compatible settings and bitrate limiting for fast streaming
+      // Resolution: max 720p | Bitrate: 2500k | Preset: fast | CRF: 24 | movflags: faststart
+      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k "${outputPath}"`;
     } else {
       onProgress?.('process', 'Applying enhancements and combining...');
 
@@ -537,8 +538,9 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
       const fullFilterComplex = videoFilters + ';' + completeAudioFilter;
 
-      // Using 'fast' preset and CRF 24 for speed while maintaining quality
-      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 192k "${outputPath}"`;
+      // Optimized for streaming: resolution capped at 720p, bitrate limited to 2500k
+      // Resolution: max 720p | Bitrate: 2500k | Preset: fast | CRF: 24 | movflags: faststart
+      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k "${outputPath}"`;
     }
 
     onProgress?.('process', 'Running FFmpeg...');
