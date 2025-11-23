@@ -13,7 +13,7 @@ const execAsync = promisify(exec);
 const TEMP_DIR = path.join(process.cwd(), 'temp', 'video-processing');
 const OUTPUT_DIR = path.join(process.cwd(), 'public', 'video-combinations');
 const THUMBNAIL_DIR = path.join(process.cwd(), 'public', 'thumbnails');
-const MAX_CONCURRENT_JOBS = 3;
+const MAX_CONCURRENT_JOBS = 8; // Increased for better parallelism
 const FFMPEG_TIMEOUT = 600000;
 
 let activeJobs = 0;
@@ -409,43 +409,35 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
     onProgress?.('download', `Downloading ${videoUrls.length} videos...`);
 
-    const downloadedPaths: string[] = [];
-    for (let i = 0; i < videoUrls.length; i++) {
-      onProgress?.('download', `Downloading video ${i + 1}/${videoUrls.length}...`);
-      const filepath = await downloadVideo(videoUrls[i], tempDir, i);
-      downloadedPaths.push(filepath);
-      tempFiles.push(filepath);
-    }
+    // Download all videos in parallel for speed
+    const downloadedPaths = await Promise.all(
+      videoUrls.map((url, i) => downloadVideo(url, tempDir, i))
+    );
+    downloadedPaths.forEach(filepath => tempFiles.push(filepath));
 
     onProgress?.('validate', 'Validating and normalizing videos...');
 
-    const metadataList: VideoMetadata[] = [];
-    const normalizedPaths: string[] = [];
+    // Get metadata for all videos in parallel
+    const metadataList = await Promise.all(
+      downloadedPaths.map(filepath => getVideoMetadata(filepath))
+    );
 
-    // Normalize all videos to ensure compatibility
-    for (let i = 0; i < downloadedPaths.length; i++) {
-      try {
-        onProgress?.('validate', `Processing video ${i + 1}/${downloadedPaths.length}...`);
-        
-        const metadata = await getVideoMetadata(downloadedPaths[i]);
-        metadataList.push(metadata);
-
-        // Check if normalization is needed
-        const needsNormalization = metadata.codec !== 'h264' || !metadata.hasAudio;
-        
-        if (needsNormalization) {
-          onProgress?.('normalize', `Video ${i + 1} needs format conversion...`);
-          const normalizedPath = path.join(tempDir, `normalized_${i}.mp4`);
-          await normalizeVideo(downloadedPaths[i], normalizedPath);
-          normalizedPaths.push(normalizedPath);
-          tempFiles.push(normalizedPath);
-        } else {
-          normalizedPaths.push(downloadedPaths[i]);
-        }
-      } catch (error: any) {
-        throw new Error(`Video ${i + 1}: ${error.message}`);
+    // Check which videos need normalization and normalize in parallel
+    const normalizePromises = downloadedPaths.map(async (filepath, i) => {
+      const metadata = metadataList[i];
+      const needsNormalization = metadata.codec !== 'h264' || !metadata.hasAudio;
+      
+      if (needsNormalization) {
+        onProgress?.('normalize', `Video ${i + 1} needs format conversion...`);
+        const normalizedPath = path.join(tempDir, `normalized_${i}.mp4`);
+        await normalizeVideo(filepath, normalizedPath);
+        tempFiles.push(normalizedPath);
+        return normalizedPath;
       }
-    }
+      return filepath;
+    });
+
+    const normalizedPaths = await Promise.all(normalizePromises);
 
     let musicPath: string | undefined;
     if (enhancements?.backgroundMusic?.audioUrl) {
@@ -477,7 +469,8 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       tempFiles.push(concatFilePath);
 
       // Re-encode with HTML5-compatible settings for proper metadata and playback
-      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset medium -crf 23 -c:a aac -b:a 192k "${outputPath}"`;
+      // Using 'fast' preset and CRF 24 for speed while maintaining quality
+      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 192k "${outputPath}"`;
     } else {
       onProgress?.('process', 'Applying enhancements and combining...');
 
@@ -544,7 +537,8 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
       const fullFilterComplex = videoFilters + ';' + completeAudioFilter;
 
-      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset medium -crf 23 -c:a aac -b:a 192k "${outputPath}"`;
+      // Using 'fast' preset and CRF 24 for speed while maintaining quality
+      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 192k "${outputPath}"`;
     }
 
     onProgress?.('process', 'Running FFmpeg...');
