@@ -176,17 +176,8 @@ async function generateVideoInBackground(
       parameters: { ...parameters, callBackUrl: callbackUrl } 
     });
     
-    // Debug: Log the full response structure
-    console.log('🔍 Kie.ai video response structure:', JSON.stringify(result, null, 2));
-    console.log('🔍 Response keys:', Object.keys(result || {}));
-    if (result?.data) {
-      console.log('🔍 result.data keys:', Object.keys(result.data || {}));
-    }
-    
     // Kie.ai returns a taskId for async processing
-    // NOTE: result is already response.data from callKieApi, so taskId is at top level
     const taskId = result?.data?.taskId || result?.taskId;
-    console.log('🔍 Extracted taskId:', taskId);
     if (!taskId) {
       // If we got direct URL (older API format), use it
       const resultUrl = result?.url || result?.videoUrl || result?.data?.url;

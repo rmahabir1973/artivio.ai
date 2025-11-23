@@ -6,11 +6,9 @@ const KIE_API_BASE = "https://api.kie.ai";
 // Helper function to generate a random seed for reproducible AI generation
 // Seeds are positive integers that models use to initialize their random number generators
 function generateRandomSeed(): number {
-  // Generate a random integer between 1 and 2147483647 (max 32-bit signed int)
-  // Most AI models use 32-bit seeds, so we stay within that range
-  // Use Math.max/min to deterministically clamp within valid range (handles floating point edge cases)
-  const raw = Math.floor(Math.random() * 2147483647) + 1;
-  return Math.max(1, Math.min(2147483647, raw));
+  // Generate a random integer between 10000 and 99999 (Veo/Kie.ai requirement)
+  // This range works for most models including Veo, Runway, etc.
+  return Math.floor(Math.random() * 90000) + 10000;
 }
 
 // Safe JSON stringifier to prevent circular reference errors
@@ -209,6 +207,22 @@ async function callKieApi(endpoint: string, data: any): Promise<{ result: any; k
     
         console.log(`✅ Kie.ai API Response from ${endpoint}:`, safeStringify(response.data));
     
+    // Check if Kie.ai returned an error in the response body (they use 200 OK with error codes)
+    if (response.data?.code && response.data.code !== 200) {
+      const errorMsg = response.data.msg || response.data.message || 'Unknown error from AI service';
+      console.error(`❌ Kie.ai returned error code ${response.data.code}:`, errorMsg);
+      
+      // Throw an error so it gets caught and handled properly
+      const error: any = new Error(errorMsg);
+      error.kieaiDetails = {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+        endpoint,
+      };
+      throw error;
+    }
+    
     return { result: response.data, keyName };
   } catch (error: any) {
     console.error(`❌ Kie.ai API Error for ${endpoint}:`, error.response?.data || error.message);
@@ -280,7 +294,7 @@ export async function generateVideo(params: {
   
   // Route to appropriate API based on model
   if (params.model.startsWith('veo-')) {
-    // Veo 3, 3.1, 3.1 Fast - uses /api/v1/jobs/createTask (unified API)
+    // Veo 3, 3.1, 3.1 Fast - uses /api/v1/veo/generate (official Veo API)
     
     // Validate aspect ratio for Veo models (only 16:9 and 9:16 supported)
     const aspectRatio = parameters.aspectRatio || '16:9';
@@ -288,11 +302,12 @@ export async function generateVideo(params: {
       throw new Error(`Veo models only support 16:9 and 9:16 aspect ratios. Received: ${aspectRatio}`);
     }
     
+    // Map model names to Kie.ai API format
     let baseModel = 'veo3';
     if (params.model === 'veo-3.1') {
-      baseModel = 'veo3';
+      baseModel = 'veo3';  // Veo 3.1 Quality
     } else if (params.model === 'veo-3.1-fast') {
-      baseModel = 'veo3_fast';
+      baseModel = 'veo3_fast';  // Veo 3.1 Fast
     } else if (params.model === 'veo-3') {
       baseModel = 'veo3';
     }
@@ -344,49 +359,35 @@ export async function generateVideo(params: {
       }
     }
     
-    // Auto-generate seed if not provided
+    // Auto-generate seed if not provided (seeds parameter is plural in new API)
     const seed = parameters.seed || generateRandomSeed();
     
-    console.log(`🌱 Veo seed format: sending scalar seed=${seed}`);
+    console.log(`🌱 Veo API: model=${baseModel}, generationType=${veoGenerationType}, seed=${seed}`);
     
-    // Map to unified API model name (follows pattern: baseModel-generationType)
-    // e.g., 'veo3-text-to-video', 'veo3_fast-image-to-video', etc.
-    let unifiedModel: string;
-    if (veoGenerationType === 'TEXT_2_VIDEO') {
-      unifiedModel = `${baseModel}-text-to-video`;
-    } else {
-      // For all image-to-video modes (FIRST_AND_LAST_FRAMES_2_VIDEO, REFERENCE_2_VIDEO)
-      unifiedModel = `${baseModel}-image-to-video`;
-    }
-    
-    // Build input payload
-    const inputPayload: any = {
+    // Build request payload for /api/v1/veo/generate (camelCase format)
+    const requestPayload: any = {
       prompt: params.prompt,
-      aspect_ratio: aspectRatio,
-      seed,
-      enable_translation: true, // Enable automatic prompt translation for better results
+      model: baseModel,  // Just 'veo3' or 'veo3_fast', no suffix!
+      aspectRatio: aspectRatio,  // camelCase
+      seeds: seed,  // Plural!
+      enableTranslation: true,  // camelCase
+      callBackUrl: parameters.callBackUrl,  // camelCase
     };
     
-    // Add generation type for image-to-video modes
-    if (veoGenerationType !== 'TEXT_2_VIDEO') {
-      inputPayload.generation_type = veoGenerationType;
-    }
+    // Add generation type (required for all modes according to docs)
+    requestPayload.generationType = veoGenerationType;
     
-    // Add image URLs if present
+    // Add image URLs if present (camelCase: imageUrls)
     if (referenceImages.length > 0) {
-      inputPayload.image_urls = referenceImages;
+      requestPayload.imageUrls = referenceImages;
     }
     
     // Add optional watermark parameter
     if (parameters.watermark !== undefined) {
-      inputPayload.watermark = parameters.watermark;
+      requestPayload.watermark = parameters.watermark;
     }
     
-    return await callKieApi('/api/v1/jobs/createTask', {
-      model: unifiedModel,
-      callBackUrl: parameters.callBackUrl,
-      input: inputPayload,
-    });
+    return await callKieApi('/api/v1/veo/generate', requestPayload);
   } 
   else if (params.model === 'runway-gen3-alpha-turbo') {
     // Runway Gen-3 - uses /api/v1/runway/generate
