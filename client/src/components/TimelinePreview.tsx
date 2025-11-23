@@ -93,7 +93,7 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
 
           const handleError = () => {
             if (!abortController.signal.aborted) {
-              // Try to use provided duration, but don't default to 10s
+              // Try to use provided duration first
               if (clip.duration && clip.duration > 0) {
                 metadata.set(cacheKey, {
                   id: clip.id,
@@ -101,10 +101,15 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
                   duration: clip.duration,
                   loaded: false,
                 });
-              }
-              // If no metadata available at all, mark as error
-              if (!clip.duration) {
-                setMetadataError(true);
+              } else {
+                // Use a reasonable default fallback (8 seconds) for AI-generated videos
+                // This allows the timeline to work even if metadata loading fails (CORS issues, etc)
+                metadata.set(cacheKey, {
+                  id: clip.id,
+                  url: clip.url,
+                  duration: 8, // Default duration for AI-generated videos
+                  loaded: false,
+                });
               }
             }
             cleanup();
