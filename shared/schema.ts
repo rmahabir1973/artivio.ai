@@ -544,16 +544,25 @@ export const sora2ProStoryboardRequestSchema = z.object({
 });
 
 export const generateImageRequestSchema = z.object({
-  model: z.enum(['4o-image', 'flux-kontext', 'nano-banana']),
+  model: z.enum(['4o-image', 'flux-kontext', 'nano-banana', 'seedream-4', 'midjourney-v7']),
   prompt: z.string().min(1).max(2000),
   mode: z.enum(['text-to-image', 'image-editing']).default('text-to-image'),
   referenceImages: z.array(imageInputSchema).max(10).optional(), // Max 10 images (base64 or HTTPS URL)
   parameters: z.object({
+    // General parameters
     aspectRatio: z.string().optional(),
     style: z.string().optional(),
     outputFormat: z.enum(['PNG', 'JPEG', 'WEBP']).optional(),
     quality: z.enum(['standard', 'hd']).optional(),
     seed: z.number().optional(), // Random seed for reproducible generation
+    // Seedream-specific parameters
+    imageSize: z.string().optional(), // square, square_hd, portrait_4_3, etc.
+    imageResolution: z.string().optional(), // 1K, 2K, 4K
+    maxImages: z.number().min(1).max(6).optional(), // 1-6 images per generation
+    // Midjourney-specific parameters
+    version: z.string().optional(), // MJ version
+    speed: z.enum(['relaxed', 'fast', 'turbo']).optional(),
+    stylization: z.number().min(0).max(1000).optional(), // 0-1000
   }).optional(),
 }).refine(
   (data) => {
