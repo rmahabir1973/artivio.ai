@@ -1,4 +1,4 @@
-import { useState, useEffect, useReducer, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,6 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "wan-2.5": ["16:9", "9:16", "1:1"],
   "kling-2.5-turbo": ["16:9", "9:16", "1:1"],
   "kling-2.1": ["16:9", "9:16", "1:1"],
-  "grok-imagine": ["16:9", "9:16"],
   "sora-2-pro": ["16:9", "9:16", "1:1"],
 };
 
@@ -49,7 +48,6 @@ const DURATION_SUPPORT: Record<string, number[]> = {
   "wan-2.5": [10],
   "kling-2.5-turbo": [5, 10],
   "kling-2.1": [5, 10],
-  "grok-imagine": [6],
   "sora-2-pro": [5, 10, 20],
 };
 
@@ -142,14 +140,6 @@ const VIDEO_MODEL_INFO = [
     maxImages: 1 
   },
   { 
-    value: "grok-imagine", 
-    label: "Grok Imagine", 
-    description: "Creative video animation from images (image-to-video only)", 
-    duration: "6s",
-    supportsImages: true,
-    maxImages: 1 
-  },
-  { 
     value: "sora-2-pro", 
     label: "Sora 2 Pro", 
     description: "Premium next-gen realistic video with advanced storytelling, multi-scene narratives, and extended 20s duration. Perfect for complex creative projects and professional content.", 
@@ -159,147 +149,35 @@ const VIDEO_MODEL_INFO = [
   },
 ];
 
-// Shallow equality check for arrays
-function shallowEqual(a: any[], b: any[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((item, index) => item === b[index]);
-}
-
-// Reducer for video state with Grok enforcement
-type VideoState = {
-  model: string;
-  generationType: "text-to-video" | "image-to-video";
-};
-
-type VideoStateResult = {
-  state: VideoState;
-  coercedTab?: "text-to-video" | "image-to-video";
-  grokAutoSwitch?: boolean;
-};
-
-type VideoAction =
-  | { type: "SET_MODEL"; payload: string }
-  | { type: "SET_GENERATION_TYPE"; payload: "text-to-video" | "image-to-video" }
-  | { type: "LOAD_TEMPLATE"; payload: { model: string; generationType?: "text-to-video" | "image-to-video" } };
-
-function videoStateReducer(state: VideoState, action: VideoAction): VideoStateResult {
-  switch (action.type) {
-    case "SET_MODEL": {
-      const newModel = action.payload;
-      
-      // Grok Imagine invariant: must use image-to-video mode
-      if (newModel === "grok-imagine" && state.generationType !== "image-to-video") {
-        return {
-          state: {
-            model: newModel,
-            generationType: "image-to-video",
-          },
-          coercedTab: "image-to-video",
-          grokAutoSwitch: true,
-        };
-      }
-      
-      return {
-        state: {
-          ...state,
-          model: newModel,
-        },
-      };
-    }
-    
-    case "SET_GENERATION_TYPE": {
-      const newGenerationType = action.payload;
-      
-      // Reject switching to text-to-video if Grok is selected
-      if (state.model === "grok-imagine" && newGenerationType === "text-to-video") {
-        // Return unchanged state (rejection) and coerce tab back
-        return {
-          state,
-          coercedTab: "image-to-video",
-        };
-      }
-      
-      return {
-        state: {
-          ...state,
-          generationType: newGenerationType,
-        },
-      };
-    }
-    
-    case "LOAD_TEMPLATE": {
-      const { model, generationType } = action.payload;
-      
-      // Apply Grok invariant when loading template
-      if (model === "grok-imagine") {
-        return {
-          state: {
-            model,
-            generationType: "image-to-video", // Force image-to-video for Grok
-          },
-          coercedTab: "image-to-video",
-        };
-      }
-      
-      return {
-        state: {
-          model,
-          generationType: generationType || state.generationType,
-        },
-      };
-    }
-    
-    default:
-      return { state };
-  }
-}
 
 export default function GenerateVideo() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
-  const { getModelCost, pricingQuery, pricingMap } = usePricing();
+  const { getModelCost, pricingQuery } = usePricing();
   const { markStepComplete } = useOnboarding();
   const [, navigate] = useLocation();
   
-  // Video state with reducer for Grok enforcement
-  const videoStateRef = useRef<VideoState>({ model: "veo-3.1", generationType: "text-to-video" });
-  const [videoState, setVideoState] = useState<VideoState>(videoStateRef.current);
-  const [generationTab, setGenerationTab] = useState<"text-to-video" | "image-to-video">(videoState.generationType);
-  
-  // Dispatch helper that handles coerced tab and Grok auto-switch notifications
-  function dispatchVideo(action: VideoAction) {
-    const result = videoStateReducer(videoStateRef.current, action);
-    videoStateRef.current = result.state;
-    setVideoState(result.state);
-    setGenerationTab(result.coercedTab ?? result.state.generationType);
-    if (result.grokAutoSwitch) {
-      toast({
-        title: "Mode Switched",
-        description: "Grok Imagine requires image-to-video mode. Mode switched automatically.",
-      });
-    }
-  }
+  // Simple state management
+  const [model, setModel] = useState("veo-3.1");
+  const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
 
-  // Merge model info with dynamic pricing - cached in state to ensure stability
+  // Merge model info with dynamic pricing
   const [videoModels, setVideoModels] = useState(() => VIDEO_MODEL_INFO.map(m => ({
     ...m,
     cost: 0,
   })));
   
-  // Update video models when pricing data changes (Fix 2: Pricing with dataUpdatedAt)
   useEffect(() => {
-    if (pricingQuery.isLoading || !pricingQuery.data?.length) return;
-    const merged = VIDEO_MODEL_INFO.map(model => ({
-      ...model,
-      cost: pricingMap.get(model.value)?.creditCost ?? 0,
+    // Update videoModels whenever pricing data changes
+    // pricingQuery.dataUpdatedAt only changes when TanStack refetches, so no infinite loop
+    const nextModels = VIDEO_MODEL_INFO.map(m => ({
+      ...m,
+      cost: getModelCost(m.value, 400) || 0,
     }));
-    setVideoModels(prev => {
-      const prevCosts = prev.map(m => m.cost);
-      const newCosts = merged.map(m => m.cost);
-      return shallowEqual(prevCosts, newCosts) ? prev : merged;
-    });
-  }, [pricingQuery.dataUpdatedAt]);
+    
+    setVideoModels(nextModels);
+  }, [pricingQuery.dataUpdatedAt, getModelCost]);
   
   const VIDEO_MODELS = videoModels;
   const [prompt, setPrompt] = useState("");
@@ -318,20 +196,17 @@ export default function GenerateVideo() {
   
   // Helper to check if current model supports seeds
   const modelSupportsSeed = () => {
-    return videoState.model.startsWith('veo-') || videoState.model.startsWith('seedance-') || videoState.model.startsWith('wan-');
+    return model.startsWith('veo-') || model.startsWith('seedance-') || model.startsWith('wan-');
   };
 
-  // Load template handler - uses dispatchVideo to handle Grok invariant
+  // Load template handler
   const handleLoadTemplate = (template: any) => {
     setPrompt(template.prompt);
     if (template.model) {
-      dispatchVideo({ 
-        type: 'LOAD_TEMPLATE', 
-        payload: { 
-          model: template.model,
-          generationType: template.generationType 
-        } 
-      });
+      setModel(template.model);
+      if (template.generationType) {
+        setGenerationType(template.generationType);
+      }
     }
     if (template.parameters) {
       if (template.parameters.aspectRatio) setAspectRatio(template.parameters.aspectRatio);
@@ -402,7 +277,7 @@ export default function GenerateVideo() {
     }
   }, [pollData, toast]);
 
-  const selectedModel = VIDEO_MODELS.find(m => m.value === videoState.model);
+  const selectedModel = VIDEO_MODELS.find(m => m.value === model);
   const maxImages = selectedModel?.maxImages || 1;
 
   // Trim reference images when model changes (enforce max images limit)
@@ -414,11 +289,11 @@ export default function GenerateVideo() {
         description: `${selectedModel?.label} supports up to ${maxImages} image${maxImages > 1 ? 's' : ''}. Extra images removed.`,
       });
     }
-  }, [videoState.model, maxImages, referenceImages.length, selectedModel?.label, toast]);
+  }, [model, maxImages, referenceImages.length, selectedModel?.label, toast]);
 
   // Auto-adjust duration when model changes to ensure it's supported
   useEffect(() => {
-    const supportedDurations = DURATION_SUPPORT[videoState.model] || [5, 8, 10];
+    const supportedDurations = DURATION_SUPPORT[model] || [5, 8, 10];
     
     // If current duration is not supported by the new model, auto-adjust to closest supported duration
     if (!supportedDurations.includes(duration)) {
@@ -429,27 +304,27 @@ export default function GenerateVideo() {
       
       setDuration(closestDuration);
       
-      const modelLabel = VIDEO_MODEL_INFO.find(m => m.value === videoState.model)?.label || videoState.model;
+      const modelLabel = VIDEO_MODEL_INFO.find(m => m.value === model)?.label || model;
       toast({
         title: "Duration Adjusted",
         description: `${modelLabel} supports: ${supportedDurations.join('s, ')}s. Duration set to ${closestDuration}s.`,
       });
     }
-  }, [videoState.model, duration, toast]);
+  }, [model, duration, toast]);
 
   // Auto-adjust aspect ratio when switching models
   useEffect(() => {
-    const supportedRatios = ASPECT_RATIO_SUPPORT[videoState.model] || ["16:9", "9:16"];
+    const supportedRatios = ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"];
     
     if (!supportedRatios.includes(aspectRatio)) {
       setAspectRatio('16:9');
-      const modelName = selectedModel?.label || videoState.model;
+      const modelName = selectedModel?.label || model;
       toast({
         title: "Aspect Ratio Adjusted",
         description: `${modelName} doesn't support ${aspectRatio}. Aspect ratio set to 16:9.`,
       });
     }
-  }, [videoState.model, aspectRatio, toast, selectedModel?.label]);
+  }, [model, aspectRatio, toast, selectedModel?.label]);
 
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -549,7 +424,7 @@ export default function GenerateVideo() {
       return;
     }
 
-    if (videoState.generationType === "image-to-video" && referenceImages.length === 0) {
+    if (generationType === "image-to-video" && referenceImages.length === 0) {
       toast({
         title: "Reference Image Required",
         description: "Please upload at least one reference image for image-to-video generation.",
@@ -569,9 +444,9 @@ export default function GenerateVideo() {
     }
 
     // Validate duration for model
-    const supportedDurations = DURATION_SUPPORT[videoState.model] || [5, 8, 10];
+    const supportedDurations = DURATION_SUPPORT[model] || [5, 8, 10];
     if (!supportedDurations.includes(duration)) {
-      const modelLabel = VIDEO_MODEL_INFO.find(m => m.value === videoState.model)?.label || videoState.model;
+      const modelLabel = VIDEO_MODEL_INFO.find(m => m.value === model)?.label || model;
       toast({
         title: "Invalid Duration",
         description: `${modelLabel} supports: ${supportedDurations.join('s, ')}s only.`,
@@ -602,7 +477,7 @@ export default function GenerateVideo() {
     
     // Add seed if model supports it and seed is provided
     if (modelSupportsSeed() && seed) {
-      if (videoState.model.startsWith('veo-')) {
+      if (model.startsWith('veo-')) {
         parameters.seeds = [seed]; // Veo uses array format
       } else {
         parameters.seed = seed; // Seedance/Wan use singular
@@ -610,10 +485,10 @@ export default function GenerateVideo() {
     }
     
     generateMutation.mutate({
-      model: videoState.model,
+      model,
       prompt,
-      generationType: videoState.generationType,
-      referenceImages: videoState.generationType === "image-to-video" ? referenceImages : undefined,
+      generationType,
+      referenceImages: generationType === "image-to-video" ? referenceImages : undefined,
       parameters,
     });
   };
@@ -642,14 +517,14 @@ export default function GenerateVideo() {
                 featureType="video"
                 onLoadTemplate={handleLoadTemplate}
                 currentPrompt={prompt}
-                currentModel={videoState.model}
+                currentModel={model}
                 currentParameters={{ aspectRatio, duration, quality }}
               />
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Generation Type Tabs */}
-            <Tabs value={generationTab} onValueChange={(v: any) => dispatchVideo({ type: 'SET_GENERATION_TYPE', payload: v })}>
+            <Tabs value={generationType} onValueChange={setGenerationType}>
               <TabsList className="grid w-full grid-cols-2" data-testid="tabs-generation-type">
                 <TabsTrigger value="text-to-video" data-testid="tab-text-to-video">
                   Text to Video
@@ -744,7 +619,7 @@ export default function GenerateVideo() {
             {/* Model Selection */}
             <div className="space-y-2">
               <Label htmlFor="model">AI Model</Label>
-              <Select value={videoState.model} onValueChange={(newModel) => dispatchVideo({ type: 'SET_MODEL', payload: newModel })}>
+              <Select value={model} onValueChange={setModel}>
                 <SelectTrigger id="model" data-testid="select-video-model">
                   <SelectValue />
                 </SelectTrigger>
@@ -772,7 +647,7 @@ export default function GenerateVideo() {
               <Textarea
                 id="prompt"
                 placeholder={
-                  videoState.generationType === "text-to-video" 
+                  generationType === "text-to-video" 
                     ? "Describe the video you want to create... (e.g., 'A serene sunset over mountains with birds flying')"
                     : "Describe how the reference image(s) should animate... (e.g., 'The scene slowly zooms in as clouds drift across the sky')"
                 }
@@ -791,16 +666,16 @@ export default function GenerateVideo() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(DURATION_SUPPORT[videoState.model] || [5, 8, 10]).map((dur) => (
+                  {(DURATION_SUPPORT[model] || [5, 8, 10]).map((dur) => (
                     <SelectItem key={dur} value={String(dur)}>
                       {dur} seconds
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {(DURATION_SUPPORT[videoState.model] || []).length < 3 && (
+              {(DURATION_SUPPORT[model] || []).length < 3 && (
                 <p className="text-xs text-muted-foreground">
-                  {selectedModel?.label || videoState.model} supports: {(DURATION_SUPPORT[videoState.model] || [5, 8, 10]).join('s, ')}s
+                  {selectedModel?.label || model} supports: {(DURATION_SUPPORT[model] || [5, 8, 10]).join('s, ')}s
                 </p>
               )}
             </div>
@@ -827,16 +702,16 @@ export default function GenerateVideo() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(ASPECT_RATIO_SUPPORT[videoState.model] || ["16:9", "9:16"]).map((ratio) => (
+                  {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).map((ratio) => (
                     <SelectItem key={ratio} value={ratio}>
                       {ASPECT_RATIO_LABELS[ratio] || ratio}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {(ASPECT_RATIO_SUPPORT[videoState.model] || []).length < 4 && (
+              {(ASPECT_RATIO_SUPPORT[model] || []).length < 4 && (
                 <p className="text-xs text-muted-foreground">
-                  {selectedModel?.label || videoState.model} supports: {(ASPECT_RATIO_SUPPORT[videoState.model] || ["16:9", "9:16"]).join(", ")}
+                  {selectedModel?.label || model} supports: {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).join(", ")}
                 </p>
               )}
             </div>

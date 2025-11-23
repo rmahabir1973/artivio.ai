@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { PricingEntry } from "@shared/schema";
 
@@ -35,15 +35,15 @@ export function usePricing() {
    * @param defaultCost - Fallback cost if not found in database or during loading
    * @returns Credit cost for the model
    */
-  const getModelCost = useMemo(
-    () => (modelName: string, defaultCost: number = 100): number => {
+  const getModelCost = useCallback(
+    (modelName: string, defaultCost: number = 100): number => {
       // During loading, use fallback to prevent flicker
       if (isLoading) return defaultCost;
       
       const pricing = pricingMap.get(modelName);
       return pricing?.creditCost ?? defaultCost;
     },
-    [pricingMap, isLoading]
+    [pricingMap, isLoading, dataUpdatedAt]
   );
 
   /**
@@ -52,12 +52,12 @@ export function usePricing() {
    * @param feature - Feature name (e.g., 'video', 'image', 'music')
    * @returns Array of pricing entries for that feature
    */
-  const getPricingByFeature = useMemo(
-    () => (feature: string): PricingEntry[] => {
+  const getPricingByFeature = useCallback(
+    (feature: string): PricingEntry[] => {
       if (isLoading) return [];
       return pricingData.filter((p) => p.feature === feature);
     },
-    [pricingData, isLoading]
+    [pricingData, dataUpdatedAt]
   );
 
   /**
@@ -66,12 +66,12 @@ export function usePricing() {
    * @param category - Category name (e.g., 'generation', 'chat', 'voice')
    * @returns Array of pricing entries for that category
    */
-  const getPricingByCategory = useMemo(
-    () => (category: string): PricingEntry[] => {
+  const getPricingByCategory = useCallback(
+    (category: string): PricingEntry[] => {
       if (isLoading) return [];
       return pricingData.filter((p) => p.category === category);
     },
-    [pricingData, isLoading]
+    [pricingData, dataUpdatedAt]
   );
 
   return {
