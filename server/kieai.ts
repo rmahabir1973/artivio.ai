@@ -348,7 +348,8 @@ export async function generateVideo(params: {
   else if (params.model === 'runway-gen3-alpha-turbo') {
     // Runway Gen-3 - uses /api/v1/runway/generate
     const duration = parameters.duration || 5;
-    const quality = '720p'; // Always use 720p (HD quality) for both 5s and 10s
+    // ALWAYS use 720p (HD quality) - ignore any incoming quality parameter
+    const quality = '720p';
     const aspectRatio = parameters.aspectRatio || '16:9';
     
     // Validate aspect ratio for Runway Gen-3 (supports 16:9, 4:3, 1:1, 3:4, 9:16)

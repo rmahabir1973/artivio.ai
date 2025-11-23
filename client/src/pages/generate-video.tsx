@@ -167,7 +167,7 @@ export default function GenerateVideo() {
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [duration, setDuration] = useState(5);
-  const [quality, setQuality] = useState("1080p");
+  const [quality, setQuality] = useState("720p");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [seedLocked, setSeedLocked] = useState(false);
@@ -194,7 +194,10 @@ export default function GenerateVideo() {
     if (template.parameters) {
       if (template.parameters.aspectRatio) setAspectRatio(template.parameters.aspectRatio);
       if (template.parameters.duration) setDuration(template.parameters.duration);
-      if (template.parameters.quality) setQuality(template.parameters.quality);
+      // Only load quality if not Runway Gen-3 (which always uses 720p)
+      if (template.parameters.quality && template.model !== 'runway-gen3-alpha-turbo') {
+        setQuality(template.parameters.quality);
+      }
     }
   };
 
@@ -321,6 +324,13 @@ export default function GenerateVideo() {
       });
     }
   }, [model, selectedModel, generationType, toast]);
+
+  // Auto-reset quality to 720p when Runway Gen-3 is selected
+  useEffect(() => {
+    if (model === 'runway-gen3-alpha-turbo' && quality !== '720p') {
+      setQuality('720p');
+    }
+  }, [model, quality]);
 
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -680,19 +690,21 @@ export default function GenerateVideo() {
               )}
             </div>
 
-            {/* Quality */}
-            <div className="space-y-2">
-              <Label htmlFor="quality">Quality</Label>
-              <Select value={quality} onValueChange={setQuality}>
-                <SelectTrigger id="quality" data-testid="select-quality">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="720p">720p (HD)</SelectItem>
-                  <SelectItem value="1080p">1080p (Full HD)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Quality - Hidden for Runway Gen-3 (always uses HD/720p) */}
+            {model !== 'runway-gen3-alpha-turbo' && (
+              <div className="space-y-2">
+                <Label htmlFor="quality">Quality</Label>
+                <Select value={quality} onValueChange={setQuality}>
+                  <SelectTrigger id="quality" data-testid="select-quality">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="720p">720p (HD)</SelectItem>
+                    <SelectItem value="1080p">1080p (Full HD)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Aspect Ratio */}
             <div className="space-y-2">
