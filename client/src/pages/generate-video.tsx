@@ -318,6 +318,25 @@ export default function GenerateVideo() {
     }
   }, [model, aspectRatio, toast, selectedModel?.label]);
 
+  // Auto-switch to image-to-video mode for image-only models like Grok
+  useEffect(() => {
+    if (selectedModel && selectedModel.supportsImages && !selectedModel.maxImages) {
+      // This shouldn't happen, but skip if maxImages is 0
+      return;
+    }
+    
+    // Grok Imagine requires image-to-video mode exclusively
+    if (model === 'grok-imagine') {
+      if (generationType !== 'image-to-video') {
+        setGenerationType('image-to-video');
+        toast({
+          title: "Mode Switched",
+          description: "Grok Imagine requires image-to-video mode. Mode switched automatically.",
+        });
+      }
+    }
+  }, [model, generationType, selectedModel, toast]);
+
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest("POST", "/api/generate/video", data);
