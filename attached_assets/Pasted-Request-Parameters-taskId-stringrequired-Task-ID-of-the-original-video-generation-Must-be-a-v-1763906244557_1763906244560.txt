@@ -1,0 +1,177 @@
+Request Parameters
+​
+taskId
+stringrequired
+Task ID of the original video generation. Must be a valid taskId returned from the video generation interface. Note: Videos generated after 1080P generation cannot be extended.
+​
+prompt
+stringrequired
+Text prompt describing the extended video content. Should detail how you want the video to be extended, including actions, scene changes, style, etc.
+​
+seeds
+integer
+Random seed parameter for controlling the randomness of generated content. Range: 10000-99999. Same seeds will generate similar video content, different seeds will generate different video content. If not specified, the system will automatically assign random seeds.
+​
+watermark
+string
+Watermark text (optional). If provided, a watermark will be added to the generated video.
+​
+callBackUrl
+string
+Callback URL when the task is completed (optional). Strongly recommended for production environments.
+​
+Extension Features
+Through the video extension feature, you can:
+Extend video duration and add more content
+Change video direction and add new actions or scenes
+Add new elements while maintaining the original style
+Create richer video stories
+Extension Features:
+Smart Analysis: Deeply understand the content and style of the original video
+Natural Connection: Extended content seamlessly connects with the original video
+Flexible Control: Precisely control extended content through prompts
+Quality Assurance: Maintain the same quality and style as the original video
+Important Notes
+Can only extend videos generated through the Veo3.1 API
+Extended content must also comply with platform content policies
+Recommend using English prompts for best results
+Video extension consumes credits, see Billing Details for specific pricing
+​
+Best Practices
+​
+Prompt Writing Suggestions
+Detailed Action Description: Clearly describe how you want the video to be extended, e.g., “the dog continues running through the park, jumping over obstacles”
+Maintain Style Consistency: Ensure the style of extended content matches the original video
+Natural Transition: Described actions should naturally connect with the end of the original video
+Use English: Recommend using English prompts for best results
+Avoid Conflicts: Ensure extended content doesn’t create logical conflicts with the original video
+​
+Technical Recommendations
+Use Callbacks: Strongly recommend using callback mechanisms to get results in production environments
+Download Promptly: Download video files promptly after generation, URLs have time limits
+Error Handling: Implement appropriate error handling and retry mechanisms
+Credit Management: Monitor credit usage to ensure sufficient balance
+Seed Control: Use the seeds parameter to control the randomness of generated content
+​
+Important Notes
+​
+Important Limitations
+Original Video Requirements: Can only extend videos generated through the Veo3.1 API
+Content Policy: Extended content must also comply with platform content policies
+Credit Consumption: Video extension consumes credits, see Billing Details for specific pricing
+Processing Time: Video extension may take several minutes to over ten minutes to process
+URL Validity: Generated video URLs have time limits, please download and save promptly
+​
+Extended Video Features
+Seamless Connection: Extended videos will naturally connect with the original video
+Quality Maintenance: Extended videos maintain the same quality as the original video
+Style Consistency: Extended content will maintain the visual style of the original video
+Flexible Control: Prompts can precisely control the content and direction of extension
+​
+Troubleshooting
+Common Error Handling
+
+Extension Quality Issues
+
+Technical Issues
+
+Authorizations
+​
+Authorization
+stringheaderrequired
+All APIs require authentication via Bearer Token.
+
+Get API Key:
+
+Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+
+Body
+application/json
+​
+taskId
+stringrequired
+Task ID of the original video generation. Must be a valid taskId returned from the video generation interface. Note: Videos generated after 1080P generation cannot be extended.
+
+Example:
+"veo_task_abcdef123456"
+
+​
+prompt
+stringrequired
+Text prompt describing the extended video content. Should detail how you want the video to be extended, including actions, scene changes, style, etc.
+
+Example:
+"The dog continues running through the park, jumping over obstacles and playing with other dogs"
+
+​
+seeds
+integer
+Random seed parameter for controlling the randomness of generated content. Range: 10000-99999. Same seeds will generate similar video content, different seeds will generate different video content. If not specified, the system will automatically assign random seeds.
+
+Required range: 10000 <= x <= 99999
+Example:
+12345
+
+​
+watermark
+string
+Watermark text (optional). If provided, a watermark will be added to the generated video.
+
+Example:
+"MyBrand"
+
+​
+callBackUrl
+string
+Callback URL when the task is completed (optional). Strongly recommended for production environments.
+
+The system will send a POST request to this URL when video extension is completed, containing task status and results
+The callback contains generated video URLs, task information, etc.
+Your callback endpoint should accept POST requests with JSON payloads containing video results
+For detailed callback format and implementation guide, see Video Generation Callbacks
+Alternatively, you can use the get video details interface to poll task status
+Example:
+"https://your-callback-url.com/veo-extend-callback"
+
+Response
+
+200
+
+application/json
+Request successful
+
+​
+code
+enum<integer>
+Response status code
+
+200: Success - Extension task created
+400: Client error - Prompt violates content policy or other input errors
+401: Unauthorized - Authentication credentials missing or invalid
+402: Insufficient credits - Account does not have enough credits to perform the operation
+404: Not found - Original video or task does not exist
+422: Validation error - Request parameter validation failed
+429: Rate limit - Exceeded the request limit for this resource
+455: Service unavailable - System is under maintenance
+500: Server error - Unexpected error occurred while processing the request
+501: Extension failed - Video extension task failed
+505: Feature disabled - The requested feature is currently disabled
+Available options: 200, 400, 401, 402, 404, 422, 429, 455, 500, 501, 505 
+​
+msg
+string
+Response message
+
+Example:
+"success"
+
+​
+data
+object
+Show child attributes
+
+Veo3.1 Video Generation Callbacks
+Get Veo3.1 Video Details

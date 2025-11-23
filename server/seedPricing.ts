@@ -6,7 +6,7 @@ const COMPREHENSIVE_PRICING = [
   // VIDEO GENERATION MODELS
   // ========================================
   // Kie.ai confirmed costs (as of Nov 2025): Veo 3 Fast=60, Veo 3 Quality=250, Veo 3 Fallback=100, Sora 2=30
-  { feature: 'video', model: 'veo-3.1', creditCost: 500, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3.1 - 1080p quality with synchronized audio (8s)' },
+  { feature: 'video', model: 'veo-3.1', creditCost: 500, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3.1 Quality - HD quality with synchronized audio (8s)' },
   { feature: 'video', model: 'veo-3.1-fast', creditCost: 300, kieCreditCost: 60, category: 'generation', description: 'Google Veo 3.1 Fast - Faster generation, great quality (8s)' },
   { feature: 'video', model: 'veo-3', creditCost: 450, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3 - High-quality video generation (8s)' },
   { feature: 'video', model: 'runway-gen3-alpha-turbo', creditCost: 350, kieCreditCost: null, category: 'generation', description: 'Runway Gen-3 Alpha Turbo - Fast, high-quality (5s-10s)' },

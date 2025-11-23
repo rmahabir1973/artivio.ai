@@ -6,10 +6,10 @@ const KIE_API_BASE = "https://api.kie.ai";
 // Helper function to generate a random seed for reproducible AI generation
 // Seeds are positive integers that models use to initialize their random number generators
 function generateRandomSeed(): number {
-  // Generate a random integer between 1 and 2147483647 (max 32-bit signed int)
-  // Most AI models use 32-bit seeds, so we stay within that range
-  const raw = Math.floor(Math.random() * 2147483647) + 1;
-  return Math.max(1, Math.min(2147483647, raw));
+  // Generate a random integer between 10000 and 99999 (Kie.ai Veo requirement)
+  // Veo models require seeds in range 10000-99999 per API documentation
+  const raw = Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
+  return Math.max(10000, Math.min(99999, raw));
 }
 
 // Safe JSON stringifier to prevent circular reference errors
@@ -313,16 +313,17 @@ export async function generateVideo(params: {
       modelName = 'veo3';
     }
     
-    // Auto-generate seed if not provided
+    // Auto-generate seed if not provided (Veo requires range 10000-99999)
     const seed = parameters.seed || generateRandomSeed();
     
-    console.log(`🌱 Veo seed format: sending scalar seed=${seed}`);
+    console.log(`🌱 Veo seed format: sending seeds=${seed}`);
     
     // Build request payload for /api/v1/veo/generate
     const payload: any = {
       model: modelName,
       prompt: params.prompt,
       aspectRatio: aspectRatio,
+      seeds: seed,  // Kie.ai uses "seeds" (plural) parameter
       callBackUrl: parameters.callBackUrl,
     };
     

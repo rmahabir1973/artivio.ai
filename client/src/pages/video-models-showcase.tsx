@@ -9,16 +9,16 @@ import { apiRequest } from "@/lib/queryClient";
 const VIDEO_MODELS = [
   {
     value: "veo-3.1",
-    label: "Veo 3.1",
-    description: "1080p quality with synchronized audio",
+    label: "Veo 3.1 Quality",
+    description: "HD quality with synchronized audio",
     duration: "8s",
     supportsImages: false,
     icon: <Sparkles className="w-5 h-5" />,
     features: [
-      "Turn Photos into Motion Visuals",
-      "Studio-Quality Results from a Single Image",
+      "Highest Quality Video Output",
+      "Professional HD Generation",
       "Smart Audio Integration for Immersive Feel",
-      "Style-Aware Scene Animation"
+      "Advanced Scene Understanding"
     ],
     useCases: ["Visual Storytellers & Artists", "Social Media Creators", "Educators & Presenters"]
   },
