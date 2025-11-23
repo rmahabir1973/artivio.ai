@@ -690,39 +690,43 @@ export async function generateImage(params: {
     });
   }
   else if (params.model === 'midjourney-v7') {
-    // Midjourney v7 - uses /api/v1/jobs/createTask (unified endpoint)
+    // Midjourney v7 - uses dedicated /api/v1/mj/generate endpoint (per official API docs)
     const aspectRatio = parameters.aspectRatio || '1:1';
     const version = parameters.version || '7';
-    const speed = parameters.speed || 'Fast';
-    const stylization = parameters.stylization !== undefined ? parameters.stylization : 100;
-    const weirdness = parameters.weirdness !== undefined ? parameters.weirdness : 0;
-    const watermark = parameters.watermark || '';
+    const speed = parameters.speed || 'relaxed'; // relaxed, fast, or turbo
+    const stylization = parameters.stylization !== undefined ? parameters.stylization : 100; // 0-1000
+    const weirdness = parameters.weirdness !== undefined ? parameters.weirdness : 0; // 0-3000
+    const variety = parameters.variety !== undefined ? parameters.variety : 0; // 0-100, increment by 5
+    const waterMark = parameters.watermark || '';
+    const enableTranslation = parameters.enableTranslation !== undefined ? parameters.enableTranslation : false;
     
-    // Build input object with Midjourney-specific parameters
-    const inputPayload: any = {
+    // Determine taskType based on mode
+    let taskType = 'mj_txt2img'; // Default: text-to-image
+    if (mode === 'image-editing' && referenceImages.length > 0) {
+      taskType = 'mj_img2img'; // Image-to-image
+    }
+    
+    // Build Midjourney-specific payload (direct fields, NOT input object)
+    const payload: any = {
+      taskType,
       prompt: params.prompt,
-      aspect_ratio: aspectRatio,
-      version,
       speed,
+      aspectRatio,
+      version,
+      variety,
       stylization,
       weirdness,
+      waterMark,
+      enableTranslation,
+      callBackUrl: parameters.callBackUrl,
     };
     
-    // Add watermark if provided
-    if (watermark) {
-      inputPayload.watermark = watermark;
+    // Add reference images for image-to-image mode (use fileUrls array)
+    if (referenceImages.length > 0) {
+      payload.fileUrls = referenceImages;
     }
     
-    // Add reference image for image-to-image mode
-    if (mode === 'image-editing' && referenceImages.length > 0) {
-      inputPayload.image_input = referenceImages;
-    }
-    
-    return await callKieApi('/api/v1/jobs/createTask', {
-      model: 'midjourney/v7',
-      callBackUrl: parameters.callBackUrl,
-      input: inputPayload,
-    });
+    return await callKieApi('/api/v1/mj/generate', payload);
   }
   else if (params.model === 'nano-banana') {
     // Nano Banana - uses /api/v1/jobs/createTask (Bytedance Playground API)
