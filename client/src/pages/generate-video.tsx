@@ -516,7 +516,7 @@ export default function GenerateVideo() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Generation Type Tabs */}
-            <Tabs value={generationType} onValueChange={setGenerationType}>
+            <Tabs value={generationType} onValueChange={(value) => setGenerationType(value as "text-to-video" | "image-to-video")}>
               <TabsList className="grid w-full grid-cols-2" data-testid="tabs-generation-type">
                 <TabsTrigger value="text-to-video" data-testid="tab-text-to-video">
                   Text to Video
