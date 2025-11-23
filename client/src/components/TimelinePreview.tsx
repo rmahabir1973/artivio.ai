@@ -351,8 +351,12 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
     video.error = null;
     video.src = '';
     
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let handleLoadedMetadata: (() => void) | null = null;
+    let handleError: (() => void) | null = null;
+    
     // Wait a tick then set new src to ensure proper reset
-    setTimeout(() => {
+    const setSourceTimeoutId = setTimeout(() => {
       video.src = clip.url;
       video.playbackRate = clip.speedFactor || 1;
       
@@ -360,7 +364,7 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
       video.load();
       
       // Wait for metadata to load before seeking and playing
-      const handleLoadedMetadata = () => {
+      handleLoadedMetadata = () => {
         try {
           video.currentTime = trim.startSeconds;
           if (isPlaying) {
@@ -376,7 +380,7 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
         }
       };
 
-      const handleError = () => {
+      handleError = () => {
         console.error("Video error event:", video.error, "for URL:", clip.url);
       };
       
@@ -384,19 +388,29 @@ export function TimelinePreview({ clips, className = "" }: TimelinePreviewProps)
       video.addEventListener('error', handleError, { once: true });
       
       // Fallback if metadata doesn't load
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         if (video.readyState < 1) {
           console.warn("Video metadata failed to load after 3 seconds, attempting playback anyway");
-          handleLoadedMetadata();
+          if (handleLoadedMetadata) {
+            handleLoadedMetadata();
+          }
         }
       }, 3000);
-      
-      return () => {
-        clearTimeout(timeoutId);
-        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        video.removeEventListener('error', handleError);
-      };
     }, 0);
+    
+    // Proper cleanup function at useEffect level
+    return () => {
+      clearTimeout(setSourceTimeoutId);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+      if (handleLoadedMetadata) {
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      }
+      if (handleError) {
+        video.removeEventListener('error', handleError);
+      }
+    };
   }, [currentClipIndex, clips, clipMetadata, isPlaying]);
 
   // Update playback rate when speed changes
