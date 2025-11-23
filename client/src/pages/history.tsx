@@ -56,6 +56,12 @@ export default function History() {
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: isAuthenticated,
+    // Smart polling: auto-refresh every 3 seconds when there are processing generations
+    refetchInterval: (query) => {
+      const allItems = query.state.data?.pages.flatMap(page => page.items) ?? [];
+      const hasProcessing = allItems.some(gen => gen.status === 'processing');
+      return hasProcessing ? 3000 : false; // Poll every 3s if processing, otherwise don't poll
+    },
   });
 
   const allGenerations = useMemo(() => {
