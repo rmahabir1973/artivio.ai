@@ -5,6 +5,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -131,7 +132,7 @@ export const pricing = pgTable("pricing", {
   feature: varchar("feature").notNull(), // 'video', 'image', 'music', 'chat', 'voice-cloning', 'stt', 'tts', 'avatar', 'audio-converter'
   model: varchar("model").notNull(), // 'veo-3.1', 'flux-kontext', 'suno-v4', 'gpt-4o'
   creditCost: integer("credit_cost").notNull(),
-  kieCreditCost: integer("kie_credit_cost"), // What Kie.ai charges for this model (nullable for backward compatibility)
+  kieCreditCost: numeric("kie_credit_cost", { precision: 10, scale: 2 }), // What Kie.ai charges (supports decimals like 22.5)
   category: varchar("category").notNull(), // 'generation', 'chat', 'voice', 'audio'
   description: text("description"), // Optional human-readable description
   createdAt: timestamp("created_at").defaultNow().notNull(),

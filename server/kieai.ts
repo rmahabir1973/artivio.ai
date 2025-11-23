@@ -378,11 +378,27 @@ export async function generateVideo(params: {
     const cameraFixed = parameters.cameraFixed !== undefined ? parameters.cameraFixed : false;
     // Auto-generate seed if not provided (instead of using -1)
     const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
-    const aspectRatio = parameters.aspectRatio || '16:9';
     
-    // Validate aspect ratio for Seedance models (21:9, 16:9, 9:16, 1:1, 4:3, 3:4 supported)
-    if (!['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'].includes(aspectRatio)) {
-      throw new Error(`Seedance models support 21:9, 16:9, 4:3, 1:1, 3:4, and 9:16 aspect ratios. Received: ${aspectRatio}`);
+    // Check if this is image-to-video mode (aspect ratio determined by input image)
+    const isImageToVideo = referenceImages.length > 0;
+    
+    // For image-to-video: aspect ratio is omitted (determined by input image)
+    // For text-to-video: validate and use provided aspectRatio (default to 16:9)
+    let aspectRatio: string | undefined = undefined;
+    
+    if (isImageToVideo) {
+      // Image-to-video mode: do NOT set or validate aspect ratio
+      // The aspect ratio is determined by the input image itself
+      console.log('Seedance image-to-video mode: aspect ratio will be determined by input image');
+    } else {
+      // Text-to-video mode: validate and use aspect ratio
+      const validatedAspectRatio = parameters.aspectRatio || '16:9';
+      
+      if (!['16:9', '4:3', '1:1', '3:4', '9:16', '9:21'].includes(validatedAspectRatio)) {
+        throw new Error(`Seedance models support 16:9, 4:3, 1:1, 3:4, 9:16, and 9:21 aspect ratios. Received: ${validatedAspectRatio}`);
+      }
+      
+      aspectRatio = validatedAspectRatio;
     }
     
     // Validate duration (5 or 10 seconds only)
@@ -396,10 +412,9 @@ export async function generateVideo(params: {
       bytedanceModel = 'bytedance/v1-pro-text-to-video';
     }
     
-    // Build input object
+    // Build input object - start with common fields
     const inputPayload: any = {
       prompt: params.prompt,
-      aspect_ratio: aspectRatio,
       resolution,
       duration,
       camera_fixed: cameraFixed,
@@ -407,8 +422,13 @@ export async function generateVideo(params: {
       enable_safety_checker: true,
     };
     
+    // Explicitly add aspect_ratio ONLY for text-to-video mode
+    if (!isImageToVideo && aspectRatio) {
+      inputPayload.aspect_ratio = aspectRatio;
+    }
+    
     // For image-to-video: add image_url to input (Bytedance supports single image)
-    if (referenceImages.length > 0) {
+    if (isImageToVideo) {
       inputPayload.image_url = referenceImages[0];
     }
     

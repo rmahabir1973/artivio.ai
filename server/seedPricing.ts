@@ -11,7 +11,9 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'video', model: 'veo-3', creditCost: 450, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3 - High-quality video generation (8s)' },
   { feature: 'video', model: 'runway-gen3-alpha-turbo', creditCost: 350, kieCreditCost: null, category: 'generation', description: 'Runway Gen-3 - HD quality video generation (5s-10s)' },
   { feature: 'video', model: 'seedance-1-pro', creditCost: 500, kieCreditCost: null, category: 'generation', description: 'Seedance 1.0 Pro - 1080p cinematic quality with camera control (10s)' },
-  { feature: 'video', model: 'seedance-1-lite', creditCost: 120, kieCreditCost: null, category: 'generation', description: 'Seedance 1.0 Lite - 720p fast generation (10s)' },
+  { feature: 'video', model: 'seedance-1-lite-480p', creditCost: 50, kieCreditCost: 10, category: 'generation', description: 'Seedance 1.0 Lite - 480p fast generation (10s)' },
+  { feature: 'video', model: 'seedance-1-lite-720p', creditCost: 113, kieCreditCost: 22.5, category: 'generation', description: 'Seedance 1.0 Lite - 720p balanced quality (10s)' },
+  { feature: 'video', model: 'seedance-1-lite-1080p', creditCost: 250, kieCreditCost: 50, category: 'generation', description: 'Seedance 1.0 Lite - 1080p high quality (10s)' },
   { feature: 'video', model: 'wan-2.5', creditCost: 250, kieCreditCost: null, category: 'generation', description: 'Wan 2.5 - Native audio sync & lip-sync support (10s)' },
   { feature: 'video', model: 'kling-2.5-turbo', creditCost: 150, kieCreditCost: null, category: 'generation', description: 'Kling 2.5 Turbo - Fast, fluid motion with realistic physics (5s-10s)' },
   { feature: 'video', model: 'kling-2.1', creditCost: 250, kieCreditCost: null, category: 'generation', description: 'Kling 2.1 - Professional hyper-realistic video generation (5s-10s)' },
@@ -141,12 +143,16 @@ async function seedPricing() {
     // This leverages the existing unique index on (feature, model)
     for (const entry of COMPREHENSIVE_PRICING) {
       await db.insert(pricing)
-        .values(entry)
+        .values({
+          ...entry,
+          // Convert kieCreditCost to string for numeric column (or keep null)
+          kieCreditCost: entry.kieCreditCost !== null ? String(entry.kieCreditCost) : null,
+        })
         .onConflictDoUpdate({
           target: [pricing.feature, pricing.model],
           set: {
             creditCost: entry.creditCost,
-            kieCreditCost: entry.kieCreditCost,
+            kieCreditCost: entry.kieCreditCost !== null ? String(entry.kieCreditCost) : null,
             category: entry.category,
             description: entry.description,
             updatedAt: new Date(),

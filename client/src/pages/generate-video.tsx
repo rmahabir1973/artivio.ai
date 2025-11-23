@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -28,8 +29,8 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1-fast": ["16:9", "9:16"],
   "veo-3": ["16:9", "9:16"],
   "runway-gen3-alpha-turbo": ["16:9", "4:3", "1:1", "3:4", "9:16"],
-  "seedance-1-pro": ["16:9", "9:16", "1:1", "4:3"],
-  "seedance-1-lite": ["16:9", "9:16", "1:1", "4:3"],
+  "seedance-1-pro": ["16:9", "4:3", "1:1", "3:4", "9:16", "9:21"],
+  "seedance-1-lite": ["16:9", "4:3", "1:1", "3:4", "9:16", "9:21"],
   "wan-2.5": ["16:9", "9:16", "1:1"],
   "kling-2.5-turbo": ["16:9", "9:16", "1:1"],
   "kling-2.1": ["16:9", "9:16", "1:1"],
@@ -55,6 +56,7 @@ const ASPECT_RATIO_LABELS: Record<string, string> = {
   "4:3": "4:3 (Classic)",
   "1:1": "1:1 (Square)",
   "3:4": "3:4 (Portrait)",
+  "9:21": "9:21 (Ultrawide Portrait)",
 };
 
 const VIDEO_MODEL_INFO = [
@@ -144,6 +146,16 @@ export default function GenerateVideo() {
   // Simple state management
   const [model, setModel] = useState("veo-3.1");
   const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
+  const [prompt, setPrompt] = useState("");
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [duration, setDuration] = useState(5);
+  const [quality, setQuality] = useState("720p");
+  const [resolution, setResolution] = useState("720p"); // For Seedance models
+  const [cameraFixed, setCameraFixed] = useState(false); // For Seedance models
+  const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [seed, setSeed] = useState<number | undefined>(undefined);
+  const [seedLocked, setSeedLocked] = useState(false);
 
   // Merge model info with dynamic pricing
   const [videoModels, setVideoModels] = useState(() => VIDEO_MODEL_INFO.map(m => ({
@@ -152,25 +164,20 @@ export default function GenerateVideo() {
   })));
   
   useEffect(() => {
-    // Update videoModels whenever pricing data changes
+    // Update videoModels whenever pricing data changes or resolution changes (for Seedance Lite)
     // pricingQuery.dataUpdatedAt only changes when TanStack refetches, so no infinite loop
     const nextModels = VIDEO_MODEL_INFO.map(m => ({
       ...m,
-      cost: getModelCost(m.value, 400) || 0,
+      // For Seedance Lite, append resolution to model name for pricing lookup
+      cost: m.value === 'seedance-1-lite' 
+        ? (getModelCost(`seedance-1-lite-${resolution}`, 400) || 0)
+        : (getModelCost(m.value, 400) || 0),
     }));
     
     setVideoModels(nextModels);
-  }, [pricingQuery.dataUpdatedAt, getModelCost]);
+  }, [pricingQuery.dataUpdatedAt, getModelCost, resolution]);
   
   const VIDEO_MODELS = videoModels;
-  const [prompt, setPrompt] = useState("");
-  const [referenceImages, setReferenceImages] = useState<string[]>([]);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [duration, setDuration] = useState(5);
-  const [quality, setQuality] = useState("720p");
-  const [aspectRatio, setAspectRatio] = useState("16:9");
-  const [seed, setSeed] = useState<number | undefined>(undefined);
-  const [seedLocked, setSeedLocked] = useState(false);
   
   // Generation result state
   const [generationId, setGenerationId] = useState<string | null>(null);
@@ -478,8 +485,20 @@ export default function GenerateVideo() {
     const parameters: any = {
       duration,
       quality,
-      aspectRatio,
     };
+    
+    // Add aspectRatio only if NOT (Seedance + image-to-video)
+    // For Seedance image-to-video, aspect ratio is determined by the input image
+    const isSeedanceImageToVideo = model.startsWith('seedance-') && generationType === 'image-to-video';
+    if (!isSeedanceImageToVideo) {
+      parameters.aspectRatio = aspectRatio;
+    }
+    
+    // Add resolution and cameraFixed for Seedance models
+    if (model.startsWith('seedance-')) {
+      parameters.resolution = resolution;
+      parameters.cameraFixed = cameraFixed;
+    }
     
     // Add seed if model supports it and seed is provided
     if (modelSupportsSeed() && seed) {
@@ -690,8 +709,8 @@ export default function GenerateVideo() {
               )}
             </div>
 
-            {/* Quality - Hidden for Runway Gen-3 (always uses HD/720p) */}
-            {model !== 'runway-gen3-alpha-turbo' && (
+            {/* Quality - Hidden for Runway Gen-3 and Seedance (use resolution instead) */}
+            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && (
               <div className="space-y-2">
                 <Label htmlFor="quality">Quality</Label>
                 <Select value={quality} onValueChange={setQuality}>
@@ -706,27 +725,67 @@ export default function GenerateVideo() {
               </div>
             )}
 
-            {/* Aspect Ratio */}
-            <div className="space-y-2">
-              <Label htmlFor="aspectRatio">Aspect Ratio</Label>
-              <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                <SelectTrigger id="aspectRatio" data-testid="select-aspect-ratio">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).map((ratio) => (
-                    <SelectItem key={ratio} value={ratio}>
-                      {ASPECT_RATIO_LABELS[ratio] || ratio}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {(ASPECT_RATIO_SUPPORT[model] || []).length < 4 && (
+            {/* Resolution - Only for Seedance models */}
+            {model.startsWith('seedance-') && (
+              <div className="space-y-2">
+                <Label htmlFor="resolution">Resolution</Label>
+                <Select value={resolution} onValueChange={setResolution}>
+                  <SelectTrigger id="resolution" data-testid="select-resolution">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="480p">480p (Fast)</SelectItem>
+                    <SelectItem value="720p">720p (Balanced)</SelectItem>
+                    <SelectItem value="1080p">1080p (High Quality)</SelectItem>
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-muted-foreground">
-                  {selectedModel?.label || model} supports: {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).join(", ")}
+                  Higher resolution costs more credits
                 </p>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Camera Fixed Toggle - Only for Seedance models */}
+            {model.startsWith('seedance-') && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="camera-fixed">Camera Fixed</Label>
+                  <Switch
+                    id="camera-fixed"
+                    checked={cameraFixed}
+                    onCheckedChange={setCameraFixed}
+                    data-testid="switch-camera-fixed"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Lock camera position to prevent movement
+                </p>
+              </div>
+            )}
+
+            {/* Aspect Ratio - Hidden for Seedance image-to-video (aspect determined by input image) */}
+            {!(model.startsWith('seedance-') && generationType === 'image-to-video') && (
+              <div className="space-y-2">
+                <Label htmlFor="aspectRatio">Aspect Ratio</Label>
+                <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                  <SelectTrigger id="aspectRatio" data-testid="select-aspect-ratio">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).map((ratio) => (
+                      <SelectItem key={ratio} value={ratio}>
+                        {ASPECT_RATIO_LABELS[ratio] || ratio}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(ASPECT_RATIO_SUPPORT[model] || []).length < 4 && (
+                  <p className="text-xs text-muted-foreground">
+                    {selectedModel?.label || model} supports: {(ASPECT_RATIO_SUPPORT[model] || ["16:9", "9:16"]).join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Seed Control - Only show for models that support it */}
             {modelSupportsSeed() && (
