@@ -34,6 +34,8 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "wan-2.5": ["16:9", "9:16", "1:1"],
   "kling-2.5-turbo": ["16:9", "9:16", "1:1"],
   "kling-2.1": ["16:9", "9:16", "1:1"],
+  "grok-imagine": ["16:9", "9:16"],
+  "sora-2-pro": ["16:9", "9:16", "1:1"],
 };
 
 const DURATION_SUPPORT: Record<string, number[]> = {
@@ -47,6 +49,8 @@ const DURATION_SUPPORT: Record<string, number[]> = {
   "wan-2.5": [10],
   "kling-2.5-turbo": [5, 10],
   "kling-2.1": [5, 10],
+  "grok-imagine": [6],
+  "sora-2-pro": [5, 10, 20],
 };
 
 const ASPECT_RATIO_LABELS: Record<string, string> = {
@@ -136,6 +140,22 @@ const VIDEO_MODEL_INFO = [
     duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
+  },
+  { 
+    value: "grok-imagine", 
+    label: "Grok Imagine", 
+    description: "Creative video generation with vivid imagination", 
+    duration: "6s",
+    supportsImages: false,
+    maxImages: 0 
+  },
+  { 
+    value: "sora-2-pro", 
+    label: "Sora 2 Pro", 
+    description: "Next-gen realistic video with advanced storytelling", 
+    duration: "5s, 10s, 20s",
+    supportsImages: false,
+    maxImages: 0 
   },
 ];
 
