@@ -1,0 +1,211 @@
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"bytedance/v1-lite-text-to-video"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.prompt
+Required
+string
+The text prompt used to generate the video
+
+Max length: 10000 characters
+Example:
+
+"Wide-angle shot: A serene sailing boat gently sways in the harbor at dawn, surrounded by soft Impressionist hues of pink and orange with ivory accents. The camera slowly pans across the scene, capturing the delicate reflections on the water and the intricate details of the boat's sails as the light gradually brightens."
+input.aspect_ratio
+Optional
+string
+The aspect ratio of the generated video
+
+Available options:
+
+16:9
+-
+16:9
+4:3
+-
+4:3
+1:1
+-
+1:1
+3:4
+-
+3:4
+9:16
+-
+9:16
+9:21
+-
+9:21
+Example:
+
+"16:9"
+input.resolution
+Optional
+string
+Video resolution - 480p for faster generation, 720p for higher quality
+
+Available options:
+
+480p
+-
+480p
+720p
+-
+720p
+1080p
+-
+1080p
+Example:
+
+"720p"
+input.duration
+Optional
+string
+Duration of the video in seconds
+
+Available options:
+
+5
+-
+5s
+10
+-
+10s
+Example:
+
+"5"
+input.camera_fixed
+Optional
+boolean
+Whether to fix the camera position
+
+Boolean value (true/false)
+Example:
+
+false
+input.seed
+Optional
+integer
+Random seed to control video generation. Use -1 for random.
+
+input.enable_safety_checker
+Optional
+boolean
+The safety checker is always enabled in Playground. It can only be disabled by setting false through the API.
+
+Boolean value (true/false)
+Example:
+
+true
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "bytedance/v1-lite-text-to-video",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "prompt": "Wide-angle shot: A serene sailing boat gently sways in the harbor at dawn, surrounded by soft Impressionist hues of pink and orange with ivory accents. The camera slowly pans across the scene, capturing the delicate reflections on the water and the intricate details of the boat's sails as the light gradually brightens.",
+      "aspect_ratio": "16:9",
+      "resolution": "720p",
+      "duration": "5",
+      "camera_fixed": false,
+      "enable_safety_checker": true
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "bytedance/v1-lite-text-to-video",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"bytedance/v1-lite-text-to-video\",\"input\":{\"prompt\":\"Wide-angle shot: A serene sailing boat gently sways in the harbor at dawn, surrounded by soft Impressionist hues of pink and orange with ivory accents. The camera slowly pans across the scene, capturing the delicate reflections on the water and the intricate details of the boat's sails as the light gradually brightens.\",\"aspect_ratio\":\"16:9\",\"resolution\":\"720p\",\"duration\":\"5\",\"camera_fixed\":false,\"seed\":null,\"enable_safety_checker\":true}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "bytedance/v1-lite-text-to-video",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"bytedance/v1-lite-text-to-video\",\"input\":{\"prompt\":\"Wide-angle shot: A serene sailing boat gently sways in the harbor at dawn, surrounded by soft Impressionist hues of pink and orange with ivory accents. The camera slowly pans across the scene, capturing the delicate reflections on the water and the intricate details of the boat's sails as the light gradually brightens.\",\"aspect_ratio\":\"16:9\",\"resolution\":\"720p\",\"duration\":\"5\",\"camera_fixed\":false,\"seed\":null,\"enable_safety_checker\":true}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section
