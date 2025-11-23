@@ -295,7 +295,7 @@ export async function generateVideo(params: {
   
   // Route to appropriate API based on model
   if (params.model.startsWith('veo-')) {
-    // Veo 3, 3.1, 3.1 Fast - uses /api/v1/jobs/createTask (unified API)
+    // Veo 3, 3.1, 3.1 Fast - uses /api/v1/veo/generate (legacy endpoint)
     
     // Validate aspect ratio for Veo models (only 16:9 and 9:16 supported)
     const aspectRatio = parameters.aspectRatio || '16:9';
@@ -303,60 +303,14 @@ export async function generateVideo(params: {
       throw new Error(`Veo models only support 16:9 and 9:16 aspect ratios. Received: ${aspectRatio}`);
     }
     
-    let baseModel = 'veo3';
+    // Map frontend model name to Kie.ai model name
+    let modelName = 'veo3';
     if (params.model === 'veo-3.1') {
-      baseModel = 'veo3';
+      modelName = 'veo3';
     } else if (params.model === 'veo-3.1-fast') {
-      baseModel = 'veo3_fast';
+      modelName = 'veo3_fast';
     } else if (params.model === 'veo-3') {
-      baseModel = 'veo3';
-    }
-    
-    // Determine Veo generation type: honor explicit veoSubtype, otherwise use smart defaults
-    let veoGenerationType = 'TEXT_2_VIDEO';
-    if (params.veoSubtype) {
-      // Use explicitly specified subtype (frontend control)
-      veoGenerationType = params.veoSubtype;
-      
-      // Validate image count for selected subtype
-      if (veoGenerationType === 'FIRST_AND_LAST_FRAMES_2_VIDEO' && referenceImages.length !== 2) {
-        throw new Error('FIRST_AND_LAST_FRAMES_2_VIDEO requires exactly 2 reference images');
-      }
-      if (veoGenerationType === 'REFERENCE_2_VIDEO') {
-        if (referenceImages.length === 0) {
-          throw new Error('REFERENCE_2_VIDEO requires at least 1 reference image');
-        }
-        if (referenceImages.length > 3) {
-          throw new Error('REFERENCE_2_VIDEO supports up to 3 reference images');
-        }
-      }
-    } else if (generationType === 'image-to-video' && referenceImages.length > 0) {
-      // Smart defaults based on image count and model constraints:
-      // IMPORTANT: REFERENCE_2_VIDEO only works with veo3_fast + 16:9 (per Kie.ai docs)
-      // For veo3 (standard Veo 3.1), use FIRST_AND_LAST_FRAMES_2_VIDEO
-      
-      const isVeo3Fast = baseModel === 'veo3_fast';
-      
-      if (referenceImages.length === 1) {
-        // Single image: use FIRST_AND_LAST_FRAMES_2_VIDEO for veo3, or REFERENCE_2_VIDEO for veo3_fast with 16:9
-        if (isVeo3Fast && aspectRatio === '16:9') {
-          veoGenerationType = 'REFERENCE_2_VIDEO';
-        } else {
-          veoGenerationType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
-        }
-      } else if (referenceImages.length === 2) {
-        // Two images: always use FIRST_AND_LAST_FRAMES_2_VIDEO (first and last frames)
-        veoGenerationType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
-      } else if (referenceImages.length === 3) {
-        // Three images: REFERENCE_2_VIDEO only works with veo3_fast + 16:9
-        if (isVeo3Fast && aspectRatio === '16:9') {
-          veoGenerationType = 'REFERENCE_2_VIDEO';
-        } else {
-          throw new Error('Multi-reference (3 images) only supported with Veo 3.1 Fast model and 16:9 aspect ratio');
-        }
-      } else {
-        throw new Error(`Invalid image count: ${referenceImages.length}. Supported: 1-3 images`);
-      }
+      modelName = 'veo3';
     }
     
     // Auto-generate seed if not provided
@@ -364,44 +318,25 @@ export async function generateVideo(params: {
     
     console.log(`🌱 Veo seed format: sending scalar seed=${seed}`);
     
-    // Map to unified API model name (follows pattern: baseModel-generationType)
-    // e.g., 'veo3-text-to-video', 'veo3_fast-image-to-video', etc.
-    let unifiedModel: string;
-    if (veoGenerationType === 'TEXT_2_VIDEO') {
-      unifiedModel = `${baseModel}-text-to-video`;
-    } else {
-      // For all image-to-video modes (FIRST_AND_LAST_FRAMES_2_VIDEO, REFERENCE_2_VIDEO)
-      unifiedModel = `${baseModel}-image-to-video`;
-    }
-    
-    // Build input payload (snake_case for unified API)
-    const inputPayload: any = {
+    // Build request payload for /api/v1/veo/generate
+    const payload: any = {
+      model: modelName,
       prompt: params.prompt,
-      aspect_ratio: aspectRatio,
-      seed,
-      enable_translation: true,
+      aspectRatio: aspectRatio,
+      callBackUrl: parameters.callBackUrl,
     };
     
-    // Add generation type for image-to-video modes
-    if (veoGenerationType !== 'TEXT_2_VIDEO') {
-      inputPayload.generation_type = veoGenerationType;
-    }
-    
-    // Add image URLs if present
+    // Add image URLs if present (for image-to-video)
     if (referenceImages.length > 0) {
-      inputPayload.image_urls = referenceImages;
+      payload.imageUrls = referenceImages;
     }
     
     // Add optional watermark parameter
     if (parameters.watermark !== undefined) {
-      inputPayload.watermark = parameters.watermark;
+      payload.waterMark = parameters.watermark;
     }
     
-    return await callKieApi('/api/v1/jobs/createTask', {
-      model: unifiedModel,
-      callBackUrl: parameters.callBackUrl,
-      input: inputPayload,
-    });
+    return await callKieApi('/api/v1/veo/generate', payload);
   } 
   else if (params.model === 'runway-gen3-alpha-turbo') {
     // Runway Gen-3 - uses /api/v1/runway/generate

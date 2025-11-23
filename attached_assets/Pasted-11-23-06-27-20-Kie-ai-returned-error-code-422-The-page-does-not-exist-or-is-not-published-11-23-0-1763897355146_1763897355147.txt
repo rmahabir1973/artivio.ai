@@ -1,0 +1,66 @@
+11-23 06:27:20
+❌ Kie.ai returned error code 422: The page does not exist or is not published
+11-23 06:27:20
+🔍 Kie.ai Error Details: {
+11-23 06:27:20
+✅ Kie.ai API Response from /api/v1/jobs/createTask: {
+11-23 06:27:20
+"endpoint": "/api/v1/jobs/createTask"
+11-23 06:27:20
+"endpoint": "/api/v1/jobs/createTask"
+11-23 06:27:20
+"kieaiDetails": {
+11-23 06:27:20
+"data": null
+11-23 06:27:20
+}
+11-23 06:27:20
+Background video generation failed: {
+11-23 06:27:20
+}
+11-23 06:27:20
+}
+11-23 06:27:20
+"message": "The page does not exist or is not published"
+11-23 06:27:20
+}
+11-23 06:27:20
+}
+11-23 06:27:20
+Full error details: {
+11-23 06:27:20
+"msg": "The page does not exist or is not published",
+11-23 06:27:21
+✓ [finalizeGeneration] Generation 98cfcddd-7d32-4f58-88bc-35b34663598f finalized as failure
+11-23 06:27:21
+✓ [CREDIT REFUND] Refunded 300 credits to user 49729939 for failed generation 98cfcddd-7d32-4f58-88bc-35b34663598f
+11-23 06:27:26
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+11-23 06:27:26
+[/api/generations] Querying database for userId: 49729939
+11-23 06:27:26
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+11-23 06:27:26
+[/api/generations] Paginated query completed in 45ms, found 15 generations, hasMore: true
+11-23 06:27:26
+11:27:26 AM [express] GET /api/generations 200 in 70ms :: {"items":[{"id":"98cfcddd-7d32-4f58-88bc-35…
+11-23 06:27:26
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+11-23 06:27:26
+[AUTH] Fetching user data { userId: '49729939' }
+11-23 06:27:26
+userId: '49729939',
+11-23 06:27:26
+isAdmin: true
+11-23 06:27:26
+}
+11-23 06:27:26
+[AUTH] ✓ User data fetched successfully {
+11-23 06:27:26
+email: 'ryan.mahabir@outlook.com',
+11-23 06:27:26
+11:27:26 AM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+11-23 06:27:39
+11:27:39 AM [express] GET /api/announcements/active 304 in 96ms :: []
+11-23 06:27:45
+system: received signal terminated
