@@ -1775,6 +1775,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Upscale factor must be 1, 2, or 4" });
       }
 
+      // Validate video duration (max 20 seconds to avoid timeouts)
+      const MAX_VIDEO_DURATION = 20; // seconds
+      try {
+        const base64Data = videoData.split(',')[1] || videoData;
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Save to temp file for ffprobe analysis
+        const tempPath = path.join(process.cwd(), 'temp', `validation-${nanoid()}.mp4`);
+        await fs.mkdir(path.dirname(tempPath), { recursive: true });
+        await fs.writeFile(tempPath, buffer);
+
+        try {
+          // Use ffprobe to get video duration
+          const { exec } = require('child_process');
+          const { promisify } = require('util');
+          const execAsync = promisify(exec);
+          
+          const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${tempPath}"`;
+          const { stdout } = await execAsync(command, { timeout: 10000 });
+          const duration = parseFloat(stdout.trim());
+
+          // Clean up temp file
+          await fs.unlink(tempPath);
+
+          if (isNaN(duration) || duration <= 0) {
+            return res.status(400).json({ 
+              message: "Invalid video file. Could not determine duration." 
+            });
+          }
+
+          if (duration > MAX_VIDEO_DURATION) {
+            return res.status(400).json({ 
+              message: `Video is ${Math.floor(duration)} seconds long. Maximum duration is ${MAX_VIDEO_DURATION} seconds to avoid processing timeouts.` 
+            });
+          }
+        } catch (probeError) {
+          // Clean up temp file on error
+          try {
+            await fs.unlink(tempPath);
+          } catch {}
+          throw probeError;
+        }
+      } catch (validationError: any) {
+        console.error('Video duration validation error:', validationError);
+        return res.status(400).json({ 
+          message: validationError.message || "Failed to validate video. Please ensure the file is a valid video." 
+        });
+      }
+
       // Get cost from database using model name (all are 72 credits)
       const cost = await getUpscaleCost('video', String(factor));
 
