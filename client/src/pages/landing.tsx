@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
   Video, Image, Music, Zap, Shield, Sparkles, Loader2, ChevronRight, Play, Palette, Mic, Film,
-  Award, DollarSign, Droplet, Monitor, Smartphone, Tablet, Check, Star, Laptop
+  Award, DollarSign, Droplet, Monitor, Smartphone, Tablet, Check, Star, Laptop,
+  Wand2, Volume2, Sliders, MessageSquare, User, Shuffle, Maximize, Maximize2
 } from "lucide-react";
 import { SiApple, SiAndroid, SiIos } from "react-icons/si";
 import type { HomePageContent, SubscriptionPlan } from "@shared/schema";
@@ -973,6 +974,134 @@ export default function Landing() {
                   View and manage all your AI-generated content
                 </p>
                 <p className="text-sm text-purple-400">Free</p>
+              </CardContent>
+            </Card>
+
+            {/* Lip Sync */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-lip-sync">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Wand2 className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Lip Sync</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Create lip-synced videos with InfiniteTalk technology
+                </p>
+                <p className="text-sm text-purple-400">15-60 credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Text-to-Speech */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-tts">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Volume2 className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Text-to-Speech</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Convert text to natural speech with ElevenLabs voices
+                </p>
+                <p className="text-sm text-purple-400">50+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Sound Effects */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-sound-effects">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Sliders className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Sound Effects</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Generate custom sound effects with ElevenLabs AI
+                </p>
+                <p className="text-sm text-purple-400">30-100 credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Speech-to-Text */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-speech-to-text">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <MessageSquare className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Speech-to-Text</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Transcribe audio and video to text instantly
+                </p>
+                <p className="text-sm text-purple-400">50+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Talking Avatars */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-talking-avatars">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <User className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Talking Avatars</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Create animated avatars that lip-sync to audio
+                </p>
+                <p className="text-sm text-purple-400">50+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Audio Converter */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-audio-converter">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Shuffle className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Audio Converter</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Convert and optimize audio files between formats
+                </p>
+                <p className="text-sm text-purple-400">Free</p>
+              </CardContent>
+            </Card>
+
+            {/* Topaz Image Upscaler */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-topaz-image">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Maximize className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Image Upscaler</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Upscale images 2x, 4x, or 8x with Topaz AI
+                </p>
+                <p className="text-sm text-purple-400">10-40 credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Topaz Video Upscaler */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-topaz-video">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Maximize2 className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Video Upscaler</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Upscale videos with professional quality enhancement
+                </p>
+                <p className="text-sm text-purple-400">72 credits</p>
               </CardContent>
             </Card>
           </div>
