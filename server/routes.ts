@@ -1778,8 +1778,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Upscale factor must be 1, 2, or 4" });
       }
 
-      // Validate video duration (max 20 seconds to avoid timeouts)
+      // Validate video duration and determine pricing tier (max 20 seconds)
       const MAX_VIDEO_DURATION = 20; // seconds
+      let videoDuration = 0;
+      let durationTier = '10s'; // default tier
+      
       try {
         const base64Data = videoData.split(',')[1] || videoData;
         const buffer = Buffer.from(base64Data, 'base64');
@@ -1813,6 +1816,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
               message: `Video is ${Math.floor(duration)} seconds long. Maximum duration is ${MAX_VIDEO_DURATION} seconds to avoid processing timeouts.` 
             });
           }
+
+          // Store duration and calculate pricing tier
+          videoDuration = duration;
+          
+          // Determine pricing tier based on duration
+          // Tier 1: 0-10s = 180 credits (120 Kie credits)
+          // Tier 2: 11-15s = 270 credits (180 Kie credits)
+          // Tier 3: 16-20s = 360 credits (240 Kie credits)
+          if (duration <= 10) {
+            durationTier = '10s';
+          } else if (duration <= 15) {
+            durationTier = '15s';
+          } else {
+            durationTier = '20s';
+          }
         } catch (probeError) {
           // Clean up temp file on error
           try {
@@ -1827,8 +1845,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get cost from database using model name (all are 72 credits)
-      const cost = await getUpscaleCost('video', String(factor));
+      // Get cost from database using tiered model name (180/270/360 credits based on duration)
+      const tierSuffix = `-${durationTier}`;
+      const cost = await getModelCost(`topaz-video-${factor}x${tierSuffix}`);
 
       // Atomically deduct credits
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -1840,9 +1859,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const generation = await storage.createGeneration({
         userId,
         type: 'upscaling',
-        model: `topaz-video-${factor}x`,
-        prompt: `Upscale video ${factor}x using Topaz AI`,
-        parameters: { upscaleFactor: factor },
+        model: `topaz-video-${factor}x${tierSuffix}`,
+        prompt: `Upscale video ${factor}x using Topaz AI (${videoDuration.toFixed(1)}s, ${durationTier} tier)`,
+        parameters: { upscaleFactor: factor, duration: videoDuration, tier: durationTier },
         status: 'pending',
         creditsCost: cost,
       });
