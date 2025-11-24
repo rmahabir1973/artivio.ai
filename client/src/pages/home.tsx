@@ -33,7 +33,11 @@ import {
   Gift,
   ExternalLink,
   QrCode,
-  Users
+  Users,
+  Volume2,
+  ZoomIn,
+  Maximize2,
+  Film
 } from "lucide-react";
 
 interface FeatureCard {
@@ -175,6 +179,15 @@ export default function Home() {
       modelCost: 'suno-v4'
     },
     {
+      id: 'sound-effects',
+      title: 'Sound Effects',
+      description: 'Generate custom AI-powered sound effects with ElevenLabs',
+      icon: Volume2,
+      route: '/sound-effects',
+      category: 'audio',
+      modelCost: 'elevenlabs-sound-effect-v2'
+    },
+    {
       id: 'ai-chat',
       title: 'AI Chat',
       description: 'Chat with Deepseek and OpenAI models including GPT-4o and o1',
@@ -212,6 +225,15 @@ export default function Home() {
       modelCost: 'kling-avatar'
     },
     {
+      id: 'lip-sync',
+      title: 'Lip Sync',
+      description: 'Create lip-synced videos from images and audio with InfiniteTalk',
+      icon: Film,
+      route: '/lip-sync',
+      category: 'video',
+      modelCost: 'infinitalk-480p'
+    },
+    {
       id: 'image-analysis',
       title: 'Image Analysis',
       description: 'Analyze images with GPT-4o Vision for insights and descriptions',
@@ -219,6 +241,15 @@ export default function Home() {
       route: '/analyze-image',
       category: 'ai',
       modelCost: 'gpt-4o-vision'
+    },
+    {
+      id: 'image-upscaler',
+      title: 'Image Upscaler',
+      description: 'Upscale images 2x, 4x, or 8x with Topaz AI enhancement',
+      icon: ZoomIn,
+      route: '/topaz-image-upscaler',
+      category: 'image',
+      modelCost: 'topaz-image-2x'
     },
     {
       id: 'audio-converter',
@@ -235,6 +266,15 @@ export default function Home() {
       icon: Scissors,
       route: '/video-editor',
       category: 'tools'
+    },
+    {
+      id: 'video-upscaler',
+      title: 'Video Upscaler',
+      description: 'Enhance video quality with Topaz AI upscaling (2x, 4x)',
+      icon: Maximize2,
+      route: '/topaz-video-upscaler',
+      category: 'tools',
+      modelCost: 'topaz-video-2x-10s'
     },
     {
       id: 'speech-to-text',
