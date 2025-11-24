@@ -1758,6 +1758,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Topaz AI Video Upscaling Standalone Page - accepts base64 video data
+  app.post('/api/upscale/topaz-video', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { videoData, upscaleFactor } = req.body;
+
+      if (!videoData || !upscaleFactor) {
+        return res.status(400).json({ message: "Video data and upscale factor are required" });
+      }
+
+      // Validate upscale factor (1, 2, or 4 for Topaz video)
+      const factor = parseInt(upscaleFactor);
+      if (![1, 2, 4].includes(factor)) {
+        return res.status(400).json({ message: "Upscale factor must be 1, 2, or 4" });
+      }
+
+      // Get cost from database using model name (all are 72 credits)
+      const cost = await getUpscaleCost('video', String(factor));
+
+      // Atomically deduct credits
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Create generation record
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'upscaling',
+        model: `topaz-video-${factor}x`,
+        prompt: `Upscale video ${factor}x using Topaz AI`,
+        parameters: { upscaleFactor: factor },
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      // Process in background
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+
+          // Convert base64 to hosted URL
+          let hostedVideoUrl: string;
+          try {
+            console.log('Converting base64 video to hosted URL...');
+            // Save base64 video (similar to image handling)
+            const hostedUrls = await saveBase64Images([videoData]);
+            hostedVideoUrl = hostedUrls[0];
+            console.log(`✓ Video hosted at: ${hostedVideoUrl}`);
+          } catch (videoError: any) {
+            console.error('Failed to host video:', videoError);
+            throw new Error(`Failed to process video: ${videoError.message}`);
+          }
+
+          // Call Topaz video upscaler
+          const callbackUrl = getCallbackUrl(generation.id);
+          const { result, keyName } = await upscaleVideo({
+            sourceVideoUrl: hostedVideoUrl,
+            upscaleFactor: factor as 2 | 4,
+            callBackUrl: callbackUrl,
+          });
+
+          const taskId = result?.taskId || result?.id || result?.task_id;
+          if (taskId) {
+            await storage.updateGeneration(generation.id, {
+              externalTaskId: taskId,
+              apiKeyUsed: keyName,
+            });
+          }
+        } catch (error: any) {
+          console.error('Topaz video upscale error:', error);
+          await storage.finalizeGeneration(generation.id, 'failure', {
+            status: 'failed',
+            errorMessage: error.message,
+          });
+        }
+      })();
+
+      res.json({ generationId: generation.id, message: "Video upscaling started" });
+    } catch (error: any) {
+      console.error('Topaz video upscale request error:', error);
+      res.status(500).json({ message: error.message || "Failed to start video upscaling" });
+    }
+  });
+
   // Music Generation
   app.post('/api/generate/music', requireJWT, async (req: any, res) => {
     try {

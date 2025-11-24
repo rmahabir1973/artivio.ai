@@ -71,6 +71,7 @@ const menuSections = [
       { title: "Image Generation", url: "/generate/image", icon: ImageIcon },
       { title: "Image Analysis", url: "/analyze-image", icon: ScanEye },
       { title: "Upscaler", url: "/topaz-upscaler", icon: Zap },
+      { title: "Video Upscaler", url: "/topaz-video-upscaler", icon: Zap },
       { title: "AI Chat", url: "/chat", icon: MessageSquare },
       { title: "Video Editor", url: "/video-editor", icon: Scissors },
       { title: "QR Generator", url: "/qr-generator", icon: QrCode },

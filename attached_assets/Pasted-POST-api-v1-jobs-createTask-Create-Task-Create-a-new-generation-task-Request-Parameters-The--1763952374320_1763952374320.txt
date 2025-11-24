@@ -1,0 +1,141 @@
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"topaz/video-upscale"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.video_url
+Required
+string(URL)
+URL of the video to upscale
+
+File URL after upload, not file content; Accepted types: video/mp4, video/quicktime, video/x-matroska; Max size: 10.0MB
+Example:
+
+"https://file.aiquickdraw.com/custom-page/akr/section-images/1758166466095hvbwkrpw.mp4"
+input.upscale_factor
+Optional
+string
+Factor to upscale the video by (e.g. 2.0 doubles width and height)
+
+Available options:
+
+1
+-
+1x
+2
+-
+2x
+4
+-
+4x
+Example:
+
+"2"
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "topaz/video-upscale",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "video_url": "https://file.aiquickdraw.com/custom-page/akr/section-images/1758166466095hvbwkrpw.mp4",
+      "upscale_factor": "2"
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "topaz/video-upscale",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"topaz/video-upscale\",\"input\":{\"video_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1758166466095hvbwkrpw.mp4\",\"upscale_factor\":\"2\"}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "topaz/video-upscale",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"topaz/video-upscale\",\"input\":{\"video_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1758166466095hvbwkrpw.mp4\",\"upscale_factor\":\"2\"}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section
+If callBackUrl is not provided, no callback notifications will be sent

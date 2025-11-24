@@ -152,12 +152,14 @@ const COMPREHENSIVE_PRICING = [
   // ========================================
   // TOPAZ AI UPSCALING
   // ========================================
-  // Hypothetical feature - not yet integrated with Kie.ai, no kieCreditCost
+  // Image upscaling - individual factors
   { feature: 'upscaling', model: 'topaz-image-2x', creditCost: 10, kieCreditCost: null, category: 'enhancement', description: 'Topaz Image Upscale 2x (up to 2K resolution)' },
   { feature: 'upscaling', model: 'topaz-image-4x', creditCost: 20, kieCreditCost: null, category: 'enhancement', description: 'Topaz Image Upscale 4x (4K resolution)' },
   { feature: 'upscaling', model: 'topaz-image-8x', creditCost: 40, kieCreditCost: null, category: 'enhancement', description: 'Topaz Image Upscale 8x (8K resolution)' },
-  { feature: 'upscaling', model: 'topaz-video-2x', creditCost: 80, kieCreditCost: null, category: 'enhancement', description: 'Topaz Video Upscale 2x (HD enhancement)' },
-  { feature: 'upscaling', model: 'topaz-video-4x', creditCost: 150, kieCreditCost: null, category: 'enhancement', description: 'Topaz Video Upscale 4x (4K enhancement)' },
+  // Video upscaling - flat 72 credits for all factors (1X, 2X, 4X) per Kie.ai
+  { feature: 'upscaling', model: 'topaz-video-1x', creditCost: 72, kieCreditCost: 72, category: 'enhancement', description: 'Topaz Video Upscale 1x (no upscaling, format conversion)' },
+  { feature: 'upscaling', model: 'topaz-video-2x', creditCost: 72, kieCreditCost: 72, category: 'enhancement', description: 'Topaz Video Upscale 2x (HD enhancement)' },
+  { feature: 'upscaling', model: 'topaz-video-4x', creditCost: 72, kieCreditCost: 72, category: 'enhancement', description: 'Topaz Video Upscale 4x (4K enhancement)' },
   
   // ========================================
   // QR CODE GENERATOR
