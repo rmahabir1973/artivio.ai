@@ -1288,6 +1288,80 @@ export type InsertUserOnboarding = z.infer<typeof insertUserOnboardingSchema>;
 export type UpdateUserOnboarding = z.infer<typeof updateUserOnboardingSchema>;
 export type UserOnboarding = typeof userOnboarding.$inferSelect;
 
+// ========================================
+// GENERATION FAVORITES AND COLLECTIONS
+// ========================================
+
+// Favorites - Track which generations user has marked as favorites
+export const favorites = pgTable("favorites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  generationId: varchar("generation_id").notNull().references(() => generations.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("user_generation_favorite_idx").on(table.userId, table.generationId),
+  index("favorites_user_idx").on(table.userId),
+]);
+
+export const insertFavoriteSchema = createInsertSchema(favorites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
+export type Favorite = typeof favorites.$inferSelect;
+
+// Collections - User-organized groups of generations
+export const collections = pgTable("collections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  color: varchar("color").default('hsl(0, 0%, 50%)'), // Color for UI display
+  itemCount: integer("item_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("collections_user_idx").on(table.userId),
+]);
+
+export const insertCollectionSchema = createInsertSchema(collections).omit({
+  id: true,
+  itemCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateCollectionSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+  color: z.string().optional(),
+});
+
+export type InsertCollection = z.infer<typeof insertCollectionSchema>;
+export type UpdateCollection = z.infer<typeof updateCollectionSchema>;
+export type Collection = typeof collections.$inferSelect;
+
+// Collection Items - Link generations to collections
+export const collectionItems = pgTable("collection_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  collectionId: varchar("collection_id").notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  generationId: varchar("generation_id").notNull().references(() => generations.id, { onDelete: 'cascade' }),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("collection_generation_idx").on(table.collectionId, table.generationId),
+  index("collection_items_collection_idx").on(table.collectionId),
+  index("collection_items_generation_idx").on(table.generationId),
+]);
+
+export const insertCollectionItemSchema = createInsertSchema(collectionItems).omit({
+  id: true,
+  addedAt: true,
+});
+
+export type InsertCollectionItem = z.infer<typeof insertCollectionItemSchema>;
+export type CollectionItem = typeof collectionItems.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   generations: many(generations),
@@ -1325,6 +1399,36 @@ export const generationTemplatesRelations = relations(generationTemplates, ({ on
   user: one(users, {
     fields: [generationTemplates.userId],
     references: [users.id],
+  }),
+}));
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+  user: one(users, {
+    fields: [favorites.userId],
+    references: [users.id],
+  }),
+  generation: one(generations, {
+    fields: [favorites.generationId],
+    references: [generations.id],
+  }),
+}));
+
+export const collectionsRelations = relations(collections, ({ one, many }) => ({
+  user: one(users, {
+    fields: [collections.userId],
+    references: [users.id],
+  }),
+  items: many(collectionItems),
+}));
+
+export const collectionItemsRelations = relations(collectionItems, ({ one }) => ({
+  collection: one(collections, {
+    fields: [collectionItems.collectionId],
+    references: [collections.id],
+  }),
+  generation: one(generations, {
+    fields: [collectionItems.generationId],
+    references: [generations.id],
   }),
 }));
 
