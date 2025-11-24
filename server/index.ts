@@ -86,6 +86,10 @@ app.use((req, res, next) => {
   const { initializePlans } = await import('./seedPlans');
   await initializePlans();
   
+  // Initialize pricing (upserts all pricing entries from seedPricing.ts)
+  const { seedPricing } = await import('./seedPricing');
+  await seedPricing();
+  
   // Initialize Passport strategies and middleware for authentication
   initializePassportStrategies(app);
   
