@@ -492,8 +492,12 @@ export default function GenerateVideo() {
     // Build parameters with seed support (Veo uses array 'seeds', others use singular 'seed')
     const parameters: any = {
       duration,
-      quality,
     };
+    
+    // Only include quality for models that use it (not Runway, Seedance, or Wan 2.5 - they use resolution)
+    if (model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5') {
+      parameters.quality = quality;
+    }
     
     // Add aspectRatio only if NOT (Seedance + image-to-video)
     // For Seedance image-to-video, aspect ratio is determined by the input image
@@ -730,8 +734,8 @@ export default function GenerateVideo() {
               )}
             </div>
 
-            {/* Quality - Hidden for Runway Gen-3 and Seedance (use resolution instead) */}
-            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && (
+            {/* Quality - Hidden for Runway Gen-3, Seedance, and Wan 2.5 (use resolution instead) */}
+            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && (
               <div className="space-y-2">
                 <Label htmlFor="quality">Quality</Label>
                 <Select value={quality} onValueChange={setQuality}>
