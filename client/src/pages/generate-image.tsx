@@ -53,6 +53,30 @@ const FLUX_ASPECT_RATIOS = [
   { value: "9:16", label: "Mobile Portrait (9:16)" },
 ];
 
+const NANO_BANANA_ASPECT_RATIOS = [
+  { value: "1:1", label: "Square (1:1)" },
+  { value: "2:3", label: "Tall Portrait (2:3)" },
+  { value: "3:2", label: "Wide Landscape (3:2)" },
+  { value: "3:4", label: "Portrait (3:4)" },
+  { value: "4:3", label: "Classic (4:3)" },
+  { value: "4:5", label: "Portrait (4:5)" },
+  { value: "5:4", label: "Landscape (5:4)" },
+  { value: "9:16", label: "Mobile Portrait (9:16)" },
+  { value: "16:9", label: "Landscape (16:9)" },
+  { value: "21:9", label: "Ultra-wide (21:9)" },
+];
+
+const NANO_BANANA_RESOLUTIONS = [
+  { value: "1K", label: "1K" },
+  { value: "2K", label: "2K" },
+  { value: "4K", label: "4K" },
+];
+
+const NANO_BANANA_OUTPUT_FORMATS = [
+  { value: "png", label: "PNG (Lossless)" },
+  { value: "jpg", label: "JPG (Compressed)" },
+];
+
 const GENERATE_QUANTITIES = [
   { value: "1", label: "1 Image (6 credits)" },
   { value: "2", label: "2 Images (7 credits)" },
@@ -94,6 +118,7 @@ export default function GenerateImage() {
   const [style, setStyle] = useState("realistic");
   const [outputFormat, setOutputFormat] = useState("PNG");
   const [quality, setQuality] = useState("standard");
+  const [resolution, setResolution] = useState("1K"); // For nano-banana: 1K, 2K, or 4K
   const [generateQuantity, setGenerateQuantity] = useState("1"); // For 4o-image: 1, 2, or 4
   const [fluxModel, setFluxModel] = useState("pro"); // For flux-kontext: pro or max
   const [promptUpsampling, setPromptUpsampling] = useState(false); // For flux-kontext
@@ -342,6 +367,11 @@ export default function GenerateImage() {
       parameters.promptUpsampling = promptUpsampling;
       parameters.outputFormat = outputFormat;
     } 
+    // For nano-banana, pass resolution and outputFormat (no style)
+    else if (model === 'nano-banana') {
+      parameters.resolution = resolution;
+      parameters.outputFormat = outputFormat;
+    }
     // For other models, include style, outputFormat, quality
     else {
       parameters.style = style;
@@ -526,7 +556,7 @@ export default function GenerateImage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(model === '4o-image' ? GPT4O_ASPECT_RATIOS : model === 'flux-kontext' ? FLUX_ASPECT_RATIOS : ASPECT_RATIOS).map((ratio) => (
+                    {(model === '4o-image' ? GPT4O_ASPECT_RATIOS : model === 'flux-kontext' ? FLUX_ASPECT_RATIOS : model === 'nano-banana' ? NANO_BANANA_ASPECT_RATIOS : ASPECT_RATIOS).map((ratio) => (
                       <SelectItem key={ratio.value} value={ratio.value}>
                         {ratio.label}
                       </SelectItem>
@@ -535,7 +565,26 @@ export default function GenerateImage() {
                 </Select>
               </div>
 
-              {/* Output Format - Hidden for 4o-image, different for flux-kontext */}
+              {/* Resolution - Only for Nano Banana */}
+              {model === 'nano-banana' && (
+                <div className="space-y-2">
+                  <Label htmlFor="resolution">Resolution</Label>
+                  <Select value={resolution} onValueChange={setResolution}>
+                    <SelectTrigger id="resolution" data-testid="select-resolution">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NANO_BANANA_RESOLUTIONS.map((res) => (
+                        <SelectItem key={res.value} value={res.value}>
+                          {res.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Output Format - Hidden for 4o-image, different for flux-kontext and nano-banana */}
               {model !== '4o-image' && (
                 <div className="space-y-2">
                   <Label htmlFor="outputFormat">Output Format</Label>
@@ -544,7 +593,7 @@ export default function GenerateImage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {(model === 'flux-kontext' ? FLUX_OUTPUT_FORMATS : OUTPUT_FORMATS).map((format) => (
+                      {(model === 'flux-kontext' ? FLUX_OUTPUT_FORMATS : model === 'nano-banana' ? NANO_BANANA_OUTPUT_FORMATS : OUTPUT_FORMATS).map((format) => (
                         <SelectItem key={format.value} value={format.value}>
                           {format.label}
                         </SelectItem>
@@ -554,8 +603,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Quality - Hidden for 4o-image and flux-kontext */}
-              {model !== '4o-image' && model !== 'flux-kontext' && (
+              {/* Quality - Hidden for 4o-image, flux-kontext, and nano-banana */}
+              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && (
                 <div className="space-y-2">
                   <Label htmlFor="quality">Quality</Label>
                   <Select value={quality} onValueChange={setQuality}>
@@ -573,8 +622,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Style - Hidden for 4o-image and flux-kontext */}
-              {model !== '4o-image' && model !== 'flux-kontext' && (
+              {/* Style - Hidden for 4o-image, flux-kontext, and nano-banana */}
+              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && (
                 <div className="space-y-2">
                   <Label htmlFor="style">Style</Label>
                   <Select value={style} onValueChange={setStyle}>

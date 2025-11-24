@@ -78,7 +78,7 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'image', model: '4o-image-4', creditCost: 8, kieCreditCost: null, category: 'generation', description: '4o Image API - 4 images output' },
   { feature: 'image', model: 'flux-kontext-pro', creditCost: 5, kieCreditCost: 1, category: 'generation', description: 'Flux Kontext Pro - Standard model for balanced performance' },
   { feature: 'image', model: 'flux-kontext-max', creditCost: 10, kieCreditCost: 2, category: 'generation', description: 'Flux Kontext Max - Enhanced model for advanced capabilities' },
-  { feature: 'image', model: 'nano-banana', creditCost: 50, kieCreditCost: 4, category: 'generation', description: 'Nano Banana - Fast, precise image generation and editing' },
+  { feature: 'image', model: 'nano-banana', creditCost: 24, kieCreditCost: 24, category: 'generation', description: 'Nano Banana - Fast, precise image generation and editing' },
   { feature: 'image', model: 'seedream-4', creditCost: 25, kieCreditCost: 4, category: 'generation', description: 'Seedream 4.0 - Up to 4K resolution with batch generation' },
   { feature: 'image', model: 'midjourney-v7', creditCost: 60, kieCreditCost: 8, category: 'generation', description: 'Midjourney v7 - Latest MJ with style controls (4 variants)' },
   
