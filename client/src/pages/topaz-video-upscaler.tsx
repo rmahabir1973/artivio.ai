@@ -12,17 +12,27 @@ import { Loader2, Upload, Download, Zap, Copy, Check } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 
-interface VideoUpscalerCosts {
-  "1": number;
-  "2": number;
-  "4": number;
+// Duration-based tiered pricing (Kie.ai charges 12 credits/second)
+// 0-10s tier: 120 Kie credits → 180 user credits (50% markup)
+// 11-15s tier: 180 Kie credits → 270 user credits (50% markup)
+// 16-20s tier: 240 Kie credits → 360 user credits (50% markup)
+const TIER_COSTS = {
+  '10s': 180,  // 0-10 seconds
+  '15s': 270,  // 11-15 seconds
+  '20s': 360,  // 16-20 seconds
+};
+
+function getVideoCostByDuration(duration: number): number {
+  if (duration <= 10) return TIER_COSTS['10s'];
+  if (duration <= 15) return TIER_COSTS['15s'];
+  return TIER_COSTS['20s'];
 }
 
-const VIDEO_UPSCALE_COSTS: VideoUpscalerCosts = {
-  "1": 72,
-  "2": 72,
-  "4": 72,
-};
+function getDurationTier(duration: number): '10s' | '15s' | '20s' {
+  if (duration <= 10) return '10s';
+  if (duration <= 15) return '15s';
+  return '20s';
+}
 
 interface UpscaleResult {
   id: string;
@@ -42,8 +52,10 @@ export default function TopazVideoUpscaler() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
 
-  const currentCost = VIDEO_UPSCALE_COSTS[selectedFactor];
+  const currentCost = videoDuration > 0 ? getVideoCostByDuration(videoDuration) : TIER_COSTS['10s'];
+  const currentTier = videoDuration > 0 ? getDurationTier(videoDuration) : '10s';
   const currentCredits = (user as any)?.credits || 0;
   const creditsAfter = currentCredits - currentCost;
 
@@ -106,6 +118,23 @@ export default function TopazVideoUpscaler() {
         });
         return;
       }
+
+      // Store duration for cost calculation
+      setVideoDuration(duration);
+      
+      // Calculate cost tier
+      const tier = getDurationTier(duration);
+      const cost = getVideoCostByDuration(duration);
+      
+      // Show tier information to user
+      const tierInfo = tier === '10s' ? '0-10s (180 credits)' : 
+                       tier === '15s' ? '11-15s (270 credits)' : 
+                       '16-20s (360 credits)';
+      
+      toast({
+        title: "Video Loaded",
+        description: `Duration: ${duration.toFixed(1)}s - Pricing Tier: ${tierInfo}`,
+      });
 
       // Duration is valid, proceed with upload
       setUploadedFileName(file.name);
