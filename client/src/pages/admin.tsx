@@ -1085,6 +1085,7 @@ export default function Admin() {
                       <TableHead className="w-20">Order</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Display Name</TableHead>
+                      <TableHead>Billing Period</TableHead>
                       <TableHead>Price</TableHead>
                       <TableHead>Credits/Month</TableHead>
                       <TableHead>Stripe</TableHead>
@@ -1105,8 +1106,13 @@ export default function Admin() {
                         <TableCell data-testid={`text-plan-display-name-${plan.id}`}>
                           {plan.displayName}
                         </TableCell>
+                        <TableCell data-testid={`text-plan-billing-period-${plan.id}`}>
+                          <Badge variant={plan.billingPeriod === 'monthly' ? 'default' : plan.billingPeriod === 'annual' ? 'secondary' : 'outline'} className="capitalize text-xs">
+                            {plan.billingPeriod}
+                          </Badge>
+                        </TableCell>
                         <TableCell data-testid={`text-plan-price-${plan.id}`}>
-                          ${(plan.price / 100).toFixed(2)}/mo
+                          ${(plan.price / 100).toFixed(2)}/{plan.billingPeriod === 'monthly' ? 'mo' : 'yr'}
                         </TableCell>
                         <TableCell data-testid={`text-plan-credits-${plan.id}`}>
                           {plan.creditsPerMonth.toLocaleString()}
@@ -1150,6 +1156,7 @@ export default function Admin() {
                                   displayName: plan.displayName,
                                   description: plan.description || "",
                                   price: (plan.price / 100).toString(),
+                                  billingPeriod: plan.billingPeriod as "monthly" | "annual" | "trial",
                                   creditsPerMonth: plan.creditsPerMonth.toString(),
                                   stripePriceId: plan.stripePriceId || "",
                                   stripeProductId: plan.stripeProductId || "",
