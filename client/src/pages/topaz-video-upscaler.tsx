@@ -69,6 +69,7 @@ export default function TopazVideoUpscaler() {
 
     const file = files[0];
     const maxFileSize = 500 * 1024 * 1024; // 500MB
+    const maxDuration = 20; // 20 seconds
     const allowedTypes = ["video/mp4", "video/quicktime", "video/x-matroska"];
 
     if (!allowedTypes.includes(file.type)) {
@@ -89,16 +90,45 @@ export default function TopazVideoUpscaler() {
       return;
     }
 
-    setUploadedFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setBase64Video(base64);
-      setVideoUrl(base64);
-      setResultUrl(null);
-      setGenerationId(null);
+    // Check video duration before processing
+    const videoElement = document.createElement("video");
+    videoElement.preload = "metadata";
+
+    videoElement.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(videoElement.src);
+      const duration = Math.floor(videoElement.duration);
+
+      if (duration > maxDuration) {
+        toast({
+          title: "Video Too Long",
+          description: `Video is ${duration}s long. Maximum duration is ${maxDuration} seconds to avoid processing timeouts.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Duration is valid, proceed with upload
+      setUploadedFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setBase64Video(base64);
+        setVideoUrl(base64);
+        setResultUrl(null);
+        setGenerationId(null);
+      };
+      reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
+
+    videoElement.onerror = () => {
+      toast({
+        title: "Invalid Video",
+        description: "Could not read video file. Please try a different file.",
+        variant: "destructive",
+      });
+    };
+
+    videoElement.src = URL.createObjectURL(file);
   };
 
   const upscaleMutation = useMutation({
@@ -246,7 +276,7 @@ export default function TopazVideoUpscaler() {
                 {uploadedFileName || "Click to upload or drag and drop"}
               </span>
               <span className="text-xs text-muted-foreground">
-                MP4, MOV, MKV up to 500MB
+                MP4, MOV, MKV • Max 20 seconds • Up to 500MB
               </span>
             </div>
             <input
