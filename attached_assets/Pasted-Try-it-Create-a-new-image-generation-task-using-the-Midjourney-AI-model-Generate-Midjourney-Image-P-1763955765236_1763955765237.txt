@@ -1,0 +1,735 @@
+Try it
+Create a new image generation task using the Midjourney AI model.
+Generate Midjourney Image
+POST /api/v1/mj/generate
+Generate Midjourney Image cURL
+Usage Guide
+Developer Notes
+Authorizations
+All APIs require authentication via Bearer Token.
+Get API Key:
+1. Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+Note:
+Body application/json
+Task type for generation mode.
+Image Generation Types:
+Video Generation Types:
+Available options: mj_txt2img , mj_img2img , mj_style_reference , mj_omni_reference , mj_video , mj_video_hd
+Example: "mj_txt2img"
+Text prompt describing the desired image content. Required for all generation modes.
+Example: "Help me generate a sci-fi themed fighter jet in a beautiful sky, to be used as a computer wallpaper"
+The speed of the API. It can be 'fast', 'relaxed' or 'turbo', which corresponds to different speed of Midjourney.
+Available options: relaxed , fast , turbo
+Example: "relaxed"
+Input image URL (required for image-to-image and image-to-video generation).
+Example: "https://example.com/image.jpg"
+Input image URL array (required for image-to-image and image-to-video generation).
+Example:
+Output image/video aspect ratio.
+Supported Aspect Ratios:
+Ratio Format Type Common Use Cases
+2:1 Ultra-wide Cinematic displays, panoramic views
+16:9 Widescreen HD video, desktop wallpapers
+4:3 Standard Traditional displays, presentations
+3:2 Classic Traditional photography, prints
+1:1 Square Social media posts, profile pictures
+3:4 Portrait Magazine layouts, portrait photos
+5:6 Portrait Mobile photography, stories
+9:16 Mobile Portrait Smartphone wallpapers, stories
+2:3 Portrait Mobile app splash screens
+6:5 Landscape Tablet wallpapers, digital art
+1:2 Ultra-tall Mobile app splash screens, banners
+Available options: 1:2 , 9:16 , 2:3 , 3:4 , 5:6 , 6:5 , 4:3 , 3:2 , 1:1 , 16:9 , 2:1
+Example: "16:9"
+Midjourney model version to use.
+Midjourney routinely releases new model versions to improve efficiency, coherency, and quality. The latest model is the default, but each
+model excels at producing different types of images.
+Available options: 7 , 6.1 , 6 , 5.2 , 5.1 , niji6
+Example: "7"
+Controls the diversity of generated images.
+Required range: 0 <= x <= 100
+Example: 10
+Stylization level (0-1000).
+Required range: 0 <= x <= 1000
+Example: 1
+Weirdness level (0-3000).
+Required range: 0 <= x <= 3000
+Example: 1
+Omni intensity parameter. Controls the strength of the omni reference effect. Range: 1-1000, increments of 1 (e.g. 1, 2, 3).
+Required range: 1 <= x <= 1000
+Example: 500
+Watermark identifier.
+Example: "my_watermark"
+Whether to enable automatic translation.
+Example: false
+Callback URL to receive task completion updates.
+📖 Detailed Callback Mechanism: See Midjourney Image Generation Callbacks for callback format, status codes, best practices, and
+troubleshooting.
+Example: "https://api.example.com/callback"
+Number of videos to generate. Only effective when taskType is 'mj_video' or 'mj_video_hd'.
+Available options: 1 , 2 , 4
+Example: 1
+Motion parameter for video generation. Controls the level of motion in generated videos.
+Available options: high , low
+Example: "high"
+Response
+Request successful
+Response status code
+Available options: 200 , 400 , 401 , 402 , 404 , 422 , 429 , 455 , 500 , 501 , 505
+Response message
+Example: "success"
+Hide child attributes
+Task ID, can be used with Get Image Details endpoint to query task status
+Example: "mj_task_abcdef123456"
+This endpoint creates images based on your text prompt
+Multiple variations will be generated
+Supports text-to-image, image-to-image, and image-to-video generation
+Recommendation for First-Time Users: Start with simple prompts for best results.
+Generated image files are retained for 15 days before being deleted.
+Ensure all required fields are provided for optimal generation.
+Authorization string header required
+Keep your API Key secure and do not share it with others
+If you suspect your API Key has been compromised, reset it immediately in the management page
+taskType enum<string> default:mj_txt2img required
+mj_txt2img: Text-to-image generation
+mj_img2img: Image-to-image generation
+mj_style_reference: Style reference
+mj_omni_reference: Omni reference
+mj_video: Image-to-standard-definition-video generation (supports videoBatchSize parameters)
+mj_video_hd: Image-to-high-definition-video generation (supports videoBatchSize parameters)
+prompt string required
+Should be detailed and specific in describing image content
+Can include style, composition, lighting and other visual elements
+Max length: 2000 characters
+speed enum<string>
+This parameter is not required when taskType is mj_video, mj_video_hd or mj_omni_reference
+fileUrl string
+Use either fileUrl or fileUrls field
+Must be a valid image URL
+Image must be accessible to the API server
+Leave empty for text-to-image generation
+fileUrls string[]
+Use either fileUrl or fileUrls field
+For backward compatibility, fileUrl field is currently retained
+When generating videos, fileUrls can only have one image link
+Recommended to use fileUrls field going forward
+Must be valid image URLs
+Images must be accessible to the API server
+Leave empty for text-to-image generation
+["https://example.com/image.jpg"]
+aspectRatio enum<string>
+version enum<string>
+variety integer
+Increment by 5 each time, such as (0, 5, 10, 15...)
+Higher values create more diverse results
+Lower values create more consistent results
+stylization integer
+Controls the artistic style intensity
+Higher values create more stylized results
+Lower values create more realistic results
+Suggested to be a multiple of 50
+weirdness integer
+Controls the creativity and uniqueness
+Higher values create more unusual results
+Lower values create more conventional results
+Suggested to be a multiple of 100
+ow integer
+Only used when taskType is 'mj_omni_reference'
+Using an Omni Reference allows you to put characters, objects, vehicles, or non-human creatures from a reference image into your
+Midjourney creations
+Higher values result in stronger reference influence
+Lower values allow for more creative interpretation
+waterMark string
+Optional parameter
+If provided, a watermark will be added to the generated content
+enableTranslation boolean default:false
+Since prompt only supports English, when this parameter is true, the system will automatically translate non-English prompts to
+English
+If your prompt is already in English, you can set this to false
+Default: false
+callBackUrl string<uri>
+Optional but recommended for production use
+System will POST task completion status to this URL
+Alternatively, use the Get Midjourney Task Details endpoint to check status
+videoBatchSize enum<integer> default:1
+1: Generate 1 video (default)
+2: Generate 2 videos
+4: Generate 4 videos
+motion enum<string> default:high
+high: High motion level (default)
+low: Low motion level
+Required when taskType is 'mj_video' or 'mj_video_hd'
+Only effective when taskType is 'mj_video' or 'mj_video_hd'
+200 application/json
+code enum<integer>
+200: Success - Request has been processed successfully
+400: Bad Request - Invalid request parameters
+401: Unauthorized - Authentication credentials are missing or invalid
+402: Insufficient Credits - Account does not have enough credits to perform the operation
+404: Not Found - The requested resource or endpoint does not exist
+422: Validation Error - The request parameters failed validation checks
+429: Rate Limited - Request limit has been exceeded for this resource
+455: Service Unavailable - System is currently undergoing maintenance
+500: Server Error - An unexpected error occurred while processing the request
+501: Generation Failed - Image generation task failed
+505: Feature Disabled - The requested feature is currently disabled
+msg string
+data object
+data.taskId string
+curl --request POST \
+--url https://api.kie.ai/api/v1/mj/generate \
+--header 'Authorization: Bearer <token>' \
+--header 'Content-Type: application/json' \
+--data '{
+"taskType": "mj_txt2img",
+"speed": "relaxed",
+"prompt": "Help me generate a sci-fi themed fighter jet in a beautiful sky, to be used as a computer wallpaper",
+"fileUrls": [
+"https://example.com/image.jpg"
+],
+"aspectRatio": "16:9",
+"version": "7",
+"variety": 10,
+"stylization": 1,
+"weirdness": 1,
+"waterMark": "",
+"enableTranslation": false,
+"callBackUrl": "https://api.example.com/callback",
+"ow": 500,
+"videoBatchSize": 1,
+"motion": "high"
+}'
+{
+"code": 200,
+"msg": "success",
+"data": {
+"taskId": "mj_task_abcdef123456"
+}
+}
+200 500
+When image generation is completed, the system will send a POST request to this URL
+Midjourney Image Generation Callbacks
+When you submit an image generation task to the Midjourney API, you can use the callBackUrl parameter to set a
+callback URL. The system will automatically push the results to your specified address when the task is completed.
+Callback Mechanism Overview
+The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task
+completion results to your server.
+Callback Timing
+The system will send callback notifications in the following situations:
+Callback Method
+Callback Request Format
+When the task is completed, the system will send a POST request to your callBackUrl in the following format:
+Status Code Description
+Callback status code indicating task processing result:
+Status Code Description
+200 Success - Image generation completed
+500 Server Error - Image generation failed or other internal error
+Status message providing detailed status description
+Task ID, consistent with the taskId returned when you submitted the task
+JSON string containing the original request parameters, useful for tracking generation request details
+Array of result URLs for generated images/videos, contains accessible download links on success
+Callback Reception Examples
+Here are example codes for receiving callbacks in popular programming languages:
+Node.js Python PHP
+Best Practices
+Callback URL Configuration Recommendations
+1. Use HTTPS: Ensure your callback URL uses HTTPS protocol for secure data transmission
+2. Verify Source: Verify the legitimacy of the request source in callback processing
+3. Idempotent Processing: The same taskId may receive multiple callbacks, ensure processing logic is idempotent
+4. Quick Response: Callback processing should return a 200 status code as quickly as possible to avoid timeout
+5. Asynchronous Processing: Complex business logic should be processed asynchronously to avoid blocking callback
+response
+6. Batch Processing: Midjourney typically generates multiple images, recommend batch downloading and processing
+Important Reminders
+Troubleshooting
+If you do not receive callback notifications, please check the following:
+Alternative Solution
+If you cannot use the callback mechanism, you can also use polling:
+Midjourney image generation task completed successfully
+Midjourney image generation task failed
+Errors occurred during task processing
+HTTP Method: POST
+Content Type: application/json
+Timeout Setting: 15 seconds
+code integer required
+msg string required
+data.taskId string required
+data.promptJson string required
+data.resultUrls array required
+Callback URL must be a publicly accessible address
+Server must respond within 15 seconds, otherwise it will be considered a timeout
+If 3 consecutive retries fail, the system will stop sending callbacks
+Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+Midjourney generated image URLs may have time limits, recommend downloading and saving promptly
+Pay attention to processing the promptJson field, which contains useful original request information
+Network Connection Issues
+Confirm that the callback URL is accessible from the public network
+Check firewall settings to ensure inbound requests are not blocked
+Verify that domain name resolution is correct
+Server Response Issues
+Ensure the server returns HTTP 200 status code within 15 seconds
+Check server logs for error messages
+Verify that the interface path and HTTP method are correct
+Content Format Issues
+Confirm that the received POST request body is in JSON format
+Check that Content-Type is application/json
+Verify that JSON parsing is correct
+Image Processing Issues
+Confirm that image URLs are accessible
+Check image download permissions and network connections
+Verify image save paths and permissions
+Note that Midjourney may generate multiple images requiring batch processing
+Poll Query Results
+Use the get Midjourney task details endpoint to regularly query task status. We recommend querying every 30 seconds.
+{
+"code": 200,
+"msg": "success",
+"data": {
+"taskId": "mj_task_12345",
+"promptJson": "{\"prompt\":\"a beautiful landscape\",\"model\":\"midjourney\"}",
+"resultUrls": [
+"https://example.com/mj_result1.png",
+"https://example.com/mj_result2.png",
+"https://example.com/mj_result3.png",
+"https://example.com/mj_result4.png"
+]
+}
+}
+const express = require('express');
+const app = express();
+app.use(express.json());
+app.post('/mj-image-callback', (req, res) => {
+const { code, msg, data } = req.body;
+console.log('Received Midjourney image generation callback:', {
+taskId: data.taskId,
+status: code,
+message: msg
+});
+if (code === 200) {
+// Task completed successfully
+console.log('Midjourney image generation completed');
+// Parse original request parameters
+try {
+const promptData = JSON.parse(data.promptJson);
+console.log('Original prompt:', promptData.prompt);
+} catch (e) {
+console.log('Failed to parse promptJson:', e);
+}
+// Process generated images
+const resultUrls = data.resultUrls || [];
+console.log(`Generated ${resultUrls.length} images:`);
+resultUrls.forEach((url, index) => {
+console.log(`Image ${index + 1}: ${url}`);
+});
+// Download and save images
+// Add image download logic here
+} else {
+// Task failed
+console.log('Midjourney image generation failed:', msg);
+// Handle failure cases...
+}
+// Return 200 status code to confirm callback received
+res.status(200).json({ status: 'received' });
+});
+app.listen(3000, () => {
+console.log('Callback server running on port 3000');
+});
+Success Callback Failure Callback
+Try it
+Retrieve the status and details of an Midjourney generation task.
+Get Midjourney Task Details
+GET /api/v1/mj/record-info
+Get Midjourney Task Details cURL
+Status Descriptions
+Authorizations
+All APIs require authentication via Bearer Token.
+Get API Key:
+1. Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+Note:
+Query Parameters
+Task ID returned from the generation request
+Response
+Request successful
+Response status code
+Available options: 200 , 400 , 401 , 402 , 404 , 422 , 429 , 455 , 500 , 501 , 505
+Response message
+Example: "success"
+Hide child attributes
+Task ID
+Example: "4edb3cXXXXX5e3f0aa5cc"
+Task type
+Example: "mj_txt2img"
+Request parameters in JSON format
+Example: "{\"prompt\":\"Help me generate a sci-fi themed fighter jet in a beautiful sky, to be used as a
+computer
+wallpaper\",\"fileUrl\":\"\",\"taskType\":\"mj_txt2img\",\"aspectRatio\":\"16:9\",\"callBackUrl\
+":\"https://api.example.com/callback\",\"waterMark\":\"\",\"stylization\":1,\"weirdness\":1,\"ve
+rsion\":\"7\",\"speed\":\"relaxed\"}"
+Task completion time
+Example: "2024-03-20T10:30:00Z"
+Result information
+Hide child attributes
+Hide child attributes
+Result URL
+Generation status flag
+Available options: 0 , 1 , 2 , 3
+Example: 1
+Task creation time
+Example: "2024-03-20T10:30:00Z"
+Error code when task fails
+Example:
+null
+Error message when task fails
+Example:
+null
+successFlag: 0 (Generating) - Task is currently being processed
+successFlag: 1 (Success) - Task completed successfully
+successFlag: 2 (Failed) - Task generation failed
+successFlag: 3 (Generation Failed) - Task created successfully but generation failed
+Authorization string header required
+Keep your API Key secure and do not share it with others
+If you suspect your API Key has been compromised, reset it immediately in the management page
+taskId string required
+200 application/json
+code enum<integer>
+200: Success - Request has been processed successfully
+400: Bad Request - Invalid request parameters
+401: Unauthorized - Authentication credentials are missing or invalid
+402: Insufficient Credits - Account does not have enough credits to perform the operation
+404: Not Found - The requested resource or endpoint does not exist
+422: Validation Error - The request parameters failed validation checks
+429: Rate Limited - Request limit has been exceeded for this resource
+455: Service Unavailable - System is currently undergoing maintenance
+500: Server Error - An unexpected error occurred while processing the request
+501: Generation Failed - Image generation task failed
+505: Feature Disabled - The requested feature is currently disabled
+msg string
+data object
+data.taskId string
+data.taskType string
+data.paramJson string
+data.completeTime string
+data.resultInfoJson object
+data.resultInfoJson.resultUrls object[]
+resultUrl string
+data.successFlag enum<integer>
+0: Generating
+1: Success
+2: Failed
+3: Generation Failed
+data.createTime string
+data.errorCode integer | null
+data.errorMessage string | null
+curl --request GET \
+--url https://api.kie.ai/api/v1/mj/record-info \
+--header 'Authorization: Bearer <token>'
+{
+"code": 200,
+"msg": "success",
+"data": {
+"taskId": "4edb3c5XXXXX75e3f0aa5cc",
+"taskType": "mj_txt2img",
+"paramJson": "{\"aspectRatio\":\"16:9\",\"callBackUrl\":\"https://api.example.com/callback\",
+\"fileUrl\":\"\",\"prompt\":\"Help me generate a sci-fi themed fighter jet in a beautiful sky, to be used as
+a computer wallpaper\",\"speed\":\"Relax\",\"stylization\":1,\"taskType\":\"mj_txt2img\",\"version\":\"7\",
+\"waterMark\":\"\",\"weirdness\":1}",
+"completeTime": "2024-03-20T10:30:00Z",
+"resultInfoJson": {
+"resultUrls": [
+{
+"resultUrl": "https://tempfile.aiquickdraw.com/v/42ea4a4250571eb18361bd2e309c8e8a_0_0.jpeg"
+},
+{
+"resultUrl": "https://tempfile.aiquickdraw.com/v/42ea4a4250571eb18361bd2e309c8e8a_0_1.jpeg"
+},
+{
+"resultUrl": "https://tempfile.aiquickdraw.com/v/42ea4a4250571eb18361bd2e309c8e8a_0_2.jpeg"
+},
+{
+"resultUrl": "https://tempfile.aiquickdraw.com/v/42ea4a4250571eb18361bd2e309c8e8a_0_3.jpeg"
+}
+]
+},
+"successFlag": 1,
+"createTime": "2024-03-20T10:30:00Z",
+"errorCode": null,
+"errorMessage": null
+}
+}
+200 500
+Try it
+Extend existing Midjourney-generated videos to create longer sequences.
+Extend Midjourney Video
+POST /api/v1/mj/generateVideoExtend
+Extend Midjourney Video cURL
+Usage Guide
+Parameter Details
+Developer Notes
+Authorizations
+All APIs require authentication via Bearer Token.
+Get API Key:
+1. Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+Note:
+Body application/json
+Extension type for video generation mode.
+Available options: mj_video_extend_manual , mj_video_extend_auto
+Example: "mj_video_extend_manual"
+Task ID of the original MJ video record to extend
+Example: "ee603959-debb-48d1-98c4-a6d1c717eba6"
+Video index from the original record to extend
+Example: 0
+Continuation prompt describing what should happen next in the video. Required for manual extension. Max length: 2000 characters
+Example: "Continue the scene with the spacecraft accelerating into a colorful nebula with dynamic light trails"
+Video watermark, optional
+Example: "my_watermark"
+Callback URL to receive extension completion updates. Optional but recommended in production.
+📖 Detailed callback format: See Midjourney Video Extension Callbacks
+Example: "https://api.example.com/callback"
+Response
+Request successful
+Response status code
+Available options: 200 , 400 , 401 , 402 , 404 , 422 , 429 , 455 , 500 , 501 , 505
+Response message
+Example: "success"
+Hide child attributes
+Task ID, can be used with Get Midjourney Task Details endpoint to query task status
+Example: "40d90dd1c6fddsa0a7dssa2a08366149"
+Provide the original video taskId and index to continue from the generated result
+Choose between manual extension (with prompt) or automatic extension
+Use prompt to guide how the video should continue while keeping consistency
+Optional callback is supported
+prompt required for manual extension, describes what should happen next
+taskType extension mode: mj_video_extend_manual or mj_video_extend_auto
+taskId identifies the original MJ video record to extend
+index video index from the original record to extend
+callBackUrl callback URL for receiving completion updates
+waterMark video watermark, optional
+Extended videos are stored for 15 days before automatic deletion
+Extension maintains the same aspect ratio and style as the original video
+Manual extension requires a prompt, automatic extension uses AI-generated continuation
+Authorization string header required
+Keep your API Key secure and do not share it with others
+If you suspect your API Key has been compromised, reset it immediately in the management page
+taskType enum<string> required
+mj_video_extend_manual: Manual extension with custom prompt
+mj_video_extend_auto: Automatic extension using AI-generated continuation
+taskId string required
+index integer required
+prompt string
+waterMark string
+callBackUrl string<uri>
+System will POST task status and results to this URL upon completion
+Alternatively, use the Get Midjourney Task Details endpoint to poll status
+200 application/json
+code enum<integer>
+200: Success - Request has been processed successfully
+400: Bad Request - Invalid request parameters
+401: Unauthorized - Authentication credentials are missing or invalid
+402: Insufficient Credits - Account does not have enough credits to perform the operation
+404: Not Found - The requested resource or endpoint does not exist
+422: Validation Error - The request parameters failed validation checks
+429: Rate Limited - Request limit has been exceeded for this resource
+455: Service Unavailable - System is currently undergoing maintenance
+500: Server Error - An unexpected error occurred while processing the request
+501: Generation Failed - Video extension task failed
+505: Feature Disabled - The requested feature is currently disabled
+msg string
+data object
+data.taskId string
+curl --request POST \
+--url https://api.kie.ai/api/v1/mj/generateVideoExtend \
+--header 'Authorization: Bearer <token>' \
+--header 'Content-Type: application/json' \
+--data '{
+"prompt": "Continue the scene with the spacecraft accelerating into a colorful nebula with dynamic light trails",
+"taskType": "mj_video_extend_manual",
+"taskId": "ee603959-debb-48d1-98c4-a6d1c717eba6",
+"index": 0,
+"waterMark": "my_watermark",
+"callBackUrl": "https://api.example.com/callback"
+}'
+{
+"code": 200,
+"msg": "success",
+"data": {
+"taskId": "40d90dd1c6fddsa0a7dssa2a08366149"
+}
+}
+200 500
+Try it
+Create an upscale task based on previously generated Midjourney images.
+Upscale
+POST /api/v1/mj/generateUpscale
+Upscale cURL
+Usage Guide
+Developer Notes
+Authorizations
+All APIs require authentication via Bearer Token.
+Get API Key:
+1. Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+Note:
+Body application/json
+Task ID returned from MJ generation task
+Example: "2584469c38e43c173dcae9e60663f645"
+Image index, range (0, 1, 2, 3) for the 4 generated images
+Required range: 0 <= x <= 3
+Example: 0
+Watermark identifier
+Example: "watermark"
+Callback URL to receive task completion updates
+📖 Detailed Callback Mechanism: See Midjourney Image Generation Callbacks for callback format, status codes,
+best practices, and troubleshooting.
+Example: "https://bd86f681ddfb.ngrok-free.app/api/v1/mj/test"
+Response
+Request successful
+Response status code
+Available options: 200 , 400 , 401 , 402 , 404 , 422 , 429 , 455 , 500 , 501 , 505
+Response message
+Example: "success"
+Hide child attributes
+Task ID, can be used with Get Image Details endpoint to query task status
+Example: "mj_upscale_abcdef123456"
+This endpoint is used to upscale Midjourney generated images
+Requires providing the taskId from generation task and the image index to upscale
+Supports adding watermarks and callback notifications
+imageIndex range is 0-3, corresponding to the 4 generated images
+Upscaled images have higher quality, suitable for printing or high-resolution use
+Recommended to use callback URL in production environments for result notifications
+Authorization string header required
+Keep your API Key secure and do not share it with others
+If you suspect your API Key has been compromised, reset it immediately in the management page
+taskId string required
+imageIndex integer required
+waterMark string
+callBackUrl string<uri>
+200 application/json
+code enum<integer>
+200: Success - Request has been processed successfully
+400: Bad Request - Invalid request parameters
+401: Unauthorized - Authentication credentials are missing or invalid
+402: Insufficient Credits - Account does not have enough credits to perform the operation
+404: Not Found - The requested resource or endpoint does not exist
+422: Validation Error - The request parameters failed validation checks
+429: Rate Limited - Request limit has been exceeded for this resource
+455: Service Unavailable - System is currently undergoing maintenance
+500: Server Error - An unexpected error occurred while processing the request
+501: Generation Failed - Image generation task failed
+505: Feature Disabled - The requested feature is currently disabled
+msg string
+data object
+data.taskId string
+curl --request POST \
+--url https://api.kie.ai/api/v1/mj/generateUpscale \
+--header 'Authorization: Bearer <token>' \
+--header 'Content-Type: application/json' \
+--data '{
+"taskId": "2584469c38e43c173dcae9e60663f645",
+"imageIndex": 0,
+"waterMark": "watermark",
+"callBackUrl": "https://bd86f681ddfb.ngrok-free.app/api/v1/mj/test"
+}'
+{
+"code": 200,
+"msg": "success",
+"data": {
+"taskId": "mj_upscale_abcdef123456"
+}
+}
+200 500
+Try it
+Create a vary task to enhance image clarity and simulate styles based on previously
+generated Midjourney images.
+Vary
+POST /api/v1/mj/generateVary
+Vary cURL
+Usage Guide
+Developer Notes
+Authorizations
+All APIs require authentication via Bearer Token.
+Get API Key:
+1. Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+Note:
+Body application/json
+Task ID returned from MJ generation task
+Example: "96a5****67tr"
+Image index, range (1, 2, 3, 4) for the 4 generated images
+Required range: 1 <= x <= 4
+Example: 1
+Watermark identifier (optional)
+Example: "my_watermark"
+Callback URL to receive task completion updates (optional)
+📖 Detailed Callback Mechanism: See Midjourney Image Generation Callbacks for callback format, status
+codes, best practices, and troubleshooting.
+Example: "https://example.com/callback"
+Response
+Request successful
+Response status code
+Available options: 200 , 400 , 401 , 402 , 404 , 422 , 429 , 455 , 500 , 501 , 505
+Response message
+Example: "success"
+Hide child attributes
+Task ID, can be used with Get Image Details endpoint to query task status
+Example: "2182668588ae82da0bc553c07c48ca38"
+This endpoint is used to create variations of Midjourney generated images
+Requires providing the taskId from generation task and the image index to vary
+Supports adding watermarks and callback notifications
+Enhances image clarity and provides style simulation
+imageIndex range is 1-4, corresponding to the 4 generated images
+Varied images have enhanced clarity and style simulation
+Recommended to use callback URL in production environments for result notifications
+Authorization string header required
+Keep your API Key secure and do not share it with others
+If you suspect your API Key has been compromised, reset it immediately in the management page
+taskId string required
+imageIndex integer required
+waterMark string
+callBackUrl string<uri>
+200 application/json
+code enum<integer>
+200: Success - Request has been processed successfully
+400: Bad Request - Invalid request parameters
+401: Unauthorized - Authentication credentials are missing or invalid
+402: Insufficient Credits - Account does not have enough credits to perform the operation
+404: Not Found - The requested resource or endpoint does not exist
+422: Validation Error - The request parameters failed validation checks
+429: Rate Limited - Request limit has been exceeded for this resource
+455: Service Unavailable - System is currently undergoing maintenance
+500: Server Error - An unexpected error occurred while processing the request
+501: Generation Failed - Image generation task failed
+505: Feature Disabled - The requested feature is currently disabled
+msg string
+data object
+data.taskId string
+curl --request POST \
+--url https://api.kie.ai/api/v1/mj/generateVary \
+--header 'Authorization: Bearer <token>' \
+--header 'Content-Type: application/json' \
+--data '{
+"taskId": "96a5****67tr",
+"imageIndex": 1,
+"waterMark": "my_watermark",
+"callBackUrl": "https://example.com/callback"
+}'
+{
+"code": 200,
+"msg": "success",
+"data": {
+"taskId": "2182668588ae82da0bc553c07c48ca38"
+}
+}
+200 500

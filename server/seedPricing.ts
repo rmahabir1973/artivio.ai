@@ -86,7 +86,10 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'image', model: 'seedream-4-4', creditCost: 32, kieCreditCost: 14, category: 'generation', description: 'Seedream 4.0 - 4 images' },
   { feature: 'image', model: 'seedream-4-5', creditCost: 40, kieCreditCost: 17.5, category: 'generation', description: 'Seedream 4.0 - 5 images' },
   { feature: 'image', model: 'seedream-4-6', creditCost: 48, kieCreditCost: 21, category: 'generation', description: 'Seedream 4.0 - 6 images' },
-  { feature: 'image', model: 'midjourney-v7', creditCost: 60, kieCreditCost: 8, category: 'generation', description: 'Midjourney v7 - Latest MJ with style controls (4 variants)' },
+  // Midjourney v7: Mode-based pricing
+  { feature: 'image', model: 'midjourney-v7-text2img', creditCost: 8, kieCreditCost: 8, category: 'generation', description: 'Midjourney v7 - Text-to-Image' },
+  { feature: 'image', model: 'midjourney-v7-img2img', creditCost: 8, kieCreditCost: 8, category: 'generation', description: 'Midjourney v7 - Image-to-Image' },
+  { feature: 'image', model: 'midjourney-v7-video', creditCost: 60, kieCreditCost: 60, category: 'generation', description: 'Midjourney v7 - Image-to-Video' },
   
   // ========================================
   // IMAGE ANALYSIS

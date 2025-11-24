@@ -95,6 +95,35 @@ const SEEDREAM_RESOLUTIONS = [
   { value: "4K", label: "4K" },
 ];
 
+const MIDJOURNEY_ASPECT_RATIOS = [
+  { value: "1:2", label: "Ultra-tall (1:2)" },
+  { value: "9:16", label: "Portrait (9:16)" },
+  { value: "2:3", label: "Portrait (2:3)" },
+  { value: "3:4", label: "Portrait (3:4)" },
+  { value: "5:6", label: "Portrait (5:6)" },
+  { value: "6:5", label: "Landscape (6:5)" },
+  { value: "4:3", label: "Classic (4:3)" },
+  { value: "3:2", label: "Classic (3:2)" },
+  { value: "1:1", label: "Square (1:1)" },
+  { value: "16:9", label: "Widescreen (16:9)" },
+  { value: "2:1", label: "Ultra-wide (2:1)" },
+];
+
+const MIDJOURNEY_VERSIONS = [
+  { value: "7", label: "Version 7" },
+  { value: "6.1", label: "Version 6.1" },
+  { value: "6", label: "Version 6" },
+  { value: "5.2", label: "Version 5.2" },
+  { value: "5.1", label: "Version 5.1" },
+  { value: "niji6", label: "Niji 6" },
+];
+
+const MIDJOURNEY_SPEED_OPTIONS = [
+  { value: "relaxed", label: "Relaxed" },
+  { value: "fast", label: "Fast" },
+  { value: "turbo", label: "Turbo" },
+];
+
 const GENERATE_QUANTITIES = [
   { value: "1", label: "1 Image (6 credits)" },
   { value: "2", label: "2 Images (7 credits)" },
@@ -147,6 +176,17 @@ export default function GenerateImage() {
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [seedLocked, setSeedLocked] = useState(false);
   
+  // Midjourney-specific state
+  const [mjMode, setMjMode] = useState<"text-to-image" | "image-to-image" | "image-to-video">("text-to-image");
+  const [mjSpeed, setMjSpeed] = useState("fast");
+  const [mjVersion, setMjVersion] = useState("7");
+  const [mjStylization, setMjStylization] = useState(0);
+  const [mjWeirdness, setMjWeirdness] = useState(0);
+  const [mjVariety, setMjVariety] = useState(0);
+  const [mjWatermark, setMjWatermark] = useState("");
+  const [mjEnableTranslation, setMjEnableTranslation] = useState(false);
+  const [mjAspectRatio, setMjAspectRatio] = useState("1:1");
+  
   // Helper to check if current model supports seeds (currently only Seedream 4)
   const modelSupportsSeed = () => {
     return model === 'seedream-4';
@@ -190,11 +230,20 @@ export default function GenerateImage() {
       cost = 8 * maxImages;
     }
     
+    // For midjourney-v7, adjust cost based on mode
+    if (m.value === 'midjourney-v7') {
+      if (mjMode === 'image-to-video') {
+        cost = 60;
+      } else {
+        cost = 8; // text-to-image or image-to-image
+      }
+    }
+    
     return {
       ...m,
       cost,
     };
-  }), [getModelCost, generateQuantity, fluxModel, maxImages]);
+  }), [getModelCost, generateQuantity, fluxModel, maxImages, mjMode]);
 
   // Clear reference images when switching to text-to-image mode
   useEffect(() => {
@@ -378,6 +427,16 @@ export default function GenerateImage() {
       return;
     }
 
+    // Validate Midjourney image requirements
+    if (model === 'midjourney-v7' && (mjMode === 'image-to-image' || mjMode === 'image-to-video') && referenceImages.length === 0) {
+      toast({
+        title: "Image Required",
+        description: "Please upload at least one image for this generation mode.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Build parameters with model-specific fields
     const parameters: any = {};
     
@@ -405,6 +464,20 @@ export default function GenerateImage() {
       parameters.imageResolution = seedreamResolution;
       parameters.maxImages = maxImages;
     }
+    // For midjourney-v7, pass all Midjourney-specific parameters
+    else if (model === 'midjourney-v7') {
+      parameters.mjMode = mjMode;
+      parameters.speed = mjSpeed;
+      parameters.version = mjVersion;
+      parameters.aspectRatio = mjAspectRatio;
+      parameters.stylization = mjStylization;
+      parameters.weirdness = mjWeirdness;
+      parameters.variety = mjVariety;
+      if (mjWatermark) {
+        parameters.waterMark = mjWatermark;
+      }
+      parameters.enableTranslation = mjEnableTranslation;
+    }
     // For other models, include style, outputFormat, quality, and aspectRatio
     else {
       parameters.aspectRatio = aspectRatio;
@@ -418,7 +491,7 @@ export default function GenerateImage() {
       parameters.seed = seed;
     }
     
-    // Ensure referenceImages is only sent in image-editing mode
+    // Ensure referenceImages is sent for both image-editing and Midjourney modes
     const payload: any = {
       model,
       prompt,
@@ -426,9 +499,12 @@ export default function GenerateImage() {
       parameters,
     };
 
-    // Only include referenceImages in editing mode
-    if (mode === "image-editing") {
+    // Include referenceImages for editing mode or Midjourney image modes
+    if (mode === "image-editing" || (model === 'midjourney-v7' && (mjMode === 'image-to-image' || mjMode === 'image-to-video'))) {
       payload.referenceImages = referenceImages;
+      if (model === 'midjourney-v7') {
+        payload.mjMode = mjMode;
+      }
     }
 
     // Defensive credit check - prevent API call if insufficient credits
@@ -582,8 +658,79 @@ export default function GenerateImage() {
                 />
               </div>
 
+              {/* Midjourney-specific: Speed Selection - Top Priority */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-2">
+                  <Label>Model generation speed</Label>
+                  <div className="flex gap-2">
+                    {MIDJOURNEY_SPEED_OPTIONS.map((opt) => (
+                      <Button
+                        key={opt.value}
+                        variant={mjSpeed === opt.value ? "default" : "outline"}
+                        onClick={() => setMjSpeed(opt.value)}
+                        className="flex-1"
+                        data-testid={`button-speed-${opt.value}`}
+                      >
+                        {opt.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Midjourney-specific: Mode Selection */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-2">
+                  <Label>Generation Mode</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={mjMode === 'text-to-image' ? "default" : "outline"}
+                      onClick={() => setMjMode('text-to-image')}
+                      className="flex-1"
+                      data-testid="button-mj-text-to-image"
+                    >
+                      Text to Image
+                    </Button>
+                    <Button
+                      variant={mjMode === 'image-to-image' ? "default" : "outline"}
+                      onClick={() => setMjMode('image-to-image')}
+                      className="flex-1"
+                      data-testid="button-mj-image-to-image"
+                    >
+                      Image to Image
+                    </Button>
+                    <Button
+                      variant={mjMode === 'image-to-video' ? "default" : "outline"}
+                      onClick={() => setMjMode('image-to-video')}
+                      className="flex-1"
+                      data-testid="button-mj-image-to-video"
+                    >
+                      Image to Video
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Midjourney-specific: Enable Translation Toggle */}
+              {model === 'midjourney-v7' && (
+                <div className="flex items-center justify-between space-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="enableTranslation">Enable Translation</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Automatically translate non-English prompts to English for better results
+                    </p>
+                  </div>
+                  <Switch
+                    id="enableTranslation"
+                    checked={mjEnableTranslation}
+                    onCheckedChange={setMjEnableTranslation}
+                    data-testid="switch-enable-translation"
+                  />
+                </div>
+              )}
+
               {/* Aspect Ratio - Model-specific options */}
-              {model !== 'seedream-4' && (
+              {model !== 'seedream-4' && model !== 'midjourney-v7' && (
                 <div className="space-y-2">
                   <Label htmlFor="aspectRatio">Aspect Ratio</Label>
                   <Select value={aspectRatio} onValueChange={setAspectRatio}>
@@ -598,6 +745,120 @@ export default function GenerateImage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {/* Midjourney Aspect Ratio */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-2">
+                  <Label htmlFor="mjAspectRatio">Aspect Ratio</Label>
+                  <Select value={mjAspectRatio} onValueChange={setMjAspectRatio}>
+                    <SelectTrigger id="mjAspectRatio" data-testid="select-mj-aspect-ratio">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MIDJOURNEY_ASPECT_RATIOS.map((ratio) => (
+                        <SelectItem key={ratio.value} value={ratio.value}>
+                          {ratio.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Midjourney Version Dropdown */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-2">
+                  <Label htmlFor="mjVersion">Version</Label>
+                  <Select value={mjVersion} onValueChange={setMjVersion}>
+                    <SelectTrigger id="mjVersion" data-testid="select-mj-version">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MIDJOURNEY_VERSIONS.map((ver) => (
+                        <SelectItem key={ver.value} value={ver.value}>
+                          {ver.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Midjourney Stylization Slider */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-3">
+                  <Label htmlFor="mjStylization">Stylization (0-1000)</Label>
+                  <input
+                    id="mjStylization"
+                    type="range"
+                    min="0"
+                    max="1000"
+                    step="50"
+                    value={mjStylization}
+                    onChange={(e) => setMjStylization(parseInt(e.target.value, 10))}
+                    className="w-full"
+                    data-testid="slider-stylization"
+                  />
+                  <p className="text-sm text-muted-foreground">Stylization (0-1000)</p>
+                </div>
+              )}
+
+              {/* Midjourney Weirdness Slider */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-3">
+                  <Label htmlFor="mjWeirdness">Weirdness (0-3000)</Label>
+                  <input
+                    id="mjWeirdness"
+                    type="range"
+                    min="0"
+                    max="3000"
+                    step="100"
+                    value={mjWeirdness}
+                    onChange={(e) => setMjWeirdness(parseInt(e.target.value, 10))}
+                    className="w-full"
+                    data-testid="slider-weirdness"
+                  />
+                  <p className="text-sm text-muted-foreground">Weirdness (0-3000)</p>
+                </div>
+              )}
+
+              {/* Midjourney Variety Slider */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-3">
+                  <Label htmlFor="mjVariety">Variety (0-100)</Label>
+                  <input
+                    id="mjVariety"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={mjVariety}
+                    onChange={(e) => setMjVariety(parseInt(e.target.value, 10))}
+                    className="w-full"
+                    data-testid="slider-variety"
+                  />
+                  <p className="text-sm text-muted-foreground">Variety (0-100)</p>
+                </div>
+              )}
+
+              {/* Midjourney Watermark */}
+              {model === 'midjourney-v7' && (
+                <div className="space-y-2">
+                  <Label htmlFor="mjWatermark">Watermark Identifier (Optional)</Label>
+                  <input
+                    id="mjWatermark"
+                    type="text"
+                    placeholder="Enter watermark identifier"
+                    value={mjWatermark}
+                    onChange={(e) => setMjWatermark(e.target.value)}
+                    className="w-full px-3 py-2 border rounded"
+                    data-testid="input-watermark"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Watermark identifier (optional)
+                  </p>
                 </div>
               )}
 
@@ -675,8 +936,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Output Format - Hidden for 4o-image and seedream-4 */}
-              {model !== '4o-image' && model !== 'seedream-4' && (
+              {/* Output Format - Hidden for 4o-image, seedream-4, and midjourney-v7 */}
+              {model !== '4o-image' && model !== 'seedream-4' && model !== 'midjourney-v7' && (
                 <div className="space-y-2">
                   <Label htmlFor="outputFormat">Output Format</Label>
                   <Select value={outputFormat} onValueChange={setOutputFormat}>
@@ -694,8 +955,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Quality - Hidden for 4o-image, flux-kontext, nano-banana, and seedream-4 */}
-              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && model !== 'seedream-4' && (
+              {/* Quality - Hidden for 4o-image, flux-kontext, nano-banana, seedream-4, and midjourney-v7 */}
+              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && model !== 'seedream-4' && model !== 'midjourney-v7' && (
                 <div className="space-y-2">
                   <Label htmlFor="quality">Quality</Label>
                   <Select value={quality} onValueChange={setQuality}>
@@ -713,8 +974,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Style - Hidden for 4o-image, flux-kontext, nano-banana, and seedream-4 */}
-              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && model !== 'seedream-4' && (
+              {/* Style - Hidden for 4o-image, flux-kontext, nano-banana, seedream-4, and midjourney-v7 */}
+              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && model !== 'seedream-4' && model !== 'midjourney-v7' && (
                 <div className="space-y-2">
                   <Label htmlFor="style">Style</Label>
                   <Select value={style} onValueChange={setStyle}>
