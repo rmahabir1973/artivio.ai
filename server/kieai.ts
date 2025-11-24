@@ -802,8 +802,15 @@ export async function generateImage(params: {
   else if (params.model === 'flux-kontext') {
     // Flux Kontext - uses dedicated /api/v1/flux/kontext/generate endpoint (per official API docs)
     const aspectRatio = parameters.aspectRatio || '16:9'; // Default 16:9
-    const model = parameters.model || 'flux-kontext-pro'; // flux-kontext-pro or flux-kontext-max
-    const outputFormat = parameters.outputFormat || 'jpeg'; // jpeg or png
+    
+    // Map fluxModel ("pro" or "max") to full Kie API model name
+    const fluxModelParam = parameters.model || 'pro'; // "pro" or "max" from frontend
+    const model = fluxModelParam === 'max' ? 'flux-kontext-max' : 'flux-kontext-pro';
+    
+    // Ensure lowercase format for output format (API expects lowercase: "png" or "jpeg")
+    const outputFormatParam = parameters.outputFormat || 'jpeg'; // Could be PNG, JPEG, png, jpeg
+    const outputFormat = outputFormatParam.toLowerCase(); // Normalize to lowercase
+    
     const enableTranslation = parameters.enableTranslation !== undefined ? parameters.enableTranslation : true;
     const promptUpsampling = parameters.promptUpsampling !== undefined ? parameters.promptUpsampling : false;
     const safetyTolerance = parameters.safetyTolerance !== undefined ? parameters.safetyTolerance : 2; // 0-6 for generation, 0-2 for editing

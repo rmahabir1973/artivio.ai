@@ -1,0 +1,157 @@
+Pasted--Image-Generation-or-Editing-Callbacks-When-the-image-generation-task-is-completed-the-system-1763949500564_1763949500564.txt
+# Image Generation or Editing Callbacks
+
+> When the image generation task is completed, the system will send the result to your provided callback URL via POST request
+
+When you submit an image generation or editing task to the Flux Kontext API, you can use the `callBackUrl` parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+
+## Callback Mechanism Overview
+
+<Info>
+  The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+</Info>
+
+### Callback Timing
+
+The system will send callback notifications in the following situations:
+
+* Image generation or editing task completed successfully
+* Image generation or editing task failed
+* Errors occurred during task processing
+
+### Callback Method
+
+* **HTTP Method**: POST
+* **Content Type**: application/json
+* **Timeout Setting**: 15 seconds
+
+## Callback Request Format
+
+When the task is completed, the system will send a POST request to your `callBackUrl` in the following format:
+
+<CodeGroup>
+  ```json Success Callback theme={null}
+  {
+    "code": 200,
+    "msg": "BFL image generated successfully.",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "https://example.com/original.jpg",
+        "resultImageUrl": "https://example.com/result.jpg"
+      }
+    }
+  }
+  ```
+
+  ```json Content Policy Violation Callback theme={null}
+  {
+    "code": 400,
+    "msg": "Your prompt was flagged by Website as violating content policies.",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "",
+        "resultImageUrl": ""
+      }
+    }
+  }
+  ```
+
+  ```json Generation Failure Callback theme={null}
+  {
+    "code": 501,
+    "msg": "Image generation task failed",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "",
+        "resultImageUrl": ""
+      }
+    }
+  }
+  ```
+
+  ```json Internal Error Callback theme={null}
+  {
+    "code": 500,
+    "msg": "Internal Error, Please try again later.",
+    "data": {
+      "taskId": "task12345",
+      "info": {
+        "originImageUrl": "",
+        "resultImageUrl": ""
+      }
+    }
+  }
+  ```
+</CodeGroup>
+
+## Status Code Description
+
+<ParamField path="code" type="integer" required>
+  Callback status code indicating task processing result:
+
+  | Status Code | Description                                                               |
+  | ----------- | ------------------------------------------------------------------------- |
+  | 200         | Success - Image generation completed successfully                         |
+  | 400         | Failed - Your prompt was flagged by Website as violating content policies |
+  | 500         | Failed - Internal Error, Please try again later                           |
+  | 501         | Failed - Image generation task failed                                     |
+</ParamField>
+
+<ParamField path="msg" type="string" required>
+  Status message providing detailed status description
+</ParamField>
+
+<ParamField path="data.taskId" type="string" required>
+  Task ID, consistent with the taskId returned when you submitted the task
+</ParamField>
+
+<ParamField path="data.info.originImageUrl" type="string">
+  Original image URL, **valid for 10 minutes**. Only present on success.
+</ParamField>
+
+<ParamField path="data.info.resultImageUrl" type="string">
+  Generated image URL on our server. Only present on success.
+</ParamField>
+
+## Callback Reception Examples
+
+Here are example codes for receiving callbacks in popular programming languages:
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript  theme={null}
+    const express = require('express');
+    const fs = require('fs');
+    const https = require('https');
+    const app = express();
+
+    app.use(express.json());
+
+    app.post('/flux-image-callback', (req, res) => {
+      const { code, msg, data } = req.body;
+      
+      console.log('Received Flux image generation callback:', {
+        taskId: data.taskId,
+        status: code,
+        message: msg
+      });
+      
+      if (code === 200) {
+        // Task completed successfully
+        console.log('Flux image generation completed successfully');
+        
+        const { taskId, info } = data;
+        const { originImageUrl, resultImageUrl } = info;
+        
+        console.log(`Original Image URL: ${originImageUrl}`);
+        console.log(`Generated Image URL: ${resultImageUrl}`);
+        console.log('Note: Original image URL is valid for 10 minutes');
+        
+        // Download generated image
+        if (resultImageUrl) {
+          downloadFile(resultImageUrl, `flux_result_${taskId}.jpg`)
+            .then(() => console.log('Generated image downloaded successfully'))
+            .catch(err => console.error('Generated i...

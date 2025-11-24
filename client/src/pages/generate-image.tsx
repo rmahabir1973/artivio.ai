@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,16 +44,35 @@ const GPT4O_ASPECT_RATIOS = [
   { value: "3:2", label: "Wide Landscape (3:2)" },
 ];
 
+const FLUX_ASPECT_RATIOS = [
+  { value: "1:1", label: "Square (1:1)" },
+  { value: "16:9", label: "Landscape (16:9)" },
+  { value: "21:9", label: "Ultra-wide (21:9)" },
+  { value: "4:3", label: "Classic (4:3)" },
+  { value: "3:4", label: "Portrait (3:4)" },
+  { value: "9:16", label: "Mobile Portrait (9:16)" },
+];
+
 const GENERATE_QUANTITIES = [
   { value: "1", label: "1 Image (6 credits)" },
   { value: "2", label: "2 Images (7 credits)" },
   { value: "4", label: "4 Images (8 credits)" },
 ];
 
+const FLUX_MODELS = [
+  { value: "pro", label: "Pro (5 credits)" },
+  { value: "max", label: "Max (10 credits)" },
+];
+
 const OUTPUT_FORMATS = [
   { value: "PNG", label: "PNG (Lossless)" },
   { value: "JPEG", label: "JPEG (Compressed)" },
   { value: "WEBP", label: "WebP (Modern)" },
+];
+
+const FLUX_OUTPUT_FORMATS = [
+  { value: "png", label: "PNG (Lossless)" },
+  { value: "jpeg", label: "JPEG (Compressed)" },
 ];
 
 const QUALITY_OPTIONS = [
@@ -75,6 +95,8 @@ export default function GenerateImage() {
   const [outputFormat, setOutputFormat] = useState("PNG");
   const [quality, setQuality] = useState("standard");
   const [generateQuantity, setGenerateQuantity] = useState("1"); // For 4o-image: 1, 2, or 4
+  const [fluxModel, setFluxModel] = useState("pro"); // For flux-kontext: pro or max
+  const [promptUpsampling, setPromptUpsampling] = useState(false); // For flux-kontext
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [seedLocked, setSeedLocked] = useState(false);
@@ -112,11 +134,16 @@ export default function GenerateImage() {
       cost = quantityMapping[generateQuantity] || 6;
     }
     
+    // For flux-kontext, adjust cost based on model selection
+    if (m.value === 'flux-kontext') {
+      cost = fluxModel === 'pro' ? 5 : 10;
+    }
+    
     return {
       ...m,
       cost,
     };
-  }), [getModelCost, generateQuantity]);
+  }), [getModelCost, generateQuantity, fluxModel]);
 
   // Clear reference images when switching to text-to-image mode
   useEffect(() => {
@@ -300,15 +327,23 @@ export default function GenerateImage() {
       return;
     }
 
-    // Build parameters with seed support (only Seedream 4 supports seeds)
+    // Build parameters with model-specific fields
     const parameters: any = {
       aspectRatio,
     };
     
-    // For 4o-image, pass nVariants; for others, include style, outputFormat, quality
+    // For 4o-image, pass nVariants
     if (model === '4o-image') {
       parameters.nVariants = parseInt(generateQuantity);
-    } else {
+    } 
+    // For flux-kontext, pass model and promptUpsampling
+    else if (model === 'flux-kontext') {
+      parameters.model = fluxModel; // pro or max
+      parameters.promptUpsampling = promptUpsampling;
+      parameters.outputFormat = outputFormat;
+    } 
+    // For other models, include style, outputFormat, quality
+    else {
       parameters.style = style;
       parameters.outputFormat = outputFormat;
       parameters.quality = quality;
@@ -491,7 +526,7 @@ export default function GenerateImage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(model === '4o-image' ? GPT4O_ASPECT_RATIOS : ASPECT_RATIOS).map((ratio) => (
+                    {(model === '4o-image' ? GPT4O_ASPECT_RATIOS : model === 'flux-kontext' ? FLUX_ASPECT_RATIOS : ASPECT_RATIOS).map((ratio) => (
                       <SelectItem key={ratio.value} value={ratio.value}>
                         {ratio.label}
                       </SelectItem>
@@ -500,7 +535,7 @@ export default function GenerateImage() {
                 </Select>
               </div>
 
-              {/* Output Format - Hidden for 4o-image */}
+              {/* Output Format - Hidden for 4o-image, different for flux-kontext */}
               {model !== '4o-image' && (
                 <div className="space-y-2">
                   <Label htmlFor="outputFormat">Output Format</Label>
@@ -509,7 +544,7 @@ export default function GenerateImage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {OUTPUT_FORMATS.map((format) => (
+                      {(model === 'flux-kontext' ? FLUX_OUTPUT_FORMATS : OUTPUT_FORMATS).map((format) => (
                         <SelectItem key={format.value} value={format.value}>
                           {format.label}
                         </SelectItem>
@@ -519,8 +554,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Quality - Hidden for 4o-image */}
-              {model !== '4o-image' && (
+              {/* Quality - Hidden for 4o-image and flux-kontext */}
+              {model !== '4o-image' && model !== 'flux-kontext' && (
                 <div className="space-y-2">
                   <Label htmlFor="quality">Quality</Label>
                   <Select value={quality} onValueChange={setQuality}>
@@ -538,8 +573,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Style - Hidden for 4o-image */}
-              {model !== '4o-image' && (
+              {/* Style - Hidden for 4o-image and flux-kontext */}
+              {model !== '4o-image' && model !== 'flux-kontext' && (
                 <div className="space-y-2">
                   <Label htmlFor="style">Style</Label>
                   <Select value={style} onValueChange={setStyle}>
@@ -554,6 +589,41 @@ export default function GenerateImage() {
                       <SelectItem value="abstract">Abstract</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {/* Flux Kontext Model Selection - Only for flux-kontext */}
+              {model === 'flux-kontext' && (
+                <div className="space-y-2">
+                  <Label htmlFor="fluxModel">Model</Label>
+                  <Select value={fluxModel} onValueChange={setFluxModel}>
+                    <SelectTrigger id="fluxModel" data-testid="select-flux-model">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FLUX_MODELS.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Pro for balanced performance, Max for advanced capabilities
+                  </p>
+                </div>
+              )}
+
+              {/* Prompt Upsampling Toggle - Only for flux-kontext */}
+              {model === 'flux-kontext' && (
+                <div className="space-y-2 flex items-center justify-between">
+                  <Label htmlFor="promptUpsampling">Prompt Upsampling</Label>
+                  <Switch 
+                    id="promptUpsampling" 
+                    checked={promptUpsampling} 
+                    onCheckedChange={setPromptUpsampling}
+                    data-testid="toggle-prompt-upsampling"
+                  />
                 </div>
               )}
 
