@@ -56,6 +56,7 @@ The platform underwent a major UI transformation from marketing-style layout to 
 -   **Admin Panel**: Comprehensive user management, API key management, Stripe integration configuration, and home page content management.
 -   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions (Free, Starter, Pro).
 -   **Dynamic Landing Page**: Public-facing landing page with admin-managed content.
+-   **Topaz Upscaler**: Standalone page for AI-powered image upscaling with 2X (10cr), 4X (20cr), and 8X (40cr) options. Uses `/api/v1/jobs/createTask` endpoint with webhook callbacks for real-time status updates.
 
 ### System Design Choices
 The project features a modular structure with a database schema supporting users, generations, conversations, API keys, and specialized tables. Video processing uses server-side FFmpeg with asynchronous job processing. Landing page content is managed via a singleton database row with JSONB. The generation queue provides real-time monitoring and smart retry functionality.

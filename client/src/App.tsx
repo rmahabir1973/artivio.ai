@@ -43,6 +43,7 @@ import TalkingAvatars from "@/pages/talking-avatars";
 import AudioConverter from "@/pages/audio-converter";
 import VideoEditor from "@/pages/video-editor";
 import QRGenerator from "@/pages/qr-generator";
+import TopazUpscaler from "@/pages/topaz-upscaler";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Profile from "@/pages/profile";
@@ -129,6 +130,9 @@ function Router() {
       </Route>
       <Route path="/qr-generator">
         <ProtectedRoute><QRGenerator /></ProtectedRoute>
+      </Route>
+      <Route path="/topaz-upscaler">
+        <ProtectedRoute><TopazUpscaler /></ProtectedRoute>
       </Route>
       <Route path="/chat">
         <ProtectedRoute><Chat /></ProtectedRoute>

@@ -1674,6 +1674,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Topaz AI Upscaling Standalone Page - accepts base64 image data
+  app.post('/api/upscale/topaz', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { imageData, upscaleFactor } = req.body;
+
+      if (!imageData || !upscaleFactor) {
+        return res.status(400).json({ message: "Image data and upscale factor are required" });
+      }
+
+      // Validate upscale factor
+      const factor = parseInt(upscaleFactor);
+      if (![2, 4, 8].includes(factor)) {
+        return res.status(400).json({ message: "Upscale factor must be 2, 4, or 8" });
+      }
+
+      // Get cost from database using model name
+      const cost = await getUpscaleCost('image', String(factor));
+
+      // Atomically deduct credits
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Create generation record
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'upscaling',
+        model: `topaz-image-${factor}x`,
+        prompt: `Upscale image ${factor}x using Topaz AI`,
+        parameters: { upscaleFactor: factor },
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      // Process in background
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+
+          // Convert base64 to hosted URL
+          let hostedImageUrl: string;
+          try {
+            console.log('Converting base64 image to hosted URL...');
+            const hostedUrls = await saveBase64Images([imageData]);
+            hostedImageUrl = hostedUrls[0];
+            console.log(`✓ Image hosted at: ${hostedImageUrl}`);
+          } catch (imageError: any) {
+            console.error('Failed to host image:', imageError);
+            throw new Error(`Failed to process image: ${imageError.message}`);
+          }
+
+          // Call Topaz upscaler
+          const callbackUrl = getCallbackUrl(generation.id);
+          const { result, keyName } = await upscaleImage({
+            sourceImageUrl: hostedImageUrl,
+            upscaleFactor: factor as 2 | 4 | 8,
+            callBackUrl: callbackUrl,
+          });
+
+          const taskId = result?.taskId || result?.id || result?.task_id;
+          if (taskId) {
+            await storage.updateGeneration(generation.id, {
+              externalTaskId: taskId,
+              apiKeyUsed: keyName,
+            });
+          }
+        } catch (error: any) {
+          console.error('Topaz upscale error:', error);
+          await storage.finalizeGeneration(generation.id, 'failure', {
+            status: 'failed',
+            errorMessage: error.message,
+          });
+        }
+      })();
+
+      res.json({ generationId: generation.id, message: "Image upscaling started" });
+    } catch (error: any) {
+      console.error('Topaz upscale request error:', error);
+      res.status(500).json({ message: error.message || "Failed to start upscaling" });
+    }
+  });
+
   // Music Generation
   app.post('/api/generate/music', requireJWT, async (req: any, res) => {
     try {
