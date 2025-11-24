@@ -58,7 +58,7 @@ The platform underwent a major UI transformation from marketing-style layout to 
 -   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions (Free, Starter, Pro).
 -   **Dynamic Landing Page**: Public-facing landing page with admin-managed content.
 -   **Topaz Image Upscaler**: Standalone page for AI-powered image upscaling with 2X (10cr), 4X (20cr), and 8X (40cr) options. Uses `/api/v1/jobs/createTask` endpoint with webhook callbacks for real-time status updates.
--   **Topaz Video Upscaler**: Standalone page for AI-powered video upscaling with 1X (72cr), 2X (72cr), and 4X (72cr) options. Flat 72 Kie.ai credits per Kie.ai pricing. Uses `/api/v1/jobs/createTask` endpoint with model "topaz/video-upscale" and webhook callbacks for real-time status updates.
+-   **Topaz Video Upscaler**: Standalone page for AI-powered video upscaling with duration-based tiered pricing. Uses ffprobe to detect video duration and applies three pricing tiers: 0-10s (180cr for 2x/270cr for 4x), 11-15s (270cr for 2x/405cr for 4x), 16-20s (360cr for 2x/540cr for 4x). Maximum duration 20 seconds. Pricing based on 12 Kie.ai credits/second with 50% markup. Both `/api/upscale/video` and `/api/upscale/topaz-video` routes use identical tiered pricing logic. Uses webhook callbacks for real-time status updates.
 
 ### System Design Choices
 The project features a modular structure with a database schema supporting users, generations, conversations, API keys, and specialized tables. Video processing uses server-side FFmpeg with asynchronous job processing. Landing page content is managed via a singleton database row with JSONB. The generation queue provides real-time monitoring and smart retry functionality.
