@@ -18,7 +18,7 @@ import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRigh
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, PlanEconomics, Generation } from "@shared/schema";
+import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, Generation } from "@shared/schema";
 
 interface UserWithSubscription extends User {
   subscription: {
@@ -49,13 +49,6 @@ export default function Admin() {
   const [editPricing, setEditPricing] = useState({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
   const [addingPricing, setAddingPricing] = useState(false);
   const [newPricing, setNewPricing] = useState({ feature: "", model: "", category: "", creditCost: "", kieCreditCost: "", description: "" });
-  const [editingEconomics, setEditingEconomics] = useState(false);
-  const [economicsForm, setEconomicsForm] = useState({ 
-    kiePurchaseAmount: "50", 
-    kieCreditAmount: "10000", 
-    userCreditAmount: "15000", 
-    profitMargin: "50" 
-  });
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editPlanData, setEditPlanData] = useState({
     name: "",
@@ -164,11 +157,6 @@ export default function Admin() {
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
-  const { data: planEconomicsData, isLoading: economicsLoading } = useQuery<PlanEconomics>({
-    queryKey: ["/api/admin/plan-economics"],
-    enabled: isAuthenticated && (user as any)?.isAdmin,
-  });
-
   const { data: homePageContent, isLoading: homePageLoading } = useQuery<HomePageContent>({
     queryKey: ["/api/admin/homepage"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
@@ -203,36 +191,6 @@ export default function Admin() {
       });
     }
   }, [homePageContent, editingHomePage]);
-
-  useEffect(() => {
-    if (planEconomicsData && !editingEconomics) {
-      setEconomicsForm({
-        kiePurchaseAmount: planEconomicsData.kiePurchaseAmount.toString(),
-        kieCreditAmount: planEconomicsData.kieCreditAmount.toString(),
-        userCreditAmount: planEconomicsData.userCreditAmount.toString(),
-        profitMargin: planEconomicsData.profitMargin.toString(),
-      });
-    }
-  }, [planEconomicsData, editingEconomics]);
-
-  const calculateSuggestedCredits = (kieCost: number, economics: PlanEconomics | undefined) => {
-    if (!kieCost || !economics) return null;
-    const kieRate = economics.kiePurchaseAmount / economics.kieCreditAmount;
-    const yourCost = kieCost * kieRate;
-    const withMargin = yourCost * (1 + economics.profitMargin / 100);
-    const userRate = economics.kiePurchaseAmount / economics.userCreditAmount;
-    const suggestedUserCredits = Math.ceil(withMargin / userRate);
-    return {
-      yourCost,
-      withMargin,
-      suggestedUserCredits,
-      details: {
-        kieRate: kieRate.toFixed(4),
-        userRate: userRate.toFixed(4),
-        margin: economics.profitMargin,
-      }
-    };
-  };
 
   const updateCreditsMutation = useMutation({
     mutationFn: async ({ userId, credits }: { userId: string; credits: number }) => {
@@ -339,20 +297,6 @@ export default function Admin() {
     },
   });
 
-  const updateEconomicsMutation = useMutation({
-    mutationFn: async (data: { kiePurchaseAmount: number; kieCreditAmount: number; userCreditAmount: number; profitMargin: number }) => {
-      return await apiRequest("PATCH", "/api/admin/plan-economics", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/plan-economics"] });
-      setEditingEconomics(false);
-      toast({ title: "Success", description: "Plan economics updated successfully" });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Error", description: error.message || "Failed to update plan economics", variant: "destructive" });
-    },
-  });
-
   const createPlanMutation = useMutation({
     mutationFn: async (data: { name: string; displayName: string; description: string; price: number; creditsPerMonth: number }) => {
       return await apiRequest("POST", "/api/admin/plans", data);
@@ -361,7 +305,7 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
       queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
       setCreatingPlan(false);
-      setNewPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "" });
+      setNewPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "", features: "[]" });
       toast({ title: "Success", description: "Plan created successfully!" });
     },
     onError: (error: Error) => {
@@ -377,7 +321,7 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
       queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
       setEditingPlanId(null);
-      setEditPlanData({ name: "", displayName: "", description: "", price: "", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
+      setEditPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "", features: "[]", stripePriceId: "", stripeProductId: "" });
       toast({ title: "Success", description: "Plan updated successfully!" });
     },
     onError: (error: Error) => {
@@ -910,78 +854,6 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="pricing">
-          <Card className="mb-6">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Plan Economics Configuration</CardTitle>
-                <CardDescription>Configure your Kie.ai purchase plan and desired profit margin</CardDescription>
-              </div>
-              <Button 
-                onClick={() => setEditingEconomics(true)} 
-                data-testid="button-edit-economics"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Economics
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {economicsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : planEconomicsData ? (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-muted-foreground">Kie.ai Purchase Plan</Label>
-                      <p className="text-2xl font-bold" data-testid="text-kie-rate">
-                        ${planEconomicsData.kiePurchaseAmount} = {planEconomicsData.kieCreditAmount.toLocaleString()} credits
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-muted-foreground">User Selling Plan</Label>
-                      <p className="text-2xl font-bold" data-testid="text-user-rate">
-                        ${planEconomicsData.kiePurchaseAmount} = {planEconomicsData.userCreditAmount.toLocaleString()} credits
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-muted-foreground">Kie Cost per Credit</Label>
-                      <p className="text-lg font-semibold" data-testid="text-kie-cost-per-credit">
-                        ${(planEconomicsData.kiePurchaseAmount / planEconomicsData.kieCreditAmount).toFixed(4)}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-muted-foreground">User Revenue per Credit</Label>
-                      <p className="text-lg font-semibold" data-testid="text-user-revenue-per-credit">
-                        ${(planEconomicsData.kiePurchaseAmount / planEconomicsData.userCreditAmount).toFixed(4)}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-muted-foreground">Effective Multiplier</Label>
-                      <p className="text-lg font-semibold text-primary" data-testid="text-effective-multiplier">
-                        {(planEconomicsData.userCreditAmount / planEconomicsData.kieCreditAmount).toFixed(2)}x
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <Label className="text-sm font-semibold text-muted-foreground">Profit Margin Target</Label>
-                    <p className="text-lg font-semibold" data-testid="text-profit-margin">
-                      {planEconomicsData.profitMargin}%
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No economics configuration found. Click Edit Economics to set up your pricing.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -2085,178 +1957,6 @@ export default function Admin() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Economics Dialog */}
-      <Dialog open={editingEconomics} onOpenChange={(open) => {
-        if (!open) {
-          setEditingEconomics(false);
-          if (planEconomicsData) {
-            setEconomicsForm({
-              kiePurchaseAmount: planEconomicsData.kiePurchaseAmount.toString(),
-              kieCreditAmount: planEconomicsData.kieCreditAmount.toString(),
-              userCreditAmount: planEconomicsData.userCreditAmount.toString(),
-              profitMargin: planEconomicsData.profitMargin.toString(),
-            });
-          }
-        }
-      }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Plan Economics</DialogTitle>
-            <DialogDescription>
-              Configure your Kie.ai purchase plan and desired profit margin
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="kie-purchase">Kie.ai Purchase Amount ($)</Label>
-                <Input
-                  id="kie-purchase"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="50"
-                  value={economicsForm.kiePurchaseAmount}
-                  onChange={(e) => setEconomicsForm({ ...economicsForm, kiePurchaseAmount: e.target.value })}
-                  data-testid="input-kie-purchase-amount"
-                />
-              </div>
-              <div>
-                <Label htmlFor="kie-credits">Kie.ai Credits Received</Label>
-                <Input
-                  id="kie-credits"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="10000"
-                  value={economicsForm.kieCreditAmount}
-                  onChange={(e) => setEconomicsForm({ ...economicsForm, kieCreditAmount: e.target.value })}
-                  data-testid="input-kie-credit-amount"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="user-credits">User Credits to Sell</Label>
-                <Input
-                  id="user-credits"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="15000"
-                  value={economicsForm.userCreditAmount}
-                  onChange={(e) => setEconomicsForm({ ...economicsForm, userCreditAmount: e.target.value })}
-                  data-testid="input-user-credit-amount"
-                />
-              </div>
-              <div>
-                <Label htmlFor="profit-margin">Profit Margin Target (%)</Label>
-                <Input
-                  id="profit-margin"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  placeholder="50"
-                  value={economicsForm.profitMargin}
-                  onChange={(e) => setEconomicsForm({ ...economicsForm, profitMargin: e.target.value })}
-                  data-testid="input-profit-margin"
-                />
-              </div>
-            </div>
-
-            {economicsForm.kiePurchaseAmount && economicsForm.kieCreditAmount && economicsForm.userCreditAmount && (
-              <div className="p-4 bg-muted rounded-lg space-y-3">
-                <h4 className="font-semibold text-sm">Real-Time Calculator Preview</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Kie Rate</p>
-                    <p className="font-semibold" data-testid="preview-kie-rate">
-                      ${economicsForm.kiePurchaseAmount} = {Number(economicsForm.kieCreditAmount).toLocaleString()} credits
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">User Rate</p>
-                    <p className="font-semibold" data-testid="preview-user-rate">
-                      ${economicsForm.kiePurchaseAmount} = {Number(economicsForm.userCreditAmount).toLocaleString()} credits
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Multiplier</p>
-                    <p className="font-semibold text-primary" data-testid="preview-multiplier">
-                      {(Number(economicsForm.userCreditAmount) / Number(economicsForm.kieCreditAmount)).toFixed(2)}x
-                    </p>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-border">
-                  <p className="text-muted-foreground text-xs">Example:</p>
-                  <p className="text-sm font-medium" data-testid="preview-example">
-                    If Kie charges 35 credits, you charge ~{Math.round(35 * (Number(economicsForm.userCreditAmount) / Number(economicsForm.kieCreditAmount)))} user credits 
-                    ({economicsForm.profitMargin}% margin)
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setEditingEconomics(false)}
-              data-testid="button-cancel-economics"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                const kiePurchase = Number(economicsForm.kiePurchaseAmount);
-                const kieCredit = Number(economicsForm.kieCreditAmount);
-                const userCredit = Number(economicsForm.userCreditAmount);
-                const margin = Number(economicsForm.profitMargin);
-
-                if (!Number.isFinite(kiePurchase) || kiePurchase < 1) {
-                  toast({ title: "Error", description: "Please enter a valid Kie purchase amount", variant: "destructive" });
-                  return;
-                }
-                if (!Number.isFinite(kieCredit) || kieCredit < 1) {
-                  toast({ title: "Error", description: "Please enter a valid Kie credit amount", variant: "destructive" });
-                  return;
-                }
-                if (!Number.isFinite(userCredit) || userCredit < 1) {
-                  toast({ title: "Error", description: "Please enter a valid user credit amount", variant: "destructive" });
-                  return;
-                }
-                if (!Number.isFinite(margin) || margin < 0 || margin > 100) {
-                  toast({ title: "Error", description: "Please enter a profit margin between 0 and 100", variant: "destructive" });
-                  return;
-                }
-
-                updateEconomicsMutation.mutate({
-                  kiePurchaseAmount: Math.round(kiePurchase),
-                  kieCreditAmount: Math.round(kieCredit),
-                  userCreditAmount: Math.round(userCredit),
-                  profitMargin: Math.round(margin),
-                });
-              }}
-              disabled={updateEconomicsMutation.isPending}
-              data-testid="button-save-economics"
-            >
-              {updateEconomicsMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Economics
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit Pricing Dialog */}
       <Dialog open={editingPricingId !== null} onOpenChange={(open) => {
         if (!open) {
@@ -2315,36 +2015,6 @@ export default function Admin() {
                 data-testid="input-edit-kie-credit-cost"
               />
             </div>
-            {editPricing.kieCreditCost && Number(editPricing.kieCreditCost) > 0 && (
-              <div className="p-4 bg-muted/5 rounded-lg border space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-sm">Auto-Calculator</h4>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Based on your Plan Economics settings</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                {planEconomicsData ? (
-                  (() => {
-                    const calc = calculateSuggestedCredits(Number(editPricing.kieCreditCost), planEconomicsData);
-                    return calc ? (
-                      <div className="space-y-1 text-sm">
-                        <p className="text-muted-foreground">Input: Kie charges {editPricing.kieCreditCost} credits</p>
-                        <p className="text-muted-foreground">Your cost: ${calc.yourCost.toFixed(4)}</p>
-                        <p className="text-muted-foreground">With {calc.details.margin}% margin: ${calc.withMargin.toFixed(4)}</p>
-                        <p className="font-semibold text-primary">→ Suggested: {calc.suggestedUserCredits} user credits</p>
-                      </div>
-                    ) : null;
-                  })()
-                ) : (
-                  <p className="text-sm text-muted-foreground">Configure Plan Economics first</p>
-                )}
-              </div>
-            )}
             <div>
               <Label htmlFor="edit-creditCost">Credit Cost</Label>
               <Input
@@ -2484,36 +2154,6 @@ export default function Admin() {
                 data-testid="input-kie-credit-cost"
               />
             </div>
-            {newPricing.kieCreditCost && Number(newPricing.kieCreditCost) > 0 && (
-              <div className="p-4 bg-muted/5 rounded-lg border space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-sm">Auto-Calculator</h4>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Based on your Plan Economics settings</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                {planEconomicsData ? (
-                  (() => {
-                    const calc = calculateSuggestedCredits(Number(newPricing.kieCreditCost), planEconomicsData);
-                    return calc ? (
-                      <div className="space-y-1 text-sm">
-                        <p className="text-muted-foreground">Input: Kie charges {newPricing.kieCreditCost} credits</p>
-                        <p className="text-muted-foreground">Your cost: ${calc.yourCost.toFixed(4)}</p>
-                        <p className="text-muted-foreground">With {calc.details.margin}% margin: ${calc.withMargin.toFixed(4)}</p>
-                        <p className="font-semibold text-primary">→ Suggested: {calc.suggestedUserCredits} user credits</p>
-                      </div>
-                    ) : null;
-                  })()
-                ) : (
-                  <p className="text-sm text-muted-foreground">Configure Plan Economics first</p>
-                )}
-              </div>
-            )}
             <div>
               <Label htmlFor="creditCost">Credit Cost</Label>
               <Input
