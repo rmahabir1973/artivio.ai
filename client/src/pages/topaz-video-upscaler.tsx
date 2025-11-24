@@ -96,12 +96,12 @@ export default function TopazVideoUpscaler() {
 
     videoElement.onloadedmetadata = () => {
       window.URL.revokeObjectURL(videoElement.src);
-      const duration = Math.floor(videoElement.duration);
+      const duration = videoElement.duration;
 
       if (duration > maxDuration) {
         toast({
           title: "Video Too Long",
-          description: `Video is ${duration}s long. Maximum duration is ${maxDuration} seconds to avoid processing timeouts.`,
+          description: `Video is ${duration.toFixed(1)}s long. Maximum duration is ${maxDuration} seconds to avoid processing timeouts.`,
           variant: "destructive",
         });
         return;
