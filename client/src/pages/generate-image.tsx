@@ -77,6 +77,24 @@ const NANO_BANANA_OUTPUT_FORMATS = [
   { value: "jpg", label: "JPG (Compressed)" },
 ];
 
+const SEEDREAM_ASPECT_RATIOS = [
+  { value: "square", label: "Square" },
+  { value: "square_hd", label: "Square HD" },
+  { value: "portrait_4_3", label: "Portrait 3:4" },
+  { value: "portrait_3_2", label: "Portrait 2:3" },
+  { value: "portrait_16_9", label: "Portrait 9:16" },
+  { value: "landscape_4_3", label: "Landscape 4:3" },
+  { value: "landscape_3_2", label: "Landscape 3:2" },
+  { value: "landscape_16_9", label: "Landscape 16:9" },
+  { value: "landscape_21_9", label: "Landscape 21:9" },
+];
+
+const SEEDREAM_RESOLUTIONS = [
+  { value: "1K", label: "1K" },
+  { value: "2K", label: "2K" },
+  { value: "4K", label: "4K" },
+];
+
 const GENERATE_QUANTITIES = [
   { value: "1", label: "1 Image (6 credits)" },
   { value: "2", label: "2 Images (7 credits)" },
@@ -119,6 +137,9 @@ export default function GenerateImage() {
   const [outputFormat, setOutputFormat] = useState("PNG");
   const [quality, setQuality] = useState("standard");
   const [resolution, setResolution] = useState("1K"); // For nano-banana: 1K, 2K, or 4K
+  const [seedreamResolution, setSeedreamResolution] = useState("1K"); // For seedream-4: 1K, 2K, or 4K
+  const [seedreamImageSize, setSeedreamImageSize] = useState("square"); // For seedream-4: image_size
+  const [maxImages, setMaxImages] = useState(1); // For seedream-4: 1-6 images
   const [generateQuantity, setGenerateQuantity] = useState("1"); // For 4o-image: 1, 2, or 4
   const [fluxModel, setFluxModel] = useState("pro"); // For flux-kontext: pro or max
   const [promptUpsampling, setPromptUpsampling] = useState(false); // For flux-kontext
@@ -164,11 +185,16 @@ export default function GenerateImage() {
       cost = fluxModel === 'pro' ? 5 : 10;
     }
     
+    // For seedream-4, adjust cost based on maxImages (8 credits per image)
+    if (m.value === 'seedream-4') {
+      cost = 8 * maxImages;
+    }
+    
     return {
       ...m,
       cost,
     };
-  }), [getModelCost, generateQuantity, fluxModel]);
+  }), [getModelCost, generateQuantity, fluxModel, maxImages]);
 
   // Clear reference images when switching to text-to-image mode
   useEffect(() => {
@@ -353,27 +379,35 @@ export default function GenerateImage() {
     }
 
     // Build parameters with model-specific fields
-    const parameters: any = {
-      aspectRatio,
-    };
+    const parameters: any = {};
     
     // For 4o-image, pass nVariants
     if (model === '4o-image') {
+      parameters.aspectRatio = aspectRatio;
       parameters.nVariants = parseInt(generateQuantity);
     } 
     // For flux-kontext, pass model and promptUpsampling
     else if (model === 'flux-kontext') {
+      parameters.aspectRatio = aspectRatio;
       parameters.model = fluxModel; // pro or max
       parameters.promptUpsampling = promptUpsampling;
       parameters.outputFormat = outputFormat;
     } 
     // For nano-banana, pass resolution and outputFormat (no style)
     else if (model === 'nano-banana') {
+      parameters.aspectRatio = aspectRatio;
       parameters.resolution = resolution;
       parameters.outputFormat = outputFormat;
     }
-    // For other models, include style, outputFormat, quality
+    // For seedream-4, pass imageSize, imageResolution, and maxImages
+    else if (model === 'seedream-4') {
+      parameters.imageSize = seedreamImageSize;
+      parameters.imageResolution = seedreamResolution;
+      parameters.maxImages = maxImages;
+    }
+    // For other models, include style, outputFormat, quality, and aspectRatio
     else {
+      parameters.aspectRatio = aspectRatio;
       parameters.style = style;
       parameters.outputFormat = outputFormat;
       parameters.quality = quality;
@@ -549,32 +583,53 @@ export default function GenerateImage() {
               </div>
 
               {/* Aspect Ratio - Model-specific options */}
-              <div className="space-y-2">
-                <Label htmlFor="aspectRatio">Aspect Ratio</Label>
-                <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                  <SelectTrigger id="aspectRatio" data-testid="select-aspect-ratio">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(model === '4o-image' ? GPT4O_ASPECT_RATIOS : model === 'flux-kontext' ? FLUX_ASPECT_RATIOS : model === 'nano-banana' ? NANO_BANANA_ASPECT_RATIOS : ASPECT_RATIOS).map((ratio) => (
-                      <SelectItem key={ratio.value} value={ratio.value}>
-                        {ratio.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {model !== 'seedream-4' && (
+                <div className="space-y-2">
+                  <Label htmlFor="aspectRatio">Aspect Ratio</Label>
+                  <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                    <SelectTrigger id="aspectRatio" data-testid="select-aspect-ratio">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(model === '4o-image' ? GPT4O_ASPECT_RATIOS : model === 'flux-kontext' ? FLUX_ASPECT_RATIOS : model === 'nano-banana' ? NANO_BANANA_ASPECT_RATIOS : ASPECT_RATIOS).map((ratio) => (
+                        <SelectItem key={ratio.value} value={ratio.value}>
+                          {ratio.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              {/* Resolution - Only for Nano Banana */}
-              {model === 'nano-banana' && (
+              {/* Image Size - Only for Seedream-4 */}
+              {model === 'seedream-4' && (
+                <div className="space-y-2">
+                  <Label htmlFor="seedreamImageSize">Image Size</Label>
+                  <Select value={seedreamImageSize} onValueChange={setSeedreamImageSize}>
+                    <SelectTrigger id="seedreamImageSize" data-testid="select-seedream-image-size">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEEDREAM_ASPECT_RATIOS.map((ratio) => (
+                        <SelectItem key={ratio.value} value={ratio.value}>
+                          {ratio.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Resolution - For Nano Banana and Seedream-4 */}
+              {(model === 'nano-banana' || model === 'seedream-4') && (
                 <div className="space-y-2">
                   <Label htmlFor="resolution">Resolution</Label>
-                  <Select value={resolution} onValueChange={setResolution}>
+                  <Select value={model === 'seedream-4' ? seedreamResolution : resolution} onValueChange={model === 'seedream-4' ? setSeedreamResolution : setResolution}>
                     <SelectTrigger id="resolution" data-testid="select-resolution">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {NANO_BANANA_RESOLUTIONS.map((res) => (
+                      {(model === 'seedream-4' ? SEEDREAM_RESOLUTIONS : NANO_BANANA_RESOLUTIONS).map((res) => (
                         <SelectItem key={res.value} value={res.value}>
                           {res.label}
                         </SelectItem>
@@ -584,8 +639,44 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Output Format - Hidden for 4o-image, different for flux-kontext and nano-banana */}
-              {model !== '4o-image' && (
+              {/* Max Images - Only for Seedream-4 */}
+              {model === 'seedream-4' && (
+                <div className="space-y-2">
+                  <Label htmlFor="maxImages">Number of Images</Label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      id="maxImages"
+                      type="number"
+                      min="1"
+                      max="6"
+                      value={maxImages}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val >= 1 && val <= 6) {
+                          setMaxImages(val);
+                        }
+                      }}
+                      className="w-16 px-2 py-2 border rounded"
+                      data-testid="input-max-images"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {maxImages} image{maxImages !== 1 ? 's' : ''} ({8 * maxImages} credits)
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="6"
+                    value={maxImages}
+                    onChange={(e) => setMaxImages(parseInt(e.target.value, 10))}
+                    className="w-full"
+                    data-testid="slider-max-images"
+                  />
+                </div>
+              )}
+
+              {/* Output Format - Hidden for 4o-image and seedream-4 */}
+              {model !== '4o-image' && model !== 'seedream-4' && (
                 <div className="space-y-2">
                   <Label htmlFor="outputFormat">Output Format</Label>
                   <Select value={outputFormat} onValueChange={setOutputFormat}>
@@ -603,8 +694,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Quality - Hidden for 4o-image, flux-kontext, and nano-banana */}
-              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && (
+              {/* Quality - Hidden for 4o-image, flux-kontext, nano-banana, and seedream-4 */}
+              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && model !== 'seedream-4' && (
                 <div className="space-y-2">
                   <Label htmlFor="quality">Quality</Label>
                   <Select value={quality} onValueChange={setQuality}>
@@ -622,8 +713,8 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Style - Hidden for 4o-image, flux-kontext, and nano-banana */}
-              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && (
+              {/* Style - Hidden for 4o-image, flux-kontext, nano-banana, and seedream-4 */}
+              {model !== '4o-image' && model !== 'flux-kontext' && model !== 'nano-banana' && model !== 'seedream-4' && (
                 <div className="space-y-2">
                   <Label htmlFor="style">Style</Label>
                   <Select value={style} onValueChange={setStyle}>

@@ -1,0 +1,67 @@
+GET
+/api/v1/jobs/recordInfo
+Query Task
+Query task status and results by task ID
+
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X GET "https://api.kie.ai/api/v1/jobs/recordInfo?taskId=task_12345678" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678",
+    "model": "bytedance/seedream-v4-edit",
+    "state": "success",
+    "param": "{\"model\":\"bytedance/seedream-v4-edit\",\"callBackUrl\":\"https://your-domain.com/api/callback\",\"input\":{\"prompt\":\"Refer to this logo and create a single visual showcase for an outdoor sports brand named ‘KIE AI’. Display five branded items together in one image: a packaging bag, a hat, a carton box, a wristband, and a lanyard. Use blue as the main visual color, with a fun, simple, and modern style.\",\"image_urls\":[\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757930552966e7f2on7s.png\"],\"image_size\":\"square_hd\",\"image_resolution\":\"1K\",\"max_images\":1,\"seed\":null}}",
+    "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+    "failCode": "",
+    "failMsg": "",
+    "completeTime": 1698765432000,
+    "createTime": 1698765400000,
+    "updateTime": 1698765432000
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID
+data.model
+Model used for generation
+data.state
+Generation state
+data.param
+Complete Create Task request parameters as JSON string (includes model, callBackUrl, input and all other parameters)
+data.resultJson
+Result JSON string containing generated media URLs
+data.failCode
+Error code (when generation failed)
+data.failMsg
+Error message (when generation failed)
+data.completeTime
+Completion timestamp
+data.createTime
+Creation timestamp
+data.updateTime
+Update timestamp
+State Values
+waiting
+Waiting for generation
+queuing
+In queue
+generating
+Generating
+success
+Generation successful
+fail
+Generation failed

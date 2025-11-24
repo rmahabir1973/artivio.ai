@@ -79,7 +79,13 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'image', model: 'flux-kontext-pro', creditCost: 5, kieCreditCost: 1, category: 'generation', description: 'Flux Kontext Pro - Standard model for balanced performance' },
   { feature: 'image', model: 'flux-kontext-max', creditCost: 10, kieCreditCost: 2, category: 'generation', description: 'Flux Kontext Max - Enhanced model for advanced capabilities' },
   { feature: 'image', model: 'nano-banana', creditCost: 24, kieCreditCost: 24, category: 'generation', description: 'Nano Banana - Fast, precise image generation and editing' },
-  { feature: 'image', model: 'seedream-4', creditCost: 25, kieCreditCost: 4, category: 'generation', description: 'Seedream 4.0 - Up to 4K resolution with batch generation' },
+  // Seedream-v4: Quantity-based pricing (3.5 Kie credits per image, charged as 8cr per image for users)
+  { feature: 'image', model: 'seedream-4-1', creditCost: 8, kieCreditCost: 3.5, category: 'generation', description: 'Seedream 4.0 - 1 image' },
+  { feature: 'image', model: 'seedream-4-2', creditCost: 16, kieCreditCost: 7, category: 'generation', description: 'Seedream 4.0 - 2 images' },
+  { feature: 'image', model: 'seedream-4-3', creditCost: 24, kieCreditCost: 10.5, category: 'generation', description: 'Seedream 4.0 - 3 images' },
+  { feature: 'image', model: 'seedream-4-4', creditCost: 32, kieCreditCost: 14, category: 'generation', description: 'Seedream 4.0 - 4 images' },
+  { feature: 'image', model: 'seedream-4-5', creditCost: 40, kieCreditCost: 17.5, category: 'generation', description: 'Seedream 4.0 - 5 images' },
+  { feature: 'image', model: 'seedream-4-6', creditCost: 48, kieCreditCost: 21, category: 'generation', description: 'Seedream 4.0 - 6 images' },
   { feature: 'image', model: 'midjourney-v7', creditCost: 60, kieCreditCost: 8, category: 'generation', description: 'Midjourney v7 - Latest MJ with style controls (4 variants)' },
   
   // ========================================

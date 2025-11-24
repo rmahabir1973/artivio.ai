@@ -1,0 +1,206 @@
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"bytedance/seedream-v4-edit"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.prompt
+Required
+string
+The text prompt used to edit the image
+
+Max length: 5000 characters
+Example:
+
+"Refer to this logo and create a single visual showcase for an outdoor sports brand named ‘KIE AI’. Display five branded items together in one image: a packaging bag, a hat, a carton box, a wristband, and a lanyard. Use blue as the main visual color, with a fun, simple, and modern style."
+input.image_urls
+Required
+array(URL)
+List of URLs of input images for editing. Presently, up to 10 image inputs are allowed.
+
+File URL after upload, not file content; Accepted types: image/jpeg, image/png, image/webp; Max size: 10.0MB
+Example:
+
+["https://file.aiquickdraw.com/custom-page/akr/section-images/1757930552966e7f2on7s.png"]
+input.image_size
+Optional
+string
+The size of the generated image.
+
+Available options:
+
+square
+-
+Square
+square_hd
+-
+Square HD
+portrait_4_3
+-
+Portrait 3:4
+portrait_3_2
+-
+Portrait 2:3
+portrait_16_9
+-
+Portrait 9:16
+landscape_4_3
+-
+Landscape 4:3
+landscape_3_2
+-
+Landscape 3:2
+landscape_16_9
+-
+Landscape 16:9
+landscape_21_9
+-
+Landscape 21:9
+Example:
+
+"square_hd"
+input.image_resolution
+Optional
+string
+Final image resolution is determined by combining image_size (aspect ratio) and image_resolution (pixel scale). For example, choosing 4:3 + 4K gives 4096 × 3072px
+
+Available options:
+
+1K
+-
+1K
+2K
+-
+2K
+4K
+-
+4K
+Example:
+
+"1K"
+input.max_images
+Optional
+number
+Set this value (1–6) to cap how many images a single generation run can produce in one set—because they’re created in one shot rather than separate requests, you must also state the exact number you want in the prompt so both settings align.
+
+Min: 1, Max: 6, Step: 1
+Example:
+
+1
+input.seed
+Optional
+integer
+Random seed to control the stochasticity of image generation.
+
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "bytedance/seedream-v4-edit",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "prompt": "Refer to this logo and create a single visual showcase for an outdoor sports brand named ‘KIE AI’. Display five branded items together in one image: a packaging bag, a hat, a carton box, a wristband, and a lanyard. Use blue as the main visual color, with a fun, simple, and modern style.",
+      "image_urls": [
+        "https://file.aiquickdraw.com/custom-page/akr/section-images/1757930552966e7f2on7s.png"
+      ],
+      "image_size": "square_hd",
+      "image_resolution": "1K",
+      "max_images": 1
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "bytedance/seedream-v4-edit",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"bytedance/seedream-v4-edit\",\"input\":{\"prompt\":\"Refer to this logo and create a single visual showcase for an outdoor sports brand named ‘KIE AI’. Display five branded items together in one image: a packaging bag, a hat, a carton box, a wristband, and a lanyard. Use blue as the main visual color, with a fun, simple, and modern style.\",\"image_urls\":[\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757930552966e7f2on7s.png\"],\"image_size\":\"square_hd\",\"image_resolution\":\"1K\",\"max_images\":1,\"seed\":null}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "bytedance/seedream-v4-edit",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"bytedance/seedream-v4-edit\",\"input\":{\"prompt\":\"Refer to this logo and create a single visual showcase for an outdoor sports brand named ‘KIE AI’. Display five branded items together in one image: a packaging bag, a hat, a carton box, a wristband, and a lanyard. Use blue as the main visual color, with a fun, simple, and modern style.\",\"image_urls\":[\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757930552966e7f2on7s.png\"],\"image_size\":\"square_hd\",\"image_resolution\":\"1K\",\"max_images\":1,\"seed\":null}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section
+If callBackUrl is not provided, no callback notifications will be sent
