@@ -313,9 +313,9 @@ export async function generateVideo(params: {
       modelName = 'veo3';
     }
     
-    // Validate Referenced Image support (only veo3_fast supports REFERENCE_2_VIDEO)
-    if (referenceImages.length > 0 && modelName !== 'veo3_fast') {
-      throw new Error(`Referenced Images are only supported by Veo 3.1 Fast. Please use Veo 3.1 Fast for image-to-video generation.`);
+    // Validate Referenced Image support (both veo3 and veo3_fast support image-to-video)
+    if (referenceImages.length > 0 && modelName !== 'veo3_fast' && modelName !== 'veo3') {
+      throw new Error(`Referenced Images are only supported by Veo 3.1 Quality and Veo 3.1 Fast. Please use one of these models for image-to-video generation.`);
     }
     
     // Auto-generate seed if not provided (Veo requires range 10000-99999)
@@ -657,7 +657,7 @@ export async function generateVideo(params: {
   }
   
   // Reject unknown models instead of falling back
-  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, veo-3, runway-gen3-alpha-turbo, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, grok-imagine, sora-2, sora-2-image-to-video, sora-2-pro-storyboard`);
+  throw new Error(`Unsupported video model: ${params.model}. Supported models: veo-3.1, veo-3.1-fast, runway-gen3-alpha-turbo, seedance-1-pro, seedance-1-lite, wan-2.5, kling-2.5-turbo, grok-imagine, sora-2, sora-2-image-to-video, sora-2-pro-storyboard`);
 }
 
 // Image Generation

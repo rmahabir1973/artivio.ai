@@ -40,7 +40,6 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
 const DURATION_SUPPORT: Record<string, number[]> = {
   "veo-3.1": [8],
   "veo-3.1-fast": [8],
-  "veo-3": [8],
   "runway-gen3-alpha-turbo": [5, 10],
   "seedance-1-pro": [5, 10],
   "seedance-1-lite": [10],
@@ -61,14 +60,6 @@ const ASPECT_RATIO_LABELS: Record<string, string> = {
 
 const VIDEO_MODEL_INFO = [
   { 
-    value: "veo-3.1", 
-    label: "Veo 3.1 Quality", 
-    description: "HD quality with synchronized audio", 
-    duration: "8s",
-    supportsImages: false,
-    maxImages: 0 
-  },
-  { 
     value: "veo-3.1-fast", 
     label: "Veo 3.1 Fast", 
     description: "Faster generation, great quality", 
@@ -77,12 +68,12 @@ const VIDEO_MODEL_INFO = [
     maxImages: 3 
   },
   { 
-    value: "veo-3", 
-    label: "Veo 3", 
-    description: "High-quality video generation", 
+    value: "veo-3.1", 
+    label: "Veo 3.1 Quality", 
+    description: "HD quality with synchronized audio", 
     duration: "8s",
     supportsImages: true,
-    maxImages: 3 
+    maxImages: 1 
   },
   { 
     value: "runway-gen3-alpha-turbo", 
@@ -93,18 +84,18 @@ const VIDEO_MODEL_INFO = [
     maxImages: 1 
   },
   { 
-    value: "seedance-1-pro", 
-    label: "Seedance 1.0 Pro", 
-    description: "Cinematic quality with camera control", 
-    duration: "5s, 10s",
-    supportsImages: true,
-    maxImages: 1 
-  },
-  { 
     value: "seedance-1-lite", 
     label: "Seedance 1.0 Lite", 
     description: "720p fast generation", 
     duration: "10s",
+    supportsImages: true,
+    maxImages: 1 
+  },
+  { 
+    value: "seedance-1-pro", 
+    label: "Seedance 1.0 Pro", 
+    description: "Cinematic quality with camera control", 
+    duration: "5s, 10s",
     supportsImages: true,
     maxImages: 1 
   },
@@ -136,7 +127,7 @@ export default function GenerateVideo() {
   const [, navigate] = useLocation();
   
   // Simple state management
-  const [model, setModel] = useState("veo-3.1");
+  const [model, setModel] = useState("veo-3.1-fast");
   const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
   const [prompt, setPrompt] = useState("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
