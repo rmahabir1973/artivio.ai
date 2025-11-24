@@ -1,0 +1,94 @@
+Get Direct Download URL
+
+Copy page
+
+Convert an image URL to a direct download URL. This helps solve cross-domain issues when downloading images directly. The returned URL is valid for 20 minutes.
+
+POST
+/
+api
+/
+v1
+/
+gpt4o-image
+/
+download-url
+
+Try it
+Authorizations
+​
+Authorization
+stringheaderrequired
+All APIs require authentication via Bearer Token.
+
+Get API Key:
+
+Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+
+Note:
+
+Keep your API Key secure and do not share it with others
+If you suspect your API Key has been compromised, reset it immediately in the management page
+Body
+application/json
+​
+taskId
+stringrequired
+The task ID associated with the image generation
+
+Example:
+"task12345"
+
+​
+url
+string<uri>required
+The original image URL that needs to be converted to a direct download URL
+
+Example:
+"https://tempfile.aiquickdraw.com/v/xxxxxxx.png"
+
+Response
+
+200
+
+application/json
+Request successful
+
+​
+code
+enum<integer>
+Response Status Codes
+
+200: Success - Request has been processed successfully
+401: Unauthorized - Authentication credentials are missing or invalid
+404: Not Found - The requested resource or endpoint does not exist
+422: Validation Error
+The request parameters failed validation checks
+record is null
+Temporarily supports records within 14 days
+record result data is blank
+record status is not success
+record result data not exist
+record result data is empty
+451: Failed to fetch the image. Kindly verify any access limits set by you or your service provider
+455: Service Unavailable - System is currently undergoing maintenance
+500: Server Error - An unexpected error occurred while processing the request
+Available options: 200, 401, 404, 422, 451, 455, 500 
+​
+msg
+string
+Error message when code != 200
+
+Example:
+"success"
+
+​
+data
+string
+Direct download URL valid for 20 minutes
+
+Example:
+"https://xxxxxx.xxxxxxxx.r2.cloudflarestorage.com/v/xxxxxxx.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20250415T101007Z&X-Amz-SignedHeaders=host&X-Amz-Expires=1200&X-Amz-Credential=2464206aa3e576aa7c035d889be3a84e%2F20250415%2Fapac%2Fs3%2Faws4_request&X-Amz-Signature=122ae8bef09110e620841ab2ef8061c1818e754fc201408a9d1c6847b36fd3df"

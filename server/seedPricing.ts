@@ -72,7 +72,10 @@ const COMPREHENSIVE_PRICING = [
   // IMAGE GENERATION MODELS
   // ========================================
   // Kie.ai confirmed costs: Nano Banana=4, Seedream 4.0=4 (rounded from 3.5), Midjourney=8 for 4 variants
-  { feature: 'image', model: '4o-image', creditCost: 100, kieCreditCost: null, category: 'generation', description: '4o Image API - High-fidelity visuals with accurate text rendering' },
+  // 4o Image API - Output quantity-based pricing (1, 2, or 4 images)
+  { feature: 'image', model: '4o-image-1', creditCost: 6, kieCreditCost: null, category: 'generation', description: '4o Image API - 1 image output' },
+  { feature: 'image', model: '4o-image-2', creditCost: 7, kieCreditCost: null, category: 'generation', description: '4o Image API - 2 images output' },
+  { feature: 'image', model: '4o-image-4', creditCost: 8, kieCreditCost: null, category: 'generation', description: '4o Image API - 4 images output' },
   { feature: 'image', model: 'flux-kontext', creditCost: 150, kieCreditCost: null, category: 'generation', description: 'Flux Kontext - Vivid scenes with strong subject consistency' },
   { feature: 'image', model: 'nano-banana', creditCost: 50, kieCreditCost: 4, category: 'generation', description: 'Nano Banana - Fast, precise image generation and editing' },
   { feature: 'image', model: 'seedream-4', creditCost: 25, kieCreditCost: 4, category: 'generation', description: 'Seedream 4.0 - Up to 4K resolution with batch generation' },

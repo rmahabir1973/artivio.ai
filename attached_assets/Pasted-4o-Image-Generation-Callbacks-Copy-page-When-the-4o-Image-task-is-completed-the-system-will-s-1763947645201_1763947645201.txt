@@ -1,0 +1,160 @@
+4o Image Generation Callbacks
+
+Copy page
+
+When the 4o Image task is completed, the system will send the result to your provided callback URL via POST request
+
+When you submit an image generation task to the 4o Image API, you can use the callBackUrl parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+​
+Callback Mechanism Overview
+The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+​
+Callback Timing
+The system will send callback notifications in the following situations:
+4o image generation task completed successfully
+4o image generation task failed
+Errors occurred during task processing
+​
+Callback Method
+HTTP Method: POST
+Content Type: application/json
+Timeout Setting: 15 seconds
+​
+Callback Request Format
+When the task is completed, the system will send a POST request to your callBackUrl in the following format:
+
+Success Callback
+
+Failure Callback
+
+Copy
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "taskId": "task12345",
+    "info": {
+      "result_urls": [
+        "https://example.com/result/image1.png"
+      ]
+    }
+  }
+}
+​
+Status Code Description
+​
+code
+integerrequired
+Callback status code indicating task processing result:
+Status Code	Description
+200	Success - Image generation completed successfully
+400	Bad Request - Image content in filesUrl violates content policy, image size exceeds maximum limit, unable to process provided image file, content flagged by OpenAI as violating policies
+451	Download Failed - Unable to download image from the provided filesUrl
+500	Server Error - Please try again later, failed to get user token, failed to generate image, GPT 4O failed to edit the picture
+​
+msg
+stringrequired
+Status message providing detailed status description
+​
+data.taskId
+stringrequired
+Task ID, consistent with the taskId returned when you submitted the task
+​
+data.info
+object
+Image generation result information, returned on success
+​
+data.info.result_urls
+array
+List of generated image URLs, returned on success with accessible download links
+​
+Callback Reception Examples
+Here are example codes for receiving callbacks in popular programming languages:
+Node.js
+Python
+PHP
+
+Copy
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.post('/4o-image-callback', (req, res) => {
+  const { code, msg, data } = req.body;
+  
+  console.log('Received 4o image generation callback:', {
+    taskId: data.taskId,
+    status: code,
+    message: msg
+  });
+  
+  if (code === 200) {
+    // Task completed successfully
+    console.log('4o image generation completed');
+    const resultUrls = data.info?.result_urls || [];
+    
+    console.log(`Generated ${resultUrls.length} images:`);
+    resultUrls.forEach((url, index) => {
+      console.log(`Image ${index + 1}: ${url}`);
+    });
+    
+    // Process generated images
+    // Can download images, save locally, etc.
+    
+  } else {
+    // Task failed
+    console.log('4o image generation failed:', msg);
+    
+    // Handle failure cases...
+    if (code === 400) {
+      console.log('Content policy violation or parameter error');
+    } else if (code === 451) {
+      console.log('Image download failed');
+    } else if (code === 500) {
+      console.log('Server internal error');
+    }
+  }
+  
+  // Return 200 status code to confirm callback received
+  res.status(200).json({ status: 'received' });
+});
+
+app.listen(3000, () => {
+  console.log('Callback server running on port 3000');
+});
+​
+Best Practices
+​
+Callback URL Configuration Recommendations
+Use HTTPS: Ensure your callback URL uses HTTPS protocol for secure data transmission
+Verify Source: Verify the legitimacy of the request source in callback processing
+Idempotent Processing: The same taskId may receive multiple callbacks, ensure processing logic is idempotent
+Quick Response: Callback processing should return a 200 status code as quickly as possible to avoid timeout
+Asynchronous Processing: Complex business logic should be processed asynchronously to avoid blocking callback response
+Image Processing: Image download and processing should be done in asynchronous tasks to avoid blocking callback response
+​
+Important Reminders
+Callback URL must be a publicly accessible address
+Server must respond within 15 seconds, otherwise it will be considered a timeout
+If 3 consecutive retries fail, the system will stop sending callbacks
+Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+Generated image URLs may have time limits, recommend downloading and saving promptly
+Pay attention to content policy compliance to avoid generation failures due to policy violations
+​
+Troubleshooting
+If you do not receive callback notifications, please check the following:
+Network Connection Issues
+
+Server Response Issues
+
+Content Format Issues
+
+Image Processing Issues
+
+​
+Alternative Solution
+If you cannot use the callback mechanism, you can also use polling:
+Poll Query Results
+Use the get 4o image details endpoint to regularly query task status. We recommend querying every 30 seconds.
+Generate 4o Image（GPT IMAG 1）

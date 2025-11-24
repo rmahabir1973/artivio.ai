@@ -37,6 +37,18 @@ const ASPECT_RATIOS = [
   { value: "3:4", label: "Portrait (3:4)" },
 ];
 
+const GPT4O_ASPECT_RATIOS = [
+  { value: "1:1", label: "Square (1:1)" },
+  { value: "2:3", label: "Tall Portrait (2:3)" },
+  { value: "3:2", label: "Wide Landscape (3:2)" },
+];
+
+const GENERATE_QUANTITIES = [
+  { value: "1", label: "1 Image (6 credits)" },
+  { value: "2", label: "2 Images (7 credits)" },
+  { value: "4", label: "4 Images (8 credits)" },
+];
+
 const OUTPUT_FORMATS = [
   { value: "PNG", label: "PNG (Lossless)" },
   { value: "JPEG", label: "JPEG (Compressed)" },
@@ -62,6 +74,7 @@ export default function GenerateImage() {
   const [style, setStyle] = useState("realistic");
   const [outputFormat, setOutputFormat] = useState("PNG");
   const [quality, setQuality] = useState("standard");
+  const [generateQuantity, setGenerateQuantity] = useState("1"); // For 4o-image: 1, 2, or 4
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [seedLocked, setSeedLocked] = useState(false);
@@ -86,10 +99,24 @@ export default function GenerateImage() {
   };
 
   // Merge model info with dynamic pricing
-  const IMAGE_MODELS = useMemo(() => IMAGE_MODEL_INFO.map(m => ({
-    ...m,
-    cost: getModelCost(m.value, 100),
-  })), [getModelCost]);
+  const IMAGE_MODELS = useMemo(() => IMAGE_MODEL_INFO.map(m => {
+    let cost = getModelCost(m.value, 100);
+    
+    // For 4o-image, adjust cost based on generate quantity
+    if (m.value === '4o-image') {
+      const quantityMapping: { [key: string]: number } = {
+        '1': 6,
+        '2': 7,
+        '4': 8,
+      };
+      cost = quantityMapping[generateQuantity] || 6;
+    }
+    
+    return {
+      ...m,
+      cost,
+    };
+  }), [getModelCost, generateQuantity]);
 
   // Clear reference images when switching to text-to-image mode
   useEffect(() => {
@@ -276,10 +303,16 @@ export default function GenerateImage() {
     // Build parameters with seed support (only Seedream 4 supports seeds)
     const parameters: any = {
       aspectRatio,
-      style,
-      outputFormat,
-      quality,
     };
+    
+    // For 4o-image, pass nVariants; for others, include style, outputFormat, quality
+    if (model === '4o-image') {
+      parameters.nVariants = parseInt(generateQuantity);
+    } else {
+      parameters.style = style;
+      parameters.outputFormat = outputFormat;
+      parameters.quality = quality;
+    }
     
     // Add seed if model supports it and seed is provided
     if (modelSupportsSeed() && seed) {
@@ -450,7 +483,7 @@ export default function GenerateImage() {
                 />
               </div>
 
-              {/* Aspect Ratio */}
+              {/* Aspect Ratio - Model-specific options */}
               <div className="space-y-2">
                 <Label htmlFor="aspectRatio">Aspect Ratio</Label>
                 <Select value={aspectRatio} onValueChange={setAspectRatio}>
@@ -458,7 +491,7 @@ export default function GenerateImage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ASPECT_RATIOS.map((ratio) => (
+                    {(model === '4o-image' ? GPT4O_ASPECT_RATIOS : ASPECT_RATIOS).map((ratio) => (
                       <SelectItem key={ratio.value} value={ratio.value}>
                         {ratio.label}
                       </SelectItem>
@@ -467,56 +500,84 @@ export default function GenerateImage() {
                 </Select>
               </div>
 
-              {/* Output Format */}
-              <div className="space-y-2">
-                <Label htmlFor="outputFormat">Output Format</Label>
-                <Select value={outputFormat} onValueChange={setOutputFormat}>
-                  <SelectTrigger id="outputFormat" data-testid="select-output-format">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OUTPUT_FORMATS.map((format) => (
-                      <SelectItem key={format.value} value={format.value}>
-                        {format.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Output Format - Hidden for 4o-image */}
+              {model !== '4o-image' && (
+                <div className="space-y-2">
+                  <Label htmlFor="outputFormat">Output Format</Label>
+                  <Select value={outputFormat} onValueChange={setOutputFormat}>
+                    <SelectTrigger id="outputFormat" data-testid="select-output-format">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OUTPUT_FORMATS.map((format) => (
+                        <SelectItem key={format.value} value={format.value}>
+                          {format.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              {/* Quality */}
-              <div className="space-y-2">
-                <Label htmlFor="quality">Quality</Label>
-                <Select value={quality} onValueChange={setQuality}>
-                  <SelectTrigger id="quality" data-testid="select-quality">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {QUALITY_OPTIONS.map((q) => (
-                      <SelectItem key={q.value} value={q.value}>
-                        {q.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Quality - Hidden for 4o-image */}
+              {model !== '4o-image' && (
+                <div className="space-y-2">
+                  <Label htmlFor="quality">Quality</Label>
+                  <Select value={quality} onValueChange={setQuality}>
+                    <SelectTrigger id="quality" data-testid="select-quality">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {QUALITY_OPTIONS.map((q) => (
+                        <SelectItem key={q.value} value={q.value}>
+                          {q.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              {/* Style */}
-              <div className="space-y-2">
-                <Label htmlFor="style">Style</Label>
-                <Select value={style} onValueChange={setStyle}>
-                  <SelectTrigger id="style" data-testid="select-style">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="realistic">Realistic</SelectItem>
-                    <SelectItem value="artistic">Artistic</SelectItem>
-                    <SelectItem value="anime">Anime</SelectItem>
-                    <SelectItem value="cinematic">Cinematic</SelectItem>
-                    <SelectItem value="abstract">Abstract</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Style - Hidden for 4o-image */}
+              {model !== '4o-image' && (
+                <div className="space-y-2">
+                  <Label htmlFor="style">Style</Label>
+                  <Select value={style} onValueChange={setStyle}>
+                    <SelectTrigger id="style" data-testid="select-style">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="realistic">Realistic</SelectItem>
+                      <SelectItem value="artistic">Artistic</SelectItem>
+                      <SelectItem value="anime">Anime</SelectItem>
+                      <SelectItem value="cinematic">Cinematic</SelectItem>
+                      <SelectItem value="abstract">Abstract</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Generate Quantity - Only for 4o-image */}
+              {model === '4o-image' && (
+                <div className="space-y-2">
+                  <Label htmlFor="generateQuantity">Generate Quantity</Label>
+                  <Select value={generateQuantity} onValueChange={setGenerateQuantity}>
+                    <SelectTrigger id="generateQuantity" data-testid="select-generate-quantity">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GENERATE_QUANTITIES.map((q) => (
+                        <SelectItem key={q.value} value={q.value}>
+                          {q.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Select how many images to generate in a single request
+                  </p>
+                </div>
+              )}
 
               {/* Seed Control - Only show for models that support it */}
               {modelSupportsSeed() && (

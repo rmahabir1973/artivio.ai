@@ -777,6 +777,7 @@ export async function generateImage(params: {
     const enableFallback = parameters.enableFallback !== undefined ? parameters.enableFallback : false;
     
     // Build 4o-Image-specific payload (direct fields, NOT input object)
+    // Note: 4o-image API does not support outputFormat or quality parameters
     const payload: any = {
       prompt: params.prompt,
       size,
@@ -794,14 +795,6 @@ export async function generateImage(params: {
     // Add mask URL if provided (for precise editing)
     if (parameters.maskUrl) {
       payload.maskUrl = parameters.maskUrl;
-    }
-    
-    // Add output format and quality if specified
-    if (parameters.outputFormat) {
-      payload.outputFormat = parameters.outputFormat;
-    }
-    if (parameters.quality) {
-      payload.quality = parameters.quality;
     }
     
     return await callKieApi('/api/v1/gpt4o-image/generate', payload);
