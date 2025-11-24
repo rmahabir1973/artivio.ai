@@ -1,0 +1,200 @@
+Image Generation or Editing Callbacks
+
+Copy page
+
+When the image generation task is completed, the system will send the result to your provided callback URL via POST request
+
+When you submit an image generation or editing task to the Flux Kontext API, you can use the callBackUrl parameter to set a callback URL. The system will automatically push the results to your specified address when the task is completed.
+​
+Callback Mechanism Overview
+The callback mechanism eliminates the need to poll the API for task status. The system will proactively push task completion results to your server.
+​
+Callback Timing
+The system will send callback notifications in the following situations:
+Image generation or editing task completed successfully
+Image generation or editing task failed
+Errors occurred during task processing
+​
+Callback Method
+HTTP Method: POST
+Content Type: application/json
+Timeout Setting: 15 seconds
+​
+Callback Request Format
+When the task is completed, the system will send a POST request to your callBackUrl in the following format:
+
+Success Callback
+
+Content Policy Violation Callback
+
+Generation Failure Callback
+
+Internal Error Callback
+
+Copy
+{
+  "code": 200,
+  "msg": "BFL image generated successfully.",
+  "data": {
+    "taskId": "task12345",
+    "info": {
+      "originImageUrl": "https://example.com/original.jpg",
+      "resultImageUrl": "https://example.com/result.jpg"
+    }
+  }
+}
+​
+Status Code Description
+​
+code
+integerrequired
+Callback status code indicating task processing result:
+Status Code	Description
+200	Success - Image generation completed successfully
+400	Failed - Your prompt was flagged by Website as violating content policies
+500	Failed - Internal Error, Please try again later
+501	Failed - Image generation task failed
+​
+msg
+stringrequired
+Status message providing detailed status description
+​
+data.taskId
+stringrequired
+Task ID, consistent with the taskId returned when you submitted the task
+​
+data.info.originImageUrl
+string
+Original image URL, valid for 10 minutes. Only present on success.
+​
+data.info.resultImageUrl
+string
+Generated image URL on our server. Only present on success.
+​
+Callback Reception Examples
+Here are example codes for receiving callbacks in popular programming languages:
+Node.js
+Python
+PHP
+
+Copy
+const express = require('express');
+const fs = require('fs');
+const https = require('https');
+const app = express();
+
+app.use(express.json());
+
+app.post('/flux-image-callback', (req, res) => {
+  const { code, msg, data } = req.body;
+  
+  console.log('Received Flux image generation callback:', {
+    taskId: data.taskId,
+    status: code,
+    message: msg
+  });
+  
+  if (code === 200) {
+    // Task completed successfully
+    console.log('Flux image generation completed successfully');
+    
+    const { taskId, info } = data;
+    const { originImageUrl, resultImageUrl } = info;
+    
+    console.log(`Original Image URL: ${originImageUrl}`);
+    console.log(`Generated Image URL: ${resultImageUrl}`);
+    console.log('Note: Original image URL is valid for 10 minutes');
+    
+    // Download generated image
+    if (resultImageUrl) {
+      downloadFile(resultImageUrl, `flux_result_${taskId}.jpg`)
+        .then(() => console.log('Generated image downloaded successfully'))
+        .catch(err => console.error('Generated image download failed:', err));
+    }
+    
+    // Download original image (if needed)
+    if (originImageUrl) {
+      downloadFile(originImageUrl, `flux_original_${taskId}.jpg`)
+        .then(() => console.log('Original image downloaded successfully'))
+        .catch(err => console.error('Original image download failed:', err));
+    }
+    
+  } else {
+    // Task failed
+    console.log('Flux image generation failed:', msg);
+    
+    // Handle specific error types
+    if (code === 400) {
+      console.log('Content policy violation - please adjust prompt');
+    } else if (code === 500) {
+      console.log('Internal error - please try again later');
+    } else if (code === 501) {
+      console.log('Generation task failed - may need to adjust parameters');
+    }
+  }
+  
+  // Return 200 status code to confirm callback received
+  res.status(200).json({ status: 'received' });
+});
+
+// Helper function to download files
+function downloadFile(url, filename) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(filename);
+    
+    https.get(url, (response) => {
+      if (response.statusCode === 200) {
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          resolve();
+        });
+      } else {
+        reject(new Error(`HTTP ${response.statusCode}`));
+      }
+    }).on('error', reject);
+  });
+}
+
+app.listen(3000, () => {
+  console.log('Callback server running on port 3000');
+});
+​
+Best Practices
+​
+Callback URL Configuration Recommendations
+Use HTTPS: Ensure your callback URL uses HTTPS protocol for secure data transmission
+Verify Source: Verify the legitimacy of the request source in callback processing
+Idempotent Processing: The same taskId may receive multiple callbacks, ensure processing logic is idempotent
+Quick Response: Callback processing should return a 200 status code as quickly as possible to avoid timeout
+Asynchronous Processing: Complex business logic should be processed asynchronously to avoid blocking callback response
+Timely Download: Original image URLs are valid for only 10 minutes, download and save files promptly upon success
+​
+Important Reminders
+Callback URL must be a publicly accessible address
+Server must respond within 15 seconds, otherwise it will be considered a timeout
+If 3 consecutive retries fail, the system will stop sending callbacks
+Original image URLs expire after 10 minutes - download immediately upon receiving callback
+Please ensure the stability of callback processing logic to avoid callback failures due to exceptions
+Need to handle multiple error status codes (400, 500, 501) for complete error handling
+Pay attention to content policy violations and adjust prompts accordingly
+​
+Troubleshooting
+If you do not receive callback notifications, please check the following:
+Network Connection Issues
+
+Server Response Issues
+
+Content Format Issues
+
+Image Processing Issues
+
+Content Policy Issues
+
+Task Failure Issues
+
+​
+Alternative Solution
+If you cannot use the callback mechanism, you can also use polling:
+Poll Query Results
+Use the get image details endpoint to regularly query task status. We recommend querying every 30 seconds.

@@ -1,0 +1,99 @@
+For GPT 4o Text to Image / Image to Image - We need to make a couple changes
+
+Aspect ratio should be 2:3, 3:2. 1:1
+Verify if there is Output format as I dont see that on Kie API
+There is no Quality option
+Verify if Style exists in the API - I dont see it on Kie
+Need to Add Generate Quantity. (1, 2, 4) Kie charges me the following:
+Generate 4o Image (Output 1 Image)
+Credits per call：6
+Generate 4o Image (Output 2 Images)
+Credits per call：7
+Generate 4o Image (Output 4 Images)
+Credits per call：8
+
+Update the epricing in Admin
+
+Get 4o Image Details
+
+Copy page
+
+Query 4o Image generation task details using taskId, including generation status, parameters and results.
+
+GET
+/
+api
+/
+v1
+/
+gpt4o-image
+/
+record-info
+
+Try it
+​
+Status Descriptions
+GENERATING: Generating in progress
+SUCCESS: Generation successful
+CREATE_TASK_FAILED: Failed to create task
+GENERATE_FAILED: Generation failed
+​
+Important Notes
+Maximum query rate is 3 times per second per task
+Authorizations
+​
+Authorization
+stringheaderrequired
+All APIs require authentication via Bearer Token.
+
+Get API Key:
+
+Visit API Key Management Page to get your API Key
+Usage:
+Add to request header:
+Authorization: Bearer YOUR_API_KEY
+
+Note:
+
+Keep your API Key secure and do not share it with others
+If you suspect your API Key has been compromised, reset it immediately in the management page
+Query Parameters
+​
+taskId
+stringrequired
+Unique identifier of the 4o image generation task
+
+Response
+
+200
+
+application/json
+Request successful
+
+​
+code
+enum<integer>
+Response Status Codes
+
+200: Success - Request has been processed successfully
+401: Unauthorized - Authentication credentials are missing or invalid
+402: Insufficient Credits - Account does not have enough credits to perform the operation
+404: Not Found - The requested resource or endpoint does not exist
+422: Validation Error - The request parameters failed validation checks
+429: Rate Limited - Request limit has been exceeded for this resource
+455: Service Unavailable - System is currently undergoing maintenance
+500: Server Error - An unexpected error occurred while processing the request
+Build Failed - vocal removal generation failed
+Available options: 200, 401, 402, 404, 422, 429, 455, 500
+​
+msg
+string
+Error message when code != 200
+
+Example:
+"success"
+
+​
+data
+object
+Show child attributes
