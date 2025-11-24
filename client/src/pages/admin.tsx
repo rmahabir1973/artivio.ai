@@ -64,6 +64,7 @@ export default function Admin() {
     price: "",
     billingPeriod: "monthly" as "monthly" | "annual" | "trial",
     creditsPerMonth: "",
+    features: "[]",
     stripePriceId: "",
     stripeProductId: ""
   });
@@ -75,6 +76,7 @@ export default function Admin() {
     price: "",
     billingPeriod: "monthly" as "monthly" | "annual" | "trial",
     creditsPerMonth: "",
+    features: "[]",
   });
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
   
@@ -1158,6 +1160,7 @@ export default function Admin() {
                                   price: (plan.price / 100).toString(),
                                   billingPeriod: plan.billingPeriod as "monthly" | "annual" | "trial",
                                   creditsPerMonth: plan.creditsPerMonth.toString(),
+                                  features: JSON.stringify(plan.features || []),
                                   stripePriceId: plan.stripePriceId || "",
                                   stripeProductId: plan.stripeProductId || "",
                                 });
@@ -2597,7 +2600,7 @@ export default function Admin() {
         if (!open) {
           setCreatingPlan(false);
           setEditingPlanId(null);
-          setEditPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
+          setEditPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "", features: "[]", stripePriceId: "", stripeProductId: "" });
         }
       }}>
         <DialogContent className="max-w-2xl">
@@ -2703,6 +2706,21 @@ export default function Admin() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="pt-2">
+              <Label htmlFor="plan-features">Features (JSON)</Label>
+              <Textarea
+                id="plan-features"
+                placeholder='["5,000 credits per month", "All AI models access", "Priority generation queue"]'
+                value={creatingPlan ? newPlanData.features : editPlanData.features}
+                onChange={(e) => creatingPlan
+                  ? setNewPlanData({ ...newPlanData, features: e.target.value })
+                  : setEditPlanData({ ...editPlanData, features: e.target.value })
+                }
+                data-testid="input-plan-features"
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Enter features as a JSON array. Each item will display as a checkmark item on the pricing page.</p>
+            </div>
             {!creatingPlan && (
               <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                 <div>
@@ -2736,8 +2754,8 @@ export default function Admin() {
               onClick={() => {
                 setCreatingPlan(false);
                 setEditingPlanId(null);
-                setEditPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "", stripePriceId: "", stripeProductId: "" });
-                setNewPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "" });
+                setEditPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "", features: "[]", stripePriceId: "", stripeProductId: "" });
+                setNewPlanData({ name: "", displayName: "", description: "", price: "", billingPeriod: "monthly", creditsPerMonth: "", features: "[]" });
               }}
               disabled={createPlanMutation.isPending || updatePlanMutation.isPending}
               data-testid="button-cancel-plan-dialog"
@@ -2774,6 +2792,21 @@ export default function Admin() {
                 const priceInCents = Math.round(price * 100);
 
                 if (creatingPlan) {
+                  // Parse features JSON
+                  let features: string[] = [];
+                  try {
+                    const parsed = JSON.parse(newPlanData.features.trim() || "[]");
+                    if (Array.isArray(parsed)) {
+                      features = parsed;
+                    } else {
+                      toast({ title: "Error", description: "Features must be a JSON array", variant: "destructive" });
+                      return;
+                    }
+                  } catch {
+                    toast({ title: "Error", description: "Invalid JSON format for features", variant: "destructive" });
+                    return;
+                  }
+
                   const createData: any = {
                     name,
                     displayName,
@@ -2781,9 +2814,25 @@ export default function Admin() {
                     price: priceInCents,
                     billingPeriod: newPlanData.billingPeriod,
                     creditsPerMonth: credits,
+                    features,
                   };
                   createPlanMutation.mutate(createData);
                 } else {
+                  // Parse features JSON
+                  let features: string[] = [];
+                  try {
+                    const parsed = JSON.parse(editPlanData.features.trim() || "[]");
+                    if (Array.isArray(parsed)) {
+                      features = parsed;
+                    } else {
+                      toast({ title: "Error", description: "Features must be a JSON array", variant: "destructive" });
+                      return;
+                    }
+                  } catch {
+                    toast({ title: "Error", description: "Invalid JSON format for features", variant: "destructive" });
+                    return;
+                  }
+
                   const updates: any = {
                     planId: editingPlanId!,
                     name,
@@ -2792,6 +2841,7 @@ export default function Admin() {
                     price: priceInCents,
                     billingPeriod: editPlanData.billingPeriod,
                     creditsPerMonth: credits,
+                    features,
                   };
                   
                   const stripePriceId = editPlanData.stripePriceId.trim();
