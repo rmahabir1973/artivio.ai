@@ -87,8 +87,15 @@ app.use((req, res, next) => {
   await initializePlans();
   
   // Initialize pricing (upserts all pricing entries from seedPricing.ts)
+  // Non-blocking: Server continues even if pricing seed fails
   const { seedPricing } = await import('./seedPricing');
-  await seedPricing();
+  try {
+    await seedPricing();
+  } catch (error) {
+    console.error('⚠️  WARNING: Pricing seed failed, server continuing with existing pricing data');
+    console.error('   Error:', error instanceof Error ? error.message : error);
+    console.error('   → Pricing may be outdated. Check database connection and restart server.');
+  }
   
   // Initialize Passport strategies and middleware for authentication
   initializePassportStrategies(app);
