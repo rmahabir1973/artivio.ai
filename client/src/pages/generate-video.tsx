@@ -494,8 +494,8 @@ export default function GenerateVideo() {
       duration,
     };
     
-    // Only include quality for models that use it (not Runway, Seedance, or Wan 2.5 - they use resolution)
-    if (model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5') {
+    // Only include quality for models that use it (not Runway, Seedance, Wan 2.5, or Kling 2.5 Turbo)
+    if (model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo') {
       parameters.quality = quality;
     }
     
@@ -734,8 +734,8 @@ export default function GenerateVideo() {
               )}
             </div>
 
-            {/* Quality - Hidden for Runway Gen-3, Seedance, and Wan 2.5 (use resolution instead) */}
-            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && (
+            {/* Quality - Hidden for Runway Gen-3, Seedance, Wan 2.5, and Kling 2.5 Turbo */}
+            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo' && (
               <div className="space-y-2">
                 <Label htmlFor="quality">Quality</Label>
                 <Select value={quality} onValueChange={setQuality}>
