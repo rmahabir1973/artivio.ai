@@ -1,0 +1,83 @@
+Complete guide to using infinitalk/from-audio
+
+InfiniteTalk AI Lip Sync Video API
+InfiniteTalk API by MeiGen-AI is an advanced AI lip sync video API that turns images or text with audio into lifelike talking avatars. It supports image-to-talking-video, natural facial expressions, precise lip-sync, and infinite-length talking videos. With Kie.ai, you can test it free online—no local setup needed.
+
+Original image
+What is MeiGen-AI InfiniteTalk AI?
+Introduction to InfiniteTalk AI Lip Sync Video API
+InfiniteTalk, developed by MeiGen-AI, is an open-source AI lip-sync generator API that uses a sparse-frame video dubbing framework to synchronize lips, head motion, posture, and expressions with audio—enabling infinite-length video generation while preserving identity and continuity. It supports both image-to-talking-video and Talking Videos API workflows for e-learning, marketing, and virtual avatars. With Kie.ai, you can try InfiniteTalk free online—no local setup required.
+
+Supported InfiniteTalk AI API Models on Kie.ai
+InfiniteTalk Image-to-Talking-Video API
+Upload a single portrait image and an audio file to generate a realistic AI talking video. The InfiniteTalk AI Lip-Sync Generator API ensures natural facial expressions, synchronized head movements, and accurate lip synchronization for professional-quality outputs.
+
+InfiniteTalk Text + Audio Lip-Sync Video API
+Provide a text script along with an audio input to create a lip-synced talking head video. This makes InfiniteTalk a powerful AI lip-sync generator API for speeches, quotes, podcasts, and personalized content narration.
+
+Core Features of InfiniteTalk AI Lip-Sync Generator API
+Create Talking or Singing Videos with InfiniteTalk AI API
+Beyond simple speech, the InfiniteTalk lip sync video API can generate avatars that appear to talk or sing in perfect sync with the audio. This feature of the AI lip-sync generator API expands creative possibilities for music videos, entertainment projects, and social media content, turning static portraits into engaging talking videos API outputs.
+
+Visual Understanding with Wan2.1 Backbone
+Built on the robust Wan 2.1 video diffusion model, the InfiniteTalk AI API benefits from strong visual understanding of human anatomy, facial expressions, and body movements, resulting in realistic and consistent talking avatars.
+
+Sparse-Frame Video Dubbing with InfiniteTalk
+InfiniteTalk introduces a sparse-frame dubbing framework that aligns not only lip movements, but also head motion, posture, and facial expressions with the input audio. This creates highly expressive and natural talking videos.
+
+Infinite-Length Talking Videos API
+Unlike most lip-sync tools limited to short clips, InfiniteTalk enables infinite-length video generation, making it ideal for podcasts, lectures, and other long-form digital content where duration is not a limitation.
+
+Stability in AI Lip-Sync Video Generation
+With its advanced framework, InfiniteTalk reduces distortions in hand and body regions, ensuring more stable and consistent outputs. This makes the model more reliable than older lip-sync approaches.
+
+Superior Lip Accuracy with InfiniteTalk API
+InfiniteTalk achieves high-precision lip synchronization, surpassing traditional dubbing methods. Every syllable aligns smoothly, delivering talking videos that look professional and convincing.
+
+How InfiniteTalk AI API Works with Wan 2.1
+Wan 2.1 as the Video Generation Backbone
+Wan 2.1 is an image-to-video model that generates continuous video frames from a single image. Within the InfiniteTalk AI API, Wan 2.1 acts as the visual backbone, ensuring motion stability and temporal consistency for long-form video generation.
+
+InfiniteTalk AI API Adds Audio-Driven Lip Sync
+The InfiniteTalk AI API adds audio-driven synchronization on top of Wan 2.1. It aligns lips, facial expressions, and head motion with the input audio, enabling accurate lip-sync and natural talking avatars for both image-to-talking-video and long-form video generation.
+
+Use Cases of InfiniteTalk AI Lip-Sync Generator API
+Create AI Talking Avatars with InfiniteTalk API
+With the InfiniteTalk API, users can generate realistic AI talking avatars from images and audio. This makes it easy to create engaging video content for podcasts, interviews, and social media storytelling.
+
+Music and Singing Video Creation with InfiniteTalk AI API
+InfiniteTalk lip sync video API can also be applied to music. By combining a portrait with a song or vocal track, the AI lip-sync generator API produces avatars that look like they are singing in sync with the audio. This makes it ideal for creating music videos, karaoke content, and social media performances, turning static images into engaging singing characters with the Talking Videos API.
+
+Marketing Campaigns with InfiniteTalk Lip Sync Video API
+Brands can integrate the AI lip-sync generator API into their marketing workflows. For example, a company can take product launch scripts, add a spokesperson’s portrait, and generate image-to-talking-video ads in multiple languages. This reduces production costs while providing highly localized video marketing content powered by the InfiniteTalk API.
+
+Podcasts and Storytelling with InfiniteTalk Lip Sync Video API
+Podcasters can repurpose audio episodes into InfiniteTalk AI talking videos. For example, a podcast host uploads their headshot and episode audio, and the InfiniteTalk lip sync video API produces a lip-synced video that can be shared on YouTube, TikTok, or Instagram—helping creators reach wider audiences beyond audio-only platforms.
+
+How to Test InfiniteTalk Lip Sync Video API Free Online on Kie.ai
+Step 1 – Choose Your Input (Image + Audio or Text + Audio)
+Upload a portrait photo with an audio track to create an image-to-talking-video result. Alternatively, you can provide a text script with an AI-generated voice to test the InfiniteTalk API in text + audio mode.
+
+Step 2 – Process with InfiniteTalk Lip Sync Video API
+The InfiniteTalk lip sync video API synchronizes lips, facial expressions, and head movements with your audio. Its advanced sparse-frame framework ensures accurate lip-sync and natural talking videos without time limits.
+
+Step 3 – Preview and Download from Talking Videos API
+Within minutes, you’ll see your generated output online. The Talking Videos API lets you preview the result, download the video, or share it instantly—all without local deployment.
+
+Why Choose Kie.ai for InfiniteTalk API Integration
+Free Online Test of InfiniteTalk Lip Sync Video API
+Kie.ai lets you try the InfiniteTalk lip sync video API directly in your browser. No local setup or heavy GPU is required—just upload your image and audio to generate image-to-talking-video results instantly.
+
+Affordable Pricing for AI Lip-Sync Generator API
+We provide transparent and developer-friendly pricing. Whether you are testing prototypes or scaling production, Kie.ai makes it cost-effective to integrate the AI lip-sync generator API into your projects without overspending.
+
+Seamless Integration with Other Kie.ai APIs
+Besides MeiGen-InfiniteTalk, Kie.ai offers APIs for images, music, and video. Developers can combine them—for example, generate a character, add voice, then create a lip-synced talking video—to build scalable and flexible workflows.
+
+Frequently Asked Questions
+What is InfiniteTalk API used for?
+How does InfiniteTalk Lip Sync Video API work?
+Can I test InfiniteTalk API free online?
+What formats does InfiniteTalk API support?
+Can InfiniteTalk API generate singing videos?
+Can I use InfiniteTalk API without coding?

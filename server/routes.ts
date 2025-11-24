@@ -19,6 +19,7 @@ import {
   generateTTS,
   transcribeAudio,
   generateKlingAvatar,
+  generateLipSync,
   convertAudio,
   upscaleImage,
   upscaleVideo,
@@ -3421,6 +3422,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(avatars);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch avatar generations" });
+    }
+  });
+
+  // ========== LIP SYNC ROUTES ==========
+
+  // Generate lip-sync video
+  app.post('/api/lip-sync/generate', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { imageUrl, audioUrl, prompt, resolution, seed } = req.body;
+
+      // Validate required fields
+      if (!imageUrl || !audioUrl) {
+        return res.status(400).json({ message: "Image URL and audio URL are required" });
+      }
+
+      const modelName = resolution === '480p' ? 'infinitalk-lip-sync-480p' : 'infinitalk-lip-sync-720p';
+      const cost = await getModelCost(modelName);
+
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        const generation = await storage.createGeneration({
+          userId,
+          model: modelName,
+          prompt: prompt || null,
+          parameters: JSON.stringify({
+            resolution: resolution || '720p',
+            seed: seed || null,
+          }),
+          imageUrls: JSON.stringify([imageUrl]),
+          audioUrls: JSON.stringify([audioUrl]),
+          generationType: 'lip-sync',
+          status: 'pending',
+          resultUrl: null,
+          creditsCost: cost,
+        });
+
+        // Background processing
+        (async () => {
+          try {
+            const callbackUrl = getCallbackUrl(generation.id);
+            const { result } = await generateLipSync({
+              imageUrl,
+              audioUrl,
+              prompt: prompt || undefined,
+              resolution: (resolution || '720p') as '480p' | '720p',
+              seed: seed ? parseInt(seed, 10) : undefined,
+              callBackUrl: callbackUrl,
+            });
+
+            const taskId = result?.data?.taskId || result?.taskId;
+            const directUrl = result?.url || result?.videoUrl || result?.data?.url;
+
+            if (directUrl) {
+              await storage.finalizeGeneration(generation.id, 'success', {
+                resultUrl: directUrl,
+              });
+            } else if (taskId) {
+              await storage.updateGeneration(generation.id, {
+                status: 'processing',
+                externalTaskId: taskId,
+                statusDetail: 'queued',
+              });
+            } else {
+              throw new Error('No taskId or URL returned');
+            }
+          } catch (error: any) {
+            await storage.addCreditsAtomic(userId, cost);
+            await storage.finalizeGeneration(generation.id, 'failure', {
+              errorMessage: error.message,
+            });
+          }
+        })();
+
+        res.json({ generationId: generation.id, message: "Lip sync generation started" });
+      } catch (error: any) {
+        await storage.addCreditsAtomic(userId, cost);
+        throw error;
+      }
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to generate lip sync video" });
+    }
+  });
+
+  // Get user's lip-sync generations
+  app.get('/api/lip-sync/generations', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const generations = await storage.getUserGenerations(userId);
+      const lipSyncGenerations = generations.filter((g) => g.generationType === 'lip-sync');
+      res.json(lipSyncGenerations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch lip-sync generations" });
     }
   });
 

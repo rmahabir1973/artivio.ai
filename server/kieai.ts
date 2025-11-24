@@ -1104,6 +1104,33 @@ export async function generateKlingAvatar(params: {
   return await callKieApi('/api/v1/kling/avatar/generate', payload);
 }
 
+// InfiniteTalk Lip Sync - Generate lip-sync video from image + audio
+export async function generateLipSync(params: {
+  imageUrl: string;
+  audioUrl: string;
+  prompt?: string; // Optional prompt for guidance
+  resolution?: '480p' | '720p';
+  seed?: number;
+  callBackUrl?: string;
+}): Promise<{ result: any; keyName: string }> {
+  const resolution = params.resolution || '720p';
+  
+  const input: any = {
+    image_url: params.imageUrl,
+    audio_url: params.audioUrl,
+    resolution,
+  };
+  
+  if (params.prompt) input.prompt = params.prompt;
+  if (params.seed !== undefined) input.seed = params.seed;
+  
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: 'infinitalk/from-audio',
+    callBackUrl: params.callBackUrl,
+    input,
+  });
+}
+
 // Audio Conversion - Unified function for WAV conversion, vocal removal, stem separation
 export async function convertAudio(params: {
   sourceUrl: string;

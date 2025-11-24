@@ -133,11 +133,15 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'voice-cloning', model: 'elevenlabs-clone', creditCost: 100, kieCreditCost: null, category: 'voice', description: 'ElevenLabs Voice Cloning - Custom voice creation' },
   
   // ========================================
-  // TALKING AVATARS
+  // TALKING AVATARS & LIP SYNC
   // ========================================
   // Kie.ai costs unknown - needs manual verification
   { feature: 'avatar', model: 'kling-ai', creditCost: 350, kieCreditCost: null, category: 'generation', description: 'Kling AI - Talking Avatar generation' },
   { feature: 'avatar', model: 'infinite-talk', creditCost: 300, kieCreditCost: null, category: 'generation', description: 'Infinite Talk - Avatar generation' },
+  
+  // InfiniteTalk Lip Sync - Resolution-based pricing (480p, 720p)
+  { feature: 'lip-sync', model: 'infinitalk-lip-sync-480p', creditCost: 15, kieCreditCost: 15, category: 'generation', description: 'InfiniteTalk Lip Sync - 480p resolution' },
+  { feature: 'lip-sync', model: 'infinitalk-lip-sync-720p', creditCost: 60, kieCreditCost: 60, category: 'generation', description: 'InfiniteTalk Lip Sync - 720p resolution' },
   
   // ========================================
   // AI CHAT MODELS

@@ -40,6 +40,7 @@ import TextToSpeech from "@/pages/text-to-speech";
 import SpeechToText from "@/pages/speech-to-text";
 import AnalyzeImage from "@/pages/analyze-image";
 import TalkingAvatars from "@/pages/talking-avatars";
+import LipSync from "@/pages/lip-sync";
 import AudioConverter from "@/pages/audio-converter";
 import VideoEditor from "@/pages/video-editor";
 import QRGenerator from "@/pages/qr-generator";
@@ -122,6 +123,9 @@ function Router() {
       </Route>
       <Route path="/talking-avatars">
         <ProtectedRoute><TalkingAvatars /></ProtectedRoute>
+      </Route>
+      <Route path="/lip-sync">
+        <ProtectedRoute><LipSync /></ProtectedRoute>
       </Route>
       <Route path="/audio-converter">
         <ProtectedRoute><AudioConverter /></ProtectedRoute>

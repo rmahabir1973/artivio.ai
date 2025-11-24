@@ -53,6 +53,7 @@ The platform underwent a major UI transformation from marketing-style layout to 
 -   **QR Code Generator**: Client-side QR code generator with logo embedding, customization, live preview, and PNG/SVG download (no credits required).
 -   **AI Chat**: Dual provider support (Deepseek, OpenAI) with streaming responses, model selection, persistent conversation history, multi-line input, and a Stop button.
 -   **Voice Cloning**: Integrates ElevenLabs via Kie.ai, supporting audio uploads and recording.
+-   **InfiniteTalk Lip Sync**: Creates lip-synced videos from images and audio using Kie.ai infinitalk/from-audio model. Features resolution-based pricing (480p/15cr, 720p/60cr at 15/60 Kie credits respectively), seed parameter for reproducibility with lock/unlock toggle, optional prompt guidance, audio upload/recording with MediaRecorder integration, and voice recorder with auto-encoding to MP3. Uses webhook-based callback pattern matching other Kie.ai models.
 -   **Admin Panel**: Comprehensive user management, API key management, Stripe integration configuration, and home page content management.
 -   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions (Free, Starter, Pro).
 -   **Dynamic Landing Page**: Public-facing landing page with admin-managed content.

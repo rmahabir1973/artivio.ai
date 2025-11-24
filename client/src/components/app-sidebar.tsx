@@ -63,6 +63,7 @@ const menuSections = [
       { title: "Text to Speech", url: "/text-to-speech", icon: Headphones },
       { title: "Speech to Text", url: "/speech-to-text", icon: Mic2 },
       { title: "Audio Converter", url: "/audio-converter", icon: AudioWaveform },
+      { title: "Lip Sync", url: "/lip-sync", icon: Video },
     ],
   },
   {
