@@ -39,9 +39,23 @@ const COMPREHENSIVE_PRICING = [
   // ========================================
   // SORA VIDEO MODELS (Separate page)
   // ========================================
-  { feature: 'video', model: 'sora-2', creditCost: 300, kieCreditCost: 30, category: 'generation', description: 'Sora 2 Pro - Text-to-video generation' },
-  { feature: 'video', model: 'sora-2-image-to-video', creditCost: 300, kieCreditCost: 30, category: 'generation', description: 'Sora 2 Pro - Image-to-video generation' },
-  { feature: 'video', model: 'sora-2-pro-storyboard', creditCost: 500, kieCreditCost: null, category: 'generation', description: 'Sora 2 Pro - Multi-scene storyboard generation' },
+  // Sora 2 Pro Text-to-Video - Quality and duration-based pricing
+  { feature: 'video', model: 'sora-2-10s-standard', creditCost: 150, kieCreditCost: 150, category: 'generation', description: 'Sora 2 Pro Text-to-Video - 10s Standard Quality' },
+  { feature: 'video', model: 'sora-2-10s-high', creditCost: 330, kieCreditCost: 330, category: 'generation', description: 'Sora 2 Pro Text-to-Video - 10s High Quality' },
+  { feature: 'video', model: 'sora-2-15s-standard', creditCost: 270, kieCreditCost: 270, category: 'generation', description: 'Sora 2 Pro Text-to-Video - 15s Standard Quality' },
+  { feature: 'video', model: 'sora-2-15s-high', creditCost: 630, kieCreditCost: 630, category: 'generation', description: 'Sora 2 Pro Text-to-Video - 15s High Quality' },
+  
+  // Sora 2 Pro Image-to-Video - Quality and duration-based pricing
+  { feature: 'video', model: 'sora-2-image-to-video-10s-standard', creditCost: 150, kieCreditCost: 150, category: 'generation', description: 'Sora 2 Pro Image-to-Video - 10s Standard Quality' },
+  { feature: 'video', model: 'sora-2-image-to-video-10s-high', creditCost: 330, kieCreditCost: 330, category: 'generation', description: 'Sora 2 Pro Image-to-Video - 10s High Quality' },
+  { feature: 'video', model: 'sora-2-image-to-video-15s-standard', creditCost: 270, kieCreditCost: 270, category: 'generation', description: 'Sora 2 Pro Image-to-Video - 15s Standard Quality' },
+  { feature: 'video', model: 'sora-2-image-to-video-15s-high', creditCost: 630, kieCreditCost: 630, category: 'generation', description: 'Sora 2 Pro Image-to-Video - 15s High Quality' },
+  
+  // Sora 2 Pro Storyboard - Duration-based pricing (no quality variation)
+  { feature: 'video', model: 'sora-2-pro-storyboard-10s', creditCost: 150, kieCreditCost: 150, category: 'generation', description: 'Sora 2 Pro Storyboard - 10s' },
+  { feature: 'video', model: 'sora-2-pro-storyboard-15s', creditCost: 270, kieCreditCost: 270, category: 'generation', description: 'Sora 2 Pro Storyboard - 15s' },
+  { feature: 'video', model: 'sora-2-pro-storyboard-25s', creditCost: 270, kieCreditCost: 270, category: 'generation', description: 'Sora 2 Pro Storyboard - 25s' },
+  
   { feature: 'video', model: 'grok-imagine', creditCost: 200, kieCreditCost: null, category: 'generation', description: 'Grok Imagine - Image-to-video generation' },
   
   // ========================================

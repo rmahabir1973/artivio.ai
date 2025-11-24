@@ -45,7 +45,11 @@ const DURATION_SUPPORT: Record<string, number[]> = {
   "seedance-1-lite": [10],
   "wan-2.5": [5, 10],
   "kling-2.5-turbo": [5, 10],
-  "sora-2-pro": [5, 10, 20],
+  "sora-2-pro": [10, 15, 25],
+};
+
+const QUALITY_SUPPORT: Record<string, string[]> = {
+  "sora-2-pro": ["standard", "high"],
 };
 
 const ASPECT_RATIO_LABELS: Record<string, string> = {
@@ -134,6 +138,7 @@ export default function GenerateVideo() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [duration, setDuration] = useState(5);
   const [quality, setQuality] = useState("720p");
+  const [soraQuality, setSoraQuality] = useState("standard"); // For Sora 2 Pro (Standard/High)
   const [resolution, setResolution] = useState("720p"); // For Seedance and Wan models
   const [cameraFixed, setCameraFixed] = useState(false); // For Seedance models
   const [aspectRatio, setAspectRatio] = useState("16:9");
@@ -154,7 +159,7 @@ export default function GenerateVideo() {
     // pricingQuery.dataUpdatedAt only changes when TanStack refetches, so no infinite loop
     const nextModels = VIDEO_MODEL_INFO.map(m => ({
       ...m,
-      // For Runway, Seedance Pro, Seedance Lite, and Wan 2.5, use composite/suffix keys for pricing lookup
+      // For Runway, Seedance Pro, Seedance Lite, Wan 2.5, and Sora 2 Pro, use composite/suffix keys for pricing lookup
       cost: m.value === 'runway-gen3-alpha-turbo'
         ? (getModelCost(`runway-gen3-alpha-turbo-${duration}s`, 400) || 0)
         : m.value === 'seedance-1-pro' 
@@ -174,7 +179,7 @@ export default function GenerateVideo() {
     }));
     
     setVideoModels(nextModels);
-  }, [pricingQuery.dataUpdatedAt, getModelCost, resolution, duration, generationType]);
+  }, [pricingQuery.dataUpdatedAt, getModelCost, resolution, duration, generationType, soraQuality]);
   
   const VIDEO_MODELS = videoModels;
   
@@ -494,8 +499,8 @@ export default function GenerateVideo() {
       duration,
     };
     
-    // Only include quality for models that use it (not Runway, Seedance, Wan 2.5, or Kling 2.5 Turbo)
-    if (model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo') {
+    // Only include quality for models that use it (not Runway, Seedance, Wan 2.5, Kling 2.5 Turbo, or Sora 2 Pro)
+    if (model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo' && model !== 'sora-2-pro') {
       parameters.quality = quality;
     }
     
@@ -523,6 +528,12 @@ export default function GenerateVideo() {
     if (model === 'kling-2.5-turbo') {
       parameters.negativePrompt = negativePrompt;
       parameters.cfgScale = cfgScale;
+    }
+    
+    // Add quality for Sora 2 Pro
+    if (model === 'sora-2-pro') {
+      parameters.soraQuality = soraQuality; // 'standard' or 'high'
+      parameters.nFrames = String(duration); // Convert duration to string for Sora 2 API
     }
     
     // Add seed if model supports it and seed is provided
@@ -734,8 +745,8 @@ export default function GenerateVideo() {
               )}
             </div>
 
-            {/* Quality - Hidden for Runway Gen-3, Seedance, Wan 2.5, and Kling 2.5 Turbo */}
-            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo' && (
+            {/* Quality - Hidden for Runway Gen-3, Seedance, Wan 2.5, and Kling 2.5 Turbo, Sora 2 Pro */}
+            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo' && model !== 'sora-2-pro' && (
               <div className="space-y-2">
                 <Label htmlFor="quality">Quality</Label>
                 <Select value={quality} onValueChange={setQuality}>
@@ -747,6 +758,25 @@ export default function GenerateVideo() {
                     <SelectItem value="1080p">1080p (Full HD)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {/* Sora 2 Pro Quality Selector */}
+            {model === 'sora-2-pro' && (
+              <div className="space-y-2">
+                <Label htmlFor="sora-quality">Video Quality</Label>
+                <Select value={soraQuality} onValueChange={setSoraQuality}>
+                  <SelectTrigger id="sora-quality" data-testid="select-sora-quality">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">Standard</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  High quality provides better detail and clarity
+                </p>
               </div>
             )}
 

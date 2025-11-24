@@ -600,6 +600,9 @@ export async function generateVideo(params: {
     const nFrames = parameters.nFrames || '10'; // 10s, 15s, or 25s (for storyboard)
     const removeWatermark = parameters.removeWatermark !== undefined ? parameters.removeWatermark : true;
     
+    // Quality/size parameter for Sora 2 (standard or high)
+    const size = parameters.soraQuality === 'high' ? 'high' : 'standard';
+    
     // Determine model variant
     let soraModel = 'sora-2-text-to-video';
     if (params.model === 'sora-2-pro-storyboard') {
@@ -614,6 +617,7 @@ export async function generateVideo(params: {
       aspect_ratio: aspectRatio,
       n_frames: nFrames,
       remove_watermark: removeWatermark,
+      size: size, // Add quality/size parameter (standard or high)
     };
     
     // Sora 2 Pro Storyboard: Multi-scene support
