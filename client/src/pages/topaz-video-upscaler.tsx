@@ -166,6 +166,10 @@ export default function TopazVideoUpscaler() {
         throw new Error("No video selected");
       }
 
+      if (videoDuration <= 0) {
+        throw new Error("Video duration not detected. Please re-upload the video.");
+      }
+
       const userCredits = (user as any)?.credits;
       if (typeof userCredits === "number" && userCredits < currentCost) {
         throw new Error(`Insufficient credits. Need ${currentCost}, have ${userCredits}.`);
@@ -243,6 +247,15 @@ export default function TopazVideoUpscaler() {
   });
 
   const handleUpscale = () => {
+    if (!base64Video || videoDuration <= 0) {
+      toast({
+        title: "No Video Uploaded",
+        description: "Please upload a video first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (warningLevel === "insufficient") {
       toast({
         title: "Insufficient Credits",
@@ -318,11 +331,48 @@ export default function TopazVideoUpscaler() {
           </label>
         </div>
 
+        {/* Pricing Tiers Information */}
+        <div className="space-y-3">
+          <Label>Pricing Based on Video Duration</Label>
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">0-10 seconds</span>
+                <span className="text-xs text-muted-foreground">Short clips</span>
+              </div>
+              <Badge variant="outline">180 credits</Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">11-15 seconds</span>
+                <span className="text-xs text-muted-foreground">Medium length</span>
+              </div>
+              <Badge variant="outline">270 credits</Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">16-20 seconds</span>
+                <span className="text-xs text-muted-foreground">Longer videos</span>
+              </div>
+              <Badge variant="outline">360 credits</Badge>
+            </div>
+          </div>
+          {videoDuration > 0 && (
+            <div className="text-sm text-primary font-medium">
+              Your video: {videoDuration.toFixed(1)}s → {currentCost} credits ({currentTier} tier)
+            </div>
+          )}
+        </div>
+
         {/* Upscale Factor Selection */}
         <div className="space-y-3">
           <Label>Upscale Factor</Label>
           <RadioGroup value={selectedFactor} onValueChange={(v) => setSelectedFactor(v as "1" | "2" | "4")}>
-            {Object.entries(VIDEO_UPSCALE_COSTS).map(([factor, cost]) => (
+            {[
+              { factor: "1", label: "1x Upscale", description: "No upscaling (format conversion)" },
+              { factor: "2", label: "2x Upscale", description: "HD enhancement" },
+              { factor: "4", label: "4x Upscale", description: "4K enhancement" }
+            ].map(({ factor, label, description }) => (
               <div
                 key={factor}
                 className="flex items-center justify-between space-x-2 rounded-lg border p-4 hover-elevate"
@@ -331,19 +381,12 @@ export default function TopazVideoUpscaler() {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value={factor} id={`v-factor-${factor}`} data-testid={`radio-video-factor-${factor}x`} />
                   <Label htmlFor={`v-factor-${factor}`} className="cursor-pointer font-medium">
-                    {factor}x Upscale
+                    {label}
                   </Label>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" data-testid={`video-cost-badge-${factor}x`}>
-                    {cost} credits
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {factor === "1" && "No upscaling"}
-                    {factor === "2" && "HD enhancement"}
-                    {factor === "4" && "4K enhancement"}
-                  </span>
-                </div>
+                <span className="text-xs text-muted-foreground">
+                  {description}
+                </span>
               </div>
             ))}
           </RadioGroup>
@@ -374,7 +417,7 @@ export default function TopazVideoUpscaler() {
         {/* Action Buttons */}
         <Button
           onClick={handleUpscale}
-          disabled={!videoUrl || upscaleMutation.isPending || isPolling}
+          disabled={!videoUrl || videoDuration <= 0 || upscaleMutation.isPending || isPolling}
           className="w-full"
           data-testid="button-start-video-upscale"
         >

@@ -1610,7 +1610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Topaz AI Video Upscaling
+  // Topaz AI Video Upscaling (from hosted URL)
   app.post('/api/upscale/video', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1624,7 +1624,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { sourceUrl, upscaleFactor, parentGenerationId } = validationResult.data;
-      const cost = await getUpscaleCost('video', upscaleFactor);
+      
+      // Download video and determine duration for tiered pricing
+      const MAX_VIDEO_DURATION = 20; // seconds
+      let videoDuration = 0;
+      let durationTier = '10s';
+      
+      try {
+        const axios = require('axios');
+        const response = await axios.get(sourceUrl, { responseType: 'arraybuffer', timeout: 30000 });
+        const buffer = Buffer.from(response.data);
+        
+        // Save to temp file for ffprobe analysis
+        const tempPath = path.join(process.cwd(), 'temp', `upscale-validation-${nanoid()}.mp4`);
+        await fs.mkdir(path.dirname(tempPath), { recursive: true });
+        await fs.writeFile(tempPath, buffer);
+
+        try {
+          const { exec } = require('child_process');
+          const { promisify } = require('util');
+          const execAsync = promisify(exec);
+          
+          const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${tempPath}"`;
+          const { stdout } = await execAsync(command, { timeout: 10000 });
+          const duration = parseFloat(stdout.trim());
+
+          await fs.unlink(tempPath);
+
+          if (isNaN(duration) || duration <= 0) {
+            return res.status(400).json({ 
+              message: "Invalid video file. Could not determine duration." 
+            });
+          }
+
+          if (duration > MAX_VIDEO_DURATION) {
+            return res.status(400).json({ 
+              message: `Video is ${Math.floor(duration)} seconds long. Maximum duration is ${MAX_VIDEO_DURATION} seconds.` 
+            });
+          }
+
+          videoDuration = duration;
+          
+          // Determine pricing tier
+          if (duration <= 10) {
+            durationTier = '10s';
+          } else if (duration <= 15) {
+            durationTier = '15s';
+          } else {
+            durationTier = '20s';
+          }
+        } catch (probeError) {
+          try {
+            await fs.unlink(tempPath);
+          } catch {}
+          throw probeError;
+        }
+      } catch (validationError: any) {
+        console.error('Video duration validation error:', validationError);
+        return res.status(400).json({ 
+          message: validationError.message || "Failed to validate video duration." 
+        });
+      }
+
+      // Get cost using tiered model name
+      const cost = await getModelCost(`topaz-video-${upscaleFactor}x-${durationTier}`);
 
       const user = await storage.deductCreditsAtomic(userId, cost);
       if (!user) {
@@ -1636,9 +1699,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'upscaling',
         processingStage: 'upscale',
         parentGenerationId,
-        model: `topaz-video-${upscaleFactor}x`,
-        prompt: `Upscale video ${upscaleFactor}x using Topaz AI`,
-        parameters: { sourceUrl, upscaleFactor },
+        model: `topaz-video-${upscaleFactor}x-${durationTier}`,
+        prompt: `Upscale video ${upscaleFactor}x using Topaz AI (${videoDuration.toFixed(1)}s, ${durationTier} tier)`,
+        parameters: { sourceUrl, upscaleFactor, duration: videoDuration, tier: durationTier },
         status: 'pending',
         creditsCost: cost,
       });
@@ -1846,8 +1909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get cost from database using tiered model name (180/270/360 credits based on duration)
-      const tierSuffix = `-${durationTier}`;
-      const cost = await getModelCost(`topaz-video-${factor}x${tierSuffix}`);
+      const cost = await getModelCost(`topaz-video-${factor}x-${durationTier}`);
 
       // Atomically deduct credits
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -1859,7 +1921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const generation = await storage.createGeneration({
         userId,
         type: 'upscaling',
-        model: `topaz-video-${factor}x${tierSuffix}`,
+        model: `topaz-video-${factor}x-${durationTier}`,
         prompt: `Upscale video ${factor}x using Topaz AI (${videoDuration.toFixed(1)}s, ${durationTier} tier)`,
         parameters: { upscaleFactor: factor, duration: videoDuration, tier: durationTier },
         status: 'pending',
