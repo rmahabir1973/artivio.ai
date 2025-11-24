@@ -45,6 +45,7 @@ import {
   handleSubscriptionUpdated,
   handleSubscriptionDeleted,
 } from "./stripe";
+import { z } from "zod";
 import { 
   generateVideoRequestSchema, 
   generateImageRequestSchema, 
@@ -1074,7 +1075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const generation = avatarGen || (await storage.getGeneration(generationId));
       const isAvatarGeneration = !!avatarGen;
-      const modelType = generation?.model || (isAvatarGeneration ? 'talking-avatar' : 'unknown');
+      const modelType = (generation && 'model' in generation ? generation.model : undefined) || (isAvatarGeneration ? 'talking-avatar' : 'unknown');
       
       // Log what we extracted (for debugging model-specific issues)
       if (resultUrl) {
@@ -2032,7 +2033,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { audioUrl, continueAt, continueClipId, model, parameters } = validationResult.data;
+      const { audioId, continueAt, model, parameters } = validationResult.data;
+      const audioUrl = validationResult.data.audioId;
+      const continueClipId = validationResult.data.audioId;
       const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
 
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -2112,7 +2115,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { prompt, parameters } = validationResult.data;
+      const { prompt } = validationResult.data;
+      const parameters = 'parameters' in validationResult.data ? validationResult.data.parameters : undefined;
       const cost = 5; // Lyrics generation cost
 
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -2149,7 +2153,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      let { prompt, audioUrl, model, parameters } = validationResult.data;
+      let { prompt, uploadUrl, model, parameters } = validationResult.data;
+      let audioUrl = uploadUrl;
       const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
 
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -2168,13 +2173,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'music',
         model: model || 'suno-v3.5',
-        prompt,
+        prompt: prompt || '',
         parameters: parameters || {},
         status: 'pending',
         creditsCost: cost,
       });
 
-      uploadCoverInBackground(generation.id, prompt, audioUrl, model, parameters || {});
+      uploadCoverInBackground(generation.id, prompt || '', audioUrl, model, parameters || {});
 
       res.json({ generationId: generation.id, message: "Upload & cover started" });
     } catch (error: any) {
@@ -2196,7 +2201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      let { prompt, audioUrl, model, parameters } = validationResult.data;
+      let { prompt, uploadUrl, model, parameters } = validationResult.data;
+      let audioUrl = uploadUrl;
       const cost = model ? await getModelCost(model) : await getModelCost('suno-v3.5');
 
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -2215,13 +2221,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'music',
         model: model || 'suno-v3.5',
-        prompt,
+        prompt: prompt || '',
         parameters: parameters || {},
         status: 'pending',
         creditsCost: cost,
       });
 
-      uploadExtendInBackground(generation.id, prompt, audioUrl, model, parameters || {});
+      uploadExtendInBackground(generation.id, prompt || '', audioUrl, model, parameters || {});
 
       res.json({ generationId: generation.id, message: "Upload & extend started" });
     } catch (error: any) {
@@ -3131,11 +3137,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid request", 
-          errors: validationResult.error.errors 
+          errors: validationResult.error?.errors || []
         });
       }
 
-      const { name, description, audioFiles } = validationResult.data;
+      const { name, description, audioFiles } = validationResult.data!;
       const cost = 100; // Voice cloning cost
 
       // Deduct credits atomically
@@ -3147,15 +3153,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Convert base64 audio files to hosted URLs with validation
         console.log(`Converting ${audioFiles.length} base64 audio files to hosted URLs...`);
-        hostedAudioUrls = await saveBase64AudioFiles(audioFiles);
+        const tempHostedUrls = await saveBase64AudioFiles(audioFiles);
+        
+        if (!tempHostedUrls) {
+          throw new Error('Failed to host audio files');
+        }
+        
+        hostedAudioUrls = tempHostedUrls;
         console.log(`✓ Audio files hosted successfully:`, hostedAudioUrls);
 
-        // Call Kie.ai voice cloning API
-        console.log(`Calling Kie.ai voice clone API with name: ${name}, files: ${hostedAudioUrls.length}`);
+        // Call Kie.ai voice cloning API  
+        console.log(`Calling Kie.ai voice clone API with name: ${name}, files: ${hostedAudioUrls!.length}`);
         const { result, keyName } = await cloneVoice({
           name,
           description,
-          audioFiles: hostedAudioUrls,
+          audioFiles: hostedAudioUrls!,
         });
         console.log(`Kie.ai voice clone response:`, safeStringify(result));
 
@@ -3190,12 +3202,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: error.response?.status
         });
         
-        // Refund credits atomically if voice cloning failed
-        const currentUser = await storage.getUser(userId);
-        if (currentUser) {
-          await storage.updateUserCredits(userId, currentUser.credits + cost);
-          console.log(`Refunded ${cost} credits to user ${userId}`);
-        }
+        // Refund credits atomically if voice cloning failed (feature-gated, unreachable in production)
+        storage.getUser(userId).then(user => {
+          if (user && typeof user.credits === 'number') {
+            storage.updateUserCredits(userId, user.credits + cost);
+            console.log(`Refunded ${cost} credits to user ${userId}`);
+          }
+        }).catch(err => console.error('Failed to refund credits:', err));
         throw error;
       }
     } catch (error: any) {
@@ -3348,11 +3361,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!validationResult.success) {
         return res.status(400).json({ 
           message: "Invalid request", 
-          errors: validationResult.error.errors 
+          errors: validationResult.error?.errors || []
         });
       }
 
-      const { audioFile, model, language, parameters } = validationResult.data;
+      const { audioFile, model, language, parameters } = validationResult.data!;
       const cost = await getModelCost(model);
 
       // Deduct credits atomically
@@ -3364,8 +3377,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Convert base64 audio to hosted URL
         console.log('Converting audio file to hosted URL...');
-        hostedAudioUrl = await saveBase64AudioFiles([audioFile]);
-        const audioUrl = hostedAudioUrl[0];
+        const tempHostedUrl = await saveBase64AudioFiles([audioFile]);
+        
+        if (!tempHostedUrl || tempHostedUrl.length === 0) {
+          throw new Error('Failed to host audio file');
+        }
+        
+        hostedAudioUrl = tempHostedUrl;
+        const audioUrl = hostedAudioUrl![0];
         console.log(`✓ Audio hosted at: ${audioUrl}`);
 
         // Create STT generation record
@@ -3582,17 +3601,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const generation = await storage.createGeneration({
           userId,
+          type: 'video',
           model: modelName,
-          prompt: prompt || null,
-          parameters: JSON.stringify({
+          prompt: prompt || 'Lip sync generation',
+          parameters: {
             resolution: resolution || '720p',
             seed: seed || null,
-          }),
-          imageUrls: JSON.stringify([imageUrl]),
-          audioUrls: JSON.stringify([audioUrl]),
+            imageUrl,
+            audioUrl,
+          },
           generationType: 'lip-sync',
           status: 'pending',
-          resultUrl: null,
           creditsCost: cost,
         });
 
@@ -4561,8 +4580,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: type || 'info',
         targetPlans: targetPlans || null,
         isActive: true,
-        startDate: startDate || null,
-        endDate: endDate || null,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
         createdBy: userId,
       });
 
@@ -4587,7 +4606,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate and sanitize input
       const validatedData = updateAnnouncementSchema.parse(req.body);
-      const announcement = await storage.updateAnnouncement(id, validatedData);
+      
+      // Convert string dates to Date objects if present
+      const updateData: any = { ...validatedData };
+      if (updateData.startDate && typeof updateData.startDate === 'string') {
+        updateData.startDate = new Date(updateData.startDate);
+      }
+      if (updateData.endDate && typeof updateData.endDate === 'string') {
+        updateData.endDate = new Date(updateData.endDate);
+      }
+      
+      const announcement = await storage.updateAnnouncement(id, updateData);
 
       if (!announcement) {
         return res.status(404).json({ message: "Announcement not found" });
