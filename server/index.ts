@@ -82,34 +82,6 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 // Configure cookie-parser with signing secret for secure plan selection
 app.use(cookieParser(process.env.SESSION_SECRET));
 
-// Request timeout middleware - prevent hanging requests
-app.use((req, res, next) => {
-  // Set timeout based on route type
-  const timeout = req.path.startsWith('/api/') ? 30000 : 60000; // 30s for API, 60s for others
-  
-  req.setTimeout(timeout, () => {
-    console.error(`⚠️  Request timeout: ${req.method} ${req.path}`);
-    if (!res.headersSent) {
-      res.status(408).json({ 
-        message: 'Request timeout. Please try again.',
-        timeout: `${timeout}ms`
-      });
-    }
-  });
-  
-  res.setTimeout(timeout, () => {
-    console.error(`⚠️  Response timeout: ${req.method} ${req.path}`);
-    if (!res.headersSent) {
-      res.status(504).json({ 
-        message: 'Response timeout. Server took too long to respond.',
-        timeout: `${timeout}ms`
-      });
-    }
-  });
-  
-  next();
-});
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
