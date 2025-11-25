@@ -1,0 +1,38 @@
+🌱 [SEED TRACE] Step 1 - Initial seed state: 42808, seedLocked: true
+index-C6e0eOhp.js:1038 🌱 [SEED TRACE] Step 3 - effectiveSeed after fallback: 42808
+index-C6e0eOhp.js:1038 🌱 [SEED TRACE] Step 4 - modelSupportsSeed(): true, model: veo-3.1-fast
+index-C6e0eOhp.js:1038 🌱 [SEED TRACE] Step 5 - Adding seed to parameters: 42808
+index-C6e0eOhp.js:1038 🌱 [SEED TRACE] Step 5b - Veo format: parameters.seeds = [42808]
+index-C6e0eOhp.js:1038 🌱 [SEED TRACE] Step 6 - Final parameters: {"duration":8,"quality":"720p","aspectRatio":"16:9","seeds":[42808]}
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-C6e0eOhp.js:1059 [HISTORY] Fetching generations with cursor: first page
+index-C6e0eOhp.js:1059 [HISTORY] Fetched generations: 15 items, hasMore: true

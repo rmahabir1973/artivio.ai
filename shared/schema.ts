@@ -588,6 +588,7 @@ export const generateVideoRequestSchema = z.object({
     removeWatermark: z.boolean().optional(), // Sora watermark removal
     mode: z.enum(['fun', 'normal', 'spicy']).optional(), // Grok Imagine mode
     seed: z.number().optional(), // Random seed for reproducible generation
+    seeds: z.union([z.number(), z.array(z.number())]).optional(), // Veo format: seeds array or single number
   }).optional(),
 });
 
