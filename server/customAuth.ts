@@ -10,6 +10,17 @@ import { getBaseUrl } from "./urlUtils";
 
 const SALT_ROUNDS = 10;
 
+// Helper to transform database user to Express.User format
+function toExpressUser(dbUser: typeof users.$inferSelect): Express.User {
+  return {
+    id: dbUser.id,
+    userId: dbUser.id,
+    email: dbUser.email || "",
+    tokenVersion: dbUser.tokenVersion,
+    isAdmin: false, // Will be set by admin check in auth routes
+  };
+}
+
 // Flag to track if Passport strategies have been initialized (prevent duplicate registration on hot reload)
 let strategiesInitialized = false;
 
@@ -68,7 +79,7 @@ export function initializePassportStrategies(app?: Express) {
             email: user.email,
           });
 
-          return done(null, user);
+          return done(null, toExpressUser(user));
         } catch (error) {
           console.error("[AUTH ERROR] Local strategy error", { error, email });
           return done(error);
@@ -116,7 +127,7 @@ export function initializePassportStrategies(app?: Express) {
                 userId: user.id,
                 email: user.email,
               });
-              return done(null, user);
+              return done(null, toExpressUser(user));
             }
 
             // Check if user exists by email
@@ -146,7 +157,7 @@ export function initializePassportStrategies(app?: Express) {
               // Refetch updated user
               [user] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
 
-              return done(null, user);
+              return done(null, toExpressUser(user));
             }
 
             // Create new user from Google OAuth
@@ -173,7 +184,7 @@ export function initializePassportStrategies(app?: Express) {
               email: newUser.email,
             });
 
-            return done(null, newUser);
+            return done(null, toExpressUser(newUser));
           } catch (error) {
             console.error("[AUTH ERROR] Google OAuth error", {
               error,

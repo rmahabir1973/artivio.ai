@@ -4,21 +4,16 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-// Custom user type for JWT
-export interface JWTUser {
-  id: string;
-  userId: string;
-  email: string;
-  tokenVersion: number;
-  isAdmin?: boolean;
-}
-
-// Extend Express Request to include user from JWT
+// Extend Express User type to match JWT requirements
+// Passport expects Express.User interface, not Request.user override
 declare global {
   namespace Express {
-    interface Request {
-      user?: JWTUser;
-      isAuthenticated?: () => boolean;
+    interface User {
+      id: string;
+      userId: string;
+      email: string;
+      tokenVersion: number;
+      isAdmin?: boolean;
     }
   }
 }
@@ -76,21 +71,17 @@ export async function requireJWT(
     }
 
     // Attach user to request
-    const jwtUser: JWTUser = {
+    req.user = {
       id: decoded.userId,
       userId: decoded.userId,
       email: decoded.email,
       tokenVersion: decoded.tokenVersion,
       isAdmin: decoded.isAdmin,
     };
-    req.user = jwtUser;
-
-    // Add isAuthenticated method for backward compatibility
-    req.isAuthenticated = () => true;
 
     console.log("[JWT MIDDLEWARE] ✓ Token verified", {
-      userId: jwtUser.id,
-      email: jwtUser.email,
+      userId: req.user.id,
+      email: req.user.email,
     });
 
     next();
@@ -118,7 +109,6 @@ export async function optionalJWT(
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       // No token provided - continue without authentication
-      req.isAuthenticated = () => false;
       return next();
     }
 
@@ -127,7 +117,6 @@ export async function optionalJWT(
 
     if (!decoded) {
       // Invalid token - continue without authentication
-      req.isAuthenticated = () => false;
       return next();
     }
 
@@ -139,23 +128,18 @@ export async function optionalJWT(
       .limit(1);
 
     if (user && user.tokenVersion === decoded.tokenVersion) {
-      const jwtUser: JWTUser = {
+      req.user = {
         id: decoded.userId,
         userId: decoded.userId,
         email: decoded.email,
         tokenVersion: decoded.tokenVersion,
         isAdmin: decoded.isAdmin,
       };
-      req.user = jwtUser;
-      req.isAuthenticated = () => true;
-    } else {
-      req.isAuthenticated = () => false;
     }
 
     next();
   } catch (error) {
     console.error("[JWT MIDDLEWARE ERROR]", error);
-    req.isAuthenticated = () => false;
     next();
   }
 }
