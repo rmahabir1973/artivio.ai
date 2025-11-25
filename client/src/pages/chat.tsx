@@ -1,18 +1,20 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { Trash2, Plus, Send, Sparkles, Square, MessageSquare } from "lucide-react";
+import { Trash2, Plus, Send, Sparkles, Square, MessageSquare, Menu, ArrowUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { CreditDisplay } from "@/components/credit-display";
 import { fetchWithAuth } from "@/lib/authBridge";
+import { ChatMessage } from "@/components/chat-message";
+import { groupConversationsByDate } from "@/lib/dateGrouping";
+import { format } from "date-fns";
 
 type Message = {
   id: string;
@@ -59,7 +61,6 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Merge model info with dynamic pricing for each provider
   const PROVIDER_MODELS = useMemo(() => ({
     deepseek: PROVIDER_MODEL_INFO.deepseek.map(m => ({
       ...m,
@@ -71,18 +72,15 @@ export default function Chat() {
     })),
   }), [getModelCost]);
 
-  // Fetch conversations
   const { data: conversations = [] } = useQuery<Conversation[]>({
     queryKey: ['/api/chat/conversations'],
   });
 
-  // Fetch messages for selected conversation
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ['/api/chat/conversations', selectedConversationId],
     enabled: !!selectedConversationId,
   });
 
-  // Delete conversation mutation
   const deleteConversation = useMutation({
     mutationFn: async (conversationId: string) => {
       await apiRequest("DELETE", `/api/chat/conversations/${conversationId}`);
@@ -91,18 +89,16 @@ export default function Chat() {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations'] });
       setSelectedConversationId(null);
       toast({
-        title: "Conversation deleted",
+        title: "Chat deleted",
         description: "The conversation has been removed.",
       });
     },
   });
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingMessage]);
 
-  // Update model when provider changes
   useEffect(() => {
     const models = PROVIDER_MODELS[provider];
     if (models.length > 0) {
@@ -117,10 +113,6 @@ export default function Chat() {
       setIsStreaming(false);
       setStreamingMessage('');
       setOptimisticUserMessage('');
-      toast({
-        title: "Stopped",
-        description: "Response generation stopped",
-      });
     }
   };
 
@@ -131,7 +123,7 @@ export default function Chat() {
     setMessage('');
     setIsStreaming(true);
     setStreamingMessage('');
-    setOptimisticUserMessage(userMessage); // Show user message optimistically
+    setOptimisticUserMessage(userMessage);
 
     try {
       const abortController = new AbortController();
@@ -143,12 +135,10 @@ export default function Chat() {
         model,
       };
       
-      // Only include conversationId if it exists
       if (selectedConversationId) {
         requestBody.conversationId = selectedConversationId;
       }
 
-      // fetchWithAuth automatically adds Authorization header and retries on 401
       const response = await fetchWithAuth('/api/chat/send', {
         method: 'POST',
         headers: {
@@ -190,38 +180,32 @@ export default function Chat() {
             }
 
             if (data.done) {
-              // Conversation completed successfully
               setIsStreaming(false);
               setOptimisticUserMessage('');
-              abortControllerRef.current = null; // Clear controller after successful completion
+              abortControllerRef.current = null;
               
               const finalConvId = data.conversationId || selectedConversationId;
               
-              // Update conversation ID if this was a new conversation
               if (data.conversationId && !selectedConversationId) {
                 setSelectedConversationId(data.conversationId);
               }
               
-              // Refresh conversations and messages with the correct conversationId
               await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations'] }),
                 queryClient.invalidateQueries({ queryKey: ['/api/chat/conversations', finalConvId] }),
                 queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] }),
               ]);
               
-              // Small delay to ensure queries have refetched before clearing streaming message
               setTimeout(() => {
                 setStreamingMessage('');
               }, 100);
             } else {
-              // Streaming chunk - accumulate content
               setStreamingMessage(prev => prev + data.content);
             }
           }
         }
       }
     } catch (error: any) {
-      // Check if this was an intentional abort (user clicked Stop)
       const isAborted = error.name === 'AbortError' || abortControllerRef.current === null;
       
       if (!isAborted) {
@@ -233,7 +217,6 @@ export default function Chat() {
         });
       }
       
-      // Clean up state regardless of error type
       setIsStreaming(false);
       setStreamingMessage('');
       setOptimisticUserMessage('');
@@ -249,247 +232,251 @@ export default function Chat() {
   };
 
   const currentCost = PROVIDER_MODELS[provider].find(m => m.value === model)?.cost || 10;
+  const groupedConversations = groupConversationsByDate(conversations);
 
-  // Shared conversations list component
   const ConversationsList = ({ onConversationSelect }: { onConversationSelect?: () => void }) => (
-    <>
-      <div className="p-4 border-b">
+    <div className="h-full flex flex-col">
+      {/* New Chat Button */}
+      <div className="p-3 border-b flex-shrink-0">
         <Button
           data-testid="button-new-chat"
           onClick={() => {
             handleNewChat();
             onConversationSelect?.();
           }}
-          className="w-full"
-          variant="default"
+          className="w-full gap-2"
+          variant="outline"
+          size="sm"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           New Chat
         </Button>
       </div>
 
+      {/* Conversations List */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
-          {conversations.map((conv) => (
-            <Card
-              key={conv.id}
-              data-testid={`conversation-${conv.id}`}
-              className={`p-3 cursor-pointer hover-elevate active-elevate-2 ${
-                selectedConversationId === conv.id ? 'bg-accent' : ''
-              }`}
-              onClick={() => {
-                setSelectedConversationId(conv.id);
-                onConversationSelect?.();
-              }}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{conv.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {conv.provider === 'deepseek' ? 'Deepseek' : 'OpenAI'} • {conv.model}
-                  </p>
+        <div className="p-2 space-y-4">
+          {groupedConversations.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground">No conversations yet</p>
+            </div>
+          ) : (
+            groupedConversations.map((group) => (
+              <div key={group.label}>
+                <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {group.label}
+                </p>
+                <div className="space-y-1">
+                  {group.conversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      data-testid={`conversation-${conv.id}`}
+                      className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedConversationId === conv.id
+                          ? 'bg-accent/80'
+                          : 'hover:bg-accent/40'
+                      }`}
+                      onClick={() => {
+                        setSelectedConversationId(conv.id);
+                        onConversationSelect?.();
+                      }}
+                    >
+                      <p className="text-sm font-medium truncate pr-8">{conv.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {conv.provider === 'deepseek' ? 'Deepseek' : 'OpenAI'} • {conv.model}
+                      </p>
+
+                      {/* Delete button - visible on hover */}
+                      <Button
+                        data-testid={`button-delete-conversation-${conv.id}`}
+                        size="icon"
+                        variant="ghost"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteConversation.mutate(conv.id);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-                <Button
-                  data-testid={`button-delete-conversation-${conv.id}`}
-                  size="icon"
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteConversation.mutate(conv.id);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
               </div>
-            </Card>
-          ))}
+            ))
+          )}
         </div>
       </ScrollArea>
-    </>
+    </div>
   );
 
   return (
     <SidebarInset>
-      <div className="flex h-full">
-      {/* Mobile Conversations Sheet */}
-      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-        <SheetContent side="left" className="w-80 p-0 flex flex-col lg:hidden">
-          <SheetHeader className="sr-only">
-            <SheetTitle>Conversations</SheetTitle>
-          </SheetHeader>
-          <ConversationsList onConversationSelect={() => setMobileSheetOpen(false)} />
-        </SheetContent>
-      </Sheet>
+      <div className="flex h-screen w-full bg-background">
+        {/* Mobile Conversations Sheet */}
+        <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+          <SheetContent side="left" className="w-80 p-0 flex flex-col lg:hidden border-r">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Conversations</SheetTitle>
+            </SheetHeader>
+            <ConversationsList onConversationSelect={() => setMobileSheetOpen(false)} />
+          </SheetContent>
+        </Sheet>
 
-      {/* Desktop Conversations Sidebar - Sticky */}
-      <div className="hidden lg:flex lg:w-80 border-r bg-card flex-col sticky top-0 h-screen overflow-hidden">
-        <ConversationsList />
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* Mobile conversations trigger */}
-            <Button
-              data-testid="button-mobile-conversations"
-              size="icon"
-              variant="ghost"
-              className="lg:hidden"
-              onClick={() => setMobileSheetOpen(true)}
-            >
-              <MessageSquare className="w-5 h-5" />
-            </Button>
-            <Sparkles className="w-5 h-5 text-primary" />
-            <h1 className="text-xl font-semibold">AI Chat</h1>
-          </div>
-          <CreditDisplay />
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:flex lg:w-64 border-r bg-card/50 flex-col sticky top-0 h-screen overflow-hidden">
+          <ConversationsList />
         </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="max-w-4xl mx-auto space-y-4">
-            {!selectedConversationId && messages.length === 0 && !streamingMessage && !optimisticUserMessage && (
-              <div className="text-center py-12">
-                <Sparkles className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-semibold mb-2">Start a conversation</h2>
-                <p className="text-muted-foreground">
-                  Choose a provider and model below, then send your first message
-                </p>
-              </div>
-            )}
-
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                data-testid={`message-${msg.id}`}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <Card
-                  className={`p-4 max-w-3xl ${
-                    msg.role === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-card'
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  {msg.creditsCost > 0 && (
-                    <p className="text-xs mt-2 opacity-70">
-                      Cost: {msg.creditsCost} credits
-                    </p>
-                  )}
-                </Card>
-              </div>
-            ))}
-
-            {/* Optimistic user message while streaming */}
-            {optimisticUserMessage && (
-              <div className="flex justify-end" data-testid="optimistic-user-message">
-                <Card className="p-4 max-w-3xl bg-primary text-primary-foreground">
-                  <p className="text-sm whitespace-pre-wrap">{optimisticUserMessage}</p>
-                </Card>
-              </div>
-            )}
-
-            {streamingMessage && (
-              <div className="flex justify-start" data-testid="streaming-message">
-                <Card className="p-4 max-w-3xl bg-card">
-                  <p className="text-sm whitespace-pre-wrap">{streamingMessage}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <p className="text-xs text-muted-foreground">Generating...</p>
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-
-        {/* Input Area */}
-        <div className="p-4 border-t">
-          <div className="max-w-4xl mx-auto space-y-3">
-            {/* Provider and Model Selection */}
-            <div className="flex gap-3">
-              <Select
-                value={provider}
-                onValueChange={(val) => setProvider(val as 'deepseek' | 'openai')}
-                data-testid="select-provider"
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="deepseek">Deepseek</SelectItem>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={model}
-                onValueChange={setModel}
-                data-testid="select-model"
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROVIDER_MODELS[provider].map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label} ({m.cost} credits/message)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Message Input */}
-            <div className="flex gap-2 items-end">
-              <Textarea
-                data-testid="input-message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (!isStreaming) {
-                      sendMessage();
-                    }
-                  }
-                }}
-                placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
-                disabled={isStreaming}
-                className="flex-1 min-h-[60px] max-h-[200px] resize-y"
-                rows={3}
-              />
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="h-14 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 flex-shrink-0">
+            <div className="flex items-center gap-3">
               <Button
-                data-testid="button-send-message"
-                onClick={isStreaming ? stopStreaming : sendMessage}
-                disabled={!isStreaming && !message.trim()}
-                variant={isStreaming ? "destructive" : "default"}
+                data-testid="button-mobile-menu"
+                size="icon"
+                variant="ghost"
+                className="lg:hidden"
+                onClick={() => setMobileSheetOpen(true)}
               >
-                {isStreaming ? (
-                  <>
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Send
-                  </>
-                )}
+                <Menu className="w-5 h-5" />
               </Button>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h1 className="font-semibold">AI Chat</h1>
+              </div>
             </div>
+            <CreditDisplay />
+          </div>
 
-            <p className="text-xs text-muted-foreground text-center">
-              Cost: {currentCost} credits per message
-            </p>
+          {/* Messages Area */}
+          <ScrollArea className="flex-1">
+            <div className="max-w-3xl mx-auto w-full px-4 py-6">
+              {/* Empty State */}
+              {!selectedConversationId && messages.length === 0 && !streamingMessage && !optimisticUserMessage && (
+                <div className="flex flex-col items-center justify-center h-full py-12 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mb-4">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-semibold mb-2">Start a conversation</h2>
+                  <p className="text-muted-foreground max-w-sm mb-6">
+                    Choose your AI provider and model, then ask anything. Your messages will be saved automatically.
+                  </p>
+                </div>
+              )}
+
+              {/* Messages */}
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <ChatMessage
+                    key={msg.id}
+                    role={msg.role}
+                    content={msg.content}
+                    creditsCost={msg.creditsCost}
+                  />
+                ))}
+
+                {/* Optimistic User Message */}
+                {optimisticUserMessage && (
+                  <ChatMessage role="user" content={optimisticUserMessage} />
+                )}
+
+                {/* Streaming Message */}
+                {streamingMessage && (
+                  <div data-testid="streaming-message">
+                    <ChatMessage role="assistant" content={streamingMessage} />
+                    <div className="flex justify-start ml-11 gap-1">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
+                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce animation-delay-100" />
+                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce animation-delay-200" />
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </ScrollArea>
+
+          {/* Input Area */}
+          <div className="p-4 border-t bg-card/50 backdrop-blur-sm flex-shrink-0">
+            <div className="max-w-3xl mx-auto space-y-3">
+              {/* Provider and Model Selection */}
+              <div className="flex gap-2 items-center">
+                <Select
+                  value={provider}
+                  onValueChange={(val) => setProvider(val as 'deepseek' | 'openai')}
+                  data-testid="select-provider"
+                >
+                  <SelectTrigger className="w-32 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deepseek">Deepseek</SelectItem>
+                    <SelectItem value="openai">OpenAI</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={model}
+                  onValueChange={setModel}
+                  data-testid="select-model"
+                >
+                  <SelectTrigger className="flex-1 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROVIDER_MODELS[provider].map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label} ({m.cost} credits)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Message Input */}
+              <div className="flex gap-2 items-end">
+                <Textarea
+                  data-testid="input-message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (!isStreaming && message.trim()) {
+                        sendMessage();
+                      }
+                    }
+                  }}
+                  placeholder="Message Artivio AI... (Shift+Enter for new line)"
+                  disabled={isStreaming}
+                  className="flex-1 min-h-[44px] max-h-[120px] resize-none text-sm"
+                  rows={2}
+                />
+                <Button
+                  data-testid="button-send-message"
+                  onClick={isStreaming ? stopStreaming : sendMessage}
+                  disabled={!isStreaming && !message.trim()}
+                  variant={isStreaming ? "destructive" : "default"}
+                  size="icon"
+                  className="h-[44px] w-[44px] flex-shrink-0"
+                >
+                  {isStreaming ? (
+                    <Square className="w-4 h-4" />
+                  ) : (
+                    <ArrowUp className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                {currentCost} credits per message • Free to try all models
+              </p>
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </SidebarInset>
   );
