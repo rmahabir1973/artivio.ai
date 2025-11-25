@@ -44,6 +44,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,7 +87,15 @@ import {
   X,
   Tag,
   FolderInput,
+  Sparkles,
+  Copy,
+  Share2,
+  RotateCw,
+  Coins,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
+import { useLocation } from "wouter";
 import type { Generation, Collection, Tag as TagType } from "@shared/schema";
 import { fetchWithAuth, apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow, subDays, isAfter } from "date-fns";
@@ -100,13 +119,15 @@ interface SelectableListItemProps {
   isSelectionMode: boolean;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
+  onOpenDetail: (generation: Generation) => void;
 }
 
 function GenerationListItem({ 
   generation, 
   isSelectionMode, 
   isSelected, 
-  onToggleSelect 
+  onToggleSelect,
+  onOpenDetail,
 }: SelectableListItemProps) {
   const { toast } = useToast();
   
@@ -183,6 +204,8 @@ function GenerationListItem({
       e.preventDefault();
       e.stopPropagation();
       onToggleSelect(generation.id);
+    } else {
+      onOpenDetail(generation);
     }
   };
 
@@ -299,6 +322,7 @@ interface SelectableCardWrapperProps {
   isSelectionMode: boolean;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
+  onOpenDetail: (generation: Generation) => void;
 }
 
 function SelectableCardWrapper({
@@ -306,12 +330,22 @@ function SelectableCardWrapper({
   isSelectionMode,
   isSelected,
   onToggleSelect,
+  onOpenDetail,
 }: SelectableCardWrapperProps) {
   const handleClick = (e: React.MouseEvent) => {
     if (isSelectionMode) {
       e.preventDefault();
       e.stopPropagation();
       onToggleSelect(generation.id);
+      return;
+    }
+    
+    // In normal mode, only open detail panel if click was NOT on an interactive element
+    // This allows GenerationCard buttons to work normally
+    const target = e.target as HTMLElement;
+    const isInteractive = target.closest('button, a, [role="button"], [data-radix-collection-item], input, select, textarea, [role="menuitem"]');
+    if (!isInteractive) {
+      onOpenDetail(generation);
     }
   };
 
@@ -349,6 +383,7 @@ export default function History() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const isMobile = useIsMobile();
+  const [, setLocation] = useLocation();
   
   const [activeView, setActiveView] = useState<ActiveView>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -365,6 +400,14 @@ export default function History() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [movePopoverOpen, setMovePopoverOpen] = useState(false);
+
+  const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showRemoveTagConfirm, setShowRemoveTagConfirm] = useState<string | null>(null);
+  const [detailTagPopoverOpen, setDetailTagPopoverOpen] = useState(false);
+  const [detailMovePopoverOpen, setDetailMovePopoverOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -444,6 +487,112 @@ export default function History() {
   const { data: tags = [] } = useQuery<TagType[]>({
     queryKey: ['/api/tags'],
     enabled: isAuthenticated,
+  });
+
+  const { data: generationTags = [], isLoading: generationTagsLoading } = useQuery<TagType[]>({
+    queryKey: ['/api/generations', selectedGeneration?.id, 'tags'],
+    enabled: !!selectedGeneration,
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: async ({ generationId, isFavorite }: { generationId: string; isFavorite: boolean }) =>
+      apiRequest('POST', `/api/generations/${generationId}/favorite`, { isFavorite }),
+    onSuccess: () => {
+      invalidateGenerations();
+      if (selectedGeneration) {
+        setSelectedGeneration(prev => prev ? { ...prev, isFavorite: !prev.isFavorite } : null);
+      }
+      toast({ title: 'Success', description: 'Favorite status updated' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update favorite', variant: 'destructive' });
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({ generationId, archive }: { generationId: string; archive: boolean }) =>
+      apiRequest('POST', `/api/generations/${generationId}/archive`, { archive }),
+    onSuccess: (_, variables) => {
+      invalidateGenerations();
+      setDetailPanelOpen(false);
+      setSelectedGeneration(null);
+      toast({ title: 'Success', description: variables.archive ? 'Item archived' : 'Item restored' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to archive', variant: 'destructive' });
+    },
+  });
+
+  const showcaseMutation = useMutation({
+    mutationFn: async ({ generationId, isShowcase }: { generationId: string; isShowcase: boolean }) =>
+      apiRequest('POST', `/api/generations/${generationId}/showcase`, { isShowcase }),
+    onSuccess: () => {
+      invalidateGenerations();
+      if (selectedGeneration) {
+        setSelectedGeneration(prev => prev ? { ...prev, isShowcase: !prev.isShowcase } : null);
+      }
+      toast({ title: 'Success', description: 'Showcase status updated' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update showcase', variant: 'destructive' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (generationId: string) =>
+      apiRequest('DELETE', `/api/generations/${generationId}`),
+    onSuccess: () => {
+      invalidateGenerations();
+      setDetailPanelOpen(false);
+      setSelectedGeneration(null);
+      setShowDeleteConfirm(false);
+      toast({ title: 'Success', description: 'Generation deleted' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to delete', variant: 'destructive' });
+    },
+  });
+
+  const moveToCollectionMutation = useMutation({
+    mutationFn: async ({ generationId, collectionId }: { generationId: string; collectionId: string | null }) =>
+      apiRequest('POST', `/api/generations/${generationId}/move`, { collectionId }),
+    onSuccess: (_, variables) => {
+      invalidateGenerations();
+      if (selectedGeneration) {
+        setSelectedGeneration(prev => prev ? { ...prev, collectionId: variables.collectionId } : null);
+      }
+      setDetailMovePopoverOpen(false);
+      toast({ title: 'Success', description: 'Moved to collection' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to move', variant: 'destructive' });
+    },
+  });
+
+  const addTagMutation = useMutation({
+    mutationFn: async ({ generationId, tagId }: { generationId: string; tagId: string }) =>
+      apiRequest('POST', `/api/generations/${generationId}/tags`, { tagId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/generations', selectedGeneration?.id, 'tags'] });
+      setDetailTagPopoverOpen(false);
+      toast({ title: 'Success', description: 'Tag added' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to add tag', variant: 'destructive' });
+    },
+  });
+
+  const removeTagMutation = useMutation({
+    mutationFn: async ({ generationId, tagId }: { generationId: string; tagId: string }) =>
+      apiRequest('DELETE', `/api/generations/${generationId}/tags/${tagId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/generations', selectedGeneration?.id, 'tags'] });
+      setShowRemoveTagConfirm(null);
+      toast({ title: 'Success', description: 'Tag removed' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to remove tag', variant: 'destructive' });
+    },
   });
 
   const createCollectionMutation = useMutation({
@@ -604,6 +753,91 @@ export default function History() {
     if (activeView === 'archived') return 'Archived';
     const collection = collections.find(c => c.id === activeView);
     return collection?.name || 'Files';
+  };
+
+  const openDetailPanel = (generation: Generation) => {
+    setSelectedGeneration(generation);
+    setDetailPanelOpen(true);
+    setCurrentImageIndex(0);
+  };
+
+  const closeDetailPanel = () => {
+    setDetailPanelOpen(false);
+    setSelectedGeneration(null);
+    setCurrentImageIndex(0);
+  };
+
+  const handleDetailDownload = async () => {
+    if (!selectedGeneration?.resultUrl) return;
+    
+    try {
+      const response = await fetchWithAuthBridge(`/api/generations/${selectedGeneration.id}/download`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      a.download = filenameMatch?.[1] || `artivio-${selectedGeneration.type}-${selectedGeneration.id}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ title: "Download started", description: "Your file is being downloaded" });
+    } catch (error) {
+      toast({ title: "Download failed", description: "Could not download the file", variant: "destructive" });
+    }
+  };
+
+  const handleCopySeed = () => {
+    if (!selectedGeneration?.seed) return;
+    navigator.clipboard.writeText(selectedGeneration.seed.toString());
+    toast({ title: "Copied", description: "Seed copied to clipboard" });
+  };
+
+  const handleRegenerate = () => {
+    if (!selectedGeneration) return;
+    const typeRoutes: Record<string, string> = {
+      video: '/generate/video',
+      image: '/generate/image',
+      music: '/generate/music',
+    };
+    const route = typeRoutes[selectedGeneration.type];
+    if (route) {
+      sessionStorage.setItem('regeneratePrompt', selectedGeneration.prompt);
+      sessionStorage.setItem('regenerateModel', selectedGeneration.model);
+      if (selectedGeneration.seed) {
+        sessionStorage.setItem('regenerateSeed', selectedGeneration.seed.toString());
+      }
+      setLocation(route);
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'video': return <Video className="h-5 w-5" />;
+      case 'image': return <ImageIcon className="h-5 w-5" />;
+      case 'music': return <Music className="h-5 w-5" />;
+      default: return <Sparkles className="h-5 w-5" />;
+    }
+  };
+
+  const statusColors = {
+    pending: "secondary",
+    processing: "default",
+    completed: "default",
+    failed: "destructive",
+  } as const;
+
+  const getSelectedCollection = () => {
+    if (!selectedGeneration?.collectionId) return null;
+    return collections.find(c => c.id === selectedGeneration.collectionId);
   };
 
   const handleBulkFavorite = () => {
@@ -965,6 +1199,7 @@ export default function History() {
                     isSelectionMode={selectionMode}
                     isSelected={selectedIds.has(generation.id)}
                     onToggleSelect={toggleSelect}
+                    onOpenDetail={openDetailPanel}
                   />
                 ))}
               </div>
@@ -977,6 +1212,7 @@ export default function History() {
                     isSelectionMode={selectionMode}
                     isSelected={selectedIds.has(generation.id)}
                     onToggleSelect={toggleSelect}
+                    onOpenDetail={openDetailPanel}
                   />
                 ))}
               </div>
@@ -1240,6 +1476,472 @@ export default function History() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Sheet open={detailPanelOpen} onOpenChange={(open) => !open && closeDetailPanel()}>
+        <SheetContent 
+          side="right" 
+          className={cn(
+            "w-full sm:w-[400px] sm:max-w-[400px] p-0 flex flex-col",
+            isMobile && "w-full max-w-full"
+          )}
+          data-testid="detail-panel"
+        >
+          {selectedGeneration && (
+            <>
+              <SheetHeader className="p-4 border-b shrink-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="shrink-0 p-2 rounded-md bg-muted">
+                      {getTypeIcon(selectedGeneration.type)}
+                    </div>
+                    <div className="min-w-0">
+                      <SheetTitle className="text-base truncate" data-testid="detail-title">
+                        {selectedGeneration.type.charAt(0).toUpperCase() + selectedGeneration.type.slice(1)} Generation
+                      </SheetTitle>
+                      <Badge 
+                        variant={statusColors[selectedGeneration.status as keyof typeof statusColors]}
+                        className="mt-1"
+                        data-testid="detail-status-badge"
+                      >
+                        {selectedGeneration.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </SheetHeader>
+
+              <ScrollArea className="flex-1">
+                <div className="p-4 space-y-6">
+                  <div className="rounded-lg overflow-hidden bg-muted aspect-video relative" data-testid="detail-preview">
+                    {selectedGeneration.type === 'video' && selectedGeneration.resultUrl ? (
+                      <video 
+                        src={selectedGeneration.resultUrl} 
+                        controls 
+                        className="w-full h-full object-contain"
+                        data-testid="detail-video-player"
+                      />
+                    ) : selectedGeneration.type === 'image' ? (
+                      selectedGeneration.resultUrls && selectedGeneration.resultUrls.length > 1 ? (
+                        <div className="relative w-full h-full">
+                          <img 
+                            src={selectedGeneration.resultUrls[currentImageIndex]} 
+                            alt={`Image ${currentImageIndex + 1}`}
+                            className="w-full h-full object-contain"
+                            data-testid="detail-image"
+                          />
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 rounded-full px-3 py-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-white"
+                              onClick={() => setCurrentImageIndex(prev => prev > 0 ? prev - 1 : selectedGeneration.resultUrls!.length - 1)}
+                              data-testid="button-prev-image"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-white text-xs" data-testid="text-image-counter">
+                              {currentImageIndex + 1} / {selectedGeneration.resultUrls.length}
+                            </span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-white"
+                              onClick={() => setCurrentImageIndex(prev => prev < selectedGeneration.resultUrls!.length - 1 ? prev + 1 : 0)}
+                              data-testid="button-next-image"
+                            >
+                              <ChevronRightIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : selectedGeneration.resultUrl ? (
+                        <img 
+                          src={selectedGeneration.resultUrl} 
+                          alt="Generated image"
+                          className="w-full h-full object-contain"
+                          data-testid="detail-image"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <ImageIcon className="h-12 w-12" />
+                        </div>
+                      )
+                    ) : selectedGeneration.type === 'music' && selectedGeneration.resultUrl ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-4 gap-4">
+                        <Music className="h-16 w-16 text-muted-foreground" />
+                        <audio 
+                          src={selectedGeneration.resultUrl} 
+                          controls 
+                          className="w-full"
+                          data-testid="detail-audio-player"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        {getTypeIcon(selectedGeneration.type)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wider">Prompt</Label>
+                      <ScrollArea className="max-h-32 mt-1">
+                        <p className="text-sm" data-testid="detail-prompt">{selectedGeneration.prompt}</p>
+                      </ScrollArea>
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Model</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Sparkles className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm" data-testid="detail-model">{selectedGeneration.model}</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Created</Label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2 mt-1 cursor-help">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm" data-testid="detail-created">
+                                {formatDistanceToNow(new Date(selectedGeneration.createdAt), { addSuffix: true })}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {new Date(selectedGeneration.createdAt).toLocaleString()}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Status</Label>
+                        <div className="mt-1">
+                          <Badge 
+                            variant={statusColors[selectedGeneration.status as keyof typeof statusColors]}
+                            data-testid="detail-status"
+                          >
+                            {selectedGeneration.status}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Credits</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Coins className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm" data-testid="detail-credits">{selectedGeneration.creditsCost}</span>
+                        </div>
+                      </div>
+
+                      {selectedGeneration.seed && (
+                        <div className="col-span-2">
+                          <Label className="text-xs text-muted-foreground uppercase tracking-wider">Seed</Label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm font-mono" data-testid="detail-seed">{selectedGeneration.seed}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={handleCopySeed}
+                              data-testid="button-copy-seed"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Tags</Label>
+                        <Popover open={detailTagPopoverOpen} onOpenChange={setDetailTagPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 text-xs"
+                              data-testid="button-add-tag"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add Tag
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-56" align="end">
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">Add tag</p>
+                              {tags.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No tags available</p>
+                              ) : (
+                                tags
+                                  .filter(tag => !generationTags.some(gt => gt.id === tag.id))
+                                  .map((tag) => (
+                                    <Button
+                                      key={tag.id}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start"
+                                      onClick={() => addTagMutation.mutate({ 
+                                        generationId: selectedGeneration.id, 
+                                        tagId: tag.id 
+                                      })}
+                                      disabled={addTagMutation.isPending}
+                                      data-testid={`button-add-tag-${tag.id}`}
+                                    >
+                                      <div 
+                                        className="h-3 w-3 rounded-full mr-2" 
+                                        style={{ backgroundColor: tag.color }} 
+                                      />
+                                      {tag.name}
+                                    </Button>
+                                  ))
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="flex flex-wrap gap-2" data-testid="detail-tags">
+                        {generationTagsLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : generationTags.length === 0 ? (
+                          <span className="text-sm text-muted-foreground">No tags</span>
+                        ) : (
+                          generationTags.map((tag) => (
+                            <Badge
+                              key={tag.id}
+                              variant="secondary"
+                              className="cursor-pointer"
+                              style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
+                              onClick={() => setShowRemoveTagConfirm(tag.id)}
+                              data-testid={`tag-${tag.id}`}
+                            >
+                              <div 
+                                className="h-2 w-2 rounded-full mr-1" 
+                                style={{ backgroundColor: tag.color }} 
+                              />
+                              {tag.name}
+                              <X className="h-3 w-3 ml-1" />
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wider">Collection</Label>
+                      <Popover open={detailMovePopoverOpen} onOpenChange={setDetailMovePopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between mt-1"
+                            data-testid="button-change-collection"
+                          >
+                            <div className="flex items-center gap-2">
+                              {getSelectedCollection() ? (
+                                <>
+                                  <Folder 
+                                    className="h-4 w-4" 
+                                    style={{ color: getSelectedCollection()?.color || '#6366F1' }} 
+                                  />
+                                  {getSelectedCollection()?.name}
+                                </>
+                              ) : (
+                                <>
+                                  <Folder className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-muted-foreground">No collection</span>
+                                </>
+                              )}
+                            </div>
+                            <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56" align="start">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Move to collection</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start"
+                              onClick={() => moveToCollectionMutation.mutate({ 
+                                generationId: selectedGeneration.id, 
+                                collectionId: null 
+                              })}
+                              disabled={moveToCollectionMutation.isPending}
+                              data-testid="button-move-to-none"
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              No collection
+                            </Button>
+                            {collections.map((collection) => (
+                              <Button
+                                key={collection.id}
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start"
+                                onClick={() => moveToCollectionMutation.mutate({ 
+                                  generationId: selectedGeneration.id, 
+                                  collectionId: collection.id 
+                                })}
+                                disabled={moveToCollectionMutation.isPending}
+                                data-testid={`button-move-to-${collection.id}`}
+                              >
+                                <Folder 
+                                  className="h-4 w-4 mr-2" 
+                                  style={{ color: collection.color || '#6366F1' }} 
+                                />
+                                {collection.name}
+                              </Button>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wider">Actions</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {selectedGeneration.status === 'completed' && selectedGeneration.resultUrl && (
+                          <Button
+                            variant="outline"
+                            onClick={handleDetailDownload}
+                            data-testid="button-detail-download"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </Button>
+                        )}
+
+                        {selectedGeneration.status === 'completed' && (
+                          <Button
+                            variant={selectedGeneration.isShowcase ? "default" : "outline"}
+                            onClick={() => showcaseMutation.mutate({ 
+                              generationId: selectedGeneration.id, 
+                              isShowcase: !selectedGeneration.isShowcase 
+                            })}
+                            disabled={showcaseMutation.isPending}
+                            data-testid="button-detail-showcase"
+                          >
+                            <Share2 className="h-4 w-4 mr-2" />
+                            {selectedGeneration.isShowcase ? 'Showcased' : 'Showcase'}
+                          </Button>
+                        )}
+
+                        <Button
+                          variant={selectedGeneration.isFavorite ? "default" : "outline"}
+                          onClick={() => favoriteMutation.mutate({ 
+                            generationId: selectedGeneration.id, 
+                            isFavorite: !selectedGeneration.isFavorite 
+                          })}
+                          disabled={favoriteMutation.isPending}
+                          data-testid="button-detail-favorite"
+                        >
+                          <Heart className={cn("h-4 w-4 mr-2", selectedGeneration.isFavorite && "fill-current")} />
+                          {selectedGeneration.isFavorite ? 'Favorited' : 'Favorite'}
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => archiveMutation.mutate({ 
+                            generationId: selectedGeneration.id, 
+                            archive: !selectedGeneration.archivedAt 
+                          })}
+                          disabled={archiveMutation.isPending}
+                          data-testid="button-detail-archive"
+                        >
+                          <Archive className="h-4 w-4 mr-2" />
+                          {selectedGeneration.archivedAt ? 'Restore' : 'Archive'}
+                        </Button>
+
+                        {['video', 'image', 'music'].includes(selectedGeneration.type) && (
+                          <Button
+                            variant="outline"
+                            onClick={handleRegenerate}
+                            data-testid="button-detail-regenerate"
+                          >
+                            <RotateCw className="h-4 w-4 mr-2" />
+                            Regenerate
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="outline"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setShowDeleteConfirm(true)}
+                          data-testid="button-detail-delete"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this generation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this generation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-detail-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => selectedGeneration && deleteMutation.mutate(selectedGeneration.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-detail-delete"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!showRemoveTagConfirm} onOpenChange={(open) => !open && setShowRemoveTagConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this tag?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the tag from this generation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-remove-tag">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => showRemoveTagConfirm && selectedGeneration && removeTagMutation.mutate({ 
+                generationId: selectedGeneration.id, 
+                tagId: showRemoveTagConfirm 
+              })}
+              data-testid="button-confirm-remove-tag"
+            >
+              {removeTagMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarInset>
   );
 }
