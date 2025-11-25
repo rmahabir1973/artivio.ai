@@ -28,7 +28,7 @@ import {
   Mic2,
   QrCode,
   Zap,
-  History as HistoryIcon,
+  Library,
   Users,
   Trophy,
   Settings,
@@ -44,7 +44,7 @@ const menuSections = [
     label: "Main",
     items: [
       { title: "Home", url: "/", icon: Home },
-      { title: "History", url: "/history", icon: HistoryIcon },
+      { title: "My Library", url: "/history", icon: Library },
     ],
   },
   {

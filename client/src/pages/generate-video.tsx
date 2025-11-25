@@ -696,7 +696,7 @@ export default function GenerateVideo() {
           <CardContent className="space-y-6">
             {/* Generation Type Tabs */}
             <Tabs value={generationType} onValueChange={(value) => setGenerationType(value as "text-to-video" | "image-to-video" | "first-and-last-frames-to-video" | "reference-2-video")}>
-              <TabsList className="grid w-full grid-cols-4" data-testid="tabs-generation-type">
+              <TabsList className="grid w-full grid-cols-2" data-testid="tabs-generation-type">
                 <TabsTrigger value="text-to-video" data-testid="tab-text-to-video" className="text-xs sm:text-sm">
                   Text
                 </TabsTrigger>
@@ -707,22 +707,6 @@ export default function GenerateVideo() {
                   className="text-xs sm:text-sm"
                 >
                   Image
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="first-and-last-frames-to-video" 
-                  data-testid="tab-first-and-last-frames-to-video"
-                  disabled={!selectedModel?.supportsImages}
-                  className="text-xs sm:text-sm"
-                >
-                  F & L Frames
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="reference-2-video" 
-                  data-testid="tab-reference-2-video"
-                  disabled={!selectedModel?.supportsImages}
-                  className="text-xs sm:text-sm"
-                >
-                  Material
                 </TabsTrigger>
               </TabsList>
 

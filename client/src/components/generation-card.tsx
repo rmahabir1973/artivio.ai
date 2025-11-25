@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Edit3, Zap } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Edit3, Zap, Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -100,6 +101,31 @@ export function GenerationCard({ generation }: GenerationCardProps) {
       toast({
         title: "Error",
         description: error.message || "Failed to update showcase status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: async (isFavorite: boolean) => {
+      return await apiRequest("POST", `/api/generations/${generation.id}/favorite`, { isFavorite });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: generation.isFavorite ? "Removed from favorites" : "Added to favorites",
+      });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.startsWith('/api/generations');
+        }
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update favorite status",
         variant: "destructive",
       });
     },
@@ -230,7 +256,17 @@ export function GenerationCard({ generation }: GenerationCardProps) {
         <CardHeader className="space-y-2 pb-4">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-base line-clamp-2">{generation.prompt}</CardTitle>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-2 shrink-0 items-center">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => favoriteMutation.mutate(!generation.isFavorite)}
+                disabled={favoriteMutation.isPending}
+                data-testid={`button-favorite-${generation.id}`}
+              >
+                <Heart className={cn("h-4 w-4", generation.isFavorite && "fill-red-500 text-red-500")} />
+              </Button>
               {generation.processingStage === 'upscale' && (
                 <Badge variant="secondary" className="flex items-center gap-1" data-testid={`badge-upscaled-${generation.id}`}>
                   <Maximize2 className="h-3 w-3" />
