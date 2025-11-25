@@ -277,18 +277,25 @@ export default function GenerateVideo() {
 
   // Load seed from sessionStorage (from history "Use Seed" button) - only once on mount
   useEffect(() => {
+    console.log(`🌱 [SEED MOUNT] useEffect triggered - checking sessionStorage`);
     const savedSeed = sessionStorage.getItem('regenerateSeed');
-    console.log(`🌱 [SEED MOUNT] Checking sessionStorage for regenerateSeed: ${savedSeed}`);
+    console.log(`🌱 [SEED MOUNT] sessionStorage.getItem('regenerateSeed') = ${savedSeed}`);
     if (savedSeed) {
       const seedValue = parseInt(savedSeed, 10);
+      console.log(`🌱 [SEED MOUNT] Parsed seedValue: ${seedValue}, isNaN: ${isNaN(seedValue)}`);
       // Always apply valid seeds, regardless of current model (user can change model later)
       if (!isNaN(seedValue) && seedValue >= 1 && seedValue <= 2147483647) {
+        console.log(`🌱 [SEED MOUNT] ✓ Valid seed - calling setSeed(${seedValue}) and setSeedLocked(true)`);
         setSeed(seedValue);
         setSeedLocked(true); // Lock the seed when loading from history
-        console.log(`🌱 [SEED MOUNT] Loaded seed from sessionStorage: ${seedValue}`);
+      } else {
+        console.log(`🌱 [SEED MOUNT] ✗ Invalid seed - out of range or NaN`);
       }
       // Always clear the stored seed after consuming it (even if invalid)
       sessionStorage.removeItem('regenerateSeed');
+      console.log(`🌱 [SEED MOUNT] Cleared sessionStorage`);
+    } else {
+      console.log(`🌱 [SEED MOUNT] No seed found in sessionStorage`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - run only once on mount
@@ -601,8 +608,11 @@ export default function GenerateVideo() {
     // Add seed if model supports it and seed is provided
     // CRITICAL: Also check sessionStorage as fallback (in case useEffect didn't run yet)
     let effectiveSeed = seed;
+    console.log(`🌱 [SEED TRACE] Step 1 - Initial seed state: ${seed}, seedLocked: ${seedLocked}`);
+    
     if (!effectiveSeed) {
       const storedSeed = sessionStorage.getItem('regenerateSeed');
+      console.log(`🌱 [SEED TRACE] Step 2 - sessionStorage fallback check: ${storedSeed}`);
       if (storedSeed) {
         const parsedSeed = parseInt(storedSeed, 10);
         if (!isNaN(parsedSeed) && parsedSeed >= 1) {
@@ -610,21 +620,28 @@ export default function GenerateVideo() {
           setSeed(parsedSeed); // Update state for UI
           setSeedLocked(true);
           sessionStorage.removeItem('regenerateSeed');
-          console.log(`🌱 [SEED DEBUG] Loaded seed from sessionStorage fallback: ${parsedSeed}`);
+          console.log(`🌱 [SEED TRACE] Step 2b - Loaded from sessionStorage: ${parsedSeed}`);
         }
       }
     }
     
+    console.log(`🌱 [SEED TRACE] Step 3 - effectiveSeed after fallback: ${effectiveSeed}`);
+    console.log(`🌱 [SEED TRACE] Step 4 - modelSupportsSeed(): ${modelSupportsSeed()}, model: ${model}`);
+    
     if (modelSupportsSeed() && effectiveSeed) {
-      console.log(`🌱 [SEED DEBUG] Adding seed to parameters: ${effectiveSeed} for model ${model}`);
+      console.log(`🌱 [SEED TRACE] Step 5 - Adding seed to parameters: ${effectiveSeed}`);
       if (model.startsWith('veo-')) {
         parameters.seeds = [effectiveSeed]; // Veo uses array format
+        console.log(`🌱 [SEED TRACE] Step 5b - Veo format: parameters.seeds = [${effectiveSeed}]`);
       } else {
         parameters.seed = effectiveSeed; // Seedance/Wan use singular
+        console.log(`🌱 [SEED TRACE] Step 5b - Non-Veo format: parameters.seed = ${effectiveSeed}`);
       }
     } else {
-      console.log(`🌱 [SEED DEBUG] No seed provided. modelSupportsSeed=${modelSupportsSeed()}, effectiveSeed=${effectiveSeed}`);
+      console.log(`🌱 [SEED TRACE] Step 5 - NOT adding seed. modelSupportsSeed=${modelSupportsSeed()}, effectiveSeed=${effectiveSeed}`);
     }
+    
+    console.log(`🌱 [SEED TRACE] Step 6 - Final parameters:`, JSON.stringify(parameters));
     
     // Map generation types to the correct model names
     let finalModel = model;

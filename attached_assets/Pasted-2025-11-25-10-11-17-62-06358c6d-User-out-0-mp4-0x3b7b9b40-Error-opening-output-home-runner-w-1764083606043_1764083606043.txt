@@ -1,0 +1,156 @@
+2025-11-25 10:11:17.62
+06358c6d
+User
+[out#0/mp4 @ 0x3b7b9b40] Error opening output /home/runner/workspace/public/video-combinations/optimized-6d308a5e-d919-404c-83c3-1598acc245a0.mp4: No such file or directory
+2025-11-25 10:11:17.62
+06358c6d
+User
+configuration: --disable-static --prefix=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1 --target_os=linux --arch=x86_64 --pkg-config=pkg-config --enable-gpl --enable-version3 --disable-nonfree --disable-static --enable-shared --enable-pic --disable-thumb --disable-small --enable-runtime-cpudetect --disable-gray --enable-swscale-alpha --enable-hardcoded-tables --enable-safe-bitstream-reader --enable-pthreads --disable-w32threads --disable-os2threads --enable-network --enable-pixelutils --datadir=/nix/store/71hcrwn1g6ncki859v14jq18i8fx84sk-ffmpeg-6.1.1-data/share/ffmpeg --enable-ffmpeg --enable-ffplay --enable-ffprobe --bindir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-bin/bin --enable-avcodec --enable-avdevice --enable-avfilter --enable-avformat --enable-avutil --enable-postproc --enable-swresample --enable-swscale --libdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-lib/lib --incdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-dev/include --enable-doc --enable-htmlpages --enable-manpages --mandir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-man/share/man --enable-podpages --enable-txtpages --docdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-doc/share/doc/ffmpeg --enable-alsa --disable-libaom --disable-appkit --disable-libaribcaption --enable-libass --disable-audiotoolbox --disable-avfoundation --disable-avisynth --disable-libbluray --disable-libbs2b --enable-bzlib --disable-libcaca --disable-libcelt --disable-chromaprint --disable-libcodec2 --disable-coreimage --disable-cuda --disable-cuda-llvm --enable-cuvid --enable-libdav1d --disable-libdc1394 --enable-libdrm --disable-libfdk-aac --enable-ffnvcodec --disable-libflite --enable-fontconfig --enable-libfontconfig --enable-libfreetype --disable-frei0r --disable-libfribidi --disable-libgme --enable-gnutls --disable-libgsm --enable-libharfbuzz --enable-iconv --disable-libjack --disable-libjxl --disable-ladspa --enable-lzma --disable-libmfx --disable-libmodplug --enable-libmp3lame --disable-libmysofa --enable-nvdec --enable-nvenc --disable-openal --disable-opencl --disable-libopencore-amrnb --disable-libopencore-amrwb --disable-opengl --disable-libopenh264 --disable-libopenjpeg --disable-libopenmpt --enable-libopus --disable-libplacebo --enable-libpulse --disable-librav1e --disable-librtmp --disable-libsmbclient --enable-sdl2 --disable-libshaderc --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --disable-librsvg --enable-libsvtav1 --disable-libtensorflow --enable-libtheora --enable-libv4l2 --enable-v4l2-m2m --enable-vaapi --enable-vdpau --disable-libvpl --disable-videotoolbox --disable-libvidstab --disable-libvmaf --disable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-vulkan --disable-libwebp --enable-libx264 --enable-libx265 --disable-libxavs --disable-libxcb --disable-libxcb-shape --disable-libxcb-shm --disable-libxcb-xfixes --disable-xlib --disable-libxml2 --enable-libxvid --enable-libzimg --enable-zlib --disable-libzmq --disable-debug --enable-optimizations --disable-extra-warnings --disable-stripping
+2025-11-25 10:11:17.62
+06358c6d
+User
+minor_version : 512
+2025-11-25 10:11:17.62
+06358c6d
+User
+libswscale 7. 5.100 / 7. 5.100
+2025-11-25 10:11:17.62
+06358c6d
+User
+libavdevice 60. 3.100 / 60. 3.100
+2025-11-25 10:11:17.62
+06358c6d
+User
+vendor_id : [0][0][0][0]
+2025-11-25 10:11:17.62
+06358c6d
+User
+libavfilter 9. 12.100 / 9. 12.100
+2025-11-25 10:11:17.62
+06358c6d
+User
+Metadata:
+2025-11-25 10:11:17.62
+06358c6d
+User
+handler_name : SoundHandler
+2025-11-25 10:11:17.62
+06358c6d
+User
+Error opening output file /home/runner/workspace/public/video-combinations/optimized-6d308a5e-d919-404c-83c3-1598acc245a0.mp4.
+2025-11-25 10:11:18.22
+06358c6d
+User
+minor_version : 512
+2025-11-25 10:11:18.22
+06358c6d
+User
+configuration: --disable-static --prefix=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1 --target_os=linux --arch=x86_64 --pkg-config=pkg-config --enable-gpl --enable-version3 --disable-nonfree --disable-static --enable-shared --enable-pic --disable-thumb --disable-small --enable-runtime-cpudetect --disable-gray --enable-swscale-alpha --enable-hardcoded-tables --enable-safe-bitstream-reader --enable-pthreads --disable-w32threads --disable-os2threads --enable-network --enable-pixelutils --datadir=/nix/store/71hcrwn1g6ncki859v14jq18i8fx84sk-ffmpeg-6.1.1-data/share/ffmpeg --enable-ffmpeg --enable-ffplay --enable-ffprobe --bindir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-bin/bin --enable-avcodec --enable-avdevice --enable-avfilter --enable-avformat --enable-avutil --enable-postproc --enable-swresample --enable-swscale --libdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-lib/lib --incdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-dev/include --enable-doc --enable-htmlpages --enable-manpages --mandir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-man/share/man --enable-podpages --enable-txtpages --docdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-doc/share/doc/ffmpeg --enable-alsa --disable-libaom --disable-appkit --disable-libaribcaption --enable-libass --disable-audiotoolbox --disable-avfoundation --disable-avisynth --disable-libbluray --disable-libbs2b --enable-bzlib --disable-libcaca --disable-libcelt --disable-chromaprint --disable-libcodec2 --disable-coreimage --disable-cuda --disable-cuda-llvm --enable-cuvid --enable-libdav1d --disable-libdc1394 --enable-libdrm --disable-libfdk-aac --enable-ffnvcodec --disable-libflite --enable-fontconfig --enable-libfontconfig --enable-libfreetype --disable-frei0r --disable-libfribidi --disable-libgme --enable-gnutls --disable-libgsm --enable-libharfbuzz --enable-iconv --disable-libjack --disable-libjxl --disable-ladspa --enable-lzma --disable-libmfx --disable-libmodplug --enable-libmp3lame --disable-libmysofa --enable-nvdec --enable-nvenc --disable-openal --disable-opencl --disable-libopencore-amrnb --disable-libopencore-amrwb --disable-opengl --disable-libopenh264 --disable-libopenjpeg --disable-libopenmpt --enable-libopus --disable-libplacebo --enable-libpulse --disable-librav1e --disable-librtmp --disable-libsmbclient --enable-sdl2 --disable-libshaderc --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --disable-librsvg --enable-libsvtav1 --disable-libtensorflow --enable-libtheora --enable-libv4l2 --enable-v4l2-m2m --enable-vaapi --enable-vdpau --disable-libvpl --disable-videotoolbox --disable-libvidstab --disable-libvmaf --disable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-vulkan --disable-libwebp --enable-libx264 --enable-libx265 --disable-libxavs --disable-libxcb --disable-libxcb-shape --disable-libxcb-shm --disable-libxcb-xfixes --disable-xlib --disable-libxml2 --enable-libxvid --enable-libzimg --enable-zlib --disable-libzmq --disable-debug --enable-optimizations --disable-extra-warnings --disable-stripping
+2025-11-25 10:11:18.22
+06358c6d
+User
+⚠️ Video optimization/thumbnail failed for 6d308a5e-d919-404c-83c3-1598acc245a0: Failed to re-encode video: Failed to normalize video: Command failed: ffmpeg -i "/home/runner/workspace/temp/video-processing/reencode-6d308a5e-d919-404c-83c3-1598acc245a0/input_0.mp4" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart -c:a aac -b:a 128k -y "/home/runner/workspace/public/video-combinations/optimized-6d308a5e-d919-404c-83c3-1598acc245a0.mp4"
+2025-11-25 10:11:18.22
+06358c6d
+User
+compatible_brands: isomiso2avc1mp41
+2025-11-25 10:11:18.22
+06358c6d
+User
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/home/runner/workspace/temp/video-processing/reencode-6d308a5e-d919-404c-83c3-1598acc245a0/input_0.mp4':
+2025-11-25 10:11:18.22
+06358c6d
+User
+libavformat 60. 16.100 / 60. 16.100
+2025-11-25 10:11:18.22
+06358c6d
+User
+Error opening output file /home/runner/workspace/public/video-combinations/optimized-6d308a5e-d919-404c-83c3-1598acc245a0.mp4.
+2025-11-25 10:11:18.22
+06358c6d
+User
+built with gcc 13.2.0 (GCC)
+2025-11-25 10:11:18.22
+06358c6d
+User
+libswscale 7. 5.100 / 7. 5.100
+2025-11-25 10:11:18.22
+06358c6d
+User
+Metadata:
+2025-11-25 10:11:18.22
+06358c6d
+User
+Metadata:
+2025-11-25 10:11:18.22
+06358c6d
+User
+Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)
+2025-11-25 10:11:18.22
+06358c6d
+User
+libavcodec 60. 31.102 / 60. 31.102
+2025-11-25 10:11:18.22
+06358c6d
+User
+Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 1280x720, 3008 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+2025-11-25 10:11:18.22
+06358c6d
+User
+libavdevice 60. 3.100 / 60. 3.100
+2025-11-25 10:11:18.22
+06358c6d
+User
+vendor_id : [0][0][0][0]
+2025-11-25 10:11:18.22
+06358c6d
+User
+encoder : Google
+2025-11-25 10:11:18.22
+06358c6d
+User
+libpostproc 57. 3.100 / 57. 3.100
+2025-11-25 10:11:18.22
+06358c6d
+User
+Metadata:
+2025-11-25 10:11:18.22
+06358c6d
+User
+libavutil 58. 29.100 / 58. 29.100
+2025-11-25 10:11:18.22
+06358c6d
+User
+ffmpeg version 6.1.1 Copyright (c) 2000-2023 the FFmpeg developers
+2025-11-25 10:11:18.22
+06358c6d
+User
+[out#0/mp4 @ 0x3b7b9b40] Error opening output /home/runner/workspace/public/video-combinations/optimized-6d308a5e-d919-404c-83c3-1598acc245a0.mp4: No such file or directory
+2025-11-25 10:11:18.22
+06358c6d
+User
+libswresample 4. 12.100 / 4. 12.100
+2025-11-25 10:11:18.22
+06358c6d
+User
+handler_name : VideoHandler
+2025-11-25 10:11:18.22
+06358c6d
+User
+Duration: 00:00:08.00, start: 0.000000, bitrate: 3162 kb/s
+2025-11-25 10:11:18.22
+06358c6d
+User
+libavfilter 9. 12.100 / 9. 12.100
+2025-11-25 10:11:18.22
+06358c6d
+User
+major_brand : isom
+2025-11-25 10:11:18.22
+06358c6d
+User
+handler_name : SoundHandler
+2025-11-25 10:11:25.76
+06358c6d
+User
+3:11:25 PM [express] GET /api/announcements/active 304 in 23ms :: []

@@ -819,8 +819,16 @@ export default function History() {
       sessionStorage.setItem('regeneratePrompt', selectedGeneration.prompt);
       sessionStorage.setItem('regenerateModel', selectedGeneration.model);
       if (selectedGeneration.seed) {
-        sessionStorage.setItem('regenerateSeed', selectedGeneration.seed.toString());
+        const seedStr = selectedGeneration.seed.toString();
+        console.log(`🌱 [HISTORY] Storing seed in sessionStorage: ${seedStr}`);
+        sessionStorage.setItem('regenerateSeed', seedStr);
+        // Verify it was stored
+        const storedSeed = sessionStorage.getItem('regenerateSeed');
+        console.log(`🌱 [HISTORY] Verification - sessionStorage now contains: ${storedSeed}`);
+      } else {
+        console.log(`🌱 [HISTORY] No seed to store - selectedGeneration.seed is: ${selectedGeneration.seed}`);
       }
+      console.log(`🌱 [HISTORY] Navigating to: ${route}`);
       setLocation(route);
     }
   };
