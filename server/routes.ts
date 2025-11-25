@@ -2722,6 +2722,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get generations in a collection
+  app.get('/api/collections/:collectionId/generations', requireJWT, async (req: any, res) => {
+    try {
+      const { collectionId } = req.params;
+      const userId = req.user.id;
+      
+      // Verify collection belongs to user
+      const collection = await storage.getCollection(collectionId);
+      if (!collection) {
+        return res.status(404).json({ message: "Collection not found" });
+      }
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "You can only view your own collections" });
+      }
+      
+      const generations = await storage.getGenerationsByCollection(collectionId);
+      res.json(generations);
+    } catch (error) {
+      console.error('Error fetching collection generations:', error);
+      res.status(500).json({ message: "Failed to fetch collection generations" });
+    }
+  });
+
   // Create collection
   app.post('/api/collections', requireJWT, async (req: any, res) => {
     try {

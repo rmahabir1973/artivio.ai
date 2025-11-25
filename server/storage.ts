@@ -137,6 +137,7 @@ export interface IStorage {
   getUserGenerations(userId: string): Promise<Generation[]>;
   getRecentGenerations(userId: string, limit?: number): Promise<Generation[]>;
   getUserGenerationsPage(userId: string, limit: number, cursor?: { createdAt: Date; id: string }): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }>;
+  getGenerationsByCollection(collectionId: string): Promise<Generation[]>;
   deleteGeneration(id: string): Promise<void>;
   getUserStats(userId: string): Promise<{
     totalGenerations: number;
@@ -772,6 +773,14 @@ export class DatabaseStorage implements IStorage {
       : null;
 
     return { items, nextCursor };
+  }
+
+  async getGenerationsByCollection(collectionId: string): Promise<Generation[]> {
+    return await db
+      .select()
+      .from(generations)
+      .where(eq(generations.collectionId, collectionId))
+      .orderBy(desc(generations.createdAt));
   }
 
   async deleteGeneration(id: string): Promise<void> {
