@@ -477,10 +477,7 @@ export default function History() {
     },
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    // Fix: Wait for auth to finish loading instead of checking isAuthenticated
-    // TanStack Query doesn't re-run when enabled flips from false to true after mount
-    // Using !authLoading ensures query runs once auth is complete (fetchWithAuth handles 401s)
-    enabled: !authLoading,
+    enabled: isAuthenticated,
     refetchInterval: (query) => {
       const allItems = query.state.data?.pages.flatMap(page => page.items) ?? [];
       const hasProcessing = allItems.some(gen => gen.status === 'processing');
@@ -490,12 +487,12 @@ export default function History() {
 
   const { data: collections = [], isLoading: collectionsLoading } = useQuery<Collection[]>({
     queryKey: ['/api/collections'],
-    enabled: !authLoading,
+    enabled: isAuthenticated,
   });
 
   const { data: tags = [] } = useQuery<TagType[]>({
     queryKey: ['/api/tags'],
-    enabled: !authLoading,
+    enabled: isAuthenticated,
   });
 
   const { data: generationTags = [], isLoading: generationTagsLoading } = useQuery<TagType[]>({
