@@ -319,7 +319,10 @@ export async function generateVideo(params: {
     }
     
     // Auto-generate seed if not provided (Veo requires range 10000-99999)
-    let seed = parameters.seed || generateRandomSeed();
+    // Normalize from either 'seed' (singular) or 'seeds' (array from frontend)
+    let seed = parameters.seed ?? 
+      (Array.isArray(parameters.seeds) ? parameters.seeds[0] : parameters.seeds) ?? 
+      generateRandomSeed();
     
     // CRITICAL: Veo API requires seeds in range 10000-99999
     // Clamp any out-of-range seeds to valid range
