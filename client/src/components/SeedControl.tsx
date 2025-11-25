@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,8 @@ interface SeedControlProps {
   className?: string;
 }
 
+// FULLY CONTROLLED component - no internal state for seed or locked
+// Parent component (generate-video.tsx) manages all state
 export function SeedControl({
   seed,
   onSeedChange,
@@ -22,15 +23,12 @@ export function SeedControl({
   onLockChange,
   className = "",
 }: SeedControlProps) {
-  const [isLocked, setIsLocked] = useState(locked);
-
   const generateRandomSeed = () => {
     const newSeed = Math.floor(Math.random() * 2147483647) + 1;
     onSeedChange(newSeed);
   };
 
   const handleLockToggle = (checked: boolean) => {
-    setIsLocked(checked);
     onLockChange?.(checked);
   };
 
@@ -79,13 +77,13 @@ export function SeedControl({
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2">
-                {isLocked ? (
+                {locked ? (
                   <Lock className="h-4 w-4 text-muted-foreground" />
                 ) : (
                   <LockOpen className="h-4 w-4 text-muted-foreground" />
                 )}
                 <Switch
-                  checked={isLocked}
+                  checked={locked}
                   onCheckedChange={handleLockToggle}
                   data-testid="switch-lock-seed"
                   aria-label="Lock seed"
@@ -94,7 +92,7 @@ export function SeedControl({
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-sm">
-                {isLocked
+                {locked
                   ? "Seed locked - will stay the same"
                   : "Seed unlocked - will auto-generate"}
               </p>

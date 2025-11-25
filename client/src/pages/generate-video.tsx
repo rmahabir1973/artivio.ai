@@ -482,6 +482,9 @@ export default function GenerateVideo() {
   };
 
   const handleGenerate = () => {
+    // DEBUG: Log current state at time of generation
+    console.log(`🌱 [GENERATE DEBUG] Current state: seed=${seed}, seedLocked=${seedLocked}, model=${model}`);
+    
     if (!prompt.trim()) {
       toast({
         title: "Prompt Required",

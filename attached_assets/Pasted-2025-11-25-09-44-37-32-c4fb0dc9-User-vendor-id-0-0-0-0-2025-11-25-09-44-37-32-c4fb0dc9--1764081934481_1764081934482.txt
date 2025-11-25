@@ -1,0 +1,152 @@
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+vendor_id : [0][0][0][0]
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+[out#0/mp4 @ 0x27f9db40] Error opening output /home/runner/workspace/public/video-combinations/optimized-70016f2c-1e26-41d2-b26b-e47762815db8.mp4: No such file or directory
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+built with gcc 13.2.0 (GCC)
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+handler_name : SoundHandler
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+vendor_id : [0][0][0][0]
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+minor_version : 512
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libavcodec 60. 31.102 / 60. 31.102
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+encoder : Google
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+ffmpeg version 6.1.1 Copyright (c) 2000-2023 the FFmpeg developers
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+⚠️ Video optimization/thumbnail failed for 70016f2c-1e26-41d2-b26b-e47762815db8: Failed to re-encode video: Failed to normalize video: Command failed: ffmpeg -i "/home/runner/workspace/temp/video-processing/reencode-70016f2c-1e26-41d2-b26b-e47762815db8/input_0.mp4" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart -c:a aac -b:a 128k -y "/home/runner/workspace/public/video-combinations/optimized-70016f2c-1e26-41d2-b26b-e47762815db8.mp4"
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+major_brand : isom
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libavutil 58. 29.100 / 58. 29.100
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+Duration: 00:00:08.00, start: 0.000000, bitrate: 7163 kb/s
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libswscale 7. 5.100 / 7. 5.100
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libavformat 60. 16.100 / 60. 16.100
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/home/runner/workspace/temp/video-processing/reencode-70016f2c-1e26-41d2-b26b-e47762815db8/input_0.mp4':
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+Metadata:
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+configuration: --disable-static --prefix=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1 --target_os=linux --arch=x86_64 --pkg-config=pkg-config --enable-gpl --enable-version3 --disable-nonfree --disable-static --enable-shared --enable-pic --disable-thumb --disable-small --enable-runtime-cpudetect --disable-gray --enable-swscale-alpha --enable-hardcoded-tables --enable-safe-bitstream-reader --enable-pthreads --disable-w32threads --disable-os2threads --enable-network --enable-pixelutils --datadir=/nix/store/71hcrwn1g6ncki859v14jq18i8fx84sk-ffmpeg-6.1.1-data/share/ffmpeg --enable-ffmpeg --enable-ffplay --enable-ffprobe --bindir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-bin/bin --enable-avcodec --enable-avdevice --enable-avfilter --enable-avformat --enable-avutil --enable-postproc --enable-swresample --enable-swscale --libdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-lib/lib --incdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-dev/include --enable-doc --enable-htmlpages --enable-manpages --mandir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-man/share/man --enable-podpages --enable-txtpages --docdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-doc/share/doc/ffmpeg --enable-alsa --disable-libaom --disable-appkit --disable-libaribcaption --enable-libass --disable-audiotoolbox --disable-avfoundation --disable-avisynth --disable-libbluray --disable-libbs2b --enable-bzlib --disable-libcaca --disable-libcelt --disable-chromaprint --disable-libcodec2 --disable-coreimage --disable-cuda --disable-cuda-llvm --enable-cuvid --enable-libdav1d --disable-libdc1394 --enable-libdrm --disable-libfdk-aac --enable-ffnvcodec --disable-libflite --enable-fontconfig --enable-libfontconfig --enable-libfreetype --disable-frei0r --disable-libfribidi --disable-libgme --enable-gnutls --disable-libgsm --enable-libharfbuzz --enable-iconv --disable-libjack --disable-libjxl --disable-ladspa --enable-lzma --disable-libmfx --disable-libmodplug --enable-libmp3lame --disable-libmysofa --enable-nvdec --enable-nvenc --disable-openal --disable-opencl --disable-libopencore-amrnb --disable-libopencore-amrwb --disable-opengl --disable-libopenh264 --disable-libopenjpeg --disable-libopenmpt --enable-libopus --disable-libplacebo --enable-libpulse --disable-librav1e --disable-librtmp --disable-libsmbclient --enable-sdl2 --disable-libshaderc --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --disable-librsvg --enable-libsvtav1 --disable-libtensorflow --enable-libtheora --enable-libv4l2 --enable-v4l2-m2m --enable-vaapi --enable-vdpau --disable-libvpl --disable-videotoolbox --disable-libvidstab --disable-libvmaf --disable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-vulkan --disable-libwebp --enable-libx264 --enable-libx265 --disable-libxavs --disable-libxcb --disable-libxcb-shape --disable-libxcb-shm --disable-libxcb-xfixes --disable-xlib --disable-libxml2 --enable-libxvid --enable-libzimg --enable-zlib --disable-libzmq --disable-debug --enable-optimizations --disable-extra-warnings --disable-stripping
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libpostproc 57. 3.100 / 57. 3.100
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libavfilter 9. 12.100 / 9. 12.100
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libavdevice 60. 3.100 / 60. 3.100
+2025-11-25 09:44:37.32
+c4fb0dc9
+User
+libswresample 4. 12.100 / 4. 12.100
+2025-11-25 09:44:37.90
+c4fb0dc9
+User
+userId: '49729939',
+2025-11-25 09:44:38.02
+c4fb0dc9
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 09:44:38.02
+c4fb0dc9
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 09:44:38.12
+c4fb0dc9
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-25 09:44:38.12
+c4fb0dc9
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-25 09:44:38.13
+c4fb0dc9
+User
+2:44:38 PM [express] GET /api/announcements/active 304 in 93ms :: []
+2025-11-25 09:44:38.15
+c4fb0dc9
+User
+2:44:38 PM [express] GET /api/tags 304 in 110ms :: []
+2025-11-25 09:44:38.16
+c4fb0dc9
+User
+[/api/generations] Paginated query completed in 43ms, found 15 generations, hasMore: true
+2025-11-25 09:44:38.27
+c4fb0dc9
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 09:44:38.29
+c4fb0dc9
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-25 09:44:38.29
+c4fb0dc9
+User
+}
+2025-11-25 09:44:38.30
+c4fb0dc9
+User
+2:44:38 PM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 09:44:38.30
+c4fb0dc9
+User
+2:44:38 PM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 09:44:38.30
+c4fb0dc9
+User
+2:44:38 PM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 09:44:53.29
+0b4bb5e3
+System
+system: received signal terminated
