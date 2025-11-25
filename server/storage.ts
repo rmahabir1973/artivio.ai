@@ -558,6 +558,9 @@ export class DatabaseStorage implements IStorage {
       'externalTaskId': 'externalTaskId',
       'parameters': 'parameters',
       'seed': 'seed',
+      'isFavorite': 'isFavorite',
+      'isArchived': 'isArchived',
+      'collectionId': 'collectionId',
     };
     
     for (const [key, updateKey] of Object.entries(fieldMap)) {
