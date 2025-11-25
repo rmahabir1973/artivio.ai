@@ -131,7 +131,7 @@ export function GenerationsQueue() {
         description: message,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setCancelDialogOpen(false);
       setGenerationToCancel(null);
     },

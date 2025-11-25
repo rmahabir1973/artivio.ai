@@ -276,7 +276,7 @@ export default function VideoEditor() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/video-combinations'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({
         title: "Video Combination Started",
         description: "Your videos are being combined. This may take a few minutes.",

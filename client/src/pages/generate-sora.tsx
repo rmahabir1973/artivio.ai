@@ -262,7 +262,7 @@ export default function GenerateSora() {
       });
       
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
