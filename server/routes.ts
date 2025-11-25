@@ -1426,6 +1426,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pricingKey = generationType === 'text-to-video'
           ? 'kling-2.5-turbo-t2v'
           : `kling-2.5-turbo-i2v-${duration}s`;
+      } else if (model === 'veo-3.1-first-and-last-frames' || model === 'veo-3.1-fast-reference-2-video') {
+        // New Veo 3.1 modes - use the model name directly as pricing key
+        pricingKey = model;
       }
       
       const cost = await getModelCost(pricingKey);

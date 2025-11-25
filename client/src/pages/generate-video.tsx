@@ -28,6 +28,8 @@ import { useLocation } from "wouter";
 const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1": ["16:9", "9:16"],
   "veo-3.1-fast": ["16:9", "9:16"],
+  "veo-3.1-first-and-last-frames": ["16:9", "9:16"],
+  "veo-3.1-fast-reference-2-video": ["16:9"],  // Reference 2 Video only supports 16:9
   "veo-3": ["16:9", "9:16"],
   "runway-gen3-alpha-turbo": ["16:9", "4:3", "1:1", "3:4", "9:16"],
   "seedance-1-pro": ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"],
@@ -40,6 +42,8 @@ const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
 const DURATION_SUPPORT: Record<string, number[]> = {
   "veo-3.1": [8],
   "veo-3.1-fast": [8],
+  "veo-3.1-first-and-last-frames": [8],
+  "veo-3.1-fast-reference-2-video": [8],
   "runway-gen3-alpha-turbo": [5, 10],
   "seedance-1-pro": [5, 10],
   "seedance-1-lite": [10],
@@ -132,7 +136,7 @@ export default function GenerateVideo() {
   
   // Simple state management
   const [model, setModel] = useState("veo-3.1-fast");
-  const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video">("text-to-video");
+  const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video" | "first-and-last-frames-to-video" | "reference-2-video">("text-to-video");
   const [prompt, setPrompt] = useState("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -175,7 +179,11 @@ export default function GenerateVideo() {
                       : `kling-2.5-turbo-i2v-${duration}s`, 
                     400
                   ) || 0)
-                : (getModelCost(m.value, 400) || 0),
+                : m.value === 'veo-3.1' && (generationType === 'first-and-last-frames-to-video')
+                  ? (getModelCost('veo-3.1-first-and-last-frames', 400) || 0)
+                  : m.value === 'veo-3.1-fast' && (generationType === 'reference-2-video')
+                    ? (getModelCost('veo-3.1-fast-reference-2-video', 400) || 0)
+                    : (getModelCost(m.value, 400) || 0),
     }));
     
     setVideoModels(nextModels);
@@ -191,6 +199,11 @@ export default function GenerateVideo() {
   // Helper to check if current model supports seeds
   const modelSupportsSeed = () => {
     return model.startsWith('veo-') || model.startsWith('seedance-') || model.startsWith('wan-');
+  };
+  
+  // Helper to check if current model should NOT have resolution parameter
+  const modelSkipsResolution = () => {
+    return model.startsWith('veo-3.1');
   };
 
   // Handle model change with synchronous duration clamping
@@ -332,14 +345,14 @@ export default function GenerateVideo() {
     }
   }, [model, aspectRatio, toast, selectedModel?.label]);
 
-  // Auto-switch to text-to-video when model doesn't support images
+  // Auto-switch to text-to-video when model doesn't support image modes
   useEffect(() => {
-    if (selectedModel && !selectedModel.supportsImages && generationType === "image-to-video") {
+    if (selectedModel && !selectedModel.supportsImages && (generationType === "image-to-video" || generationType === "first-and-last-frames-to-video" || generationType === "reference-2-video")) {
       setGenerationType("text-to-video");
       setReferenceImages([]);
       toast({
         title: "Mode switched to Text to Video",
-        description: `${selectedModel.label} does not support Referenced Images. Use Veo 3.1 Fast for image-to-video generation.`,
+        description: `${selectedModel.label} does not support image modes. Use Veo 3.1 for First & Last Frames, or Veo 3.1 Fast for Reference 2 Video.`,
         variant: "default",
       });
     }
@@ -450,10 +463,21 @@ export default function GenerateVideo() {
       return;
     }
 
-    if (generationType === "image-to-video" && referenceImages.length === 0) {
+    if ((generationType === "image-to-video" || generationType === "reference-2-video") && referenceImages.length === 0) {
       toast({
-        title: "Reference Image Required",
-        description: "Please upload at least one reference image for image-to-video generation.",
+        title: "Reference Image(s) Required",
+        description: generationType === "reference-2-video" 
+          ? "Please upload reference images for material-to-video generation."
+          : "Please upload at least one reference image for image-to-video generation.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (generationType === "first-and-last-frames-to-video" && referenceImages.length < 2) {
+      toast({
+        title: "Two Reference Images Required",
+        description: "Please upload first and last frame images for first-and-last-frames-to-video generation.",
         variant: "destructive",
       });
       return;
@@ -504,21 +528,28 @@ export default function GenerateVideo() {
       parameters.quality = quality;
     }
     
-    // Add aspectRatio only if NOT (Seedance + image-to-video)
+    // Add aspectRatio only if NOT (Seedance + image-to-video) or (Veo 3.1 models - resolution auto-detected)
     // For Seedance image-to-video, aspect ratio is determined by the input image
+    // For Veo 3.1 models, resolution/aspect ratio defaults are determined by API
     const isSeedanceImageToVideo = model.startsWith('seedance-') && generationType === 'image-to-video';
-    if (!isSeedanceImageToVideo) {
+    if (!isSeedanceImageToVideo && !modelSkipsResolution()) {
+      parameters.aspectRatio = aspectRatio;
+    } else if (!modelSkipsResolution()) {
+      parameters.aspectRatio = aspectRatio;  // Veo 3.1 still needs aspect ratio
+    } else if (model === 'veo-3.1-fast-reference-2-video') {
+      parameters.aspectRatio = '16:9'; // Reference 2 Video only supports 16:9
+    } else {
       parameters.aspectRatio = aspectRatio;
     }
     
-    // Add resolution and cameraFixed for Seedance models
-    if (model.startsWith('seedance-')) {
+    // Add resolution and cameraFixed for Seedance models (NOT for Veo 3.1)
+    if (model.startsWith('seedance-') && !modelSkipsResolution()) {
       parameters.resolution = resolution;
       parameters.cameraFixed = cameraFixed;
     }
     
-    // Add resolution, negativePrompt, and enablePromptExpansion for Wan 2.5
-    if (model === 'wan-2.5') {
+    // Add resolution, negativePrompt, and enablePromptExpansion for Wan 2.5 (NOT for Veo 3.1)
+    if (model === 'wan-2.5' && !modelSkipsResolution()) {
       parameters.resolution = resolution;
       parameters.negativePrompt = negativePrompt;
       parameters.enablePromptExpansion = enablePromptExpansion;
@@ -545,11 +576,23 @@ export default function GenerateVideo() {
       }
     }
     
+    // Map generation types to the correct model names
+    let finalModel = model;
+    let finalGenerationType = generationType;
+    
+    if (model === 'veo-3.1' && generationType === 'first-and-last-frames-to-video') {
+      finalModel = 'veo-3.1-first-and-last-frames';
+      finalGenerationType = 'image-to-video'; // API treats it as image-to-video
+    } else if (model === 'veo-3.1-fast' && generationType === 'reference-2-video') {
+      finalModel = 'veo-3.1-fast-reference-2-video';
+      finalGenerationType = 'image-to-video'; // API treats it as image-to-video
+    }
+    
     generateMutation.mutate({
-      model,
+      model: finalModel,
       prompt,
-      generationType,
-      referenceImages: generationType === "image-to-video" ? referenceImages : undefined,
+      generationType: finalGenerationType,
+      referenceImages: (generationType === "image-to-video" || generationType === "first-and-last-frames-to-video" || generationType === "reference-2-video") ? referenceImages : undefined,
       parameters,
     });
   };
@@ -585,17 +628,34 @@ export default function GenerateVideo() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Generation Type Tabs */}
-            <Tabs value={generationType} onValueChange={(value) => setGenerationType(value as "text-to-video" | "image-to-video")}>
-              <TabsList className="grid w-full grid-cols-2" data-testid="tabs-generation-type">
-                <TabsTrigger value="text-to-video" data-testid="tab-text-to-video">
-                  Text to Video
+            <Tabs value={generationType} onValueChange={(value) => setGenerationType(value as "text-to-video" | "image-to-video" | "first-and-last-frames-to-video" | "reference-2-video")}>
+              <TabsList className="grid w-full grid-cols-4" data-testid="tabs-generation-type">
+                <TabsTrigger value="text-to-video" data-testid="tab-text-to-video" className="text-xs sm:text-sm">
+                  Text
                 </TabsTrigger>
                 <TabsTrigger 
                   value="image-to-video" 
                   data-testid="tab-image-to-video"
                   disabled={!selectedModel?.supportsImages}
+                  className="text-xs sm:text-sm"
                 >
-                  Image to Video {!selectedModel?.supportsImages && "(Not available for this model)"}
+                  Image
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="first-and-last-frames-to-video" 
+                  data-testid="tab-first-and-last-frames-to-video"
+                  disabled={!selectedModel?.supportsImages}
+                  className="text-xs sm:text-sm"
+                >
+                  F & L Frames
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="reference-2-video" 
+                  data-testid="tab-reference-2-video"
+                  disabled={!selectedModel?.supportsImages}
+                  className="text-xs sm:text-sm"
+                >
+                  Material
                 </TabsTrigger>
               </TabsList>
 

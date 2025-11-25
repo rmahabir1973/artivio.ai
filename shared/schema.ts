@@ -479,6 +479,8 @@ export const generateVideoRequestSchema = z.object({
     'veo-3',
     'veo-3.1',
     'veo-3.1-fast',
+    'veo-3.1-first-and-last-frames',
+    'veo-3.1-fast-reference-2-video',
     'runway-gen3-alpha-turbo',
     'seedance-1-pro',
     'seedance-1-lite',
@@ -490,7 +492,7 @@ export const generateVideoRequestSchema = z.object({
     'sora-2-pro-storyboard',
   ]),
   prompt: z.string().min(1).max(2000),
-  generationType: z.enum(['text-to-video', 'image-to-video']).optional(),
+  generationType: z.enum(['text-to-video', 'image-to-video', 'first-and-last-frames-to-video', 'reference-2-video']).optional(),
   referenceImages: z.array(imageInputSchema).max(3).optional(), // Up to 3 images (base64 or HTTPS URL)
   veoSubtype: z.enum(['TEXT_2_VIDEO', 'REFERENCE_2_VIDEO', 'FIRST_AND_LAST_FRAMES_2_VIDEO']).optional(), // Explicit Veo generation subtype
   parameters: z.object({
