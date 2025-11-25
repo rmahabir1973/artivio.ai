@@ -34,7 +34,7 @@ import { analyzeImageWithVision } from "./openaiVision";
 import { processImageInputs, saveBase64Images, saveBase64Video } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
-import { combineVideos, generateThumbnail, reencodeVideoForStreaming } from "./videoProcessor";
+import { combineVideos, generateThumbnail, generateImageThumbnail, reencodeVideoForStreaming } from "./videoProcessor";
 import { LoopsService } from "./loops";
 import { logger } from "./logger";
 import { 
@@ -1287,35 +1287,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
           }
           
-          // Re-encode and generate thumbnail for video generations (async, don't block callback)
+          // Generate thumbnails for video and image generations (async, don't block callback)
           const gen = await storage.getGeneration(generationId);
-          if (gen && gen.type === 'video' && resultUrl) {
-            // Re-encode video for optimized streaming (async background job)
+          if (gen && resultUrl) {
+            // Generate appropriate thumbnail based on generation type
             (async () => {
               try {
-                console.log(`🎬 Starting video optimization for ${generationId}...`);
-                const optimizedUrl = await reencodeVideoForStreaming(resultUrl, generationId);
-                
-                // Update generation with optimized URL
-                await storage.updateGeneration(generationId, { resultUrl: optimizedUrl });
-                console.log(`✓ Video optimized and URL updated for ${generationId}: ${optimizedUrl}`);
-                
-                // Generate thumbnail from optimized video (use local path for efficiency)
-                const localVideoPath = path.join(process.cwd(), 'public', optimizedUrl.replace(/^\//,''));
-                const thumbResult = await generateThumbnail({
-                  videoPath: localVideoPath,
-                  generationId: generationId,
-                  timestampSeconds: 1, // Extract frame at 1 second mark
-                });
-                
-                await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
-                console.log(`✓ Thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                if (gen.type === 'video') {
+                  // Re-encode video for optimized streaming (async background job)
+                  console.log(`🎬 Starting video optimization for ${generationId}...`);
+                  const optimizedUrl = await reencodeVideoForStreaming(resultUrl, generationId);
+                  
+                  // Update generation with optimized URL
+                  await storage.updateGeneration(generationId, { resultUrl: optimizedUrl });
+                  console.log(`✓ Video optimized and URL updated for ${generationId}: ${optimizedUrl}`);
+                  
+                  // Generate thumbnail from optimized video (use local path for efficiency)
+                  const localVideoPath = path.join(process.cwd(), 'public', optimizedUrl.replace(/^\//,''));
+                  const thumbResult = await generateThumbnail({
+                    videoPath: localVideoPath,
+                    generationId: generationId,
+                    timestampSeconds: 1, // Extract frame at 1 second mark
+                  });
+                  
+                  await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+                  console.log(`✓ Thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                } else if (['image', 'upscaling', 'background-remover'].includes(gen.type)) {
+                  // Generate thumbnail for image types
+                  console.log(`🖼️  Generating image thumbnail for ${generationId}...`);
+                  const thumbResult = await generateImageThumbnail(resultUrl, generationId);
+                  
+                  await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+                  console.log(`✓ Image thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                }
               } catch (error: any) {
-                console.error(`⚠️  Video optimization/thumbnail failed for ${generationId}:`, error.message);
-                // Keep original URL if optimization fails - don't break user experience
+                console.error(`⚠️  Thumbnail generation failed for ${generationId}:`, error.message);
+                // Don't break user experience - thumbnails are optional
               }
             })().catch((error) => {
-              console.error(`⚠️  Background video processing error for ${generationId}:`, error);
+              console.error(`⚠️  Background thumbnail processing error for ${generationId}:`, error);
             });
           }
         } else {

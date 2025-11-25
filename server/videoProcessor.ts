@@ -707,6 +707,65 @@ export async function generateThumbnail(options: GenerateThumbnailOptions): Prom
 }
 
 /**
+ * Generate a thumbnail from an image URL by downloading and resizing it
+ * For images, we create a small version for preview purposes
+ */
+export async function generateImageThumbnail(imageUrl: string, generationId: string): Promise<GenerateThumbnailResult> {
+  await fs.mkdir(THUMBNAIL_DIR, { recursive: true });
+  
+  let tempDir: string | null = null;
+  
+  try {
+    tempDir = path.join(TEMP_DIR, `img-thumb-${nanoid()}`);
+    await fs.mkdir(tempDir, { recursive: true });
+    
+    // Download image
+    console.log(`📥 Downloading image for thumbnail: ${imageUrl}`);
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 30000 });
+    const imageBuffer = Buffer.from(response.data);
+    const tempImagePath = path.join(tempDir, 'image.jpg');
+    await fs.writeFile(tempImagePath, imageBuffer);
+    
+    // Generate thumbnail by resizing image to 300x300 max (ffmpeg works for images too)
+    const thumbnailFilename = `${generationId}.jpg`;
+    const thumbnailPath = path.join(THUMBNAIL_DIR, thumbnailFilename);
+    const thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
+    
+    // Use ffmpeg to resize image to 300x300 max while maintaining aspect ratio
+    const command = `ffmpeg -i "${tempImagePath}" -vf "scale=300:300:force_original_aspect_ratio=decrease" -q:v 5 "${thumbnailPath}" -y`;
+    
+    const { stderr } = await execAsync(command, { 
+      timeout: 30000,
+      maxBuffer: 10 * 1024 * 1024 
+    });
+    
+    const stats = await fs.stat(thumbnailPath);
+    if (stats.size === 0) {
+      throw new Error('Generated thumbnail is empty');
+    }
+    
+    console.log(`✓ Generated image thumbnail for ${generationId}: ${thumbnailPath}`);
+    
+    return {
+      thumbnailUrl,
+      thumbnailPath,
+    };
+  } catch (error: any) {
+    console.error(`✗ Image thumbnail generation failed for ${generationId}:`, error.message);
+    throw new Error(`Failed to generate image thumbnail: ${error.message}`);
+  } finally {
+    // Cleanup temp directory
+    if (tempDir) {
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      }
+    }
+  }
+}
+
+/**
  * Re-encode a video from URL for optimized streaming
  * Downloads, re-encodes with bitrate limits, and saves to public directory
  */
