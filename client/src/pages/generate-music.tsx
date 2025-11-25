@@ -20,6 +20,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Music, ChevronDown, Sparkles, Upload, Plus } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
+import { SiSoundcloud } from "react-icons/si";
+
+// Music model icon component - all Suno models use the same icon
+const MusicModelIcon = ({ className = "h-4 w-4" }: { className?: string }) => {
+  return <SiSoundcloud className={`${className} text-orange-500`} />;
+};
 
 const MUSIC_MODEL_INFO = [
   { value: "suno-v3.5", label: "Suno V3.5", description: "High-quality music generation" },
@@ -682,12 +688,18 @@ export default function GenerateMusic() {
                   <Label htmlFor="model">Model</Label>
                   <Select value={model} onValueChange={setModel}>
                     <SelectTrigger id="model" data-testid="select-music-model">
-                      <SelectValue />
+                      <div className="flex items-center gap-2">
+                        <MusicModelIcon />
+                        <span>{selectedModel?.label || model} ({selectedModel?.cost || 0} credits)</span>
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {MUSIC_MODELS.map((m) => (
                         <SelectItem key={m.value} value={m.value}>
-                          {m.label} ({m.cost} credits)
+                          <div className="flex items-center gap-2">
+                            <MusicModelIcon />
+                            <span>{m.label} ({m.cost} credits)</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1021,8 +1033,13 @@ export default function GenerateMusic() {
                 {MUSIC_MODELS.map((m) => (
                   <Card key={m.value} className={model === m.value ? "border-primary" : ""}>
                     <CardHeader>
-                      <CardTitle className="text-lg">{m.label}</CardTitle>
-                      <CardDescription>{m.description}</CardDescription>
+                      <div className="flex items-center gap-3">
+                        <MusicModelIcon className="h-5 w-5" />
+                        <div>
+                          <CardTitle className="text-lg">{m.label}</CardTitle>
+                          <CardDescription>{m.description}</CardDescription>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
@@ -1088,12 +1105,18 @@ export default function GenerateMusic() {
                 <Label htmlFor="extendModel">Model</Label>
                 <Select value={extendModel} onValueChange={setExtendModel}>
                   <SelectTrigger id="extendModel" data-testid="select-extend-model">
-                    <SelectValue />
+                    <div className="flex items-center gap-2">
+                      <MusicModelIcon />
+                      <span>{MUSIC_MODELS.find(m => m.value === extendModel)?.label || extendModel}</span>
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {MUSIC_MODELS.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
-                        {m.label} ({m.cost} credits)
+                        <div className="flex items-center gap-2">
+                          <MusicModelIcon />
+                          <span>{m.label} ({m.cost} credits)</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1407,12 +1430,18 @@ export default function GenerateMusic() {
                 <Label htmlFor="coverModel">Model</Label>
                 <Select value={coverModel} onValueChange={setCoverModel}>
                   <SelectTrigger id="coverModel" data-testid="select-cover-model">
-                    <SelectValue />
+                    <div className="flex items-center gap-2">
+                      <MusicModelIcon />
+                      <span>{MUSIC_MODELS.find(m => m.value === coverModel)?.label || coverModel}</span>
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {MUSIC_MODELS.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
-                        {m.label} ({m.cost} credits)
+                        <div className="flex items-center gap-2">
+                          <MusicModelIcon />
+                          <span>{m.label} ({m.cost} credits)</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1662,12 +1691,18 @@ export default function GenerateMusic() {
                 <Label htmlFor="uploadExtendModel">Model</Label>
                 <Select value={uploadExtendModel} onValueChange={setUploadExtendModel}>
                   <SelectTrigger id="uploadExtendModel" data-testid="select-upload-extend-model">
-                    <SelectValue />
+                    <div className="flex items-center gap-2">
+                      <MusicModelIcon />
+                      <span>{MUSIC_MODELS.find(m => m.value === uploadExtendModel)?.label || uploadExtendModel}</span>
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {MUSIC_MODELS.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
-                        {m.label} ({m.cost} credits)
+                        <div className="flex items-center gap-2">
+                          <MusicModelIcon />
+                          <span>{m.label} ({m.cost} credits)</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

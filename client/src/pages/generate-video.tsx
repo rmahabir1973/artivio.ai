@@ -14,7 +14,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Video, Upload, X, Info, ChevronDown } from "lucide-react";
+import { Loader2, Video, Upload, X, Info, ChevronDown, Sparkles, Zap, Film, Wand2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
@@ -24,6 +24,27 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { useLocation } from "wouter";
+import { SiGoogle } from "react-icons/si";
+
+// Model icon component for consistent styling
+const ModelIcon = ({ modelValue, className = "h-4 w-4" }: { modelValue: string; className?: string }) => {
+  if (modelValue.startsWith("veo-")) {
+    return <SiGoogle className={`${className} text-blue-500`} />;
+  }
+  if (modelValue.startsWith("runway-")) {
+    return <Film className={`${className} text-purple-500`} />;
+  }
+  if (modelValue.startsWith("seedance-")) {
+    return <Sparkles className={`${className} text-pink-500`} />;
+  }
+  if (modelValue.startsWith("wan-")) {
+    return <Wand2 className={`${className} text-orange-500`} />;
+  }
+  if (modelValue.startsWith("kling-")) {
+    return <Zap className={`${className} text-yellow-500`} />;
+  }
+  return <Video className={`${className} text-muted-foreground`} />;
+};
 
 const ASPECT_RATIO_SUPPORT: Record<string, string[]> = {
   "veo-3.1": ["16:9", "9:16"],
@@ -878,12 +899,18 @@ export default function GenerateVideo() {
               <Label htmlFor="model">AI Model</Label>
               <Select value={model} onValueChange={handleModelChange}>
                 <SelectTrigger id="model" data-testid="select-video-model">
-                  <SelectValue />
+                  <div className="flex items-center gap-2">
+                    <ModelIcon modelValue={model} />
+                    <span>{selectedModel?.label || model} ({selectedModel?.cost || 0} credits)</span>
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
                   {VIDEO_MODELS.map((m) => (
                     <SelectItem key={m.value} value={m.value}>
-                      {m.label} ({m.cost} credits)
+                      <div className="flex items-center gap-2">
+                        <ModelIcon modelValue={m.value} />
+                        <span>{m.label} ({m.cost} credits)</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1180,9 +1207,14 @@ export default function GenerateVideo() {
                   >
                     <CardHeader className="p-4">
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <CardTitle className="text-base">{m.label}</CardTitle>
-                          <CardDescription className="text-xs">{m.description}</CardDescription>
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5">
+                            <ModelIcon modelValue={m.value} className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">{m.label}</CardTitle>
+                            <CardDescription className="text-xs">{m.description}</CardDescription>
+                          </div>
                         </div>
                         {m.supportsImages && (
                           <Badge variant="secondary" className="shrink-0 text-xs">

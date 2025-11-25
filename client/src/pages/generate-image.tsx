@@ -13,7 +13,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Image as ImageIcon, Upload, X, ChevronDown } from "lucide-react";
+import { Loader2, Image as ImageIcon, Upload, X, ChevronDown, Sparkles, Zap, Palette, Banana } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
@@ -21,6 +21,27 @@ import { PreviewPanel } from "@/components/preview-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
+import { SiOpenai } from "react-icons/si";
+
+// Model icon component for consistent styling
+const ImageModelIcon = ({ modelValue, className = "h-4 w-4" }: { modelValue: string; className?: string }) => {
+  if (modelValue === "4o-image") {
+    return <SiOpenai className={`${className} text-green-500`} />;
+  }
+  if (modelValue === "flux-kontext") {
+    return <Zap className={`${className} text-blue-500`} />;
+  }
+  if (modelValue === "nano-banana") {
+    return <Banana className={`${className} text-yellow-500`} />;
+  }
+  if (modelValue === "seedream-4") {
+    return <Sparkles className={`${className} text-purple-500`} />;
+  }
+  if (modelValue === "midjourney-v7") {
+    return <Palette className={`${className} text-indigo-500`} />;
+  }
+  return <ImageIcon className={`${className} text-muted-foreground`} />;
+};
 
 const IMAGE_MODEL_INFO = [
   { value: "4o-image", label: "4o Image API", description: "High-fidelity visuals with accurate text rendering" },
@@ -573,12 +594,18 @@ export default function GenerateImage() {
                 <Label htmlFor="model">Model</Label>
                 <Select value={model} onValueChange={setModel}>
                   <SelectTrigger id="model" data-testid="select-image-model">
-                    <SelectValue />
+                    <div className="flex items-center gap-2">
+                      <ImageModelIcon modelValue={model} />
+                      <span>{selectedModel?.label || model} ({selectedModel?.cost || 0} credits)</span>
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {IMAGE_MODELS.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
-                        {m.label} ({m.cost} credits)
+                        <div className="flex items-center gap-2">
+                          <ImageModelIcon modelValue={m.value} />
+                          <span>{m.label} ({m.cost} credits)</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
