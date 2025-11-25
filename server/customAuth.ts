@@ -10,14 +10,23 @@ import { getBaseUrl } from "./urlUtils";
 
 const SALT_ROUNDS = 10;
 
+// Admin email whitelist
+const ADMIN_EMAILS = [
+  "ryan.mahabir@outlook.com",
+  "admin@artivio.ai",
+  "joe@joecodeswell.com",
+  "jordanlambrecht@gmail.com",
+];
+
 // Helper to transform database user to Express.User format
 function toExpressUser(dbUser: typeof users.$inferSelect): Express.User {
+  const isAdmin = ADMIN_EMAILS.includes(dbUser.email?.toLowerCase() || "");
   return {
     id: dbUser.id,
     userId: dbUser.id,
     email: dbUser.email || "",
     tokenVersion: dbUser.tokenVersion,
-    isAdmin: false, // Will be set by admin check in auth routes
+    isAdmin,
   };
 }
 
