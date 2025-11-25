@@ -996,15 +996,23 @@ export async function uploadExtend(params: {
 // because Kie.ai does not offer image analysis/vision capabilities.
 
 // ElevenLabs Voice Cloning - Create custom voice from audio samples
+// Uses /api/v1/jobs/createTask with elevenlabs/voice-clone model (same API as TTS)
 export async function cloneVoice(params: {
   name: string;
   description?: string;
   audioFiles: string[]; // URLs to audio samples (min 60s total recommended)
+  callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
-  return await callKieApi('/api/v1/elevenlabs/voice-clone', {
-    name: params.name,
-    description: params.description || '',
-    files: params.audioFiles,
+  console.log(`📞 Kie.ai Voice Clone: Creating voice "${params.name}" with ${params.audioFiles.length} audio files`);
+  
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: 'elevenlabs/voice-clone',
+    callBackUrl: params.callBackUrl,
+    input: {
+      name: params.name,
+      description: params.description || '',
+      files: params.audioFiles,
+    },
   });
 }
 
