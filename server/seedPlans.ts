@@ -2,7 +2,7 @@ import { db } from "./db";
 import { subscriptionPlans } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-// Default subscription plans with marketing copy
+// Default subscription plans with marketing copy and Stripe IDs
 export const defaultPlans = [
   {
     name: "free",
@@ -29,13 +29,36 @@ export const defaultPlans = [
     sortOrder: 0,
   },
   {
-    name: "starter",
+    name: "starter-monthly",
     displayName: "Starter",
     description: "Everything you need to bring your creative ideas to life. Perfect for individuals and content creators getting started with AI.",
-    price: 1900, // $19.00
-    monthlyPrice: 1900, // $19.00/month
-    annualPrice: 14800, // $148/year (~35% off)
+    price: 1900, // $19.00/month
+    monthlyPrice: 1900,
+    annualPrice: null,
     billingPeriod: "monthly",
+    creditsPerMonth: 4000,
+    creditRolloverLimit: 2000,
+    savingsPercentage: 0,
+    features: [
+      "4,000 credits per month",
+      "Access to all AI models (Veo, Runway, Suno, etc.)",
+      "Generate unlimited videos, images & music",
+      "Priority support via email",
+      "Rollover up to 2,000 unused credits"
+    ],
+    stripeProductId: "prod_TUAOGMBKxiYbwT",
+    stripePriceId: "price_1SXC65KvkQIROMzfKMV2IETR",
+    isActive: true,
+    sortOrder: 1,
+  },
+  {
+    name: "starter-yearly",
+    displayName: "Starter (Annual)",
+    description: "Everything you need to bring your creative ideas to life. Save 35% with annual billing!",
+    price: 14800, // $148/year
+    monthlyPrice: null,
+    annualPrice: 14800,
+    billingPeriod: "annual",
     creditsPerMonth: 4000,
     creditRolloverLimit: 2000,
     savingsPercentage: 35,
@@ -44,21 +67,46 @@ export const defaultPlans = [
       "Access to all AI models (Veo, Runway, Suno, etc.)",
       "Generate unlimited videos, images & music",
       "Priority support via email",
-      "Rollover up to 2,000 unused credits"
+      "Rollover up to 2,000 unused credits",
+      "Save 35% with annual billing"
     ],
-    stripeProductId: null, // Will be set via admin panel
-    stripePriceId: null, // Will be set via admin panel
+    stripeProductId: "prod_TUAOGMBKxiYbwT",
+    stripePriceId: "price_1SXCABKvkQIROMzfCUt5gQFq",
     isActive: true,
-    sortOrder: 1,
+    sortOrder: 2,
   },
   {
-    name: "pro",
+    name: "pro-monthly",
     displayName: "Professional",
     description: "Unlock your full creative potential with our most popular plan. Ideal for professionals, agencies, and businesses scaling their content production.",
-    price: 4900, // $49.00
-    monthlyPrice: 4900, // $49.00/month
-    annualPrice: 38400, // $384/year (~35% off)
+    price: 4900, // $49.00/month
+    monthlyPrice: 4900,
+    annualPrice: null,
     billingPeriod: "monthly",
+    creditsPerMonth: 10000,
+    creditRolloverLimit: 5000,
+    savingsPercentage: 0,
+    features: [
+      "10,000 credits per month",
+      "Access to all premium AI models",
+      "Highest priority processing queue",
+      "Priority support (email & chat)",
+      "Rollover up to 5,000 unused credits",
+      "Early access to new features & models"
+    ],
+    stripeProductId: "prod_TUAOGMBKxiYbwT",
+    stripePriceId: "price_1SXCUZKvkQIROMzflhWxr4hz",
+    isActive: true,
+    sortOrder: 3,
+  },
+  {
+    name: "pro-yearly",
+    displayName: "Professional (Annual)",
+    description: "Unlock your full creative potential and save 35% with annual billing. Perfect for professionals and businesses.",
+    price: 38400, // $384/year
+    monthlyPrice: null,
+    annualPrice: 38400,
+    billingPeriod: "annual",
     creditsPerMonth: 10000,
     creditRolloverLimit: 5000,
     savingsPercentage: 35,
@@ -68,12 +116,13 @@ export const defaultPlans = [
       "Highest priority processing queue",
       "Priority support (email & chat)",
       "Rollover up to 5,000 unused credits",
-      "Early access to new features & models"
+      "Early access to new features & models",
+      "Save 35% with annual billing"
     ],
-    stripeProductId: null, // Will be set via admin panel
-    stripePriceId: null, // Will be set via admin panel
+    stripeProductId: "prod_TUAOGMBKxiYbwT",
+    stripePriceId: "price_1SXCVhKvkQIROMzfOktck8wI",
     isActive: true,
-    sortOrder: 2,
+    sortOrder: 4,
   },
 ];
 

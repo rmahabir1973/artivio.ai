@@ -4565,11 +4565,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Execute the reset in a transaction
       const result = await storage.resetPlans();
 
-      console.log(`✅ [Admin] Plan reset complete: ${result.plansCreated} plans created, ${result.plansDeleted} old plans removed`);
+      console.log(`✅ [Admin] Plan reset complete:`);
+      console.log(`   - ${result.usersMigrated} user(s) migrated to free trial`);
+      console.log(`   - ${result.plansDeleted} old plan(s) removed`);
+      console.log(`   - ${result.plansCreated} new plan(s) created`);
 
       res.json({
         success: true,
-        message: `Successfully reset plans: ${result.plansCreated} created, ${result.plansDeleted} removed`,
+        message: `Successfully reset plans: ${result.plansCreated} created, ${result.plansDeleted} removed, ${result.usersMigrated} users migrated to free trial`,
+        stats: {
+          plansCreated: result.plansCreated,
+          plansDeleted: result.plansDeleted,
+          usersMigrated: result.usersMigrated,
+        },
         plans: result.plans
       });
     } catch (error: any) {

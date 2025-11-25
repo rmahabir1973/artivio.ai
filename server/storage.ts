@@ -1383,34 +1383,38 @@ export class DatabaseStorage implements IStorage {
     return { success: true };
   }
 
-  async resetPlans(): Promise<{ plans: SubscriptionPlan[]; plansCreated: number; plansDeleted: number }> {
+  async resetPlans(): Promise<{ plans: SubscriptionPlan[]; plansCreated: number; plansDeleted: number; usersMigrated: number }> {
     const { defaultPlans } = await import('./seedPlans');
     
     return await db.transaction(async (tx) => {
-      // SAFETY CHECK: Ensure no active subscriptions exist
+      // Step 1: Get free plan ID (will be created first, so we can reference it)
+      // First, check if any subscriptions exist
       const activeSubscriptions = await tx
         .select()
         .from(userSubscriptions);
       
-      if (activeSubscriptions.length > 0) {
-        throw new Error(
-          `Cannot reset plans: ${activeSubscriptions.length} active subscription(s) exist. ` +
-          `Please cancel or migrate all subscriptions before resetting plans.`
-        );
+      const usersMigrated = activeSubscriptions.length;
+
+      if (usersMigrated > 0) {
+        console.log(`👥 Found ${usersMigrated} active subscription(s) - will migrate to free plan`);
+        
+        // Delete all subscriptions (users will get free trial on next login via auth flow)
+        await tx.delete(userSubscriptions);
+        console.log(`✅ Migrated ${usersMigrated} user(s) to free trial`);
       }
 
-      // Step 1: Count existing plans
+      // Step 2: Count existing plans
       const existingPlans = await tx.select().from(subscriptionPlans);
       const plansDeleted = existingPlans.length;
 
       console.log(`🗑️  Deleting ${plansDeleted} existing plan(s)...`);
 
-      // Step 2: Hard delete ALL existing plans (safe since no active subscriptions)
+      // Step 3: Hard delete ALL existing plans (safe since subscriptions removed)
       await tx.delete(subscriptionPlans);
 
       console.log(`✅ Deleted ${plansDeleted} plan(s)`);
 
-      // Step 3: Insert new canonical plans
+      // Step 4: Insert new canonical plans with Stripe IDs pre-populated
       console.log(`📝 Creating ${defaultPlans.length} canonical plan(s)...`);
       
       const insertedPlans: SubscriptionPlan[] = [];
@@ -1422,7 +1426,7 @@ export class DatabaseStorage implements IStorage {
           .returning();
         
         insertedPlans.push(plan);
-        console.log(`   ✓ Created: ${plan.displayName}`);
+        console.log(`   ✓ Created: ${plan.displayName} ${plan.stripePriceId ? `(${plan.stripePriceId})` : ''}`);
       }
 
       console.log(`✅ Created ${insertedPlans.length} plan(s)`);
@@ -1431,6 +1435,7 @@ export class DatabaseStorage implements IStorage {
         plans: insertedPlans,
         plansCreated: insertedPlans.length,
         plansDeleted,
+        usersMigrated,
       };
     });
   }
