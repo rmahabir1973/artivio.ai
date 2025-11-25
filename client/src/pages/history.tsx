@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,8 +72,12 @@ import {
   Trash2,
   MoreHorizontal,
   Play,
+  CheckSquare,
+  X,
+  Tag,
+  FolderInput,
 } from "lucide-react";
-import type { Generation, Collection } from "@shared/schema";
+import type { Generation, Collection, Tag as TagType } from "@shared/schema";
 import { fetchWithAuth, apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow, subDays, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -75,7 +95,19 @@ const COLLECTION_COLORS = [
   '#0EA5E9', '#3B82F6',
 ];
 
-function GenerationListItem({ generation }: { generation: Generation }) {
+interface SelectableListItemProps {
+  generation: Generation;
+  isSelectionMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
+}
+
+function GenerationListItem({ 
+  generation, 
+  isSelectionMode, 
+  isSelected, 
+  onToggleSelect 
+}: SelectableListItemProps) {
   const { toast } = useToast();
   
   const statusColors = {
@@ -146,11 +178,35 @@ function GenerationListItem({ generation }: { generation: Generation }) {
 
   const thumbnail = getThumbnail();
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (isSelectionMode) {
+      e.preventDefault();
+      e.stopPropagation();
+      onToggleSelect(generation.id);
+    }
+  };
+
   return (
     <div 
-      className="flex items-center gap-4 p-3 rounded-md hover-elevate border border-border/50 bg-card"
+      className={cn(
+        "flex items-center gap-4 p-3 rounded-md hover-elevate border bg-card transition-all cursor-pointer",
+        isSelected 
+          ? "ring-2 ring-primary border-primary" 
+          : "border-border/50"
+      )}
+      onClick={handleClick}
       data-testid={`list-item-${generation.id}`}
     >
+      {isSelectionMode && (
+        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelect(generation.id)}
+            data-testid={`checkbox-${generation.id}`}
+          />
+        </div>
+      )}
+
       <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted shrink-0">
         {thumbnail ? (
           generation.type === 'video' ? (
@@ -198,34 +254,92 @@ function GenerationListItem({ generation }: { generation: Generation }) {
         {formatDistanceToNow(new Date(generation.createdAt), { addSuffix: true })}
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
-        {generation.status === 'completed' && generation.resultUrl && (
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={handleDownload}
-            data-testid={`button-download-${generation.id}`}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost" data-testid={`button-more-${generation.id}`}>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => deleteMutation.mutate()}
-              className="text-destructive"
-              data-testid={`button-delete-${generation.id}`}
+      {!isSelectionMode && (
+        <div className="flex items-center gap-1 shrink-0">
+          {generation.status === 'completed' && generation.resultUrl && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+              data-testid={`button-download-${generation.id}`}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={(e) => e.stopPropagation()}
+                data-testid={`button-more-${generation.id}`}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => deleteMutation.mutate()}
+                className="text-destructive"
+                data-testid={`button-delete-${generation.id}`}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface SelectableCardWrapperProps {
+  generation: Generation;
+  isSelectionMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
+}
+
+function SelectableCardWrapper({
+  generation,
+  isSelectionMode,
+  isSelected,
+  onToggleSelect,
+}: SelectableCardWrapperProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (isSelectionMode) {
+      e.preventDefault();
+      e.stopPropagation();
+      onToggleSelect(generation.id);
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative transition-all",
+        isSelectionMode && "cursor-pointer",
+        isSelected && "ring-2 ring-primary rounded-lg"
+      )}
+      onClick={handleClick}
+      data-testid={`selectable-card-${generation.id}`}
+    >
+      {isSelectionMode && (
+        <div 
+          className="absolute top-3 left-3 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelect(generation.id)}
+            className="bg-background/80 backdrop-blur-sm"
+            data-testid={`checkbox-${generation.id}`}
+          />
+        </div>
+      )}
+      <div className={isSelectionMode ? "pointer-events-none" : ""}>
+        <GenerationCard generation={generation} />
       </div>
     </div>
   );
@@ -246,6 +360,12 @@ export default function History() {
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newCollectionColor, setNewCollectionColor] = useState(COLLECTION_COLORS[0]);
 
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+  const [movePopoverOpen, setMovePopoverOpen] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
@@ -262,6 +382,27 @@ export default function History() {
   useEffect(() => {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeView, typeFilter, searchQuery, sortBy, viewMode]);
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const {
     data,
@@ -300,6 +441,11 @@ export default function History() {
     enabled: isAuthenticated,
   });
 
+  const { data: tags = [] } = useQuery<TagType[]>({
+    queryKey: ['/api/tags'],
+    enabled: isAuthenticated,
+  });
+
   const createCollectionMutation = useMutation({
     mutationFn: async (data: { name: string; color: string }) => {
       return await apiRequest("POST", "/api/collections", data);
@@ -312,6 +458,81 @@ export default function History() {
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to create collection", variant: "destructive" });
+    },
+  });
+
+  const invalidateGenerations = () => {
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === 'string' && key.startsWith('/api/generations');
+      }
+    });
+  };
+
+  const bulkMoveMutation = useMutation({
+    mutationFn: async ({ generationIds, collectionId }: { generationIds: string[], collectionId: string | null }) =>
+      apiRequest('POST', '/api/generations/bulk/move', { generationIds, collectionId }),
+    onSuccess: () => {
+      invalidateGenerations();
+      setSelectedIds(new Set());
+      setMovePopoverOpen(false);
+      toast({ title: 'Success', description: 'Items moved successfully' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to move items', variant: 'destructive' });
+    },
+  });
+
+  const bulkFavoriteMutation = useMutation({
+    mutationFn: async ({ generationIds, isFavorite }: { generationIds: string[], isFavorite: boolean }) =>
+      apiRequest('POST', '/api/generations/bulk/favorite', { generationIds, isFavorite }),
+    onSuccess: () => {
+      invalidateGenerations();
+      toast({ title: 'Success', description: 'Favorites updated' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update favorites', variant: 'destructive' });
+    },
+  });
+
+  const bulkArchiveMutation = useMutation({
+    mutationFn: async ({ generationIds, archive }: { generationIds: string[], archive: boolean }) =>
+      apiRequest('POST', '/api/generations/bulk/archive', { generationIds, archive }),
+    onSuccess: (_, variables) => {
+      invalidateGenerations();
+      setSelectedIds(new Set());
+      toast({ title: 'Success', description: variables.archive ? 'Items archived' : 'Items restored' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to archive items', variant: 'destructive' });
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (generationIds: string[]) =>
+      apiRequest('POST', '/api/generations/bulk/delete', { generationIds }),
+    onSuccess: () => {
+      invalidateGenerations();
+      setSelectedIds(new Set());
+      setShowBulkDeleteDialog(false);
+      toast({ title: 'Success', description: 'Items deleted' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to delete items', variant: 'destructive' });
+    },
+  });
+
+  const bulkAddTagMutation = useMutation({
+    mutationFn: async ({ generationIds, tagId }: { generationIds: string[], tagId: string }) =>
+      apiRequest('POST', '/api/generations/bulk/add-tag', { generationIds, tagId }),
+    onSuccess: () => {
+      invalidateGenerations();
+      setTagPopoverOpen(false);
+      toast({ title: 'Success', description: 'Tag added to selected items' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to add tag', variant: 'destructive' });
     },
   });
 
@@ -365,6 +586,17 @@ export default function History() {
     return result;
   }, [allGenerations, activeView, typeFilter, searchQuery, sortBy]);
 
+  const allVisibleSelected = filteredGenerations.length > 0 && 
+    filteredGenerations.every(g => selectedIds.has(g.id));
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredGenerations.map(g => g.id)));
+    }
+  };
+
   const getViewLabel = () => {
     if (activeView === 'all') return 'All Files';
     if (activeView === 'favorites') return 'Favorites';
@@ -372,6 +604,32 @@ export default function History() {
     if (activeView === 'archived') return 'Archived';
     const collection = collections.find(c => c.id === activeView);
     return collection?.name || 'Files';
+  };
+
+  const handleBulkFavorite = () => {
+    const ids = Array.from(selectedIds);
+    bulkFavoriteMutation.mutate({ generationIds: ids, isFavorite: true });
+  };
+
+  const handleBulkArchive = () => {
+    const ids = Array.from(selectedIds);
+    const archive = activeView !== 'archived';
+    bulkArchiveMutation.mutate({ generationIds: ids, archive });
+  };
+
+  const handleBulkMove = (collectionId: string | null) => {
+    const ids = Array.from(selectedIds);
+    bulkMoveMutation.mutate({ generationIds: ids, collectionId });
+  };
+
+  const handleBulkAddTag = (tagId: string) => {
+    const ids = Array.from(selectedIds);
+    bulkAddTagMutation.mutate({ generationIds: ids, tagId });
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selectedIds);
+    bulkDeleteMutation.mutate(ids);
   };
 
   if (authLoading) {
@@ -552,67 +810,105 @@ export default function History() {
                 <div>
                   <h1 className="text-xl font-semibold">{getViewLabel()}</h1>
                   <p className="text-sm text-muted-foreground">
-                    {filteredGenerations.length} item{filteredGenerations.length !== 1 ? 's' : ''}
+                    {selectionMode && selectedIds.size > 0 
+                      ? `${selectedIds.size} of ${filteredGenerations.length} selected`
+                      : `${filteredGenerations.length} item${filteredGenerations.length !== 1 ? 's' : ''}`
+                    }
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 w-[200px]"
-                    data-testid="input-search"
-                  />
-                </div>
+                {selectionMode ? (
+                  <>
+                    <div className="flex items-center gap-2 mr-2">
+                      <Checkbox
+                        checked={allVisibleSelected}
+                        onCheckedChange={toggleSelectAll}
+                        data-testid="checkbox-select-all"
+                      />
+                      <span className="text-sm text-muted-foreground">Select All</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exitSelectionMode}
+                      data-testid="button-cancel-selection"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 w-[200px]"
+                        data-testid="input-search"
+                      />
+                    </div>
 
-                <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
-                  <SelectTrigger className="w-[120px]" data-testid="select-type-filter">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="video">Videos</SelectItem>
-                    <SelectItem value="image">Images</SelectItem>
-                    <SelectItem value="music">Music</SelectItem>
-                  </SelectContent>
-                </Select>
+                    <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
+                      <SelectTrigger className="w-[120px]" data-testid="select-type-filter">
+                        <SelectValue placeholder="Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="video">Videos</SelectItem>
+                        <SelectItem value="image">Images</SelectItem>
+                        <SelectItem value="music">Music</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-                  <SelectTrigger className="w-[130px]" data-testid="select-sort">
-                    <SelectValue placeholder="Sort" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="oldest">Oldest</SelectItem>
-                    <SelectItem value="name-asc">Name A-Z</SelectItem>
-                    <SelectItem value="name-desc">Name Z-A</SelectItem>
-                  </SelectContent>
-                </Select>
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+                      <SelectTrigger className="w-[130px]" data-testid="select-sort">
+                        <SelectValue placeholder="Sort" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Newest</SelectItem>
+                        <SelectItem value="oldest">Oldest</SelectItem>
+                        <SelectItem value="name-asc">Name A-Z</SelectItem>
+                        <SelectItem value="name-desc">Name Z-A</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                <div className="flex items-center border rounded-md">
-                  <Button
-                    size="icon"
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    onClick={() => setViewMode('grid')}
-                    className="rounded-r-none"
-                    data-testid="button-view-grid"
-                  >
-                    <Grid3X3 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    onClick={() => setViewMode('list')}
-                    className="rounded-l-none"
-                    data-testid="button-view-list"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
+                    <div className="flex items-center border rounded-md">
+                      <Button
+                        size="icon"
+                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                        onClick={() => setViewMode('grid')}
+                        className="rounded-r-none"
+                        data-testid="button-view-grid"
+                      >
+                        <Grid3X3 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant={viewMode === 'list' ? 'default' : 'ghost'}
+                        onClick={() => setViewMode('list')}
+                        className="rounded-l-none"
+                        data-testid="button-view-list"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectionMode(true)}
+                      disabled={filteredGenerations.length === 0}
+                      data-testid="button-select-mode"
+                    >
+                      <CheckSquare className="h-4 w-4 mr-1" />
+                      Select
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -663,13 +959,25 @@ export default function History() {
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredGenerations.map((generation) => (
-                  <GenerationCard key={generation.id} generation={generation} />
+                  <SelectableCardWrapper
+                    key={generation.id}
+                    generation={generation}
+                    isSelectionMode={selectionMode}
+                    isSelected={selectedIds.has(generation.id)}
+                    onToggleSelect={toggleSelect}
+                  />
                 ))}
               </div>
             ) : (
               <div className="space-y-2">
                 {filteredGenerations.map((generation) => (
-                  <GenerationListItem key={generation.id} generation={generation} />
+                  <GenerationListItem
+                    key={generation.id}
+                    generation={generation}
+                    isSelectionMode={selectionMode}
+                    isSelected={selectedIds.has(generation.id)}
+                    onToggleSelect={toggleSelect}
+                  />
                 ))}
               </div>
             )}
@@ -694,9 +1002,178 @@ export default function History() {
                 </Button>
               </div>
             )}
+
+            {selectedIds.size > 0 && <div className="h-24" />}
           </ScrollArea>
         </div>
       </div>
+
+      {selectedIds.size > 0 && (
+        <div 
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-card border shadow-lg rounded-lg p-3 flex items-center gap-3 z-50 animate-in slide-in-from-bottom-4 duration-200"
+          data-testid="bulk-action-bar"
+        >
+          <span className="text-sm font-medium whitespace-nowrap" data-testid="text-selected-count">
+            {selectedIds.size} selected
+          </span>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          <Popover open={movePopoverOpen} onOpenChange={setMovePopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                disabled={bulkMoveMutation.isPending}
+                data-testid="button-bulk-move"
+              >
+                <FolderInput className="h-4 w-4 mr-1" />
+                Move
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56" align="center">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Move to collection</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => handleBulkMove(null)}
+                  data-testid="button-move-none"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  No collection
+                </Button>
+                {collections.map((collection) => (
+                  <Button
+                    key={collection.id}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => handleBulkMove(collection.id)}
+                    data-testid={`button-move-${collection.id}`}
+                  >
+                    <Folder 
+                      className="h-4 w-4 mr-2" 
+                      style={{ color: collection.color || '#6366F1' }} 
+                    />
+                    {collection.name}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                disabled={bulkAddTagMutation.isPending}
+                data-testid="button-bulk-tag"
+              >
+                <Tag className="h-4 w-4 mr-1" />
+                Tag
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56" align="center">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Add tag</p>
+                {tags.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No tags available</p>
+                ) : (
+                  tags.map((tag) => (
+                    <Button
+                      key={tag.id}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => handleBulkAddTag(tag.id)}
+                      data-testid={`button-tag-${tag.id}`}
+                    >
+                      <div 
+                        className="h-3 w-3 rounded-full mr-2" 
+                        style={{ backgroundColor: tag.color }} 
+                      />
+                      {tag.name}
+                    </Button>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBulkFavorite}
+            disabled={bulkFavoriteMutation.isPending}
+            data-testid="button-bulk-favorite"
+          >
+            <Heart className="h-4 w-4 mr-1" />
+            Favorite
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBulkArchive}
+            disabled={bulkArchiveMutation.isPending}
+            data-testid="button-bulk-archive"
+          >
+            <Archive className="h-4 w-4 mr-1" />
+            {activeView === 'archived' ? 'Restore' : 'Archive'}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowBulkDeleteDialog(true)}
+            disabled={bulkDeleteMutation.isPending}
+            className="text-destructive hover:text-destructive"
+            data-testid="button-bulk-delete"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+            data-testid="button-clear-selection"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Clear
+          </Button>
+        </div>
+      )}
+
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} items?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected generations.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              {bulkDeleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={showCreateCollection} onOpenChange={setShowCreateCollection}>
         <DialogContent>
