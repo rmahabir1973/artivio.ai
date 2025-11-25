@@ -3,6 +3,50 @@ import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializePassportStrategies } from "./customAuth";
+import { pool } from "./db";
+
+// ===== GLOBAL ERROR HANDLERS =====
+// Prevent server crashes from unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ UNHANDLED PROMISE REJECTION:', reason);
+  console.error('   Promise:', promise);
+  // Don't crash - log and continue
+});
+
+// Prevent server crashes from uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ UNCAUGHT EXCEPTION:', error);
+  // For critical errors, give time to log before exiting
+  setTimeout(() => {
+    console.error('⚠️  Server shutting down due to uncaught exception');
+    process.exit(1);
+  }, 1000);
+});
+
+// Graceful shutdown - close database connections cleanly
+process.on('SIGTERM', async () => {
+  console.log('⚠️  SIGTERM received, shutting down gracefully...');
+  try {
+    await pool.end();
+    console.log('✓ Database pool closed successfully');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
+});
+
+process.on('SIGINT', async () => {
+  console.log('⚠️  SIGINT received, shutting down gracefully...');
+  try {
+    await pool.end();
+    console.log('✓ Database pool closed successfully');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
+});
 
 // Validate critical environment variables at startup
 const requiredEnvVars = ['DATABASE_URL', 'SESSION_SECRET'];
@@ -37,6 +81,34 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 // Configure cookie-parser with signing secret for secure plan selection
 app.use(cookieParser(process.env.SESSION_SECRET));
+
+// Request timeout middleware - prevent hanging requests
+app.use((req, res, next) => {
+  // Set timeout based on route type
+  const timeout = req.path.startsWith('/api/') ? 30000 : 60000; // 30s for API, 60s for others
+  
+  req.setTimeout(timeout, () => {
+    console.error(`⚠️  Request timeout: ${req.method} ${req.path}`);
+    if (!res.headersSent) {
+      res.status(408).json({ 
+        message: 'Request timeout. Please try again.',
+        timeout: `${timeout}ms`
+      });
+    }
+  });
+  
+  res.setTimeout(timeout, () => {
+    console.error(`⚠️  Response timeout: ${req.method} ${req.path}`);
+    if (!res.headersSent) {
+      res.status(504).json({ 
+        message: 'Response timeout. Server took too long to respond.',
+        timeout: `${timeout}ms`
+      });
+    }
+  });
+  
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
