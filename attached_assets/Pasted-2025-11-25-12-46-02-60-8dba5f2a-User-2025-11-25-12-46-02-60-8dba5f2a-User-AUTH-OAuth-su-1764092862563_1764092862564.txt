@@ -1,0 +1,105 @@
+2025-11-25 12:46:02.60
+8dba5f2a
+User
+}
+2025-11-25 12:46:02.60
+8dba5f2a
+User
+[AUTH] ✓ OAuth successful - cookies set via HTML response {
+2025-11-25 12:46:02.94
+8dba5f2a
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-25 12:46:02.94
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:46:02.96
+8dba5f2a
+User
+userId: '49729939',
+2025-11-25 12:46:02.96
+8dba5f2a
+User
+}
+
+2025-11-25 12:46:02.96
+8dba5f2a
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-25 12:46:02.96
+8dba5f2a
+User
+isAdmin: true
+2025-11-25 12:46:02.96
+8dba5f2a
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-25 12:46:02.96
+8dba5f2a
+User
+5:46:02 PM [express] GET /api/auth/user 200 in 43ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 12:46:03.07
+8dba5f2a
+User
+5:46:03 PM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-11-25 12:46:03.16
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+}
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+userId: '49729939',
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+isPaginated: false,
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+cursor: undefined
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+[/api/generations] Request received {
+2025-11-25 12:46:03.17
+8dba5f2a
+User
+hasUser: true,
+2025-11-25 12:46:03.18
+8dba5f2a
+User
+5:46:03 PM [express] GET /api/subscriptions/current 304 in 127ms
+2025-11-25 12:46:03.19
+8dba5f2a
+User
+5:46:03 PM [express] GET /api/favorites 304 in 132ms :: []
+2025-11-25 12:46:03.21
+8dba5f2a
+User
+5:46:03 PM [express] GET /api/pricing 304 in 155ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-11-25 12:46:03.54
+8dba5f2a
+User
+[/api/generations] Array query completed in 370ms, found 15 generations
+2025-11-25 12:46:03.56
+8dba5f2a
+User
+5:46:03 PM [express] GET /api/generations 200 in 502ms :: [{"id":"e55e1539-9d9f-47f0-b625-1c508b3dee…

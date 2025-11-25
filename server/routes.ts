@@ -2565,6 +2565,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         music: { ext: 'mp3', contentType: 'audio/mpeg' },
         'sound-effects': { ext: 'mp3', contentType: 'audio/mpeg' },
         upscaling: { ext: 'png', contentType: 'image/png' }, // Default to image for upscaling
+        'background-remover': { ext: 'png', contentType: 'image/png' }, // Background remover outputs PNG
+        'talking-avatar': { ext: 'mp4', contentType: 'video/mp4' }, // Avatar videos are MP4
+        'avatar': { ext: 'mp4', contentType: 'video/mp4' }, // Avatar videos are MP4
       };
 
       let fileInfo = extensionMap[generation.type];
