@@ -2,12 +2,12 @@ import { db } from "./db";
 import { subscriptionPlans } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-// Default subscription plans
-const defaultPlans = [
+// Default subscription plans with marketing copy
+export const defaultPlans = [
   {
     name: "free",
     displayName: "7 Day Free Trial",
-    description: "Try all features free for 7 days",
+    description: "Experience the full power of AI creation with no commitment. Perfect for exploring all our features risk-free.",
     price: 0,
     monthlyPrice: 0,
     annualPrice: 0,
@@ -17,57 +17,63 @@ const defaultPlans = [
     creditRolloverLimit: 0,
     savingsPercentage: 0,
     features: [
-      "1,000 credits (one-time)",
-      "Full access to all AI models",
-      "All features included",
-      "7 day trial period",
+      "1,000 credits to start creating",
+      "Access to all AI models and features",
+      "Generate videos, images, and music",
+      "7-day trial period",
       "No credit card required"
     ],
+    stripeProductId: null,
+    stripePriceId: null,
     isActive: true,
-    sortOrder: 1,
+    sortOrder: 0,
   },
   {
     name: "starter",
     displayName: "Starter",
-    description: "Perfect for individuals and small projects",
-    price: 1999, // $19.99
-    monthlyPrice: 1999, // $19.99/month
-    annualPrice: 14393, // $143.93/year (40% off: $19.99 * 12 * 0.6)
+    description: "Everything you need to bring your creative ideas to life. Perfect for individuals and content creators getting started with AI.",
+    price: 1900, // $19.00
+    monthlyPrice: 1900, // $19.00/month
+    annualPrice: 14800, // $148/year (~35% off)
     billingPeriod: "monthly",
-    creditsPerMonth: 5000,
-    creditRolloverLimit: 2500,
-    savingsPercentage: 40, // 40% off when paying annually
+    creditsPerMonth: 4000,
+    creditRolloverLimit: 2000,
+    savingsPercentage: 35,
     features: [
-      "5,000 credits per month",
-      "All AI models access",
-      "Priority generation queue",
-      "Email support",
-      "Up to 2,500 credit rollover"
+      "4,000 credits per month",
+      "Access to all AI models (Veo, Runway, Suno, etc.)",
+      "Generate unlimited videos, images & music",
+      "Priority support via email",
+      "Rollover up to 2,000 unused credits"
     ],
+    stripeProductId: null, // Will be set via admin panel
+    stripePriceId: null, // Will be set via admin panel
     isActive: true,
-    sortOrder: 2,
+    sortOrder: 1,
   },
   {
     name: "pro",
-    displayName: "Pro",
-    description: "For professionals and growing teams",
-    price: 4999, // $49.99
-    monthlyPrice: 4999, // $49.99/month
-    annualPrice: 35993, // $359.93/year (40% off: $49.99 * 12 * 0.6)
+    displayName: "Professional",
+    description: "Unlock your full creative potential with our most popular plan. Ideal for professionals, agencies, and businesses scaling their content production.",
+    price: 4900, // $49.00
+    monthlyPrice: 4900, // $49.00/month
+    annualPrice: 38400, // $384/year (~35% off)
     billingPeriod: "monthly",
-    creditsPerMonth: 15000,
-    creditRolloverLimit: 7500,
-    savingsPercentage: 40, // 40% off when paying annually
+    creditsPerMonth: 10000,
+    creditRolloverLimit: 5000,
+    savingsPercentage: 35,
     features: [
-      "15,000 credits per month",
-      "All AI models access",
-      "Highest priority queue",
-      "Priority email & chat support",
-      "Up to 7,500 credit rollover",
-      "Early access to new features"
+      "10,000 credits per month",
+      "Access to all premium AI models",
+      "Highest priority processing queue",
+      "Priority support (email & chat)",
+      "Rollover up to 5,000 unused credits",
+      "Early access to new features & models"
     ],
+    stripeProductId: null, // Will be set via admin panel
+    stripePriceId: null, // Will be set via admin panel
     isActive: true,
-    sortOrder: 3,
+    sortOrder: 2,
   },
 ];
 

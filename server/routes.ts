@@ -4550,6 +4550,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Reset and recreate all plans (purge duplicates, seed canonical plans)
+  app.post('/api/admin/plans/reset', requireJWT, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      console.log('🔄 [Admin] Starting plan reset...');
+
+      // Execute the reset in a transaction
+      const result = await storage.resetPlans();
+
+      console.log(`✅ [Admin] Plan reset complete: ${result.plansCreated} plans created, ${result.plansDeleted} old plans removed`);
+
+      res.json({
+        success: true,
+        message: `Successfully reset plans: ${result.plansCreated} created, ${result.plansDeleted} removed`,
+        plans: result.plans
+      });
+    } catch (error: any) {
+      console.error('❌ [Admin] Error resetting plans:', error);
+      res.status(500).json({ message: error.message || "Failed to reset plans" });
+    }
+  });
+
   // ========== HOME PAGE CONTENT ROUTES ==========
 
   // Public: Get home page content

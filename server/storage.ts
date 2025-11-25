@@ -220,6 +220,7 @@ export interface IStorage {
   updatePlanStripeIds(planId: string, stripePriceId: string | null, stripeProductId: string | null): Promise<SubscriptionPlan | undefined>;
   deletePlan(planId: string): Promise<{ success: boolean; error?: string }>;
   checkPlanInUse(planId: string): Promise<boolean>;
+  resetPlans(): Promise<{ plans: SubscriptionPlan[]; plansCreated: number; plansDeleted: number }>;
 
   // Home Page Content operations
   getHomePageContent(): Promise<HomePageContent | undefined>;
@@ -1380,6 +1381,58 @@ export class DatabaseStorage implements IStorage {
       .where(eq(subscriptionPlans.id, planId));
 
     return { success: true };
+  }
+
+  async resetPlans(): Promise<{ plans: SubscriptionPlan[]; plansCreated: number; plansDeleted: number }> {
+    const { defaultPlans } = await import('./seedPlans');
+    
+    return await db.transaction(async (tx) => {
+      // SAFETY CHECK: Ensure no active subscriptions exist
+      const activeSubscriptions = await tx
+        .select()
+        .from(userSubscriptions);
+      
+      if (activeSubscriptions.length > 0) {
+        throw new Error(
+          `Cannot reset plans: ${activeSubscriptions.length} active subscription(s) exist. ` +
+          `Please cancel or migrate all subscriptions before resetting plans.`
+        );
+      }
+
+      // Step 1: Count existing plans
+      const existingPlans = await tx.select().from(subscriptionPlans);
+      const plansDeleted = existingPlans.length;
+
+      console.log(`🗑️  Deleting ${plansDeleted} existing plan(s)...`);
+
+      // Step 2: Hard delete ALL existing plans (safe since no active subscriptions)
+      await tx.delete(subscriptionPlans);
+
+      console.log(`✅ Deleted ${plansDeleted} plan(s)`);
+
+      // Step 3: Insert new canonical plans
+      console.log(`📝 Creating ${defaultPlans.length} canonical plan(s)...`);
+      
+      const insertedPlans: SubscriptionPlan[] = [];
+      
+      for (const planData of defaultPlans) {
+        const [plan] = await tx
+          .insert(subscriptionPlans)
+          .values(planData)
+          .returning();
+        
+        insertedPlans.push(plan);
+        console.log(`   ✓ Created: ${plan.displayName}`);
+      }
+
+      console.log(`✅ Created ${insertedPlans.length} plan(s)`);
+
+      return {
+        plans: insertedPlans,
+        plansCreated: insertedPlans.length,
+        plansDeleted,
+      };
+    });
   }
 
   async getUserSubscription(userId: string): Promise<(UserSubscription & { plan: SubscriptionPlan }) | undefined> {
