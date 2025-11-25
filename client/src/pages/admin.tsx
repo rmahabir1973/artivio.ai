@@ -72,6 +72,7 @@ export default function Admin() {
     features: "[]",
   });
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+  const [resettingPlans, setResettingPlans] = useState(false);
   
   // Home page content state
   const [editingHomePage, setEditingHomePage] = useState(false);
@@ -360,6 +361,29 @@ export default function Admin() {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to reorder plan", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const resetPlansMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/admin/plans/reset", {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plans"] });
+      setResettingPlans(false);
+      toast({ 
+        title: "Plans Reset Successfully!", 
+        description: `${data.stats.plansCreated} plans created, ${data.stats.plansDeleted} removed, ${data.stats.usersMigrated} users migrated to free trial`,
+      });
+    },
+    onError: (error: Error) => {
+      setResettingPlans(false);
+      toast({ 
+        title: "Reset Failed", 
+        description: error.message || "Failed to reset plans", 
         variant: "destructive" 
       });
     },
@@ -942,10 +966,20 @@ export default function Admin() {
                   Manage subscription plans, pricing, and Stripe configuration
                 </CardDescription>
               </div>
-              <Button onClick={() => setCreatingPlan(true)} data-testid="button-create-plan">
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Plan
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => setResettingPlans(true)} 
+                  variant="destructive"
+                  data-testid="button-reset-plans"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Reset Plans
+                </Button>
+                <Button onClick={() => setCreatingPlan(true)} data-testid="button-create-plan">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Plan
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {plansLoading ? (
@@ -2535,6 +2569,57 @@ export default function Admin() {
                 </>
               ) : (
                 "Delete Plan"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Plans Confirmation */}
+      <AlertDialog open={resettingPlans} onOpenChange={(open) => !open && setResettingPlans(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Reset All Subscription Plans?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="font-semibold text-foreground">This will perform the following actions:</p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Migrate all users to the free trial plan (7 days, 1,000 credits)</li>
+                <li>Delete all existing subscription plans (including duplicates)</li>
+                <li>Create 5 new canonical plans with Stripe IDs pre-configured:
+                  <ul className="list-circle list-inside ml-6 mt-1 space-y-0.5">
+                    <li>Free Trial (1,000 credits)</li>
+                    <li>Starter Monthly ($19, 4,000 credits)</li>
+                    <li>Starter Annual ($148, 4,000 credits)</li>
+                    <li>Professional Monthly ($49, 10,000 credits)</li>
+                    <li>Professional Annual ($384, 10,000 credits)</li>
+                  </ul>
+                </li>
+              </ul>
+              <p className="text-destructive font-semibold mt-3">
+                This action cannot be undone. Use this to fix duplicate plan issues in production.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetPlansMutation.isPending} data-testid="button-cancel-reset-plans">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => resetPlansMutation.mutate()}
+              disabled={resetPlansMutation.isPending}
+              data-testid="button-confirm-reset-plans"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {resetPlansMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Resetting Plans...
+                </>
+              ) : (
+                "Yes, Reset All Plans"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
