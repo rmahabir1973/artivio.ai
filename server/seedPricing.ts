@@ -80,9 +80,9 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'image', model: '4o-image-1', creditCost: 20, kieCreditCost: 8, category: 'generation', description: '4o Image API - 1 image output' },
   { feature: 'image', model: '4o-image-2', creditCost: 20, kieCreditCost: 8, category: 'generation', description: '4o Image API - 2 images output' },
   { feature: 'image', model: '4o-image-4', creditCost: 20, kieCreditCost: 8, category: 'generation', description: '4o Image API - 4 images output' },
-  { feature: 'image', model: 'flux-kontext-pro', creditCost: 3, kieCreditCost: 1, category: 'generation', description: 'Flux Kontext Pro - Standard model for balanced performance' },
-  { feature: 'image', model: 'flux-kontext-max', creditCost: 5, kieCreditCost: 2, category: 'generation', description: 'Flux Kontext Max - Enhanced model for advanced capabilities' },
-  { feature: 'image', model: 'nano-banana', creditCost: 50, kieCreditCost: 24, category: 'generation', description: 'Nano Banana - Fast, precise image generation and editing' },
+  { feature: 'image', model: 'flux-kontext-pro', creditCost: 3, kieCreditCost: 1, category: 'generation', description: 'Flux Kontext Pro - Standard model for balanced performance' }, // Spreadsheet: 2.7 → rounded to 3
+  { feature: 'image', model: 'flux-kontext-max', creditCost: 5, kieCreditCost: 2, category: 'generation', description: 'Flux Kontext Max - Enhanced model for advanced capabilities' }, // Spreadsheet: 5.4 → rounded to 5
+  { feature: 'image', model: 'nano-banana', creditCost: 50, kieCreditCost: 24, category: 'generation', description: 'Nano Banana - Fast, precise image generation and editing' }, // Spreadsheet: 50.4 → rounded to 50
   // Seedream-v4: Quantity-based pricing (3.5 Kie credits per image)
   { feature: 'image', model: 'seedream-4-1', creditCost: 10, kieCreditCost: 3.5, category: 'generation', description: 'Seedream 4.0 - 1 image' },
   { feature: 'image', model: 'seedream-4-2', creditCost: 20, kieCreditCost: 7, category: 'generation', description: 'Seedream 4.0 - 2 images' },
