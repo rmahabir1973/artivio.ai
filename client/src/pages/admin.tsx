@@ -2588,13 +2588,17 @@ export default function Admin() {
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Migrate all users to the free trial plan (7 days, 1,000 credits)</li>
                 <li>Delete all existing subscription plans (including duplicates)</li>
-                <li>Create 5 new canonical plans with Stripe IDs pre-configured:
+                <li>Create 9 new canonical plans with Stripe IDs pre-configured:
                   <ul className="list-circle list-inside ml-6 mt-1 space-y-0.5">
                     <li>Free Trial (1,000 credits)</li>
                     <li>Starter Monthly ($19, 4,000 credits)</li>
                     <li>Starter Annual ($148, 4,000 credits)</li>
                     <li>Professional Monthly ($49, 10,000 credits)</li>
                     <li>Professional Annual ($384, 10,000 credits)</li>
+                    <li>Business Monthly ($99, 20,000 credits)</li>
+                    <li>Business Annual ($768, 20,000 credits)</li>
+                    <li>Agency Monthly ($249, 50,000 credits)</li>
+                    <li>Agency Annual ($1,942, 50,000 credits)</li>
                   </ul>
                 </li>
               </ul>
