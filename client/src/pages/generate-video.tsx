@@ -134,9 +134,14 @@ export default function GenerateVideo() {
   const { markStepComplete } = useOnboarding();
   const [, navigate] = useLocation();
   
+  // Check URL params for transition mode (Veo 3.1 First & Last Frames)
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialMode = urlParams.get('mode') === 'transition' ? 'first-and-last-frames-to-video' : 'text-to-video';
+  const initialModel = urlParams.get('mode') === 'transition' ? 'veo-3.1' : 'veo-3.1-fast';
+  
   // Simple state management
-  const [model, setModel] = useState("veo-3.1-fast");
-  const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video" | "first-and-last-frames-to-video" | "reference-2-video">("text-to-video");
+  const [model, setModel] = useState(initialModel);
+  const [generationType, setGenerationType] = useState<"text-to-video" | "image-to-video" | "first-and-last-frames-to-video" | "reference-2-video">(initialMode);
   const [prompt, setPrompt] = useState("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);

@@ -34,6 +34,7 @@ import {
   Settings,
   CreditCard,
   Shield,
+  ArrowLeftRight,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +51,7 @@ const menuSections = [
     label: "Video",
     items: [
       { title: "Video Generation", url: "/generate/video", icon: Video },
+      { title: "Transition", url: "/generate/video?mode=transition", icon: ArrowLeftRight },
       { title: "Sora 2 Pro", url: "/generate/sora", icon: Sparkles },
       { title: "Talking Avatars", url: "/talking-avatars", icon: UserCircle },
       { title: "Video Upscaler", url: "/topaz-video-upscaler", icon: Zap },
@@ -105,6 +107,27 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const isAdmin = (user as any)?.isAdmin;
+  
+  // Get full URL with query params for proper active state matching
+  const fullUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : location;
+  
+  // Check if a menu item is active (handles query params for Transition link)
+  const isItemActive = (itemUrl: string) => {
+    // Exact match for URLs with query params (like /generate/video?mode=transition)
+    if (itemUrl.includes('?')) {
+      return fullUrl === itemUrl;
+    }
+    // For base URLs without query params, match only if there's no query string
+    // This prevents /generate/video matching when on /generate/video?mode=transition
+    if (location === itemUrl && !window.location.search) {
+      return true;
+    }
+    // For non-video pages, just match the path
+    if (!itemUrl.startsWith('/generate/video')) {
+      return location === itemUrl;
+    }
+    return false;
+  };
 
   return (
     <Sidebar collapsible="offcanvas">
@@ -137,7 +160,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton
                       asChild
-                      isActive={location === item.url}
+                      isActive={isItemActive(item.url)}
                       data-testid={`sidebar-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       <Link href={item.url}>
