@@ -1434,6 +1434,9 @@ export const homePageContent = pgTable("home_page_content", {
   featureImageUrl: text("feature_image_url"), // "Images that inspire" section Vimeo URL
   featureMusicUrl: text("feature_music_url"), // "Music that moves" section Vimeo URL
   
+  // Pricing page video
+  pricingVideoUrl: text("pricing_video_url"), // Pricing page popup video URL
+  
   // Product sections
   creatorsTitle: text("creators_title").default('Creators'),
   creatorsDescription: text("creators_description"),

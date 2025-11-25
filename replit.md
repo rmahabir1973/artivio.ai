@@ -10,6 +10,7 @@ I prefer simple language and detailed explanations. I want an iterative developm
 - **Modernized AI Chat UI**: Added markdown rendering with syntax highlighting, code copy buttons, message formatting, and auto-grouped conversations (Today, Yesterday, This Week, etc.)
 - **Replaced Referral Program**: Removed Referral Program and Leaderboard links from sidebar and header, replaced with Affiliate (Rewardful) links. Backend code kept intact for future fixes.
 - **Comprehensive Footer**: Updated footer with all features organized by category (AI Video, AI Image, Audio & Music, Tools, Company, Legal) featuring modern design, responsive layout, and hover effects.
+- **Redesigned Pricing Page (Viddo AI Style)**: Complete overhaul inspired by Viddo AI with new hero title ("Your Complete AI Creative Studio in One Platform"), video popup modal (configurable in Admin), 40% price savings comparison box, all 4 paid plans with complete feature lists, 7-day free trial section, payment methods display, and 5 FAQ items. Video URL configurable via Admin Panel. Price comparison dynamically displays market vs Artivio pricing.
 
 ## System Architecture
 
