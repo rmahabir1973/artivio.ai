@@ -278,12 +278,14 @@ export default function GenerateVideo() {
   // Load seed from sessionStorage (from history "Use Seed" button) - only once on mount
   useEffect(() => {
     const savedSeed = sessionStorage.getItem('regenerateSeed');
+    console.log(`🌱 [SEED MOUNT] Checking sessionStorage for regenerateSeed: ${savedSeed}`);
     if (savedSeed) {
       const seedValue = parseInt(savedSeed, 10);
       // Always apply valid seeds, regardless of current model (user can change model later)
       if (!isNaN(seedValue) && seedValue >= 1 && seedValue <= 2147483647) {
         setSeed(seedValue);
         setSeedLocked(true); // Lock the seed when loading from history
+        console.log(`🌱 [SEED MOUNT] Loaded seed from sessionStorage: ${seedValue}`);
       }
       // Always clear the stored seed after consuming it (even if invalid)
       sessionStorage.removeItem('regenerateSeed');
@@ -594,12 +596,31 @@ export default function GenerateVideo() {
     }
     
     // Add seed if model supports it and seed is provided
-    if (modelSupportsSeed() && seed) {
-      if (model.startsWith('veo-')) {
-        parameters.seeds = [seed]; // Veo uses array format
-      } else {
-        parameters.seed = seed; // Seedance/Wan use singular
+    // CRITICAL: Also check sessionStorage as fallback (in case useEffect didn't run yet)
+    let effectiveSeed = seed;
+    if (!effectiveSeed) {
+      const storedSeed = sessionStorage.getItem('regenerateSeed');
+      if (storedSeed) {
+        const parsedSeed = parseInt(storedSeed, 10);
+        if (!isNaN(parsedSeed) && parsedSeed >= 1) {
+          effectiveSeed = parsedSeed;
+          setSeed(parsedSeed); // Update state for UI
+          setSeedLocked(true);
+          sessionStorage.removeItem('regenerateSeed');
+          console.log(`🌱 [SEED DEBUG] Loaded seed from sessionStorage fallback: ${parsedSeed}`);
+        }
       }
+    }
+    
+    if (modelSupportsSeed() && effectiveSeed) {
+      console.log(`🌱 [SEED DEBUG] Adding seed to parameters: ${effectiveSeed} for model ${model}`);
+      if (model.startsWith('veo-')) {
+        parameters.seeds = [effectiveSeed]; // Veo uses array format
+      } else {
+        parameters.seed = effectiveSeed; // Seedance/Wan use singular
+      }
+    } else {
+      console.log(`🌱 [SEED DEBUG] No seed provided. modelSupportsSeed=${modelSupportsSeed()}, effectiveSeed=${effectiveSeed}`);
     }
     
     // Map generation types to the correct model names

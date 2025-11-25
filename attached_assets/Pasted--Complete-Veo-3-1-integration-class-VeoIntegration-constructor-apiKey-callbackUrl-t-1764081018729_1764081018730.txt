@@ -1,0 +1,103 @@
+// Complete Veo 3.1 integration
+class VeoIntegration {
+  constructor(apiKey, callbackUrl) {
+    this.apiKey = apiKey;
+    this.callbackUrl = callbackUrl;
+    this.seedManager = new VeoSeedManager();
+  }
+
+  async generateVideo(options) {
+    const {
+      prompt,
+      model = "veo3_fast",
+      generationType = "TEXT_2_VIDEO", 
+      aspectRatio = "16:9",
+      useSeed = true,
+      customSeed = null,
+      imageUrls = null
+    } = options;
+
+    // Determine seed to use
+    let seed = null;
+    if (useSeed) {
+      seed = customSeed || this.seedManager.getStoredSeed(prompt);
+      if (!seed) {
+        seed = this.seedManager.generateValidSeed();
+        this.seedManager.storeSeed(prompt, seed);
+      }
+    }
+
+    const payload = {
+      prompt,
+      model,
+      generationType,
+      aspectRatio,
+      enableTranslation: true,
+      callBackUrl: this.callbackUrl,
+      ...(seed && { seeds: seed }),
+      ...(imageUrls && imageUrls.length > 0 && { imageUrls })
+    };
+
+    console.log('Sending Veo 3.1 payload:', {
+      prompt: prompt.substring(0, 50) + '...',
+      model,
+      seed: seed || 'auto-generated',
+      hasImages: !!imageUrls
+    });
+
+    const response = await fetch('https://api.kie.ai/api/v1/veo/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    
+    if (result.code === 200) {
+      return {
+        taskId: result.data.taskId,
+        seed: seed,
+        success: true
+      };
+    } else {
+      throw new Error(`Veo 3.1 generation failed: ${result.msg}`);
+    }
+  }
+
+  // Handle callback from Kie.ai
+  async handleCallback(callbackData) {
+    const { code, msg, data } = callbackData;
+    
+    console.log('Received Veo 3.1 callback:', {
+      taskId: data.taskId,
+      status: code,
+      message: msg
+    });
+
+    if (code === 200) {
+      const { taskId, info, fallbackFlag } = data;
+      const { resultUrls, originUrls, resolution } = info;
+      
+      console.log('✅ Video generation successful!');
+      console.log(`📹 Resolution: ${resolution}`);
+      console.log(`🔄 Fallback used: ${fallbackFlag}`);
+      console.log(`🎬 Video URLs: ${resultUrls}`);
+      
+      // Store successful generation info
+      await this.storeGenerationResult(taskId, {
+        urls: resultUrls,
+        resolution,
+        fallback: fallbackFlag,
+        timestamp: new Date().toISOString()
+      });
+      
+      return { success: true, urls: resultUrls, resolution };
+    } else {
+      console.error('❌ Video generation failed:', msg);
+      return { success: false, error: msg };
+    }
+  }
+}

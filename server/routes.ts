@@ -1481,12 +1481,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Pre-generate seed for models that support it
       let finalParameters: any = parameters || {};
+      
+      // DEBUG: Log incoming parameters for seed tracing
+      console.log(`🔍 [SEED DEBUG] Incoming parameters for ${model}:`, JSON.stringify({
+        seed: finalParameters.seed,
+        seeds: finalParameters.seeds,
+        hasSeeds: 'seeds' in finalParameters,
+        hasSeed: 'seed' in finalParameters
+      }));
+      
       if (modelSupportsSeed(model)) {
         // Normalize seed from either 'seed' (singular) or 'seeds' (array from Veo frontend)
         // Frontend sends seeds: [value] for Veo, seed: value for others
         const seedsField = finalParameters.seeds;
         const existingSeed = finalParameters.seed ?? 
           (Array.isArray(seedsField) ? seedsField[0] : seedsField);
+        
+        console.log(`🔍 [SEED DEBUG] Normalized existingSeed: ${existingSeed} (type: ${typeof existingSeed})`);
         
         if (existingSeed === undefined || existingSeed === null) {
           const generatedSeed = generateRandomSeed(model);
@@ -1497,6 +1508,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           finalParameters.seed = existingSeed;
           console.log(`🌱 Using user-provided seed for ${model}: ${existingSeed}`);
         }
+        
+        console.log(`🔍 [SEED DEBUG] Final seed in parameters: ${finalParameters.seed}`);
       }
 
       // Create generation record with image-to-video support and seed

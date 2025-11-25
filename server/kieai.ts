@@ -318,11 +318,21 @@ export async function generateVideo(params: {
       throw new Error(`Referenced Images are only supported by Veo 3.1 Quality and Veo 3.1 Fast. Please use one of these models for image-to-video generation.`);
     }
     
+    // DEBUG: Log incoming parameters for seed tracing
+    console.log(`🔍 [KIEAI SEED DEBUG] Received parameters:`, JSON.stringify({
+      seed: parameters.seed,
+      seeds: parameters.seeds,
+      hasSeed: 'seed' in parameters,
+      hasSeeds: 'seeds' in parameters
+    }));
+    
     // Auto-generate seed if not provided (Veo requires range 10000-99999)
     // Normalize from either 'seed' (singular) or 'seeds' (array from frontend)
     let seed = parameters.seed ?? 
       (Array.isArray(parameters.seeds) ? parameters.seeds[0] : parameters.seeds) ?? 
       generateRandomSeed();
+    
+    console.log(`🔍 [KIEAI SEED DEBUG] Normalized seed: ${seed} (type: ${typeof seed})`);
     
     // CRITICAL: Veo API requires seeds in range 10000-99999
     // Clamp any out-of-range seeds to valid range
@@ -331,7 +341,7 @@ export async function generateVideo(params: {
       seed = generateRandomSeed();
     }
     
-    console.log(`🌱 Veo seed format: sending seeds=${seed}`);
+    console.log(`🌱 Veo seed format: sending seeds=${seed} to Kie.ai API`);
     
     // Build request payload for /api/v1/veo/generate
     const payload: any = {
