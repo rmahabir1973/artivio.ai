@@ -235,55 +235,57 @@ export default function Chat() {
   const groupedConversations = groupConversationsByDate(conversations);
 
   const ConversationsList = ({ onConversationSelect }: { onConversationSelect?: () => void }) => (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-muted/20">
       {/* New Chat Button */}
-      <div className="p-3 border-b flex-shrink-0">
+      <div className="p-3 flex-shrink-0">
         <Button
           data-testid="button-new-chat"
           onClick={() => {
             handleNewChat();
             onConversationSelect?.();
           }}
-          className="w-full gap-2"
-          variant="outline"
-          size="sm"
+          className="w-full gap-2 rounded-xl h-10 font-medium"
+          variant="default"
         >
           <Plus className="w-4 h-4" />
-          New Chat
+          New chat
         </Button>
       </div>
 
       {/* Conversations List */}
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-4">
+      <ScrollArea className="flex-1 px-2">
+        <div className="space-y-6 pb-4">
           {groupedConversations.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-12 px-4">
+              <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">No conversations yet</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Start a new chat to begin</p>
             </div>
           ) : (
             groupedConversations.map((group) => (
               <div key={group.label}>
-                <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <p className="px-3 py-2 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider">
                   {group.label}
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {group.conversations.map((conv) => (
                     <div
                       key={conv.id}
                       data-testid={`conversation-${conv.id}`}
-                      className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
+                      className={`group relative px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
                         selectedConversationId === conv.id
-                          ? 'bg-accent/80'
-                          : 'hover:bg-accent/40'
+                          ? 'bg-accent shadow-sm'
+                          : 'hover:bg-accent/50'
                       }`}
                       onClick={() => {
                         setSelectedConversationId(conv.id);
                         onConversationSelect?.();
                       }}
                     >
-                      <p className="text-sm font-medium truncate pr-8">{conv.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {conv.provider === 'deepseek' ? 'Deepseek' : 'OpenAI'} • {conv.model}
+                      <p className="text-[13px] font-medium truncate pr-7 leading-tight">{conv.title}</p>
+                      <p className="text-[11px] text-muted-foreground/70 mt-0.5 flex items-center gap-1">
+                        <span className={`w-1.5 h-1.5 rounded-full ${conv.provider === 'deepseek' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                        {conv.provider === 'deepseek' ? 'Deepseek' : 'OpenAI'}
                       </p>
 
                       {/* Delete button - visible on hover */}
@@ -291,13 +293,13 @@ export default function Chat() {
                         data-testid={`button-delete-conversation-${conv.id}`}
                         size="icon"
                         variant="ghost"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteConversation.mutate(conv.id);
                         }}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   ))}
@@ -352,23 +354,29 @@ export default function Chat() {
 
           {/* Messages Area */}
           <ScrollArea className="flex-1">
-            <div className="max-w-3xl mx-auto w-full px-4 py-6">
+            <div className="min-h-full">
               {/* Empty State */}
               {!selectedConversationId && messages.length === 0 && !streamingMessage && !optimisticUserMessage && (
-                <div className="flex flex-col items-center justify-center h-full py-12 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mb-4">
-                    <Sparkles className="w-8 h-8 text-primary" />
+                <div className="flex flex-col items-center justify-center min-h-[60vh] py-16 text-center px-4">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 shadow-lg shadow-primary/10">
+                    <Sparkles className="w-10 h-10 text-primary" />
                   </div>
-                  <h2 className="text-2xl font-semibold mb-2">Start a conversation</h2>
-                  <p className="text-muted-foreground max-w-sm mb-6">
-                    Choose your AI provider and model, then ask anything. Your messages will be saved automatically.
+                  <h2 className="text-2xl font-semibold mb-3 tracking-tight">How can I help you today?</h2>
+                  <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+                    Ask me anything — from coding help to creative writing. I can explain concepts, write code, analyze data, and much more.
                   </p>
-                  <p className="text-xs text-muted-foreground/50">v2.1.0-md</p>
+                  <div className="flex flex-wrap gap-2 justify-center max-w-lg">
+                    <span className="px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground">Write code</span>
+                    <span className="px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground">Explain concepts</span>
+                    <span className="px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground">Debug errors</span>
+                    <span className="px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground">Creative writing</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground/40 mt-8">v2.2.0</p>
                 </div>
               )}
 
               {/* Messages */}
-              <div className="space-y-4">
+              <div>
                 {messages.map((msg) => (
                   <ChatMessage
                     key={msg.id}
@@ -387,93 +395,104 @@ export default function Chat() {
                 {streamingMessage && (
                   <div data-testid="streaming-message">
                     <ChatMessage role="assistant" content={streamingMessage} />
-                    <div className="flex justify-start ml-11 gap-1">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
-                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce animation-delay-100" />
-                      <div className="w-2 h-2 rounded-full bg-primary animate-bounce animation-delay-200" />
+                    <div className="max-w-3xl mx-auto px-4 py-2">
+                      <div className="flex items-center gap-1.5 ml-12">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse [animation-delay:150ms]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse [animation-delay:300ms]" />
+                      </div>
                     </div>
                   </div>
                 )}
 
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} className="h-4" />
               </div>
             </div>
           </ScrollArea>
 
           {/* Input Area */}
-          <div className="p-4 border-t bg-card/50 backdrop-blur-sm flex-shrink-0">
-            <div className="max-w-3xl mx-auto space-y-3">
-              {/* Provider and Model Selection */}
-              <div className="flex gap-2 items-center">
-                <Select
-                  value={provider}
-                  onValueChange={(val) => setProvider(val as 'deepseek' | 'openai')}
-                  data-testid="select-provider"
-                >
-                  <SelectTrigger className="w-32 h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="deepseek">Deepseek</SelectItem>
-                    <SelectItem value="openai">OpenAI</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="border-t bg-gradient-to-t from-background to-background/80 backdrop-blur-xl flex-shrink-0">
+            <div className="max-w-3xl mx-auto p-4 space-y-3">
+              {/* Message Input Container */}
+              <div className="relative rounded-2xl border bg-card shadow-sm overflow-hidden">
+                {/* Provider and Model Selection - Inline */}
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-muted/30">
+                  <Select
+                    value={provider}
+                    onValueChange={(val) => setProvider(val as 'deepseek' | 'openai')}
+                    data-testid="select-provider"
+                  >
+                    <SelectTrigger className="w-auto h-7 px-2.5 text-xs border-0 bg-transparent hover:bg-muted">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deepseek">Deepseek</SelectItem>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                <Select
-                  value={model}
-                  onValueChange={setModel}
-                  data-testid="select-model"
-                >
-                  <SelectTrigger className="flex-1 h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROVIDER_MODELS[provider].map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label} ({m.cost} credits)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <span className="text-muted-foreground/40">•</span>
 
-              {/* Message Input */}
-              <div className="flex gap-2 items-end">
-                <Textarea
-                  data-testid="input-message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      if (!isStreaming && message.trim()) {
-                        sendMessage();
+                  <Select
+                    value={model}
+                    onValueChange={setModel}
+                    data-testid="select-model"
+                  >
+                    <SelectTrigger className="w-auto h-7 px-2.5 text-xs border-0 bg-transparent hover:bg-muted">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROVIDER_MODELS[provider].map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label} ({m.cost} credits)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    {currentCost} credits
+                  </span>
+                </div>
+
+                {/* Text Input */}
+                <div className="flex items-end gap-2 p-3">
+                  <Textarea
+                    data-testid="input-message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (!isStreaming && message.trim()) {
+                          sendMessage();
+                        }
                       }
-                    }
-                  }}
-                  placeholder="Message Artivio AI... (Shift+Enter for new line)"
-                  disabled={isStreaming}
-                  className="flex-1 min-h-[44px] max-h-[120px] resize-none text-sm"
-                  rows={2}
-                />
-                <Button
-                  data-testid="button-send-message"
-                  onClick={isStreaming ? stopStreaming : sendMessage}
-                  disabled={!isStreaming && !message.trim()}
-                  variant={isStreaming ? "destructive" : "default"}
-                  size="icon"
-                  className="h-[44px] w-[44px] flex-shrink-0"
-                >
-                  {isStreaming ? (
-                    <Square className="w-4 h-4" />
-                  ) : (
-                    <ArrowUp className="w-4 h-4" />
-                  )}
-                </Button>
+                    }}
+                    placeholder="Ask anything..."
+                    disabled={isStreaming}
+                    className="flex-1 min-h-[24px] max-h-[200px] resize-none text-[15px] border-0 shadow-none focus-visible:ring-0 p-0 bg-transparent placeholder:text-muted-foreground/50"
+                    rows={1}
+                  />
+                  <Button
+                    data-testid="button-send-message"
+                    onClick={isStreaming ? stopStreaming : sendMessage}
+                    disabled={!isStreaming && !message.trim()}
+                    variant={isStreaming ? "destructive" : "default"}
+                    size="icon"
+                    className="h-9 w-9 rounded-xl flex-shrink-0 transition-all"
+                  >
+                    {isStreaming ? (
+                      <Square className="w-4 h-4" />
+                    ) : (
+                      <ArrowUp className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
 
-              <p className="text-xs text-muted-foreground text-center">
-                {currentCost} credits per message • Free to try all models
+              <p className="text-[11px] text-muted-foreground/60 text-center">
+                Press Enter to send • Shift+Enter for new line
               </p>
             </div>
           </div>
