@@ -1,0 +1,156 @@
+2025-11-25 12:36:19.87
+8dba5f2a
+User
+at file:///home/runner/workspace/dist/index.js:7975:19
+2025-11-25 12:36:19.87
+8dba5f2a
+User
+at async saveBase64Images (file:///home/runner/workspace/dist/index.js:3935:19)
+2025-11-25 12:36:19.87
+8dba5f2a
+User
+at saveBase64Image (file:///home/runner/workspace/dist/index.js:3912:11)
+2025-11-25 12:36:19.87
+8dba5f2a
+User
+at saveBase64Image (file:///home/runner/workspace/dist/index.js:3912:11)
+2025-11-25 12:36:19.87
+8dba5f2a
+User
+Failed to host video: Error: Invalid base64 image data URI format
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [finalizeGeneration] Generation 59daa496-d958-4689-a620-6583b98b4cbc finalized as failure
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [CREDIT REFUND] Refunded 252 credits to user 49729939 for failed generation 59daa496-d958-4689-a620-6583b98b4cbc
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [CREDIT REFUND] Refunded 252 credits to user 49729939 for failed generation 59daa496-d958-4689-a620-6583b98b4cbc
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [finalizeGeneration] Generation 59daa496-d958-4689-a620-6583b98b4cbc finalized as failure
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [CREDIT REFUND] Refunded 252 credits to user 49729939 for failed generation 59daa496-d958-4689-a620-6583b98b4cbc
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [finalizeGeneration] Generation 59daa496-d958-4689-a620-6583b98b4cbc finalized as failure
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [CREDIT REFUND] Refunded 252 credits to user 49729939 for failed generation 59daa496-d958-4689-a620-6583b98b4cbc
+2025-11-25 12:36:19.95
+8dba5f2a
+User
+✓ [finalizeGeneration] Generation 59daa496-d958-4689-a620-6583b98b4cbc finalized as failure
+2025-11-25 12:36:37.38
+8dba5f2a
+User
+5:36:37 PM [express] GET /api/announcements/active 304 in 25ms :: []
+2025-11-25 12:36:37.38
+8dba5f2a
+User
+5:36:37 PM [express] GET /api/announcements/active 304 in 25ms :: []
+2025-11-25 12:37:14.68
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:37:14.72
+8dba5f2a
+User
+5:37:14 PM [express] GET /api/avatar/generations 200 in 132ms :: [{"id":"8b0452df-769f-4e90-9c8e-85d…
+2025-11-25 12:37:14.72
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:37:14.73
+8dba5f2a
+User
+5:37:14 PM [express] GET /api/pricing 304 in 148ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-11-25 12:37:14.75
+8dba5f2a
+User
+5:37:14 PM [express] GET /api/voice-clones 200 in 135ms :: []
+2025-11-25 12:37:18.81
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:37:18.83
+8dba5f2a
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-25 12:37:18.83
+8dba5f2a
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-25 12:37:18.83
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:37:18.84
+8dba5f2a
+User
+5:37:18 PM [express] GET /api/tags 200 in 51ms :: []
+2025-11-25 12:37:19.30
+8dba5f2a
+User
+[/api/generations] Paginated query completed in 466ms, found 15 generations, hasMore: true
+2025-11-25 12:37:19.32
+8dba5f2a
+User
+5:37:19 PM [express] GET /api/generations 200 in 516ms :: {"items":[{"id":"59daa496-d958-4689-a620-6…
+2025-11-25 12:37:19.35
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:37:19.37
+8dba5f2a
+User
+5:37:19 PM [express] GET /api/collections 200 in 49ms :: [{"id":"d98bcda5-4ab5-4b2b-98c9-c1faf271a95…
+2025-11-25 12:37:19.68
+8dba5f2a
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-25 12:37:19.68
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:37:19.71
+8dba5f2a
+User
+}
+2025-11-25 12:37:19.71
+8dba5f2a
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-25 12:37:19.71
+8dba5f2a
+User
+isAdmin: true
+2025-11-25 12:37:19.71
+8dba5f2a
+User
+userId: '49729939',
+2025-11-25 12:37:19.71
+8dba5f2a
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-25 12:37:19.71
+8dba5f2a
+User
+5:37:19 PM [express] GET /api/auth/user 200 in 47ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 12:37:37.48
+8dba5f2a
+User
+5:37:37 PM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-11-25 12:37:37.48
+8dba5f2a
+User
+5:37:37 PM [express] GET /api/announcements/active 304 in 24ms :: []

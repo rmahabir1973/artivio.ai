@@ -93,6 +93,48 @@ export async function saveBase64Images(base64Images: string[]): Promise<string[]
 }
 
 /**
+ * Save base64 video to hosted URL with minimal validation
+ * Accepts video base64 data (with or without data URI prefix)
+ */
+export async function saveBase64Video(base64Data: string): Promise<string> {
+  await ensureUploadsDir();
+
+  // Handle both raw base64 and data URI formats
+  let base64Content = base64Data;
+  let extension = 'mp4'; // Default to mp4
+
+  // Try to extract from data URI if present
+  if (base64Data.includes('data:')) {
+    const matches = base64Data.match(/^data:(video\/[\w+]+);base64,(.+)$/);
+    if (matches) {
+      const [, mimeType, content] = matches;
+      base64Content = content;
+      // Extract extension from MIME type (e.g., video/mp4 -> mp4)
+      extension = mimeType.split('/')[1] || 'mp4';
+    }
+  }
+
+  // Decode and validate size
+  const buffer = Buffer.from(base64Content, 'base64');
+  const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB max for video
+  if (buffer.length > MAX_VIDEO_SIZE) {
+    throw new Error(`Video size ${(buffer.length / 1024 / 1024).toFixed(2)}MB exceeds maximum ${MAX_VIDEO_SIZE / 1024 / 1024}MB`);
+  }
+
+  // Generate unique filename with hash to prevent duplicates
+  const hash = crypto.createHash('md5').update(buffer).digest('hex');
+  const filename = `${Date.now()}-${hash}.${extension}`;
+  const filePath = path.join(UPLOADS_DIR, filename);
+
+  // Save file
+  await fs.writeFile(filePath, buffer);
+
+  // Return public URL
+  const baseUrl = getBaseUrl();
+  return `${baseUrl}/uploads/${filename}`;
+}
+
+/**
  * Process array of images that can be either base64 data URIs or HTTP/HTTPS URLs
  * Converts data URIs to hosted URLs, passes through URLs unchanged
  * Preserves original array order

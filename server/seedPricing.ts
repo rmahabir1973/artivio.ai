@@ -175,19 +175,19 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'upscaling', model: 'topaz-image-2x', creditCost: 25, kieCreditCost: 10, category: 'enhancement', description: 'Topaz Image Upscale 2x (up to 2K resolution)' },
   { feature: 'upscaling', model: 'topaz-image-4x', creditCost: 50, kieCreditCost: 20, category: 'enhancement', description: 'Topaz Image Upscale 4x (4K resolution)' },
   { feature: 'upscaling', model: 'topaz-image-8x', creditCost: 100, kieCreditCost: 40, category: 'enhancement', description: 'Topaz Image Upscale 8x (8K resolution)' },
-  // Video upscaling - Duration-tiered pricing (Kie.ai charges 12 credits/second, 2.1x markup)
-  // 0-10s tier: 120 Kie credits → 252 user credits
-  { feature: 'upscaling', model: 'topaz-video-1x-10s', creditCost: 252, kieCreditCost: 120, category: 'enhancement', description: 'Topaz Video Upscale 1x - 0-10 seconds' },
-  { feature: 'upscaling', model: 'topaz-video-2x-10s', creditCost: 252, kieCreditCost: 120, category: 'enhancement', description: 'Topaz Video Upscale 2x - 0-10 seconds' },
-  { feature: 'upscaling', model: 'topaz-video-4x-10s', creditCost: 252, kieCreditCost: 120, category: 'enhancement', description: 'Topaz Video Upscale 4x - 0-10 seconds' },
-  // 11-15s tier: 180 Kie credits → 378 user credits
-  { feature: 'upscaling', model: 'topaz-video-1x-15s', creditCost: 378, kieCreditCost: 180, category: 'enhancement', description: 'Topaz Video Upscale 1x - 11-15 seconds' },
-  { feature: 'upscaling', model: 'topaz-video-2x-15s', creditCost: 378, kieCreditCost: 180, category: 'enhancement', description: 'Topaz Video Upscale 2x - 11-15 seconds' },
-  { feature: 'upscaling', model: 'topaz-video-4x-15s', creditCost: 378, kieCreditCost: 180, category: 'enhancement', description: 'Topaz Video Upscale 4x - 11-15 seconds' },
-  // 16-20s tier: 240 Kie credits → 504 user credits
-  { feature: 'upscaling', model: 'topaz-video-1x-20s', creditCost: 504, kieCreditCost: 240, category: 'enhancement', description: 'Topaz Video Upscale 1x - 16-20 seconds' },
-  { feature: 'upscaling', model: 'topaz-video-2x-20s', creditCost: 504, kieCreditCost: 240, category: 'enhancement', description: 'Topaz Video Upscale 2x - 16-20 seconds' },
-  { feature: 'upscaling', model: 'topaz-video-4x-20s', creditCost: 504, kieCreditCost: 240, category: 'enhancement', description: 'Topaz Video Upscale 4x - 16-20 seconds' },
+  // Video upscaling - Duration-tiered pricing (matching advertised frontend prices)
+  // 0-10s tier: 120 Kie credits → 160 user credits (advertised)
+  { feature: 'upscaling', model: 'topaz-video-1x-10s', creditCost: 160, kieCreditCost: 120, category: 'enhancement', description: 'Topaz Video Upscale 1x - 0-10 seconds' },
+  { feature: 'upscaling', model: 'topaz-video-2x-10s', creditCost: 160, kieCreditCost: 120, category: 'enhancement', description: 'Topaz Video Upscale 2x - 0-10 seconds' },
+  { feature: 'upscaling', model: 'topaz-video-4x-10s', creditCost: 160, kieCreditCost: 120, category: 'enhancement', description: 'Topaz Video Upscale 4x - 0-10 seconds' },
+  // 11-15s tier: 180 Kie credits → 270 user credits (advertised)
+  { feature: 'upscaling', model: 'topaz-video-1x-15s', creditCost: 270, kieCreditCost: 180, category: 'enhancement', description: 'Topaz Video Upscale 1x - 11-15 seconds' },
+  { feature: 'upscaling', model: 'topaz-video-2x-15s', creditCost: 270, kieCreditCost: 180, category: 'enhancement', description: 'Topaz Video Upscale 2x - 11-15 seconds' },
+  { feature: 'upscaling', model: 'topaz-video-4x-15s', creditCost: 270, kieCreditCost: 180, category: 'enhancement', description: 'Topaz Video Upscale 4x - 11-15 seconds' },
+  // 16-20s tier: 240 Kie credits → 380 user credits (advertised)
+  { feature: 'upscaling', model: 'topaz-video-1x-20s', creditCost: 380, kieCreditCost: 240, category: 'enhancement', description: 'Topaz Video Upscale 1x - 16-20 seconds' },
+  { feature: 'upscaling', model: 'topaz-video-2x-20s', creditCost: 380, kieCreditCost: 240, category: 'enhancement', description: 'Topaz Video Upscale 2x - 16-20 seconds' },
+  { feature: 'upscaling', model: 'topaz-video-4x-20s', creditCost: 380, kieCreditCost: 240, category: 'enhancement', description: 'Topaz Video Upscale 4x - 16-20 seconds' },
   
   // ========================================
   // BACKGROUND REMOVER

@@ -31,7 +31,7 @@ import {
   initializeApiKeys 
 } from "./kieai";
 import { analyzeImageWithVision } from "./openaiVision";
-import { processImageInputs, saveBase64Images } from "./imageHosting";
+import { processImageInputs, saveBase64Images, saveBase64Video } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
 import { combineVideos, generateThumbnail, reencodeVideoForStreaming } from "./videoProcessor";
@@ -1947,9 +1947,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           videoDuration = duration;
           
           // Determine pricing tier based on duration
-          // Tier 1: 0-10s = 180 credits (120 Kie credits)
-          // Tier 2: 11-15s = 270 credits (180 Kie credits)
-          // Tier 3: 16-20s = 360 credits (240 Kie credits)
+          // Tier 1: 0-10s = 160 credits
+          // Tier 2: 11-15s = 270 credits
+          // Tier 3: 16-20s = 380 credits
           if (duration <= 10) {
             durationTier = '10s';
           } else if (duration <= 15) {
@@ -2000,9 +2000,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let hostedVideoUrl: string;
           try {
             console.log('Converting base64 video to hosted URL...');
-            // Save base64 video (similar to image handling)
-            const hostedUrls = await saveBase64Images([videoData]);
-            hostedVideoUrl = hostedUrls[0];
+            // Save base64 video with proper video handling
+            hostedVideoUrl = await saveBase64Video(videoData);
             console.log(`✓ Video hosted at: ${hostedVideoUrl}`);
           } catch (videoError: any) {
             console.error('Failed to host video:', videoError);
