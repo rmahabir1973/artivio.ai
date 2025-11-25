@@ -4336,23 +4336,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Host image
         const [imageUrl] = await saveBase64Images([sourceImage]);
 
-        const avatarGeneration = await storage.createAvatarGeneration({
+        // Create as a regular generation with type 'talking-avatar' so it appears in My Library
+        const generation = await storage.createGeneration({
           userId,
-          sourceImageUrl: imageUrl,
-          script,
-          voiceId: voiceId || null,
-          provider,
-          parameters: parameters || null,
+          type: 'talking-avatar',
+          model: provider,
+          prompt: script, // Store script in prompt field
+          parameters: {
+            sourceImageUrl: imageUrl,
+            audioUrl: script, // Script should be audio URL
+            voiceId: voiceId || undefined,
+            quality: parameters?.quality || '720p',
+            emotion: parameters?.emotion || undefined,
+          },
           status: 'pending',
-          resultUrl: null,
-          errorMessage: null,
           creditsCost: cost,
         });
 
         // Background processing
         (async () => {
           try {
-            const callbackUrl = getCallbackUrl(avatarGeneration.id);
+            const callbackUrl = getCallbackUrl(generation.id);
             const { result } = await generateKlingAvatar({
               sourceImageUrl: imageUrl,
               script,
@@ -4366,36 +4370,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const directUrl = result?.url || result?.videoUrl || result?.data?.url;
 
             if (directUrl) {
-              await storage.updateAvatarGeneration(avatarGeneration.id, {
+              await storage.updateGeneration(generation.id, {
                 status: 'completed',
                 resultUrl: directUrl,
                 completedAt: new Date(),
               });
             } else if (taskId) {
-              await storage.updateAvatarGeneration(avatarGeneration.id, {
+              await storage.updateGeneration(generation.id, {
                 status: 'processing',
-                resultUrl: taskId,
+                resultUrl: taskId, // Store taskId as resultUrl temporarily
               });
             } else {
               throw new Error('No taskId or URL returned');
             }
           } catch (error: any) {
             await storage.addCreditsAtomic(userId, cost);
-            let errorMsg = error.message;
             
-            // Provide clearer message for 404 errors (endpoint not available)
+            let errorMsg = error.message;
             if (error.message?.includes('404') || error.message?.includes('Not Found')) {
               errorMsg = 'Talking Avatar feature is temporarily unavailable on Kie.ai. Please try again later or contact support.';
             }
             
-            await storage.updateAvatarGeneration(avatarGeneration.id, {
+            await storage.updateGeneration(generation.id, {
               status: 'failed',
               errorMessage: errorMsg,
             });
           }
         })();
 
-        res.json({ generationId: avatarGeneration.id, message: "Avatar generation started" });
+        res.json({ generationId: generation.id, message: "Avatar generation started" });
       } catch (error: any) {
         await storage.addCreditsAtomic(userId, cost);
         throw error;

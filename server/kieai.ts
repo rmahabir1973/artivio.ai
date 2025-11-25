@@ -1088,40 +1088,35 @@ export async function transcribeAudio(params: {
   return await callKieApi('/api/v1/elevenlabs/stt', payload);
 }
 
-// Kling AI Avatar - Generate talking avatar video from image + audio/script
+// Kling AI Avatar - Generate talking avatar video from image + audio
 export async function generateKlingAvatar(params: {
   sourceImageUrl: string;
-  script: string; // What the avatar says (text or audio URL)
+  script: string; // Audio URL (must be audio, not text)
   voiceId?: string; // Optional: use specific voice
   provider?: string; // 'kling-ai' or 'infinite-talk'
   parameters?: {
-    quality?: '480p' | '720p';
+    quality?: '480p' | '720p' | '1080p';
     emotion?: string; // Optional emotion/style guidance
   };
   callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
   
-  // Check if script is an audio URL or text
-  const isAudioUrl = params.script.startsWith('http://') || params.script.startsWith('https://');
+  // Determine model variant based on quality
+  const quality = parameters.quality || '720p';
+  const model = quality === '1080p' ? 'kling/v1-avatar-pro' : 'kling/v1-avatar-standard';
   
-  const payload: any = {
+  const input: any = {
     image_url: params.sourceImageUrl,
-    resolution: parameters.quality || '720p',
+    audio_url: params.script, // Must be audio URL
+    prompt: parameters.emotion || '', // Optional emotion/style guidance
   };
   
-  if (isAudioUrl) {
-    // Script is an audio URL
-    payload.audio_url = params.script;
-  } else {
-    // Script is text - need to convert to audio first or use text field
-    payload.text = params.script;
-  }
-  
-  if (parameters.emotion) payload.description = parameters.emotion;
-  if (params.callBackUrl) payload.callBackUrl = params.callBackUrl;
-  
-  return await callKieApi('/api/v1/kling/avatar/generate', payload);
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: model,
+    callBackUrl: params.callBackUrl,
+    input,
+  });
 }
 
 // InfiniteTalk Lip Sync - Generate lip-sync video from image + audio
