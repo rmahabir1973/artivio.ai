@@ -1298,11 +1298,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 await storage.updateGeneration(generationId, { resultUrl: optimizedUrl });
                 console.log(`✓ Video optimized and URL updated for ${generationId}: ${optimizedUrl}`);
                 
-                // Generate thumbnail from optimized video
+                // Generate thumbnail from optimized video (use local path for efficiency)
+                const localVideoPath = path.join(process.cwd(), 'public', optimizedUrl.replace(/^\//,''));
                 const thumbResult = await generateThumbnail({
-                  videoUrl: optimizedUrl,
+                  videoPath: localVideoPath,
                   generationId: generationId,
-                  timestampSeconds: 2,
+                  timestampSeconds: 1, // Extract frame at 1 second mark
                 });
                 
                 await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
