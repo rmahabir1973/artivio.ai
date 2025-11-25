@@ -79,13 +79,41 @@ When the user clicks "Publish" in Replit:
 - The build not running correctly during publish
 - CDN/edge caching on the published domain
 
-**Solution - Force Fresh Deployment**:
+**Solution - Complete Troubleshooting Checklist**:
+
+**Step 1: Browser-Side (User Must Do)**
+- Hard refresh: Press **Ctrl+Shift+R** (Windows) or **Cmd+Shift+R** (Mac) on the production site
+- Or open the site in **Incognito/Private window**
+- Or clear browser cache for the domain
+
+**Step 2: Verify Build Contains Changes**
+```bash
+# Check build has new code
+grep -c "YOUR_FEATURE_TEXT" dist/public/assets/index-*.js
+
+# Note the current build hash
+ls dist/public/assets/index-*.js
+```
+
+**Step 3: Force Fresh Deployment (If Still Not Working)**
 1. Go to **Publish** button → **Manage** tab
 2. Click **"Shut Down"** to completely stop the current deployment
-3. Wait a few seconds
+   - This is SAFE: Only deletes the deployed instance, NOT your code/database
+3. Wait 10 seconds
 4. Click **"Publish"** again to create a fresh deployment
 
+**Step 4: Verify Production is Using New Build**
+- Check Network tab in browser DevTools on production site
+- Look at the JS filename (e.g., `index-DLyJg_Qz.js`)
+- Compare to the build hash from Step 2
+
 **DO NOT sync `public/` with `dist/public/` as a fix** - This only affects local development, NOT production deployments.
+
+**Important Notes for Agents:**
+- Vite uses content hashing - filename changes when content changes
+- If build hash is same after changes, the bundler cached unchanged modules
+- Production serves from `dist/public/`, development from `public/`
+- Shut Down is the nuclear option but always works
 
 ### File Structure for Deployment
 
