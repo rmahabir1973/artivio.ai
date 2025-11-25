@@ -69,37 +69,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Schedule periodic cleanup of old uploaded files (runs every 24 hours)
-  const { cleanupOldUploads } = await import('./imageHosting');
-  setInterval(() => {
-    cleanupOldUploads(24 * 60 * 60 * 1000).catch((err) => {
-      console.error('Scheduled cleanup failed:', err);
-    });
-  }, 24 * 60 * 60 * 1000); // Run every 24 hours
-  
-  // Run cleanup immediately on startup
-  cleanupOldUploads(24 * 60 * 60 * 1000).catch((err) => {
-    console.error('Startup cleanup failed:', err);
-  });
-  
-  // Initialize subscription plans (creates default plans if they don't exist)
-  const { initializePlans } = await import('./seedPlans');
-  await initializePlans();
-  
-  // Initialize pricing (upserts all pricing entries from seedPricing.ts)
-  // Non-blocking: Server continues even if pricing seed fails
-  const { seedPricing } = await import('./seedPricing');
-  try {
-    await seedPricing();
-  } catch (error) {
-    console.error('⚠️  WARNING: Pricing seed failed, server continuing with existing pricing data');
-    console.error('   Error:', error instanceof Error ? error.message : error);
-    console.error('   → Pricing may be outdated. Check database connection and restart server.');
-  }
-  
-  // Initialize Passport strategies and middleware for authentication
+  // Initialize Passport strategies FIRST - quick operation
   initializePassportStrategies(app);
   
+  // Register all routes immediately - this makes endpoints available for health checks
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -130,5 +103,36 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+  });
+
+  // === BACKGROUND INITIALIZATION (non-blocking) ===
+  // These operations run AFTER server is listening to avoid health check timeouts
+  
+  // Schedule periodic cleanup of old uploaded files (runs every 24 hours)
+  const { cleanupOldUploads } = await import('./imageHosting');
+  setInterval(() => {
+    cleanupOldUploads(24 * 60 * 60 * 1000).catch((err) => {
+      console.error('Scheduled cleanup failed:', err);
+    });
+  }, 24 * 60 * 60 * 1000); // Run every 24 hours
+  
+  // Run cleanup immediately on startup (background)
+  cleanupOldUploads(24 * 60 * 60 * 1000).catch((err) => {
+    console.error('Startup cleanup failed:', err);
+  });
+  
+  // Initialize subscription plans in background (creates default plans if they don't exist)
+  const { initializePlans } = await import('./seedPlans');
+  initializePlans().catch((error) => {
+    console.error('⚠️  WARNING: Plan initialization failed:');
+    console.error('   Error:', error instanceof Error ? error.message : error);
+  });
+  
+  // Initialize pricing in background (upserts all pricing entries from seedPricing.ts)
+  const { seedPricing } = await import('./seedPricing');
+  seedPricing().catch((error) => {
+    console.error('⚠️  WARNING: Pricing seed failed, using existing pricing data');
+    console.error('   Error:', error instanceof Error ? error.message : error);
+    console.error('   → Pricing may be outdated. Check database connection and restart server.');
   });
 })();
