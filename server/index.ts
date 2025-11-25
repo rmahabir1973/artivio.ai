@@ -144,11 +144,17 @@ app.use((req, res, next) => {
     console.error('   Error:', error instanceof Error ? error.message : error);
   });
   
-  // Initialize pricing in background (upserts all pricing entries from seedPricing.ts)
-  const { seedPricing } = await import('./seedPricing');
-  seedPricing().catch((error) => {
-    console.error('⚠️  WARNING: Pricing seed failed, using existing pricing data');
-    console.error('   Error:', error instanceof Error ? error.message : error);
-    console.error('   → Pricing may be outdated. Check database connection and restart server.');
-  });
+  // Initialize pricing in background ONLY when explicitly enabled
+  // This prevents connection pool exhaustion on every server restart
+  if (process.env.PRICING_SEED_ENABLED === 'true') {
+    console.log('📋 Pricing seed enabled - updating pricing data...');
+    const { seedPricing } = await import('./seedPricing');
+    seedPricing().catch((error) => {
+      console.error('⚠️  WARNING: Pricing seed failed, using existing pricing data');
+      console.error('   Error:', error instanceof Error ? error.message : error);
+      console.error('   → Pricing may be outdated. Check database connection and restart server.');
+    });
+  } else {
+    console.log('ℹ️  Pricing seed skipped (set PRICING_SEED_ENABLED=true to enable)');
+  }
 })();
