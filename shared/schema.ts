@@ -7,6 +7,7 @@ import {
   jsonb,
   numeric,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -213,11 +214,15 @@ export const generations = pgTable("generations", {
   creditsCost: integer("credits_cost").notNull(),
   apiKeyUsed: varchar("api_key_used"), // Which API key was used
   seed: integer("seed"), // Random seed for reproducibility (supported by Veo 3.1, Wan 2.5, Seedance)
+  collectionId: varchar("collection_id").references(() => collections.id, { onDelete: 'set null' }),
+  isFavorite: boolean("is_favorite").notNull().default(false),
+  archivedAt: timestamp("archived_at"), // null means not archived
   isShowcase: boolean("is_showcase").notNull().default(false), // User opt-in to display in public showcase
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 }, (table) => [
   index("generations_user_created_idx").on(table.userId, table.createdAt),
+  index("generations_collection_idx").on(table.collectionId),
 ]);
 
 export const insertGenerationSchema = createInsertSchema(generations).omit({
@@ -228,6 +233,81 @@ export const insertGenerationSchema = createInsertSchema(generations).omit({
 
 export type InsertGeneration = z.infer<typeof insertGenerationSchema>;
 export type Generation = typeof generations.$inferSelect;
+
+// Collections table (folders for organizing generations)
+export const collections = pgTable("collections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  parentId: varchar("parent_id"), // Self-referencing for hierarchy - null means root level
+  color: varchar("color", { length: 7 }), // Hex color for folder icon (e.g., "#FF5733")
+  icon: varchar("icon", { length: 50 }), // Lucide icon name (e.g., "folder", "star", "heart")
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("collections_user_idx").on(table.userId),
+  index("collections_parent_idx").on(table.parentId),
+]);
+
+export const insertCollectionSchema = createInsertSchema(collections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateCollectionSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().optional(),
+  parentId: z.string().nullable().optional(),
+  color: z.string().max(7).optional(),
+  icon: z.string().max(50).optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+export type InsertCollection = z.infer<typeof insertCollectionSchema>;
+export type UpdateCollection = z.infer<typeof updateCollectionSchema>;
+export type Collection = typeof collections.$inferSelect;
+
+// Tags table (labels for categorization)
+export const tags = pgTable("tags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar("name", { length: 50 }).notNull(),
+  color: varchar("color", { length: 7 }).notNull().default("#6366F1"), // Hex color
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("tags_user_idx").on(table.userId),
+  uniqueIndex("tags_user_name_idx").on(table.userId, table.name),
+]);
+
+export const insertTagSchema = createInsertSchema(tags).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const updateTagSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+  color: z.string().max(7).optional(),
+});
+
+export type InsertTag = z.infer<typeof insertTagSchema>;
+export type UpdateTag = z.infer<typeof updateTagSchema>;
+export type Tag = typeof tags.$inferSelect;
+
+// Generation-Tags join table
+export const generationTags = pgTable("generation_tags", {
+  generationId: varchar("generation_id").notNull().references(() => generations.id, { onDelete: 'cascade' }),
+  tagId: varchar("tag_id").notNull().references(() => tags.id, { onDelete: 'cascade' }),
+}, (table) => [
+  primaryKey({ columns: [table.generationId, table.tagId] }),
+]);
+
+export const insertGenerationTagSchema = createInsertSchema(generationTags);
+
+export type InsertGenerationTag = z.infer<typeof insertGenerationTagSchema>;
+export type GenerationTag = typeof generationTags.$inferSelect;
 
 // Saved Seeds table for user's seed library (for reproducible AI generations)
 export const savedSeeds = pgTable("saved_seeds", {
