@@ -59,6 +59,67 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 ### System Design Choices
 The project features a modular structure with a database schema supporting users, generations, conversations, and API keys. Video processing uses server-side FFmpeg with asynchronous job processing. Landing page content is managed via a singleton database row with JSONB. The generation queue provides real-time monitoring and smart retry functionality.
 
+## CRITICAL: Replit Deployment System
+
+**IMPORTANT FOR ALL AGENTS: READ THIS BEFORE MAKING ANY DEPLOYMENT-RELATED CHANGES**
+
+### How Replit Autoscale Deployment Works
+
+When the user clicks "Publish" in Replit:
+1. **Replit runs `npm run build`** - This creates NEW files in `dist/public/` (frontend) and `dist/index.js` (server)
+2. **Replit runs `npm run start`** - This runs `NODE_ENV=production node dist/index.js`
+3. **Production server serves from `dist/public/`** - NOT the root `public/` folder
+
+### Common Deployment Issue: Published Version Not Updating
+
+**Problem**: User republishes but the published version still shows old code.
+
+**Root Cause**: The `public/` folder at root level may have OLD build files, but this is NOT what production uses. Production uses `dist/public/`. The real issue is usually:
+- Replit's deployment using a cached snapshot
+- The build not running correctly during publish
+- CDN/edge caching on the published domain
+
+**Solution - Force Fresh Deployment**:
+1. Go to **Publish** button → **Manage** tab
+2. Click **"Shut Down"** to completely stop the current deployment
+3. Wait a few seconds
+4. Click **"Publish"** again to create a fresh deployment
+
+**DO NOT sync `public/` with `dist/public/` as a fix** - This only affects local development, NOT production deployments.
+
+### File Structure for Deployment
+
+```
+/
+├── public/                    # LOCAL DEV ONLY - Vite dev server uses this
+│   └── assets/               # Stale build files (ignore for production)
+├── dist/                     # PRODUCTION BUILD OUTPUT
+│   ├── index.js             # Compiled server (serves from dist/public/)
+│   └── public/              # Built frontend assets (THIS is what production uses)
+│       ├── index.html       # Has correct hashed JS/CSS references
+│       └── assets/          # Actual JS/CSS bundles with ReactMarkdown, etc.
+```
+
+### Build Verification Commands
+
+```bash
+# Check if new code is in build
+grep -c "ReactMarkdown" dist/public/assets/index-*.js  # Should return 1+
+
+# Check build hash
+cat dist/public/index.html | grep "index-"  # Shows current build hash
+
+# Verify production server path
+grep "serveStatic" dist/index.js | head -3  # Shows path resolution
+```
+
+### Lip Sync Audio Recording Issue
+
+**Problem**: Audio recordings sent as `audio/mp3` but browsers actually record in `audio/webm` format.
+**Solution**: Use `MediaRecorder.isTypeSupported()` to detect correct format and use actual MIME type.
+
+---
+
 ## External Dependencies
 
 -   **Kie.ai API**: Core AI service for video, image, music generation, and voice cloning.
