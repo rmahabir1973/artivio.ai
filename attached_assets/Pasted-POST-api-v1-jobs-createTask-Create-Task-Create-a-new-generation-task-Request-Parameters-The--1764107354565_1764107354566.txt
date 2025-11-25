@@ -1,0 +1,263 @@
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"elevenlabs/text-to-speech-multilingual-v2"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.text
+Required
+string
+The text to convert to speech
+
+Max length: 5000 characters
+Example:
+
+"Unlock powerful API with Kie.ai! Affordable, scalable APl integration, free trial playground, and secure, reliable performance."
+input.voice
+Optional
+string
+The voice to use for speech generation
+
+Available options:
+
+Rachel
+-
+Rachel
+Aria
+-
+Aria
+Roger
+-
+Roger
+Sarah
+-
+Sarah
+Laura
+-
+Laura
+Charlie
+-
+Charlie
+George
+-
+George
+Callum
+-
+Callum
+River
+-
+River
+Liam
+-
+Liam
+Charlotte
+-
+Charlotte
+Alice
+-
+Alice
+Matilda
+-
+Matilda
+Will
+-
+Will
+Jessica
+-
+Jessica
+Eric
+-
+Eric
+Chris
+-
+Chris
+Brian
+-
+Brian
+Daniel
+-
+Daniel
+Lily
+-
+Lily
+Bill
+-
+Bill
+Example:
+
+"Rachel"
+input.stability
+Optional
+number
+Voice stability (0-1)
+
+Min: 0, Max: 1, Step: 0.01
+Example:
+
+0.5
+input.similarity_boost
+Optional
+number
+Similarity boost (0-1)
+
+Min: 0, Max: 1, Step: 0.01
+Example:
+
+0.75
+input.style
+Optional
+number
+Style exaggeration (0-1)
+
+Min: 0, Max: 1, Step: 0.01
+Example:
+
+0
+input.speed
+Optional
+number
+Speech speed (0.7-1.2). Values below 1.0 slow down the speech, above 1.0 speed it up. Extreme values may affect quality.
+
+Min: 0.7, Max: 1.2, Step: 0.01
+Example:
+
+1
+input.timestamps
+Optional
+boolean
+Whether to return timestamps for each word in the generated speech
+
+Boolean value (true/false)
+Example:
+
+false
+input.previous_text
+Optional
+string
+The text that came before the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation.
+
+Max length: 5000 characters
+input.next_text
+Optional
+string
+The text that comes after the text of the current request. Can be used to improve the speech's continuity when concatenating together multiple generations or to influence the speech's continuity in the current generation.
+
+Max length: 5000 characters
+input.language_code
+Optional
+string
+Language code (ISO 639-1) used to enforce a language for the model. Currently only Turbo v2.5 and Flash v2.5 support language enforcement. For other models, an error will be returned if language code is provided.
+
+Max length: 500 characters
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "elevenlabs/text-to-speech-multilingual-v2",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "text": "Unlock powerful API with Kie.ai! Affordable, scalable APl integration, free trial playground, and secure, reliable performance.",
+      "voice": "Rachel",
+      "stability": 0.5,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "speed": 1,
+      "timestamps": false
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "elevenlabs/text-to-speech-multilingual-v2",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"elevenlabs/text-to-speech-multilingual-v2\",\"input\":{\"text\":\"Unlock powerful API with Kie.ai! Affordable, scalable APl integration, free trial playground, and secure, reliable performance.\",\"voice\":\"Rachel\",\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"speed\":1,\"timestamps\":false,\"previous_text\":\"\",\"next_text\":\"\",\"language_code\":\"\"}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "elevenlabs/text-to-speech-multilingual-v2",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"elevenlabs/text-to-speech-multilingual-v2\",\"input\":{\"text\":\"Unlock powerful API with Kie.ai! Affordable, scalable APl integration, free trial playground, and secure, reliable performance.\",\"voice\":\"Rachel\",\"stability\":0.5,\"similarity_boost\":0.75,\"style\":0,\"speed\":1,\"timestamps\":false,\"previous_text\":\"\",\"next_text\":\"\",\"language_code\":\"\"}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section
+If callBackUrl is not provided, no callback notifications will be sent
