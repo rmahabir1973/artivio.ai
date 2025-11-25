@@ -363,6 +363,7 @@ export default function Chat() {
                   <p className="text-muted-foreground max-w-sm mb-6">
                     Choose your AI provider and model, then ask anything. Your messages will be saved automatically.
                   </p>
+                  <p className="text-xs text-muted-foreground/50">v2.1.0-md</p>
                 </div>
               )}
 
