@@ -78,7 +78,7 @@ async function cleanupPlans() {
 
   const plansToDeactivate: string[] = [];
   
-  for (const [name, plans] of duplicatePlans.entries()) {
+  for (const [name, plans] of Array.from(duplicatePlans.entries())) {
     if (plans.length > 1) {
       // Keep the oldest one (first created), mark others as inactive
       const sorted = [...plans].sort((a, b) => 
