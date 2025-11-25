@@ -2680,6 +2680,629 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== COLLECTIONS ROUTES ==========
+
+  // Get user collections
+  app.get('/api/collections', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const collections = await storage.getCollections(userId);
+      res.json(collections);
+    } catch (error) {
+      console.error('Error fetching collections:', error);
+      res.status(500).json({ message: "Failed to fetch collections" });
+    }
+  });
+
+  // Create collection
+  app.post('/api/collections', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const schema = z.object({
+        name: z.string().min(1).max(100),
+        description: z.string().optional(),
+        color: z.string().optional(),
+        icon: z.string().optional(),
+        parentId: z.string().uuid().optional().nullable(),
+        sortOrder: z.number().optional()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const collection = await storage.createCollection({
+        ...validationResult.data,
+        userId
+      });
+      res.status(201).json(collection);
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      res.status(500).json({ message: "Failed to create collection" });
+    }
+  });
+
+  // Update collection
+  app.put('/api/collections/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const collection = await storage.getCollection(id);
+      if (!collection) {
+        return res.status(404).json({ message: "Collection not found" });
+      }
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own collections" });
+      }
+
+      const schema = z.object({
+        name: z.string().min(1).max(100).optional(),
+        description: z.string().optional().nullable(),
+        color: z.string().optional().nullable(),
+        icon: z.string().optional().nullable(),
+        parentId: z.string().uuid().optional().nullable(),
+        sortOrder: z.number().optional()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const updated = await storage.updateCollection(id, validationResult.data);
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating collection:', error);
+      res.status(500).json({ message: "Failed to update collection" });
+    }
+  });
+
+  // Delete collection
+  app.delete('/api/collections/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const collection = await storage.getCollection(id);
+      if (!collection) {
+        return res.status(404).json({ message: "Collection not found" });
+      }
+      if (collection.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own collections" });
+      }
+
+      await storage.deleteCollection(id);
+      res.json({ success: true, message: "Collection deleted" });
+    } catch (error) {
+      console.error('Error deleting collection:', error);
+      res.status(500).json({ message: "Failed to delete collection" });
+    }
+  });
+
+  // ========== TAGS ROUTES ==========
+
+  // Get user tags
+  app.get('/api/tags', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const tags = await storage.getTags(userId);
+      res.json(tags);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      res.status(500).json({ message: "Failed to fetch tags" });
+    }
+  });
+
+  // Create tag
+  app.post('/api/tags', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const schema = z.object({
+        name: z.string().min(1).max(50),
+        color: z.string().optional()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const tag = await storage.createTag({
+        ...validationResult.data,
+        userId
+      });
+      res.status(201).json(tag);
+    } catch (error) {
+      console.error('Error creating tag:', error);
+      res.status(500).json({ message: "Failed to create tag" });
+    }
+  });
+
+  // Update tag
+  app.put('/api/tags/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const tag = await storage.getTag(id);
+      if (!tag) {
+        return res.status(404).json({ message: "Tag not found" });
+      }
+      if (tag.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own tags" });
+      }
+
+      const schema = z.object({
+        name: z.string().min(1).max(50).optional(),
+        color: z.string().optional().nullable()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const updated = await storage.updateTag(id, validationResult.data);
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating tag:', error);
+      res.status(500).json({ message: "Failed to update tag" });
+    }
+  });
+
+  // Delete tag
+  app.delete('/api/tags/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const tag = await storage.getTag(id);
+      if (!tag) {
+        return res.status(404).json({ message: "Tag not found" });
+      }
+      if (tag.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own tags" });
+      }
+
+      await storage.deleteTag(id);
+      res.json({ success: true, message: "Tag deleted" });
+    } catch (error) {
+      console.error('Error deleting tag:', error);
+      res.status(500).json({ message: "Failed to delete tag" });
+    }
+  });
+
+  // ========== GENERATION ORGANIZATION ROUTES ==========
+
+  // Toggle favorite status
+  app.post('/api/generations/:id/favorite', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const generation = await storage.getGeneration(id);
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own generations" });
+      }
+
+      const schema = z.object({
+        isFavorite: z.boolean()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const updated = await storage.updateGeneration(id, { isFavorite: validationResult.data.isFavorite });
+      res.json({ success: true, isFavorite: updated?.isFavorite });
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      res.status(500).json({ message: "Failed to update favorite status" });
+    }
+  });
+
+  // Archive/unarchive generation
+  app.post('/api/generations/:id/archive', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const generation = await storage.getGeneration(id);
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own generations" });
+      }
+
+      const schema = z.object({
+        isArchived: z.boolean()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const updated = await storage.updateGeneration(id, { isArchived: validationResult.data.isArchived });
+      res.json({ success: true, isArchived: updated?.isArchived });
+    } catch (error) {
+      console.error('Error toggling archive:', error);
+      res.status(500).json({ message: "Failed to update archive status" });
+    }
+  });
+
+  // Move to collection
+  app.post('/api/generations/:id/collection', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const generation = await storage.getGeneration(id);
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own generations" });
+      }
+
+      const schema = z.object({
+        collectionId: z.string().uuid().nullable()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      if (validationResult.data.collectionId) {
+        const collection = await storage.getCollection(validationResult.data.collectionId);
+        if (!collection || collection.userId !== userId) {
+          return res.status(403).json({ message: "Collection not found or does not belong to you" });
+        }
+      }
+
+      const updated = await storage.updateGeneration(id, { collectionId: validationResult.data.collectionId });
+      res.json({ success: true, collectionId: updated?.collectionId });
+    } catch (error) {
+      console.error('Error moving to collection:', error);
+      res.status(500).json({ message: "Failed to move generation to collection" });
+    }
+  });
+
+  // Get generation's tags
+  app.get('/api/generations/:id/tags', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const generation = await storage.getGeneration(id);
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "You can only view tags for your own generations" });
+      }
+
+      const tags = await storage.getGenerationTags(id);
+      res.json(tags);
+    } catch (error) {
+      console.error('Error fetching generation tags:', error);
+      res.status(500).json({ message: "Failed to fetch generation tags" });
+    }
+  });
+
+  // Add tag to generation
+  app.post('/api/generations/:id/tags', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const generation = await storage.getGeneration(id);
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own generations" });
+      }
+
+      const schema = z.object({
+        tagId: z.string().uuid()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const tag = await storage.getTag(validationResult.data.tagId);
+      if (!tag || tag.userId !== userId) {
+        return res.status(403).json({ message: "Tag not found or does not belong to you" });
+      }
+
+      await storage.addGenerationTag(id, validationResult.data.tagId);
+      res.json({ success: true, message: "Tag added to generation" });
+    } catch (error) {
+      console.error('Error adding tag to generation:', error);
+      res.status(500).json({ message: "Failed to add tag to generation" });
+    }
+  });
+
+  // Remove tag from generation
+  app.delete('/api/generations/:id/tags/:tagId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id, tagId } = req.params;
+      
+      const generation = await storage.getGeneration(id);
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      if (generation.userId !== userId) {
+        return res.status(403).json({ message: "You can only modify your own generations" });
+      }
+
+      await storage.removeGenerationTag(id, tagId);
+      res.json({ success: true, message: "Tag removed from generation" });
+    } catch (error) {
+      console.error('Error removing tag from generation:', error);
+      res.status(500).json({ message: "Failed to remove tag from generation" });
+    }
+  });
+
+  // ========== BULK OPERATIONS ROUTES ==========
+
+  // Bulk move to collection
+  app.post('/api/generations/bulk/move', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const schema = z.object({
+        generationIds: z.array(z.string().uuid()).min(1),
+        collectionId: z.string().uuid().nullable()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { generationIds, collectionId } = validationResult.data;
+
+      const userGenerations = await storage.getUserGenerations(userId);
+      const userGenIds = new Set(userGenerations.map(g => g.id));
+      const invalidIds = generationIds.filter(id => !userGenIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ message: "Some generations do not belong to you" });
+      }
+
+      if (collectionId) {
+        const collection = await storage.getCollection(collectionId);
+        if (!collection || collection.userId !== userId) {
+          return res.status(403).json({ message: "Collection not found or does not belong to you" });
+        }
+      }
+
+      await storage.bulkMoveToCollection(generationIds, collectionId);
+      res.json({ success: true, message: `${generationIds.length} generations moved` });
+    } catch (error) {
+      console.error('Error bulk moving generations:', error);
+      res.status(500).json({ message: "Failed to move generations" });
+    }
+  });
+
+  // Bulk toggle favorite
+  app.post('/api/generations/bulk/favorite', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const schema = z.object({
+        generationIds: z.array(z.string().uuid()).min(1),
+        isFavorite: z.boolean()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { generationIds, isFavorite } = validationResult.data;
+
+      const userGenerations = await storage.getUserGenerations(userId);
+      const userGenIds = new Set(userGenerations.map(g => g.id));
+      const invalidIds = generationIds.filter(id => !userGenIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ message: "Some generations do not belong to you" });
+      }
+
+      await storage.bulkToggleFavorite(generationIds, isFavorite);
+      res.json({ success: true, message: `${generationIds.length} generations updated` });
+    } catch (error) {
+      console.error('Error bulk toggling favorite:', error);
+      res.status(500).json({ message: "Failed to update generations" });
+    }
+  });
+
+  // Bulk archive
+  app.post('/api/generations/bulk/archive', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const schema = z.object({
+        generationIds: z.array(z.string().uuid()).min(1),
+        archive: z.boolean()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { generationIds, archive } = validationResult.data;
+
+      const userGenerations = await storage.getUserGenerations(userId);
+      const userGenIds = new Set(userGenerations.map(g => g.id));
+      const invalidIds = generationIds.filter(id => !userGenIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ message: "Some generations do not belong to you" });
+      }
+
+      await storage.bulkArchive(generationIds, archive);
+      res.json({ success: true, message: `${generationIds.length} generations ${archive ? 'archived' : 'unarchived'}` });
+    } catch (error) {
+      console.error('Error bulk archiving generations:', error);
+      res.status(500).json({ message: "Failed to archive generations" });
+    }
+  });
+
+  // Bulk delete
+  app.post('/api/generations/bulk/delete', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const schema = z.object({
+        generationIds: z.array(z.string().uuid()).min(1)
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { generationIds } = validationResult.data;
+
+      const userGenerations = await storage.getUserGenerations(userId);
+      const userGenIds = new Set(userGenerations.map(g => g.id));
+      const invalidIds = generationIds.filter(id => !userGenIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ message: "Some generations do not belong to you" });
+      }
+
+      await storage.bulkDelete(generationIds);
+      res.json({ success: true, message: `${generationIds.length} generations deleted` });
+    } catch (error) {
+      console.error('Error bulk deleting generations:', error);
+      res.status(500).json({ message: "Failed to delete generations" });
+    }
+  });
+
+  // Bulk add tag
+  app.post('/api/generations/bulk/add-tag', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const schema = z.object({
+        generationIds: z.array(z.string().uuid()).min(1),
+        tagId: z.string().uuid()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { generationIds, tagId } = validationResult.data;
+
+      const userGenerations = await storage.getUserGenerations(userId);
+      const userGenIds = new Set(userGenerations.map(g => g.id));
+      const invalidIds = generationIds.filter(id => !userGenIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ message: "Some generations do not belong to you" });
+      }
+
+      const tag = await storage.getTag(tagId);
+      if (!tag || tag.userId !== userId) {
+        return res.status(403).json({ message: "Tag not found or does not belong to you" });
+      }
+
+      await storage.bulkAddTag(generationIds, tagId);
+      res.json({ success: true, message: `Tag added to ${generationIds.length} generations` });
+    } catch (error) {
+      console.error('Error bulk adding tag:', error);
+      res.status(500).json({ message: "Failed to add tag to generations" });
+    }
+  });
+
+  // Bulk remove tag
+  app.post('/api/generations/bulk/remove-tag', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const schema = z.object({
+        generationIds: z.array(z.string().uuid()).min(1),
+        tagId: z.string().uuid()
+      });
+      
+      const validationResult = schema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request body", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { generationIds, tagId } = validationResult.data;
+
+      const userGenerations = await storage.getUserGenerations(userId);
+      const userGenIds = new Set(userGenerations.map(g => g.id));
+      const invalidIds = generationIds.filter(id => !userGenIds.has(id));
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ message: "Some generations do not belong to you" });
+      }
+
+      await storage.bulkRemoveTag(generationIds, tagId);
+      res.json({ success: true, message: `Tag removed from ${generationIds.length} generations` });
+    } catch (error) {
+      console.error('Error bulk removing tag:', error);
+      res.status(500).json({ message: "Failed to remove tag from generations" });
+    }
+  });
+
   // Get user stats
   app.get('/api/stats', requireJWT, async (req: any, res) => {
     try {

@@ -24,6 +24,9 @@ import {
   favoriteWorkflows,
   generationTemplates,
   referrals,
+  collections,
+  tags,
+  generationTags,
   type User,
   type UpsertUser,
   type Referral,
@@ -80,9 +83,15 @@ import {
   type InsertUserOnboarding,
   type UpdateUserOnboarding,
   type UserOnboarding,
+  type Collection,
+  type InsertCollection,
+  type UpdateCollection,
+  type Tag,
+  type InsertTag,
+  type UpdateTag,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, sql } from "drizzle-orm";
+import { eq, desc, and, gte, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -280,6 +289,33 @@ export interface IStorage {
     totalReferrals: number;
     totalCreditsEarned: number;
   }>>;
+
+  // Collections operations
+  getCollections(userId: string): Promise<Collection[]>;
+  getCollection(id: string): Promise<Collection | undefined>;
+  createCollection(collection: InsertCollection): Promise<Collection>;
+  updateCollection(id: string, updates: UpdateCollection): Promise<Collection | undefined>;
+  deleteCollection(id: string): Promise<void>;
+
+  // Tags operations
+  getTags(userId: string): Promise<Tag[]>;
+  getTag(id: string): Promise<Tag | undefined>;
+  createTag(tag: InsertTag): Promise<Tag>;
+  updateTag(id: string, updates: UpdateTag): Promise<Tag | undefined>;
+  deleteTag(id: string): Promise<void>;
+
+  // Generation-Tag operations
+  getGenerationTags(generationId: string): Promise<Tag[]>;
+  addGenerationTag(generationId: string, tagId: string): Promise<void>;
+  removeGenerationTag(generationId: string, tagId: string): Promise<void>;
+
+  // Bulk operations
+  bulkMoveToCollection(generationIds: string[], collectionId: string | null): Promise<void>;
+  bulkToggleFavorite(generationIds: string[], isFavorite: boolean): Promise<void>;
+  bulkArchive(generationIds: string[], archive: boolean): Promise<void>;
+  bulkDelete(generationIds: string[]): Promise<void>;
+  bulkAddTag(generationIds: string[], tagId: string): Promise<void>;
+  bulkRemoveTag(generationIds: string[], tagId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2106,6 +2142,169 @@ export class DatabaseStorage implements IStorage {
     );
 
     return result;
+  }
+
+  // Collections operations
+  async getCollections(userId: string): Promise<Collection[]> {
+    return await db
+      .select()
+      .from(collections)
+      .where(eq(collections.userId, userId))
+      .orderBy(collections.sortOrder, collections.name);
+  }
+
+  async getCollection(id: string): Promise<Collection | undefined> {
+    const [collection] = await db
+      .select()
+      .from(collections)
+      .where(eq(collections.id, id));
+    return collection;
+  }
+
+  async createCollection(collection: InsertCollection): Promise<Collection> {
+    const [created] = await db
+      .insert(collections)
+      .values(collection)
+      .returning();
+    return created;
+  }
+
+  async updateCollection(id: string, updates: UpdateCollection): Promise<Collection | undefined> {
+    const [updated] = await db
+      .update(collections)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(collections.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCollection(id: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(generations)
+        .set({ collectionId: null })
+        .where(eq(generations.collectionId, id));
+      await tx.delete(collections).where(eq(collections.id, id));
+    });
+  }
+
+  // Tags operations
+  async getTags(userId: string): Promise<Tag[]> {
+    return await db
+      .select()
+      .from(tags)
+      .where(eq(tags.userId, userId))
+      .orderBy(tags.name);
+  }
+
+  async getTag(id: string): Promise<Tag | undefined> {
+    const [tag] = await db
+      .select()
+      .from(tags)
+      .where(eq(tags.id, id));
+    return tag;
+  }
+
+  async createTag(tag: InsertTag): Promise<Tag> {
+    const [created] = await db
+      .insert(tags)
+      .values(tag)
+      .returning();
+    return created;
+  }
+
+  async updateTag(id: string, updates: UpdateTag): Promise<Tag | undefined> {
+    const [updated] = await db
+      .update(tags)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tags.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteTag(id: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx.delete(generationTags).where(eq(generationTags.tagId, id));
+      await tx.delete(tags).where(eq(tags.id, id));
+    });
+  }
+
+  // Generation-Tag operations
+  async getGenerationTags(generationId: string): Promise<Tag[]> {
+    const result = await db
+      .select({ tag: tags })
+      .from(generationTags)
+      .innerJoin(tags, eq(generationTags.tagId, tags.id))
+      .where(eq(generationTags.generationId, generationId));
+    return result.map(r => r.tag);
+  }
+
+  async addGenerationTag(generationId: string, tagId: string): Promise<void> {
+    await db
+      .insert(generationTags)
+      .values({ generationId, tagId })
+      .onConflictDoNothing();
+  }
+
+  async removeGenerationTag(generationId: string, tagId: string): Promise<void> {
+    await db
+      .delete(generationTags)
+      .where(and(
+        eq(generationTags.generationId, generationId),
+        eq(generationTags.tagId, tagId)
+      ));
+  }
+
+  // Bulk operations
+  async bulkMoveToCollection(generationIds: string[], collectionId: string | null): Promise<void> {
+    if (generationIds.length === 0) return;
+    await db
+      .update(generations)
+      .set({ collectionId })
+      .where(inArray(generations.id, generationIds));
+  }
+
+  async bulkToggleFavorite(generationIds: string[], isFavorite: boolean): Promise<void> {
+    if (generationIds.length === 0) return;
+    await db
+      .update(generations)
+      .set({ isFavorite })
+      .where(inArray(generations.id, generationIds));
+  }
+
+  async bulkArchive(generationIds: string[], archive: boolean): Promise<void> {
+    if (generationIds.length === 0) return;
+    await db
+      .update(generations)
+      .set({ isArchived: archive })
+      .where(inArray(generations.id, generationIds));
+  }
+
+  async bulkDelete(generationIds: string[]): Promise<void> {
+    if (generationIds.length === 0) return;
+    await db.transaction(async (tx) => {
+      await tx.delete(generationTags).where(inArray(generationTags.generationId, generationIds));
+      await tx.delete(generations).where(inArray(generations.id, generationIds));
+    });
+  }
+
+  async bulkAddTag(generationIds: string[], tagId: string): Promise<void> {
+    if (generationIds.length === 0) return;
+    const values = generationIds.map(generationId => ({ generationId, tagId }));
+    await db
+      .insert(generationTags)
+      .values(values)
+      .onConflictDoNothing();
+  }
+
+  async bulkRemoveTag(generationIds: string[], tagId: string): Promise<void> {
+    if (generationIds.length === 0) return;
+    await db
+      .delete(generationTags)
+      .where(and(
+        inArray(generationTags.generationId, generationIds),
+        eq(generationTags.tagId, tagId)
+      ));
   }
 }
 
