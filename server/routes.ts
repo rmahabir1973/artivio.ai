@@ -1981,6 +1981,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Background Remover - Recraft AI
+  app.post('/api/background-remover', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { imageData } = req.body;
+
+      if (!imageData) {
+        return res.status(400).json({ message: "Image data is required" });
+      }
+
+      // Get cost from database
+      const cost = await getModelCost('recraft-remove-background');
+
+      // Atomically deduct credits
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Create generation record
+      const generation = await storage.createGeneration({
+        userId,
+        type: 'background-remover',
+        model: 'recraft-remove-background',
+        prompt: 'Remove background from image',
+        parameters: {},
+        status: 'pending',
+        creditsCost: cost,
+      });
+
+      // Process in background
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+
+          // Convert base64 to hosted URL
+          let hostedImageUrl: string;
+          try {
+            console.log('Converting base64 image to hosted URL...');
+            const hostedUrls = await saveBase64Images([imageData]);
+            hostedImageUrl = hostedUrls[0];
+            console.log(`✓ Image hosted at: ${hostedImageUrl}`);
+          } catch (imageError: any) {
+            console.error('Failed to host image:', imageError);
+            throw new Error(`Failed to process image: ${imageError.message}`);
+          }
+
+          // Call Kie.ai recraft/remove-background model directly
+          const callbackUrl = getCallbackUrl(generation.id);
+          console.log(`📞 Sending callback URL to Kie.ai for background remover ${generation.id}: ${callbackUrl}`);
+
+          // Get a Kie.ai API key
+          const apiKey = await storage.getNextApiKey();
+          if (!apiKey) {
+            throw new Error('No Kie.ai API keys available');
+          }
+
+          // Call Kie.ai API for background removal
+          const response = await axios.post(
+            'https://api.kie.ai/api/v1/jobs/createTask',
+            {
+              model: 'recraft/remove-background',
+              callBackUrl: callbackUrl,
+              input: { image: hostedImageUrl }
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${apiKey.keyValue}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          const taskId = response.data?.data?.taskId;
+          if (!taskId) {
+            throw new Error('API response missing taskId');
+          }
+
+          // Store taskId in externalTaskId field for webhook matching
+          await storage.updateGeneration(generation.id, {
+            status: 'processing',
+            apiKeyUsed: apiKey.keyName,
+            externalTaskId: taskId,
+            statusDetail: 'queued',
+          });
+
+          console.log(`📋 Background removal task queued: ${taskId} (waiting for callback)`);
+        } catch (error: any) {
+          console.error('Background removal failed:', error);
+          await storage.updateGeneration(generation.id, {
+            status: 'failed',
+            errorMessage: error.message,
+          });
+          // Refund credits on failure
+          await storage.addCreditsAtomic(userId, cost);
+        }
+      })();
+
+      res.json({ generationId: generation.id, message: "Background removal started" });
+    } catch (error: any) {
+      console.error('Background remover request error:', error);
+      res.status(500).json({ message: error.message || "Failed to start background removal" });
+    }
+  });
+
   // Music Generation
   app.post('/api/generate/music', requireJWT, async (req: any, res) => {
     try {

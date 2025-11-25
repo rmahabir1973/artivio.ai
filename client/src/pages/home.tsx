@@ -37,7 +37,8 @@ import {
   Volume2,
   ZoomIn,
   Maximize2,
-  Film
+  Film,
+  Wand2
 } from "lucide-react";
 
 interface FeatureCard {
@@ -250,6 +251,15 @@ export default function Home() {
       route: '/topaz-image-upscaler',
       category: 'image',
       modelCost: 'topaz-image-2x'
+    },
+    {
+      id: 'background-remover',
+      title: 'Background Remover',
+      description: 'Remove backgrounds from images with AI-powered precision using Recraft',
+      icon: Wand2,
+      route: '/background-remover',
+      category: 'image',
+      modelCost: 'recraft-remove-background'
     },
     {
       id: 'audio-converter',

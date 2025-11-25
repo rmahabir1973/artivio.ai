@@ -190,6 +190,12 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'upscaling', model: 'topaz-video-4x-20s', creditCost: 504, kieCreditCost: 240, category: 'enhancement', description: 'Topaz Video Upscale 4x - 16-20 seconds' },
   
   // ========================================
+  // BACKGROUND REMOVER
+  // ========================================
+  // Recraft AI background removal (1 Kie credit → 3 user credits)
+  { feature: 'background-remover', model: 'recraft-remove-background', creditCost: 3, kieCreditCost: 1, category: 'enhancement', description: 'Background Remover - Remove image backgrounds with Recraft AI' },
+
+  // ========================================
   // QR CODE GENERATOR
   // ========================================
   // Client-side generation (no server cost, no Kie.ai cost)
