@@ -915,6 +915,7 @@ export async function extendMusic(params: {
     continueAt: params.continueAt,
     continueClipId: params.continueClipId,
     model: kieModel,
+    defaultParamFlag: true, // Required by Kie.ai - use default parameters for extension
     callBackUrl: parameters.callBackUrl || 'https://placeholder-callback.invalid',
   });
 }
