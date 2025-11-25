@@ -132,20 +132,40 @@ export default function LipSync() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      // Determine the best supported MIME type for recording
+      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+      let selectedMimeType = '';
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
+      }
+      
+      const mediaRecorder = selectedMimeType 
+        ? new MediaRecorder(stream, { mimeType: selectedMimeType })
+        : new MediaRecorder(stream);
+      
+      // Store the actual MIME type being used
+      const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
+      
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       mediaRecorder.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
       };
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/mp3" });
+        // Use the actual MIME type from the recorder
+        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
         const reader = new FileReader();
         reader.onload = () => {
           const audioData = reader.result as string;
           setRecordedAudio(audioData);
           setAudioUrl(audioData);
-          setAudioFile("Voice Recording.mp3");
+          // Use appropriate extension based on MIME type
+          const ext = actualMimeType.includes('webm') ? 'webm' : actualMimeType.includes('ogg') ? 'ogg' : 'mp4';
+          setAudioFile(`Voice Recording.${ext}`);
           toast({ title: "Recording Saved", description: "Your voice recording has been saved." });
         };
         reader.readAsDataURL(audioBlob);
