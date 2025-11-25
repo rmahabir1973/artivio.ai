@@ -29,12 +29,11 @@ import {
   QrCode,
   Zap,
   Library,
-  Users,
-  Trophy,
   Settings,
   CreditCard,
   Shield,
   ArrowLeftRight,
+  DollarSign,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -90,8 +89,7 @@ const menuSections = [
     label: "Community",
     items: [
       { title: "Workflows", url: "/workflows", icon: Sparkles },
-      { title: "Referrals", url: "/referrals", icon: Users },
-      { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
+      { title: "Affiliates", url: "/affiliates", icon: DollarSign },
     ],
   },
   {

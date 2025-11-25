@@ -319,22 +319,6 @@ export default function Home() {
       route: '/workflows',
       category: 'community',
       badge: 'Community'
-    },
-    {
-      id: 'referrals',
-      title: 'Referral Program',
-      description: 'Earn 30% recurring commission by referring friends and grow your income',
-      icon: Gift,
-      route: '/referrals',
-      category: 'community'
-    },
-    {
-      id: 'leaderboard',
-      title: 'Leaderboard',
-      description: 'See top creators and community members on our leaderboard',
-      icon: TrendingUp,
-      route: '/leaderboard',
-      category: 'community'
     }
   ];
 

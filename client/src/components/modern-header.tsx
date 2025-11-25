@@ -32,8 +32,6 @@ import {
   Sparkles,
   Mic2,
   DollarSign,
-  Users,
-  Trophy,
   QrCode
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,8 +79,7 @@ export function ModernHeader() {
         { label: "Video Editor", href: "/video-editor", icon: Scissors },
         { label: "QR Generator", href: "/qr-generator", icon: QrCode },
         { label: "Workflows", href: "/workflows", icon: Sparkles },
-        { label: "Referrals", href: "/referrals", icon: Users },
-        { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
+        { label: "Affiliates", href: "/affiliates", icon: DollarSign },
       ]
     }
   ];

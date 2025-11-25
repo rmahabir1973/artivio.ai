@@ -6,6 +6,10 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 ## User Preferences
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
+## Recent Updates (Nov 25, 2025)
+- **Modernized AI Chat UI**: Added markdown rendering with syntax highlighting, code copy buttons, message formatting, and auto-grouped conversations (Today, Yesterday, This Week, etc.)
+- **Replaced Referral Program**: Removed Referral Program and Leaderboard links from sidebar and header, replaced with Affiliate (Rewardful) links. Backend code kept intact for future fixes.
+
 ## System Architecture
 
 ### UI/UX Decisions
