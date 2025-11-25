@@ -1,0 +1,149 @@
+2025-11-25 13:35:23.39
+8dba5f2a
+User
+}
+
+2025-11-25 13:35:23.39
+8dba5f2a
+User
+}
+2025-11-25 13:35:23.39
+8dba5f2a
+User
+"data": {
+2025-11-25 13:35:23.51
+8dba5f2a
+User
+📋 Lyrics task queued: ebc7f2856bff9e4257fba33be8a57dbb (waiting for callback)
+2025-11-25 13:35:28.41
+8dba5f2a
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-25 13:35:28.41
+8dba5f2a
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-25 13:35:28.41
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 13:35:28.78
+8dba5f2a
+User
+[/api/generations] Paginated query completed in 364ms, found 15 generations, hasMore: true
+2025-11-25 13:35:28.80
+8dba5f2a
+User
+6:35:28 PM [express] GET /api/generations 304 in 407ms :: {"items":[{"id":"c93a3768-3e1a-42b2-b0ac-8…
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"data": {
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+],
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"code": 200,
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"callbackType": "complete",
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"error_message": "",
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"text": "[Verse]\nSnowflakes fall\nThe city's bright (bright, bright)\nSkating lights\nA frosty night\nBreath like smoke\nThe chill's alive\nTDOT’s vibe\nWe thrive\nWe thrive\n\n[Prechorus]\nCold winds blow\nBut we don’t stop\nDancing through the icy top\n(Ooh, yeah!)\n\n[Chorus]\nWinter in the TDOT\nOh\nWe go\nWe go\nFeel the bass beneath the snow\nLet it flow\nLet it flow\nFreeze the night\nThe city's glow\nTDOT\nTDOT\nTake control\n\n[Verse 2]\nStreetcars hum\nThe rhythm's near\nFrosted glass\nWe’re crystal clear\nParkas on\nThe heat's inside\nThrough the frost\nWe glide\nWe glide\n\n[Prechorus]\nCold winds blow\nBut we don’t stop\nDancing through the icy top\n(Ooh, yeah!)\n\n[Chorus]\nWinter in the TDOT\nOh\nWe go\nWe go\nFeel the bass beneath the snow\nLet it flow\nLet it flow\nFreeze the night\nThe city's glow\nTDOT\nTDOT\nTake control",
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"status": "complete",
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"task_id": "ebc7f2856bff9e4257fba33be8a57dbb"
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"title": "Frozen Groove"
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+{
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"data": [
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+},
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+{
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+======================================
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+Callback Data: {
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"error_message": "",
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"text": "[Verse]\nSnow falls\nWhite on the street\nCold wind\nChill in the beat\nLights glow\nCity alive\nWinter\nThe TDOT vibe\n\n[Prechorus]\n(Ooh-yeah!) Frost in the air\nWe breathe it in\n(Ooh-yeah!) Nights so cold\nLet the heat begin\n\n[Chorus]\nWinter in the TDOT\nWe don’t stop\nWe don’t stop\nDancing through the snowfall\nLet it drop\nLet it drop\nIce on the skyline\nIt shines\nIt shines\nWinter in the TDOT\nAll night\nAll night\n\n[Verse 2]\nFootsteps\nCrunch in the snow\nHeartbeat\nFeel it below\nSkyline\nFrozen and bright\nWe own the winter tonight\n\n[Prechorus]\n(Ooh-yeah!) Frost in the air\nWe breathe it in\n(Ooh-yeah!) Nights so cold\nLet the heat begin\n\n[Chorus]\nWinter in the TDOT\nWe don’t stop\nWe don’t stop\nDancing through the snowfall\nLet it drop\nLet it drop\nIce on the skyline\nIt shines\nIt shines\nWinter in the TDOT\nAll night\nAll night",
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"status": "complete",
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+}
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+🔔 ===== RECEIVED LYRICS CALLBACK =====
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+Lyrics ID: 6dad1b94-27c0-46b7-a45d-233f45ddf0fe
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"title": "Winter in the TDOT"
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+}
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+},
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+"msg": "All generated successfully."
+2025-11-25 13:35:33.01
+8dba5f2a
+User
+6:35:33 PM [express] POST /api/callback/lyrics/6dad1b94-27c0-46b7-a45d-233f45ddf0fe 200 in 2ms :: {"…
+2025-11-25 13:35:34.66
+8dba5f2a
+User
+6:35:34 PM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-11-25 13:35:34.66
+8dba5f2a
+User
+6:35:34 PM [express] GET /api/announcements/active 304 in 24ms :: []

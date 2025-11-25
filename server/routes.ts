@@ -2325,6 +2325,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get User's Lyrics Library
+  app.get('/api/lyrics', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const lyrics = await storage.getUserLyricsGenerations(userId);
+      res.json(lyrics);
+    } catch (error: any) {
+      console.error('Error fetching lyrics:', error);
+      res.status(500).json({ message: error.message || "Failed to fetch lyrics" });
+    }
+  });
+
+  // Delete Lyrics
+  app.delete('/api/lyrics/:lyricsId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { lyricsId } = req.params;
+      
+      // Get all user's lyrics to verify ownership
+      const userLyrics = await storage.getUserLyricsGenerations(userId);
+      const lyric = userLyrics.find(l => l.id === lyricsId);
+      
+      if (!lyric) {
+        return res.status(403).json({ message: "Not authorized to delete this lyrics" });
+      }
+      
+      // Delete the lyrics
+      const deleted = await storage.deleteLyricsGeneration(lyricsId);
+      
+      if (!deleted) {
+        return res.status(500).json({ message: "Failed to delete lyrics" });
+      }
+      
+      res.json({ message: "Lyrics deleted successfully" });
+    } catch (error: any) {
+      console.error('Error deleting lyrics:', error);
+      res.status(500).json({ message: error.message || "Failed to delete lyrics" });
+    }
+  });
+
   // Upload & Cover
   app.post('/api/generate/upload-cover', requireJWT, async (req: any, res) => {
     try {

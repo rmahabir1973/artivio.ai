@@ -213,6 +213,7 @@ export interface IStorage {
     updates: Partial<LyricsGeneration>
   ): Promise<LyricsGeneration | undefined>;
   getUserLyricsGenerations(userId: string): Promise<LyricsGeneration[]>;
+  deleteLyricsGeneration(id: string): Promise<boolean>;
 
   // Video Combination operations
   createVideoCombination(combination: InsertVideoCombination): Promise<VideoCombination>;
@@ -1263,6 +1264,14 @@ export class DatabaseStorage implements IStorage {
       .from(lyricsGenerations)
       .where(eq(lyricsGenerations.userId, userId))
       .orderBy(desc(lyricsGenerations.createdAt));
+  }
+
+  async deleteLyricsGeneration(id: string): Promise<boolean> {
+    const result = await db
+      .delete(lyricsGenerations)
+      .where(eq(lyricsGenerations.id, id))
+      .returning();
+    return result.length > 0;
   }
 
   // Video Combination operations
