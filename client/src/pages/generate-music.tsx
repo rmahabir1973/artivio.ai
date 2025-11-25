@@ -1583,7 +1583,11 @@ export default function GenerateMusic() {
 
               <Button
                 onClick={handleUploadCover}
-                disabled={uploadCoverMutation.isPending || !coverUploadUrl}
+                disabled={uploadCoverMutation.isPending || !(
+                  (coverAudioSource === "url" && coverUploadUrl) ||
+                  (coverAudioSource === "upload" && coverUploadedFile) ||
+                  (coverAudioSource === "library" && coverSelectedLibraryId)
+                )}
                 className="w-full"
                 size="lg"
                 data-testid="button-upload-cover"
@@ -1846,7 +1850,11 @@ export default function GenerateMusic() {
 
               <Button
                 onClick={handleUploadExtend}
-                disabled={uploadExtendMutation.isPending || !extendUploadUrl}
+                disabled={uploadExtendMutation.isPending || !(
+                  (extendAudioSource === "url" && extendUploadUrl) ||
+                  (extendAudioSource === "upload" && extendUploadedFile) ||
+                  (extendAudioSource === "library" && extendSelectedLibraryId)
+                )}
                 className="w-full"
                 size="lg"
                 data-testid="button-upload-extend"
