@@ -28,7 +28,7 @@ import {
   UserCircle,
   AudioWaveform,
   Scissors,
-  History as HistoryIcon,
+  Library as LibraryIcon,
   Sparkles,
   Mic2,
   DollarSign,
@@ -149,17 +149,17 @@ export function ModernHeader() {
               </DropdownMenu>
             )}
 
-            {/* History - standalone prominent button for authenticated users */}
+            {/* My Library - standalone prominent button for authenticated users */}
             {isAuthenticated && (
               <Link href="/history">
                 <Button
                   variant={location === "/history" ? "default" : "ghost"}
                   size="sm"
                   className="gap-2"
-                  data-testid="nav-history"
+                  data-testid="nav-library"
                 >
-                  <HistoryIcon className="h-4 w-4" />
-                  History
+                  <LibraryIcon className="h-4 w-4" />
+                  My Library
                 </Button>
               </Link>
             )}
@@ -315,16 +315,16 @@ export function ModernHeader() {
                   </Button>
                 </Link>
 
-                {/* History - Prominent standalone button */}
+                {/* My Library - Prominent standalone button */}
                 <Link href="/history">
                   <Button
                     variant={location === "/history" ? "default" : "ghost"}
                     className="w-full justify-start gap-3"
                     onClick={() => setMobileMenuOpen(false)}
-                    data-testid="mobile-nav-history"
+                    data-testid="mobile-nav-library"
                   >
-                    <HistoryIcon className="h-5 w-5" />
-                    History
+                    <LibraryIcon className="h-5 w-5" />
+                    My Library
                   </Button>
                 </Link>
 

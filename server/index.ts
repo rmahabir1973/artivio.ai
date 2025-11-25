@@ -38,6 +38,9 @@ app.use('/uploads', express.static('public/uploads'));
 // Serve combined videos statically from public/video-combinations
 app.use('/video-combinations', express.static('public/video-combinations'));
 
+// Serve video thumbnails statically from public/thumbnails
+app.use('/thumbnails', express.static('public/thumbnails'));
+
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown

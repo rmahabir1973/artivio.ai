@@ -21,7 +21,7 @@ import {
   UserCircle,
   AudioWaveform,
   Scissors,
-  History,
+  Library,
   Search,
   Sparkles,
   Zap,
@@ -305,9 +305,9 @@ export default function Home() {
     },
     {
       id: 'history',
-      title: 'Generation History',
+      title: 'My Library',
       description: 'View and manage all your AI-generated content',
-      icon: History,
+      icon: Library,
       route: '/history',
       category: 'tools'
     },
