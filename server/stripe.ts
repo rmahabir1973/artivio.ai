@@ -57,11 +57,29 @@ export async function createCheckoutSession(params: {
     }
   }
 
+  // Fetch the price from Stripe to get recurring info for inline price_data
+  const stripePrice = await stripe.prices.retrieve(plan.stripePriceId);
+  
+  // Build display name with billing period (e.g., "Starter - Monthly" or "Professional - Annual")
+  const billingLabel = plan.billingPeriod === 'annual' ? 'Annual' : 'Monthly';
+  const displayName = `${plan.displayName} - ${billingLabel}`;
+  
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
     line_items: [{
-      price: plan.stripePriceId,
+      price_data: {
+        currency: stripePrice.currency,
+        unit_amount: stripePrice.unit_amount!,
+        recurring: {
+          interval: stripePrice.recurring?.interval || 'month',
+          interval_count: stripePrice.recurring?.interval_count || 1,
+        },
+        product_data: {
+          name: displayName,
+          description: `${plan.creditsPerMonth.toLocaleString()} credits per month`,
+        },
+      },
       quantity: 1,
     }],
     success_url: successUrl,
@@ -69,11 +87,13 @@ export async function createCheckoutSession(params: {
     metadata: {
       userId: userId,
       planId: planId,
+      stripePriceId: plan.stripePriceId, // Track original price for proration reference
     },
     subscription_data: {
       metadata: {
         userId: userId,
         planId: planId,
+        stripePriceId: plan.stripePriceId, // Store for upgrade/downgrade proration
       },
     },
     allow_promotion_codes: true,
