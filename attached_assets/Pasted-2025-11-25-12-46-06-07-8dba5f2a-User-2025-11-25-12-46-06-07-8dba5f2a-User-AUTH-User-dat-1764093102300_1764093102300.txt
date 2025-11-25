@@ -1,0 +1,148 @@
+2025-11-25 12:46:06.07
+8dba5f2a
+User
+}
+2025-11-25 12:46:06.07
+8dba5f2a
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-25 12:46:06.07
+8dba5f2a
+User
+isAdmin: true
+2025-11-25 12:46:06.07
+8dba5f2a
+User
+5:46:06 PM [express] GET /api/auth/user 200 in 49ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 12:46:08.94
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:46:08.99
+8dba5f2a
+User
+5:46:08 PM [express] GET /api/generations/e55e1539-9d9f-47f0-b625-1c508b3dee0c/tags 200 in 69ms :: []
+2025-11-25 12:46:16.29
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:46:20.72
+8dba5f2a
+User
+5:46:20 PM [express] GET /api/generations/e55e1539-9d9f-47f0-b625-1c508b3dee0c/download 200 in 4456ms
+2025-11-25 12:51:00.95
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:51:00.95
+8dba5f2a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 12:51:07.06
+8dba5f2a
+User
+5:51:07 PM [express] GET /api/announcements/active 304 in 2620ms :: []
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+Video combination error: error: column "thumbnail_url" of relation "video_combinations" does not exist
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+}
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+line: '1066',
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+internalPosition: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+table: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+constraint: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+at async file:///home/runner/workspace/dist/index.js:10934:27 {
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+code: '42703',
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+routine: 'checkInsertTargets'
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+column: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+file: 'parse_target.c',
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+severity: 'ERROR',
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+where: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+position: '87',
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+at async DatabaseStorage.createVideoCombination (file:///home/runner/workspace/dist/index.js:2483:26)
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+at async NeonPreparedQuery.execute (file:///home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.js:76:20)
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+dataType: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+internalQuery: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+schema: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+detail: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+hint: undefined,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+length: 144,
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+5:51:08 PM [express] POST /api/combine-videos 500 in 7397ms :: {"message":"column \"thumbnail_url\" …
+2025-11-25 12:51:08.25
+8dba5f2a
+User
+5:51:08 PM [express] POST /api/combine-videos 500 in 7397ms :: {"message":"column \"thumbnail_url\" …
