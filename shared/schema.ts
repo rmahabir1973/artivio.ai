@@ -637,9 +637,11 @@ export const generateImageRequestSchema = z.object({
     // General parameters
     aspectRatio: z.string().optional(),
     style: z.string().optional(),
-    outputFormat: z.enum(['PNG', 'JPEG', 'WEBP']).optional(),
+    outputFormat: z.enum(['PNG', 'JPEG', 'WEBP', 'png', 'jpg']).optional(), // Support both uppercase (legacy) and lowercase (Nano Banana)
     quality: z.enum(['standard', 'hd']).optional(),
     seed: z.number().optional(), // Random seed for reproducible generation
+    // Nano Banana-specific parameters
+    resolution: z.enum(['1K', '2K', '4K']).optional(), // For nano-banana: 1K, 2K, 4K
     // Seedream-specific parameters
     imageSize: z.string().optional(), // square, square_hd, portrait_4_3, etc.
     imageResolution: z.string().optional(), // 1K, 2K, 4K
