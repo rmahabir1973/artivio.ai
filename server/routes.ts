@@ -4381,9 +4381,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           } catch (error: any) {
             await storage.addCreditsAtomic(userId, cost);
+            let errorMsg = error.message;
+            
+            // Provide clearer message for 404 errors (endpoint not available)
+            if (error.message?.includes('404') || error.message?.includes('Not Found')) {
+              errorMsg = 'Talking Avatar feature is temporarily unavailable on Kie.ai. Please try again later or contact support.';
+            }
+            
             await storage.updateAvatarGeneration(avatarGeneration.id, {
               status: 'failed',
-              errorMessage: error.message,
+              errorMessage: errorMsg,
             });
           }
         })();

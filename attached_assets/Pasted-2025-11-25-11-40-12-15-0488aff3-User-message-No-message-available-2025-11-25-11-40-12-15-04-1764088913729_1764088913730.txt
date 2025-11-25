@@ -1,0 +1,156 @@
+2025-11-25 11:40:12.15
+0488aff3
+User
+message: 'No message available',
+2025-11-25 11:40:12.15
+0488aff3
+User
+"data": {
+2025-11-25 11:40:12.15
+0488aff3
+User
+"error": "Not Found",
+2025-11-25 11:40:12.15
+0488aff3
+User
+}
+2025-11-25 11:40:12.15
+0488aff3
+User
+"message": "No message available",
+2025-11-25 11:40:12.15
+0488aff3
+User
+status: 404,
+2025-11-25 11:40:12.15
+0488aff3
+User
+Full error details: {
+2025-11-25 11:40:12.15
+0488aff3
+User
+"status": 404,
+2025-11-25 11:40:12.15
+0488aff3
+User
+error: 'Not Found',
+2025-11-25 11:40:12.15
+0488aff3
+User
+}
+2025-11-25 11:40:12.15
+0488aff3
+User
+"timestamp": 1764088811434,
+2025-11-25 11:40:12.15
+0488aff3
+User
+},
+2025-11-25 11:40:12.15
+0488aff3
+User
+timestamp: 1764088811434,
+2025-11-25 11:40:18.78
+0488aff3
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 11:40:18.78
+0488aff3
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-25 11:40:18.80
+0488aff3
+User
+}
+2025-11-25 11:40:18.80
+0488aff3
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-25 11:40:18.80
+0488aff3
+User
+userId: '49729939',
+2025-11-25 11:40:18.80
+0488aff3
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-25 11:40:18.80
+0488aff3
+User
+isAdmin: true
+2025-11-25 11:40:18.80
+0488aff3
+User
+4:40:18 PM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 11:40:28.64
+0488aff3
+User
+4:40:28 PM [express] GET /api/pricing 304 in 66ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-11-25 11:41:03.53
+0488aff3
+User
+4:41:03 PM [express] GET /api/announcements/active 304 in 106ms :: []
+2025-11-25 11:41:05.55
+0488aff3
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '35ba5c99' }
+2025-11-25 11:41:05.60
+0488aff3
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '35ba5c99-0797-4050-8055-3214d08fa640' }
+2025-11-25 11:41:05.62
+0488aff3
+User
+userId: '49729939',
+2025-11-25 11:41:05.62
+0488aff3
+User
+}
+2025-11-25 11:41:05.62
+0488aff3
+User
+isAdmin: true
+2025-11-25 11:41:05.62
+0488aff3
+User
+[AUTH] ✓ Bootstrap successful {
+2025-11-25 11:41:05.62
+0488aff3
+User
+tokenId: '35ba5c99',
+2025-11-25 11:41:05.62
+0488aff3
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-25 11:41:05.62
+0488aff3
+User
+4:41:05 PM [express] GET /api/auth/bootstrap 200 in 70ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-11-25 11:41:05.76
+0488aff3
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 11:41:05.78
+0488aff3
+User
+4:41:05 PM [express] GET /api/avatar/generations 200 in 45ms :: [{"id":"eba8774e-118f-4003-86d1-1925…
+2025-11-25 11:41:05.83
+0488aff3
+User
+4:41:05 PM [express] GET /api/announcements/active 304 in 94ms :: []
+2025-11-25 11:41:05.84
+0488aff3
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 11:41:05.86
+0488aff3
+User
+4:41:05 PM [express] GET /api/voice-clones 304 in 121ms :: []
+2025-11-25 11:41:05.87
+0488aff3
+User
+4:41:05 PM [express] GET /api/pricing 304 in 133ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-11-25 11:41:05.87
+0488aff3
+User
+4:41:05 PM [express] GET /api/pricing 304 in 133ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
