@@ -37,6 +37,7 @@ import { chatService } from "./chatService";
 import { combineVideos, generateThumbnail, generateImageThumbnail, reencodeVideoForStreaming } from "./videoProcessor";
 import { LoopsService } from "./loops";
 import { logger } from "./logger";
+import { parseKieaiError, extractErrorMessage } from "./errorParser";
 import { 
   createCheckoutSession, 
   createCustomerPortalSession,
@@ -1349,20 +1350,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Extract comprehensive error message from various possible fields
         // Seedance uses data.failMsg and data.failCode
         // Runway/Veo use "msg" field for error descriptions
-        const errorMessage = callbackData.data?.failMsg ||  // Seedance error message
-                           callbackData.msg ||              // Runway/Veo error message
+        const rawErrorMessage = extractErrorMessage(callbackData) ||
                            sunoError ||
-                           callbackData.errorMessage || 
-                           callbackData.error_message ||
-                           callbackData.error ||
-                           callbackData.message || 
-                           callbackData.data?.errorMessage ||
-                           callbackData.data?.error_message ||
-                           callbackData.data?.error ||
-                           callbackData.data?.message ||
                            (callbackData.data?.failCode ? `Error code: ${callbackData.data.failCode}` : null) ||
                            (hasErrorCode ? `Error code: ${hasErrorCode}` : null) ||
                            'Generation failed - error indicated by provider';
+        
+        // Parse error to get user-friendly message with recommendations
+        const parsedError = parseKieaiError(rawErrorMessage);
+        
+        // Store detailed error information as JSON in errorMessage
+        // Frontend will parse this and display the recommendation
+        const errorDetails = {
+          _type: 'DETAILED_ERROR', // Marker so frontend knows this is structured data
+          message: parsedError.message,
+          recommendation: parsedError.recommendation,
+          errorType: parsedError.errorType,
+          raw: rawErrorMessage
+        };
+        
+        const errorMessageToStore = JSON.stringify(errorDetails);
+        
+        console.log(`🔍 Parsed Error:`, errorDetails);
         
         if (isAvatarGeneration) {
           // Refund credits for failed avatar generation
@@ -1376,14 +1385,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           await storage.updateAvatarGeneration(generationId, {
             status: 'failed',
-            errorMessage: String(errorMessage),
+            errorMessage: errorMessageToStore,
           });
         } else {
           await storage.finalizeGeneration(generationId, 'failure', {
-            errorMessage: String(errorMessage),
+            errorMessage: errorMessageToStore,
           });
         }
-        console.log(`✗ Generation ${generationId} failed: ${errorMessage}`);
+        console.log(`✗ Generation ${generationId} failed: ${parsedError.message}`);
       }
       
       res.json({ success: true });

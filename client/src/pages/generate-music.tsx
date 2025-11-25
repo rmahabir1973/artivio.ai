@@ -711,12 +711,16 @@ export default function GenerateMusic() {
 
                 {/* Prompt */}
                 <div className="space-y-2">
-                  <Label htmlFor="prompt">Music Description</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="prompt">Music Description</Label>
+                    <span className="text-xs text-muted-foreground">{prompt.length}/500</span>
+                  </div>
                   <Textarea
                     id="prompt"
                     placeholder="Describe the music you want to create... (e.g., 'Upbeat electronic dance music with energetic drums')"
                     value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
+                    onChange={(e) => setPrompt(e.target.value.slice(0, 500))}
+                    maxLength={500}
                     rows={4}
                     data-testid="input-music-prompt"
                   />

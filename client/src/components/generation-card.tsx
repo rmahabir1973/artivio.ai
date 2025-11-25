@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Edit3, Zap, Heart } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Edit3, Zap, Heart, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import type { Generation } from "@shared/schema";
 import { useLocation } from "wouter";
 import { UpscaleModal } from "@/components/upscale-modal";
 import { fetchWithAuth } from "@/lib/authBridge";
+import { parseDetailedError, getErrorDisplay } from "@/lib/errorParser";
 
 interface GenerationCardProps {
   generation: Generation;
@@ -387,7 +388,15 @@ export function GenerationCard({ generation }: GenerationCardProps) {
 
           {generation.status === 'failed' && (
             <div className="aspect-video rounded-md bg-destructive/10 flex items-center justify-center">
-              <p className="text-sm text-destructive">Generation failed</p>
+              <div className="text-center space-y-2">
+                <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
+                <p className="text-sm text-destructive">Generation failed</p>
+                {generation.errorMessage && parseDetailedError(generation.errorMessage) && (
+                  <p className="text-xs text-destructive/80 max-w-xs">
+                    {parseDetailedError(generation.errorMessage)?.message}
+                  </p>
+                )}
+              </div>
             </div>
           )}
           
@@ -603,7 +612,28 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   {formatDistanceToNow(new Date(generation.createdAt), { addSuffix: true })}
                 </p>
               </div>
-              {generation.statusDetail && (
+              {generation.errorMessage && generation.status === 'failed' && (
+                <div className="col-span-2 space-y-3">
+                  {(() => {
+                    const errorDisplay = getErrorDisplay(generation.errorMessage);
+                    return (
+                      <>
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                          <h4 className="text-sm font-medium text-destructive mb-1">Error</h4>
+                          <p className="text-sm text-destructive/90">{errorDisplay.message}</p>
+                        </div>
+                        {errorDisplay.recommendation && (
+                          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/30 rounded-md p-3">
+                            <h4 className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">💡 Try This</h4>
+                            <p className="text-sm text-amber-800 dark:text-amber-100">{errorDisplay.recommendation}</p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+              {generation.statusDetail && !generation.errorMessage && (
                 <div className="col-span-2">
                   <h4 className="text-sm font-medium mb-1">Status Detail</h4>
                   <p className="text-sm text-muted-foreground">{generation.statusDetail}</p>
