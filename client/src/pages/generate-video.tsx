@@ -739,6 +739,133 @@ export default function GenerateVideo() {
                   )}
                 </div>
               </TabsContent>
+
+              <TabsContent value="first-and-last-frames-to-video" className="space-y-6 mt-6">
+                <div className="bg-muted/50 rounded-md p-4 flex gap-3">
+                  <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-sm">First & Last Frames</p>
+                    <p className="text-sm text-muted-foreground">
+                      Upload a first frame and last frame to guide video generation
+                    </p>
+                  </div>
+                </div>
+
+                {/* First and Last Frames Upload */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <Label>Select First Frame Image</Label>
+                    {referenceImages.length > 0 && (
+                      <div className="relative group">
+                        <img 
+                          src={referenceImages[0]} 
+                          alt="First Frame"
+                          className="w-full h-40 object-cover rounded-md border-2 border-border"
+                        />
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeImage(0)}
+                          data-testid="button-remove-first-frame"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {referenceImages.length === 0 && (
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setReferenceImages(prev => [...prev, reader.result as string]);
+                              };
+                              reader.readAsDataURL(e.target.files[0]);
+                            }
+                          }}
+                          className="hidden"
+                          disabled={uploadingImage}
+                          data-testid="input-upload-first-frame"
+                        />
+                        <div className="border-2 border-dashed border-border rounded-md p-6 hover-elevate active-elevate-2 cursor-pointer text-center transition-colors">
+                          {uploadingImage ? (
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                          ) : (
+                            <>
+                              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                              <p className="text-sm font-medium">Upload First Frame</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Drag or click to upload
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Select Last Frame Image</Label>
+                    {referenceImages.length > 1 && (
+                      <div className="relative group">
+                        <img 
+                          src={referenceImages[1]} 
+                          alt="Last Frame"
+                          className="w-full h-40 object-cover rounded-md border-2 border-border"
+                        />
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeImage(1)}
+                          data-testid="button-remove-last-frame"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {referenceImages.length < 2 && (
+                      <label className="block">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setReferenceImages(prev => [...prev, reader.result as string]);
+                              };
+                              reader.readAsDataURL(e.target.files[0]);
+                            }
+                          }}
+                          className="hidden"
+                          disabled={uploadingImage || referenceImages.length === 0}
+                          data-testid="input-upload-last-frame"
+                        />
+                        <div className="border-2 border-dashed border-border rounded-md p-6 hover-elevate active-elevate-2 cursor-pointer text-center transition-colors">
+                          {uploadingImage ? (
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                          ) : (
+                            <>
+                              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                              <p className="text-sm font-medium">Upload Last Frame</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Drag or click to upload
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
 
             {/* Model Selection */}
@@ -805,8 +932,8 @@ export default function GenerateVideo() {
               )}
             </div>
 
-            {/* Quality - Hidden for Runway Gen-3, Seedance, Wan 2.5, and Kling 2.5 Turbo, Sora 2 Pro */}
-            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo' && model !== 'sora-2-pro' && (
+            {/* Quality - Hidden for Runway Gen-3, Seedance, Wan 2.5, Kling 2.5 Turbo, Sora 2 Pro, and Veo 3.1 models */}
+            {model !== 'runway-gen3-alpha-turbo' && !model.startsWith('seedance-') && model !== 'wan-2.5' && model !== 'kling-2.5-turbo' && model !== 'sora-2-pro' && !model.startsWith('veo-') && (
               <div className="space-y-2">
                 <Label htmlFor="quality">Quality</Label>
                 <Select value={quality} onValueChange={setQuality}>
