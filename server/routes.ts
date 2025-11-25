@@ -4499,7 +4499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/lip-sync/generate', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { imageUrl, audioUrl, prompt, resolution, seed } = req.body;
+      let { imageUrl, audioUrl, prompt, resolution, seed } = req.body;
 
       // Validate required fields
       if (!imageUrl || !audioUrl) {
@@ -4515,6 +4515,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
+        // Convert base64 image to hosted URL if needed
+        if (imageUrl.startsWith('data:image/')) {
+          console.log('Converting base64 image to hosted URL for lip sync...');
+          imageUrl = await saveBase64Image(imageUrl);
+          console.log(`✓ Image hosted at: ${imageUrl}`);
+        }
+
+        // Convert base64 audio to hosted URL if needed
+        if (audioUrl.startsWith('data:audio/')) {
+          console.log('Converting base64 audio to hosted URL for lip sync...');
+          audioUrl = await saveBase64Audio(audioUrl);
+          console.log(`✓ Audio hosted at: ${audioUrl}`);
+        }
+
         const generation = await storage.createGeneration({
           userId,
           type: 'video',
