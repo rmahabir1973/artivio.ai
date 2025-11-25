@@ -2757,7 +2757,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const updated = await storage.updateCollection(id, validationResult.data);
+      // Convert nullable to undefined for storage compatibility
+      const updateData = {
+        ...validationResult.data,
+        color: validationResult.data.color ?? undefined,
+        description: validationResult.data.description ?? undefined,
+        icon: validationResult.data.icon ?? undefined,
+      };
+
+      const updated = await storage.updateCollection(id, updateData);
       res.json(updated);
     } catch (error) {
       console.error('Error updating collection:', error);
@@ -2856,7 +2864,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const updated = await storage.updateTag(id, validationResult.data);
+      // Convert nullable to undefined for storage compatibility
+      const updateData = {
+        ...validationResult.data,
+        color: validationResult.data.color ?? undefined,
+      };
+
+      const updated = await storage.updateTag(id, updateData);
       res.json(updated);
     } catch (error) {
       console.error('Error updating tag:', error);
@@ -2937,7 +2951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const schema = z.object({
-        isArchived: z.boolean()
+        archive: z.boolean()
       });
       
       const validationResult = schema.safeParse(req.body);
@@ -2948,8 +2962,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const updated = await storage.updateGeneration(id, { isArchived: validationResult.data.isArchived });
-      res.json({ success: true, isArchived: updated?.isArchived });
+      const archivedAt = validationResult.data.archive ? new Date() : null;
+      const updated = await storage.updateGeneration(id, { archivedAt });
+      res.json({ success: true, archivedAt: updated?.archivedAt });
     } catch (error) {
       console.error('Error toggling archive:', error);
       res.status(500).json({ message: "Failed to update archive status" });

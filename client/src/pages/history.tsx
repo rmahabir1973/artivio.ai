@@ -453,25 +453,34 @@ export default function History() {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
+    isError,
   } = useInfiniteQuery({
     queryKey: ["/api/generations", { paginated: true }],
     queryFn: async ({ pageParam }: { pageParam?: string }) => {
       const cursor = pageParam || '';
       const url = `/api/generations?cursor=${encodeURIComponent(cursor)}`;
       
+      console.log('[HISTORY] Fetching generations with cursor:', cursor || 'first page');
+      
       const response = await fetchWithAuth(url, {
         method: 'GET',
       });
       
       if (!response.ok) {
+        console.error('[HISTORY] Failed to fetch generations:', response.status);
         throw new Error('Failed to fetch generations');
       }
       
-      return response.json() as Promise<{ items: Generation[]; nextCursor: string | null }>;
+      const result = await response.json() as { items: Generation[]; nextCursor: string | null };
+      console.log('[HISTORY] Fetched generations:', result.items.length, 'items, hasMore:', !!result.nextCursor);
+      return result;
     },
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: isAuthenticated,
+    // Fix: Wait for auth to finish loading instead of checking isAuthenticated
+    // TanStack Query doesn't re-run when enabled flips from false to true after mount
+    // Using !authLoading ensures query runs once auth is complete (fetchWithAuth handles 401s)
+    enabled: !authLoading,
     refetchInterval: (query) => {
       const allItems = query.state.data?.pages.flatMap(page => page.items) ?? [];
       const hasProcessing = allItems.some(gen => gen.status === 'processing');
@@ -481,12 +490,12 @@ export default function History() {
 
   const { data: collections = [], isLoading: collectionsLoading } = useQuery<Collection[]>({
     queryKey: ['/api/collections'],
-    enabled: isAuthenticated,
+    enabled: !authLoading,
   });
 
   const { data: tags = [] } = useQuery<TagType[]>({
     queryKey: ['/api/tags'],
-    enabled: isAuthenticated,
+    enabled: !authLoading,
   });
 
   const { data: generationTags = [], isLoading: generationTagsLoading } = useQuery<TagType[]>({
