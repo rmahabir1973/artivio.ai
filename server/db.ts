@@ -12,15 +12,12 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Production-safe connection pool configuration
+// Replit docs recommend max: 10 for production apps with 1000+ users when using Neon pooler
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  // Limit max connections to prevent exhausting Neon's connection limit
-  // Replit Autoscale can spawn multiple instances, so keep this conservative
-  max: 10, // Maximum 10 connections per instance
-  // Connection timeout - fail fast instead of hanging
-  connectionTimeoutMillis: 5000, // 5 seconds
-  // Idle timeout - close unused connections to free resources
-  idleTimeoutMillis: 30000, // 30 seconds
+  max: 10, // Recommended by Replit for Autoscale deployments
+  connectionTimeoutMillis: 10000, // 10 seconds - allow time for slow networks
+  idleTimeoutMillis: 30000, // 30 seconds - close unused connections
 });
 
 // Handle pool errors to prevent crashes

@@ -13,39 +13,11 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't crash - log and continue
 });
 
-// Prevent server crashes from uncaught exceptions
+// Prevent server crashes from uncaught exceptions  
 process.on('uncaughtException', (error) => {
   console.error('❌ UNCAUGHT EXCEPTION:', error);
-  // For critical errors, give time to log before exiting
-  setTimeout(() => {
-    console.error('⚠️  Server shutting down due to uncaught exception');
-    process.exit(1);
-  }, 1000);
-});
-
-// Graceful shutdown - close database connections cleanly
-process.on('SIGTERM', async () => {
-  console.log('⚠️  SIGTERM received, shutting down gracefully...');
-  try {
-    await pool.end();
-    console.log('✓ Database pool closed successfully');
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error during shutdown:', error);
-    process.exit(1);
-  }
-});
-
-process.on('SIGINT', async () => {
-  console.log('⚠️  SIGINT received, shutting down gracefully...');
-  try {
-    await pool.end();
-    console.log('✓ Database pool closed successfully');
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error during shutdown:', error);
-    process.exit(1);
-  }
+  // Don't exit immediately - log and continue
+  // The HTTP server and event loop will keep the process alive
 });
 
 // Validate critical environment variables at startup
