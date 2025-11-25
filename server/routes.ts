@@ -31,7 +31,7 @@ import {
   initializeApiKeys 
 } from "./kieai";
 import { analyzeImageWithVision } from "./openaiVision";
-import { processImageInputs, saveBase64Images, saveBase64Video } from "./imageHosting";
+import { processImageInputs, saveBase64Image, saveBase64Images, saveBase64Video } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
 import { chatService } from "./chatService";
 import { combineVideos, generateThumbnail, generateImageThumbnail, reencodeVideoForStreaming } from "./videoProcessor";
