@@ -1,0 +1,191 @@
+infinitalk / from-audio
+
+Commercial use
+Run with API
+Copy page
+
+InfiniteTalk API is an advanced AI lip sync video API developed by MeiGen-AI. It transforms images or text with audio into natural talking avatars, offering precise lip synchronization, expressive facial movements, and even infinite-length video generation.
+
+Pricing: Infinitalk: 3 credits/s (~$0.015) for 480P, 12 credits/s (~$0.06) for 720P, up to 15 seconds per generation.
+Playground
+Examples
+README
+API
+API Endpoints
+Authentication
+All APIs require authentication via Bearer Token.
+
+Authorization: Bearer YOUR_API_KEY
+
+Get API Key:
+
+API Key Management
+🔒 Keep your API Key secure
+
+🚫 Do not share it with others
+
+⚡ Reset immediately if compromised
+
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"infinitalk/from-audio"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.image_url
+Required
+string(URL)
+URL of the input image. If the input image does not match the chosen aspect ratio, it is resized and center cropped.
+
+File URL after upload, not file content; Accepted types: image/jpeg, image/png, image/webp; Max size: 10.0MB
+Example:
+
+"https://file.aiquickdraw.com/custom-page/akr/section-images/1757329269873ggqj2hz3.png"
+input.audio_url
+Required
+string(URL)
+The URL of the audio file.
+
+File URL after upload, not file content; Accepted types: audio/mpeg, audio/wav, audio/x-wav, audio/aac, audio/mp4, audio/ogg; Max size: 10.0MB
+Example:
+
+"https://file.aiquickdraw.com/custom-page/akr/section-images/1757329255705mmqwrnri.mp3"
+input.prompt
+Required
+string
+The text prompt to guide video generation.
+
+Max length: 5000 characters
+Example:
+
+"A young woman with long dark hair talking on a podcast."
+input.resolution
+Optional
+string
+Resolution of the video to generate. Must be either 480p or 720p.
+
+Available options:
+
+480p
+-
+480p
+720p
+-
+720p
+Example:
+
+"480p"
+input.seed
+Optional
+number
+Random seed for reproducibility. Valid range is 10000 to 1000000.
+
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "infinitalk/from-audio",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "image_url": "https://file.aiquickdraw.com/custom-page/akr/section-images/1757329269873ggqj2hz3.png",
+      "audio_url": "https://file.aiquickdraw.com/custom-page/akr/section-images/1757329255705mmqwrnri.mp3",
+      "prompt": "A young woman with long dark hair talking on a podcast.",
+      "resolution": "480p"
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "infinitalk/from-audio",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"infinitalk/from-audio\",\"input\":{\"image_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757329269873ggqj2hz3.png\",\"audio_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757329255705mmqwrnri.mp3\",\"prompt\":\"A young woman with long dark hair talking on a podcast.\",\"resolution\":\"480p\",\"seed\":null}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultUrls\":[\"https://example.com/generated-image.jpg\"]}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "infinitalk/from-audio",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"infinitalk/from-audio\",\"input\":{\"image_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757329269873ggqj2hz3.png\",\"audio_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757329255705mmqwrnri.mp3\",\"prompt\":\"A young woman with long dark hair talking on a podcast.\",\"resolution\":\"480p\",\"seed\":null}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section
+If callBackUrl is not provided, no callback notifications will be sent

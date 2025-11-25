@@ -5,6 +5,8 @@ import axios from "axios";
 import path from "path";
 import fs from "fs/promises";
 import { nanoid } from "nanoid";
+import { exec } from "child_process";
+import { promisify } from "util";
 import { storage } from "./storage";
 import { db } from "./db";
 import { registerAuthRoutes } from "./authRoutes";
@@ -1708,8 +1710,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await fs.writeFile(tempPath, buffer);
 
         try {
-          const { exec } = require('child_process');
-          const { promisify } = require('util');
           const execAsync = promisify(exec);
           
           const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${tempPath}"`;
@@ -1923,9 +1923,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await fs.writeFile(tempPath, buffer);
 
         try {
-          // Use ffprobe to get video duration
-          const { exec } = require('child_process');
-          const { promisify } = require('util');
           const execAsync = promisify(exec);
           
           const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${tempPath}"`;
@@ -4357,14 +4354,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (async () => {
           try {
             const callbackUrl = getCallbackUrl(generation.id);
-            const { result } = await generateKlingAvatar({
-              sourceImageUrl: imageUrl,
-              script,
-              voiceId,
-              provider,
-              parameters: parameters || undefined,
-              callBackUrl: callbackUrl,
-            });
+            
+            // Use the correct generator based on provider
+            let result;
+            if (provider === 'infinite-talk') {
+              // Use InfiniteTalk lip-sync generator
+              const lipSyncResult = await generateLipSync({
+                imageUrl: imageUrl,
+                audioUrl: script, // Script must be audio URL
+                prompt: parameters?.emotion,
+                resolution: (parameters?.quality === '1080p' ? '720p' : parameters?.quality) || '720p',
+                callBackUrl: callbackUrl,
+              });
+              result = lipSyncResult.result;
+            } else {
+              // Use Kling AI avatar generator (default)
+              const klingResult = await generateKlingAvatar({
+                sourceImageUrl: imageUrl,
+                script,
+                voiceId,
+                provider,
+                parameters: parameters || undefined,
+                callBackUrl: callbackUrl,
+              });
+              result = klingResult.result;
+            }
 
             const taskId = result?.data?.taskId || result?.taskId;
             const directUrl = result?.url || result?.videoUrl || result?.data?.url;

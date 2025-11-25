@@ -1,0 +1,97 @@
+2025-11-25 11:43:11.78
+0488aff3
+User
+4:43:11 PM [express] POST /api/upscale/topaz-video 400 in 34ms :: {"message":"Dynamic require of \"c…
+
+2025-11-25 11:43:11.78
+0488aff3
+User
+4:43:11 PM [express] POST /api/upscale/topaz-video 400 in 34ms :: {"message":"Dynamic require of \"c…
+2025-11-25 11:44:06.44
+0488aff3
+User
+4:44:06 PM [express] GET /api/announcements/active 304 in 135ms :: []
+2025-11-25 11:49:07.34
+0488aff3
+User
+4:49:07 PM [express] GET /api/announcements/active 304 in 109ms :: []
+2025-11-25 11:49:10.98
+0488aff3
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 11:49:10.98
+0488aff3
+User
+at file:///home/runner/workspace/dist/index.js:7912:35
+2025-11-25 11:49:10.98
+0488aff3
+User
+Video duration validation error: Error: Dynamic require of "child_process" is not supported
+2025-11-25 11:49:10.98
+0488aff3
+User
+at file:///home/runner/workspace/dist/index.js:7:9
+2025-11-25 11:49:10.99
+0488aff3
+User
+4:49:10 PM [express] POST /api/upscale/topaz-video 400 in 34ms :: {"message":"Dynamic require of \"c…
+2025-11-25 11:49:10.99
+0488aff3
+User
+4:49:10 PM [express] POST /api/upscale/topaz-video 400 in 34ms :: {"message":"Dynamic require of \"c…
+2025-11-25 11:49:32.70
+0488aff3
+User
+4:49:32 PM [express] GET /api/pricing 304 in 75ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-11-25 11:49:32.75
+0488aff3
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 11:49:32.75
+0488aff3
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 11:49:32.78
+0488aff3
+User
+4:49:32 PM [express] GET /api/avatar/generations 304 in 124ms :: [{"id":"eba8774e-118f-4003-86d1-192…
+2025-11-25 11:49:32.78
+0488aff3
+User
+4:49:32 PM [express] GET /api/voice-clones 304 in 130ms :: []
+2025-11-25 11:54:02.30
+0488aff3
+User
+4:54:02 PM [express] GET /api/pricing 304 in 2555ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6"…
+2025-11-25 11:54:11.32
+0488aff3
+User
+4:54:11 PM [express] GET /api/announcements/active 304 in 39ms :: []
+2025-11-25 11:55:11.55
+0488aff3
+User
+4:55:11 PM [express] GET /api/announcements/active 304 in 118ms :: []
+2025-11-25 11:55:12.88
+0488aff3
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 11:55:12.90
+0488aff3
+User
+at file:///home/runner/workspace/dist/index.js:7912:35
+2025-11-25 11:55:12.90
+0488aff3
+User
+Video duration validation error: Error: Dynamic require of "child_process" is not supported
+2025-11-25 11:55:12.90
+0488aff3
+User
+at file:///home/runner/workspace/dist/index.js:7:9
+2025-11-25 11:55:12.90
+0488aff3
+User
+4:55:12 PM [express] POST /api/upscale/topaz-video 400 in 62ms :: {"message":"Dynamic require of \"c…
+2025-11-25 11:55:12.90
+0488aff3
+User
+4:55:12 PM [express] POST /api/upscale/topaz-video 400 in 62ms :: {"message":"Dynamic require of \"c…
