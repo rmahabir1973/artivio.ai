@@ -319,7 +319,14 @@ export async function generateVideo(params: {
     }
     
     // Auto-generate seed if not provided (Veo requires range 10000-99999)
-    const seed = parameters.seed || generateRandomSeed();
+    let seed = parameters.seed || generateRandomSeed();
+    
+    // CRITICAL: Veo API requires seeds in range 10000-99999
+    // Clamp any out-of-range seeds to valid range
+    if (seed < 10000 || seed > 99999) {
+      console.warn(`⚠️ Veo seed ${seed} out of range, regenerating...`);
+      seed = generateRandomSeed();
+    }
     
     console.log(`🌱 Veo seed format: sending seeds=${seed}`);
     

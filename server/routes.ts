@@ -136,7 +136,13 @@ function getCallbackUrl(generationId: string): string {
 }
 
 // Helper to generate a random seed for reproducible AI generation
-function generateRandomSeed(): number {
+// Different models have different seed range requirements
+function generateRandomSeed(model?: string): number {
+  // Veo models require seeds in range 10000-99999 per Kie.ai API documentation
+  if (model && model.startsWith('veo-')) {
+    return Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
+  }
+  // Other models can use larger seed ranges
   return Math.floor(Math.random() * 2147483647) + 1;
 }
 
@@ -1478,7 +1484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (modelSupportsSeed(model)) {
         // All models (Veo, Seedance, Wan, etc.) use singular 'seed' scalar value
         if (finalParameters.seed === undefined) {
-          const generatedSeed = generateRandomSeed();
+          const generatedSeed = generateRandomSeed(model);
           finalParameters.seed = generatedSeed;
           console.log(`🌱 Pre-generated seed for ${model}: ${generatedSeed}`);
         }
@@ -1547,7 +1553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let finalParameters = parameters || {};
       if (modelSupportsSeed(model)) {
         if (finalParameters.seed === undefined) {
-          finalParameters.seed = generateRandomSeed();
+          finalParameters.seed = generateRandomSeed(model);
         }
       }
 
