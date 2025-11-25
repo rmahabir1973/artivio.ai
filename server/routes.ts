@@ -4009,13 +4009,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Clone a voice
   app.post('/api/voice-clone', requireJWT, async (req: any, res) => {
-    // Feature gate: ElevenLabs Voice Cloning API not available through Kie.ai
-    return res.status(503).json({
-      message: "Voice Cloning service is temporarily unavailable. This feature requires ElevenLabs API integration which is not currently supported through our provider. Please check back later or contact support for alternatives.",
-      error: "SERVICE_UNAVAILABLE",
-      feature: "voice-cloning"
-    });
-    
     let hostedAudioUrls: string[] | undefined;
     
     try {
