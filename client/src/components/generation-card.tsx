@@ -269,13 +269,31 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                 </>
               )}
               {generation.type === 'image' && (
-                <img 
-                  src={generation.resultUrl} 
-                  alt={generation.prompt} 
-                  className="w-full h-full object-cover cursor-pointer"
-                  onClick={() => generation.resultUrl && window.open(generation.resultUrl, '_blank')}
-                  data-testid={`img-result-${generation.id}`}
-                />
+                <>
+                  {/* Multi-image grid for models that produce multiple images (Midjourney, Seedream, 4o-Image) */}
+                  {generation.resultUrls && generation.resultUrls.length > 1 ? (
+                    <div className={`grid gap-1 w-full h-full ${generation.resultUrls.length === 2 ? 'grid-cols-2' : generation.resultUrls.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                      {generation.resultUrls.map((url, index) => (
+                        <img 
+                          key={index}
+                          src={url} 
+                          alt={`${generation.prompt} - ${index + 1}`}
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(url, '_blank')}
+                          data-testid={`img-result-${generation.id}-${index}`}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <img 
+                      src={generation.resultUrl} 
+                      alt={generation.prompt} 
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={() => generation.resultUrl && window.open(generation.resultUrl, '_blank')}
+                      data-testid={`img-result-${generation.id}`}
+                    />
+                  )}
+                </>
               )}
               {generation.type === 'music' && (
                 <div className="flex items-center justify-center h-full bg-gradient-to-br from-purple-900/20 to-blue-900/20">

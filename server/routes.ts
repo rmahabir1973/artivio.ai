@@ -1022,20 +1022,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { parseSunoResponse } = await import('./kieai');
       const { audioUrl: sunoAudioUrl, status: sunoStatus, errorMessage: sunoError } = parseSunoResponse(callbackData);
       
-      // Extract result URL from callback data
-      // Handle Seedance/Bytedance resultJson (JSON string containing resultUrls array)
-      let seedanceResultUrl: string | undefined;
+      // Extract result URL(s) from callback data
+      // Handle unified API resultJson (JSON string containing resultUrls array)
+      // Used by: Nano Banana, Seedance, Midjourney, Seedream, and other /api/v1/jobs/createTask models
+      let parsedResultUrls: string[] = [];
+      let parsedResultUrl: string | undefined;
       if (callbackData.data?.resultJson) {
         try {
           const resultData = JSON.parse(callbackData.data.resultJson);
-          seedanceResultUrl = resultData.resultUrls?.[0];
+          if (resultData.resultUrls && Array.isArray(resultData.resultUrls)) {
+            parsedResultUrls = resultData.resultUrls;
+            parsedResultUrl = resultData.resultUrls[0];
+          }
         } catch (e) {
-          console.warn('Failed to parse Seedance resultJson:', e);
+          console.warn('Failed to parse resultJson:', e);
         }
       }
       
-      // Priority order: Seedance (resultJson), Runway Aleph (result_video_url, result_image_url), Runway Gen-3 (video_url), Veo (info.resultUrls), Bytedance models (output_url, videoUrl), Suno, Image models, ElevenLabs, others
-      const resultUrl = seedanceResultUrl ||              // Seedance/Bytedance JSON string (resultJson with resultUrls array)
+      // Also collect all URLs from other array sources for multi-image models
+      // Midjourney: data.resultUrls array, 4o-Image: data.info.result_urls, Veo: data.info.resultUrls
+      if (parsedResultUrls.length === 0) {
+        if (callbackData.data?.resultUrls && Array.isArray(callbackData.data.resultUrls)) {
+          parsedResultUrls = callbackData.data.resultUrls;
+        } else if (callbackData.data?.info?.result_urls && Array.isArray(callbackData.data.info.result_urls)) {
+          parsedResultUrls = callbackData.data.info.result_urls;
+        } else if (callbackData.data?.info?.resultUrls && Array.isArray(callbackData.data.info.resultUrls)) {
+          parsedResultUrls = callbackData.data.info.resultUrls;
+        } else if (callbackData.data?.images && Array.isArray(callbackData.data.images)) {
+          parsedResultUrls = callbackData.data.images;
+        } else if (callbackData.data?.results && Array.isArray(callbackData.data.results)) {
+          parsedResultUrls = callbackData.data.results;
+        } else if (callbackData.resultUrls && Array.isArray(callbackData.resultUrls)) {
+          parsedResultUrls = callbackData.resultUrls;
+        } else if (callbackData.result_urls && Array.isArray(callbackData.result_urls)) {
+          parsedResultUrls = callbackData.result_urls;
+        }
+      }
+      
+      // Priority order: Unified API resultJson (Nano Banana, Seedance, Midjourney, Seedream), Runway Aleph, Runway Gen-3, Veo, Bytedance models, Suno, ElevenLabs, others
+      const resultUrl = parsedResultUrl ||              // Unified API resultJson (resultUrls array)
                        callbackData.data?.result_video_url || // Runway Aleph video result
                        callbackData.data?.result_image_url || // Runway Aleph image fallback
                        callbackData.data?.video_url ||    // Runway Gen-3 uses snake_case
@@ -1080,6 +1105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log what we extracted (for debugging model-specific issues)
       if (resultUrl) {
         console.log(`✅ [${modelType}] Extracted resultUrl: ${resultUrl}`);
+        if (parsedResultUrls.length > 1) {
+          console.log(`📷 [${modelType}] Multi-image: ${parsedResultUrls.length} total URLs extracted`);
+        }
       } else {
         console.log(`⚠️  [${modelType}] No resultUrl extracted. Checking callback structure for debugging:`);
         console.log(`   - callbackData.data?.result_video_url (Aleph): ${callbackData.data?.result_video_url}`);
@@ -1229,8 +1257,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             seedValue = toInt(callbackData.seed);
           }
           
-          // Prepare updates object with resultUrl and optional seed
+          // Prepare updates object with resultUrl, resultUrls (multi-image), and optional seed
           const updates: any = { resultUrl, status: 'completed', completedAt: new Date() };
+          
+          // Store all URLs for multi-image models (Midjourney, Seedream, 4o-Image, etc.)
+          if (parsedResultUrls.length > 0) {
+            updates.resultUrls = parsedResultUrls;
+          }
+          
           if (seedValue !== undefined && seedValue !== null) {
             updates.seed = seedValue;
             console.log(`📍 Captured seed value for ${generationId}: ${seedValue}`);

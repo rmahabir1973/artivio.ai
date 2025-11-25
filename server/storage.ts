@@ -513,6 +513,7 @@ export class DatabaseStorage implements IStorage {
       'isShowcase': 'isShowcase',
       'status': 'status',
       'resultUrl': 'resultUrl',
+      'resultUrls': 'resultUrls',
       'statusDetail': 'statusDetail',
       'errorMessage': 'errorMessage',
       'completedAt': 'completedAt',
@@ -520,6 +521,7 @@ export class DatabaseStorage implements IStorage {
       'thumbnailUrl': 'thumbnailUrl',
       'externalTaskId': 'externalTaskId',
       'parameters': 'parameters',
+      'seed': 'seed',
     };
     
     for (const [key, updateKey] of Object.entries(fieldMap)) {

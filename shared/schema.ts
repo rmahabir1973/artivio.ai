@@ -204,7 +204,8 @@ export const generations = pgTable("generations", {
   referenceImages: text("reference_images").array(), // Image URLs for image-to-video (up to 3 for Veo)
   parameters: jsonb("parameters"), // Store generation parameters
   status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
-  resultUrl: text("result_url"), // URL to generated content
+  resultUrl: text("result_url"), // URL to generated content (primary/first result)
+  resultUrls: text("result_urls").array(), // Array of URLs for multi-image outputs (Midjourney, Seedream, etc.)
   thumbnailUrl: text("thumbnail_url"), // URL to video thumbnail (auto-generated for videos)
   externalTaskId: varchar("external_task_id"), // Provider's task/job ID for tracking
   statusDetail: text("status_detail"), // Detailed status message from provider
