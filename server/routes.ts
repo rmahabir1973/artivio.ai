@@ -1700,7 +1700,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let durationTier = '10s';
       
       try {
-        const axios = require('axios');
         const response = await axios.get(sourceUrl, { responseType: 'arraybuffer', timeout: 30000 });
         const buffer = Buffer.from(response.data);
         
