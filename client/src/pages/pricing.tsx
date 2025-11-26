@@ -1,7 +1,6 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, Play, Shield } from "lucide-react";
+import { Check, Loader2, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import type { SubscriptionPlan } from "@shared/schema";
@@ -9,18 +8,16 @@ import { fetchWithAuth } from "@/lib/authBridge";
 import { useAuth } from "@/hooks/useAuth";
 import { VideoModal } from "@/components/video-modal";
 
-interface PlanWithPopular extends SubscriptionPlan {
-  popular?: boolean;
-}
-
 interface HomePageData {
   pricingVideoUrl?: string;
 }
 
 export default function Pricing() {
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<'annual' | 'monthly'>('annual');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -49,22 +46,75 @@ export default function Pricing() {
 
   const currentPlanId = subscription?.planId;
 
-  // Filter to only paid monthly, paid annual, and trial plans (exclude old ones)
-  const filteredPlans = plansData?.filter(p => 
-    (p.billingPeriod === 'monthly' && p.price > 0) || 
-    p.billingPeriod === 'trial'
-  ) || [];
+  const trialPlan = plansData?.find(p => p.billingPeriod === 'trial');
 
-  const plans: PlanWithPopular[] = filteredPlans.map(plan => ({
-    ...plan,
-    popular: plan.name === 'starter',
-  }));
+  const { monthlyPlans, annualPlans } = useMemo(() => {
+    if (!plansData) return { monthlyPlans: [], annualPlans: [] };
+    
+    const monthly = plansData
+      .filter(p => p.billingPeriod === 'monthly' && p.price > 0)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    
+    const seenTiers = new Set<number>();
+    const uniqueMonthly = monthly.filter(plan => {
+      const tier = getPlanTierFromName(plan.displayName || plan.name);
+      if (seenTiers.has(tier)) return false;
+      seenTiers.add(tier);
+      return true;
+    });
+    
+    const annual = plansData
+      .filter(p => p.billingPeriod === 'annual')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    
+    return { monthlyPlans: uniqueMonthly, annualPlans: annual };
+  }, [plansData]);
 
-  const trialPlan = plans.find(p => p.billingPeriod === 'trial');
-  const paidPlans = plans.filter(p => p.billingPeriod === 'monthly');
+  const displayPlans = billingPeriod === 'annual' ? annualPlans : monthlyPlans;
 
-  const handleSelectPlan = async (plan: PlanWithPopular) => {
-    if (plan.id === currentPlanId) {
+  function getPlanTierFromName(name: string): number {
+    const lower = name.toLowerCase();
+    if (lower.includes('trial') || lower.includes('free')) return 0;
+    if (lower.includes('starter')) return 1;
+    if (lower.includes('professional') || (lower.includes('pro') && !lower.includes('business'))) return 2;
+    if (lower.includes('business')) return 3;
+    if (lower.includes('agency') || lower.includes('enterprise')) return 4;
+    return 1;
+  }
+
+  const isCurrentPlan = (plan: SubscriptionPlan): boolean => {
+    if (!user || isLoadingSubscription || isSubscriptionError || !currentPlanId) return false;
+    return plan.id === currentPlanId;
+  };
+
+  const isBillingSwitch = (plan: SubscriptionPlan): boolean => {
+    if (!user || !currentPlanId) return false;
+    if (plan.id === currentPlanId) return false;
+    
+    const currentPlan = plansData?.find(p => p.id === currentPlanId);
+    if (!currentPlan) return false;
+    
+    const currentTier = getPlanTierFromName(currentPlan.displayName || currentPlan.name);
+    const planTier = getPlanTierFromName(plan.displayName || plan.name);
+    
+    return planTier === currentTier && plan.billingPeriod !== currentPlan.billingPeriod;
+  };
+
+  const canUpgrade = (plan: SubscriptionPlan): boolean => {
+    if (!user || !currentPlanId) return true;
+    if (plan.id === currentPlanId) return false;
+    
+    const currentPlan = plansData?.find(p => p.id === currentPlanId);
+    if (!currentPlan) return true;
+    
+    const currentTier = getPlanTierFromName(currentPlan.displayName || currentPlan.name);
+    const planTier = getPlanTierFromName(plan.displayName || plan.name);
+    
+    return planTier > currentTier;
+  };
+
+  const handleSelectPlan = async (plan: SubscriptionPlan) => {
+    if (isCurrentPlan(plan)) {
       toast({
         title: "Already subscribed",
         description: "You are already on this plan.",
@@ -73,7 +123,7 @@ export default function Pricing() {
       return;
     }
 
-    setSelectedPlan(plan.name);
+    setSelectedPlan(plan.id);
     setIsSubmitting(true);
 
     try {
@@ -125,21 +175,52 @@ export default function Pricing() {
     }
   };
 
-  const getPriceDisplay = (priceInCents: number): string => {
+  const getMonthlyEquivalent = (plan: SubscriptionPlan): number => {
+    if (plan.billingPeriod === 'annual') {
+      const annual = plan.annualPrice || plan.price;
+      return Math.round(annual / 12);
+    }
+    return plan.monthlyPrice || plan.price;
+  };
+
+  const getTotalPrice = (plan: SubscriptionPlan): number => {
+    if (plan.billingPeriod === 'annual') {
+      return plan.annualPrice || plan.price;
+    }
+    return plan.monthlyPrice || plan.price;
+  };
+
+  const formatPrice = (priceInCents: number): string => {
     const price = priceInCents / 100;
     return price % 1 === 0 ? price.toFixed(0) : price.toFixed(2);
   };
 
-  const paymentMethods = [
-    { name: 'Mastercard', icon: '💳' },
-    { name: 'Visa', icon: '💳' },
-    { name: 'American Express', icon: '💳' },
-    { name: 'Apple Pay', icon: '🍎' },
-    { name: 'Google Pay', icon: '🔵' },
-    { name: 'PayPal', icon: '🅿️' },
-    { name: 'iDEAL', icon: '🏦' },
-    { name: 'Alipay', icon: '🇨🇳' },
-  ];
+  const isPro = (plan: SubscriptionPlan): boolean => {
+    const name = (plan.displayName || plan.name).toLowerCase();
+    return name.includes('professional') || (name.includes('pro') && !name.includes('business'));
+  };
+
+  const getCompareTiers = useMemo(() => {
+    const tierDefs = [
+      { tier: 1, name: 'Starter' },
+      { tier: 2, name: 'Professional' },
+      { tier: 3, name: 'Business' },
+      { tier: 4, name: 'Agency' },
+    ];
+    
+    return tierDefs.map(def => {
+      const monthly = monthlyPlans.find(p => getPlanTierFromName(p.displayName || p.name) === def.tier);
+      const annual = annualPlans.find(p => getPlanTierFromName(p.displayName || p.name) === def.tier);
+      const activePlan = billingPeriod === 'annual' ? annual : monthly;
+      return { 
+        ...def, 
+        monthly, 
+        annual, 
+        activePlan,
+        hasData: !!monthly || !!annual
+      };
+    }).filter(t => t.hasData);
+  }, [monthlyPlans, annualPlans, billingPeriod]);
 
   const faqs = [
     {
@@ -165,7 +246,7 @@ export default function Pricing() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <VideoModal 
         isOpen={videoModalOpen}
         onOpenChange={setVideoModalOpen}
@@ -174,262 +255,503 @@ export default function Pricing() {
       />
 
       {/* Hero Section */}
-      <section className="relative py-16 md:py-24 bg-gradient-to-b from-primary/5 via-background to-background">
+      <section className="relative py-16 md:py-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
               Your Complete AI Creative Studio in One Platform
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-400 mb-6 leading-relaxed">
               Why juggle multiple tools when one platform does it all?<br />
-              <span className="font-semibold text-foreground">See for yourself. <button onClick={() => setVideoModalOpen(true)} className="text-primary hover:underline inline-flex items-center gap-1">Watch the Video</button> to discover infinite creative possibilities</span>
+              <span className="text-gray-300">See for yourself. <button onClick={() => setVideoModalOpen(true)} className="text-purple-400 hover:text-purple-300 hover:underline inline-flex items-center gap-1">Watch the Video</button> to discover infinite creative possibilities</span>
             </p>
           </div>
 
           {/* Price Comparison Box */}
-          <Card className="border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 mb-12">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-center mb-4">
-                <span className="inline-block bg-destructive/20 text-destructive px-3 py-1 rounded-full text-sm font-semibold">🔥 SAVE BIG</span>
-              </div>
-              <div className="text-center">
-                <h3 className="text-xl font-semibold mb-6">Your Price per Generation is 40% Less Than Market Average</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Market Price</p>
-                    <p className="text-2xl font-bold text-muted-foreground line-through">$2.50</p>
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <p className="text-lg font-semibold text-primary">Save 40%</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Artivio Price</p>
-                    <p className="text-2xl font-bold text-primary">$1.50</p>
-                  </div>
+          <div className="bg-[#111111] border border-[#222] rounded-xl p-6 mb-12">
+            <div className="flex items-center justify-center mb-4">
+              <span className="inline-flex items-center gap-1.5 bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-sm font-semibold">
+                <span>🔥</span> SAVE BIG
+              </span>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-6 text-white">Your Price per Generation is 40% Less Than Market Average</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-2">Market Price</p>
+                  <p className="text-2xl font-bold text-gray-500 line-through">$2.50</p>
+                </div>
+                <div className="flex items-center justify-center">
+                  <p className="text-lg font-semibold text-red-400">Save 40%</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-2">Artivio Price</p>
+                  <p className="text-2xl font-bold text-purple-400">$1.50</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Plans & Pricing</h2>
-          <p className="text-lg text-muted-foreground">Choose your perfect plan and start creating</p>
+      {/* Plans & Pricing Section */}
+      <section className="container mx-auto px-4 pb-16">
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold mb-3 text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Plans & Pricing
+          </h2>
+          <p className="text-gray-400">Start free and upgrade to unlock more features.</p>
+        </div>
+
+        {/* Billing Toggle */}
+        <div className="flex justify-center mb-10">
+          <div className="inline-flex bg-[#1a1a1a] border border-[#333] rounded-full p-1">
+            <button
+              onClick={() => setBillingPeriod('monthly')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+                billingPeriod === 'monthly'
+                  ? 'bg-white text-black'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              data-testid="toggle-monthly"
+            >
+              MONTHLY
+            </button>
+            <button
+              onClick={() => setBillingPeriod('annual')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                billingPeriod === 'annual'
+                  ? 'bg-white text-black'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              data-testid="toggle-annual"
+            >
+              ANNUAL <span className={billingPeriod === 'annual' ? 'text-purple-600' : 'text-purple-500'}>(35% OFF)</span>
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
           <div className="flex justify-center items-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loader-plans" />
+            <Loader2 className="h-8 w-8 animate-spin text-purple-500" data-testid="loader-plans" />
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <p className="text-destructive font-semibold mb-2">Failed to load pricing plans</p>
-            <p className="text-muted-foreground text-sm mb-4">{error instanceof Error ? error.message : 'An error occurred'}</p>
-            <Button onClick={() => window.location.reload()}>Reload Page</Button>
+            <p className="text-red-400 font-semibold mb-2">Failed to load pricing plans</p>
+            <p className="text-gray-500 text-sm mb-4">{error instanceof Error ? error.message : 'An error occurred'}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">Reload Page</Button>
           </div>
-        ) : !paidPlans || paidPlans.length === 0 ? (
+        ) : displayPlans.length === 0 && !trialPlan ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <p className="text-muted-foreground font-semibold mb-2">No pricing plans available</p>
-            <p className="text-muted-foreground text-sm">Please contact support if this persists.</p>
+            <p className="text-gray-400 font-semibold mb-2">No pricing plans available</p>
+            <p className="text-gray-500 text-sm">Please contact support if this persists.</p>
           </div>
         ) : (
           <>
-            {/* Paid Plans Grid */}
-            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
-              {paidPlans.map((plan) => {
-                const features = Array.isArray(plan.features) ? plan.features : [];
-                const isCurrentPlan = user && !isLoadingSubscription && !isSubscriptionError && plan.id === currentPlanId;
+            {/* Plan Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto mb-16">
+              {/* Free Trial Card */}
+              {trialPlan && (
+                <div 
+                  className={`bg-[#111111] border rounded-xl p-6 flex flex-col ${
+                    isCurrentPlan(trialPlan) ? 'border-purple-500/50 opacity-60' : 'border-[#222]'
+                  }`}
+                  data-testid="card-plan-trial"
+                >
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold text-white italic" style={{ fontFamily: "'Playfair Display', serif" }}>Free</h3>
+                    <p className="text-sm text-gray-500 mt-1">Try your first AI creations</p>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-white">$0</span>
+                    <span className="text-gray-500 ml-1">per month</span>
+                  </div>
+
+                  <Button
+                    onClick={() => handleSelectPlan(trialPlan)}
+                    disabled={isSubmitting || isCurrentPlan(trialPlan)}
+                    variant="outline"
+                    className={`w-full mb-6 bg-transparent border-[#333] text-white hover:bg-white hover:text-black ${
+                      isCurrentPlan(trialPlan) ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    data-testid="button-select-trial"
+                  >
+                    {isCurrentPlan(trialPlan) ? (
+                      "Current Plan"
+                    ) : isSubmitting && selectedPlan === trialPlan.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Get Started"
+                    )}
+                  </Button>
+
+                  <div className="space-y-4 flex-1">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">USAGE LIMITS</p>
+                      <ul className="space-y-2">
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          {trialPlan.creditsPerMonth.toLocaleString()} credits
+                        </li>
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          7 day access
+                        </li>
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          No credit card required
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">FEATURES</p>
+                      <ul className="space-y-2">
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          All AI models
+                        </li>
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          All tools & features
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Paid Plan Cards */}
+              {displayPlans.map((plan) => {
+                const isProPlan = isPro(plan);
+                const isCurrent = isCurrentPlan(plan);
+                const canUpgradeToPlan = canUpgrade(plan);
+                const monthlyPrice = getMonthlyEquivalent(plan);
+                const totalPrice = getTotalPrice(plan);
                 
                 return (
-                  <Card 
+                  <div 
                     key={plan.id}
-                    className={`relative hover-elevate transition-all flex flex-col ${
-                      plan.popular ? 'border-primary shadow-xl md:scale-105 md:z-10' : 'border-muted'
-                    } ${
-                      selectedPlan === plan.name ? 'ring-2 ring-primary' : ''
-                    } ${
-                      isCurrentPlan ? 'opacity-70' : ''
-                    }`}
-                    data-testid={`card-plan-${plan.name}`}
+                    className={`relative bg-[#111111] rounded-xl p-6 flex flex-col ${
+                      isProPlan 
+                        ? 'border-2 border-purple-500' 
+                        : isCurrent 
+                          ? 'border border-purple-500/50' 
+                          : 'border border-[#222]'
+                    } ${isCurrent ? 'opacity-60' : ''}`}
+                    data-testid={`card-plan-${plan.id}`}
                   >
-                    {plan.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                        <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-xs font-bold">
-                          MOST POPULAR
+                    {isProPlan && !isCurrent && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="bg-purple-500/20 text-purple-400 border border-purple-500/50 px-4 py-1 rounded-full text-xs font-medium">
+                          Most Popular
                         </span>
                       </div>
                     )}
-                    
-                    <CardHeader className={`text-center ${plan.popular ? 'pt-10' : ''} pb-4`}>
-                      <CardTitle className="text-2xl mb-1">{plan.displayName}</CardTitle>
+
+                    <div className={`mb-4 ${isProPlan ? 'pt-2' : ''}`}>
+                      <h3 className="text-xl font-semibold text-white italic" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        {plan.displayName.replace(' (Annual)', '')}
+                      </h3>
                       {plan.description && (
-                        <CardDescription className="text-xs">{plan.description}</CardDescription>
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-1">{plan.description}</p>
                       )}
-                      
-                      <div className="mt-6 flex flex-col items-center gap-1">
-                        <div className="text-4xl font-bold text-primary">
-                          ${getPriceDisplay(plan.price)}
-                        </div>
-                        <p className="text-xs text-muted-foreground">/month</p>
-                        <div className="mt-3 p-2 bg-primary/10 rounded-md w-full">
-                          <p className="text-sm font-semibold text-primary">{plan.creditsPerMonth.toLocaleString()} credits/mo</p>
-                        </div>
+                    </div>
+                    
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold text-white">${formatPrice(monthlyPrice)}</span>
+                      <span className="text-gray-500 ml-1">/month</span>
+                      {billingPeriod === 'annual' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          ${formatPrice(totalPrice)} billed yearly
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      onClick={() => handleSelectPlan(plan)}
+                      disabled={isSubmitting || isCurrent}
+                      variant={isProPlan ? "default" : "outline"}
+                      className={`w-full mb-6 ${
+                        isProPlan 
+                          ? 'bg-purple-500 hover:bg-purple-600 text-white border-0' 
+                          : 'bg-transparent border-[#333] text-white hover:bg-white hover:text-black'
+                      } ${isCurrent ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      data-testid={`button-select-${plan.id}`}
+                    >
+                      {isCurrent ? (
+                        "Current Plan"
+                      ) : isSubmitting && selectedPlan === plan.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : user && canUpgradeToPlan ? (
+                        "Upgrade"
+                      ) : user && !canUpgradeToPlan ? (
+                        "Switch Plan"
+                      ) : (
+                        "Get Started"
+                      )}
+                    </Button>
+
+                    <div className="space-y-4 flex-1">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">USAGE LIMITS</p>
+                        <ul className="space-y-2">
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            {plan.creditsPerMonth.toLocaleString()} credits/month
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            {plan.creditRolloverLimit ? `${plan.creditRolloverLimit.toLocaleString()} rollover limit` : 'Credit rollover'}
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            Priority generation
+                          </li>
+                        </ul>
                       </div>
-                    </CardHeader>
-
-                    <CardContent className="flex-1 pb-4">
-                      <ul className="space-y-2">
-                        {features.slice(0, 8).map((feature: string, index: number) => (
-                          <li key={index} className="flex items-start gap-2 text-xs">
-                            <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                            <span className="line-clamp-2">{feature}</span>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">FEATURES</p>
+                        <ul className="space-y-2">
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            All AI video models
                           </li>
-                        ))}
-                        {features.length > 8 && (
-                          <li className="text-xs text-muted-foreground italic pt-1">
-                            + {features.length - 8} more features
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            All AI image models
                           </li>
-                        )}
-                      </ul>
-                    </CardContent>
-
-                    <CardFooter className="pt-2">
-                      <Button
-                        onClick={() => handleSelectPlan(plan)}
-                        disabled={isSubmitting || isCurrentPlan}
-                        className="w-full"
-                        variant={isCurrentPlan ? "secondary" : plan.popular ? "default" : "outline"}
-                        size="sm"
-                        data-testid={`button-select-${plan.name}`}
-                      >
-                        {isCurrentPlan ? (
-                          "Current Plan"
-                        ) : isSubmitting && selectedPlan === plan.name ? (
-                          <>
-                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                            Processing...
-                          </>
-                        ) : (
-                          "Get Started"
-                        )}
-                      </Button>
-                    </CardFooter>
-                  </Card>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            Suno music generation
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            Voice cloning & TTS
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Free Trial Section */}
-            {trialPlan && (
-              <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 mb-16">
-                <CardContent className="p-8">
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                      <div className="mb-4">
-                        <span className="inline-block bg-primary/20 text-primary px-3 py-1 rounded-full text-sm font-semibold">
-                          START FREE
+            {/* Feature Comparison Table */}
+            <div className="max-w-6xl mx-auto mb-16">
+              <h3 className="text-2xl font-semibold text-white mb-8" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Compare Plans
+              </h3>
+              
+              <div className="bg-[#0d0d0d] border border-[#222] rounded-xl overflow-hidden overflow-x-auto">
+                {/* Table Header */}
+                <div 
+                  className="grid gap-4 p-4 border-b border-[#222] bg-[#111] min-w-[700px]" 
+                  style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                >
+                  <div className="text-gray-400 text-sm font-medium">Plan Details</div>
+                  <div className="text-center">
+                    <p className="text-white font-medium">Free Trial</p>
+                    <p className="text-gray-500 text-xs">$0</p>
+                  </div>
+                  {getCompareTiers.map((tier) => {
+                    const plan = tier.activePlan;
+                    return (
+                      <div key={tier.name} className="text-center">
+                        <p className="text-white font-medium">{tier.name}</p>
+                        <p className="text-gray-500 text-xs">
+                          {plan ? `$${formatPrice(getMonthlyEquivalent(plan))}/mo` : '-'}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Credits Row */}
+                <div 
+                  className="grid gap-4 p-4 border-b border-[#1a1a1a] min-w-[700px]" 
+                  style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                >
+                  <div className="text-gray-300 text-sm font-medium">Monthly Credits</div>
+                  <div className="text-center">
+                    <span className="text-purple-400 font-semibold">{trialPlan?.creditsPerMonth.toLocaleString() || '1,000'}</span>
+                  </div>
+                  {getCompareTiers.map((tier) => {
+                    const plan = tier.activePlan || tier.monthly || tier.annual;
+                    return (
+                      <div key={tier.name} className="text-center">
+                        <span className="text-purple-400 font-semibold">
+                          {plan ? plan.creditsPerMonth.toLocaleString() : '-'}
                         </span>
                       </div>
-                      <h3 className="text-3xl font-bold mb-3">7 Day Free Trial</h3>
-                      <p className="text-muted-foreground mb-4 leading-relaxed">
-                        No credit card required. Get {trialPlan.creditsPerMonth.toLocaleString()} credits to explore all our AI tools and create amazing content.
-                      </p>
-                      <ul className="space-y-2 mb-6">
-                        <li className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span>Full access to all features</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span>No credit card required</span>
-                        </li>
-                        <li className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span>Cancel anytime</span>
-                        </li>
-                      </ul>
-                      <Button
-                        onClick={() => handleSelectPlan(trialPlan)}
-                        disabled={isSubmitting}
-                        size="lg"
-                        className="w-full md:w-auto"
-                        data-testid="button-start-trial"
-                      >
-                        {isSubmitting && selectedPlan === trialPlan.name ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Starting...
-                          </>
-                        ) : (
-                          "Start Free Trial"
-                        )}
-                      </Button>
-                    </div>
-                    <div className="hidden md:block text-center">
-                      <div className="inline-block text-6xl">✨</div>
-                      <p className="text-muted-foreground mt-4">Join thousands of creators using Artivio AI</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    );
+                  })}
+                </div>
 
-            {/* Payment Security Section */}
-            <div className="max-w-4xl mx-auto mb-16">
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
-                  <Shield className="h-6 w-6 text-primary" />
-                  Pay Safely and Securely with
-                </h3>
-              </div>
-              <Card className="bg-muted/30 border-muted">
-                <CardContent className="pt-8">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {paymentMethods.map((method) => (
-                      <div key={method.name} className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                        <span className="text-2xl">{method.icon}</span>
-                        <span className="text-xs text-muted-foreground text-center line-clamp-2">{method.name}</span>
+                {/* Credit Rollover Row */}
+                <div 
+                  className="grid gap-4 p-4 border-b border-[#1a1a1a] min-w-[700px]" 
+                  style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                >
+                  <div className="text-gray-300 text-sm">Credit Rollover Limit</div>
+                  <div className="text-center">
+                    <X className="h-4 w-4 text-gray-600 mx-auto" />
+                  </div>
+                  {getCompareTiers.map((tier) => {
+                    const plan = tier.activePlan || tier.monthly || tier.annual;
+                    return (
+                      <div key={tier.name} className="text-center">
+                        {plan?.creditRolloverLimit ? (
+                          <span className="text-gray-300 text-sm">{plan.creditRolloverLimit.toLocaleString()}</span>
+                        ) : (
+                          <Check className="h-4 w-4 text-purple-400 mx-auto" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Trial Duration Row */}
+                <div 
+                  className="grid gap-4 p-4 border-b border-[#1a1a1a] min-w-[700px]" 
+                  style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                >
+                  <div className="text-gray-300 text-sm">Access Duration</div>
+                  <div className="text-center">
+                    <span className="text-gray-400 text-sm">7 days</span>
+                  </div>
+                  {getCompareTiers.map((tier) => (
+                    <div key={tier.name} className="text-center">
+                      <span className="text-gray-300 text-sm">Unlimited</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* AI Video Section */}
+                <div className="bg-[#0a0a0a] px-4 py-3 border-b border-[#222] min-w-[700px]">
+                  <h4 className="text-purple-400 font-medium text-sm">AI Video Generation</h4>
+                </div>
+                {['Veo 3.1, Runway Gen-3, Kling 2.5', 'Seedance, Wan 2.5, Sora 2', 'Image-to-Video'].map((feature, idx) => (
+                  <div 
+                    key={idx} 
+                    className="grid gap-4 p-4 border-b border-[#1a1a1a] min-w-[700px]" 
+                    style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                  >
+                    <div className="text-gray-300 text-sm">{feature}</div>
+                    <div className="text-center"><Check className="h-4 w-4 text-purple-400 mx-auto" /></div>
+                    {getCompareTiers.map((tier) => (
+                      <div key={tier.name} className="text-center">
+                        <Check className="h-4 w-4 text-purple-400 mx-auto" />
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                ))}
+
+                {/* AI Image Section */}
+                <div className="bg-[#0a0a0a] px-4 py-3 border-b border-[#222] min-w-[700px]">
+                  <h4 className="text-purple-400 font-medium text-sm">AI Image Generation</h4>
+                </div>
+                {['Seedream 4.0, Flux Kontext', 'Midjourney v7, 4o Image', 'Background Removal'].map((feature, idx) => (
+                  <div 
+                    key={idx} 
+                    className="grid gap-4 p-4 border-b border-[#1a1a1a] min-w-[700px]" 
+                    style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                  >
+                    <div className="text-gray-300 text-sm">{feature}</div>
+                    <div className="text-center"><Check className="h-4 w-4 text-purple-400 mx-auto" /></div>
+                    {getCompareTiers.map((tier) => (
+                      <div key={tier.name} className="text-center">
+                        <Check className="h-4 w-4 text-purple-400 mx-auto" />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+
+                {/* AI Audio Section */}
+                <div className="bg-[#0a0a0a] px-4 py-3 border-b border-[#222] min-w-[700px]">
+                  <h4 className="text-purple-400 font-medium text-sm">AI Audio & Music</h4>
+                </div>
+                {['Suno V3.5/V4/V5 Music', 'Voice Cloning & TTS', 'Sound Effects & Lip Sync'].map((feature, idx) => (
+                  <div 
+                    key={idx} 
+                    className="grid gap-4 p-4 border-b border-[#1a1a1a] min-w-[700px]" 
+                    style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                  >
+                    <div className="text-gray-300 text-sm">{feature}</div>
+                    <div className="text-center"><Check className="h-4 w-4 text-purple-400 mx-auto" /></div>
+                    {getCompareTiers.map((tier) => (
+                      <div key={tier.name} className="text-center">
+                        <Check className="h-4 w-4 text-purple-400 mx-auto" />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+
+                {/* Tools Section */}
+                <div className="bg-[#0a0a0a] px-4 py-3 border-b border-[#222] min-w-[700px]">
+                  <h4 className="text-purple-400 font-medium text-sm">Tools & Features</h4>
+                </div>
+                {['Image & Video Upscaling', 'AI Chat Assistant', 'QR Code Generator'].map((feature, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`grid gap-4 p-4 min-w-[700px] ${idx < 2 ? 'border-b border-[#1a1a1a]' : ''}`} 
+                    style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
+                  >
+                    <div className="text-gray-300 text-sm">{feature}</div>
+                    <div className="text-center"><Check className="h-4 w-4 text-purple-400 mx-auto" /></div>
+                    {getCompareTiers.map((tier) => (
+                      <div key={tier.name} className="text-center">
+                        <Check className="h-4 w-4 text-purple-400 mx-auto" />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* FAQ Section */}
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-3">Frequently Asked Questions</h2>
-                <p className="text-muted-foreground">Everything you need to know about our pricing and service</p>
+            <div className="max-w-3xl mx-auto mb-16">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Frequently Asked Questions
+                </h2>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {faqs.map((faq, index) => (
-                  <Card key={index} className="border-muted">
-                    <CardContent className="pt-6">
-                      <details className="group cursor-pointer">
-                        <summary className="flex items-start gap-3 font-semibold text-foreground list-none select-none">
-                          <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold mt-0.5">
-                            {index + 1}
-                          </span>
-                          <span className="pt-0.5">{faq.question}</span>
-                        </summary>
-                        <div className="mt-4 pl-9 text-muted-foreground text-sm leading-relaxed">
-                          {faq.answer}
-                        </div>
-                      </details>
-                    </CardContent>
-                  </Card>
+                  <div 
+                    key={index} 
+                    className="bg-[#111111] border border-[#222] rounded-xl overflow-hidden"
+                  >
+                    <button
+                      onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                      className="w-full flex items-center justify-between p-5 text-left hover:bg-[#1a1a1a] transition-colors"
+                      data-testid={`faq-toggle-${index}`}
+                    >
+                      <span className="text-white font-medium pr-4">{faq.question}</span>
+                      <span className="text-gray-400 shrink-0">
+                        <Plus className={`h-5 w-5 transition-transform ${openFaq === index ? 'rotate-45' : ''}`} />
+                      </span>
+                    </button>
+                    {openFaq === index && (
+                      <div className="px-5 pb-5 text-gray-400 text-sm leading-relaxed">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
 
             {/* Bottom CTA */}
-            <div className="text-center mt-16 mb-8">
-              <p className="text-muted-foreground text-sm">
+            <div className="text-center">
+              <p className="text-gray-500 text-sm">
                 All plans include full access to every AI feature. Cancel anytime, no questions asked.
               </p>
             </div>
