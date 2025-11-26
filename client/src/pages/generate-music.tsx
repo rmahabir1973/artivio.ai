@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useSearch } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,9 +43,23 @@ export default function GenerateMusic() {
   const queryClient = useQueryClient();
   const { getModelCost } = usePricing();
   const { markStepComplete } = useOnboarding();
+  const searchString = useSearch();
+  
+  // Parse tab from URL query parameter
+  const urlParams = new URLSearchParams(searchString);
+  const tabFromUrl = urlParams.get('tab');
+  const validTabs = ['generate', 'extend', 'lyrics', 'cover', 'upload-extend', 'process'];
+  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'generate';
   
   // Tab state
-  const [activeTab, setActiveTab] = useState("generate");
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // Update tab when URL changes
+  useEffect(() => {
+    if (tabFromUrl && validTabs.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
   
   // Guest modal state
   const [showGuestModal, setShowGuestModal] = useState(false);
