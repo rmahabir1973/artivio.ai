@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { useLocation } from "wouter";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,6 @@ import { Loader2, Sparkles } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 export default function Register() {
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { login, setUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +87,8 @@ export default function Register() {
       });
 
       // Redirect to pricing page to select subscription plan (including Free Trial)
-      setLocation("/pricing");
+      // Use window.location.href for reliable navigation after auth state changes
+      window.location.href = "/pricing";
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
