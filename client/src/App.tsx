@@ -98,64 +98,28 @@ function Router() {
       {/* Dashboard route - accessible to all users (guests can explore in guest mode) */}
       <Route path="/dashboard" component={Home} />
 
-      {/* Protected routes - require authentication */}
-      <Route path="/generate/video">
-        <ProtectedRoute><GenerateVideo /></ProtectedRoute>
-      </Route>
-      <Route path="/generate/transition">
-        <ProtectedRoute><GenerateTransition /></ProtectedRoute>
-      </Route>
-      <Route path="/generate/sora">
-        <ProtectedRoute><GenerateSora /></ProtectedRoute>
-      </Route>
-      <Route path="/generate/image">
-        <ProtectedRoute><GenerateImage /></ProtectedRoute>
-      </Route>
-      <Route path="/generate/music">
-        <ProtectedRoute><GenerateMusic /></ProtectedRoute>
-      </Route>
-      <Route path="/sound-effects">
-        <ProtectedRoute><SoundEffects /></ProtectedRoute>
-      </Route>
-      <Route path="/voice-clone">
-        <ProtectedRoute><VoiceClone /></ProtectedRoute>
-      </Route>
-      <Route path="/text-to-speech">
-        <ProtectedRoute><TextToSpeech /></ProtectedRoute>
-      </Route>
-      <Route path="/speech-to-text">
-        <ProtectedRoute><SpeechToText /></ProtectedRoute>
-      </Route>
-      <Route path="/analyze-image">
-        <ProtectedRoute><AnalyzeImage /></ProtectedRoute>
-      </Route>
-      <Route path="/talking-avatars">
-        <ProtectedRoute><TalkingAvatars /></ProtectedRoute>
-      </Route>
-      <Route path="/lip-sync">
-        <ProtectedRoute><LipSync /></ProtectedRoute>
-      </Route>
-      <Route path="/audio-converter">
-        <ProtectedRoute><AudioConverter /></ProtectedRoute>
-      </Route>
-      <Route path="/video-editor">
-        <ProtectedRoute><VideoEditor /></ProtectedRoute>
-      </Route>
-      <Route path="/qr-generator">
-        <ProtectedRoute><QRGenerator /></ProtectedRoute>
-      </Route>
-      <Route path="/topaz-upscaler">
-        <ProtectedRoute><TopazUpscaler /></ProtectedRoute>
-      </Route>
-      <Route path="/topaz-video-upscaler">
-        <ProtectedRoute><TopazVideoUpscaler /></ProtectedRoute>
-      </Route>
-      <Route path="/background-remover">
-        <ProtectedRoute><BackgroundRemover /></ProtectedRoute>
-      </Route>
-      <Route path="/chat">
-        <ProtectedRoute><Chat /></ProtectedRoute>
-      </Route>
+      {/* Tool pages - accessible to guests for browsing (auth required at generation time) */}
+      <Route path="/generate/video" component={GenerateVideo} />
+      <Route path="/generate/transition" component={GenerateTransition} />
+      <Route path="/generate/sora" component={GenerateSora} />
+      <Route path="/generate/image" component={GenerateImage} />
+      <Route path="/generate/music" component={GenerateMusic} />
+      <Route path="/sound-effects" component={SoundEffects} />
+      <Route path="/voice-clone" component={VoiceClone} />
+      <Route path="/text-to-speech" component={TextToSpeech} />
+      <Route path="/speech-to-text" component={SpeechToText} />
+      <Route path="/analyze-image" component={AnalyzeImage} />
+      <Route path="/talking-avatars" component={TalkingAvatars} />
+      <Route path="/lip-sync" component={LipSync} />
+      <Route path="/audio-converter" component={AudioConverter} />
+      <Route path="/video-editor" component={VideoEditor} />
+      <Route path="/qr-generator" component={QRGenerator} />
+      <Route path="/topaz-upscaler" component={TopazUpscaler} />
+      <Route path="/topaz-video-upscaler" component={TopazVideoUpscaler} />
+      <Route path="/background-remover" component={BackgroundRemover} />
+      <Route path="/chat" component={Chat} />
+
+      {/* Account pages - require authentication */}
       <Route path="/history">
         <ProtectedRoute><History /></ProtectedRoute>
       </Route>
