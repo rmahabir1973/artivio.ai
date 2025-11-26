@@ -849,6 +849,22 @@ export default function Landing() {
               </CardContent>
             </Card>
 
+            {/* Video Editor */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-video-editor">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Film className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Video Editor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Professional video editing with timeline, effects, and cloud export
+                </p>
+                <p className="text-sm text-purple-400">New Feature</p>
+              </CardContent>
+            </Card>
+
             {/* Image Generation */}
             <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-image-generation">
               <CardHeader>
