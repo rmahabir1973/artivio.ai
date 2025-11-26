@@ -30,6 +30,7 @@ export default function AnalyzeImage() {
   // Fetch image analyses
   const { data: analyses = [], isLoading } = useQuery<ImageAnalysis[]>({
     queryKey: ["/api/image-analysis/results"],
+    enabled: isAuthenticated,
   });
 
   // Analyze mutation

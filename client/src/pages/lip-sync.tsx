@@ -60,6 +60,7 @@ export default function LipSync() {
   // Fetch generations
   const { data: generations = [], isLoading } = useQuery<Generation[]>({
     queryKey: ["/api/lip-sync/generations"],
+    enabled: isAuthenticated,
   });
 
   // Generate mutation

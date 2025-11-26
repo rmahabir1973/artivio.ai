@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 
 type OnboardingStep = 'exploredWorkflows' | 'triedTemplate' | 'completedFirstGeneration';
 
@@ -15,7 +16,14 @@ type OnboardingProgress = {
 };
 
 export function useOnboarding() {
+  const { isAuthenticated } = useAuth();
+
   const markStepComplete = useCallback(async (step: OnboardingStep) => {
+    // Skip API calls for unauthenticated guests
+    if (!isAuthenticated) {
+      return;
+    }
+
     try {
       // Check if step is already complete to prevent redundant API calls
       const cachedData = queryClient.getQueryData<OnboardingProgress>(['/api/onboarding']);
@@ -32,7 +40,7 @@ export function useOnboarding() {
     } catch (error) {
       console.error(`Error marking ${step} complete:`, error);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   return { markStepComplete };
 }

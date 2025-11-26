@@ -294,7 +294,7 @@ export default function GenerateVideo() {
       if (!generationId) return null;
       return await apiRequest("GET", `/api/generations/${generationId}`);
     },
-    enabled: !!generationId && isGenerating,
+    enabled: isAuthenticated && !!generationId && isGenerating,
     refetchInterval: 2000, // Poll every 2 seconds while generating
     refetchOnWindowFocus: false,
   });

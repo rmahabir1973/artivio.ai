@@ -60,6 +60,7 @@ export default function TextToSpeech() {
   // Fetch user's cloned voices
   const { data: clonedVoices = [] } = useQuery<VoiceClone[]>({
     queryKey: ["/api/voice-clones"],
+    enabled: isAuthenticated,
   });
 
   // Generate TTS mutation

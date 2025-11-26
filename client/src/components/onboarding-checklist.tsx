@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
   Check, 
@@ -56,13 +57,20 @@ const ONBOARDING_STEPS = [
 
 export function OnboardingChecklist() {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
 
   const { data: progress, isLoading, isError, error } = useQuery<OnboardingProgress>({
     queryKey: ['/api/onboarding'],
+    enabled: isAuthenticated,
     retry: 2,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Don't show onboarding for unauthenticated guests
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<OnboardingProgress>) => {

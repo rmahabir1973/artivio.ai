@@ -1,20 +1,25 @@
 import { useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { PricingEntry } from "@shared/schema";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Shared pricing hook that fetches dynamic pricing from the API
  * and provides helpers to get costs for specific models.
  * 
  * Uses TanStack Query caching for efficiency - subsequent pages reuse data.
- * Memoizes pricing map to avoid O(n) rebuilds on every render.
+ * Memoizes pricing map to avoid O(1) rebuilds on every render.
+ * Only fetches for authenticated users to prevent 401 errors for guests.
  */
 export function usePricing() {
+  const { isAuthenticated } = useAuth();
+  
   const pricingQuery = useQuery<PricingEntry[]>({
     queryKey: ["/api/pricing"],
     staleTime: 60 * 1000, // 60 seconds - pricing rarely changes
     gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     refetchOnWindowFocus: true, // Detect admin changes when user returns to tab
+    enabled: isAuthenticated, // Only fetch for authenticated users
   });
 
   const { data: pricingData = [], isLoading, error, dataUpdatedAt } = pricingQuery;

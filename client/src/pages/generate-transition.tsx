@@ -137,7 +137,7 @@ export default function GenerateTransition() {
       if (!generationId) return null;
       return await apiRequest("GET", `/api/generations/${generationId}`);
     },
-    enabled: !!generationId && isGenerating,
+    enabled: isAuthenticated && !!generationId && isGenerating,
     refetchInterval: 2000,
     refetchOnWindowFocus: false,
   });

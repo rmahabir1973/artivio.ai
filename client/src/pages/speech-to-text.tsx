@@ -32,6 +32,7 @@ export default function SpeechToText() {
   // Fetch STT transcriptions
   const { data: transcriptions = [], isLoading } = useQuery<SttGeneration[]>({
     queryKey: ["/api/stt/transcriptions"],
+    enabled: isAuthenticated,
   });
 
   // Transcribe mutation

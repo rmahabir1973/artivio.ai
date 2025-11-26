@@ -51,6 +51,7 @@ export default function TalkingAvatars() {
 
   const { data: avatars = [], isLoading } = useQuery<AvatarGeneration[]>({
     queryKey: ["/api/avatar/generations"],
+    enabled: isAuthenticated,
   });
 
   const generateMutation = useMutation({

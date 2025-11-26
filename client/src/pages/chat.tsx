@@ -78,11 +78,12 @@ export default function Chat() {
 
   const { data: conversations = [] } = useQuery<Conversation[]>({
     queryKey: ['/api/chat/conversations'],
+    enabled: isAuthenticated,
   });
 
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ['/api/chat/conversations', selectedConversationId],
-    enabled: !!selectedConversationId,
+    enabled: isAuthenticated && !!selectedConversationId,
   });
 
   const deleteConversation = useMutation({

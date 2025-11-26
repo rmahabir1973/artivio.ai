@@ -42,6 +42,7 @@ export default function VideoEditor() {
 
   const { data: firstPageData = { data: [] }, isLoading: loadingGenerations } = useQuery<any>({
     queryKey: ['/api/generations'],
+    enabled: isAuthenticated,
   });
 
   useEffect(() => {
