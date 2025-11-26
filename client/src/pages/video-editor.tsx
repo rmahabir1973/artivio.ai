@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CreativeEditor from '@cesdk/cesdk-js/react';
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 interface Generation {
   id: string;
@@ -37,6 +38,7 @@ export default function VideoEditor() {
   const [assetType, setAssetType] = useState<'video' | 'image' | 'music'>('video');
   const [allGenerations, setAllGenerations] = useState<Generation[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   const { data: firstPageData = { data: [] }, isLoading: loadingGenerations } = useQuery<any>({
     queryKey: ['/api/generations'],
@@ -120,6 +122,11 @@ export default function VideoEditor() {
   );
 
   const addAssetToEditor = async (url: string, type: 'video' | 'image' | 'audio') => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!cesdkInstance) {
       toast({
         title: "Editor not ready",
@@ -236,27 +243,6 @@ export default function VideoEditor() {
       });
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <SidebarInset>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="max-w-md">
-            <CardContent className="pt-6 text-center">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-              <p className="text-muted-foreground mb-4">
-                Please sign in to access the video editor.
-              </p>
-              <Link href="/auth">
-                <Button data-testid="button-signin">Sign In</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </SidebarInset>
-    );
-  }
 
   if (isLoadingLicense) {
     return (
@@ -514,6 +500,12 @@ export default function VideoEditor() {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Video Editor"
+      />
     </SidebarInset>
   );
 }

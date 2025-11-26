@@ -17,6 +17,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Mic, Upload, Trash2, ToggleLeft, ToggleRight, Square, Play, Pause, FileText, Radio, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 // Professional 2-minute voice cloning script (phonetically diverse)
 const VOICE_SCRIPT = `Hello! I'm excited to help you create a high-quality voice clone. This script is designed to capture the full range of your voice, including different tones, emotions, and phonetic sounds.
@@ -51,6 +52,7 @@ export default function VoiceClone() {
   const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [scriptDialogOpen, setScriptDialogOpen] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -58,18 +60,6 @@ export default function VoiceClone() {
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-    }
-  }, [isAuthenticated, authLoading, toast]);
 
   // Fetch user's voice clones
   const { data: voiceClones = [], isLoading: voicesLoading } = useQuery<any[]>({
@@ -218,6 +208,12 @@ export default function VoiceClone() {
   };
 
   const handleClone = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!name.trim()) {
       toast({
         title: "Name Required",
@@ -383,8 +379,6 @@ export default function VoiceClone() {
       </div>
     );
   }
-
-  if (!isAuthenticated) return null;
 
   return (
     <SidebarInset>
@@ -752,6 +746,11 @@ export default function VoiceClone() {
       </div>
         </div>
       </div>
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Voice Cloning"
+      />
     </SidebarInset>
   );
 }

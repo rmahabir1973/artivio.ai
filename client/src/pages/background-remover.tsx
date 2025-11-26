@@ -10,6 +10,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, Upload, Download, Copy, Check, Wand2 } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 const BACKGROUND_REMOVER_COST = 3;
 
@@ -30,6 +31,7 @@ export default function BackgroundRemover() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   const currentCost = BACKGROUND_REMOVER_COST;
   const currentCredits = (user as any)?.credits || 0;
@@ -171,6 +173,11 @@ export default function BackgroundRemover() {
   });
 
   const handleRemoveBackground = () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (warningLevel === "insufficient") {
       toast({
         title: "Insufficient Credits",
@@ -210,8 +217,6 @@ export default function BackgroundRemover() {
       </div>
     );
   }
-
-  if (!isAuthenticated) return null;
 
   const form = (
     <Card>
@@ -368,6 +373,11 @@ export default function BackgroundRemover() {
   return (
     <SidebarInset>
       <ThreeColumnLayout form={form} preview={preview} />
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Background Removal"
+      />
     </SidebarInset>
   );
 }

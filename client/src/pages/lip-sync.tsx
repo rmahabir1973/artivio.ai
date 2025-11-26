@@ -11,12 +11,14 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Loader2, Upload, Mic, Square, Play, Pause, Volume2, ChevronDown, AlertTriangle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import type { Generation } from "@shared/schema";
 
 const MAX_AUDIO_DURATION = 15; // Maximum audio duration in seconds
@@ -24,6 +26,8 @@ const MAX_AUDIO_DURATION = 15; // Maximum audio duration in seconds
 export default function LipSync() {
   const { toast } = useToast();
   const { getModelCost } = usePricing();
+  const { isAuthenticated } = useAuth();
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   // Form state
   const [imageUrl, setImageUrl] = useState("");
@@ -292,6 +296,11 @@ export default function LipSync() {
   };
 
   const handleGenerate = () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!imageUrl) {
       toast({ title: "Validation Error", description: "Please upload an image.", variant: "destructive" });
       return;
@@ -560,6 +569,12 @@ export default function LipSync() {
           </Card>
         </div>
       )}
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Lip Sync"
+      />
     </div>
   );
 }

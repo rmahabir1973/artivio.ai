@@ -11,6 +11,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, Upload, Download, Zap, Copy, Check } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 interface UpsculerCosts {
   "2": number;
@@ -42,6 +43,7 @@ export default function TopazUpscaler() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   const currentCost = UPSCALE_COSTS[selectedFactor];
   const currentCredits = (user as any)?.credits || 0;
@@ -184,6 +186,11 @@ export default function TopazUpscaler() {
   });
 
   const handleUpscale = () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (warningLevel === "insufficient") {
       toast({
         title: "Insufficient Credits",
@@ -223,8 +230,6 @@ export default function TopazUpscaler() {
       </div>
     );
   }
-
-  if (!isAuthenticated) return null;
 
   const form = (
     <Card>
@@ -399,6 +404,11 @@ export default function TopazUpscaler() {
   return (
     <SidebarInset>
       <ThreeColumnLayout form={form} preview={preview} />
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Image Upscaling"
+      />
     </SidebarInset>
   );
 }

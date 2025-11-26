@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 interface Scene {
   id: string;
@@ -26,7 +27,7 @@ interface Scene {
 
 export default function GenerateSora() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
   const [mode, setMode] = useState<"text-to-video" | "image-to-video" | "storyboard">("text-to-video");
@@ -45,6 +46,7 @@ export default function GenerateSora() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   // Poll for generation result when generationId is set
   const { data: pollData } = useQuery<any>({
@@ -284,6 +286,12 @@ export default function GenerateSora() {
   });
 
   const handleGenerate = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (mode === "text-to-video" && !prompt.trim()) {
       toast({
         title: "Missing prompt",
@@ -321,6 +329,7 @@ export default function GenerateSora() {
   const estimatedCost = mode === "storyboard" ? 500 : 300;
 
   return (
+    <>
     <ThreeColumnLayout
       form={
         <Card>
@@ -759,5 +768,11 @@ export default function GenerateSora() {
         />
       }
     />
+    <GuestGenerateModal
+      open={showGuestModal}
+      onOpenChange={setShowGuestModal}
+      featureName="Sora Videos"
+    />
+    </>
   );
 }

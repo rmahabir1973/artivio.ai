@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Download, QrCode, Upload, Trash2, ChevronDown } from "lucide-react";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import QRCodeStyling from "qr-code-styling";
 import {
@@ -19,7 +21,9 @@ import {
 
 export default function QRGenerator() {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [text, setText] = useState("https://artivio.ai");
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const [logoFile, setLogoFile] = useState<string>("");
   const [logoFileName, setLogoFileName] = useState("");
   const [qrSize, setQrSize] = useState("300");
@@ -167,6 +171,11 @@ export default function QRGenerator() {
   };
 
   const handleDownload = async (format: "png" | "svg") => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!qrCodeInstance.current) return;
 
     try {
@@ -462,6 +471,12 @@ export default function QRGenerator() {
       </div>
         </div>
       </div>
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="QR Codes"
+      />
     </SidebarInset>
   );
 }

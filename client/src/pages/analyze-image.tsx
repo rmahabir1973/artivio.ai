@@ -8,18 +8,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Image as ImageIcon, Upload, Sparkles, Clock, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { ImageAnalysis } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 export default function AnalyzeImage() {
   const { toast } = useToast();
   const { getModelCost } = usePricing();
+  const { isAuthenticated } = useAuth();
   const [imageFile, setImageFile] = useState<string>("");
   const [imageFileName, setImageFileName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [customPrompt, setCustomPrompt] = useState("");
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   const cost = getModelCost("gpt-4o", 20);
 
@@ -124,6 +128,11 @@ export default function AnalyzeImage() {
   };
 
   const handleAnalyze = () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!imageFile) {
       toast({
         title: "Validation Error",
@@ -401,6 +410,12 @@ export default function AnalyzeImage() {
       </Card>
         </div>
       </div>
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Image Analysis"
+      />
     </SidebarInset>
   );
 }

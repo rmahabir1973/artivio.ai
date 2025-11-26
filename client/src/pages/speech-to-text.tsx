@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,11 +14,14 @@ import { Loader2, FileAudio, Upload, Copy, Check, Clock, ChevronDown } from "luc
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { SttGeneration } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 export default function SpeechToText() {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const { getModelCost } = usePricing();
   const [audioFile, setAudioFile] = useState<string>("");
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const [audioFileName, setAudioFileName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [language, setLanguage] = useState("");
@@ -124,6 +128,12 @@ export default function SpeechToText() {
   };
 
   const handleTranscribe = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!audioFile) {
       toast({
         title: "Validation Error",
@@ -456,6 +466,11 @@ export default function SpeechToText() {
       </Card>
         </div>
       </div>
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Speech to Text"
+      />
     </SidebarInset>
   );
 }

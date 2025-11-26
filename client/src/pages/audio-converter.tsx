@@ -1,12 +1,24 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Music, AudioLines, ArrowRight, Mic, Layers } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 export default function AudioConverter() {
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
+  const [showGuestModal, setShowGuestModal] = useState(false);
+
+  const handleGoToMusicStudio = () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+    setLocation("/generate-music?tab=process");
+  };
 
   return (
     <SidebarInset>
@@ -66,7 +78,7 @@ export default function AudioConverter() {
 
               <div className="pt-4">
                 <Button 
-                  onClick={() => setLocation("/generate-music?tab=process")}
+                  onClick={handleGoToMusicStudio}
                   size="lg"
                   className="w-full md:w-auto"
                   data-testid="button-go-to-music-studio"
@@ -84,6 +96,12 @@ export default function AudioConverter() {
           </Card>
         </div>
       </div>
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Audio Conversion"
+      />
     </SidebarInset>
   );
 }

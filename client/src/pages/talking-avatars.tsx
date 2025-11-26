@@ -9,15 +9,19 @@ import { Switch } from "@/components/ui/switch";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Image as ImageIcon, Video, Upload, Mic, Square, Play, Pause, Volume2, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { AvatarGeneration } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 export default function TalkingAvatars() {
   const { toast } = useToast();
   const { getModelCost } = usePricing();
+  const { isAuthenticated } = useAuth();
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   // Form state
   const [sourceImage, setSourceImage] = useState("");
@@ -252,6 +256,11 @@ export default function TalkingAvatars() {
   };
 
   const handleGenerate = () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!sourceImage) {
       toast({
         title: "Validation Error",
@@ -670,6 +679,12 @@ export default function TalkingAvatars() {
           </Card>
         </div>
       </div>
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Talking Avatars"
+      />
     </SidebarInset>
   );
 }

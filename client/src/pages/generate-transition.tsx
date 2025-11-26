@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiGoogle } from "react-icons/si";
 
 const ASPECT_RATIOS = [
@@ -37,21 +38,9 @@ export default function GenerateTransition() {
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
+  const [showGuestModal, setShowGuestModal] = useState(false);
   
   const creditCost = getModelCost('veo-3.1-fast-first-and-last-frames', 400) || 125;
-
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-    }
-  }, [isAuthenticated, authLoading, toast]);
 
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -175,6 +164,12 @@ export default function GenerateTransition() {
   }, [pollData, toast]);
 
   const handleGenerate = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!firstFrame || !lastFrame) {
       toast({
         title: "Missing Images",
@@ -220,9 +215,8 @@ export default function GenerateTransition() {
     );
   }
 
-  if (!isAuthenticated) return null;
-
   return (
+    <>
     <ThreeColumnLayout
       form={
         <Card>
@@ -424,5 +418,11 @@ export default function GenerateTransition() {
         />
       }
     />
+    <GuestGenerateModal
+      open={showGuestModal}
+      onOpenChange={setShowGuestModal}
+      featureName="Video Transitions"
+    />
+    </>
   );
 }

@@ -15,6 +15,8 @@ import { fetchWithAuth } from "@/lib/authBridge";
 import { ChatMessage } from "@/components/chat-message";
 import { groupConversationsByDate } from "@/lib/dateGrouping";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 type Message = {
   id: string;
@@ -50,7 +52,9 @@ const PROVIDER_MODEL_INFO = {
 export default function Chat() {
   const { toast } = useToast();
   const { getModelCost } = usePricing();
+  const { isAuthenticated } = useAuth();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const [provider, setProvider] = useState<'deepseek' | 'openai'>('deepseek');
   const [model, setModel] = useState('deepseek-chat');
   const [message, setMessage] = useState('');
@@ -117,6 +121,11 @@ export default function Chat() {
   };
 
   const sendMessage = async () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!message.trim()) return;
 
     const userMessage = message;
@@ -498,6 +507,12 @@ export default function Chat() {
           </div>
         </div>
       </div>
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="AI Chat"
+      />
     </SidebarInset>
   );
 }

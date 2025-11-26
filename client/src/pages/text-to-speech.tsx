@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { Volume2, Mic, Download, ChevronDown, Loader2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 // Pre-made ElevenLabs voices
 const PREMADE_VOICES = [
@@ -35,8 +37,10 @@ const TTS_MODEL_INFO = [
 
 export default function TextToSpeech() {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const { getModelCost } = usePricing();
   const [text, setText] = useState("");
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const [voiceId, setVoiceId] = useState("");
   const [voiceName, setVoiceName] = useState("");
   const [model, setModel] = useState<string>("eleven_multilingual_v2");
@@ -92,6 +96,12 @@ export default function TextToSpeech() {
   });
 
   const handleGenerate = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!text.trim()) {
       toast({
         title: "Validation Error",
@@ -410,6 +420,11 @@ export default function TextToSpeech() {
 
         </div>
       </div>
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Text to Speech"
+      />
     </SidebarInset>
   );
 }

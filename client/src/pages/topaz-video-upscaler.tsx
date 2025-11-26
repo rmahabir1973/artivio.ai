@@ -11,6 +11,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, Upload, Download, Zap, Copy, Check } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 // Duration-based tiered pricing (Kie.ai charges 12 credits/second)
 // 0-10s tier: 120 Kie credits → 180 user credits (50% markup)
@@ -53,6 +54,7 @@ export default function TopazVideoUpscaler() {
   const [isPolling, setIsPolling] = useState(false);
   const [copied, setCopied] = useState(false);
   const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   const currentCost = videoDuration > 0 ? getVideoCostByDuration(videoDuration) : TIER_COSTS['10s'];
   const currentTier = videoDuration > 0 ? getDurationTier(videoDuration) : '10s';
@@ -247,6 +249,11 @@ export default function TopazVideoUpscaler() {
   });
 
   const handleUpscale = () => {
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!base64Video || videoDuration <= 0) {
       toast({
         title: "No Video Uploaded",
@@ -295,8 +302,6 @@ export default function TopazVideoUpscaler() {
       </div>
     );
   }
-
-  if (!isAuthenticated) return null;
 
   const form = (
     <Card>
@@ -501,6 +506,11 @@ export default function TopazVideoUpscaler() {
   return (
     <SidebarInset>
       <ThreeColumnLayout form={form} preview={preview} />
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Video Upscaling"
+      />
     </SidebarInset>
   );
 }

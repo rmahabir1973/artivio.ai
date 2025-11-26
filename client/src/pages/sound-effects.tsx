@@ -20,6 +20,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 const OUTPUT_FORMATS = [
   { value: "mp3_44100_128", label: "MP3 44.1kHz 128kbps (Recommended)" },
@@ -50,19 +51,8 @@ export default function SoundEffects() {
   const [generatedAudio, setGeneratedAudio] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-    }
-  }, [isAuthenticated, authLoading, toast]);
 
   // Poll for generation result when generationId is set
   const { data: pollData } = useQuery<any>({
@@ -137,6 +127,11 @@ export default function SoundEffects() {
   });
 
   const handleGenerate = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
     setIsGenerating(true);
     generateSoundEffectsMutation.mutate();
     setTimeout(() => setIsGenerating(false), 1000);
@@ -151,8 +146,6 @@ export default function SoundEffects() {
       </div>
     );
   }
-
-  if (!isAuthenticated) return null;
 
   return (
     <SidebarInset>
@@ -352,6 +345,11 @@ export default function SoundEffects() {
             )}
           </div>
         }
+      />
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Sound Effects"
       />
     </SidebarInset>
   );
