@@ -1,0 +1,1188 @@
+deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 0)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 1)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 0)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 0)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 0)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 1)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 0)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 2)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 1)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:164 Warning: The `ui.elements.view` configuration option is deprecated. Use `cesdk.ui.setView()` instead.
+ASe @ index-CtbVaEqI.js:164
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:153 Warning: The `ui.elements.panels.settings` configuration option is deprecated. Use `cesdk.feature.enable('ly.img.settings')`, `cesdk.ui.setPanelPosition('//ly.img.panel/settings')` and `cesdk.ui.setPanelFloating('//ly.img.panel/settings')` instead.
+PSe @ index-CtbVaEqI.js:153
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CtbVaEqI.js:129 Engine disposed
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/
+LZ @ index-CtbVaEqI.js:58
+toe @ index-CtbVaEqI.js:58
+init @ index-CtbVaEqI.js:82
+fne @ index-CtbVaEqI.js:207
+await in fne
+create @ index-CtbVaEqI.js:201
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+(anonymous) @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this warning
+index-CaBpdHHW.js:1040 [VIDEO EDITOR] Failed to initialize editor: BindingError: Cannot pass deleted object as a pointer of type UBQ
+    at mr (index-CtbVaEqI.js:32:29137)
+    at sr.yh [as toWireType] (index-CtbVaEqI.js:32:34213)
+    at UBQ.addLocalAssetSource (index-CtbVaEqI.js:33:903)
+    at vp.addLocalSource (index-CtbVaEqI.js:35:69408)
+    at index-CtbVaEqI.js:58:69396
+    at async Promise.all (index 0)
+    at async PZ (index-CtbVaEqI.js:58:69912)
+    at async Kre (index-CtbVaEqI.js:58:80203)
+    at async B (index-CaBpdHHW.js:1040:80890)
+    at async index-CaBpdHHW.js:1040:77639
+B @ index-CaBpdHHW.js:1040
+await in B
+(anonymous) @ index-CaBpdHHW.js:1040
+await in (anonymous)
+(anonymous) @ index-CaBpdHHW.js:1040
+Zv @ index-CaBpdHHW.js:40
+Xu @ index-CaBpdHHW.js:40
+$4 @ index-CaBpdHHW.js:40
+Pl @ index-CaBpdHHW.js:38
+YW @ index-CaBpdHHW.js:40
+Gl @ index-CaBpdHHW.js:40
+$M @ index-CaBpdHHW.js:40
+N @ index-CaBpdHHW.js:25
+M @ index-CaBpdHHW.js:25Understand this error
+index-CtbVaEqI.js:207 [CE.SDK] v1.64.0 Revision ad846385710
+index-CtbVaEqI.js:82 [CreativeEngine] v1.64.0 Revision ad8463857
+index-CtbVaEqI.js:58 [UBQ] Using IMG.LY CDN (cdn.img.ly) for assets. For production use, please host assets yourself and specify a baseURL in your configuration. See: https://img.ly/docs/cesdk/js/serve-assets-b0827c/

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,19 @@ export default function VideoEditor() {
   const [allGenerations, setAllGenerations] = useState<Generation[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [editorReady, setEditorReady] = useState(false);
+  const [editorError, setEditorError] = useState<string | null>(null);
+  
+  // Track component mount state to prevent operations on unmounted component
+  const isMountedRef = useRef(true);
+  const initializationIdRef = useRef(0);
+  
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const { data: firstPageData = { data: [] }, isLoading: loadingGenerations } = useQuery<any>({
     queryKey: ['/api/generations'],
@@ -220,30 +233,73 @@ export default function VideoEditor() {
     }
   };
 
-  const initEditor = async (instance: any) => {
+  const initEditor = useCallback(async (instance: any) => {
+    // Increment initialization ID to track this specific initialization attempt
+    const currentInitId = ++initializationIdRef.current;
+    
+    // Helper to check if this initialization is still valid
+    const isStillValid = () => {
+      return isMountedRef.current && currentInitId === initializationIdRef.current;
+    };
+    
     try {
+      // Small delay to let React StrictMode complete its double-render cycle
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!isStillValid()) {
+        console.log('[VIDEO EDITOR] Initialization cancelled - component unmounted or superseded');
+        return;
+      }
+      
+      // Check if the instance is still valid (not disposed)
+      try {
+        // Try to access a simple property to check if instance is valid
+        if (!instance || !instance.engine) {
+          throw new Error('Instance or engine is null');
+        }
+      } catch (e) {
+        console.log('[VIDEO EDITOR] Instance no longer valid, skipping initialization');
+        return;
+      }
+      
       setCesdkInstance(instance);
       
-      await instance.addDefaultAssetSources();
-      await instance.addDemoAssetSources({
-        sceneMode: 'Video',
-        withUploadAssetSources: true,
-      });
-      
+      // Create video scene first - this is the most basic operation
+      if (!isStillValid()) return;
       await instance.createVideoScene();
       
-      instance.engine.editor.setSetting('page/title/show', false);
+      if (!isStillValid()) return;
       
+      // Set page title setting
+      try {
+        instance.engine.editor.setSetting('page/title/show', false);
+      } catch (e) {
+        console.log('[VIDEO EDITOR] Could not set page title setting:', e);
+      }
+      
+      if (!isStillValid()) return;
+      setEditorReady(true);
       console.log('[VIDEO EDITOR] CreativeEditor SDK initialized successfully');
-    } catch (error) {
-      console.error('[VIDEO EDITOR] Failed to initialize editor:', error);
-      toast({
-        title: "Editor initialization failed",
-        description: "There was an error setting up the video editor.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      // Only show error if component is still mounted and this is the current initialization
+      if (isStillValid()) {
+        console.error('[VIDEO EDITOR] Failed to initialize editor:', error);
+        
+        // Check if it's a "deleted object" error - this means cleanup happened, not a real error
+        if (error?.message?.includes('deleted object')) {
+          console.log('[VIDEO EDITOR] Ignoring cleanup-related error');
+          return;
+        }
+        
+        setEditorError('There was an error setting up the video editor. Please refresh the page.');
+        toast({
+          title: "Editor initialization failed",
+          description: "There was an error setting up the video editor.",
+          variant: "destructive",
+        });
+      }
     }
-  };
+  }, [toast]);
 
   if (isLoadingLicense) {
     return (
@@ -258,7 +314,7 @@ export default function VideoEditor() {
     );
   }
 
-  if (licenseError || !license) {
+  if (licenseError || !license || editorError) {
     return (
       <SidebarInset>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -267,7 +323,7 @@ export default function VideoEditor() {
               <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
               <h2 className="text-xl font-semibold mb-2">Video Editor Unavailable</h2>
               <p className="text-muted-foreground mb-4">
-                {licenseError || "The video editor is temporarily unavailable. Please try again later."}
+                {editorError || licenseError || "The video editor is temporarily unavailable. Please try again later."}
               </p>
               <Button onClick={() => window.location.reload()} data-testid="button-retry">
                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -338,6 +394,7 @@ export default function VideoEditor() {
 
         <div className="flex-1 relative" style={{ minHeight: '700px' }}>
           <CreativeEditor
+            key={`editor-${license}`}
             config={config}
             init={initEditor}
             style={{ width: '100%', height: '100%' }}
