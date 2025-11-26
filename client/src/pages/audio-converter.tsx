@@ -1,437 +1,87 @@
-import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { useToast } from "@/hooks/use-toast";
-import { usePricing } from "@/hooks/use-pricing";
-import { Loader2, Music2, Upload, Download, ChevronDown } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { AudioConversion } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-
-const OPERATION_INFO = [
-  { value: 'wav-conversion', label: 'Format Conversion', key: 'audio-wav-conversion', defaultCost: 15 },
-  { value: 'vocal-removal', label: 'Vocal Removal', key: 'audio-vocal-removal', defaultCost: 25 },
-  { value: 'stem-separation', label: 'Stem Separation', key: 'audio-stem-separation', defaultCost: 30 },
-] as const;
+import { Music, AudioLines, ArrowRight, Mic, Layers } from "lucide-react";
 
 export default function AudioConverter() {
-  const { toast } = useToast();
-  const { getModelCost } = usePricing();
-  const [sourceAudio, setSourceAudio] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [sourceFormat, setSourceFormat] = useState("mp3");
-  const [operation, setOperation] = useState<'wav-conversion' | 'vocal-removal' | 'stem-separation'>('wav-conversion');
-  const [targetFormat, setTargetFormat] = useState<'mp3' | 'wav'>('mp3');
-  const [separationType, setSeparationType] = useState<'separate_vocal' | 'split_stem'>('separate_vocal');
-  const [compressionLevel, setCompressionLevel] = useState("medium");
-  const [uploading, setUploading] = useState(false);
-
-  const { data: conversions = [], isLoading } = useQuery<AudioConversion[]>({
-    queryKey: ["/api/audio/conversions"],
-  });
-
-  const convertMutation = useMutation({
-    mutationFn: async (params: {
-      sourceAudio: string;
-      sourceFormat: string;
-      operation: 'wav-conversion' | 'vocal-removal' | 'stem-separation';
-      parameters?: {
-        targetFormat?: string;
-        separationType?: string;
-        compressionLevel?: string;
-      };
-    }) => {
-      return await apiRequest("POST", "/api/audio/convert", params);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Audio conversion started! Check below for updates.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/audio/conversions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setSourceAudio("");
-      setFileName("");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to convert audio",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("audio/") && !file.name.match(/\.(mp3|wav|m4a|aac|ogg|flac)$/i)) {
-      toast({
-        title: "Invalid File",
-        description: "Please upload an audio file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (file.size > 25 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Maximum audio size is 25MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploading(true);
-    setFileName(file.name);
-
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'mp3';
-    setSourceFormat(extension);
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setSourceAudio(event.target?.result as string);
-      setUploading(false);
-      toast({
-        title: "Audio Loaded",
-        description: `${file.name} ready for conversion`,
-      });
-    };
-    reader.onerror = () => {
-      setUploading(false);
-      toast({
-        title: "Error",
-        description: "Failed to read audio file",
-        variant: "destructive",
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleConvert = () => {
-    if (!sourceAudio) {
-      toast({
-        title: "Validation Error",
-        description: "Please upload an audio file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const parameters: any = {};
-    if (operation === 'wav-conversion') {
-      parameters.targetFormat = targetFormat;
-      parameters.compressionLevel = compressionLevel;
-    } else if (operation === 'stem-separation') {
-      parameters.separationType = separationType;
-    }
-
-    convertMutation.mutate({
-      sourceAudio,
-      sourceFormat,
-      operation,
-      parameters,
-    });
-  };
-
-  const operationCosts = useMemo(() => {
-    const costMap: Record<string, number> = {};
-    OPERATION_INFO.forEach(op => {
-      costMap[op.value] = getModelCost(op.key, op.defaultCost);
-    });
-    return costMap;
-  }, [getModelCost]);
+  const [, setLocation] = useLocation();
 
   return (
     <SidebarInset>
       <div className="h-full overflow-y-auto">
-        <div className="container mx-auto p-6 max-w-7xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold" data-testid="text-heading">Audio Converter</h1>
-        <p className="text-muted-foreground">Convert audio formats and separate audio stems</p>
-      </div>
+        <div className="p-8 max-w-4xl mx-auto">
+          <div className="space-y-2 mb-8">
+            <h1 className="text-4xl font-bold flex items-center gap-3">
+              <AudioLines className="h-10 w-10 text-primary" />
+              Audio Processing
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Audio processing features are now integrated into Music Studio
+            </p>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Convert Audio</CardTitle>
-            <CardDescription>Upload audio and select conversion type</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="audio-file">Audio File *</Label>
-              <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-2">
-                <Music2 className="h-8 w-8 mx-auto text-muted-foreground" />
-                <div>
-                  <Input
-                    id="audio-file"
-                    type="file"
-                    accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
-                    onChange={handleAudioSelect}
-                    className="hidden"
-                    data-testid="input-audio-file"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById("audio-file")?.click()}
-                    disabled={uploading}
-                    data-testid="button-upload-audio"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Choose Audio
-                      </>
-                    )}
-                  </Button>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Music className="h-5 w-5 text-primary" />
+                Audio Processing Moved to Music Studio
+              </CardTitle>
+              <CardDescription>
+                WAV conversion, vocal removal, and stem separation are now available 
+                directly in the Music Studio for your Suno-generated tracks.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+                  <div className="flex items-center gap-2 font-medium">
+                    <AudioLines className="h-4 w-4 text-primary" />
+                    WAV Conversion
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Convert your Suno tracks to high-quality WAV format
+                  </p>
                 </div>
-                {fileName && <p className="text-sm text-muted-foreground">Selected: {fileName}</p>}
-                <p className="text-xs text-muted-foreground">MP3, WAV, M4A, AAC, OGG, FLAC (max 25MB)</p>
+                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Mic className="h-4 w-4 text-primary" />
+                    Vocal Removal
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Separate vocals from instrumental tracks
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Layers className="h-4 w-4 text-primary" />
+                    Stem Separation
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Split into drums, bass, vocals, and more
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="operation">Operation *</Label>
-              <Select value={operation} onValueChange={(val) => setOperation(val as typeof operation)}>
-                <SelectTrigger id="operation" data-testid="select-operation">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {OPERATION_INFO.map(op => (
-                    <SelectItem key={op.value} value={op.value}>
-                      {op.label} ({operationCosts[op.value] || op.defaultCost} credits)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {operation === 'wav-conversion' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="target-format">Target Format</Label>
-                  <Select value={targetFormat} onValueChange={(val) => setTargetFormat(val as typeof targetFormat)}>
-                    <SelectTrigger id="target-format" data-testid="select-target-format">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mp3">MP3</SelectItem>
-                      <SelectItem value="wav">WAV</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="compression">Compression Level</Label>
-                  <Select value={compressionLevel} onValueChange={setCompressionLevel}>
-                    <SelectTrigger id="compression" data-testid="select-compression">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-
-            {operation === 'stem-separation' && (
-              <div className="space-y-2">
-                <Label htmlFor="separation-type">Separation Type</Label>
-                <Select value={separationType} onValueChange={(val) => setSeparationType(val as typeof separationType)}>
-                  <SelectTrigger id="separation-type" data-testid="select-separation-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="separate_vocal">Separate Vocal</SelectItem>
-                    <SelectItem value="split_stem">Split Stem (Full)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Tips & Best Practices */}
-            <Collapsible className="mt-6">
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  <ChevronDown className="mr-2 h-4 w-4" />
-                  Tips & Best Practices
+              <div className="pt-4">
+                <Button 
+                  onClick={() => setLocation("/generate-music?tab=process")}
+                  size="lg"
+                  className="w-full md:w-auto"
+                  data-testid="button-go-to-music-studio"
+                >
+                  Go to Music Studio
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-4 space-y-3">
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm">Choose the Right Format</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-xs text-muted-foreground">MP3 is universal and compressed. WAV preserves quality but creates larger files. Choose based on your needs.</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm">Optimize Audio Quality</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-xs text-muted-foreground">For high quality, use 192kbps MP3 or WAV format. For streaming, lower bitrates (128kbps) work fine.</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm">Vocal Removal Tips</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-xs text-muted-foreground">Works best with professionally produced tracks. Poor separation may occur with heavily compressed vocals or busy mixes.</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm">Stem Separation for Complex Tracks</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-xs text-muted-foreground">Split Stem separates into vocals, drums, bass, and instruments. Ideal for remixing, production, or karaoke creation.</p>
-                  </CardContent>
-                </Card>
-              </CollapsibleContent>
-            </Collapsible>
-          </CardContent>
-          <CardFooter>
-            <Button
-              onClick={handleConvert}
-              disabled={convertMutation.isPending || !sourceAudio}
-              className="w-full"
-              data-testid="button-convert"
-            >
-              {convertMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Converting...
-                </>
-              ) : (
-                <>
-                  <Music2 className="mr-2 h-4 w-4" />
-                  Convert Audio ({operationCosts[operation] || OPERATION_INFO.find(op => op.value === operation)?.defaultCost || 15} credits)
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>About Audio Converter</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">Operations</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <strong>Format Conversion:</strong> Convert between MP3 and WAV formats
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <strong>Vocal Removal:</strong> Extract instrumental track from songs
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <strong>Stem Separation:</strong> Split audio into individual stems (vocals, drums, bass, etc.)
-                </li>
-              </ul>
-            </div>
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm">
-                <strong>Costs:</strong> Format Conversion - {operationCosts['wav-conversion'] || 15} credits | Vocal Removal - {operationCosts['vocal-removal'] || 25} credits | Stem Separation - {operationCosts['stem-separation'] || 30} credits
+              <p className="text-sm text-muted-foreground">
+                Note: These features work with music generated through Suno. 
+                Generate music first, then process it with these tools.
               </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Conversions</CardTitle>
-          <CardDescription>Converted audio files</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : conversions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Music2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No conversions yet</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {conversions.map((conv) => (
-                <Card key={conv.id} data-testid={`card-conversion-${conv.id}`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-base">
-                          {conv.sourceFormat.toUpperCase()} → {conv.targetFormat?.toUpperCase() || 'Processed'}
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          {conv.creditsCost} credits
-                        </CardDescription>
-                      </div>
-                      {conv.status === "processing" && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Processing...
-                        </div>
-                      )}
-                      {conv.status === "completed" && conv.resultUrl && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          data-testid={`button-download-${conv.id}`}
-                        >
-                          <a href={conv.resultUrl} download>
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </a>
-                        </Button>
-                      )}
-                      {conv.status === "failed" && (
-                        <p className="text-sm text-destructive">
-                          {conv.errorMessage || "Failed"}
-                        </p>
-                      )}
-                    </div>
-                  </CardHeader>
-                  {conv.status === "completed" && conv.resultUrl && (
-                    <CardContent>
-                      <audio
-                        src={conv.resultUrl}
-                        controls
-                        className="w-full"
-                        data-testid={`audio-${conv.id}`}
-                      />
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </SidebarInset>

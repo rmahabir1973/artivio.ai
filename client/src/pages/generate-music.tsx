@@ -17,7 +17,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Music, ChevronDown, Sparkles, Upload, Plus } from "lucide-react";
+import { Loader2, Music, ChevronDown, Sparkles, Upload, Plus, AudioLines, Mic, Layers } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 import { SiSoundcloud } from "react-icons/si";
@@ -135,14 +135,73 @@ export default function GenerateMusic() {
   const [uploadExtendStyleWeight, setUploadExtendStyleWeight] = useState([0.5]);
   const [uploadExtendWeirdnessConstraint, setUploadExtendWeirdnessConstraint] = useState([0.5]);
   const [uploadExtendAudioWeight, setUploadExtendAudioWeight] = useState([0.5]);
+  
+  // Audio Processing tab state
+  const [processSourceId, setProcessSourceId] = useState("");
+  const [processOperation, setProcessOperation] = useState<"wav-conversion" | "vocal-removal" | "stem-separation">("wav-conversion");
+  const [processingInProgress, setProcessingInProgress] = useState(false);
 
-  // Fetch user's music generations for extend and upload tabs
+  // Fetch user's music generations for extend, upload, cover, and process tabs
   const { data: generations = [] } = useQuery<any[]>({
     queryKey: ["/api/generations"],
-    enabled: isAuthenticated && (activeTab === "extend" || activeTab === "cover" || activeTab === "upload-extend"),
+    enabled: isAuthenticated && (activeTab === "extend" || activeTab === "cover" || activeTab === "upload-extend" || activeTab === "process"),
   });
 
   const musicGenerations = generations.filter(g => g.type === 'music' && g.status === 'completed');
+  
+  // Filter music generations that have audioId for processing (required by Suno API)
+  const processableGenerations = musicGenerations.filter((g: any) => g.parameters?.audioId);
+  
+  // Audio processing mutation
+  const processMutation = useMutation({
+    mutationFn: async (data: { generationId: string; operation: string; separationType?: string }) => {
+      const response = await apiRequest("POST", "/api/music/process", data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Processing Started",
+        description: data.message || "Check My Library for results when complete.",
+      });
+      setProcessingInProgress(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+    },
+    onError: (error: any) => {
+      setProcessingInProgress(false);
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Session Expired",
+          description: "Please log in again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Processing Failed",
+        description: error.message || "Failed to process audio",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleProcess = () => {
+    if (!processSourceId || !processOperation) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a track and processing option.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setProcessingInProgress(true);
+    processMutation.mutate({
+      generationId: processSourceId,
+      operation: processOperation,
+      separationType: processOperation === "stem-separation" ? "split_stem" : 
+                      processOperation === "vocal-removal" ? "separate_vocal" : undefined,
+    });
+  };
 
   // File upload handlers
   const handleCoverAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -640,7 +699,7 @@ export default function GenerateMusic() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
           <TabsTrigger value="generate" data-testid="tab-generate">
             <Music className="h-4 w-4 mr-2" />
             Generate
@@ -660,6 +719,10 @@ export default function GenerateMusic() {
           <TabsTrigger value="upload-extend" data-testid="tab-upload-extend">
             <Upload className="h-4 w-4 mr-2" />
             Upload & Extend
+          </TabsTrigger>
+          <TabsTrigger value="process" data-testid="tab-process">
+            <AudioLines className="h-4 w-4 mr-2" />
+            Process
           </TabsTrigger>
         </TabsList>
 
@@ -1868,6 +1931,162 @@ export default function GenerateMusic() {
                   `Extend Audio (${getModelCost(uploadExtendModel, 200)} credits)`
                 )}
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Process Tab - Audio Processing for Suno Tracks */}
+        <TabsContent value="process" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AudioLines className="h-5 w-5 text-primary" />
+                Audio Processing
+              </CardTitle>
+              <CardDescription>
+                Process your Suno-generated music with vocal removal, stem separation, or WAV conversion. 
+                Results will appear in your library.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Select Source Track */}
+              <div className="space-y-2">
+                <Label htmlFor="processSource">Select Music Track</Label>
+                <Select value={processSourceId} onValueChange={setProcessSourceId}>
+                  <SelectTrigger id="processSource" data-testid="select-process-source">
+                    <SelectValue placeholder="Select a track to process" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {processableGenerations.length === 0 ? (
+                      <SelectItem value="none" disabled>No processable tracks available</SelectItem>
+                    ) : (
+                      processableGenerations.map((gen: any) => (
+                        <SelectItem key={gen.id} value={gen.id}>
+                          <div className="flex items-center gap-2">
+                            <Music className="h-4 w-4 text-muted-foreground" />
+                            <span className="truncate max-w-[280px]">
+                              {gen.prompt?.substring(0, 50) || "Untitled"}{gen.prompt?.length > 50 ? "..." : ""}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Only music tracks generated with Suno can be processed. Older tracks without required identifiers will not appear here.
+                </p>
+              </div>
+
+              {/* Processing Operation Selection */}
+              <div className="space-y-3">
+                <Label>Processing Options</Label>
+                <div className="grid gap-3">
+                  <div 
+                    className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer hover-elevate transition-colors ${
+                      processOperation === "wav-conversion" ? "border-primary bg-primary/5" : "border-border"
+                    }`}
+                    onClick={() => setProcessOperation("wav-conversion")}
+                    data-testid="option-wav-conversion"
+                  >
+                    <input 
+                      type="radio" 
+                      name="processOperation" 
+                      checked={processOperation === "wav-conversion"}
+                      onChange={() => setProcessOperation("wav-conversion")}
+                      className="h-4 w-4"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium flex items-center gap-2">
+                        <AudioLines className="h-4 w-4" />
+                        WAV Conversion
+                      </div>
+                      <p className="text-sm text-muted-foreground">Convert to high-quality WAV format for professional use</p>
+                    </div>
+                    <div className="text-sm font-medium text-primary">{getModelCost('wav-conversion', 0)} credits</div>
+                  </div>
+
+                  <div 
+                    className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer hover-elevate transition-colors ${
+                      processOperation === "vocal-removal" ? "border-primary bg-primary/5" : "border-border"
+                    }`}
+                    onClick={() => setProcessOperation("vocal-removal")}
+                    data-testid="option-vocal-removal"
+                  >
+                    <input 
+                      type="radio" 
+                      name="processOperation" 
+                      checked={processOperation === "vocal-removal"}
+                      onChange={() => setProcessOperation("vocal-removal")}
+                      className="h-4 w-4"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium flex items-center gap-2">
+                        <Mic className="h-4 w-4" />
+                        Vocal Removal
+                      </div>
+                      <p className="text-sm text-muted-foreground">Separate vocals from instrumental - get both tracks</p>
+                    </div>
+                    <div className="text-sm font-medium text-primary">{getModelCost('vocal-removal', 0)} credits</div>
+                  </div>
+
+                  <div 
+                    className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer hover-elevate transition-colors ${
+                      processOperation === "stem-separation" ? "border-primary bg-primary/5" : "border-border"
+                    }`}
+                    onClick={() => setProcessOperation("stem-separation")}
+                    data-testid="option-stem-separation"
+                  >
+                    <input 
+                      type="radio" 
+                      name="processOperation" 
+                      checked={processOperation === "stem-separation"}
+                      onChange={() => setProcessOperation("stem-separation")}
+                      className="h-4 w-4"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium flex items-center gap-2">
+                        <Layers className="h-4 w-4" />
+                        Stem Separation
+                      </div>
+                      <p className="text-sm text-muted-foreground">Split into drums, bass, vocals, and other tracks</p>
+                    </div>
+                    <div className="text-sm font-medium text-primary">{getModelCost('stem-separation', 0)} credits</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Process Button */}
+              <Button
+                onClick={handleProcess}
+                disabled={processingInProgress || !processSourceId}
+                className="w-full"
+                size="lg"
+                data-testid="button-process"
+              >
+                {processingInProgress ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <AudioLines className="mr-2 h-5 w-5" />
+                    {processOperation === "wav-conversion" ? "Convert to WAV" : 
+                     processOperation === "vocal-removal" ? "Remove Vocals" : 
+                     "Separate Stems"}
+                  </>
+                )}
+              </Button>
+
+              {processableGenerations.length === 0 && musicGenerations.length > 0 && (
+                <div className="p-4 bg-muted/50 rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Some of your music tracks were created before audio processing was available. 
+                    Generate new music with Suno to use these features.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

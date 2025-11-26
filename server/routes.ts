@@ -24,7 +24,6 @@ import {
   transcribeAudio,
   generateKlingAvatar,
   generateLipSync,
-  convertAudio,
   upscaleImage,
   upscaleVideo,
   initializeApiKeys 
@@ -69,7 +68,6 @@ import {
   generateSTTRequestSchema,
   generateAvatarRequestSchema,
   analyzeImageRequestSchema,
-  convertAudioRequestSchema,
   combineVideosRequestSchema,
   upscaleImageRequestSchema,
   upscaleVideoRequestSchema,
@@ -1348,6 +1346,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (seedValue !== undefined && seedValue !== null) {
             updates.seed = seedValue;
             console.log(`📍 Captured seed value for ${generationId}: ${seedValue}`);
+          }
+          
+          // Capture audioId for music generations (needed for WAV/vocal separation later)
+          // Suno returns audioId in data.data[0].id in callback
+          const audioId = callbackData?.data?.data?.[0]?.id || 
+                         callbackData?.data?.audioId ||
+                         callbackData?.audioId;
+          if (audioId && generation && 'type' in generation && generation.type === 'music') {
+            // Merge audioId into existing parameters
+            const existingParams = (generation.parameters as any) || {};
+            updates.parameters = { ...existingParams, audioId };
+            console.log(`🎵 Captured audioId for music ${generationId}: ${audioId}`);
           }
           
           // Update appropriate table based on generation type
@@ -4673,19 +4683,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ========== AUDIO CONVERSION ROUTES ==========
+  // ========== SUNO AUDIO PROCESSING ROUTES ==========
+  // These routes process Suno-generated music (require taskId and audioId from music generation)
 
-  // Convert audio
-  app.post('/api/audio/convert', requireJWT, async (req: any, res) => {
+  // Process Suno audio (WAV conversion, vocal removal, stem separation)
+  app.post('/api/music/process', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const { generationId, operation, separationType } = req.body;
 
-      const validationResult = convertAudioRequestSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        return res.status(400).json({ message: "Invalid request", errors: validationResult.error.errors });
+      if (!generationId || !operation) {
+        return res.status(400).json({ message: "generationId and operation are required" });
       }
 
-      const { sourceAudio, sourceFormat, operation, parameters } = validationResult.data;
+      if (!['wav-conversion', 'vocal-removal', 'stem-separation'].includes(operation)) {
+        return res.status(400).json({ message: "Invalid operation. Must be wav-conversion, vocal-removal, or stem-separation" });
+      }
+
+      // Get the original music generation to extract taskId and audioId
+      const originalGen = await storage.getGeneration(generationId);
+      if (!originalGen) {
+        return res.status(404).json({ message: "Original generation not found" });
+      }
+
+      if (originalGen.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to process this generation" });
+      }
+
+      if (originalGen.type !== 'music') {
+        return res.status(400).json({ message: "Can only process music generations created with Suno" });
+      }
+
+      // Extract taskId and audioId from the original generation
+      const taskId = originalGen.externalTaskId;
+      const audioId = (originalGen.parameters as any)?.audioId;
+
+      if (!taskId || !audioId) {
+        return res.status(400).json({ 
+          message: "This music track is missing required identifiers for processing. It may have been generated before this feature was available." 
+        });
+      }
+
+      // Get cost based on operation (uses model names from defaults: wav-conversion, vocal-removal, stem-separation)
       const cost = await getModelCost(operation);
 
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -4694,74 +4733,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        const audioUrl = await saveBase64Audio(sourceAudio);
-
-        const conversion = await storage.createAudioConversion({
+        // Create a new generation record for the processed audio (will show in My Library)
+        const processTypeLabel = operation === 'wav-conversion' ? 'WAV Conversion' : 
+                                 operation === 'vocal-removal' ? 'Vocal Removal' : 'Stem Separation';
+        
+        const newGeneration = await storage.createGeneration({
           userId,
-          sourceUrl: audioUrl,
-          sourceFormat,
-          targetFormat: parameters?.targetFormat || 'mp3',
-          compressionLevel: parameters?.compressionLevel || null,
+          type: 'audio', // New type for processed audio
+          generationType: operation,
+          model: `suno-${operation}`,
+          prompt: `${processTypeLabel} of "${originalGen.prompt?.substring(0, 50) || 'Music'}"`,
+          parameters: { 
+            sourceGenerationId: generationId,
+            sourceTaskId: taskId,
+            sourceAudioId: audioId,
+            operation,
+            separationType: separationType || (operation === 'stem-separation' ? 'split_stem' : 'separate_vocal'),
+          },
           status: 'pending',
-          resultUrl: null,
-          errorMessage: null,
           creditsCost: cost,
         });
 
+        // Process in background
         (async () => {
           try {
-            const callbackUrl = getCallbackUrl(conversion.id);
-            const { result } = await convertAudio({
-              sourceUrl: audioUrl,
-              operation,
-              parameters: parameters || undefined,
+            await storage.updateGeneration(newGeneration.id, { status: 'processing' });
+
+            const callbackUrl = getCallbackUrl(newGeneration.id);
+            const { processAudio } = await import('./kieai');
+            const { result, keyName } = await processAudio({
+              taskId,
+              audioId,
+              operation: operation as 'wav-conversion' | 'vocal-removal' | 'stem-separation',
+              separationType: separationType || (operation === 'stem-separation' ? 'split_stem' : 'separate_vocal'),
               callBackUrl: callbackUrl,
             });
 
-            const taskId = result?.data?.taskId || result?.taskId;
-            const directUrl = result?.url || result?.audioUrl || result?.data?.url;
+            const responseTaskId = result?.data?.taskId || result?.taskId;
 
-            if (directUrl) {
-              await storage.updateAudioConversion(conversion.id, {
-                status: 'completed',
-                resultUrl: directUrl,
-                completedAt: new Date(),
-              });
-            } else if (taskId) {
-              await storage.updateAudioConversion(conversion.id, {
+            if (responseTaskId) {
+              await storage.updateGeneration(newGeneration.id, {
                 status: 'processing',
-                resultUrl: taskId,
+                apiKeyUsed: keyName,
+                externalTaskId: responseTaskId,
+                statusDetail: 'queued',
               });
+              console.log(`📋 Audio processing task queued: ${responseTaskId}`);
             } else {
-              throw new Error('No taskId or URL returned');
+              throw new Error('No taskId returned from API');
             }
           } catch (error: any) {
             await storage.addCreditsAtomic(userId, cost);
-            await storage.updateAudioConversion(conversion.id, {
-              status: 'failed',
+            await storage.finalizeGeneration(newGeneration.id, 'failure', {
               errorMessage: error.message,
             });
           }
         })();
 
-        res.json({ conversionId: conversion.id, message: "Audio conversion started" });
+        res.json({ 
+          generationId: newGeneration.id, 
+          message: `${processTypeLabel} started. Check My Library for results.` 
+        });
       } catch (error: any) {
         await storage.addCreditsAtomic(userId, cost);
         throw error;
       }
     } catch (error: any) {
-      res.status(500).json({ message: error.message || "Failed to convert audio" });
-    }
-  });
-
-  // Get user's audio conversions
-  app.get('/api/audio/conversions', requireJWT, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const conversions = await storage.getUserAudioConversions(userId);
-      res.json(conversions);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch conversions" });
+      res.status(500).json({ message: error.message || "Failed to process audio" });
     }
   });
 

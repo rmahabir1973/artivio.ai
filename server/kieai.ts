@@ -30,6 +30,7 @@ function safeStringify(obj: any): string {
 // Covers v3, v4, v4.5, callbacks, and all documented Suno payload variations
 export function parseSunoResponse(response: any): {
   taskId: string | null;
+  audioId: string | null;
   audioUrl: string | null;
   status: string | null;
   errorMessage: string | null;
@@ -47,6 +48,18 @@ export function parseSunoResponse(response: any): {
                 response?.taskId ||
                 response?.task_id ||
                 null;
+  
+  // Parse audio ID from callback data - used for WAV conversion and vocal separation
+  // Format: data.data[0].id in callback response
+  const audioId = response?.data?.data?.[0]?.id ||
+                 response?.data?.data?.[0]?.audioId ||
+                 response?.data?.response?.sunoData?.[0]?.id ||
+                 response?.data?.response?.tracks?.[0]?.id ||
+                 response?.response?.sunoData?.[0]?.id ||
+                 response?.response?.tracks?.[0]?.id ||
+                 response?.data?.audioId ||
+                 response?.audioId ||
+                 null;
   
   // Parse audio URL from ALL known Suno payload formats
   // Priority order: Official API docs format -> nested response structures -> direct data fields -> top-level fields
@@ -127,7 +140,7 @@ export function parseSunoResponse(response: any): {
                       response?.message ||
                       null;
   
-  return { taskId, audioUrl, status, errorMessage };
+  return { taskId, audioId, audioUrl, status, errorMessage };
 }
 
 // Get available API keys from environment
@@ -1169,33 +1182,35 @@ export async function generateLipSync(params: {
   });
 }
 
-// Audio Conversion - Unified function for WAV conversion, vocal removal, stem separation
-export async function convertAudio(params: {
-  sourceUrl: string;
+// Audio Processing for Suno-generated tracks
+// These APIs only work with music generated through Suno (require taskId and audioId)
+export async function processAudio(params: {
+  taskId: string;      // From Suno music generation (stored in externalTaskId)
+  audioId: string;     // From Suno callback (stored in parameters.audioId)
   operation: 'wav-conversion' | 'vocal-removal' | 'stem-separation';
-  parameters?: {
-    targetFormat?: 'wav' | 'mp3';
-    separationType?: 'separate_vocal' | 'split_stem';
-  };
+  separationType?: 'separate_vocal' | 'split_stem';
   callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
-  const parameters = params.parameters || {};
-  
   if (params.operation === 'wav-conversion') {
+    // WAV conversion API: https://docs.kie.ai/suno-api/convert-to-wav
     return await callKieApi('/api/v1/wav/generate', {
-      audio_url: params.sourceUrl,
+      taskId: params.taskId,
+      audioId: params.audioId,
       callBackUrl: params.callBackUrl,
     });
   } else if (params.operation === 'vocal-removal' || params.operation === 'stem-separation') {
-    const type = parameters.separationType || 'separate_vocal';
+    // Vocal/Stem separation API: https://docs.kie.ai/suno-api/separate-vocals
+    const type = params.separationType || 
+                 (params.operation === 'stem-separation' ? 'split_stem' : 'separate_vocal');
     return await callKieApi('/api/v1/vocal-removal/generate', {
-      audio_url: params.sourceUrl,
+      taskId: params.taskId,
+      audioId: params.audioId,
       type: type,
       callBackUrl: params.callBackUrl,
     });
   }
   
-  throw new Error(`Unsupported audio conversion operation: ${params.operation}`);
+  throw new Error(`Unsupported audio processing operation: ${params.operation}`);
 }
 
 // Topaz AI Image Upscaling - High-fidelity image enhancement

@@ -106,7 +106,7 @@ import { fetchWithAuth as fetchWithAuthBridge } from "@/lib/authBridge";
 type ActiveView = 'all' | 'favorites' | 'recent' | 'archived' | string;
 type ViewMode = 'grid' | 'list';
 type SortBy = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
-type TypeFilter = 'all' | 'video' | 'image' | 'music';
+type TypeFilter = 'all' | 'video' | 'image' | 'music' | 'audio';
 
 const COLLECTION_COLORS = [
   '#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', 
@@ -142,6 +142,7 @@ function GenerationListItem({
     video: <Video className="h-4 w-4" />,
     image: <ImageIcon className="h-4 w-4" />,
     music: <Music className="h-4 w-4" />,
+    audio: <Music className="h-4 w-4" />,
   };
 
   const handleDownload = async () => {
@@ -1109,6 +1110,7 @@ export default function History() {
                         <SelectItem value="video">Videos</SelectItem>
                         <SelectItem value="image">Images</SelectItem>
                         <SelectItem value="music">Music</SelectItem>
+                        <SelectItem value="audio">Processed Audio</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -1579,7 +1581,7 @@ export default function History() {
                           <ImageIcon className="h-12 w-12" />
                         </div>
                       )
-                    ) : selectedGeneration.type === 'music' && selectedGeneration.resultUrl ? (
+                    ) : (selectedGeneration.type === 'music' || selectedGeneration.type === 'audio') && selectedGeneration.resultUrl ? (
                       <div className="w-full h-full flex flex-col items-center justify-center p-4 gap-4">
                         <Music className="h-16 w-16 text-muted-foreground" />
                         <audio 
@@ -1588,6 +1590,11 @@ export default function History() {
                           className="w-full"
                           data-testid="detail-audio-player"
                         />
+                        {selectedGeneration.type === 'audio' && (
+                          <p className="text-xs text-muted-foreground text-center">
+                            {(selectedGeneration.generationType || '').replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
