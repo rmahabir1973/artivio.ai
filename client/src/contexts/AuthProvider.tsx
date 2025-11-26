@@ -165,8 +165,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
               const userData = await userResponse.json();
               setUser(userData);
               console.log("[AUTH] ✓ OAuth login successful - user data loaded");
-              setIsLoading(false);
-              return;
+              
+              // Check if user has a subscription - if not, redirect to pricing
+              try {
+                const subResponse = await fetch("/api/subscriptions/current", {
+                  headers: {
+                    Authorization: `Bearer ${oauthToken}`,
+                  },
+                  credentials: "include",
+                });
+                
+                if (subResponse.ok) {
+                  const subData = await subResponse.json();
+                  if (!subData || !subData.planId) {
+                    console.log("[AUTH] New user without subscription - redirecting to pricing");
+                    window.location.href = "/pricing";
+                    return;
+                  } else {
+                    console.log("[AUTH] User has subscription - redirecting to dashboard");
+                    window.location.href = "/dashboard";
+                    return;
+                  }
+                } else {
+                  // No subscription found, redirect to pricing
+                  console.log("[AUTH] No subscription found - redirecting to pricing");
+                  window.location.href = "/pricing";
+                  return;
+                }
+              } catch (subError) {
+                console.error("[AUTH] Error checking subscription:", subError);
+                // On error, default to pricing page for safety
+                window.location.href = "/pricing";
+                return;
+              }
             } else {
               console.log("[AUTH] OAuth flow - failed to fetch user data:", userResponse.status);
             }
