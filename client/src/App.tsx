@@ -48,6 +48,7 @@ import QRGenerator from "@/pages/qr-generator";
 import TopazUpscaler from "@/pages/topaz-upscaler";
 import TopazVideoUpscaler from "@/pages/topaz-video-upscaler";
 import BackgroundRemover from "@/pages/background-remover";
+import VideoEditor from "@/pages/video-editor";
 import Chat from "@/pages/chat";
 import History from "@/pages/history";
 import Profile from "@/pages/profile";
@@ -116,6 +117,7 @@ function Router() {
       <Route path="/topaz-upscaler" component={TopazUpscaler} />
       <Route path="/topaz-video-upscaler" component={TopazVideoUpscaler} />
       <Route path="/background-remover" component={BackgroundRemover} />
+      <Route path="/video-editor" component={VideoEditor} />
       <Route path="/chat" component={Chat} />
 
       {/* Account pages - require authentication */}
@@ -190,6 +192,7 @@ function AppContent() {
     '/topaz-upscaler',
     '/topaz-video-upscaler',
     '/background-remover',
+    '/video-editor',
     '/chat',
     '/history',
     '/generations',

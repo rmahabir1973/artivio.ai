@@ -224,6 +224,15 @@ export default function Home() {
       modelCost: 'infinitalk-480p'
     },
     {
+      id: 'video-editor',
+      title: 'Video Editor',
+      description: 'Professional video editing with timeline, effects, and export to AWS',
+      icon: Film,
+      route: '/video-editor',
+      category: 'video',
+      badge: 'New'
+    },
+    {
       id: 'image-analysis',
       title: 'Image Analysis',
       description: 'Analyze images with GPT-4o Vision for insights and descriptions',

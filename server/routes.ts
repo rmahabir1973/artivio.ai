@@ -6085,6 +6085,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Video Editor Routes (Twick + AWS Lambda) =====
+  
+  // Store for tracking export jobs (in-memory for now, could be moved to DB)
+  const videoExportJobs: Map<string, {
+    status: 'processing' | 'completed' | 'failed';
+    downloadUrl?: string;
+    error?: string;
+    createdAt: Date;
+  }> = new Map();
+  
+  // Export video via AWS Lambda
+  app.post('/api/video-editor/export', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { project, videoSettings } = req.body;
+      
+      if (!project) {
+        return res.status(400).json({ message: "Project data is required" });
+      }
+      
+      const lambdaApiUrl = process.env.AWS_LAMBDA_API_URL;
+      const s3Bucket = process.env.AWS_S3_BUCKET;
+      
+      if (!lambdaApiUrl || !s3Bucket) {
+        console.error('AWS configuration missing:', { lambdaApiUrl: !!lambdaApiUrl, s3Bucket: !!s3Bucket });
+        return res.status(500).json({ message: "Video export service not configured" });
+      }
+      
+      // Generate unique job ID
+      const jobId = `export-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      console.log(`[Video Editor] Starting export job ${jobId} for user ${userId}`);
+      
+      // Store job in tracking map
+      videoExportJobs.set(jobId, {
+        status: 'processing',
+        createdAt: new Date(),
+      });
+      
+      // Send to AWS Lambda (fire and forget, will poll for status)
+      const lambdaResponse = await fetch(lambdaApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          project,
+          videoSettings,
+          outputBucket: s3Bucket,
+          jobId,
+          userId,
+        }),
+      });
+      
+      if (!lambdaResponse.ok) {
+        const errorText = await lambdaResponse.text();
+        console.error(`[Video Editor] Lambda error for job ${jobId}:`, errorText);
+        videoExportJobs.set(jobId, {
+          status: 'failed',
+          error: 'Export service error',
+          createdAt: new Date(),
+        });
+        return res.status(500).json({ message: "Failed to start video export" });
+      }
+      
+      const lambdaResult = await lambdaResponse.json();
+      console.log(`[Video Editor] Lambda response for job ${jobId}:`, lambdaResult);
+      
+      // If Lambda returns immediate result (synchronous processing)
+      if (lambdaResult.downloadUrl) {
+        videoExportJobs.set(jobId, {
+          status: 'completed',
+          downloadUrl: lambdaResult.downloadUrl,
+          createdAt: new Date(),
+        });
+        
+        // Create generation record
+        await storage.createGeneration({
+          userId,
+          type: 'video-editor',
+          status: 'completed',
+          resultUrl: lambdaResult.downloadUrl,
+          model: 'twick-video-editor',
+          prompt: 'Video Editor Export',
+          parameters: videoSettings || {},
+          creditsCost: 0, // Free for now, can add pricing later
+          processingStage: 'completed',
+        });
+        
+        return res.json({
+          status: 'completed',
+          jobId,
+          downloadUrl: lambdaResult.downloadUrl,
+        });
+      }
+      
+      // Otherwise, return processing status for polling
+      res.json({
+        status: 'processing',
+        jobId,
+        message: 'Video export started',
+      });
+      
+    } catch (error: any) {
+      console.error('[Video Editor] Export error:', error);
+      res.status(500).json({ message: error.message || "Failed to export video" });
+    }
+  });
+  
+  // Check export status
+  app.get('/api/video-editor/export/:jobId', requireJWT, async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+      const job = videoExportJobs.get(jobId);
+      
+      if (!job) {
+        return res.status(404).json({ message: "Export job not found" });
+      }
+      
+      res.json({
+        status: job.status,
+        downloadUrl: job.downloadUrl,
+        error: job.error,
+      });
+      
+    } catch (error: any) {
+      console.error('[Video Editor] Status check error:', error);
+      res.status(500).json({ message: error.message || "Failed to check export status" });
+    }
+  });
+  
+  // Lambda callback for async export completion
+  // Security: Validate callback with shared secret from AWS Lambda
+  app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+      const { status, downloadUrl, error, signature } = req.body;
+      
+      // Verify callback authenticity using shared secret
+      const callbackSecret = process.env.AWS_LAMBDA_CALLBACK_SECRET;
+      if (callbackSecret) {
+        const crypto = await import('crypto');
+        const expectedSignature = crypto.createHmac('sha256', callbackSecret)
+          .update(jobId + status + (downloadUrl || ''))
+          .digest('hex');
+        
+        if (signature !== expectedSignature) {
+          console.warn(`[Video Editor] Invalid callback signature for job ${jobId}`);
+          return res.status(401).json({ message: "Invalid signature" });
+        }
+      } else {
+        // Log warning but allow in development
+        console.warn('[Video Editor] AWS_LAMBDA_CALLBACK_SECRET not set - callback verification disabled');
+      }
+      
+      console.log(`[Video Editor] Callback received for job ${jobId}:`, { status, downloadUrl, error });
+      
+      if (!videoExportJobs.has(jobId)) {
+        console.warn(`[Video Editor] Unknown job ${jobId} in callback`);
+        return res.status(404).json({ message: "Job not found" });
+      }
+      
+      videoExportJobs.set(jobId, {
+        status: status === 'completed' ? 'completed' : 'failed',
+        downloadUrl,
+        error,
+        createdAt: videoExportJobs.get(jobId)!.createdAt,
+      });
+      
+      res.json({ received: true });
+      
+    } catch (error: any) {
+      console.error('[Video Editor] Callback error:', error);
+      res.status(500).json({ message: error.message || "Callback processing failed" });
+    }
+  });
+
   // Stripe Billing Routes
 
   // Get all subscription plans (public route for billing page)

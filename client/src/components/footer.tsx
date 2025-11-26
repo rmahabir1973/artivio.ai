@@ -7,6 +7,7 @@ export function Footer() {
       title: "AI Video",
       links: [
         { label: "Video Generation", href: "/generate/video" },
+        { label: "Video Editor", href: "/video-editor" },
         { label: "Sora 2 Pro", href: "/generate/sora" },
         { label: "Talking Avatars", href: "/talking-avatars" },
       ]
