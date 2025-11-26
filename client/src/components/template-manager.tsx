@@ -116,7 +116,7 @@ export function TemplateManager({
       if (!currentPrompt) {
         throw new Error("No prompt to save");
       }
-      return apiRequest('/api/templates', 'POST', {
+      return apiRequest('POST', '/api/templates', {
         name: data.name,
         description: data.description,
         prompt: currentPrompt,
@@ -148,7 +148,7 @@ export function TemplateManager({
   // Delete template mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/templates/${id}`, 'DELETE');
+      return apiRequest('DELETE', `/api/templates/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/templates'] });
@@ -171,7 +171,7 @@ export function TemplateManager({
   // Use template mutation
   const useMutation_ = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/templates/${id}/use`, 'POST');
+      return apiRequest('POST', `/api/templates/${id}/use`);
     },
   });
 
