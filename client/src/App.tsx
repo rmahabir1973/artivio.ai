@@ -90,13 +90,13 @@ function Router() {
         </>
       )}
 
+      {/* Dashboard route - accessible to all users (guests can explore in guest mode) */}
+      <Route path="/dashboard" component={Home} />
+
       {/* Home route - Landing for guests, Dashboard for authenticated */}
       <Route path="/">
         {isAuthenticated ? <Home /> : <Landing />}
       </Route>
-
-      {/* Dashboard route - accessible to all users (guests can explore in guest mode) */}
-      <Route path="/dashboard" component={Home} />
 
       {/* Tool pages - accessible to guests for browsing (auth required at generation time) */}
       <Route path="/generate/video" component={GenerateVideo} />

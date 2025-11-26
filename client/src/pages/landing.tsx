@@ -321,7 +321,7 @@ export default function Landing() {
                 <a href="/login">Sign In</a>
               </Button>
               <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-get-started">
-                <a href="/pricing">Get Started</a>
+                <a href="/dashboard">Get Started</a>
               </Button>
             </div>
           </div>
@@ -376,7 +376,7 @@ export default function Landing() {
                 asChild
                 data-testid="button-hero-get-started"
               >
-                <a href="/pricing">
+                <a href="/dashboard">
                   Get Started Free
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </a>
@@ -542,7 +542,7 @@ export default function Landing() {
                 </li>
               </ul>
               <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-section-video">
-                <a href="/pricing">Start Creating</a>
+                <a href="/dashboard">Start Creating</a>
               </Button>
             </div>
           </div>
@@ -574,7 +574,7 @@ export default function Landing() {
                 </li>
               </ul>
               <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" asChild data-testid="button-section-image">
-                <a href="/pricing">Get Started</a>
+                <a href="/dashboard">Get Started</a>
               </Button>
             </div>
             <div className="relative md:order-2">
