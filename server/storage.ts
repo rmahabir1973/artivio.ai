@@ -27,6 +27,9 @@ import {
   collections,
   tags,
   generationTags,
+  videoProjects,
+  brandKits,
+  projectCollaborators,
   type User,
   type UpsertUser,
   type Referral,
@@ -89,6 +92,12 @@ import {
   type Tag,
   type InsertTag,
   type UpdateTag,
+  type VideoProject,
+  type InsertVideoProject,
+  type BrandKit,
+  type InsertBrandKit,
+  type ProjectCollaborator,
+  type InsertProjectCollaborator,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql, inArray } from "drizzle-orm";
@@ -318,6 +327,26 @@ export interface IStorage {
   bulkDelete(generationIds: string[]): Promise<void>;
   bulkAddTag(generationIds: string[], tagId: string): Promise<void>;
   bulkRemoveTag(generationIds: string[], tagId: string): Promise<void>;
+
+  // Video Project operations
+  createVideoProject(project: InsertVideoProject): Promise<VideoProject>;
+  getVideoProject(id: string): Promise<VideoProject | undefined>;
+  getUserOwnedProjects(userId: string): Promise<VideoProject[]>;
+  getUserAccessibleProjects(userId: string): Promise<VideoProject[]>;
+  updateVideoProject(id: string, data: Partial<InsertVideoProject>): Promise<VideoProject | undefined>;
+  deleteVideoProject(id: string): Promise<boolean>;
+  getTemplateProjects(): Promise<VideoProject[]>;
+
+  // Brand Kit operations
+  getBrandKit(userId: string): Promise<BrandKit>;
+  upsertBrandKit(userId: string, data: Partial<InsertBrandKit>): Promise<BrandKit>;
+
+  // Project Collaborator operations
+  addProjectCollaborator(data: InsertProjectCollaborator): Promise<ProjectCollaborator>;
+  getProjectCollaborators(projectId: string): Promise<ProjectCollaborator[]>;
+  updateCollaboratorRole(projectId: string, userId: string, role: string): Promise<ProjectCollaborator | undefined>;
+  removeProjectCollaborator(projectId: string, userId: string): Promise<boolean>;
+  checkProjectAccess(projectId: string, userId: string): Promise<{ hasAccess: boolean; role: string | null }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2326,6 +2355,210 @@ export class DatabaseStorage implements IStorage {
         inArray(generationTags.generationId, generationIds),
         eq(generationTags.tagId, tagId)
       ));
+  }
+
+  // Video Project operations
+  async createVideoProject(project: InsertVideoProject): Promise<VideoProject> {
+    const [created] = await db
+      .insert(videoProjects)
+      .values(project)
+      .returning();
+    return created;
+  }
+
+  async getVideoProject(id: string): Promise<VideoProject | undefined> {
+    const [project] = await db
+      .select()
+      .from(videoProjects)
+      .where(eq(videoProjects.id, id));
+    return project;
+  }
+
+  async getUserOwnedProjects(userId: string): Promise<VideoProject[]> {
+    return await db
+      .select()
+      .from(videoProjects)
+      .where(eq(videoProjects.ownerUserId, userId))
+      .orderBy(desc(videoProjects.updatedAt));
+  }
+
+  async getUserAccessibleProjects(userId: string): Promise<VideoProject[]> {
+    const ownedProjects = await db
+      .select()
+      .from(videoProjects)
+      .where(eq(videoProjects.ownerUserId, userId));
+
+    const collaboratorProjects = await db
+      .select({ project: videoProjects })
+      .from(projectCollaborators)
+      .innerJoin(videoProjects, eq(projectCollaborators.projectId, videoProjects.id))
+      .where(eq(projectCollaborators.userId, userId));
+
+    const collabProjectList = collaboratorProjects.map(r => r.project);
+    
+    const allProjects = [...ownedProjects, ...collabProjectList];
+    const uniqueProjects = allProjects.reduce((acc, project) => {
+      if (!acc.find(p => p.id === project.id)) {
+        acc.push(project);
+      }
+      return acc;
+    }, [] as VideoProject[]);
+
+    return uniqueProjects.sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async updateVideoProject(id: string, data: Partial<InsertVideoProject>): Promise<VideoProject | undefined> {
+    const [updated] = await db
+      .update(videoProjects)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(videoProjects.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteVideoProject(id: string): Promise<boolean> {
+    const result = await db
+      .delete(videoProjects)
+      .where(eq(videoProjects.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getTemplateProjects(): Promise<VideoProject[]> {
+    return await db
+      .select()
+      .from(videoProjects)
+      .where(eq(videoProjects.isTemplate, true))
+      .orderBy(desc(videoProjects.createdAt));
+  }
+
+  // Brand Kit operations
+  async getBrandKit(userId: string): Promise<BrandKit> {
+    const [existing] = await db
+      .select()
+      .from(brandKits)
+      .where(eq(brandKits.userId, userId));
+
+    if (existing) {
+      return existing;
+    }
+
+    const [created] = await db
+      .insert(brandKits)
+      .values({
+        userId,
+        name: 'Default',
+        palettes: null,
+        fonts: null,
+        logos: null,
+      })
+      .returning();
+    return created;
+  }
+
+  async upsertBrandKit(userId: string, data: Partial<InsertBrandKit>): Promise<BrandKit> {
+    const [existing] = await db
+      .select()
+      .from(brandKits)
+      .where(eq(brandKits.userId, userId));
+
+    if (existing) {
+      const updateData: Record<string, unknown> = { updatedAt: new Date() };
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.palettes !== undefined) updateData.palettes = data.palettes;
+      if (data.fonts !== undefined) updateData.fonts = data.fonts;
+      if (data.logos !== undefined) updateData.logos = data.logos;
+      
+      const [updated] = await db
+        .update(brandKits)
+        .set(updateData)
+        .where(eq(brandKits.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(brandKits)
+        .values({
+          userId,
+          name: data.name ?? 'Default',
+          palettes: data.palettes as typeof brandKits.$inferInsert['palettes'] ?? null,
+          fonts: data.fonts as typeof brandKits.$inferInsert['fonts'] ?? null,
+          logos: data.logos as typeof brandKits.$inferInsert['logos'] ?? null,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  // Project Collaborator operations
+  async addProjectCollaborator(data: InsertProjectCollaborator): Promise<ProjectCollaborator> {
+    const [created] = await db
+      .insert(projectCollaborators)
+      .values(data)
+      .returning();
+    return created;
+  }
+
+  async getProjectCollaborators(projectId: string): Promise<ProjectCollaborator[]> {
+    return await db
+      .select()
+      .from(projectCollaborators)
+      .where(eq(projectCollaborators.projectId, projectId))
+      .orderBy(projectCollaborators.createdAt);
+  }
+
+  async updateCollaboratorRole(projectId: string, userId: string, role: string): Promise<ProjectCollaborator | undefined> {
+    const [updated] = await db
+      .update(projectCollaborators)
+      .set({ role })
+      .where(and(
+        eq(projectCollaborators.projectId, projectId),
+        eq(projectCollaborators.userId, userId)
+      ))
+      .returning();
+    return updated;
+  }
+
+  async removeProjectCollaborator(projectId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(projectCollaborators)
+      .where(and(
+        eq(projectCollaborators.projectId, projectId),
+        eq(projectCollaborators.userId, userId)
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async checkProjectAccess(projectId: string, userId: string): Promise<{ hasAccess: boolean; role: string | null }> {
+    const [project] = await db
+      .select()
+      .from(videoProjects)
+      .where(eq(videoProjects.id, projectId));
+
+    if (!project) {
+      return { hasAccess: false, role: null };
+    }
+
+    if (project.ownerUserId === userId) {
+      return { hasAccess: true, role: 'owner' };
+    }
+
+    const [collaborator] = await db
+      .select()
+      .from(projectCollaborators)
+      .where(and(
+        eq(projectCollaborators.projectId, projectId),
+        eq(projectCollaborators.userId, userId)
+      ));
+
+    if (collaborator) {
+      return { hasAccess: true, role: collaborator.role };
+    }
+
+    return { hasAccess: false, role: null };
   }
 }
 

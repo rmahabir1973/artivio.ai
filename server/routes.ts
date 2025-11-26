@@ -6467,6 +6467,432 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // Video Editor API Routes
+  // ===========================================
+
+  // Get all projects the user has access to (owned + collaborator)
+  app.get('/api/editor/projects', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const projects = await storage.getUserAccessibleProjects(userId);
+      res.json(projects);
+    } catch (error: any) {
+      console.error('[Editor] Error fetching projects:', error);
+      res.status(500).json({ error: 'Failed to fetch projects' });
+    }
+  });
+
+  // Create a new video project
+  app.post('/api/editor/projects', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const bodySchema = z.object({
+        title: z.string().min(1).max(255),
+        description: z.string().optional(),
+        timelineData: z.any(),
+        settings: z.any().optional(),
+        isTemplate: z.boolean().optional(),
+        thumbnailUrl: z.string().optional(),
+      });
+
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request body', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const { title, description, timelineData, settings, isTemplate, thumbnailUrl } = validationResult.data;
+
+      const project = await storage.createVideoProject({
+        ownerUserId: userId,
+        title,
+        description: description || null,
+        timelineData: timelineData || {},
+        settings: settings || {},
+        isTemplate: isTemplate || false,
+        thumbnailUrl: thumbnailUrl || null,
+      });
+
+      res.status(201).json(project);
+    } catch (error: any) {
+      console.error('[Editor] Error creating project:', error);
+      res.status(500).json({ error: 'Failed to create project' });
+    }
+  });
+
+  // Get a single project (check access)
+  app.get('/api/editor/projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id } = req.params;
+
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const access = await storage.checkProjectAccess(id, userId);
+      if (!access.hasAccess) {
+        return res.status(403).json({ error: 'Forbidden - no access to this project' });
+      }
+
+      res.json({ ...project, userRole: access.role });
+    } catch (error: any) {
+      console.error('[Editor] Error fetching project:', error);
+      res.status(500).json({ error: 'Failed to fetch project' });
+    }
+  });
+
+  // Update a project (check edit access - owner or editor)
+  app.patch('/api/editor/projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id } = req.params;
+
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const access = await storage.checkProjectAccess(id, userId);
+      if (!access.hasAccess) {
+        return res.status(403).json({ error: 'Forbidden - no access to this project' });
+      }
+
+      if (access.role !== 'owner' && access.role !== 'editor') {
+        return res.status(403).json({ error: 'Forbidden - viewers cannot edit projects' });
+      }
+
+      const bodySchema = z.object({
+        title: z.string().min(1).max(255).optional(),
+        description: z.string().nullable().optional(),
+        timelineData: z.any().optional(),
+        settings: z.any().optional(),
+        isTemplate: z.boolean().optional(),
+        thumbnailUrl: z.string().nullable().optional(),
+      });
+
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request body', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const updated = await storage.updateVideoProject(id, validationResult.data);
+      if (!updated) {
+        return res.status(500).json({ error: 'Failed to update project' });
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error('[Editor] Error updating project:', error);
+      res.status(500).json({ error: 'Failed to update project' });
+    }
+  });
+
+  // Delete a project (owner only)
+  app.delete('/api/editor/projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id } = req.params;
+
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      if (project.ownerUserId !== userId) {
+        return res.status(403).json({ error: 'Forbidden - only the owner can delete this project' });
+      }
+
+      const deleted = await storage.deleteVideoProject(id);
+      if (!deleted) {
+        return res.status(500).json({ error: 'Failed to delete project' });
+      }
+
+      res.json({ success: true, message: 'Project deleted successfully' });
+    } catch (error: any) {
+      console.error('[Editor] Error deleting project:', error);
+      res.status(500).json({ error: 'Failed to delete project' });
+    }
+  });
+
+  // Get all template projects
+  app.get('/api/editor/templates', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const templates = await storage.getTemplateProjects();
+      res.json(templates);
+    } catch (error: any) {
+      console.error('[Editor] Error fetching templates:', error);
+      res.status(500).json({ error: 'Failed to fetch templates' });
+    }
+  });
+
+  // ===========================================
+  // Project Collaborators Routes
+  // ===========================================
+
+  // Get project collaborators
+  app.get('/api/editor/projects/:id/collaborators', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id } = req.params;
+
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const access = await storage.checkProjectAccess(id, userId);
+      if (!access.hasAccess) {
+        return res.status(403).json({ error: 'Forbidden - no access to this project' });
+      }
+
+      const collaborators = await storage.getProjectCollaborators(id);
+      res.json(collaborators);
+    } catch (error: any) {
+      console.error('[Editor] Error fetching collaborators:', error);
+      res.status(500).json({ error: 'Failed to fetch collaborators' });
+    }
+  });
+
+  // Add a collaborator (owner only)
+  app.post('/api/editor/projects/:id/collaborators', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id } = req.params;
+
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      if (project.ownerUserId !== userId) {
+        return res.status(403).json({ error: 'Forbidden - only the owner can add collaborators' });
+      }
+
+      const bodySchema = z.object({
+        userId: z.string().min(1),
+        role: z.enum(['viewer', 'editor']),
+      });
+
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request body', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const { userId: collaboratorUserId, role } = validationResult.data;
+
+      if (collaboratorUserId === userId) {
+        return res.status(400).json({ error: 'Cannot add yourself as a collaborator' });
+      }
+
+      const collaboratorUser = await storage.getUser(collaboratorUserId);
+      if (!collaboratorUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const existingCollaborators = await storage.getProjectCollaborators(id);
+      if (existingCollaborators.some(c => c.userId === collaboratorUserId)) {
+        return res.status(400).json({ error: 'User is already a collaborator' });
+      }
+
+      const collaborator = await storage.addProjectCollaborator({
+        projectId: id,
+        userId: collaboratorUserId,
+        role,
+        invitedBy: userId,
+      });
+
+      res.status(201).json(collaborator);
+    } catch (error: any) {
+      console.error('[Editor] Error adding collaborator:', error);
+      res.status(500).json({ error: 'Failed to add collaborator' });
+    }
+  });
+
+  // Update collaborator role (owner only)
+  app.patch('/api/editor/projects/:id/collaborators/:collaboratorUserId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id, collaboratorUserId } = req.params;
+
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      if (project.ownerUserId !== userId) {
+        return res.status(403).json({ error: 'Forbidden - only the owner can update collaborator roles' });
+      }
+
+      const bodySchema = z.object({
+        role: z.enum(['viewer', 'editor']),
+      });
+
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request body', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const { role } = validationResult.data;
+
+      const updated = await storage.updateCollaboratorRole(id, collaboratorUserId, role);
+      if (!updated) {
+        return res.status(404).json({ error: 'Collaborator not found' });
+      }
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error('[Editor] Error updating collaborator role:', error);
+      res.status(500).json({ error: 'Failed to update collaborator role' });
+    }
+  });
+
+  // Remove a collaborator (owner only)
+  app.delete('/api/editor/projects/:id/collaborators/:collaboratorUserId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { id, collaboratorUserId } = req.params;
+
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      if (project.ownerUserId !== userId) {
+        return res.status(403).json({ error: 'Forbidden - only the owner can remove collaborators' });
+      }
+
+      const removed = await storage.removeProjectCollaborator(id, collaboratorUserId);
+      if (!removed) {
+        return res.status(404).json({ error: 'Collaborator not found' });
+      }
+
+      res.json({ success: true, message: 'Collaborator removed successfully' });
+    } catch (error: any) {
+      console.error('[Editor] Error removing collaborator:', error);
+      res.status(500).json({ error: 'Failed to remove collaborator' });
+    }
+  });
+
+  // ===========================================
+  // Brand Kit Routes
+  // ===========================================
+
+  // Get user's brand kit
+  app.get('/api/editor/brand-kit', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const brandKit = await storage.getBrandKit(userId);
+      res.json(brandKit);
+    } catch (error: any) {
+      console.error('[Editor] Error fetching brand kit:', error);
+      res.status(500).json({ error: 'Failed to fetch brand kit' });
+    }
+  });
+
+  // Update/create user's brand kit
+  app.put('/api/editor/brand-kit', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const bodySchema = z.object({
+        name: z.string().min(1).max(100).optional(),
+        palettes: z.array(z.object({
+          id: z.string(),
+          name: z.string(),
+          colors: z.array(z.string()),
+        })).nullable().optional(),
+        fonts: z.array(z.object({
+          id: z.string(),
+          name: z.string(),
+          family: z.string(),
+          weights: z.array(z.number()).optional(),
+        })).nullable().optional(),
+        logos: z.array(z.object({
+          id: z.string(),
+          name: z.string(),
+          url: z.string(),
+          kind: z.enum(['logo', 'watermark']).optional(),
+        })).nullable().optional(),
+      });
+
+      const validationResult = bodySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request body', 
+          details: validationResult.error.errors 
+        });
+      }
+
+      const brandKit = await storage.upsertBrandKit(userId, validationResult.data);
+      res.json(brandKit);
+    } catch (error: any) {
+      console.error('[Editor] Error updating brand kit:', error);
+      res.status(500).json({ error: 'Failed to update brand kit' });
+    }
+  });
+
   // Get showcase videos for the models page
   app.get('/api/showcase-videos', async (req: any, res) => {
     try {

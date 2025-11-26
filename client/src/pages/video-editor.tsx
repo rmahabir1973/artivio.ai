@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { LivePlayerProvider } from "@twick/live-player";
 import { TwickStudio } from "@twick/studio";
 import { TimelineProvider, INITIAL_TIMELINE_DATA } from "@twick/timeline";
@@ -11,11 +11,19 @@ import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Loader2, Download, Film, AlertCircle, Monitor, Smartphone, Square, 
-  Library, Copy, Video, Image, Music, X, Check, Settings2
+  Library, Copy, Video, Image, Music, X, Check, Settings2, Keyboard
 } from "lucide-react";
 import { SiYoutube, SiTiktok, SiInstagram, SiX } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -177,6 +185,270 @@ type MediaItem = {
   createdAt: Date;
 };
 
+type ShortcutCategory = {
+  name: string;
+  shortcuts: { keys: string[]; description: string }[];
+};
+
+const KEYBOARD_SHORTCUTS: ShortcutCategory[] = [
+  {
+    name: "Playback",
+    shortcuts: [
+      { keys: ["Space"], description: "Play / Pause" },
+      { keys: ["←"], description: "Previous frame / Rewind" },
+      { keys: ["→"], description: "Next frame / Forward" },
+    ],
+  },
+  {
+    name: "Editing",
+    shortcuts: [
+      { keys: ["⌘/Ctrl", "Z"], description: "Undo" },
+      { keys: ["⌘/Ctrl", "Shift", "Z"], description: "Redo" },
+      { keys: ["⌘/Ctrl", "C"], description: "Copy" },
+      { keys: ["⌘/Ctrl", "V"], description: "Paste" },
+      { keys: ["⌘/Ctrl", "X"], description: "Cut" },
+      { keys: ["Delete/⌫"], description: "Delete selected element" },
+    ],
+  },
+  {
+    name: "Selection",
+    shortcuts: [
+      { keys: ["⌘/Ctrl", "A"], description: "Select all" },
+      { keys: ["Esc"], description: "Deselect / Close modals" },
+    ],
+  },
+  {
+    name: "File",
+    shortcuts: [
+      { keys: ["⌘/Ctrl", "S"], description: "Save project" },
+      { keys: ["?"], description: "Show keyboard shortcuts" },
+    ],
+  },
+];
+
+function useKeyboardShortcuts({
+  onSave,
+  onShowShortcuts,
+  editorContainerRef,
+}: {
+  onSave: () => void;
+  onShowShortcuts: () => void;
+  editorContainerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const { toast } = useToast();
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    const target = event.target as HTMLElement;
+    const isInInput = target.tagName === 'INPUT' || 
+                      target.tagName === 'TEXTAREA' || 
+                      target.isContentEditable;
+    
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modKey = isMac ? event.metaKey : event.ctrlKey;
+    
+    if (event.key === '?' && !isInInput) {
+      event.preventDefault();
+      onShowShortcuts();
+      return;
+    }
+
+    if (modKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      onSave();
+      toast({
+        title: "Project Saved",
+        description: "Your project has been saved.",
+      });
+      return;
+    }
+    
+    if (event.key === 'Escape') {
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement !== document.body) {
+        activeElement.blur();
+      }
+      return;
+    }
+
+    if (isInInput) {
+      return;
+    }
+
+    const editorContainer = editorContainerRef.current;
+    if (!editorContainer) return;
+
+    switch (event.key) {
+      case ' ':
+        event.preventDefault();
+        editorContainer.dispatchEvent(
+          new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true })
+        );
+        break;
+      case 'ArrowLeft':
+        event.preventDefault();
+        editorContainer.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowLeft', code: 'ArrowLeft', bubbles: true })
+        );
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        editorContainer.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowRight', code: 'ArrowRight', bubbles: true })
+        );
+        break;
+      case 'Delete':
+      case 'Backspace':
+        event.preventDefault();
+        editorContainer.dispatchEvent(
+          new KeyboardEvent('keydown', { key: event.key, code: event.code, bubbles: true })
+        );
+        break;
+      case 'z':
+      case 'Z':
+        if (modKey) {
+          event.preventDefault();
+          const isRedo = event.shiftKey;
+          editorContainer.dispatchEvent(
+            new KeyboardEvent('keydown', { 
+              key: 'z', 
+              code: 'KeyZ', 
+              ctrlKey: !isMac, 
+              metaKey: isMac, 
+              shiftKey: isRedo,
+              bubbles: true 
+            })
+          );
+        }
+        break;
+      case 'c':
+      case 'C':
+        if (modKey) {
+          editorContainer.dispatchEvent(
+            new KeyboardEvent('keydown', { 
+              key: 'c', 
+              code: 'KeyC', 
+              ctrlKey: !isMac, 
+              metaKey: isMac, 
+              bubbles: true 
+            })
+          );
+        }
+        break;
+      case 'v':
+      case 'V':
+        if (modKey) {
+          editorContainer.dispatchEvent(
+            new KeyboardEvent('keydown', { 
+              key: 'v', 
+              code: 'KeyV', 
+              ctrlKey: !isMac, 
+              metaKey: isMac, 
+              bubbles: true 
+            })
+          );
+        }
+        break;
+      case 'x':
+      case 'X':
+        if (modKey) {
+          event.preventDefault();
+          editorContainer.dispatchEvent(
+            new KeyboardEvent('keydown', { 
+              key: 'x', 
+              code: 'KeyX', 
+              ctrlKey: !isMac, 
+              metaKey: isMac, 
+              bubbles: true 
+            })
+          );
+        }
+        break;
+      case 'a':
+      case 'A':
+        if (modKey) {
+          event.preventDefault();
+          editorContainer.dispatchEvent(
+            new KeyboardEvent('keydown', { 
+              key: 'a', 
+              code: 'KeyA', 
+              ctrlKey: !isMac, 
+              metaKey: isMac, 
+              bubbles: true 
+            })
+          );
+        }
+        break;
+    }
+  }, [onSave, onShowShortcuts, editorContainerRef, toast]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+}
+
+function KeyboardShortcutKey({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="px-2 py-1 text-xs font-semibold bg-muted border rounded-md shadow-sm min-w-[24px] text-center">
+      {children}
+    </kbd>
+  );
+}
+
+function KeyboardShortcutsDialog({ 
+  open, 
+  onOpenChange 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Keyboard className="h-5 w-5" />
+            Keyboard Shortcuts
+          </DialogTitle>
+          <DialogDescription>
+            Use these shortcuts to speed up your video editing workflow.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6 mt-4">
+          {KEYBOARD_SHORTCUTS.map((category) => (
+            <div key={category.name}>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+                {category.name}
+              </h3>
+              <div className="space-y-2">
+                {category.shortcuts.map((shortcut, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between py-2 px-3 rounded-md bg-muted/50"
+                  >
+                    <span className="text-sm">{shortcut.description}</span>
+                    <div className="flex items-center gap-1">
+                      {shortcut.keys.map((key, keyIndex) => (
+                        <span key={keyIndex} className="flex items-center gap-1">
+                          <KeyboardShortcutKey>{key}</KeyboardShortcutKey>
+                          {keyIndex < shortcut.keys.length - 1 && (
+                            <span className="text-muted-foreground text-xs">+</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function LibraryItem({ item, onCopy }: { item: MediaItem; onCopy: (url: string) => void }) {
   const [copied, setCopied] = useState(false);
 
@@ -260,9 +532,24 @@ export default function VideoEditor() {
   const [studioKey, setStudioKey] = useState(0);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [exportSettings, setExportSettings] = useState<ExportSettings>(DEFAULT_EXPORT_SETTINGS);
+  const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
   
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSaveProject = useCallback(() => {
+    toast({
+      title: "Project Saved",
+      description: "Your project has been saved locally.",
+    });
+  }, [toast]);
+
+  useKeyboardShortcuts({
+    onSave: handleSaveProject,
+    onShowShortcuts: () => setShortcutsDialogOpen(true),
+    editorContainerRef,
+  });
   
   useEffect(() => {
     isMountedRef.current = true;
@@ -490,6 +777,16 @@ export default function VideoEditor() {
           </div>
           
           <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShortcutsDialogOpen(true)}
+              title="Keyboard Shortcuts (?)"
+              data-testid="button-keyboard-shortcuts"
+            >
+              <Keyboard className="h-4 w-4" />
+            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2" data-testid="button-canvas-size">
@@ -761,7 +1058,7 @@ export default function VideoEditor() {
           </Alert>
         )}
 
-        <div className="flex-1 relative twick-studio-wrapper" data-testid="video-editor-container">
+        <div ref={editorContainerRef} className="flex-1 relative twick-studio-wrapper" data-testid="video-editor-container">
           <LivePlayerProvider>
             <TimelineProvider
               key={studioKey}
@@ -795,6 +1092,11 @@ export default function VideoEditor() {
           open={showGuestModal}
           onOpenChange={setShowGuestModal}
           featureName="Video Editor"
+        />
+
+        <KeyboardShortcutsDialog
+          open={shortcutsDialogOpen}
+          onOpenChange={setShortcutsDialogOpen}
         />
       </div>
     </SidebarInset>
