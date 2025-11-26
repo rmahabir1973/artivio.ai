@@ -95,10 +95,8 @@ function Router() {
         {isAuthenticated ? <Home /> : <Landing />}
       </Route>
 
-      {/* Dashboard route - redirect to home for authenticated, register for guests */}
-      <Route path="/dashboard">
-        {isAuthenticated ? <Home /> : <Register />}
-      </Route>
+      {/* Dashboard route - accessible to all users (guests can explore in guest mode) */}
+      <Route path="/dashboard" component={Home} />
 
       {/* Protected routes - require authentication */}
       <Route path="/generate/video">

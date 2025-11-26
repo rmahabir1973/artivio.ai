@@ -121,19 +121,9 @@ export default function Home() {
     return routeMap[workflowId] || '/workflows';
   };
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Guest mode: Allow unauthenticated users to explore the dashboard
+  // They can browse features but will be prompted to sign up when trying to use them
+  const isGuestMode = !isAuthenticated && !isLoading;
 
   const features: FeatureCard[] = [
     {
@@ -341,24 +331,21 @@ export default function Home() {
 
   const featuredFeatures = features.filter(f => f.featured);
 
-  // Guard: Wait for auth to complete AND user data to load
-  if (isLoading || !isAuthenticated || !user) {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center space-y-4">
-            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
+  // Guard: Only show loading state while auth is loading
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center space-y-4">
+          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
-      );
-    }
-    return null;
+      </div>
+    );
   }
 
-  // Safe: user is guaranteed to be non-null here
-  const userCredits = (user as any)?.credits ?? 0;
-  const userFirstName = (user as any)?.firstName ?? 'Creator';
+  // User info (for authenticated users) or guest defaults
+  const userCredits = isGuestMode ? 0 : ((user as any)?.credits ?? 0);
+  const userFirstName = isGuestMode ? 'Explorer' : ((user as any)?.firstName ?? 'Creator');
 
   return (
     <SidebarInset className="overflow-x-hidden">
@@ -383,33 +370,101 @@ export default function Home() {
               12+ powerful AI tools at your fingertips. Generate videos, images, music, voices, and more.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card border">
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="font-medium">{userCredits} credits</span>
-              </div>
-              {subscription?.plan && (
-                <Badge variant="outline" className="px-4 py-2 text-sm font-medium">
-                  {subscription.plan.name} Plan
-                </Badge>
+              {isGuestMode ? (
+                <>
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="font-medium">Start with 1,000 free credits</span>
+                  </div>
+                  <Link href="/register">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="gap-2"
+                      data-testid="button-signup-hero"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Sign Up Free
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      data-testid="button-login-hero"
+                    >
+                      Log In
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card border">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="font-medium">{userCredits} credits</span>
+                  </div>
+                  {subscription?.plan && (
+                    <Badge variant="outline" className="px-4 py-2 text-sm font-medium">
+                      {subscription.plan.name} Plan
+                    </Badge>
+                  )}
+                  <Link href="/billing">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="gap-2"
+                      data-testid="button-upgrade-hero"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Upgrade Now
+                    </Button>
+                  </Link>
+                </>
               )}
-              <Link href="/billing">
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  className="gap-2"
-                  data-testid="button-upgrade-hero"
-                >
-                  <Zap className="h-4 w-4" />
-                  Upgrade Now
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
-        {/* Affiliate Promotion Cards */}
+        {/* Guest Mode Banner */}
+        {isGuestMode && (
+          <div className="mb-8">
+            <Card className="border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10">
+              <CardContent className="py-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold">You're exploring as a guest</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Sign up now to get <span className="font-semibold text-foreground">1,000 free credits</span> and start creating amazing AI content!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Link href="/register">
+                      <Button className="gap-2" data-testid="button-signup-banner">
+                        <Zap className="h-4 w-4" />
+                        Sign Up Free
+                      </Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button variant="outline" data-testid="button-login-banner">
+                        Log In
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Affiliate Promotion Cards - Only for authenticated users */}
+        {!isGuestMode && (
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Main Affiliate CTA Card */}
           <Card className="hover-elevate border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-purple-500/5">
@@ -498,9 +553,10 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+        )}
 
-        {/* Favorite Workflows Quick Launch */}
-        {favoriteWorkflows.length > 0 && (
+        {/* Favorite Workflows Quick Launch - Only for authenticated users */}
+        {!isGuestMode && favoriteWorkflows.length > 0 && (
           <div className="mb-8">
             <Card>
               <CardHeader>
