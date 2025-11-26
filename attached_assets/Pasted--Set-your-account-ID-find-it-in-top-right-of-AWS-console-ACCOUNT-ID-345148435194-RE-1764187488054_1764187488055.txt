@@ -1,0 +1,45 @@
+~ $ # Set your account ID (find it in top-right of AWS console)
+~ $ ACCOUNT_ID="345148435194"
+~ $ REGION="us-east-1"
+~ $ 
+~ $ # Pull from GitHub Container Registry
+~ $ docker pull ghcr.io/ncounterspecialist/cloud-export-video:latest
+latest: Pulling from ncounterspecialist/cloud-export-video
+daf71fff6ad2: Pull complete 
+6af7ad1facd2: Pull complete 
+78c3c9493d00: Pull complete 
+ca57dfa5425b: Pull complete 
+79e6c475d4a0: Pull complete 
+560388c66338: Pull complete 
+dfcabbb58fa5: Pull complete 
+b82d1332f835: Pull complete 
+16caedf1541f: Pull complete 
+6d8fc23b50f3: Pull complete 
+8a0255bf1da1: Extracting [==================================================>]  29.67MB/29.67MB
+7a20bda644fe: Download complete 
+584e9f2ddb3a: Download complete 
+704eeab54a78: Download complete 
+21bb13904a92: Download complete 
+f93c2861ceff: Download complete 
+4f4fb700ef54: Download complete 
+failed to register layer: no space left on device
+~ $ 
+~ $ # Login to your ECR
+~ $ aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+WARNING! Your password will be stored unencrypted in /home/cloudshell-user/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+~ $ 
+~ $ # Tag for ECR
+~ $ docker tag ghcr.io/ncounterspecialist/cloud-export-video:latest $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/artivio-video-export:latest
+Error response from daemon: No such image: ghcr.io/ncounterspecialist/cloud-export-video:latest
+~ $ 
+~ $ # Push to ECR
+~ $ docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/artivio-video-export:latest
+The push refers to repository [345148435194.dkr.ecr.us-east-1.amazonaws.com/artivio-video-export]
+An image does not exist locally with the tag: 345148435194.dkr.ecr.us-east-1.amazonaws.com/artivio-video-export
+~ $ 
+~ $ # Show the URI you'll use
+~ $ echo "Use this URI in Lambda: $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/artivio-video-export:latest"

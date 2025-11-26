@@ -101,3 +101,10 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0", "javascript_stripe:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+AWS_S3_BUCKET = "artivio-video-exports"
+AWS_LAMBDA_API_URL = "https://0okz1km51i.execute-api.us-east-1.amazonaws.com"
+AWS_REGION = "us-east-1"
