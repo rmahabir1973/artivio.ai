@@ -866,6 +866,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ status: 'ok' });
   });
 
+  // IMG.LY CreativeEditor SDK license endpoint (protected but accessible to authenticated users)
+  app.get('/api/imgly/license', requireJWT, async (req, res) => {
+    try {
+      const licenseKey = process.env.IMGLY_LICENSE_KEY;
+      
+      if (!licenseKey) {
+        console.error('[IMGLY] License key not configured');
+        return res.status(503).json({ 
+          message: 'Video editor is temporarily unavailable. Please try again later.' 
+        });
+      }
+
+      res.json({ license: licenseKey });
+    } catch (error) {
+      console.error('[IMGLY] Error fetching license:', error);
+      res.status(500).json({ message: 'Failed to load video editor configuration' });
+    }
+  });
+
   // Initialize auth - fail-fast if this doesn't work
   // Auth is critical; without it, all protected routes will fail
   try {

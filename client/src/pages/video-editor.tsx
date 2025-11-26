@@ -1,26 +1,18 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { queryClient, apiRequest, fetchWithAuth } from "@/lib/queryClient";
-import { Loader2, Video, Plus, X, Combine, Music, Type, Zap, Sparkles, Clock, ArrowDown, ChevronDown } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { fetchWithAuth } from "@/lib/queryClient";
+import { Loader2, Video, ArrowLeft, AlertCircle, Upload, Image, Music, Film, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { Link } from "wouter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TimelinePreview } from "@/components/TimelinePreview";
-import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
-import { DraggableClip } from "@/components/DraggableTimeline";
+import CreativeEditor from '@cesdk/cesdk-js/react';
 
 interface Generation {
   id: string;
@@ -34,1250 +26,494 @@ interface Generation {
   completedAt: string | null;
 }
 
-interface VideoCombination {
-  id: string;
-  sourceVideoIds: string[];
-  outputPath: string | null;
-  status: string;
-  errorMessage: string | null;
-  creditsCost: number;
-  durationSeconds: number | null;
-  createdAt: string;
-  completedAt: string | null;
-}
-
-interface TextOverlay {
-  text: string;
-  timing: 'intro' | 'outro' | 'all';
-  x: number;
-  y: number;
-  fontSize: number;
-  color: string;
-}
-
-interface ClipTrim {
-  startSeconds: number;
-  endSeconds: number;
-}
-
-interface Speed {
-  mode: 'none' | 'custom';
-  multipliers?: number[];
-}
-
-interface SpeedState {
-  mode: 'none' | 'custom' | 'perClip';
-  values?: Record<string, number>;
-  perClip?: Array<{ clipIndex: number; factor: number }>;
-  globalFactor?: number;
-}
-
-interface Transitions {
-  mode: 'none' | 'crossfade';
-  durationSeconds?: number;
-}
-
-interface BackgroundMusic {
-  audioUrl: string | null;
-  volume?: number;
-  fadeInSeconds?: number;
-  fadeOutSeconds?: number;
-  trimStartSeconds?: number;
-  trimEndSeconds?: number;
-}
-
-interface Enhancements {
-  transitions?: Transitions;
-  backgroundMusic?: BackgroundMusic;
-  textOverlays?: TextOverlay[];
-  speed?: SpeedState;
-  clipTrims?: Record<string, ClipTrim>;
-}
-
-type EditorStep = 'select' | 'arrange' | 'enhance';
-
-// Translate technical errors to user-friendly messages
-const getUserFriendlyErrorMessage = (technicalError: string | null): string => {
-  if (!technicalError) return "An error occurred during video combination.";
-  
-  const errorLower = technicalError.toLowerCase();
-  
-  // FFmpeg/video processing errors
-  if (errorLower.includes('ffprobe') || errorLower.includes('probe video metadata')) {
-    return "Unable to read video file. The video format may be corrupted or unsupported. Please try with a different video.";
-  }
-  if (errorLower.includes('ffmpeg') || errorLower.includes('command failed')) {
-    return "Video processing failed. This may be due to incompatible video formats or corrupted files. Please try again with different videos.";
-  }
-  if (errorLower.includes('format incompatibility')) {
-    return "Video format is not supported. Please use standard video formats like MP4, WebM, or MOV.";
-  }
-  if (errorLower.includes('codec')) {
-    return "Video codec is not supported. Please use videos with common codecs like H.264 or VP9.";
-  }
-  if (errorLower.includes('timeout') || errorLower.includes('exceeded')) {
-    return "Video processing took too long and was cancelled. Please try with shorter videos.";
-  }
-  if (errorLower.includes('memory') || errorLower.includes('out of memory')) {
-    return "Processing ran out of memory. Please try with shorter videos or fewer effects.";
-  }
-  
-  // Default fallback
-  return "Video combination failed. Please try again with different videos or fewer effects.";
-};
-
 export default function VideoEditor() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
-  const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
-  const [currentStep, setCurrentStep] = useState<EditorStep>('select');
-  const [enhancements, setEnhancements] = useState<Enhancements>({});
-  const [selectedSunoTrack, setSelectedSunoTrack] = useState<string | null>(null);
+  const [license, setLicense] = useState<string | null>(null);
+  const [licenseError, setLicenseError] = useState<string | null>(null);
+  const [isLoadingLicense, setIsLoadingLicense] = useState(true);
+  const [cesdkInstance, setCesdkInstance] = useState<any>(null);
+  const [showAssetBrowser, setShowAssetBrowser] = useState(false);
+  const [assetType, setAssetType] = useState<'video' | 'image' | 'music'>('video');
   const [allGenerations, setAllGenerations] = useState<Generation[]>([]);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
 
-  // Synchronize speed values with selectedVideoIds
-  useEffect(() => {
-    if (enhancements.speed?.mode === 'custom' && enhancements.speed.values) {
-      const currentValues = enhancements.speed.values;
-      const validVideoIds = new Set(selectedVideoIds);
-      const valueKeys = Object.keys(currentValues);
-      const hasOrphans = valueKeys.some(id => !validVideoIds.has(id));
-      
-      if (hasOrphans) {
-        const cleanedValues = Object.fromEntries(
-          Object.entries(currentValues).filter(([id]) => validVideoIds.has(id))
-        );
-        setEnhancements(prev => ({
-          ...prev,
-          speed: { mode: 'custom', values: cleanedValues }
-        }));
-      }
-    }
-  }, [selectedVideoIds]);
-
-  // Fetch user's completed video generations - load ALL pages using authenticated fetch
   const { data: firstPageData = { data: [] }, isLoading: loadingGenerations } = useQuery<any>({
     queryKey: ['/api/generations'],
   });
 
-  // Fetch user's video combinations
-  const { data: combinations = [], isLoading: loadingCombinations } = useQuery<VideoCombination[]>({
-    queryKey: ['/api/video-combinations'],
-  });
-
-  // Load all pages of generations when component mounts using fetchWithAuth
-  // ONLY run when user is authenticated to ensure bearer token is available
   useEffect(() => {
     const fetchAllGenerations = async () => {
-      console.log('[VIDEO EDITOR] Starting pagination fetch for all generations...');
+      setIsLoadingAssets(true);
       try {
         let allGens: Generation[] = [];
         let cursor: string | undefined = undefined;
         let hasMore = true;
-        let pageCount = 0;
 
-        // Fetch all paginated pages using fetchWithAuth (handles 401 retries automatically)
         while (hasMore) {
           const url = cursor ? `/api/generations?cursor=${cursor}` : '/api/generations';
-          console.log(`[VIDEO EDITOR] Fetching page ${pageCount + 1}:`, url);
-          
-          // Use fetchWithAuth directly - it includes authBridge's retry-on-401 logic
           const res = await fetchWithAuth(url, { method: 'GET' });
           
           if (!res.ok) {
-            throw new Error(`Failed to fetch page ${pageCount + 1}: ${res.status} ${res.statusText}`);
+            throw new Error(`Failed to fetch: ${res.status}`);
           }
           
           const response: any = await res.json();
-          
-          // Handle response - API returns object with data property
           const pageData = Array.isArray(response) ? response : (response.data || []);
           const pageItems = Array.isArray(pageData) ? pageData : [];
           
-          console.log(`[VIDEO EDITOR] Page ${pageCount + 1} loaded: ${pageItems.length} items, nextCursor:`, response.nextCursor);
           allGens = [...allGens, ...pageItems];
-          pageCount++;
-          
-          // Check if there's a next page
           cursor = response.nextCursor;
           hasMore = !!cursor;
         }
 
-        console.log(`[VIDEO EDITOR] ✓ Pagination complete: ${pageCount} pages, ${allGens.length} total generations`);
         setAllGenerations(allGens);
       } catch (error) {
-        console.error('[VIDEO EDITOR] ✗ Pagination failed:', error);
-        // Fallback to first page data
+        console.error('[VIDEO EDITOR] Failed to load generations:', error);
         const pageData = Array.isArray(firstPageData) ? firstPageData : (firstPageData?.data || []);
         setAllGenerations(Array.isArray(pageData) ? pageData : []);
+      } finally {
+        setIsLoadingAssets(false);
       }
     };
 
-    // Only fetch when authenticated to ensure bearer token is available
     if (!loadingGenerations && isAuthenticated) {
-      console.log('[VIDEO EDITOR] ✓ User authenticated - starting pagination');
       fetchAllGenerations();
-    } else if (!loadingGenerations && !isAuthenticated) {
-      console.log('[VIDEO EDITOR] ⚠️ User not authenticated - skipping pagination');
     }
   }, [loadingGenerations, firstPageData, isAuthenticated]);
 
-  const generations = allGenerations;
+  useEffect(() => {
+    const fetchLicense = async () => {
+      try {
+        const res = await fetchWithAuth('/api/imgly/license', { method: 'GET' });
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch license');
+        }
+        
+        const data = await res.json();
+        setLicense(data.license);
+        setLicenseError(null);
+      } catch (error) {
+        console.error('[VIDEO EDITOR] Failed to load license:', error);
+        setLicenseError('Unable to load the video editor. Please try again later.');
+      } finally {
+        setIsLoadingLicense(false);
+      }
+    };
 
-  // Filter videos and music tracks
-  const availableVideos = generations.filter(
+    if (isAuthenticated) {
+      fetchLicense();
+    }
+  }, [isAuthenticated]);
+
+  const availableVideos = allGenerations.filter(
     g => g.type === 'video' && g.status === 'completed' && g.resultUrl
   );
 
-  const availableMusicTracks = generations.filter(
+  const availableImages = allGenerations.filter(
+    g => g.type === 'image' && g.status === 'completed' && g.resultUrl
+  );
+
+  const availableMusic = allGenerations.filter(
     g => g.type === 'music' && g.status === 'completed' && g.resultUrl
   );
 
-  // Initialize backgroundMusic when Suno track is selected
-  useEffect(() => {
-    if (selectedSunoTrack) {
-      const sunoTrack = availableMusicTracks.find(t => t.id === selectedSunoTrack);
-      if (sunoTrack?.resultUrl) {
-        setEnhancements(prev => {
-          // Only update if audioUrl has changed to prevent infinite loop
-          if (prev.backgroundMusic?.audioUrl === sunoTrack.resultUrl) {
-            return prev;
-          }
-          return {
-            ...prev,
-            backgroundMusic: {
-              audioUrl: sunoTrack.resultUrl,
-              volume: prev.backgroundMusic?.volume ?? 0.3,
-              fadeInSeconds: prev.backgroundMusic?.fadeInSeconds ?? 0,
-              fadeOutSeconds: prev.backgroundMusic?.fadeOutSeconds ?? 0,
-              trimStartSeconds: prev.backgroundMusic?.trimStartSeconds ?? 0,
-              trimEndSeconds: prev.backgroundMusic?.trimEndSeconds ?? 0,
-            }
-          };
-        });
-      }
-    } else {
-      // Clear backgroundMusic when no track is selected
-      setEnhancements(prev => {
-        // Only update if backgroundMusic exists to prevent infinite loop
-        if (!prev.backgroundMusic) {
-          return prev;
-        }
-        const { backgroundMusic, ...rest } = prev;
-        return rest;
-      });
-    }
-  }, [selectedSunoTrack, availableMusicTracks]);
-
-  // Combine videos mutation
-  const combineMutation = useMutation({
-    mutationFn: async ({ videoIds, enhancements: enhancementsData }: { videoIds: string[], enhancements?: Enhancements }) => {
-      return await apiRequest('POST', '/api/combine-videos', { videoIds, enhancements: enhancementsData });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/video-combinations'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+  const addAssetToEditor = async (url: string, type: 'video' | 'image' | 'audio') => {
+    if (!cesdkInstance) {
       toast({
-        title: "Video Combination Started",
-        description: "Your videos are being combined. This may take a few minutes.",
-      });
-      setSelectedVideoIds([]);
-      setCurrentStep('select');
-      setEnhancements({});
-      setSelectedSunoTrack(null);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Combination Failed",
-        description: error.message || "Failed to start video combination",
+        title: "Editor not ready",
+        description: "Please wait for the editor to fully load.",
         variant: "destructive",
       });
-    },
-  });
-
-  const calculateCost = () => {
-    let cost = 75;
-    if (enhancements.transitions?.mode === 'crossfade') cost += 25;
-    if (selectedSunoTrack) cost += 25;
-    if (enhancements.textOverlays && enhancements.textOverlays.length > 0) {
-      cost += 25 * enhancements.textOverlays.length;
+      return;
     }
-    if (enhancements.speed?.mode === 'custom') cost += 25;
-    if (enhancements.clipTrims && Object.keys(enhancements.clipTrims).length > 0) cost += 10;
-    return cost;
-  };
 
-  const getSpeedMap = () => enhancements.speed?.values ?? {};
-
-  const validateEnhancements = (): string | null => {
-    if (enhancements.textOverlays) {
-      for (let i = 0; i < enhancements.textOverlays.length; i++) {
-        const overlay = enhancements.textOverlays[i];
-        if (!overlay.text.trim()) {
-          return `Text overlay #${i + 1} has empty text`;
-        }
-        if (overlay.x < 0 || overlay.x > 100) {
-          return `Text overlay #${i + 1} has invalid X position`;
-        }
-        if (overlay.y < 0 || overlay.y > 100) {
-          return `Text overlay #${i + 1} has invalid Y position`;
-        }
-        if (overlay.fontSize < 12 || overlay.fontSize > 200) {
-          return `Text overlay #${i + 1} has invalid font size`;
-        }
-      }
-    }
-    return null;
-  };
-
-  const handleToggleVideo = (videoId: string) => {
-    if (selectedVideoIds.includes(videoId)) {
-      setSelectedVideoIds(selectedVideoIds.filter(id => id !== videoId));
-      if (enhancements.speed?.mode === 'custom' && enhancements.speed.values) {
-        const { [videoId]: _, ...remainingValues } = enhancements.speed.values;
-        setEnhancements(prev => ({
-          ...prev,
-          speed: { mode: 'custom', values: remainingValues }
-        }));
-      }
-      if (enhancements.clipTrims?.[videoId]) {
-        const { [videoId]: _, ...remainingTrims } = enhancements.clipTrims;
-        setEnhancements(prev => ({
-          ...prev,
-          clipTrims: remainingTrims
-        }));
-      }
-    } else {
-      if (selectedVideoIds.length >= 20) {
+    try {
+      const engine = cesdkInstance.engine;
+      const page = engine.scene.getCurrentPage();
+      
+      if (!page) {
         toast({
-          title: "Maximum Reached",
-          description: "You can combine up to 20 videos at once",
+          title: "No page found",
+          description: "Please create a scene first.",
           variant: "destructive",
         });
         return;
       }
-      setSelectedVideoIds([...selectedVideoIds, videoId]);
-    }
-  };
 
-  // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // Require dragging 8px before activating (prevents accidental drags)
-      },
-    })
-  );
-
-  // Handle drag end to reorder clips
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = selectedVideoIds.indexOf(active.id as string);
-      const newIndex = selectedVideoIds.indexOf(over.id as string);
-
-      setSelectedVideoIds(arrayMove(selectedVideoIds, oldIndex, newIndex));
-    }
-  };
-
-  const handleRemoveFromSelection = (videoId: string) => {
-    setSelectedVideoIds(selectedVideoIds.filter(id => id !== videoId));
-    if (enhancements.speed?.mode === 'custom' && enhancements.speed.values) {
-      const { [videoId]: _, ...remainingValues } = enhancements.speed.values;
-      setEnhancements(prev => ({
-        ...prev,
-        speed: { mode: 'custom', values: remainingValues }
-      }));
-    }
-    if (enhancements.clipTrims?.[videoId]) {
-      const { [videoId]: _, ...remainingTrims } = enhancements.clipTrims;
-      setEnhancements(prev => ({
-        ...prev,
-        clipTrims: remainingTrims
-      }));
-    }
-  };
-
-  const handleCombine = async () => {
-    if (selectedVideoIds.length < 2) {
-      toast({
-        title: "Selection Required",
-        description: "Please select at least 2 videos to combine",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const validationError = validateEnhancements();
-    if (validationError) {
-      toast({
-        title: "Validation Error",
-        description: validationError,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const enhancementsData: any = {};
-
-    if (enhancements.transitions?.mode === 'crossfade') {
-      enhancementsData.transitions = enhancements.transitions;
-    }
-
-    if (selectedSunoTrack) {
-      const sunoTrack = availableMusicTracks.find(t => t.id === selectedSunoTrack);
-      if (sunoTrack?.resultUrl) {
-        enhancementsData.backgroundMusic = {
-          audioUrl: sunoTrack.resultUrl,
-          volume: enhancements.backgroundMusic?.volume ?? 0.3,
-          fadeInSeconds: enhancements.backgroundMusic?.fadeInSeconds ?? 0,
-          fadeOutSeconds: enhancements.backgroundMusic?.fadeOutSeconds ?? 0,
-          trimStartSeconds: enhancements.backgroundMusic?.trimStartSeconds ?? 0,
-          trimEndSeconds: enhancements.backgroundMusic?.trimEndSeconds ?? 0,
-        };
+      if (type === 'video') {
+        const videoBlock = engine.block.create('video');
+        engine.block.setString(videoBlock, 'video/uri', url);
+        engine.block.appendChild(page, videoBlock);
+        
+        const pageWidth = engine.block.getWidth(page);
+        const pageHeight = engine.block.getHeight(page);
+        engine.block.setWidth(videoBlock, pageWidth);
+        engine.block.setHeight(videoBlock, pageHeight);
+        engine.block.setPositionX(videoBlock, 0);
+        engine.block.setPositionY(videoBlock, 0);
+      } else if (type === 'image') {
+        const imageBlock = engine.block.create('image');
+        engine.block.setString(imageBlock, 'image/uri', url);
+        engine.block.appendChild(page, imageBlock);
+        
+        const pageWidth = engine.block.getWidth(page);
+        const pageHeight = engine.block.getHeight(page);
+        engine.block.setWidth(imageBlock, pageWidth);
+        engine.block.setHeight(imageBlock, pageHeight);
+        engine.block.setPositionX(imageBlock, 0);
+        engine.block.setPositionY(imageBlock, 0);
+      } else if (type === 'audio') {
+        const audioBlock = engine.block.create('audio');
+        engine.block.setString(audioBlock, 'audio/uri', url);
+        engine.block.appendChild(page, audioBlock);
       }
-    }
 
-    if (enhancements.textOverlays && enhancements.textOverlays.length > 0) {
-      enhancementsData.textOverlays = enhancements.textOverlays;
+      setShowAssetBrowser(false);
+      toast({
+        title: "Asset added",
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} has been added to your project.`,
+      });
+    } catch (error) {
+      console.error('[VIDEO EDITOR] Failed to add asset:', error);
+      toast({
+        title: "Failed to add asset",
+        description: "There was an error adding the asset to your project.",
+        variant: "destructive",
+      });
     }
-
-    if (enhancements.speed?.mode === 'custom') {
-      const speedMap = getSpeedMap();
-      const perClip = selectedVideoIds.map((id, index) => ({
-        clipIndex: index,
-        factor: speedMap[id] ?? 1.0
-      }));
-      enhancementsData.speed = { mode: 'perClip', perClip };
-    }
-
-    if (enhancements.clipTrims && Object.keys(enhancements.clipTrims).length > 0) {
-      enhancementsData.clipTrims = Object.fromEntries(
-        selectedVideoIds.map((id, index) => [index, enhancements.clipTrims![id] || { startSeconds: 0, endSeconds: 0 }])
-      );
-    }
-
-    const finalEnhancements = Object.keys(enhancementsData).length > 0 ? enhancementsData : undefined;
-    combineMutation.mutate({ videoIds: selectedVideoIds, enhancements: finalEnhancements });
   };
 
-  const getVideoById = (id: string) => {
-    return availableVideos.find(v => v.id === id);
+  const config = {
+    role: 'Adopter' as const,
+    theme: 'dark' as const,
+    license: license || '',
+    ui: {
+      elements: {
+        view: 'default' as const,
+        panels: {
+          settings: true
+        },
+        navigation: {
+          position: 'top' as const,
+          action: {
+            export: true,
+            download: true,
+            close: false
+          }
+        }
+      }
+    },
+    callbacks: {
+      onUpload: 'local' as const,
+      onDownload: 'download' as const,
+      onExport: 'download' as const
+    }
   };
 
-  const formatDate = (date: string | Date | null) => {
-    if (!date) return "N/A";
-    return new Date(date).toLocaleString();
+  const initEditor = async (instance: any) => {
+    try {
+      setCesdkInstance(instance);
+      
+      await instance.addDefaultAssetSources();
+      await instance.addDemoAssetSources({
+        sceneMode: 'Video',
+        withUploadAssetSources: true,
+      });
+      
+      await instance.createVideoScene();
+      
+      instance.engine.editor.setSetting('page/title/show', false);
+      
+      console.log('[VIDEO EDITOR] CreativeEditor SDK initialized successfully');
+    } catch (error) {
+      console.error('[VIDEO EDITOR] Failed to initialize editor:', error);
+      toast({
+        title: "Editor initialization failed",
+        description: "There was an error setting up the video editor.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      pending: "secondary",
-      processing: "default",
-      completed: "default",
-      failed: "destructive",
-    };
-    return <Badge variant={variants[status] || "default"} data-testid={`badge-status-${status}`}>{status}</Badge>;
-  };
-
-  if (loadingGenerations) {
+  if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
+      <SidebarInset>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md">
+            <CardContent className="pt-6 text-center">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+              <p className="text-muted-foreground mb-4">
+                Please sign in to access the video editor.
+              </p>
+              <Link href="/auth">
+                <Button data-testid="button-signin">Sign In</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </SidebarInset>
+    );
+  }
+
+  if (isLoadingLicense) {
+    return (
+      <SidebarInset>
+        <div className="flex items-center justify-center min-h-[600px]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading video editor...</p>
+          </div>
+        </div>
+      </SidebarInset>
+    );
+  }
+
+  if (licenseError || !license) {
+    return (
+      <SidebarInset>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md">
+            <CardContent className="pt-6 text-center">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
+              <h2 className="text-xl font-semibold mb-2">Video Editor Unavailable</h2>
+              <p className="text-muted-foreground mb-4">
+                {licenseError || "The video editor is temporarily unavailable. Please try again later."}
+              </p>
+              <Button onClick={() => window.location.reload()} data-testid="button-retry">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </SidebarInset>
     );
   }
 
   return (
     <SidebarInset>
-      <div className="h-full overflow-y-auto">
-        <div className="container mx-auto p-6 max-w-7xl space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold" data-testid="text-heading">Video Editor</h1>
-            <p className="text-muted-foreground">Combine multiple AI-generated videos into longer content with professional enhancements</p>
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" data-testid="button-back">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold" data-testid="text-heading">Video Editor</h1>
+              <p className="text-sm text-muted-foreground">Professional video editing powered by IMG.LY</p>
+            </div>
           </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setAssetType('video');
+                setShowAssetBrowser(true);
+              }}
+              data-testid="button-add-video"
+            >
+              <Film className="w-4 h-4 mr-2" />
+              Add Video
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setAssetType('image');
+                setShowAssetBrowser(true);
+              }}
+              data-testid="button-add-image"
+            >
+              <Image className="w-4 h-4 mr-2" />
+              Add Image
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setAssetType('music');
+                setShowAssetBrowser(true);
+              }}
+              data-testid="button-add-music"
+            >
+              <Music className="w-4 h-4 mr-2" />
+              Add Music
+            </Button>
+          </div>
+        </div>
 
-          {/* Selection Panel */}
-          {currentStep === 'select' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Step 1: Select Videos</CardTitle>
-                <CardDescription>Choose 2-20 videos to combine (in order)</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {availableVideos.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+        <div className="flex-1 relative" style={{ minHeight: '700px' }}>
+          <CreativeEditor
+            config={config}
+            init={initEditor}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
+      </div>
+
+      <Dialog open={showAssetBrowser} onOpenChange={setShowAssetBrowser}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Add from My Library</DialogTitle>
+            <DialogDescription>
+              Select content from your AI generations to add to your project
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs value={assetType} onValueChange={(v) => setAssetType(v as 'video' | 'image' | 'music')}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="video" data-testid="tab-videos">
+                <Film className="w-4 h-4 mr-2" />
+                Videos ({availableVideos.length})
+              </TabsTrigger>
+              <TabsTrigger value="image" data-testid="tab-images">
+                <Image className="w-4 h-4 mr-2" />
+                Images ({availableImages.length})
+              </TabsTrigger>
+              <TabsTrigger value="music" data-testid="tab-music">
+                <Music className="w-4 h-4 mr-2" />
+                Music ({availableMusic.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="video">
+              <ScrollArea className="h-[400px]">
+                {isLoadingAssets ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  </div>
+                ) : availableVideos.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
                     <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No completed videos available for combination</p>
+                    <p>No videos available</p>
                     <p className="text-sm mt-2">Generate some videos first!</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {availableVideos.map((video) => {
-                      const isSelected = selectedVideoIds.includes(video.id);
-                      const selectionIndex = selectedVideoIds.indexOf(video.id);
-
-                      return (
-                        <Card
-                          key={video.id}
-                          className={`cursor-pointer transition-all hover-elevate ${
-                            isSelected ? 'ring-2 ring-primary' : ''
-                          }`}
-                          onClick={() => handleToggleVideo(video.id)}
-                          data-testid={`card-video-${video.id}`}
-                        >
-                          <CardContent className="p-4 space-y-2">
-                            <div className="aspect-video bg-muted rounded-md overflow-hidden">
-                              {video.resultUrl && (
-                                <video
-                                  src={video.resultUrl}
-                                  className="w-full h-full object-cover"
-                                  controls={false}
-                                  muted
-                                />
-                              )}
-                            </div>
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{video.model}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-2">{video.prompt}</p>
-                              </div>
-                              {isSelected && (
-                                <Badge variant="default" data-testid={`badge-order-${selectionIndex + 1}`}>
-                                  #{selectionIndex + 1}
-                                </Badge>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {selectedVideoIds.length > 0 && (
-                  <div className="sticky bottom-0 bg-background border-t pt-4 mt-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
-                        {selectedVideoIds.length} video{selectedVideoIds.length !== 1 ? 's' : ''} selected
-                      </p>
-                      <Button 
-                        onClick={() => setCurrentStep('arrange')}
-                        data-testid="button-continue"
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-2">
+                    {availableVideos.map((video) => (
+                      <Card
+                        key={video.id}
+                        className="cursor-pointer hover-elevate"
+                        onClick={() => video.resultUrl && addAssetToEditor(video.resultUrl, 'video')}
+                        data-testid={`card-video-${video.id}`}
                       >
-                        Continue to Arrange <ArrowDown className="ml-2 w-4 h-4" />
-                      </Button>
-                    </div>
+                        <CardContent className="p-3 space-y-2">
+                          <div className="aspect-video bg-muted rounded-md overflow-hidden">
+                            {video.resultUrl && (
+                              <video
+                                src={video.resultUrl}
+                                className="w-full h-full object-cover"
+                                controls={false}
+                                muted
+                              />
+                            )}
+                          </div>
+                          <div>
+                            <Badge variant="secondary" className="text-xs">{video.model}</Badge>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{video.prompt}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          )}
+              </ScrollArea>
+            </TabsContent>
 
-          {/* Arrangement Panel */}
-          {currentStep === 'arrange' && selectedVideoIds.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Step 2: Arrange & Trim</CardTitle>
-                <CardDescription>Reorder videos and set trim points for precision editing</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Timeline Preview */}
-                <TimelinePreview
-                  clips={selectedVideoIds.map((videoId) => {
-                    const video = getVideoById(videoId);
-                    if (!video) return null;
-                    
-                    const trim = enhancements.clipTrims?.[videoId];
-                    const speedData = enhancements.speed?.perClip?.find(s => s.clipIndex === selectedVideoIds.indexOf(videoId));
-                    
-                    return {
-                      id: video.id,
-                      url: video.resultUrl || '',
-                      trim: trim,
-                      speedFactor: speedData?.factor || enhancements.speed?.globalFactor || 1,
-                    };
-                  }).filter(Boolean) as any[]}
-                />
-
-                <Separator />
-
-                {/* Draggable Timeline */}
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={selectedVideoIds}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-2" data-testid="sortable-timeline">
-                      {selectedVideoIds.map((videoId, index) => {
-                        const video = getVideoById(videoId);
-                        if (!video) return null;
-
-                        // Clone trim object to prevent frozen state issues
-                        const trim = { ...(enhancements.clipTrims?.[videoId] ?? { startSeconds: 0, endSeconds: 0 }) };
-
-                        return (
-                          <DraggableClip
-                            key={videoId}
-                            id={videoId}
-                            index={index}
-                            video={{
-                              id: video.id,
-                              model: video.model,
-                              prompt: video.prompt,
-                              resultUrl: video.resultUrl || '',
-                              thumbnailUrl: video.thumbnailUrl,
-                            }}
-                            trim={trim}
-                            onRemove={() => handleRemoveFromSelection(videoId)}
-                            onTrimChange={(newTrim) => {
-                              setEnhancements(prev => ({
-                                ...prev,
-                                clipTrims: {
-                                  ...(prev.clipTrims ?? {}),
-                                  [videoId]: newTrim
-                                }
-                              }));
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setCurrentStep('select')}
-                    data-testid="button-back"
-                  >
-                    Back to Selection
-                  </Button>
-                  <Button
-                    onClick={() => setCurrentStep('enhance')}
-                    data-testid="button-continue-enhance"
-                  >
-                    Continue to Enhancements <ArrowDown className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Enhancements Panel */}
-          {currentStep === 'enhance' && selectedVideoIds.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Step 3: Configure Enhancements (Optional)</CardTitle>
-                <CardDescription>Add professional polish to your combined video</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Rendering Time Warning */}
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <div className="flex gap-3">
-                    <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-sm text-blue-900 dark:text-blue-200 mb-1">Rendering may take up to 20 minutes</h4>
-                      <p className="text-xs text-blue-800 dark:text-blue-300">
-                        Video combination and processing times depend on video length and selected enhancements. You can continue using Artivio while your video renders in the background.
-                      </p>
-                    </div>
+            <TabsContent value="image">
+              <ScrollArea className="h-[400px]">
+                {isLoadingAssets ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin" />
                   </div>
-                </div>
-
-                {/* Transitions */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                      <Label className="text-base font-semibold">Crossfade Transitions</Label>
-                      <Badge variant="outline">+25 credits</Badge>
-                    </div>
-                    <Switch
-                      checked={enhancements.transitions?.mode === 'crossfade'}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setEnhancements(prev => ({
-                            ...prev,
-                            transitions: { mode: 'crossfade', durationSeconds: 1.0 }
-                          }));
-                        } else {
-                          const { transitions, ...rest } = enhancements;
-                          setEnhancements(rest);
-                        }
-                      }}
-                      data-testid="switch-transitions"
-                    />
+                ) : availableImages.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Image className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No images available</p>
+                    <p className="text-sm mt-2">Generate some images first!</p>
                   </div>
-                  {enhancements.transitions?.mode === 'crossfade' && (
-                    <div className="pl-7 space-y-2">
-                      <Label className="text-sm">Duration: {enhancements.transitions.durationSeconds || 1.0}s</Label>
-                      <Slider
-                        value={[enhancements.transitions.durationSeconds || 1.0]}
-                        onValueChange={([value]) => {
-                          setEnhancements(prev => ({
-                            ...prev,
-                            transitions: { mode: 'crossfade', durationSeconds: value }
-                          }));
-                        }}
-                        min={0.5}
-                        max={3.0}
-                        step={0.1}
-                        data-testid="slider-transition-duration"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Background Music - Now with Suno Integration */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Music className="w-5 h-5 text-primary" />
-                      <Label className="text-base font-semibold">Background Music</Label>
-                      <Badge variant="outline">+25 credits</Badge>
-                    </div>
-                  </div>
-                  <Tabs defaultValue="suno" className="pl-7">
-                    <TabsList className="grid w-full grid-cols-1">
-                      <TabsTrigger value="suno">Suno Library</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="suno" className="space-y-3">
-                      {availableMusicTracks.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No Suno tracks generated yet. Create some music first!</p>
-                      ) : (
-                        <div className="space-y-3">
-                          <Select value={selectedSunoTrack || ''} onValueChange={(v) => setSelectedSunoTrack(v || null)}>
-                            <SelectTrigger data-testid="select-suno-track">
-                              <SelectValue placeholder="Select a music track" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableMusicTracks.map((track) => (
-                                <SelectItem key={track.id} value={track.id}>
-                                  {track.prompt.substring(0, 50)}... ({new Date(track.createdAt).toLocaleDateString()})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {selectedSunoTrack && (() => {
-                            const currentTrack = availableMusicTracks.find(t => t.id === selectedSunoTrack);
-                            const trackAudioUrl = currentTrack?.resultUrl || '';
-                            
-                            return (
-                              <div className="space-y-3 p-3 bg-muted rounded-md">
-                                <audio controls className="w-full h-8">
-                                  <source src={trackAudioUrl} />
-                                </audio>
-                                
-                                {/* Audio Trim Controls */}
-                                <div className="space-y-2 pt-2 border-t">
-                                  <Label className="text-sm font-medium">Audio Trim</Label>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div className="space-y-1">
-                                      <Label className="text-xs text-muted-foreground">Start (s)</Label>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="0.1"
-                                        value={enhancements.backgroundMusic?.trimStartSeconds ?? 0}
-                                        onChange={(e) => {
-                                          setEnhancements(prev => ({
-                                            ...prev,
-                                            backgroundMusic: {
-                                              ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
-                                              trimStartSeconds: parseFloat(e.target.value) || 0
-                                            }
-                                          }));
-                                        }}
-                                      className="h-8 text-sm"
-                                      data-testid="input-audio-trim-start"
-                                    />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">End (s)</Label>
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      step="0.1"
-                                      value={enhancements.backgroundMusic?.trimEndSeconds ?? 0}
-                                      onChange={(e) => {
-                                        setEnhancements(prev => ({
-                                          ...prev,
-                                          backgroundMusic: {
-                                            ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
-                                            trimEndSeconds: parseFloat(e.target.value) || 0
-                                          }
-                                        }));
-                                      }}
-                                      className="h-8 text-sm"
-                                      placeholder="Auto"
-                                      data-testid="input-audio-trim-end"
-                                    />
-                                  </div>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                  Leave end time at 0 to use full track duration
-                                </p>
-                              </div>
-
-                              {/* Volume Control */}
-                              <div className="space-y-2">
-                                <Label className="text-sm">Volume: {((enhancements.backgroundMusic?.volume ?? 0.3) * 100).toFixed(0)}%</Label>
-                                <Slider
-                                  value={[(enhancements.backgroundMusic?.volume ?? 0.3) * 100]}
-                                  onValueChange={([value]) => {
-                                    setEnhancements(prev => ({
-                                      ...prev,
-                                      backgroundMusic: {
-                                        ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
-                                        volume: value / 100
-                                      }
-                                    }));
-                                  }}
-                                  min={0}
-                                  max={100}
-                                  step={1}
-                                  data-testid="slider-music-volume"
-                                />
-                              </div>
-
-                              {/* Fade Controls */}
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                  <Label className="text-sm">Fade In: {enhancements.backgroundMusic?.fadeInSeconds ?? 0}s</Label>
-                                  <Slider
-                                    value={[enhancements.backgroundMusic?.fadeInSeconds ?? 0]}
-                                    onValueChange={([value]) => {
-                                      setEnhancements(prev => ({
-                                        ...prev,
-                                        backgroundMusic: {
-                                          ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
-                                          fadeInSeconds: value
-                                        }
-                                      }));
-                                    }}
-                                    min={0}
-                                    max={5}
-                                    step={0.1}
-                                    data-testid="slider-fade-in"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-sm">Fade Out: {enhancements.backgroundMusic?.fadeOutSeconds ?? 0}s</Label>
-                                  <Slider
-                                    value={[enhancements.backgroundMusic?.fadeOutSeconds ?? 0]}
-                                    onValueChange={([value]) => {
-                                      setEnhancements(prev => ({
-                                        ...prev,
-                                        backgroundMusic: {
-                                          ...(prev.backgroundMusic || { audioUrl: trackAudioUrl, volume: 0.3, fadeInSeconds: 0, fadeOutSeconds: 0, trimStartSeconds: 0, trimEndSeconds: 0 }),
-                                          fadeOutSeconds: value
-                                        }
-                                      }));
-                                    }}
-                                    min={0}
-                                    max={5}
-                                    step={0.1}
-                                    data-testid="slider-fade-out"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          );
-                          })()}
-                        </div>
-                      )}
-                    </TabsContent>
-                  </Tabs>
-                </div>
-
-                <Separator />
-
-                {/* Text Overlays */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Type className="w-5 h-5 text-primary" />
-                      <Label className="text-base font-semibold">Text Overlays</Label>
-                      <Badge variant="outline">+30 credits</Badge>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        const newOverlay: TextOverlay = {
-                          text: '',
-                          timing: 'all',
-                          x: 50,
-                          y: 50,
-                          fontSize: 48,
-                          color: '#FFFFFF'
-                        };
-                        setEnhancements(prev => ({
-                          ...prev,
-                          textOverlays: [...(prev.textOverlays || []), newOverlay]
-                        }));
-                      }}
-                      data-testid="button-add-overlay"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Overlay
-                    </Button>
-                  </div>
-                  {enhancements.textOverlays && enhancements.textOverlays.length > 0 && (
-                    <div className="pl-7 space-y-4">
-                      {enhancements.textOverlays.map((overlay, index) => (
-                        <div key={index} className="p-4 bg-muted rounded-md space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label className="font-medium">Overlay #{index + 1}</Label>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => {
-                                setEnhancements(prev => ({
-                                  ...prev,
-                                  textOverlays: prev.textOverlays?.filter((_, i) => i !== index)
-                                }));
-                              }}
-                              data-testid={`button-remove-overlay-${index}`}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-2">
+                    {availableImages.map((image) => (
+                      <Card
+                        key={image.id}
+                        className="cursor-pointer hover-elevate"
+                        onClick={() => image.resultUrl && addAssetToEditor(image.resultUrl, 'image')}
+                        data-testid={`card-image-${image.id}`}
+                      >
+                        <CardContent className="p-2">
+                          <div className="aspect-square bg-muted rounded-md overflow-hidden">
+                            {image.resultUrl && (
+                              <img
+                                src={image.resultUrl}
+                                alt={image.prompt}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
                           </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="col-span-2">
-                              <Label className="text-sm">Text</Label>
-                              <Textarea
-                                value={overlay.text}
-                                onChange={(e) => {
-                                  setEnhancements(prev => ({
-                                    ...prev,
-                                    textOverlays: prev.textOverlays?.map((o, i) =>
-                                      i === index ? { ...o, text: e.target.value } : o
-                                    )
-                                  }));
-                                }}
-                                placeholder="Enter overlay text..."
-                                data-testid={`textarea-overlay-text-${index}`}
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm">Timing</Label>
-                              <Select
-                                value={overlay.timing}
-                                onValueChange={(value: 'intro' | 'outro' | 'all') => {
-                                  setEnhancements(prev => ({
-                                    ...prev,
-                                    textOverlays: prev.textOverlays?.map((o, i) =>
-                                      i === index ? { ...o, timing: value } : o
-                                    )
-                                  }));
-                                }}
-                              >
-                                <SelectTrigger data-testid={`select-timing-${index}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="intro">Intro (first 3s)</SelectItem>
-                                  <SelectItem value="outro">Outro (last 3s)</SelectItem>
-                                  <SelectItem value="all">Always visible</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-sm">Font Size</Label>
-                              <Input
-                                type="number"
-                                value={overlay.fontSize}
-                                onChange={(e) => {
-                                  setEnhancements(prev => ({
-                                    ...prev,
-                                    textOverlays: prev.textOverlays?.map((o, i) =>
-                                      i === index ? { ...o, fontSize: parseInt(e.target.value) || 48 } : o
-                                    )
-                                  }));
-                                }}
-                                min={12}
-                                max={200}
-                                data-testid={`input-font-size-${index}`}
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm">X Position (%)</Label>
-                              <Input
-                                type="number"
-                                value={overlay.x}
-                                onChange={(e) => {
-                                  setEnhancements(prev => ({
-                                    ...prev,
-                                    textOverlays: prev.textOverlays?.map((o, i) =>
-                                      i === index ? { ...o, x: parseInt(e.target.value) || 50 } : o
-                                    )
-                                  }));
-                                }}
-                                min={0}
-                                max={100}
-                                data-testid={`input-x-position-${index}`}
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm">Y Position (%)</Label>
-                              <Input
-                                type="number"
-                                value={overlay.y}
-                                onChange={(e) => {
-                                  setEnhancements(prev => ({
-                                    ...prev,
-                                    textOverlays: prev.textOverlays?.map((o, i) =>
-                                      i === index ? { ...o, y: parseInt(e.target.value) || 50 } : o
-                                    )
-                                  }));
-                                }}
-                                min={0}
-                                max={100}
-                                data-testid={`input-y-position-${index}`}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Speed Control */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-primary" />
-                      <Label className="text-base font-semibold">Speed Control</Label>
-                      <Badge variant="outline">+25 credits</Badge>
-                    </div>
-                    <Switch
-                      checked={enhancements.speed?.mode === 'custom'}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const speedMap = getSpeedMap();
-                          const values = Object.fromEntries(
-                            selectedVideoIds.map(id => [id, speedMap[id] ?? 1.0])
-                          );
-                          setEnhancements(prev => ({
-                            ...prev,
-                            speed: { mode: 'custom', values }
-                          }));
-                        } else {
-                          const { speed, ...rest } = enhancements;
-                          setEnhancements(rest);
-                        }
-                      }}
-                      data-testid="switch-speed"
-                    />
+                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{image.prompt}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                  {enhancements.speed?.mode === 'custom' && (
-                    <div className="pl-7 space-y-3">
-                      {selectedVideoIds.map((videoId, index) => {
-                        const video = getVideoById(videoId);
-                        const speedMap = getSpeedMap();
-                        const multiplier = speedMap[videoId] ?? 1.0;
-                        return (
-                          <div key={videoId} className="space-y-2">
-                            <Label className="text-sm">
-                              Clip #{index + 1}: {video?.model} - {multiplier.toFixed(2)}x
-                            </Label>
-                            <Slider
-                              value={[multiplier]}
-                              onValueChange={([value]) => {
-                                const newSpeedMap = { ...(enhancements.speed?.values ?? {}) };
-                                newSpeedMap[videoId] = value;
-                                setEnhancements(prev => ({
-                                  ...prev,
-                                  speed: { mode: 'custom', values: newSpeedMap }
-                                }));
-                              }}
-                              min={0.25}
-                              max={4.0}
-                              step={0.25}
-                              data-testid={`slider-speed-${index}`}
+                )}
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="music">
+              <ScrollArea className="h-[400px]">
+                {isLoadingAssets ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  </div>
+                ) : availableMusic.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Music className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No music available</p>
+                    <p className="text-sm mt-2">Generate some music first!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 p-2">
+                    {availableMusic.map((track) => (
+                      <Card
+                        key={track.id}
+                        className="cursor-pointer hover-elevate"
+                        onClick={() => track.resultUrl && addAssetToEditor(track.resultUrl, 'audio')}
+                        data-testid={`card-music-${track.id}`}
+                      >
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center shrink-0">
+                            <Music className="w-6 h-6 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <Badge variant="secondary" className="text-xs">{track.model}</Badge>
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{track.prompt}</p>
+                          </div>
+                          {track.resultUrl && (
+                            <audio
+                              src={track.resultUrl}
+                              controls
+                              className="w-40 h-8"
+                              onClick={(e) => e.stopPropagation()}
                             />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Tips & Best Practices */}
-                <Collapsible className="mt-6">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <ChevronDown className="mr-2 h-4 w-4" />
-                      Tips & Best Practices
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4 space-y-3">
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-sm">Organize Timeline Properly</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0">
-                        <p className="text-xs text-muted-foreground">Arrange clips in logical order before combining. Reorder using drag-and-drop to match your desired sequence for better storytelling.</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-sm">Trim with Precision</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0">
-                        <p className="text-xs text-muted-foreground">Use exact trim points to remove unwanted footage. Test different trim values to ensure smooth transitions between clips.</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-sm">Sync Audio Carefully</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0">
-                        <p className="text-xs text-muted-foreground">Add background music at appropriate volume levels. Use fade-in/fade-out to blend audio smoothly with video transitions.</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-sm">Enhance for Quality</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0">
-                        <p className="text-xs text-muted-foreground">Use crossfade transitions for professional feel. Add text overlays to introduce sections. Adjust speed for dramatic effects.</p>
-                      </CardContent>
-                    </Card>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                <div className="flex items-center justify-between pt-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setCurrentStep('arrange')}
-                    data-testid="button-back-arrange"
-                  >
-                    Back to Arrangement
-                  </Button>
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm text-muted-foreground">
-                      Total Cost: <span className="font-bold text-foreground">{calculateCost()} credits</span>
-                    </p>
-                    <Button
-                      onClick={handleCombine}
-                      disabled={combineMutation.isPending || selectedVideoIds.length < 2}
-                      data-testid="button-combine-final"
-                    >
-                      {combineMutation.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                          Combining...
-                        </>
-                      ) : (
-                        <>
-                          <Combine className="mr-2 w-4 h-4" />
-                          Combine Videos
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Combinations History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Video Combinations</CardTitle>
-              <CardDescription>Previously combined videos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingCombinations ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : combinations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No video combinations yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {combinations.map((combo) => (
-                    <div
-                      key={combo.id}
-                      className="flex items-center gap-4 p-4 bg-muted rounded-md"
-                      data-testid={`combination-${combo.id}`}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          {getStatusBadge(combo.status)}
-                          <Badge variant="outline">
-                            {combo.sourceVideoIds.length} videos
-                          </Badge>
-                          {combo.durationSeconds && (
-                            <Badge variant="outline">
-                              {combo.durationSeconds}s
-                            </Badge>
                           )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Created: {formatDate(combo.createdAt)}
-                        </p>
-                        {combo.errorMessage && (
-                          <p className="text-xs text-destructive mt-1 max-w-md">{getUserFriendlyErrorMessage(combo.errorMessage)}</p>
-                        )}
-                      </div>
-
-                      {combo.status === 'completed' && combo.outputPath && (
-                        <div className="flex gap-2">
-                          <a
-                            href={combo.outputPath}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            data-testid={`link-view-${combo.id}`}
-                          >
-                            <Button size="sm">
-                              <Video className="mr-2 w-3 h-3" />
-                              View
-                            </Button>
-                          </a>
-                          <a
-                            href={combo.outputPath}
-                            download
-                            data-testid={`link-download-${combo.id}`}
-                          >
-                            <Button size="sm" variant="outline">
-                              Download
-                            </Button>
-                          </a>
-                        </div>
-                      )}
-
-                      {combo.status === 'processing' && (
-                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </SidebarInset>
   );
 }
