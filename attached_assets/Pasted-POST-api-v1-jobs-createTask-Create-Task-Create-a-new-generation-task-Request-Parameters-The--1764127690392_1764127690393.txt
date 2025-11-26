@@ -1,0 +1,146 @@
+POST
+/api/v1/jobs/createTask
+Create Task
+Create a new generation task
+
+Request Parameters
+The API accepts a JSON payload with the following structure:
+
+Request Body Structure
+{
+  "model": "string",
+  "callBackUrl": "string (optional)",
+  "input": {
+    // Input parameters based on form configuration
+  }
+}
+Root Level Parameters
+model
+Required
+string
+The model name to use for generation
+
+Example:
+
+"elevenlabs/speech-to-text"
+callBackUrl
+Optional
+string
+Callback URL for task completion notifications. Optional parameter. If provided, the system will send POST requests to this URL when the task completes (success or failure). If not provided, no callback notifications will be sent.
+
+Example:
+
+"https://your-domain.com/api/callback"
+Input Object Parameters
+The input object contains the following parameters based on the form configuration:
+
+input.audio_url
+Required
+string(URL)
+URL of the audio file to transcribe
+
+File URL after upload, not file content; Accepted types: audio/mpeg, audio/wav, audio/x-wav, audio/aac, audio/mp4, audio/ogg; Max size: 200.0MB
+Example:
+
+"https://file.aiquickdraw.com/custom-page/akr/section-images/1757157053357tn37vxc8.mp3"
+input.language_code
+Optional
+string
+Language code of the audio
+
+Max length: 500 characters
+input.tag_audio_events
+Optional
+boolean
+Tag audio events like laughter, applause, etc.
+
+Boolean value (true/false)
+Example:
+
+true
+input.diarize
+Optional
+boolean
+Whether to annotate who is speaking
+
+Boolean value (true/false)
+Example:
+
+true
+Request Example
+
+cURL
+
+JavaScript
+
+Python
+curl -X POST "https://api.kie.ai/api/v1/jobs/createTask" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "elevenlabs/speech-to-text",
+    "callBackUrl": "https://your-domain.com/api/callback",
+    "input": {
+      "audio_url": "https://file.aiquickdraw.com/custom-page/akr/section-images/1757157053357tn37vxc8.mp3",
+      "tag_audio_events": true,
+      "diarize": true
+    }
+}'
+Response Example
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "taskId": "task_12345678"
+  }
+}
+Response Fields
+code
+Status code, 200 for success, others for failure
+message
+Response message, error description when failed
+data.taskId
+Task ID for querying task status
+Callback Notifications
+When you provide the callBackUrl parameter when creating a task, the system will send POST requests to the specified URL upon task completion (success or failure).
+
+Success Callback Example
+{
+    "code": 200,
+    "data": {
+        "completeTime": 1755599644000,
+        "consumeCredits": 100,
+        "costTime": 8,
+        "createTime": 1755599634000,
+        "model": "elevenlabs/speech-to-text",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"elevenlabs/speech-to-text\",\"input\":{\"audio_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757157053357tn37vxc8.mp3\",\"language_code\":\"\",\"tag_audio_events\":true,\"diarize\":true}}",
+        "remainedCredits": 2510330,
+        "resultJson": "{\"resultObject\":{  \"language_code\": \"eng\",  \"language_probability\": 0.9915943741798401,  \"words\": [    {      \"speaker_id\": \"speaker_0\",      \"start\": 0.14,      \"end\": 0.339,      \"text\": \"Ever\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 0.339,      \"end\": 0.459,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 0.459,      \"end\": 0.659,      \"text\": \"tried\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 0.659,      \"end\": 0.74,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 0.74,      \"end\": 0.879,      \"text\": \"Ki\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 0.879,      \"end\": 0.959,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 0.959,      \"end\": 2.279,      \"text\": \"AI?\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.279,      \"end\": 2.279,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.279,      \"end\": 2.459,      \"text\": \"They've\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.459,      \"end\": 2.48,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.48,      \"end\": 2.579,      \"text\": \"got\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.579,      \"end\": 2.639,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.639,      \"end\": 2.699,      \"text\": \"a\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.699,      \"end\": 2.719,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.72,      \"end\": 2.939,      \"text\": \"bunch\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.939,      \"end\": 2.979,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 2.98,      \"end\": 3.119,      \"text\": \"of\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 3.119,      \"end\": 3.139,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 3.139,      \"end\": 3.479,      \"text\": \"solid\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 3.479,      \"end\": 3.5,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 3.5,      \"end\": 3.759,      \"text\": \"AI\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 3.759,      \"end\": 3.839,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 3.839,      \"end\": 4.78,      \"text\": \"APIs,\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 4.78,      \"end\": 4.779,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 4.779,      \"end\": 4.899,      \"text\": \"and\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 4.899,      \"end\": 4.92,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 4.92,      \"end\": 5.019,      \"text\": \"the\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.019,      \"end\": 5.039,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.039,      \"end\": 5.48,      \"text\": \"prices\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.48,      \"end\": 5.5,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.5,      \"end\": 5.619,      \"text\": \"are\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.619,      \"end\": 5.639,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.639,      \"end\": 5.799,      \"text\": \"more\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.799,      \"end\": 5.819,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 5.819,      \"end\": 6.019,      \"text\": \"than\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 6.019,      \"end\": 6.199,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 6.199,      \"end\": 6.739,      \"text\": \"50%\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 6.739,      \"end\": 6.759,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 6.759,      \"end\": 7.039,      \"text\": \"lower\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.039,      \"end\": 7.059,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.059,      \"end\": 7.179,      \"text\": \"than\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.179,      \"end\": 7.199,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.199,      \"end\": 7.299,      \"text\": \"the\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.299,      \"end\": 7.339,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.339,      \"end\": 7.679,      \"text\": \"usual\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.679,      \"end\": 7.699,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.699,      \"end\": 7.839,      \"text\": \"big\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.839,      \"end\": 7.879,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 7.879,      \"end\": 8.079,      \"text\": \"name\",      \"type\": \"word\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 8.079,      \"end\": 8.099,      \"text\": \" \",      \"type\": \"spacing\"    },    {      \"speaker_id\": \"speaker_0\",      \"start\": 8.099,      \"end\": 9.659,      \"text\": \"platforms.\",      \"type\": \"word\"    }  ],  \"text\": \"Ever tried Ki AI? They've got a bunch of solid AI APIs, and the prices are more than 50% lower than the usual big name platforms.\"}}",
+        "state": "success",
+        "taskId": "e989621f54392584b05867f87b160672",
+        "updateTime": 1755599644000
+    },
+    "msg": "Playground task completed successfully."
+}
+Failure Callback Example
+{
+    "code": 501,
+    "data": {
+        "completeTime": 1755597081000,
+        "consumeCredits": 0,
+        "costTime": 0,
+        "createTime": 1755596341000,
+        "failCode": "500",
+        "failMsg": "Internal server error",
+        "model": "elevenlabs/speech-to-text",
+        "param": "{\"callBackUrl\":\"https://your-domain.com/api/callback\",\"model\":\"elevenlabs/speech-to-text\",\"input\":{\"audio_url\":\"https://file.aiquickdraw.com/custom-page/akr/section-images/1757157053357tn37vxc8.mp3\",\"language_code\":\"\",\"tag_audio_events\":true,\"diarize\":true}}",
+        "remainedCredits": 2510430,
+        "state": "fail",
+        "taskId": "bd3a37c523149e4adf45a3ddb5faf1a8",
+        "updateTime": 1755597097000
+    },
+    "msg": "Playground task failed."
+}
+Important Notes
+The callback content structure is identical to the Query Task API response
+The param field contains the complete Create Task request parameters, not just the input section

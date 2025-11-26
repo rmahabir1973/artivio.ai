@@ -1107,7 +1107,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
                        callbackData.data?.audioUrl;
       
       // Load generation to identify model type for logging
-      // Try avatar generation first, then fall back to regular generation
+      // Try STT generation first, then avatar generation, then fall back to regular generation
+      const sttGen = await db.query.sttGenerations.findFirst({
+        where: (fields, { eq }) => eq(fields.id, generationId),
+      }).catch(() => undefined);
+      
+      // Handle STT callbacks specially - extract transcription from resultObject
+      if (sttGen) {
+        console.log(`🎤 Detected STT callback for generation ${generationId}`);
+        
+        const dataState = callbackData.data?.state?.toLowerCase();
+        const isSuccess = callbackData.code === 200 || dataState === 'success';
+        const isError = dataState === 'fail' || callbackData.code === 500 || callbackData.code === 501;
+        
+        if (isSuccess && callbackData.data?.resultJson) {
+          try {
+            const resultData = JSON.parse(callbackData.data.resultJson);
+            const transcriptionData = resultData.resultObject;
+            
+            if (transcriptionData) {
+              // Extract text from words array if available, or use full object
+              let transcriptionText = '';
+              if (transcriptionData.words && Array.isArray(transcriptionData.words)) {
+                transcriptionText = transcriptionData.words
+                  .filter((w: any) => w.type === 'word')
+                  .map((w: any) => w.text)
+                  .join('');
+              }
+              
+              // Store full transcription data as JSON
+              const fullTranscription = JSON.stringify(transcriptionData);
+              
+              await storage.updateSttGeneration(generationId, {
+                status: 'completed',
+                transcription: transcriptionText || fullTranscription,
+                completedAt: new Date(),
+              });
+              
+              console.log(`✓ STT transcription completed for ${generationId}`);
+              return res.json({ success: true, message: 'STT callback processed' });
+            }
+          } catch (e) {
+            console.error('Failed to parse STT resultJson:', e);
+          }
+        }
+        
+        if (isError) {
+          const errorMsg = callbackData.data?.failMsg || callbackData.msg || 'Transcription failed';
+          
+          // Refund credits
+          if (sttGen.userId && sttGen.creditsCost) {
+            await storage.addCreditsAtomic(sttGen.userId, sttGen.creditsCost);
+          }
+          
+          await storage.updateSttGeneration(generationId, {
+            status: 'failed',
+            errorMessage: errorMsg,
+            completedAt: new Date(),
+          });
+          
+          console.log(`✗ STT transcription failed for ${generationId}: ${errorMsg}`);
+          return res.json({ success: true, message: 'STT error callback processed' });
+        }
+        
+        // Intermediate status update
+        return res.json({ success: true, message: 'STT callback acknowledged' });
+      }
+      
       const avatarGen = await db.query.avatarGenerations.findFirst({
         where: (fields, { eq }) => eq(fields.id, generationId),
       }).catch(() => undefined);
@@ -4241,17 +4307,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ========== SPEECH-TO-TEXT ROUTES ==========
 
-  // Transcribe audio (STT) - SYNCHRONOUS processing
+  // Transcribe audio (STT) - Uses Kie.ai jobs API with callbacks
   app.post('/api/stt/transcribe', requireJWT, async (req: any, res) => {
-    // Feature gate: ElevenLabs Speech-to-Text API not available through Kie.ai
-    return res.status(503).json({
-      message: "Speech-to-Text service is temporarily unavailable. This feature requires ElevenLabs API integration which is not currently supported through our provider. Please check back later or contact support for alternatives.",
-      error: "SERVICE_UNAVAILABLE",
-      feature: "speech-to-text"
-    });
-    
-    let hostedAudioUrl: string[] | undefined;
-    let sttGeneration: any = undefined; // Hoist to outer scope for error handling
+    let sttGeneration: any = undefined;
     
     try {
       const userId = req.user.id;
@@ -4265,8 +4323,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { audioFile, model, language, parameters } = validationResult.data!;
-      const cost = await getModelCost(model);
+      const { audioFile, language, parameters } = validationResult.data!;
+      const cost = await getModelCost('elevenlabs-stt');
 
       // Deduct credits atomically
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -4276,95 +4334,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         // Convert base64 audio to hosted URL
-        console.log('Converting audio file to hosted URL...');
+        console.log('Converting audio file to hosted URL for STT...');
         const tempHostedUrl = await saveBase64AudioFiles([audioFile]);
         
         if (!tempHostedUrl || tempHostedUrl.length === 0) {
           throw new Error('Failed to host audio file');
         }
         
-        hostedAudioUrl = tempHostedUrl;
-        const audioUrl = hostedAudioUrl![0];
+        const audioUrl = tempHostedUrl[0];
         console.log(`✓ Audio hosted at: ${audioUrl}`);
 
         // Create STT generation record
         sttGeneration = await storage.createSttGeneration({
           userId,
           audioUrl,
-          model,
+          model: 'elevenlabs/speech-to-text',
           language: language || null,
           transcription: null,
-          status: 'processing',
+          status: 'pending',
           errorMessage: null,
           creditsCost: cost,
         });
 
-        // Transcribe audio SYNCHRONOUSLY (wait for result before responding)
-        const { result } = await transcribeAudio({
-          audioUrl,
-          model,
-          language,
-          parameters,
-        });
-
-        // Extract transcription from result
-        const transcription = result?.data?.transcription || result?.transcription || result?.text;
-        if (!transcription) {
-          throw new Error('Transcription failed - no text returned');
-        }
-
-        // Update with completed transcription
-        await storage.updateSttGeneration(sttGeneration.id, {
-          status: 'completed',
-          transcription: typeof transcription === 'string' ? transcription : JSON.stringify(transcription),
-          completedAt: new Date(),
-        });
-
-        // Return success with transcription immediately and EXIT
-        return res.json({ 
-          success: true, 
-          generationId: sttGeneration.id,
-          transcription,
-          message: "Transcription completed" 
-        });
-      } catch (error: any) {
-        console.error('STT transcription/processing error:', error);
+        // Start async transcription with callback
+        const callbackUrl = getCallbackUrl(sttGeneration.id);
         
-        // Refund credits atomically on failure
-        try {
-          await storage.addCreditsAtomic(userId, cost);
-        } catch (refundError) {
-          console.error('Credit refund failed:', refundError);
-          // Continue even if refund fails - error will be logged
-        }
-        
-        // Mark as failed in database if generation record exists
-        if (sttGeneration) {
+        // Background processing
+        (async () => {
           try {
+            const { result } = await transcribeAudio({
+              audioUrl,
+              language,
+              parameters: {
+                diarization: parameters?.diarization,
+                tagAudioEvents: false, // Can add UI option later
+              },
+              callBackUrl: callbackUrl,
+            });
+
+            const taskId = result?.data?.taskId || result?.taskId;
+            
+            if (taskId) {
+              await storage.updateSttGeneration(sttGeneration.id, {
+                status: 'processing',
+              });
+              console.log(`✓ STT task started: ${taskId}`);
+            } else {
+              throw new Error('No taskId returned from Kie.ai');
+            }
+          } catch (error: any) {
+            console.error('STT background processing error:', error);
+            await storage.addCreditsAtomic(userId, cost);
             await storage.updateSttGeneration(sttGeneration.id, {
               status: 'failed',
               errorMessage: error.message || 'Transcription failed',
               completedAt: new Date(),
             });
-          } catch (dbError) {
-            console.error('Failed to update STT generation status:', dbError);
-            // Continue - error will be logged
           }
+        })();
+
+        // Return immediately with generation ID
+        return res.json({ 
+          success: true, 
+          generationId: sttGeneration.id,
+          message: "Transcription started" 
+        });
+      } catch (error: any) {
+        console.error('STT setup error:', error);
+        await storage.addCreditsAtomic(userId, cost);
+        
+        if (sttGeneration) {
+          await storage.updateSttGeneration(sttGeneration.id, {
+            status: 'failed',
+            errorMessage: error.message || 'Transcription failed',
+            completedAt: new Date(),
+          });
         }
         
-        // Send error response and return (don't rethrow)
-        if (!res.headersSent) {
-          return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
-        }
-        return; // Exit if headers already sent
+        return res.status(500).json({ message: error.message || "Failed to start transcription" });
       }
     } catch (error: any) {
       console.error('STT transcription error:', error);
-      // Only send response if not already sent
-      if (!res.headersSent) {
-        return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
-      }
-      return; // Exit if headers already sent
+      return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
     }
   });
 

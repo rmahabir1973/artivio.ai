@@ -1074,27 +1074,33 @@ export async function generateTTS(params: {
   });
 }
 
-// ElevenLabs Speech-to-Text (Scribe v1) - Transcribe audio with diarization
+// ElevenLabs Speech-to-Text via Kie.ai - Transcribe audio with diarization
+// Uses Kie.ai jobs API with model 'elevenlabs/speech-to-text'
 export async function transcribeAudio(params: {
   audioUrl: string;
-  model?: string; // STT model
   language?: string; // ISO 639-1 code
   parameters?: {
-    diarization?: boolean; // Speaker identification
-    timestamps?: boolean;
+    diarization?: boolean; // Speaker identification (diarize in API)
+    tagAudioEvents?: boolean; // Tag audio events like laughter, applause
   };
+  callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
   const parameters = params.parameters || {};
   
-  const payload: any = {
+  const input: any = {
     audio_url: params.audioUrl,
   };
   
-  if (params.language) payload.language_code = params.language;
-  if (parameters.diarization !== undefined) payload.diarization = parameters.diarization;
-  if (parameters.timestamps !== undefined) payload.timestamps = parameters.timestamps;
+  // Add optional parameters per Kie.ai API spec
+  if (params.language) input.language_code = params.language;
+  if (parameters.diarization !== undefined) input.diarize = parameters.diarization;
+  if (parameters.tagAudioEvents !== undefined) input.tag_audio_events = parameters.tagAudioEvents;
   
-  return await callKieApi('/api/v1/elevenlabs/stt', payload);
+  return await callKieApi('/api/v1/jobs/createTask', {
+    model: 'elevenlabs/speech-to-text',
+    callBackUrl: params.callBackUrl,
+    input,
+  });
 }
 
 // Kling AI Avatar - Generate talking avatar video from image + audio
