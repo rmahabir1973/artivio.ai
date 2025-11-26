@@ -1388,6 +1388,12 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   subscriptions: many(userSubscriptions),
   favoriteWorkflows: many(favoriteWorkflows),
   generationTemplates: many(generationTemplates),
+  videoProjects: many(videoProjects),
+  brandKit: one(brandKits, {
+    fields: [users.id],
+    references: [brandKits.userId],
+  }),
+  projectCollaborations: many(projectCollaborators),
   onboarding: one(userOnboarding, {
     fields: [users.id],
     references: [userOnboarding.userId],
@@ -1463,6 +1469,74 @@ export const insertHomePageContentSchema = createInsertSchema(homePageContent).o
 export type InsertHomePageContent = z.infer<typeof insertHomePageContentSchema>;
 export type HomePageContent = typeof homePageContent.$inferSelect;
 
+// Video Projects table for Video Editor (Twick-based)
+export const videoProjects = pgTable("video_projects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  timelineData: jsonb("timeline_data").notNull(), // Stores Twick timeline JSON
+  settings: jsonb("settings").default(sql`'{}'::jsonb`).notNull(), // Export settings, canvas size, etc.
+  isTemplate: boolean("is_template").notNull().default(false),
+  thumbnailUrl: text("thumbnail_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("video_projects_owner_idx").on(table.ownerUserId),
+]);
+
+export const insertVideoProjectSchema = createInsertSchema(videoProjects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertVideoProject = z.infer<typeof insertVideoProjectSchema>;
+export type VideoProject = typeof videoProjects.$inferSelect;
+
+// Brand Kits table for user branding assets
+export const brandKits = pgTable("brand_kits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  name: varchar("name", { length: 100 }).notNull().default('Default'),
+  palettes: jsonb("palettes").$type<{ id: string; name: string; colors: string[] }[]>(), // Array of color palettes
+  fonts: jsonb("fonts").$type<{ id: string; name: string; family: string; weights?: number[] }[]>(), // Array of fonts
+  logos: jsonb("logos").$type<{ id: string; name: string; url: string; kind?: 'logo' | 'watermark' }[]>(), // Array of logos
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export const insertBrandKitSchema = createInsertSchema(brandKits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertBrandKit = z.infer<typeof insertBrandKitSchema>;
+export type BrandKit = typeof brandKits.$inferSelect;
+
+// Project Collaborators table for sharing video projects
+export const projectCollaborators = pgTable("project_collaborators", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => videoProjects.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: varchar("role").notNull(), // 'viewer', 'editor', 'owner'
+  invitedBy: varchar("invited_by").references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("project_collaborators_project_user_idx").on(table.projectId, table.userId),
+  index("project_collaborators_project_idx").on(table.projectId),
+  index("project_collaborators_user_idx").on(table.userId),
+]);
+
+export const insertProjectCollaboratorSchema = createInsertSchema(projectCollaborators).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertProjectCollaborator = z.infer<typeof insertProjectCollaboratorSchema>;
+export type ProjectCollaborator = typeof projectCollaborators.$inferSelect;
+
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({
   user: one(users, {
     fields: [conversations.userId],
@@ -1533,4 +1607,35 @@ export const userSubscriptionsRelations = relations(userSubscriptions, ({ one })
 
 export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
   subscriptions: many(userSubscriptions),
+}));
+
+// Video Editor Relations
+export const videoProjectsRelations = relations(videoProjects, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [videoProjects.ownerUserId],
+    references: [users.id],
+  }),
+  collaborators: many(projectCollaborators),
+}));
+
+export const brandKitsRelations = relations(brandKits, ({ one }) => ({
+  user: one(users, {
+    fields: [brandKits.userId],
+    references: [users.id],
+  }),
+}));
+
+export const projectCollaboratorsRelations = relations(projectCollaborators, ({ one }) => ({
+  project: one(videoProjects, {
+    fields: [projectCollaborators.projectId],
+    references: [videoProjects.id],
+  }),
+  user: one(users, {
+    fields: [projectCollaborators.userId],
+    references: [users.id],
+  }),
+  inviter: one(users, {
+    fields: [projectCollaborators.invitedBy],
+    references: [users.id],
+  }),
 }));

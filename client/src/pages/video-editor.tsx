@@ -11,8 +11,9 @@ import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Loader2, Download, Film, AlertCircle, Monitor, Smartphone, Square, 
-  Library, Copy, Video, Image, Music, X, Check
+  Library, Copy, Video, Image, Music, X, Check, Settings2
 } from "lucide-react";
+import { SiYoutube, SiTiktok, SiInstagram, SiX } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -46,6 +53,119 @@ const CANVAS_PRESETS: CanvasPreset[] = [
   { name: "Portrait", width: 1080, height: 1920, icon: Smartphone, ratio: "9:16" },
   { name: "Square", width: 1080, height: 1080, icon: Square, ratio: "1:1" },
 ];
+
+type QualityPreset = {
+  name: string;
+  width: number;
+  height: number;
+  label: string;
+};
+
+const QUALITY_PRESETS: QualityPreset[] = [
+  { name: "720p", width: 1280, height: 720, label: "720p (HD)" },
+  { name: "1080p", width: 1920, height: 1080, label: "1080p (Full HD)" },
+  { name: "4K", width: 3840, height: 2160, label: "4K (Ultra HD)" },
+];
+
+type FPSPreset = {
+  value: number;
+  name: string;
+  label: string;
+};
+
+const FPS_PRESETS: FPSPreset[] = [
+  { value: 24, name: "24fps", label: "24 FPS (Cinematic)" },
+  { value: 30, name: "30fps", label: "30 FPS (Standard)" },
+  { value: 60, name: "60fps", label: "60 FPS (Smooth)" },
+];
+
+type PlatformPreset = {
+  id: string;
+  name: string;
+  icon: typeof SiYoutube;
+  ratio: string;
+  quality: string;
+  fps: number;
+  width: number;
+  height: number;
+  canvasWidth: number;
+  canvasHeight: number;
+};
+
+const PLATFORM_PRESETS: PlatformPreset[] = [
+  { 
+    id: "youtube", 
+    name: "YouTube", 
+    icon: SiYoutube, 
+    ratio: "16:9", 
+    quality: "1080p", 
+    fps: 30,
+    width: 1920,
+    height: 1080,
+    canvasWidth: 1920,
+    canvasHeight: 1080
+  },
+  { 
+    id: "tiktok", 
+    name: "TikTok", 
+    icon: SiTiktok, 
+    ratio: "9:16", 
+    quality: "1080p", 
+    fps: 30,
+    width: 1920,
+    height: 1080,
+    canvasWidth: 1080,
+    canvasHeight: 1920
+  },
+  { 
+    id: "instagram-reels", 
+    name: "Instagram Reels", 
+    icon: SiInstagram, 
+    ratio: "9:16", 
+    quality: "1080p", 
+    fps: 30,
+    width: 1920,
+    height: 1080,
+    canvasWidth: 1080,
+    canvasHeight: 1920
+  },
+  { 
+    id: "instagram-feed", 
+    name: "Instagram Feed", 
+    icon: SiInstagram, 
+    ratio: "1:1", 
+    quality: "1080p", 
+    fps: 30,
+    width: 1920,
+    height: 1080,
+    canvasWidth: 1080,
+    canvasHeight: 1080
+  },
+  { 
+    id: "twitter", 
+    name: "Twitter/X", 
+    icon: SiX, 
+    ratio: "16:9", 
+    quality: "720p", 
+    fps: 30,
+    width: 1280,
+    height: 720,
+    canvasWidth: 1280,
+    canvasHeight: 720
+  },
+];
+
+type ExportSettings = {
+  quality: QualityPreset;
+  fps: FPSPreset;
+  platform: PlatformPreset | null;
+};
+
+const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
+  quality: QUALITY_PRESETS[1],
+  fps: FPS_PRESETS[1],
+  platform: null,
+};
 
 type MediaItem = {
   id: string;
@@ -139,6 +259,7 @@ export default function VideoEditor() {
   const [selectedCanvas, setSelectedCanvas] = useState<CanvasPreset>(CANVAS_PRESETS[0]);
   const [studioKey, setStudioKey] = useState(0);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [exportSettings, setExportSettings] = useState<ExportSettings>(DEFAULT_EXPORT_SETTINGS);
   
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
@@ -207,6 +328,47 @@ export default function VideoEditor() {
     });
   };
 
+  const handleQualityChange = (quality: QualityPreset) => {
+    setExportSettings(prev => ({ ...prev, quality, platform: null }));
+    toast({
+      title: "Quality Updated",
+      description: `Export quality set to ${quality.label}`,
+    });
+  };
+
+  const handleFPSChange = (fps: FPSPreset) => {
+    setExportSettings(prev => ({ ...prev, fps, platform: null }));
+    toast({
+      title: "Frame Rate Updated", 
+      description: `Export frame rate set to ${fps.label}`,
+    });
+  };
+
+  const handlePlatformPreset = (platform: PlatformPreset) => {
+    const matchingQuality = QUALITY_PRESETS.find(q => q.name === platform.quality) || QUALITY_PRESETS[1];
+    const matchingFPS = FPS_PRESETS.find(f => f.value === platform.fps) || FPS_PRESETS[1];
+    
+    const matchingCanvas = CANVAS_PRESETS.find(
+      c => c.width === platform.canvasWidth && c.height === platform.canvasHeight
+    );
+    
+    if (matchingCanvas) {
+      setSelectedCanvas(matchingCanvas);
+      setStudioKey(prev => prev + 1);
+    }
+    
+    setExportSettings({
+      quality: matchingQuality,
+      fps: matchingFPS,
+      platform,
+    });
+    
+    toast({
+      title: `${platform.name} Preset Applied`,
+      description: `Canvas: ${platform.ratio}, Quality: ${platform.quality}, FPS: ${platform.fps}`,
+    });
+  };
+
   const handleExportVideo = async (project: any, videoSettings: any) => {
     if (!isAuthenticated) {
       setShowGuestModal(true);
@@ -225,7 +387,14 @@ export default function VideoEditor() {
       
       const response = await apiRequest("POST", "/api/video-editor/export", {
         project,
-        videoSettings,
+        videoSettings: {
+          ...videoSettings,
+          quality: exportSettings.quality.name,
+          width: exportSettings.quality.width,
+          height: exportSettings.quality.height,
+          fps: exportSettings.fps.value,
+          platform: exportSettings.platform?.id || null,
+        },
       });
       
       const data = await response.json();
@@ -349,6 +518,104 @@ export default function VideoEditor() {
                     </DropdownMenuItem>
                   );
                 })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2" data-testid="button-export-settings">
+                  <Settings2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Export Settings</span>
+                  {exportSettings.platform ? (
+                    <Badge variant="secondary" className="text-xs">
+                      {exportSettings.platform.name}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      {exportSettings.quality.name} • {exportSettings.fps.value}fps
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Platform Presets</DropdownMenuLabel>
+                {PLATFORM_PRESETS.map((platform) => {
+                  const PlatformIcon = platform.icon;
+                  const isSelected = exportSettings.platform?.id === platform.id;
+                  return (
+                    <DropdownMenuItem
+                      key={platform.id}
+                      onClick={() => handlePlatformPreset(platform)}
+                      className="gap-2"
+                      data-testid={`menu-item-platform-${platform.id}`}
+                    >
+                      <PlatformIcon className="h-4 w-4" />
+                      <div className="flex-1">
+                        <span>{platform.name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {platform.ratio} • {platform.quality}
+                        </span>
+                      </div>
+                      {isSelected && <Check className="h-4 w-4 text-primary" />}
+                    </DropdownMenuItem>
+                  );
+                })}
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger data-testid="menu-quality-submenu">
+                    <Video className="h-4 w-4 mr-2" />
+                    <span>Quality</span>
+                    <Badge variant="outline" className="ml-auto text-xs">
+                      {exportSettings.quality.name}
+                    </Badge>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {QUALITY_PRESETS.map((quality) => {
+                        const isSelected = exportSettings.quality.name === quality.name;
+                        return (
+                          <DropdownMenuItem
+                            key={quality.name}
+                            onClick={() => handleQualityChange(quality)}
+                            data-testid={`menu-item-quality-${quality.name}`}
+                          >
+                            <span className="flex-1">{quality.label}</span>
+                            {isSelected && <Check className="h-4 w-4 text-primary" />}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger data-testid="menu-fps-submenu">
+                    <Film className="h-4 w-4 mr-2" />
+                    <span>Frame Rate</span>
+                    <Badge variant="outline" className="ml-auto text-xs">
+                      {exportSettings.fps.value}fps
+                    </Badge>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {FPS_PRESETS.map((fps) => {
+                        const isSelected = exportSettings.fps.value === fps.value;
+                        return (
+                          <DropdownMenuItem
+                            key={fps.name}
+                            onClick={() => handleFPSChange(fps)}
+                            data-testid={`menu-item-fps-${fps.value}`}
+                          >
+                            <span className="flex-1">{fps.label}</span>
+                            {isSelected && <Check className="h-4 w-4 text-primary" />}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
 
