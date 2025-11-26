@@ -929,22 +929,6 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            {/* Video Editor */}
-            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-video-editor">
-              <CardHeader>
-                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
-                  <Film className="h-6 w-6 text-purple-500" />
-                </div>
-                <CardTitle>Video Editor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-400 mb-3">
-                  Combine and edit AI-generated videos with transitions
-                </p>
-                <p className="text-sm text-purple-400">Free</p>
-              </CardContent>
-            </Card>
-
             {/* QR Code Generator */}
             <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-qr-generator">
               <CardHeader>

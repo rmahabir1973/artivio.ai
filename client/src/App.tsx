@@ -44,7 +44,6 @@ import AnalyzeImage from "@/pages/analyze-image";
 import TalkingAvatars from "@/pages/talking-avatars";
 import LipSync from "@/pages/lip-sync";
 import AudioConverter from "@/pages/audio-converter";
-import VideoEditor from "@/pages/video-editor";
 import QRGenerator from "@/pages/qr-generator";
 import TopazUpscaler from "@/pages/topaz-upscaler";
 import TopazVideoUpscaler from "@/pages/topaz-video-upscaler";
@@ -113,7 +112,6 @@ function Router() {
       <Route path="/talking-avatars" component={TalkingAvatars} />
       <Route path="/lip-sync" component={LipSync} />
       <Route path="/audio-converter" component={AudioConverter} />
-      <Route path="/video-editor" component={VideoEditor} />
       <Route path="/qr-generator" component={QRGenerator} />
       <Route path="/topaz-upscaler" component={TopazUpscaler} />
       <Route path="/topaz-video-upscaler" component={TopazVideoUpscaler} />
@@ -188,7 +186,6 @@ function AppContent() {
     '/talking-avatars',
     '/lip-sync',
     '/audio-converter',
-    '/video-editor',
     '/qr-generator',
     '/topaz-upscaler',
     '/topaz-video-upscaler',

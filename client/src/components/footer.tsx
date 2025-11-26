@@ -36,7 +36,6 @@ export function Footer() {
       links: [
         { label: "AI Chat", href: "/chat" },
         { label: "QR Generator", href: "/qr-generator" },
-        { label: "Video Editor", href: "/video-editor" },
         { label: "Video Upscaler", href: "/topaz-video-upscaler" },
         { label: "Lip Sync", href: "/lip-sync" },
       ]

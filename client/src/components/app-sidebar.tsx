@@ -23,7 +23,6 @@ import {
   ScanEye,
   UserCircle,
   AudioWaveform,
-  Scissors,
   Sparkles,
   Mic2,
   QrCode,
@@ -54,7 +53,6 @@ const menuSections = [
       { title: "Sora 2 Pro", url: "/generate/sora", icon: Sparkles },
       { title: "Talking Avatars", url: "/talking-avatars", icon: UserCircle },
       { title: "Video Upscaler", url: "/topaz-video-upscaler", icon: Zap },
-      { title: "Video Editor", url: "/video-editor", icon: Scissors },
     ],
   },
   {

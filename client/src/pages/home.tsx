@@ -20,7 +20,6 @@ import {
   ScanEye,
   UserCircle,
   AudioWaveform,
-  Scissors,
   Library,
   Search,
   Sparkles,
@@ -257,14 +256,6 @@ export default function Home() {
       description: 'Convert audio between formats and enhance quality',
       icon: AudioWaveform,
       route: '/audio-converter',
-      category: 'tools'
-    },
-    {
-      id: 'video-editor',
-      title: 'Video Editor',
-      description: 'Combine and edit AI-generated videos with transitions',
-      icon: Scissors,
-      route: '/video-editor',
       category: 'tools'
     },
     {
