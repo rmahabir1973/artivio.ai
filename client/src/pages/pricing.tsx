@@ -543,6 +543,27 @@ export default function Pricing() {
               })}
             </div>
 
+            {/* Enterprise CTA */}
+            <div className="max-w-4xl mx-auto mb-16">
+              <div className="relative p-[1px] rounded-xl bg-gradient-to-r from-purple-500/50 via-purple-600/30 to-purple-500/50">
+                <div className="bg-[#0d0d0d] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="text-center md:text-left">
+                    <h4 className="text-lg font-semibold text-white mb-1">Need more?</h4>
+                    <p className="text-gray-400 text-sm">
+                      Looking for a custom plan for your agency or enterprise team? We'd love to help.
+                    </p>
+                  </div>
+                  <a 
+                    href="mailto:sales@artivio.ai"
+                    className="shrink-0 px-6 py-2.5 bg-transparent border border-purple-500/50 text-purple-400 rounded-lg hover:bg-purple-500/10 hover:border-purple-400 transition-all duration-200 text-sm font-medium"
+                    data-testid="link-contact-sales"
+                  >
+                    Contact Sales
+                  </a>
+                </div>
+              </div>
+            </div>
+
             {/* Feature Comparison Table */}
             <div className="max-w-6xl mx-auto mb-16">
               <h3 className="text-2xl font-semibold text-white mb-8" style={{ fontFamily: "'Playfair Display', serif" }}>
