@@ -286,3 +286,24 @@
     inset: -1px;
   }
 }
+
+/* ========================================
+   TWICK STUDIO OVERRIDES
+   Fix layout to work within sidebar layout
+   ======================================== */
+.twick-studio-wrapper .studio-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 900px;
+}
+
+.twick-studio-wrapper .studio-content {
+  height: calc(100% - 56px) !important;
+}
+
+.twick-studio-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

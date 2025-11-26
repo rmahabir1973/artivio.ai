@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { LivePlayerProvider } from "@twick/live-player";
 import { TwickStudio } from "@twick/studio";
 import { TimelineProvider, INITIAL_TIMELINE_DATA } from "@twick/timeline";
@@ -8,22 +8,141 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
-import { Loader2, Download, Film, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { 
+  Loader2, Download, Film, AlertCircle, Monitor, Smartphone, Square, 
+  Library, Copy, Video, Image, Music, X, Check
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type CanvasPreset = {
+  name: string;
+  width: number;
+  height: number;
+  icon: typeof Monitor;
+  ratio: string;
+};
+
+const CANVAS_PRESETS: CanvasPreset[] = [
+  { name: "Landscape", width: 1920, height: 1080, icon: Monitor, ratio: "16:9" },
+  { name: "Portrait", width: 1080, height: 1920, icon: Smartphone, ratio: "9:16" },
+  { name: "Square", width: 1080, height: 1080, icon: Square, ratio: "1:1" },
+];
+
+type MediaItem = {
+  id: string;
+  name: string;
+  url: string;
+  thumbnail?: string;
+  type: 'video' | 'image' | 'audio';
+  duration?: number;
+  createdAt: Date;
+};
+
+function LibraryItem({ item, onCopy }: { item: MediaItem; onCopy: (url: string) => void }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(item.url);
+      setCopied(true);
+      onCopy(item.url);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const TypeIcon = item.type === 'video' ? Video : item.type === 'image' ? Image : Music;
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card hover-elevate transition-colors group">
+      <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+        {item.type === 'image' ? (
+          <img 
+            src={item.thumbnail || item.url} 
+            alt={item.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : item.type === 'video' ? (
+          <video 
+            src={item.url} 
+            className="w-full h-full object-cover"
+            muted
+            preload="metadata"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Music className="w-6 h-6 text-muted-foreground" />
+          </div>
+        )}
+        <div className="absolute bottom-1 right-1">
+          <Badge variant="secondary" className="text-[10px] px-1 py-0">
+            <TypeIcon className="w-3 h-3" />
+          </Badge>
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{item.name}</p>
+        <p className="text-xs text-muted-foreground">
+          {item.createdAt.toLocaleDateString()}
+          {item.duration && ` • ${item.duration}s`}
+        </p>
+      </div>
+      
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleCopy}
+        className="flex-shrink-0"
+        data-testid={`button-copy-${item.id}`}
+      >
+        {copied ? (
+          <Check className="h-4 w-4 text-green-500" />
+        ) : (
+          <Copy className="h-4 w-4" />
+        )}
+      </Button>
+    </div>
+  );
+}
 
 export default function VideoEditor() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<string | null>(null);
   const [exportedVideoUrl, setExportedVideoUrl] = useState<string | null>(null);
+  const [selectedCanvas, setSelectedCanvas] = useState<CanvasPreset>(CANVAS_PRESETS[0]);
+  const [studioKey, setStudioKey] = useState(0);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   
-  // Ref for tracking abort controller and mounted state
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   
-  // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -34,13 +153,66 @@ export default function VideoEditor() {
     };
   }, []);
 
+  const { data: userGenerations } = useQuery<any[]>({
+    queryKey: ['/api/generations'],
+    enabled: isAuthenticated,
+  });
+
+  const userMedia = useMemo(() => {
+    if (!userGenerations) return { videos: [] as MediaItem[], images: [] as MediaItem[], audio: [] as MediaItem[] };
+    
+    const videos: MediaItem[] = [];
+    const images: MediaItem[] = [];
+    const audio: MediaItem[] = [];
+    
+    userGenerations.forEach((gen: any) => {
+      if (gen.status !== 'completed' || !gen.resultUrl) return;
+      
+      const mediaItem: MediaItem = {
+        id: gen.id,
+        name: gen.prompt?.substring(0, 50) || `${gen.type} - ${gen.model}`,
+        url: gen.resultUrl,
+        thumbnail: gen.resultUrl,
+        createdAt: new Date(gen.createdAt),
+        type: 'video',
+      };
+      
+      if (gen.type === 'video' || gen.type === 'talking-avatar' || gen.type === 'avatar' || gen.type === 'transition') {
+        videos.push({ ...mediaItem, type: 'video', duration: gen.metadata?.duration || 5 });
+      } else if (gen.type === 'image' || gen.type === 'upscaling' || gen.type === 'background-remover') {
+        images.push({ ...mediaItem, type: 'image' });
+      } else if (gen.type === 'music' || gen.type === 'sound-effects') {
+        audio.push({ ...mediaItem, type: 'audio', duration: gen.metadata?.duration || 30 });
+      }
+    });
+    
+    return { videos, images, audio };
+  }, [userGenerations]);
+
+  const totalMediaCount = userMedia.videos.length + userMedia.images.length + userMedia.audio.length;
+
+  const handleCanvasChange = (preset: CanvasPreset) => {
+    setSelectedCanvas(preset);
+    setStudioKey(prev => prev + 1);
+    toast({
+      title: "Canvas Updated",
+      description: `Canvas set to ${preset.name} (${preset.ratio})`,
+    });
+  };
+
+  const handleCopyUrl = (url: string) => {
+    toast({
+      title: "URL Copied",
+      description: "Paste this URL in the editor's media panel to add it to your project.",
+    });
+  };
+
   const handleExportVideo = async (project: any, videoSettings: any) => {
     if (!isAuthenticated) {
       setShowGuestModal(true);
       return { status: false, message: "Please sign in to export videos" };
     }
 
-    // Create abort controller for this export
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
 
@@ -137,31 +309,167 @@ export default function VideoEditor() {
     }
   };
 
+  const SelectedIcon = selectedCanvas.icon;
+
   return (
     <SidebarInset>
       <div className="flex flex-col h-full w-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Film className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-semibold">Video Editor</h1>
           </div>
           
-          {exportedVideoUrl && (
-            <a
-              href={exportedVideoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-              data-testid="button-download-video"
-            >
-              <Download className="h-4 w-4" />
-              Download Video
-            </a>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2" data-testid="button-canvas-size">
+                  <SelectedIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{selectedCanvas.name}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedCanvas.ratio}
+                  </Badge>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {CANVAS_PRESETS.map((preset) => {
+                  const Icon = preset.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={preset.name}
+                      onClick={() => handleCanvasChange(preset)}
+                      className="gap-2"
+                      data-testid={`menu-item-canvas-${preset.name.toLowerCase()}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{preset.name}</span>
+                      <Badge variant="outline" className="ml-auto text-xs">
+                        {preset.ratio}
+                      </Badge>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {isAuthenticated && (
+              <Sheet open={libraryOpen} onOpenChange={setLibraryOpen}>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2"
+                    data-testid="button-open-library"
+                  >
+                    <Library className="h-4 w-4" />
+                    <span className="hidden sm:inline">My Library</span>
+                    {totalMediaCount > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {totalMediaCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <Library className="h-5 w-5" />
+                      My Library
+                    </SheetTitle>
+                    <SheetDescription>
+                      Copy URLs of your generated content to use in the editor. Paste URLs in the video, image, or audio panels.
+                    </SheetDescription>
+                  </SheetHeader>
+                  
+                  <Tabs defaultValue="videos" className="mt-6">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="videos" className="gap-1">
+                        <Video className="h-4 w-4" />
+                        Videos ({userMedia.videos.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="images" className="gap-1">
+                        <Image className="h-4 w-4" />
+                        Images ({userMedia.images.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="audio" className="gap-1">
+                        <Music className="h-4 w-4" />
+                        Audio ({userMedia.audio.length})
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="videos" className="mt-4">
+                      <ScrollArea className="h-[calc(100vh-280px)]">
+                        {userMedia.videos.length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p>No videos yet</p>
+                            <p className="text-sm">Generate videos to see them here</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 pr-4">
+                            {userMedia.videos.map((item) => (
+                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} />
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
+                    
+                    <TabsContent value="images" className="mt-4">
+                      <ScrollArea className="h-[calc(100vh-280px)]">
+                        {userMedia.images.length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p>No images yet</p>
+                            <p className="text-sm">Generate images to see them here</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 pr-4">
+                            {userMedia.images.map((item) => (
+                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} />
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
+                    
+                    <TabsContent value="audio" className="mt-4">
+                      <ScrollArea className="h-[calc(100vh-280px)]">
+                        {userMedia.audio.length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <Music className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p>No audio yet</p>
+                            <p className="text-sm">Generate music or sound effects to see them here</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 pr-4">
+                            {userMedia.audio.map((item) => (
+                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} />
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
+                  </Tabs>
+                </SheetContent>
+              </Sheet>
+            )}
+            
+            {exportedVideoUrl && (
+              <a
+                href={exportedVideoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                data-testid="button-download-video"
+              >
+                <Download className="h-4 w-4" />
+                Download Video
+              </a>
+            )}
+          </div>
         </div>
 
-        {/* Export Progress Overlay */}
         {isExporting && (
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="bg-card border rounded-lg p-8 text-center space-y-4 max-w-md">
@@ -177,28 +485,27 @@ export default function VideoEditor() {
           </div>
         )}
 
-        {/* Info Alert for Guests */}
         {!isAuthenticated && (
           <Alert className="m-4 border-blue-500/50 bg-blue-500/10">
             <AlertCircle className="h-4 w-4 text-blue-500" />
             <AlertDescription className="text-blue-700 dark:text-blue-300">
-              You're exploring as a guest. Sign in to save projects and export videos.
+              You're exploring as a guest. Sign in to access your library, save projects, and export videos.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Twick Studio */}
-        <div className="flex-1 relative" data-testid="video-editor-container">
+        <div className="flex-1 relative twick-studio-wrapper" data-testid="video-editor-container">
           <LivePlayerProvider>
             <TimelineProvider
+              key={studioKey}
               initialData={INITIAL_TIMELINE_DATA}
               contextId="artivio-video-editor"
             >
               <TwickStudio
                 studioConfig={{
                   videoProps: {
-                    width: 1920,
-                    height: 1080,
+                    width: selectedCanvas.width,
+                    height: selectedCanvas.height,
                   },
                   timelineTickConfigs: [
                     { durationThreshold: 30, majorInterval: 5, minorTicks: 5 },
@@ -217,7 +524,6 @@ export default function VideoEditor() {
           </LivePlayerProvider>
         </div>
 
-        {/* Guest Modal */}
         <GuestGenerateModal
           open={showGuestModal}
           onOpenChange={setShowGuestModal}
