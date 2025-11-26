@@ -47,7 +47,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine AI-generated videos with a drag-and-drop interface.
 -   **QR Code Generator**: Client-side QR code generator with logo embedding, customization, and live preview.
 -   **AI Chat**: Dual provider support (Deepseek, OpenAI) with streaming responses, model selection, and persistent conversation history.
--   **Voice Cloning**: Integrates ElevenLabs via Kie.ai, supporting audio uploads and recording.
+-   **Voice Cloning**: Direct ElevenLabs API integration (replaces non-functional Kie.ai), supporting audio uploads, recording, and SSRF-secure base64 validation.
 -   **InfiniteTalk Lip Sync**: Creates lip-synced videos from images and audio using Kie.ai, featuring resolution-based pricing and seed parameters.
 -   **Admin Panel**: Comprehensive user management, API key management, Stripe integration, and home page content management.
 -   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions.
@@ -155,7 +155,7 @@ grep "serveStatic" dist/index.js | head -3  # Shows path resolution
 -   **OpenAI API**: AI chat models and GPT-4o Vision for image analysis.
 -   **Neon (PostgreSQL)**: Managed PostgreSQL database service.
 -   **Replit Auth**: User authentication.
--   **ElevenLabs**: Voice cloning (integrated via Kie.ai).
+-   **ElevenLabs**: Voice cloning and TTS (direct API integration for voice cloning, Kie.ai for TTS and sound effects).
 -   **FFmpeg 6.1.1**: Server-side video processing.
 -   **Stripe**: Payment processing for subscriptions.
 -   **Loops.so**: Email marketing platform.
