@@ -9,7 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
-import { Volume2, Mic, Download, ChevronDown } from "lucide-react";
+import { Volume2, Mic, Download, ChevronDown, Loader2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { VoiceClone } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";

@@ -20,7 +20,6 @@ import {
   generateSoundEffects,
   uploadCover,
   uploadExtend,
-  cloneVoice,
   generateTTS,
   transcribeAudio,
   generateKlingAvatar,
@@ -30,6 +29,12 @@ import {
   upscaleVideo,
   initializeApiKeys 
 } from "./kieai";
+import { 
+  cloneVoice as elevenLabsCloneVoice, 
+  deleteVoice as elevenLabsDeleteVoice,
+  processAudioFilesForCloning,
+  isElevenLabsConfigured
+} from "./elevenlabs";
 import { analyzeImageWithVision } from "./openaiVision";
 import { processImageInputs, saveBase64Image, saveBase64Images, saveBase64Video } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
@@ -4007,12 +4012,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ========== VOICE CLONING ROUTES ==========
 
-  // Clone a voice
+  // Clone a voice - Uses direct ElevenLabs API
   app.post('/api/voice-clone', requireJWT, async (req: any, res) => {
-    let hostedAudioUrls: string[] | undefined;
-    
     try {
       const userId = req.user.id;
+
+      // Check if ElevenLabs is configured
+      if (!isElevenLabsConfigured()) {
+        return res.status(503).json({ 
+          message: "Voice cloning is not available. ElevenLabs API key is not configured." 
+        });
+      }
 
       // Validate request
       const validationResult = cloneVoiceRequestSchema.safeParse(req.body);
@@ -4026,6 +4036,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { name, description, audioFiles } = validationResult.data!;
       const cost = 100; // Voice cloning cost
 
+      // Validate audio files before deducting credits
+      if (!audioFiles || audioFiles.length === 0) {
+        return res.status(400).json({ message: "At least one audio file is required for voice cloning" });
+      }
+
+      // Validate all files are base64 data URLs (prevent SSRF)
+      for (const file of audioFiles) {
+        if (!file.startsWith('data:audio/') && !file.startsWith('data:video/')) {
+          return res.status(400).json({ message: "Only base64 encoded audio files are accepted" });
+        }
+      }
+
       // Deduct credits atomically
       const user = await storage.deductCreditsAtomic(userId, cost);
       if (!user) {
@@ -4033,38 +4055,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        // Convert base64 audio files to hosted URLs with validation
-        console.log(`Converting ${audioFiles.length} base64 audio files to hosted URLs...`);
-        const tempHostedUrls = await saveBase64AudioFiles(audioFiles);
-        
-        if (!tempHostedUrls) {
-          throw new Error('Failed to host audio files');
-        }
-        
-        hostedAudioUrls = tempHostedUrls;
-        console.log(`✓ Audio files hosted successfully:`, hostedAudioUrls);
+        // Process audio files for ElevenLabs (convert base64 to buffers)
+        console.log(`[VoiceClone] Processing ${audioFiles.length} audio files for ElevenLabs...`);
+        const audioBuffers = await processAudioFilesForCloning(audioFiles);
+        console.log(`[VoiceClone] ✓ Processed ${audioBuffers.length} audio files`);
 
-        // Call Kie.ai voice cloning API  
-        console.log(`Calling Kie.ai voice clone API with name: ${name}, files: ${hostedAudioUrls!.length}`);
-        const { result, keyName } = await cloneVoice({
+        // Call direct ElevenLabs voice cloning API  
+        console.log(`[VoiceClone] Calling ElevenLabs API with name: "${name}"`);
+        const result = await elevenLabsCloneVoice({
           name,
           description,
-          audioFiles: hostedAudioUrls!,
+          audioBuffers,
         });
-        console.log(`Kie.ai voice clone response:`, safeStringify(result));
-
-        // Extract voice ID from result
-        const voiceId = result?.data?.voiceId || result?.voiceId || result?.id;
-        if (!voiceId) {
-          console.error('Voice cloning failed - no voice ID in result:', result);
-          throw new Error('Voice cloning failed - no voice ID returned from ElevenLabs. Please try again.');
-        }
+        console.log(`[VoiceClone] ✓ Voice cloned successfully: ${result.voice_id}`);
 
         // Save voice clone to database
         const voiceClone = await storage.createVoiceClone({
           userId,
           name,
-          voiceId,
+          voiceId: result.voice_id,
           description: description || '',
           provider: 'elevenlabs',
           isActive: true,
@@ -4073,29 +4082,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ 
           success: true, 
           voiceClone,
-          message: "Voice cloned successfully" 
+          message: "Voice cloned successfully! You can now use this voice in Text-to-Speech." 
         });
       } catch (error: any) {
         // Log full error details for debugging
-        console.error('Voice cloning inner error:', {
+        console.error('[VoiceClone] Voice cloning failed:', {
           message: error.message,
           stack: error.stack,
-          response: error.response?.data,
-          status: error.response?.status
         });
         
-        // Refund credits atomically if voice cloning failed (feature-gated, unreachable in production)
+        // Refund credits if voice cloning failed
         storage.getUser(userId).then(user => {
           if (user && typeof user.credits === 'number') {
             storage.updateUserCredits(userId, user.credits + cost);
-            console.log(`Refunded ${cost} credits to user ${userId}`);
+            console.log(`[VoiceClone] Refunded ${cost} credits to user ${userId}`);
           }
-        }).catch(err => console.error('Failed to refund credits:', err));
+        }).catch(err => console.error('[VoiceClone] Failed to refund credits:', err));
         throw error;
       }
     } catch (error: any) {
-      console.error('Voice cloning outer error:', error);
-      const errorMessage = error.message || error.response?.data?.message || error.response?.data?.error || "Voice cloning failed. Please check your audio files and try again.";
+      console.error('[VoiceClone] Error:', error.message);
+      const errorMessage = error.message || "Voice cloning failed. Please check your audio files and try again.";
       res.status(500).json({ message: errorMessage });
     }
   });
@@ -4136,7 +4143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete voice clone
+  // Delete voice clone - Also deletes from ElevenLabs
   app.delete('/api/voice-clones/:voiceId', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -4149,6 +4156,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (existingVoice.userId !== userId) {
         return res.status(403).json({ message: "Forbidden - not your voice clone" });
+      }
+
+      // Try to delete from ElevenLabs as well (best effort)
+      if (isElevenLabsConfigured() && existingVoice.provider === 'elevenlabs') {
+        try {
+          await elevenLabsDeleteVoice(voiceId);
+          console.log(`[VoiceClone] Deleted voice ${voiceId} from ElevenLabs`);
+        } catch (error: any) {
+          // Log but don't fail - still delete from our database
+          console.warn(`[VoiceClone] Could not delete voice ${voiceId} from ElevenLabs:`, error.message);
+        }
       }
 
       await storage.deleteVoiceClone(voiceId);
