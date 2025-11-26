@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
@@ -12,6 +13,7 @@ import { Loader2, Image as ImageIcon, Video, Upload, Mic, Square, Play, Pause, V
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { AvatarGeneration } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 
 export default function TalkingAvatars() {
   const { toast } = useToast();
@@ -26,6 +28,8 @@ export default function TalkingAvatars() {
   const [quality, setQuality] = useState("720p");
   const [emotion, setEmotion] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [seed, setSeed] = useState("");
+  const [seedLocked, setSeedLocked] = useState(false);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -50,7 +54,7 @@ export default function TalkingAvatars() {
       sourceImage: string;
       audioUrl: string;
       provider: string;
-      parameters?: { quality?: string; emotion?: string };
+      parameters?: { quality?: string; emotion?: string; seed?: number };
     }) => {
       return await apiRequest("POST", "/api/avatar/generate", params);
     },
@@ -68,6 +72,9 @@ export default function TalkingAvatars() {
       setRecordedAudio(null);
       setEmotion("");
       setRecordingTime(0);
+      if (!seedLocked) {
+        setSeed("");
+      }
     },
     onError: (error: any) => {
       toast({
@@ -263,6 +270,19 @@ export default function TalkingAvatars() {
       return;
     }
 
+    // Validate seed for InfiniteTalk if provided
+    if (provider === "infinite-talk" && seed) {
+      const seedNum = parseInt(seed, 10);
+      if (isNaN(seedNum) || seedNum < 10000 || seedNum > 1000000) {
+        toast({
+          title: "Validation Error",
+          description: "Seed must be between 10000 and 1000000.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     generateMutation.mutate({
       sourceImage,
       audioUrl,
@@ -270,6 +290,7 @@ export default function TalkingAvatars() {
       parameters: {
         quality,
         emotion: emotion || undefined,
+        seed: provider === "infinite-talk" && seed ? parseInt(seed, 10) : undefined,
       },
     });
   };
@@ -457,6 +478,43 @@ export default function TalkingAvatars() {
                     data-testid="input-emotion"
                   />
                 </div>
+
+                {/* Seed - only for InfiniteTalk */}
+                {provider === "infinite-talk" && (
+                  <div className="space-y-3 border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="seed">Seed (Optional)</Label>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="seed-lock"
+                          checked={seedLocked}
+                          onCheckedChange={setSeedLocked}
+                          data-testid="toggle-seed-lock"
+                        />
+                        <span className="text-xs text-muted-foreground">{seedLocked ? "Locked" : "Unlocked"}</span>
+                      </div>
+                    </div>
+                    <Input
+                      id="seed"
+                      type="number"
+                      placeholder="Leave empty for random"
+                      value={seed}
+                      onChange={(e) => setSeed(e.target.value)}
+                      min="10000"
+                      max="1000000"
+                      disabled={seedLocked}
+                      data-testid="input-seed"
+                    />
+                    <p className="text-xs text-muted-foreground">Range: 10000 - 1000000. Use a seed to reproduce the same result.</p>
+                    <SavedSeedsLibrary
+                      currentSeed={seed ? parseInt(seed, 10) : undefined}
+                      onApplySeed={(appliedSeed: number) => {
+                        setSeed(appliedSeed.toString());
+                        setSeedLocked(true);
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Tips & Best Practices */}
                 <Collapsible className="mt-6">

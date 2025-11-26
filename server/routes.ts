@@ -4441,7 +4441,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 imageUrl: imageUrl,
                 audioUrl: hostedAudioUrl,
                 prompt: parameters?.emotion,
-                resolution: (parameters?.quality === '1080p' ? '720p' : parameters?.quality) || '720p',
+                resolution: parameters?.quality || '720p',
+                seed: parameters?.seed, // Pass seed for reproducibility
                 callBackUrl: callbackUrl,
               });
               result = lipSyncResult.result;

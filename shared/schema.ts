@@ -1270,6 +1270,7 @@ export const generateAvatarRequestSchema = z.object({
   parameters: z.object({
     quality: z.enum(['480p', '720p']).optional(),
     emotion: z.string().optional(), // e.g., 'professional', 'enthusiastic'
+    seed: z.number().min(10000).max(1000000).optional(), // For InfiniteTalk reproducibility
   }).optional(),
 });
 
