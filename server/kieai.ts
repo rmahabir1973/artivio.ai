@@ -318,10 +318,20 @@ export async function generateVideo(params: {
     
     // Map frontend model name to Kie.ai model name
     let modelName = 'veo3';
+    let isFirstAndLastFrames = false;
+    
     if (params.model === 'veo-3.1') {
       modelName = 'veo3';
     } else if (params.model === 'veo-3.1-fast') {
       modelName = 'veo3_fast';
+    } else if (params.model === 'veo-3.1-first-and-last-frames') {
+      // Veo 3.1 Quality first-and-last-frames mode
+      modelName = 'veo3';
+      isFirstAndLastFrames = true;
+    } else if (params.model === 'veo-3.1-fast-first-and-last-frames') {
+      // Veo 3.1 Fast first-and-last-frames mode (for Transition page)
+      modelName = 'veo3_fast';
+      isFirstAndLastFrames = true;
     } else if (params.model === 'veo-3') {
       modelName = 'veo3';
     }
@@ -365,10 +375,17 @@ export async function generateVideo(params: {
       callBackUrl: parameters.callBackUrl,
     };
     
-    // Add image URLs if present (for image-to-video on veo3_fast only)
+    // Add image URLs if present (for image-to-video)
     if (referenceImages.length > 0) {
       payload.imageUrls = referenceImages;
-      payload.generationType = 'REFERENCE_2_VIDEO';
+      // Use FIRST_AND_LAST_FRAMES_2_VIDEO for transition mode (exactly 2 images)
+      // Use REFERENCE_2_VIDEO for standard image-to-video
+      if (isFirstAndLastFrames && referenceImages.length === 2) {
+        payload.generationType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
+        console.log('🎬 Veo first-and-last-frames mode: using FIRST_AND_LAST_FRAMES_2_VIDEO');
+      } else {
+        payload.generationType = 'REFERENCE_2_VIDEO';
+      }
     }
     
     // Add optional watermark parameter

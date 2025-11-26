@@ -561,6 +561,7 @@ export const generateVideoRequestSchema = z.object({
     'veo-3.1',
     'veo-3.1-fast',
     'veo-3.1-first-and-last-frames',
+    'veo-3.1-fast-first-and-last-frames',
     'veo-3.1-fast-reference-2-video',
     'runway-gen3-alpha-turbo',
     'seedance-1-pro',

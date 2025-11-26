@@ -9,6 +9,7 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'video', model: 'veo-3.1', creditCost: 525, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3.1 Quality - HD quality with synchronized audio (8s)' },
   { feature: 'video', model: 'veo-3.1-fast', creditCost: 125, kieCreditCost: 60, category: 'generation', description: 'Google Veo 3.1 Fast - Faster generation, great quality (8s)' },
   { feature: 'video', model: 'veo-3.1-first-and-last-frames', creditCost: 525, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3.1 Quality - First and last frames to video (transition generation)' },
+  { feature: 'video', model: 'veo-3.1-fast-first-and-last-frames', creditCost: 125, kieCreditCost: 60, category: 'generation', description: 'Google Veo 3.1 Fast - First and last frames to video (transition generation)' },
   { feature: 'video', model: 'veo-3.1-fast-reference-2-video', creditCost: 525, kieCreditCost: 250, category: 'generation', description: 'Google Veo 3.1 Quality - Material-to-video (reference images, 16:9 only)' },
   
   // Runway Gen-3 - Duration-based pricing (5s, 10s)

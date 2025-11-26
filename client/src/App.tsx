@@ -31,6 +31,7 @@ import Pricing from "@/pages/pricing";
 import Affiliates from "@/pages/affiliates";
 import Home from "@/pages/home";
 import GenerateVideo from "@/pages/generate-video";
+import GenerateTransition from "@/pages/generate-transition";
 import GenerateSora from "@/pages/generate-sora";
 import GenerateImage from "@/pages/generate-image";
 import GenerateMusic from "@/pages/generate-music";
@@ -97,6 +98,9 @@ function Router() {
       {/* Protected routes - require authentication */}
       <Route path="/generate/video">
         <ProtectedRoute><GenerateVideo /></ProtectedRoute>
+      </Route>
+      <Route path="/generate/transition">
+        <ProtectedRoute><GenerateTransition /></ProtectedRoute>
       </Route>
       <Route path="/generate/sora">
         <ProtectedRoute><GenerateSora /></ProtectedRoute>

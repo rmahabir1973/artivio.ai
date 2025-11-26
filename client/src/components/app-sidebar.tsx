@@ -50,7 +50,7 @@ const menuSections = [
     label: "Video",
     items: [
       { title: "Video Generation", url: "/generate/video", icon: Video },
-      { title: "Transition", url: "/generate/video?mode=transition", icon: ArrowLeftRight },
+      { title: "Transition", url: "/generate/transition", icon: ArrowLeftRight },
       { title: "Sora 2 Pro", url: "/generate/sora", icon: Sparkles },
       { title: "Talking Avatars", url: "/talking-avatars", icon: UserCircle },
       { title: "Video Upscaler", url: "/topaz-video-upscaler", icon: Zap },
