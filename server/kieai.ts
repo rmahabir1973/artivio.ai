@@ -1098,6 +1098,7 @@ export async function transcribeAudio(params: {
 }
 
 // Kling AI Avatar - Generate talking avatar video from image + audio
+// Note: prompt is REQUIRED by Kie.ai API - it guides the video generation
 export async function generateKlingAvatar(params: {
   sourceImageUrl: string;
   script: string; // Audio URL (must be audio, not text)
@@ -1115,10 +1116,13 @@ export async function generateKlingAvatar(params: {
   const quality = parameters.quality || '720p';
   const model = quality === '1080p' ? 'kling/v1-avatar-pro' : 'kling/v1-avatar-standard';
   
+  // Default prompt if none provided - required by Kie.ai API
+  const defaultPrompt = "A person speaking naturally with expressive facial movements and clear lip synchronization.";
+  
   const input: any = {
     image_url: params.sourceImageUrl,
     audio_url: params.script, // Must be audio URL
-    prompt: parameters.emotion || '', // Optional emotion/style guidance
+    prompt: parameters.emotion || defaultPrompt, // Required by Kie.ai API
   };
   
   return await callKieApi('/api/v1/jobs/createTask', {
