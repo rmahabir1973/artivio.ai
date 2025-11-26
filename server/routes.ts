@@ -4539,8 +4539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`✓ Image hosted at: ${imageUrl}`);
         }
 
-        // Convert base64 audio to hosted URL if needed
-        if (audioUrl.startsWith('data:audio/')) {
+        // Convert base64 audio to hosted URL if needed (includes audio/* and video/webm for recorded audio)
+        if (audioUrl.startsWith('data:audio/') || audioUrl.startsWith('data:video/')) {
           console.log('Converting base64 audio to hosted URL for lip sync...');
           audioUrl = await saveBase64Audio(audioUrl);
           console.log(`✓ Audio hosted at: ${audioUrl}`);

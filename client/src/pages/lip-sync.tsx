@@ -8,15 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, Upload, Mic, Square, Play, Pause, Volume2, ChevronDown } from "lucide-react";
+import { Loader2, Upload, Mic, Square, Play, Pause, Volume2, ChevronDown, AlertTriangle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
 import type { Generation } from "@shared/schema";
+
+const MAX_AUDIO_DURATION = 15; // Maximum audio duration in seconds
 
 export default function LipSync() {
   const { toast } = useToast();
@@ -27,6 +30,7 @@ export default function LipSync() {
   const [imageFile, setImageFile] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [audioFile, setAudioFile] = useState("");
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [prompt, setPrompt] = useState("");
   const [resolution, setResolution] = useState("720p");
   const [seed, setSeed] = useState("");
@@ -70,6 +74,7 @@ export default function LipSync() {
       setRecordedAudio(null);
       setPrompt("");
       setRecordingTime(0);
+      setAudioDuration(null);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to generate lip sync video", variant: "destructive" });
@@ -115,18 +120,44 @@ export default function LipSync() {
     }
     setUploading(true);
     setAudioFile(file.name);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setAudioUrl(event.target?.result as string);
-      setRecordedAudio(null);
-      setUploading(false);
-      toast({ title: "Audio Loaded", description: `${file.name} ready for lip sync` });
+    
+    // Check audio duration before accepting
+    const audioElement = new Audio();
+    audioElement.src = URL.createObjectURL(file);
+    audioElement.onloadedmetadata = () => {
+      const duration = audioElement.duration;
+      URL.revokeObjectURL(audioElement.src);
+      
+      if (duration > MAX_AUDIO_DURATION) {
+        setUploading(false);
+        setAudioFile("");
+        setAudioDuration(null);
+        toast({ 
+          title: "Audio Too Long", 
+          description: `Audio must be ${MAX_AUDIO_DURATION} seconds or less. Your audio is ${Math.round(duration)} seconds.`, 
+          variant: "destructive" 
+        });
+        return;
+      }
+      
+      setAudioDuration(duration);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAudioUrl(event.target?.result as string);
+        setRecordedAudio(null);
+        setUploading(false);
+        toast({ title: "Audio Loaded", description: `${file.name} (${Math.round(duration)}s) ready for lip sync` });
+      };
+      reader.onerror = () => {
+        setUploading(false);
+        toast({ title: "Error", description: "Failed to read audio file", variant: "destructive" });
+      };
+      reader.readAsDataURL(file);
     };
-    reader.onerror = () => {
+    audioElement.onerror = () => {
       setUploading(false);
-      toast({ title: "Error", description: "Failed to read audio file", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to load audio file", variant: "destructive" });
     };
-    reader.readAsDataURL(file);
   };
 
   const startRecording = async () => {
@@ -174,8 +205,31 @@ export default function LipSync() {
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      setAudioDuration(null);
+      
+      let currentTime = 0;
       timerIntervalRef.current = window.setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
+        currentTime += 1;
+        setRecordingTime(currentTime);
+        setAudioDuration(currentTime);
+        
+        // Auto-stop at max duration
+        if (currentTime >= MAX_AUDIO_DURATION) {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            setIsPaused(false);
+            if (timerIntervalRef.current) {
+              clearInterval(timerIntervalRef.current);
+              timerIntervalRef.current = null;
+            }
+            toast({ 
+              title: "Recording Stopped", 
+              description: `Maximum recording length is ${MAX_AUDIO_DURATION} seconds.`,
+              variant: "default"
+            });
+          }
+        }
       }, 1000);
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to access microphone: " + error.message, variant: "destructive" });
@@ -223,6 +277,7 @@ export default function LipSync() {
     setAudioUrl("");
     setAudioFile("");
     setRecordingTime(0);
+    setAudioDuration(null);
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
       audioPlayerRef.current.currentTime = 0;
@@ -245,6 +300,14 @@ export default function LipSync() {
       toast({ title: "Validation Error", description: "Please upload or record audio.", variant: "destructive" });
       return;
     }
+    if (audioDuration && audioDuration > MAX_AUDIO_DURATION) {
+      toast({ 
+        title: "Audio Too Long", 
+        description: `Audio must be ${MAX_AUDIO_DURATION} seconds or less. Please use shorter audio.`, 
+        variant: "destructive" 
+      });
+      return;
+    }
     generateMutation.mutate({ imageUrl, audioUrl, prompt: prompt || undefined, resolution, seed: seed || undefined });
   };
 
@@ -259,6 +322,17 @@ export default function LipSync() {
         <CardDescription>Upload image and audio, customize settings</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <Alert variant="default" className="border-amber-500 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <AlertDescription className="text-sm">
+            <span className="font-bold text-amber-600 dark:text-amber-400">
+              Maximum audio length: {MAX_AUDIO_DURATION} seconds
+            </span>
+            <span className="text-muted-foreground ml-1">
+              — Audio exceeding this limit will be rejected.
+            </span>
+          </AlertDescription>
+        </Alert>
         <div className="space-y-2">
           <Label htmlFor="image-file">Image *</Label>
           <div className="border-2 border-dashed rounded-lg p-6 text-center space-y-2">

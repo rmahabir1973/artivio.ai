@@ -1,0 +1,156 @@
+2025-11-25 21:45:51.50
+8d058ebe
+User
+"accept-language": "zh-CN,zh;q=0.8",
+2025-11-25 21:45:51.50
+8d058ebe
+User
+"x-forwarded-host": "artivio.ai",
+2025-11-25 21:45:51.50
+8d058ebe
+User
+"completeTime": 1764125151000,
+2025-11-25 21:45:51.50
+8d058ebe
+User
+"x-cloud-trace-context": "3c0b4258dc6b326e172a36b3d423ea8e/8002529864243041095",
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.output_url (Bytedance): undefined
+2025-11-25 21:45:51.55
+8d058ebe
+User
+Full Callback Payload: {
+2025-11-25 21:45:51.55
+8d058ebe
+User
+Generation ID: 1220af8c-273c-4632-95f6-522e94444e3c
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.result_video_url (Aleph): undefined
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.resultJson (Seedance): absent
+2025-11-25 21:45:51.55
+8d058ebe
+User
+⚠️ [infinitalk-lip-sync-720p] No resultUrl extracted. Checking callback structure for debugging:
+2025-11-25 21:45:51.55
+8d058ebe
+User
+"data": {
+2025-11-25 21:45:51.55
+8d058ebe
+User
+HTTP Status Code: 501
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- Full data structure keys: completeTime, costTime, createTime, failCode, failMsg, model, param, state, taskId, updateTime
+2025-11-25 21:45:51.55
+8d058ebe
+User
+"code": 501,
+2025-11-25 21:45:51.55
+8d058ebe
+User
+Error Message: Playground task failed.
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.imageUrl: undefined
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.result_image_url (Aleph): undefined
+2025-11-25 21:45:51.55
+8d058ebe
+User
+❌ ===== ERROR DETECTED IN CALLBACK =====
+2025-11-25 21:45:51.55
+8d058ebe
+User
+"failCode": "422",
+2025-11-25 21:45:51.55
+8d058ebe
+User
+Status: fail
+2025-11-25 21:45:51.55
+8d058ebe
+User
+},
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.image_url: undefined
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.url: undefined
+2025-11-25 21:45:51.55
+8d058ebe
+User
+Error Code: 501
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.videoUrl: undefined
+2025-11-25 21:45:51.55
+8d058ebe
+User
+"taskId": "26d3415aed9b40079ccdd41a9a06bb5f",
+2025-11-25 21:45:51.55
+8d058ebe
+User
+"completeTime": 1764125151000,
+2025-11-25 21:45:51.55
+8d058ebe
+User
+- callbackData.data?.video_url (Runway Gen-3): undefined
+2025-11-25 21:46:00.61
+8d058ebe
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 21:46:00.61
+8d058ebe
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-25 21:46:00.61
+8d058ebe
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-25 21:46:01.50
+8d058ebe
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 21:46:01.50
+8d058ebe
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-25 21:46:01.52
+8d058ebe
+User
+userId: '49729939',
+2025-11-25 21:46:01.52
+8d058ebe
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-25 21:46:01.52
+8d058ebe
+User
+isAdmin: true
+2025-11-25 21:46:01.53
+8d058ebe
+User
+2:46:01 AM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-11-25 21:46:01.53
+8d058ebe
+User
+2:46:01 AM [express] GET /api/auth/user 200 in 48ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+
+Wrap
+
+Colors
