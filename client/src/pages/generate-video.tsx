@@ -25,6 +25,7 @@ import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { useLocation } from "wouter";
 import { SiGoogle } from "react-icons/si";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 // Model icon component for consistent styling
 const ModelIcon = ({ modelValue, className = "h-4 w-4" }: { modelValue: string; className?: string }) => {
@@ -172,6 +173,7 @@ export default function GenerateVideo() {
   const [negativePrompt, setNegativePrompt] = useState(""); // For Wan and Kling models
   const [enablePromptExpansion, setEnablePromptExpansion] = useState(true); // For Wan model
   const [cfgScale, setCfgScale] = useState(0.5); // For Kling model (0-1, step 0.1)
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   // Merge model info with dynamic pricing
   const [videoModels, setVideoModels] = useState(() => VIDEO_MODEL_INFO.map(m => ({
@@ -257,18 +259,8 @@ export default function GenerateVideo() {
     }
   };
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-    }
-  }, [isAuthenticated, authLoading, toast]);
+  // Guest browsing allowed - no auto-redirect to login
+  // Users will see the guest modal when they try to generate
 
   // Load seed from sessionStorage (from history "Use Seed" button) - only once on mount
   useEffect(() => {
@@ -484,6 +476,12 @@ export default function GenerateVideo() {
   };
 
   const handleGenerate = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     // DEBUG: Log current state at time of generation
     console.log(`🌱 [GENERATE DEBUG] Current state: seed=${seed}, seedLocked=${seedLocked}, model=${model}`);
     
@@ -667,9 +665,8 @@ export default function GenerateVideo() {
     );
   }
 
-  if (!isAuthenticated) return null;
-
   return (
+    <>
     <ThreeColumnLayout
       form={
         <Card>
@@ -1321,5 +1318,12 @@ export default function GenerateVideo() {
         />
       }
     />
+
+    <GuestGenerateModal
+      open={showGuestModal}
+      onOpenChange={setShowGuestModal}
+      featureName="Videos"
+    />
+  </>
   );
 }

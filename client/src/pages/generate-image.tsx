@@ -21,6 +21,7 @@ import { PreviewPanel } from "@/components/preview-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiOpenai } from "react-icons/si";
 
 // Model icon component for consistent styling
@@ -196,6 +197,7 @@ export default function GenerateImage() {
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [seedLocked, setSeedLocked] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
   
   // Midjourney-specific state
   const [mjMode, setMjMode] = useState<"text-to-image" | "image-to-image" | "image-to-video">("text-to-image");
@@ -273,18 +275,6 @@ export default function GenerateImage() {
     }
   }, [mode]);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-    }
-  }, [isAuthenticated, authLoading, toast]);
 
   // Load seed from sessionStorage (from history "Use Seed" button) - only once on mount
   useEffect(() => {
@@ -430,6 +420,12 @@ export default function GenerateImage() {
   const selectedModel = IMAGE_MODELS.find(m => m.value === model);
 
   const handleGenerate = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+
     if (!prompt.trim()) {
       toast({
         title: "Prompt Required",
@@ -552,10 +548,9 @@ export default function GenerateImage() {
     );
   }
 
-  if (!isAuthenticated) return null;
-
   return (
-    <ThreeColumnLayout
+    <>
+      <ThreeColumnLayout
       form={
         <Card>
             <CardHeader>
@@ -1233,5 +1228,12 @@ export default function GenerateImage() {
         />
       }
     />
+
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Images"
+      />
+    </>
   );
 }

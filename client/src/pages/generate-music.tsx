@@ -20,6 +20,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Music, ChevronDown, Sparkles, Upload, Plus, AudioLines, Mic, Layers } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
+import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiSoundcloud } from "react-icons/si";
 
 // Music model icon component - all Suno models use the same icon
@@ -44,6 +45,9 @@ export default function GenerateMusic() {
   
   // Tab state
   const [activeTab, setActiveTab] = useState("generate");
+  
+  // Guest modal state
+  const [showGuestModal, setShowGuestModal] = useState(false);
   
   // Generate tab state
   const [model, setModel] = useState("suno-v4");
@@ -185,6 +189,12 @@ export default function GenerateMusic() {
   });
   
   const handleProcess = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+    
     if (!processSourceId || !processOperation) {
       toast({
         title: "Missing Information",
@@ -306,18 +316,6 @@ export default function GenerateMusic() {
     cost: getModelCost(m.value, 200),
   }));
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-    }
-  }, [isAuthenticated, authLoading, toast]);
 
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -444,6 +442,12 @@ export default function GenerateMusic() {
   });
 
   const handleGenerate = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+    
     if (!prompt.trim()) {
       toast({
         title: "Prompt Required",
@@ -492,6 +496,12 @@ export default function GenerateMusic() {
   };
 
   const handleGenerateLyrics = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+    
     if (!lyricsPrompt.trim()) {
       toast({
         title: "Prompt Required",
@@ -508,6 +518,12 @@ export default function GenerateMusic() {
   };
 
   const handleExtendMusic = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+    
     if (!selectedAudioId) {
       toast({
         title: "Audio Required",
@@ -540,6 +556,12 @@ export default function GenerateMusic() {
   };
 
   const handleUploadCover = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+    
     // Determine audio source based on selection
     let audioUrl = "";
     if (coverAudioSource === "url") {
@@ -606,6 +628,12 @@ export default function GenerateMusic() {
   };
 
   const handleUploadExtend = () => {
+    // Guest check - prompt sign up if not authenticated
+    if (!isAuthenticated) {
+      setShowGuestModal(true);
+      return;
+    }
+    
     // Determine audio source based on selection
     let audioUrl = "";
     if (extendAudioSource === "url") {
@@ -681,8 +709,6 @@ export default function GenerateMusic() {
       </div>
     );
   }
-
-  if (!isAuthenticated) return null;
 
   return (
     <SidebarInset>
@@ -2093,6 +2119,12 @@ export default function GenerateMusic() {
       </Tabs>
         </div>
       </div>
+      
+      <GuestGenerateModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        featureName="Music"
+      />
     </SidebarInset>
   );
 }
