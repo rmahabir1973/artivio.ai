@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import { setAccessToken as bridgeSetAccessToken, getAccessToken as bridgeGetAccessToken, setRefreshTokenFn, setLogoutFn } from "@/lib/authBridge";
+import { setAccessToken as bridgeSetAccessToken, getAccessToken as bridgeGetAccessToken, setRefreshTokenFn, setLogoutFn, resetWasEverAuthenticated } from "@/lib/authBridge";
 import { queryClient } from "@/lib/queryClient";
 
 interface AuthContextType {
@@ -67,6 +67,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAccessTokenState(null);
       bridgeSetAccessToken(null);
       setUser(null);
+      
+      // Reset the "was ever authenticated" flag so user can browse as guest after logout
+      resetWasEverAuthenticated();
       
       // Clear ALL React Query cache on logout
       console.log('[AUTH] Logout - clearing all cached data');

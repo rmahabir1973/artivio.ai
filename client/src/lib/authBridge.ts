@@ -10,6 +10,8 @@
 let accessTokenRef: { current: string | null } = { current: null };
 let refreshTokenFn: (() => Promise<string | null>) | null = null;
 let logoutFn: (() => Promise<void>) | null = null;
+// Track if user was ever authenticated in this session - prevents logout redirect for first-time guests
+let wasEverAuthenticated = false;
 
 export function initializeAuthBridge() {
   console.log("[AUTH BRIDGE] Initializing auth bridge before React render");
@@ -22,7 +24,26 @@ export function initializeAuthBridge() {
  */
 export function setAccessToken(token: string | null) {
   accessTokenRef.current = token;
+  // Track if user was ever authenticated - used to determine if logout redirect should happen
+  if (token) {
+    wasEverAuthenticated = true;
+  }
   console.log("[AUTH BRIDGE] Access token updated:", token ? `${token.substring(0, 20)}...` : "NULL");
+}
+
+/**
+ * Check if the user was ever authenticated in this session
+ * Used to prevent logout redirect for first-time guests
+ */
+export function getWasEverAuthenticated(): boolean {
+  return wasEverAuthenticated;
+}
+
+/**
+ * Reset the wasEverAuthenticated flag (called on explicit logout)
+ */
+export function resetWasEverAuthenticated() {
+  wasEverAuthenticated = false;
 }
 
 /**
@@ -114,10 +135,13 @@ export async function fetchWithAuth(
     token = await refreshTokenFn();
     
     if (!token) {
-      // Refresh failed - trigger complete logout to clear all auth state
-      console.log("[AUTH BRIDGE] Refresh failed, triggering logout");
-      if (logoutFn) {
+      // Only trigger logout redirect if user was previously authenticated
+      // This prevents first-time guests from being redirected to /login
+      if (wasEverAuthenticated && logoutFn) {
+        console.log("[AUTH BRIDGE] Refresh failed for previously authenticated user, triggering logout");
         await logoutFn();
+      } else {
+        console.log("[AUTH BRIDGE] Refresh failed for guest - no redirect needed");
       }
       throw new Error("Not authenticated. Please log in.");
     }
@@ -141,4 +165,6 @@ export const authBridge = {
   setLogoutFn,
   ensureValidToken,
   fetchWithAuth,
+  getWasEverAuthenticated,
+  resetWasEverAuthenticated,
 };
