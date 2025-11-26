@@ -68,6 +68,12 @@ const ERROR_PATTERNS: Array<{
 
   // Video Errors
   {
+    pattern: /link.*expired|expired.*link|video.*expired|re-generate.*video|no longer accessible/i,
+    type: 'VIDEO_LINK_EXPIRED',
+    message: 'Video link has expired',
+    recommendation: 'The video links have expired. Please re-generate the videos you want to combine, or use more recently created videos.'
+  },
+  {
     pattern: /aspect.*ratio|invalid.*resolution/i,
     type: 'INVALID_ASPECT_RATIO',
     message: 'Video aspect ratio or resolution is not supported',

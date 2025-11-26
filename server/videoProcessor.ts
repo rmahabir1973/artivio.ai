@@ -65,8 +65,19 @@ async function downloadVideo(url: string, tempDir: string, index: number): Promi
       method: 'GET',
       url,
       responseType: 'stream',
-      timeout: 60000,
+      timeout: 120000, // Increased timeout for larger files
+      validateStatus: (status) => status >= 200 && status < 300, // Only accept 2xx
     });
+
+    // Check Content-Type to ensure we're downloading a video, not an error page
+    const contentType = response.headers['content-type'] || '';
+    if (!contentType.includes('video') && !contentType.includes('octet-stream') && !contentType.includes('application/mp4')) {
+      // If response is HTML or text, the URL likely expired
+      if (contentType.includes('text/html') || contentType.includes('text/plain') || contentType.includes('application/xml')) {
+        throw new Error('Video link has expired. Please re-generate the video or try again later.');
+      }
+      console.warn(`Unexpected content type for video ${index}: ${contentType}`);
+    }
 
     const writer = createWriteStream(filepath);
     response.data.pipe(writer);
@@ -78,12 +89,39 @@ async function downloadVideo(url: string, tempDir: string, index: number): Promi
 
     const stats = await fs.stat(filepath);
     if (stats.size === 0) {
-      throw new Error('Downloaded file is empty');
+      throw new Error('Downloaded file is empty - video link may have expired');
     }
+    
+    // Additional check: if file is too small, it might be an error page
+    if (stats.size < 1000) {
+      // Read the file to check if it's HTML
+      const content = await fs.readFile(filepath, 'utf-8').catch(() => '');
+      if (content.includes('<html') || content.includes('<!DOCTYPE') || content.includes('AccessDenied') || content.includes('expired')) {
+        throw new Error('Video link has expired. Please re-generate the video or try again later.');
+      }
+    }
+    
     console.log(`✓ Downloaded video ${index}: ${filepath} (${(stats.size / 1024 / 1024).toFixed(2)}MB)`);
 
     return filepath;
   } catch (error: any) {
+    // Handle specific axios errors
+    if (error.response) {
+      const status = error.response.status;
+      if (status === 403 || status === 401) {
+        throw new Error(`Video ${index + 1} link has expired or is no longer accessible. Please re-generate the video.`);
+      }
+      if (status === 404) {
+        throw new Error(`Video ${index + 1} not found. The video may have been deleted or the link has expired.`);
+      }
+    }
+    
+    // Check for expired link indicators in error message
+    const errMsg = error.message?.toLowerCase() || '';
+    if (errMsg.includes('expired') || errMsg.includes('access denied') || errMsg.includes('forbidden')) {
+      throw new Error(`Video ${index + 1} link has expired. Please re-generate the video or try again later.`);
+    }
+    
     throw new Error(`Failed to download video ${index + 1}: ${error.message}`);
   }
 }
