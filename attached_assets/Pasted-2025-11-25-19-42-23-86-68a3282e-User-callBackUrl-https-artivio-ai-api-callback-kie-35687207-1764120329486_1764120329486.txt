@@ -1,0 +1,152 @@
+2025-11-25 19:42:23.86
+68a3282e
+User
+"callBackUrl": "https://artivio.ai/api/callback/kie/35687207-27b2-4b0f-b502-daf4c23780c0",
+2025-11-25 19:42:23.86
+68a3282e
+User
+"audio_url": "https://artivio.ai/uploads/audio/1764117743791-f7ff8394e539bfb6dd01aaf8958a7513.mp3",
+2025-11-25 19:42:23.86
+68a3282e
+User
+"image_url": "https://artivio.ai/uploads/1764117743781-efb1dd21b0a948158c860b20d187ec35.png",
+2025-11-25 19:42:23.86
+68a3282e
+User
+"model": "infinitalk/from-audio",
+2025-11-25 19:42:23.86
+68a3282e
+User
+🔵 Kie.ai API Request to /api/v1/jobs/createTask: {
+2025-11-25 19:42:23.86
+68a3282e
+User
+}
+2025-11-25 19:42:23.86
+68a3282e
+User
+"input": {
+2025-11-25 19:42:23.86
+68a3282e
+User
+"resolution": "720p"
+2025-11-25 19:42:23.93
+68a3282e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 19:42:23.99
+68a3282e
+User
+❌ Kie.ai API Error for /api/v1/jobs/createTask: prompt is required
+2025-11-25 19:42:23.99
+68a3282e
+User
+"msg": "prompt is required",
+2025-11-25 19:42:23.99
+68a3282e
+User
+Full error details: {
+2025-11-25 19:42:23.99
+68a3282e
+User
+✅ Kie.ai API Response from /api/v1/jobs/createTask: {
+2025-11-25 19:42:23.99
+68a3282e
+User
+❌ Kie.ai returned error code 500: prompt is required
+2025-11-25 19:42:23.99
+68a3282e
+User
+"code": 500,
+2025-11-25 19:42:23.99
+68a3282e
+User
+}
+2025-11-25 19:42:23.99
+68a3282e
+User
+"message": "prompt is required"
+2025-11-25 19:42:24.85
+68a3282e
+User
+✓ [CREDIT REFUND] Refunded 125 credits to user 49729939 for failed generation 35687207-27b2-4b0f-b502-daf4c23780c0
+2025-11-25 19:42:27.73
+68a3282e
+User
+12:42:27 AM [express] GET /api/lip-sync/generations 200 in 3777ms :: [{"id":"35687207-27b2-4b0f-b502-…
+2025-11-25 19:42:28.95
+68a3282e
+User
+12:42:28 AM [express] GET /api/pricing 304 in 43ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-11-25 19:42:39.81
+68a3282e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 19:42:39.82
+68a3282e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 19:42:39.83
+68a3282e
+User
+12:42:39 AM [express] GET /api/collections 304 in 44ms :: [{"id":"d98bcda5-4ab5-4b2b-98c9-c1faf271a95…
+2025-11-25 19:42:39.84
+68a3282e
+User
+12:42:39 AM [express] GET /api/tags 304 in 46ms :: []
+2025-11-25 19:42:39.89
+68a3282e
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-25 19:42:39.89
+68a3282e
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-25 19:42:39.89
+68a3282e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 19:42:40.23
+68a3282e
+User
+[/api/generations] Paginated query completed in 340ms, found 15 generations, hasMore: true
+2025-11-25 19:42:40.33
+68a3282e
+User
+12:42:40 AM [express] GET /api/generations 200 in 492ms :: {"items":[{"id":"35687207-27b2-4b0f-b502-d…
+2025-11-25 19:42:40.61
+68a3282e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 19:42:40.61
+68a3282e
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-25 19:42:40.64
+68a3282e
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-25 19:42:40.64
+68a3282e
+User
+}
+2025-11-25 19:42:40.64
+68a3282e
+User
+isAdmin: true
+2025-11-25 19:42:40.64
+68a3282e
+User
+userId: '49729939',
+2025-11-25 19:42:40.64
+68a3282e
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-25 19:42:40.64
+68a3282e
+User
+12:42:40 AM [express] GET /api/auth/user 200 in 47ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+
+Wrap
+
+Colors

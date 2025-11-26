@@ -1129,23 +1129,27 @@ export async function generateKlingAvatar(params: {
 }
 
 // InfiniteTalk Lip Sync - Generate lip-sync video from image + audio
+// Note: prompt is REQUIRED by Kie.ai API - it guides the video generation
 export async function generateLipSync(params: {
   imageUrl: string;
   audioUrl: string;
-  prompt?: string; // Optional prompt for guidance
+  prompt?: string; // Prompt for guidance (will use default if not provided)
   resolution?: '480p' | '720p';
   seed?: number;
   callBackUrl?: string;
 }): Promise<{ result: any; keyName: string }> {
   const resolution = params.resolution || '720p';
   
+  // Default prompt if none provided - describes a person talking naturally
+  const prompt = params.prompt || "A person talking naturally with expressive facial movements and natural lip synchronization.";
+  
   const input: any = {
     image_url: params.imageUrl,
     audio_url: params.audioUrl,
+    prompt, // Required by Kie.ai API
     resolution,
   };
   
-  if (params.prompt) input.prompt = params.prompt;
   if (params.seed !== undefined) input.seed = params.seed;
   
   return await callKieApi('/api/v1/jobs/createTask', {

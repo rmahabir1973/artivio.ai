@@ -1,0 +1,132 @@
+2025-11-25 19:41:41.65
+68a3282e
+User
+endpoint: '/api/v1/jobs/createTask'
+2025-11-25 19:41:41.65
+68a3282e
+User
+}
+2025-11-25 19:41:41.65
+68a3282e
+User
+at async cloneVoice (file:///home/runner/workspace/dist/index.js:3772:10)
+2025-11-25 19:41:41.65
+68a3282e
+User
+status: undefined,
+2025-11-25 19:41:41.65
+68a3282e
+User
+Voice cloning outer error: Error: The page does not exist or is not published
+2025-11-25 19:41:41.65
+68a3282e
+User
+data: undefined,
+2025-11-25 19:41:41.65
+68a3282e
+User
+at callKieApi (file:///home/runner/workspace/dist/index.js:3302:27)
+2025-11-25 19:41:41.65
+68a3282e
+User
+at async file:///home/runner/workspace/dist/index.js:9793:37 {
+2025-11-25 19:41:41.65
+68a3282e
+User
+statusText: undefined,
+2025-11-25 19:41:41.65
+68a3282e
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-11-25 19:41:41.65
+68a3282e
+User
+}
+2025-11-25 19:41:41.65
+68a3282e
+User
+kieaiDetails: {
+2025-11-25 19:41:41.65
+68a3282e
+User
+12:41:41 AM [express] POST /api/voice-clone 500 in 211ms :: {"message":"The page does not exist or is…
+2025-11-25 19:41:41.68
+68a3282e
+User
+Refunded 100 credits to user 49729939
+2025-11-25 19:41:53.00
+68a3282e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 19:41:56.68
+68a3282e
+User
+12:41:56 AM [express] GET /api/lip-sync/generations 200 in 3661ms :: [{"id":"cfec197e-a765-4328-8f90-…
+2025-11-25 19:42:08.68
+68a3282e
+User
+12:42:08 AM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-11-25 19:42:17.19
+68a3282e
+User
+12:42:17 AM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-11-25 19:42:23.03
+68a3282e
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2025-11-25 19:42:23.03
+68a3282e
+User
+at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15 {
+2025-11-25 19:42:23.03
+68a3282e
+User
+at /home/runner/workspace/node_modules/jsonwebtoken/verify.js:190:21
+2025-11-25 19:42:23.03
+68a3282e
+User
+at verifyAccessToken (file:///home/runner/workspace/dist/index.js:4502:25)
+2025-11-25 19:42:23.03
+68a3282e
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-11-25 19:42:23.03
+68a3282e
+User
+at getSecret (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:97:14)
+2025-11-25 19:42:23.03
+68a3282e
+User
+12:42:23 AM [express] POST /api/lip-sync/generate 401 in 3ms :: {"message":"Unauthorized - Invalid to…
+2025-11-25 19:42:23.03
+68a3282e
+User
+expiredAt: 2025-11-26T00:42:14.000Z
+2025-11-25 19:42:23.03
+68a3282e
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-11-25 19:42:23.03
+68a3282e
+User
+at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+2025-11-25 19:42:23.03
+68a3282e
+User
+at requireJWT (file:///home/runner/workspace/dist/index.js:4606:21)
+2025-11-25 19:42:23.03
+68a3282e
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+2025-11-25 19:42:23.03
+68a3282e
+User
+[JWT] Access token verification failed: TokenExpiredError: jwt expired
+2025-11-25 19:42:23.03
+68a3282e
+User
+}
+2025-11-25 19:42:23.03
+68a3282e
+User
+[JWT MIDDLEWARE] Invalid or expired access token
