@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AuthProvider, useAuth } from "@/contexts/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Loader2, User, LogOut } from "lucide-react";
+import { Loader2, User, LogOut, Home as HomeIcon, DollarSign } from "lucide-react";
+import { CreditDisplay } from "@/components/credit-display";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -153,7 +154,7 @@ function Router() {
 
 function AppContent() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
 
   // Handle logout - clear React Query cache when redirected after logout
   useEffect(() => {
@@ -174,10 +175,33 @@ function AppContent() {
     }
   }, [location]);
 
-  // REMOVED: Blanket cache invalidation on login caused race condition
-  // where queries refetched before access token was available in authContextRef,
-  // resulting in 401 errors. Individual components now handle their own
-  // cache invalidation after mutations.
+  // Determine if we're on an "app page" that should show the sidebar layout
+  // vs a "public page" that should show the traditional header/footer layout
+  const appPages = [
+    '/dashboard',
+    '/generate/',
+    '/sound-effects',
+    '/voice-clone',
+    '/text-to-speech',
+    '/speech-to-text',
+    '/analyze-image',
+    '/talking-avatars',
+    '/lip-sync',
+    '/audio-converter',
+    '/video-editor',
+    '/qr-generator',
+    '/topaz-upscaler',
+    '/topaz-video-upscaler',
+    '/background-remover',
+    '/chat',
+    '/history',
+    '/generations',
+    '/profile',
+    '/admin',
+    '/billing',
+  ];
+  
+  const isAppPage = appPages.some(page => location.startsWith(page));
 
   if (isLoading) {
     return (
@@ -190,8 +214,8 @@ function AppContent() {
     );
   }
 
-  // Authenticated users: Sidebar layout
-  if (isAuthenticated) {
+  // Sidebar layout for app pages (both authenticated AND guest users exploring)
+  if (isAuthenticated || isAppPage) {
     const sidebarStyle = {
       "--sidebar-width": "16rem",
       "--sidebar-width-icon": "3rem",
@@ -202,44 +226,87 @@ function AppContent() {
         <div className="flex h-screen w-full overflow-x-hidden">
           <AppSidebar />
           <div className="flex flex-col flex-1 min-w-0">
-            <header className="flex items-center justify-between p-3 border-b h-14 flex-shrink-0">
+            <header className="flex items-center justify-between p-3 border-b h-14 flex-shrink-0 gap-2">
               <div className="flex items-center gap-2">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
               </div>
+              
+              {/* Navigation links - visible for all users */}
+              <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+                <Link href="/dashboard">
+                  <Button variant={location === "/dashboard" ? "default" : "ghost"} size="sm" data-testid="nav-home">
+                    <HomeIcon className="h-4 w-4 mr-1" />
+                    Home
+                  </Button>
+                </Link>
+                <Link href="/affiliates">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
+                    data-testid="nav-affiliates"
+                  >
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Earn 30%
+                  </Button>
+                </Link>
+                <Link href="/pricing">
+                  <Button variant={location === "/pricing" ? "default" : "ghost"} size="sm" data-testid="nav-pricing">
+                    Pricing
+                  </Button>
+                </Link>
+              </nav>
+              
               <div className="flex items-center gap-2">
+                {/* Credits display for authenticated users */}
+                {isAuthenticated && (
+                  <div className="hidden sm:block">
+                    <CreditDisplay />
+                  </div>
+                )}
+                
                 <ThemeToggle />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" data-testid="button-user-menu">
-                      <User className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>
-                      {user ? (user as any).email : "My Account"}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" data-testid="menu-profile">
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/billing" data-testid="menu-billing">
-                        Billing
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={logout}
-                      className="text-destructive focus:text-destructive"
-                      data-testid="menu-logout"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                
+                {/* User menu for authenticated users */}
+                {isAuthenticated ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" data-testid="button-user-menu">
+                        <User className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>
+                        {user ? (user as any).email : "My Account"}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile" data-testid="menu-profile">
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/billing" data-testid="menu-billing">
+                          Billing
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={logout}
+                        className="text-destructive focus:text-destructive"
+                        data-testid="menu-logout"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  /* Login button for guest users */
+                  <Button asChild size="sm" data-testid="nav-login">
+                    <Link href="/login">Log in</Link>
+                  </Button>
+                )}
               </div>
             </header>
             {isAuthenticated && <AnnouncementBar />}
@@ -252,7 +319,7 @@ function AppContent() {
     );
   }
 
-  // Unauthenticated users: Traditional header layout
+  // Traditional header/footer layout for public pages (landing, pricing, etc.)
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <ModernHeader />

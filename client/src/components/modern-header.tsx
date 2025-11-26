@@ -161,6 +161,19 @@ export function ModernHeader() {
               </Link>
             )}
 
+            {/* Dashboard/Explore link for unauthenticated users */}
+            {!isAuthenticated && (
+              <Link href="/dashboard">
+                <Button
+                  variant={location === "/dashboard" ? "default" : "ghost"}
+                  size="sm"
+                  data-testid="nav-dashboard"
+                >
+                  Explore Tools
+                </Button>
+              </Link>
+            )}
+
             {/* Affiliate link for all users */}
             <Link href="/affiliates">
               <Button
