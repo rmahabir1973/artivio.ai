@@ -4392,7 +4392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid request", errors: validationResult.error.errors });
       }
 
-      const { sourceImage, script, voiceId, provider, parameters } = validationResult.data;
+      const { sourceImage, audioUrl: audioInput, provider, parameters } = validationResult.data;
       const cost = await getModelCost(provider);
 
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -4403,17 +4403,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Host image
         const [imageUrl] = await saveBase64Images([sourceImage]);
+        
+        // Convert base64 audio to hosted URL if needed
+        let hostedAudioUrl = audioInput;
+        if (audioInput.startsWith('data:audio/') || audioInput.startsWith('data:video/')) {
+          console.log('Converting base64 audio to hosted URL for avatar...');
+          hostedAudioUrl = await saveBase64Audio(audioInput);
+          console.log(`✓ Audio hosted at: ${hostedAudioUrl}`);
+        }
 
         // Create as a regular generation with type 'talking-avatar' so it appears in My Library
         const generation = await storage.createGeneration({
           userId,
           type: 'talking-avatar',
           model: provider,
-          prompt: script, // Store script in prompt field
+          prompt: 'Talking Avatar Generation', // Store description in prompt field
           parameters: {
             sourceImageUrl: imageUrl,
-            audioUrl: script, // Script should be audio URL
-            voiceId: voiceId || undefined,
+            audioUrl: hostedAudioUrl,
             quality: parameters?.quality || '720p',
             emotion: parameters?.emotion || undefined,
           },
@@ -4432,7 +4439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Use InfiniteTalk lip-sync generator
               const lipSyncResult = await generateLipSync({
                 imageUrl: imageUrl,
-                audioUrl: script, // Script must be audio URL
+                audioUrl: hostedAudioUrl,
                 prompt: parameters?.emotion,
                 resolution: (parameters?.quality === '1080p' ? '720p' : parameters?.quality) || '720p',
                 callBackUrl: callbackUrl,
@@ -4442,8 +4449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Use Kling AI avatar generator (default)
               const klingResult = await generateKlingAvatar({
                 sourceImageUrl: imageUrl,
-                script,
-                voiceId,
+                script: hostedAudioUrl, // Pass audio URL as script
                 provider,
                 parameters: parameters || undefined,
                 callBackUrl: callbackUrl,

@@ -1,0 +1,144 @@
+2025-11-25 21:22:49.93
+d2434732
+User
+"audio_url": "Bring your images to life with realistic talking avatars powered by Kling AI and Infinite Talk. Perfect for video marketing, tutorials, presentations, and social media content. Simply upload an image and provide a script to create engaging video content in minutes.",
+2025-11-25 21:22:49.93
+d2434732
+User
+}
+2025-11-25 21:22:49.93
+d2434732
+User
+🔵 Kie.ai API Request to /api/v1/jobs/createTask: {
+2025-11-25 21:22:49.93
+d2434732
+User
+}
+2025-11-25 21:22:49.93
+d2434732
+User
+"model": "kling/v1-avatar-standard",
+2025-11-25 21:22:49.93
+d2434732
+User
+"prompt": ""
+2025-11-25 21:22:49.93
+d2434732
+User
+"input": {
+2025-11-25 21:22:49.93
+d2434732
+User
+"image_url": "https://artivio.ai/uploads/1764123769848-adffdbd6fc07995388fa1b6203219ded.png",
+2025-11-25 21:22:49.98
+d2434732
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 21:22:50.01
+d2434732
+User
+2:22:50 AM [express] GET /api/avatar/generations 304 in 46ms :: [{"id":"8b0452df-769f-4e90-9c8e-85d8…
+2025-11-25 21:22:50.15
+d2434732
+User
+Full error details: {
+2025-11-25 21:22:50.15
+d2434732
+User
+"code": 500,
+2025-11-25 21:22:50.15
+d2434732
+User
+✅ Kie.ai API Response from /api/v1/jobs/createTask: {
+2025-11-25 21:22:50.15
+d2434732
+User
+}
+2025-11-25 21:22:50.15
+d2434732
+User
+"data": null
+2025-11-25 21:22:50.15
+d2434732
+User
+"message": "audio_url file type not supported"
+2025-11-25 21:22:50.15
+d2434732
+User
+❌ Kie.ai returned error code 500: audio_url file type not supported
+2025-11-25 21:22:50.15
+d2434732
+User
+}
+2025-11-25 21:22:50.15
+d2434732
+User
+❌ Kie.ai API Error for /api/v1/jobs/createTask: audio_url file type not supported
+2025-11-25 21:22:50.15
+d2434732
+User
+"msg": "audio_url file type not supported",
+2025-11-25 21:23:00.73
+d2434732
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-25 21:23:00.73
+d2434732
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-25 21:23:00.73
+d2434732
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 21:23:00.74
+d2434732
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 21:23:00.76
+d2434732
+User
+2:23:00 AM [express] GET /api/collections 304 in 55ms :: [{"id":"d98bcda5-4ab5-4b2b-98c9-c1faf271a95…
+2025-11-25 21:23:00.81
+d2434732
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 21:23:00.83
+d2434732
+User
+2:23:00 AM [express] GET /api/tags 304 in 124ms :: []
+2025-11-25 21:23:01.09
+d2434732
+User
+[/api/generations] Paginated query completed in 362ms, found 15 generations, hasMore: true
+2025-11-25 21:23:01.16
+d2434732
+User
+2:23:01 AM [express] GET /api/generations 200 in 430ms :: {"items":[{"id":"04bc7ad7-aebb-4ee2-80c1-0…
+2025-11-25 21:23:02.36
+d2434732
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-25 21:23:02.36
+d2434732
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-11-25 21:23:02.38
+d2434732
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-25 21:23:02.38
+d2434732
+User
+userId: '49729939',
+2025-11-25 21:23:02.38
+d2434732
+User
+[AUTH] ✓ User data fetched successfully {
+2025-11-25 21:23:02.38
+d2434732
+User
+isAdmin: true
+2025-11-25 21:23:02.38
+d2434732
+User
+}
