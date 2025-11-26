@@ -95,6 +95,11 @@ function Router() {
         {isAuthenticated ? <Home /> : <Landing />}
       </Route>
 
+      {/* Dashboard route - redirect to home for authenticated, register for guests */}
+      <Route path="/dashboard">
+        {isAuthenticated ? <Home /> : <Register />}
+      </Route>
+
       {/* Protected routes - require authentication */}
       <Route path="/generate/video">
         <ProtectedRoute><GenerateVideo /></ProtectedRoute>
