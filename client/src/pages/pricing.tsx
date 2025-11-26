@@ -127,20 +127,63 @@ export default function Pricing() {
     setIsSubmitting(true);
 
     try {
+      // Free trial plan (price === 0)
       if (plan.price === 0) {
-        const response = await fetch('/api/public/plan-selection', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ planName: plan.name }),
-        });
+        // If user is authenticated, start free trial directly
+        if (user) {
+          const response = await fetchWithAuth('/api/billing/start-free-trial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to store plan selection');
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to start free trial');
+          }
+
+          toast({
+            title: "Welcome to Artivio AI!",
+            description: `Your free trial has started! You've received ${data.creditsGranted} credits.`,
+          });
+
+          // Redirect to dashboard
+          window.location.href = '/dashboard';
+        } else {
+          // Not authenticated - store plan selection and redirect to register
+          const response = await fetch('/api/public/plan-selection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ planName: plan.name }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to store plan selection');
+          }
+
+          window.location.href = '/register';
+        }
+      } else {
+        // Paid plan - require authentication first
+        if (!user) {
+          // Store plan selection and redirect to register
+          const response = await fetch('/api/public/plan-selection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ planName: plan.name }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to store plan selection');
+          }
+
+          window.location.href = '/register';
+          return;
         }
 
-        window.location.href = '/register';
-      } else {
         const response = await fetchWithAuth('/api/billing/checkout', {
           method: 'POST',
           headers: { 

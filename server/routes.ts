@@ -6163,6 +6163,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // Start Free Trial for authenticated users
+  app.post('/api/billing/start-free-trial', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Check if user already has an active subscription
+      const existingSub = await storage.getUserSubscription(userId);
+      if (existingSub) {
+        return res.status(400).json({ 
+          error: 'You already have an active subscription',
+          subscription: existingSub
+        });
+      }
+
+      // Find the free trial plan
+      const plans = await storage.getAllPlans();
+      const freePlan = plans.find(p => p.billingPeriod === 'trial' || p.name === 'free');
+      
+      if (!freePlan) {
+        console.error('[Billing] Free trial plan not found in database');
+        return res.status(500).json({ error: 'Free trial plan not available' });
+      }
+
+      // Assign the free trial plan to the user
+      const result = await storage.assignPlanToUser(userId, freePlan.id);
+
+      console.log(`[Billing] ✓ Free trial started for user ${userId}, granted ${result.creditsGranted} credits`);
+
+      // Add user to Loops 7-day funnel if email exists
+      if (user.email) {
+        try {
+          await LoopsService.addToSevenDayFunnel(
+            user.email,
+            user.firstName || undefined,
+            user.lastName || undefined,
+            user.id
+          );
+          console.log(`[Billing] ✓ Added user ${userId} to 7-day email funnel`);
+        } catch (loopsError) {
+          console.error('[Billing] Failed to add user to Loops funnel:', loopsError);
+          // Don't fail the request for Loops errors
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Free trial started successfully',
+        creditsGranted: result.creditsGranted,
+        subscription: result.subscription
+      });
+    } catch (error: any) {
+      console.error('[Billing] Start free trial error:', error);
+      res.status(500).json({ error: error.message || 'Failed to start free trial' });
+    }
+  });
+
   // Create Checkout Session for subscription purchase
   app.post('/api/billing/checkout', requireJWT, async (req: any, res) => {
     try {
