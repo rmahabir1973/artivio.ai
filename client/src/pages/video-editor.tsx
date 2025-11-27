@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
@@ -245,27 +245,37 @@ export default function VideoEditor() {
     })
   );
 
-  const { data: generationsData, isLoading: generationsLoading } = useQuery<Generation[]>({
-    queryKey: ["/api/generations", { type: "video", page }],
-    queryFn: async () => {
-      const response = await fetchWithAuth(`/api/generations?limit=100`);
+  // Use same pattern as History page - useInfiniteQuery with cursor-based pagination
+  const {
+    data: generationsData,
+    isLoading: generationsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["/api/generations", { paginated: true, type: "video" }],
+    queryFn: async ({ pageParam }: { pageParam?: string }) => {
+      const cursor = pageParam || '';
+      const url = `/api/generations?cursor=${encodeURIComponent(cursor)}`;
+      const response = await fetchWithAuth(url);
       if (!response.ok) throw new Error("Failed to fetch videos");
-      const data = await response.json();
-      // Handle both array response (legacy) and paginated object response
-      return Array.isArray(data) ? data : data.items || [];
+      const result = await response.json() as { items: Generation[]; nextCursor: string | null };
+      return result;
     },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: isAuthenticated,
   });
 
-  // Filter for completed videos and apply client-side pagination
+  // Flatten all pages and filter for completed videos
   const allVideos = useMemo(() => {
-    if (!generationsData) return [];
-    return generationsData.filter(
+    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    return items.filter(
       (g) => g.type === "video" && g.status === "completed" && g.resultUrl
     );
   }, [generationsData]);
 
-  // Apply client-side pagination
+  // Apply client-side pagination for display
   const videos = useMemo(() => {
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
     return allVideos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -274,6 +284,13 @@ export default function VideoEditor() {
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(allVideos.length / ITEMS_PER_PAGE));
   }, [allVideos.length]);
+
+  // Load more when reaching last page
+  useEffect(() => {
+    if (page >= totalPages && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [page, totalPages, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const stopPolling = () => {
     if (pollingIntervalRef.current) {
