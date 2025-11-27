@@ -7519,6 +7519,407 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== STORY STUDIO ROUTES ==========
+
+  // Get user's story projects
+  app.get('/api/story-projects', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projects = await storage.getUserStoryProjects(userId);
+      res.json(projects);
+    } catch (error: any) {
+      console.error('Error fetching story projects:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch story projects' });
+    }
+  });
+
+  // Get single story project with segments
+  app.get('/api/story-projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const project = await storage.getStoryProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const segments = await storage.getProjectSegments(id);
+      res.json({ ...project, segments });
+    } catch (error: any) {
+      console.error('Error fetching story project:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch story project' });
+    }
+  });
+
+  // Create new story project
+  app.post('/api/story-projects', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { title, mode, settings } = req.body;
+      
+      if (!title) {
+        return res.status(400).json({ message: 'Title is required' });
+      }
+      
+      const project = await storage.createStoryProject({
+        userId,
+        title,
+        mode: mode || 'instant',
+        settings,
+      });
+      
+      res.json(project);
+    } catch (error: any) {
+      console.error('Error creating story project:', error);
+      res.status(500).json({ message: error.message || 'Failed to create story project' });
+    }
+  });
+
+  // Update story project
+  app.patch('/api/story-projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const project = await storage.getStoryProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const updated = await storage.updateStoryProject(id, updates);
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating story project:', error);
+      res.status(500).json({ message: error.message || 'Failed to update story project' });
+    }
+  });
+
+  // Delete story project
+  app.delete('/api/story-projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const project = await storage.getStoryProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.deleteStoryProject(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error deleting story project:', error);
+      res.status(500).json({ message: error.message || 'Failed to delete story project' });
+    }
+  });
+
+  // Add segment to story project
+  app.post('/api/story-projects/:id/segments', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { speakerLabel, voiceId, voiceName, text, emotionTags, orderIndex, metadata } = req.body;
+      
+      const project = await storage.getStoryProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      if (!text) {
+        return res.status(400).json({ message: 'Text is required' });
+      }
+      
+      // Get current segments to determine order
+      const segments = await storage.getProjectSegments(id);
+      const newOrderIndex = orderIndex ?? segments.length;
+      
+      const segment = await storage.createStorySegment({
+        projectId: id,
+        orderIndex: newOrderIndex,
+        speakerLabel,
+        voiceId,
+        voiceName,
+        text,
+        emotionTags,
+        metadata,
+      });
+      
+      res.json(segment);
+    } catch (error: any) {
+      console.error('Error adding story segment:', error);
+      res.status(500).json({ message: error.message || 'Failed to add segment' });
+    }
+  });
+
+  // Update segment
+  app.patch('/api/story-projects/:projectId/segments/:segmentId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { projectId, segmentId } = req.params;
+      const updates = req.body;
+      
+      const project = await storage.getStoryProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const updated = await storage.updateStorySegment(segmentId, updates);
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating story segment:', error);
+      res.status(500).json({ message: error.message || 'Failed to update segment' });
+    }
+  });
+
+  // Delete segment
+  app.delete('/api/story-projects/:projectId/segments/:segmentId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { projectId, segmentId } = req.params;
+      
+      const project = await storage.getStoryProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.deleteStorySegment(segmentId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error deleting story segment:', error);
+      res.status(500).json({ message: error.message || 'Failed to delete segment' });
+    }
+  });
+
+  // Reorder segments
+  app.post('/api/story-projects/:id/reorder', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { segmentIds } = req.body;
+      
+      const project = await storage.getStoryProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      await storage.reorderProjectSegments(id, segmentIds);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error reordering segments:', error);
+      res.status(500).json({ message: error.message || 'Failed to reorder segments' });
+    }
+  });
+
+  // Generate audio for Instant Speech mode (single segment)
+  app.post('/api/story-studio/generate-instant', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Fish.Audio is not available. API key is not configured." 
+        });
+      }
+
+      const { 
+        text, 
+        voiceId, 
+        voiceName,
+        temperature = 0.9, 
+        topP = 0.9, 
+        speed = 1, 
+        volume = 0,
+        format = 'mp3',
+        projectId,
+        title
+      } = req.body;
+
+      if (!text || !voiceId) {
+        return res.status(400).json({ message: "text and voiceId are required" });
+      }
+
+      if (text.length > 30000) {
+        return res.status(400).json({ message: "Text exceeds maximum length of 30,000 characters" });
+      }
+
+      // Get Story Studio TTS cost from database (same as fish-audio-tts)
+      const cost = await getModelCost('fish-audio-tts');
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        // Generate speech using Fish.Audio
+        const audioBuffer = await fishAudioGenerateSpeech({
+          text,
+          referenceId: voiceId,
+          temperature,
+          topP,
+          speed,
+          volume,
+          format,
+        });
+
+        // Save audio to public folder for playback
+        const filename = `story-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${format}`;
+        const audioPath = `public/uploads/audio/${filename}`;
+        const fs = await import('fs/promises');
+        await fs.mkdir('public/uploads/audio', { recursive: true });
+        await fs.writeFile(audioPath, audioBuffer);
+        const audioUrl = `/uploads/audio/${filename}`;
+
+        // Create or update project if projectId provided
+        let project = null;
+        if (projectId) {
+          project = await storage.getStoryProject(projectId);
+          if (project && project.userId === userId) {
+            await storage.updateStoryProject(projectId, {
+              combinedAudioUrl: audioUrl,
+              status: 'completed',
+              totalDurationMs: Math.round((audioBuffer.length / 128) * 8), // Rough estimate
+            });
+          }
+        } else if (title) {
+          // Create a new project for this instant speech
+          project = await storage.createStoryProject({
+            userId,
+            title: title || `Instant Speech - ${new Date().toLocaleDateString()}`,
+            mode: 'instant',
+            status: 'completed',
+            settings: { voiceId, voiceName, temperature, speed },
+            combinedAudioUrl: audioUrl,
+          });
+        }
+
+        // Create a generation record for history
+        await storage.createGeneration({
+          userId,
+          type: 'story-studio',
+          model: 'fish-audio-tts',
+          prompt: text.slice(0, 500),
+          parameters: { 
+            mode: 'instant',
+            voiceId, 
+            voiceName,
+            temperature, 
+            speed,
+            projectId: project?.id 
+          },
+          status: 'completed',
+          resultUrl: audioUrl,
+          creditsCost: cost,
+        });
+
+        res.json({
+          success: true,
+          audioUrl,
+          projectId: project?.id,
+          creditsCost: cost,
+        });
+      } catch (genError: any) {
+        // Refund credits on generation failure
+        await storage.addCreditsAtomic(userId, cost);
+        throw genError;
+      }
+    } catch (error: any) {
+      console.error('Story Studio instant generation error:', error);
+      res.status(500).json({ message: error.message || "Failed to generate audio" });
+    }
+  });
+
+  // Generate audio for Advanced Story mode (multi-segment)
+  app.post('/api/story-studio/generate-advanced', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Fish.Audio is not available. API key is not configured." 
+        });
+      }
+
+      const { projectId } = req.body;
+
+      if (!projectId) {
+        return res.status(400).json({ message: "projectId is required" });
+      }
+
+      const project = await storage.getStoryProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      if (project.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const segments = await storage.getProjectSegments(projectId);
+      if (segments.length === 0) {
+        return res.status(400).json({ message: "No segments in project" });
+      }
+
+      // Calculate total cost based on segments
+      const baseCost = await getModelCost('fish-audio-tts');
+      const totalCost = baseCost * segments.length;
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, totalCost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      // Update project status to generating
+      await storage.updateStoryProject(projectId, { status: 'generating' });
+
+      // Start background generation
+      generateAdvancedStoryInBackground(projectId, segments, userId, totalCost);
+
+      res.json({
+        success: true,
+        message: 'Story generation started',
+        projectId,
+        segmentCount: segments.length,
+        totalCost,
+      });
+    } catch (error: any) {
+      console.error('Story Studio advanced generation error:', error);
+      res.status(500).json({ message: error.message || "Failed to start generation" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -7630,5 +8031,132 @@ async function combineVideosInBackground(combinationId: string, videoUrls: strin
     } catch (refundError) {
       console.error(`CRITICAL: Failed to refund credits for combination ${combinationId}:`, refundError);
     }
+  }
+}
+
+// Background advanced story generation processor
+async function generateAdvancedStoryInBackground(
+  projectId: string, 
+  segments: any[], 
+  userId: string, 
+  totalCost: number
+) {
+  const fs = await import('fs/promises');
+  const { generateSpeech: fishAudioGenSpeech } = await import('./fishAudio');
+
+  try {
+    console.log(`[Story Studio] Starting advanced story generation for project ${projectId} with ${segments.length} segments`);
+
+    const audioUrls: string[] = [];
+    let failedSegments: string[] = [];
+
+    // Generate audio for each segment
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      
+      try {
+        // Update segment status
+        await storage.updateStorySegment(segment.id, { status: 'generating' });
+        
+        console.log(`[Story Studio] Generating segment ${i + 1}/${segments.length}: "${segment.text.slice(0, 50)}..."`);
+
+        // Generate speech for this segment
+        const audioBuffer = await fishAudioGenSpeech({
+          text: segment.text,
+          referenceId: segment.voiceId || 'default',
+          format: 'mp3',
+        });
+
+        // Save audio file
+        const filename = `story-segment-${segment.id}-${Date.now()}.mp3`;
+        const audioPath = `public/uploads/audio/${filename}`;
+        await fs.mkdir('public/uploads/audio', { recursive: true });
+        await fs.writeFile(audioPath, audioBuffer);
+        const audioUrl = `/uploads/audio/${filename}`;
+
+        // Update segment with audio URL
+        await storage.updateStorySegment(segment.id, {
+          status: 'completed',
+          audioUrl,
+          durationMs: Math.round((audioBuffer.length / 128) * 8),
+        });
+
+        audioUrls.push(audioUrl);
+        console.log(`[Story Studio] Segment ${i + 1} completed: ${audioUrl}`);
+
+      } catch (segError: any) {
+        console.error(`[Story Studio] Segment ${i + 1} failed:`, segError.message);
+        await storage.updateStorySegment(segment.id, { 
+          status: 'failed',
+          errorMessage: segError.message
+        });
+        failedSegments.push(segment.id);
+      }
+    }
+
+    // Calculate total duration
+    const allSegments = await storage.getProjectSegments(projectId);
+    const totalDurationMs = allSegments.reduce((sum, seg) => sum + (seg.durationMs || 0), 0);
+
+    // Update project status
+    if (failedSegments.length === segments.length) {
+      // All segments failed
+      await storage.updateStoryProject(projectId, {
+        status: 'failed',
+      });
+      
+      // Refund credits
+      await storage.addCreditsAtomic(userId, totalCost);
+      console.log(`[Story Studio] All segments failed for project ${projectId}, refunded ${totalCost} credits`);
+    } else if (failedSegments.length > 0) {
+      // Some segments failed - partial success
+      await storage.updateStoryProject(projectId, {
+        status: 'completed',
+        totalDurationMs,
+      });
+      
+      // Partial refund for failed segments
+      const refundAmount = Math.round((totalCost / segments.length) * failedSegments.length);
+      if (refundAmount > 0) {
+        await storage.addCreditsAtomic(userId, refundAmount);
+        console.log(`[Story Studio] Partial refund of ${refundAmount} credits for ${failedSegments.length} failed segments`);
+      }
+    } else {
+      // All segments succeeded
+      await storage.updateStoryProject(projectId, {
+        status: 'completed',
+        totalDurationMs,
+      });
+    }
+
+    // Create a generation record
+    await storage.createGeneration({
+      userId,
+      type: 'story-studio',
+      model: 'fish-audio-tts',
+      prompt: `Advanced Story: ${segments.length} segments`,
+      parameters: { 
+        mode: 'advanced',
+        projectId,
+        segmentCount: segments.length,
+        failedCount: failedSegments.length,
+      },
+      status: failedSegments.length === segments.length ? 'failed' : 'completed',
+      creditsCost: totalCost - (Math.round((totalCost / segments.length) * failedSegments.length) || 0),
+    });
+
+    console.log(`[Story Studio] Project ${projectId} generation completed. ${segments.length - failedSegments.length}/${segments.length} segments successful`);
+
+  } catch (error: any) {
+    console.error(`[Story Studio] Project ${projectId} generation failed:`, error);
+
+    // Update project status
+    await storage.updateStoryProject(projectId, {
+      status: 'failed',
+    });
+
+    // Refund all credits on total failure
+    await storage.addCreditsAtomic(userId, totalCost);
+    console.log(`[Story Studio] Refunded ${totalCost} credits for failed project ${projectId}`);
   }
 }
