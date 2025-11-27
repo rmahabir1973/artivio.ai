@@ -355,3 +355,21 @@
   display: flex !important;
   flex-direction: column !important;
 }
+
+/* Hide the SDK's built-in orientation toggle - we use our own canvas selector */
+.twick-studio-wrapper [data-testid="orientation-toggle"],
+.twick-studio-wrapper button[aria-label*="orientation" i],
+.twick-studio-wrapper button[aria-label*="landscape" i],
+.twick-studio-wrapper button[aria-label*="portrait" i],
+.twick-studio-wrapper button[title*="orientation" i],
+.twick-studio-wrapper button[title*="landscape" i],
+.twick-studio-wrapper button[title*="portrait" i] {
+  display: none !important;
+}
+
+/* Also try to hide by common class patterns used for orientation toggles */
+.twick-studio-wrapper .orientation-toggle,
+.twick-studio-wrapper .orientation-button,
+.twick-studio-wrapper .aspect-ratio-toggle {
+  display: none !important;
+}

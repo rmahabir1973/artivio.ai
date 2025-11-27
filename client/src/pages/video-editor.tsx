@@ -4545,7 +4545,7 @@ export default function VideoEditor() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const { data: initialGenerations, isLoading: isLoadingInitial } = useQuery<{ items: any[], nextCursor: string | null }>({
-    queryKey: ['/api/generations', { cursor: '' }],
+    queryKey: ['/api/generations?cursor='],
     enabled: isAuthenticated,
   });
 
