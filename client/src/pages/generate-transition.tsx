@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { fetchWithAuth } from "@/lib/authBridge";
 import { Loader2, Upload, X, Info, ArrowLeftRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
@@ -46,10 +47,9 @@ export default function GenerateTransition() {
     const formData = new FormData();
     formData.append('image', file);
     
-    const response = await fetch('/api/upload-temp-image', {
+    const response = await fetchWithAuth('/api/upload-temp-image', {
       method: 'POST',
       body: formData,
-      credentials: 'include',
     });
     
     if (!response.ok) {
