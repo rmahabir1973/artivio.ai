@@ -73,6 +73,7 @@ const menuSections = [
       { title: "Sound Effects", url: "/sound-effects", icon: Zap },
       { title: "Voice Cloning", url: "/voice-clone", icon: Mic },
       { title: "Text to Speech", url: "/text-to-speech", icon: Headphones },
+      { title: "Story Studio", url: "/story-studio", icon: Sparkles },
       { title: "Speech to Text", url: "/speech-to-text", icon: Mic2 },
       { title: "Audio Converter", url: "/audio-converter", icon: AudioWaveform },
       { title: "Lip Sync", url: "/lip-sync", icon: Video },

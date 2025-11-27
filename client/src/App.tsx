@@ -39,6 +39,7 @@ import GenerateMusic from "@/pages/generate-music";
 import SoundEffects from "@/pages/sound-effects";
 import VoiceClone from "@/pages/voice-clone";
 import TextToSpeech from "@/pages/text-to-speech";
+import StoryStudio from "@/pages/story-studio";
 import SpeechToText from "@/pages/speech-to-text";
 import AnalyzeImage from "@/pages/analyze-image";
 import TalkingAvatars from "@/pages/talking-avatars";
@@ -108,6 +109,7 @@ function Router() {
       <Route path="/sound-effects" component={SoundEffects} />
       <Route path="/voice-clone" component={VoiceClone} />
       <Route path="/text-to-speech" component={TextToSpeech} />
+      <Route path="/story-studio" component={StoryStudio} />
       <Route path="/speech-to-text" component={SpeechToText} />
       <Route path="/analyze-image" component={AnalyzeImage} />
       <Route path="/talking-avatars" component={TalkingAvatars} />
