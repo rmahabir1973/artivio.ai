@@ -4969,7 +4969,18 @@ export default function VideoEditor() {
     fps: exportSettings.fps.value,
   }), [selectedCanvas, exportSettings]);
 
-  const initialTimelineData = loadedTimelineData || INITIAL_TIMELINE_DATA;
+  const initialTimelineData = useMemo(() => {
+    const baseData = loadedTimelineData || INITIAL_TIMELINE_DATA;
+    return {
+      ...baseData,
+      stage: {
+        width: selectedCanvas.width,
+        height: selectedCanvas.height,
+      },
+      width: selectedCanvas.width,
+      height: selectedCanvas.height,
+    };
+  }, [loadedTimelineData, selectedCanvas]);
 
   return (
     <SidebarInset>
