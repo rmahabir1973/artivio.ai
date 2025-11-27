@@ -5242,7 +5242,7 @@ export default function VideoEditor() {
                       My Library
                     </SheetTitle>
                     <SheetDescription>
-                      Copy URLs of your generated content to use in the editor. Paste URLs in the video, image, or audio panels.
+                      Click "Use" to add your generated content directly to the timeline.
                     </SheetDescription>
                   </SheetHeader>
                   
@@ -5434,34 +5434,36 @@ export default function VideoEditor() {
           </Alert>
         )}
 
-        <div ref={editorContainerRef} className="flex-1 min-h-0 relative twick-studio-wrapper" data-testid="video-editor-container">
-          <LivePlayerProvider>
-            <TimelineProvider
-              key={studioKey}
-              initialData={initialTimelineData}
-              contextId="artivio-video-editor"
-            >
-              <TwickStudio
-                studioConfig={{
-                  videoProps: {
-                    width: selectedCanvas.width,
-                    height: selectedCanvas.height,
-                  },
-                  timelineTickConfigs: [
-                    { durationThreshold: 30, majorInterval: 5, minorTicks: 5 },
-                    { durationThreshold: 300, majorInterval: 30, minorTicks: 6 },
-                  ],
-                  timelineZoomConfig: {
-                    min: 0.5,
-                    max: 2.0,
-                    step: 0.25,
-                    default: 1.0,
-                  },
-                  exportVideo: handleExportVideo,
-                }}
-              />
-            </TimelineProvider>
-          </LivePlayerProvider>
+        <div ref={editorContainerRef} className="flex-1 min-h-0 relative" data-testid="video-editor-container">
+          <div className="twick-studio-wrapper">
+            <LivePlayerProvider>
+              <TimelineProvider
+                key={studioKey}
+                initialData={initialTimelineData}
+                contextId="artivio-video-editor"
+              >
+                <TwickStudio
+                  studioConfig={{
+                    videoProps: {
+                      width: selectedCanvas.width,
+                      height: selectedCanvas.height,
+                    },
+                    timelineTickConfigs: [
+                      { durationThreshold: 30, majorInterval: 5, minorTicks: 5 },
+                      { durationThreshold: 300, majorInterval: 30, minorTicks: 6 },
+                    ],
+                    timelineZoomConfig: {
+                      min: 0.5,
+                      max: 2.0,
+                      step: 0.25,
+                      default: 1.0,
+                    },
+                    exportVideo: handleExportVideo,
+                  }}
+                />
+              </TimelineProvider>
+            </LivePlayerProvider>
+          </div>
         </div>
 
         <GuestGenerateModal

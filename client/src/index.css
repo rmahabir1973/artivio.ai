@@ -291,28 +291,8 @@
    TWICK STUDIO OVERRIDES
    Fix layout to work within sidebar layout
    ======================================== */
-.twick-studio-wrapper .studio-container {
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 900px;
-  min-height: 0;
-}
-
-.twick-studio-wrapper .studio-content {
-  height: 100% !important;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
 .twick-studio-wrapper {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-}
-
-.twick-studio-wrapper [class*="timeline"] {
-  min-height: 0;
-  flex-shrink: 1;
 }
