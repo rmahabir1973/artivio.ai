@@ -30,6 +30,8 @@ import {
   videoProjects,
   brandKits,
   projectCollaborators,
+  storyProjects,
+  storyProjectSegments,
   type User,
   type UpsertUser,
   type Referral,
@@ -98,6 +100,12 @@ import {
   type InsertBrandKit,
   type ProjectCollaborator,
   type InsertProjectCollaborator,
+  type StoryProject,
+  type InsertStoryProject,
+  type UpdateStoryProject,
+  type StoryProjectSegment,
+  type InsertStoryProjectSegment,
+  type UpdateStoryProjectSegment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql, inArray } from "drizzle-orm";
@@ -349,6 +357,22 @@ export interface IStorage {
   updateCollaboratorRole(projectId: string, userId: string, role: string): Promise<ProjectCollaborator | undefined>;
   removeProjectCollaborator(projectId: string, userId: string): Promise<boolean>;
   checkProjectAccess(projectId: string, userId: string): Promise<{ hasAccess: boolean; role: string | null }>;
+
+  // Story Studio Project operations
+  createStoryProject(project: InsertStoryProject): Promise<StoryProject>;
+  getStoryProject(id: string): Promise<StoryProject | undefined>;
+  getUserStoryProjects(userId: string): Promise<StoryProject[]>;
+  updateStoryProject(id: string, updates: UpdateStoryProject): Promise<StoryProject | undefined>;
+  deleteStoryProject(id: string): Promise<boolean>;
+
+  // Story Project Segment operations
+  createStorySegment(segment: InsertStoryProjectSegment): Promise<StoryProjectSegment>;
+  getProjectSegments(projectId: string): Promise<StoryProjectSegment[]>;
+  getStorySegment(id: string): Promise<StoryProjectSegment | undefined>;
+  updateStorySegment(id: string, updates: UpdateStoryProjectSegment): Promise<StoryProjectSegment | undefined>;
+  deleteStorySegment(id: string): Promise<boolean>;
+  reorderProjectSegments(projectId: string, segmentIds: string[]): Promise<void>;
+  createBulkSegments(segments: InsertStoryProjectSegment[]): Promise<StoryProjectSegment[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2574,6 +2598,113 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { hasAccess: false, role: null };
+  }
+
+  // Story Studio Project operations
+  async createStoryProject(project: InsertStoryProject): Promise<StoryProject> {
+    const [created] = await db
+      .insert(storyProjects)
+      .values(project)
+      .returning();
+    return created;
+  }
+
+  async getStoryProject(id: string): Promise<StoryProject | undefined> {
+    const [project] = await db
+      .select()
+      .from(storyProjects)
+      .where(eq(storyProjects.id, id));
+    return project;
+  }
+
+  async getUserStoryProjects(userId: string): Promise<StoryProject[]> {
+    return await db
+      .select()
+      .from(storyProjects)
+      .where(eq(storyProjects.userId, userId))
+      .orderBy(desc(storyProjects.updatedAt));
+  }
+
+  async updateStoryProject(id: string, updates: UpdateStoryProject): Promise<StoryProject | undefined> {
+    const [updated] = await db
+      .update(storyProjects)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(storyProjects.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteStoryProject(id: string): Promise<boolean> {
+    const result = await db
+      .delete(storyProjects)
+      .where(eq(storyProjects.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Story Project Segment operations
+  async createStorySegment(segment: InsertStoryProjectSegment): Promise<StoryProjectSegment> {
+    const [created] = await db
+      .insert(storyProjectSegments)
+      .values(segment)
+      .returning();
+    return created;
+  }
+
+  async getProjectSegments(projectId: string): Promise<StoryProjectSegment[]> {
+    return await db
+      .select()
+      .from(storyProjectSegments)
+      .where(eq(storyProjectSegments.projectId, projectId))
+      .orderBy(storyProjectSegments.orderIndex);
+  }
+
+  async getStorySegment(id: string): Promise<StoryProjectSegment | undefined> {
+    const [segment] = await db
+      .select()
+      .from(storyProjectSegments)
+      .where(eq(storyProjectSegments.id, id));
+    return segment;
+  }
+
+  async updateStorySegment(id: string, updates: UpdateStoryProjectSegment): Promise<StoryProjectSegment | undefined> {
+    const [updated] = await db
+      .update(storyProjectSegments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(storyProjectSegments.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteStorySegment(id: string): Promise<boolean> {
+    const result = await db
+      .delete(storyProjectSegments)
+      .where(eq(storyProjectSegments.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async reorderProjectSegments(projectId: string, segmentIds: string[]): Promise<void> {
+    await Promise.all(
+      segmentIds.map((segmentId, index) =>
+        db
+          .update(storyProjectSegments)
+          .set({ orderIndex: index, updatedAt: new Date() })
+          .where(and(
+            eq(storyProjectSegments.id, segmentId),
+            eq(storyProjectSegments.projectId, projectId)
+          ))
+      )
+    );
+  }
+
+  async createBulkSegments(segments: InsertStoryProjectSegment[]): Promise<StoryProjectSegment[]> {
+    if (segments.length === 0) return [];
+    const created = await db
+      .insert(storyProjectSegments)
+      .values(segments)
+      .returning();
+    return created;
   }
 }
 
