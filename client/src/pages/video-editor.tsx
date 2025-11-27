@@ -4520,19 +4520,53 @@ export default function VideoEditor() {
     return () => clearInterval(interval);
   }, [checkForChanges]);
 
-  const { data: userGenerations } = useQuery<any[]>({
-    queryKey: ['/api/generations'],
+  const [allGenerations, setAllGenerations] = useState<any[]>([]);
+  const [generationsCursor, setGenerationsCursor] = useState<string | null>(null);
+  const [hasMoreGenerations, setHasMoreGenerations] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const { data: initialGenerations, isLoading: isLoadingInitial } = useQuery<{ items: any[], nextCursor: string | null }>({
+    queryKey: ['/api/generations', { cursor: '' }],
     enabled: isAuthenticated,
   });
 
+  useEffect(() => {
+    if (initialGenerations) {
+      setAllGenerations(initialGenerations.items || []);
+      setGenerationsCursor(initialGenerations.nextCursor);
+      setHasMoreGenerations(!!initialGenerations.nextCursor);
+    }
+  }, [initialGenerations]);
+
+  const loadMoreGenerations = useCallback(async () => {
+    if (!generationsCursor || isLoadingMore) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch(`/api/generations?cursor=${encodeURIComponent(generationsCursor)}`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAllGenerations(prev => [...prev, ...(data.items || [])]);
+        setGenerationsCursor(data.nextCursor);
+        setHasMoreGenerations(!!data.nextCursor);
+      }
+    } catch (error) {
+      console.error('Failed to load more generations:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [generationsCursor, isLoadingMore]);
+
   const userMedia = useMemo(() => {
-    if (!userGenerations) return { videos: [] as MediaItem[], images: [] as MediaItem[], audio: [] as MediaItem[] };
+    if (!allGenerations.length) return { videos: [] as MediaItem[], images: [] as MediaItem[], audio: [] as MediaItem[] };
     
     const videos: MediaItem[] = [];
     const images: MediaItem[] = [];
     const audio: MediaItem[] = [];
     
-    userGenerations.forEach((gen: any) => {
+    allGenerations.forEach((gen: any) => {
       if (gen.status !== 'completed' || !gen.resultUrl) return;
       
       const mediaItem: MediaItem = {
@@ -4554,7 +4588,7 @@ export default function VideoEditor() {
     });
     
     return { videos, images, audio };
-  }, [userGenerations]);
+  }, [allGenerations]);
 
   const totalMediaCount = userMedia.videos.length + userMedia.images.length + userMedia.audio.length;
 
@@ -5229,8 +5263,12 @@ export default function VideoEditor() {
                     </TabsList>
                     
                     <TabsContent value="videos" className="mt-4">
-                      <ScrollArea className="h-[calc(100vh-280px)]">
-                        {userMedia.videos.length === 0 ? (
+                      <ScrollArea className="h-[calc(100vh-320px)]">
+                        {isLoadingInitial ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : userMedia.videos.length === 0 ? (
                           <div className="text-center py-8 text-muted-foreground">
                             <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
                             <p>No videos yet</p>
@@ -5244,11 +5282,36 @@ export default function VideoEditor() {
                           </div>
                         )}
                       </ScrollArea>
+                      {hasMoreGenerations && !isLoadingInitial && (
+                        <div className="pt-3 border-t mt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadMoreGenerations}
+                            disabled={isLoadingMore}
+                            className="w-full"
+                            data-testid="button-load-more-videos"
+                          >
+                            {isLoadingMore ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Loading...
+                              </>
+                            ) : (
+                              'Load More'
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </TabsContent>
                     
                     <TabsContent value="images" className="mt-4">
-                      <ScrollArea className="h-[calc(100vh-280px)]">
-                        {userMedia.images.length === 0 ? (
+                      <ScrollArea className="h-[calc(100vh-320px)]">
+                        {isLoadingInitial ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : userMedia.images.length === 0 ? (
                           <div className="text-center py-8 text-muted-foreground">
                             <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
                             <p>No images yet</p>
@@ -5262,11 +5325,36 @@ export default function VideoEditor() {
                           </div>
                         )}
                       </ScrollArea>
+                      {hasMoreGenerations && !isLoadingInitial && (
+                        <div className="pt-3 border-t mt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadMoreGenerations}
+                            disabled={isLoadingMore}
+                            className="w-full"
+                            data-testid="button-load-more-images"
+                          >
+                            {isLoadingMore ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Loading...
+                              </>
+                            ) : (
+                              'Load More'
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </TabsContent>
                     
                     <TabsContent value="audio" className="mt-4">
-                      <ScrollArea className="h-[calc(100vh-280px)]">
-                        {userMedia.audio.length === 0 ? (
+                      <ScrollArea className="h-[calc(100vh-320px)]">
+                        {isLoadingInitial ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : userMedia.audio.length === 0 ? (
                           <div className="text-center py-8 text-muted-foreground">
                             <Music className="h-12 w-12 mx-auto mb-2 opacity-50" />
                             <p>No audio yet</p>
@@ -5280,6 +5368,27 @@ export default function VideoEditor() {
                           </div>
                         )}
                       </ScrollArea>
+                      {hasMoreGenerations && !isLoadingInitial && (
+                        <div className="pt-3 border-t mt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadMoreGenerations}
+                            disabled={isLoadingMore}
+                            className="w-full"
+                            data-testid="button-load-more-audio"
+                          >
+                            {isLoadingMore ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Loading...
+                              </>
+                            ) : (
+                              'Load More'
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </TabsContent>
                   </Tabs>
                 </SheetContent>
