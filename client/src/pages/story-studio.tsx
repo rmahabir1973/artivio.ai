@@ -283,6 +283,44 @@ export default function StoryStudio() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/story-projects"] });
+      
+      // Start polling for project status updates
+      const pollInterval = setInterval(async () => {
+        try {
+          const response = await fetchWithAuth(`/api/story-projects/${data.projectId}`, {
+            credentials: "include",
+          });
+          if (response.ok) {
+            const project = await response.json();
+            setCurrentProject(project);
+            setSegments(project.segments || []);
+            
+            if (project.status === 'completed' || project.status === 'failed') {
+              clearInterval(pollInterval);
+              queryClient.invalidateQueries({ queryKey: ["/api/story-projects"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+              
+              if (project.status === 'completed') {
+                toast({
+                  title: "Generation Complete",
+                  description: "Your audio story is ready!",
+                });
+              } else {
+                toast({
+                  title: "Generation Failed",
+                  description: "Some segments could not be generated.",
+                  variant: "destructive",
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 3000);
+      
+      // Auto-stop polling after 5 minutes
+      setTimeout(() => clearInterval(pollInterval), 5 * 60 * 1000);
     },
     onError: (error: any) => {
       toast({
@@ -329,7 +367,7 @@ export default function StoryStudio() {
   });
 
   const addSegmentMutation = useMutation({
-    mutationFn: async (params: { projectId: string; text: string; voiceId?: string; voiceName?: string; speakerLabel?: string; emotionTags?: string[] }) => {
+    mutationFn: async (params: { projectId: string; text: string; voiceId?: string; voiceName?: string; speakerLabel?: string; emotionTags?: string[]; tempId?: string }) => {
       const response = await fetchWithAuth(`/api/story-projects/${params.projectId}/segments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -342,10 +380,15 @@ export default function StoryStudio() {
         throw new Error(errorData.message || "Failed to add segment");
       }
       
-      return response.json();
+      const segment = await response.json();
+      return { segment, tempId: params.tempId };
     },
-    onSuccess: (segment) => {
-      setSegments(prev => [...prev, segment]);
+    onSuccess: ({ segment, tempId }) => {
+      if (tempId) {
+        setSegments(prev => prev.map(s => s.id === tempId ? segment : s));
+      } else {
+        setSegments(prev => [...prev, segment]);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/story-projects", currentProject?.id] });
     },
     onError: (error: any) => {
@@ -424,7 +467,7 @@ export default function StoryStudio() {
     });
   };
 
-  const handleAdvancedGenerate = () => {
+  const handleAdvancedGenerate = async () => {
     if (!isAuthenticated) {
       setShowGuestModal(true);
       return;
@@ -446,6 +489,61 @@ export default function StoryStudio() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Check if all segments have voice assigned
+    const segmentsWithoutVoice = segments.filter(s => !s.voiceId);
+    if (segmentsWithoutVoice.length > 0) {
+      toast({
+        title: "Missing Voices",
+        description: `${segmentsWithoutVoice.length} segment(s) need a voice assigned.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if all segments have text
+    const emptySegments = segments.filter(s => !s.text.trim());
+    if (emptySegments.length > 0) {
+      toast({
+        title: "Empty Segments",
+        description: `${emptySegments.length} segment(s) have no text.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Save any unsaved (temp) segments first
+    const tempSegments = segments.filter(s => s.id.startsWith("temp-"));
+    if (tempSegments.length > 0) {
+      try {
+        for (const segment of tempSegments) {
+          await addSegmentMutation.mutateAsync({
+            projectId: currentProject.id,
+            text: segment.text,
+            voiceId: segment.voiceId,
+            voiceName: segment.voiceName,
+            speakerLabel: segment.speakerLabel,
+            emotionTags: segment.emotionTags,
+            tempId: segment.id,
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save segments before generation",
+          variant: "destructive",
+        });
+        // Refresh to get clean state
+        const response = await fetchWithAuth(`/api/story-projects/${currentProject.id}`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const fullProject = await response.json();
+          setSegments(fullProject.segments || []);
+        }
+        return;
+      }
     }
 
     advancedGenerateMutation.mutate(currentProject.id);
