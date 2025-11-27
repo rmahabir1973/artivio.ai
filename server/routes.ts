@@ -33,9 +33,18 @@ import {
 import { 
   cloneVoice as elevenLabsCloneVoice, 
   deleteVoice as elevenLabsDeleteVoice,
-  processAudioFilesForCloning,
+  processAudioFilesForCloning as elevenLabsProcessAudioFiles,
   isElevenLabsConfigured
 } from "./elevenlabs";
+import {
+  listVoices as fishAudioListVoices,
+  getVoice as fishAudioGetVoice,
+  generateSpeech as fishAudioGenerateSpeech,
+  createVoiceModel as fishAudioCreateVoiceModel,
+  deleteVoiceModel as fishAudioDeleteVoiceModel,
+  processAudioFilesForCloning as fishAudioProcessAudioFiles,
+  isFishAudioConfigured
+} from "./fishAudio";
 import { analyzeImageWithVision } from "./openaiVision";
 import { processImageInputs, saveBase64Image, saveBase64Images, saveBase64Video } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
@@ -4181,7 +4190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Process audio files for ElevenLabs (convert base64 to buffers)
         console.log(`[VoiceClone] Processing ${audioFiles.length} audio files for ElevenLabs...`);
-        const audioBuffers = await processAudioFilesForCloning(audioFiles);
+        const audioBuffers = await elevenLabsProcessAudioFiles(audioFiles);
         console.log(`[VoiceClone] ✓ Processed ${audioBuffers.length} audio files`);
 
         // Call direct ElevenLabs voice cloning API  
@@ -4360,6 +4369,296 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching TTS generations:', error);
       res.status(500).json({ message: "Failed to fetch TTS generations" });
+    }
+  });
+
+  // ========== FISH.AUDIO ROUTES ==========
+
+  // List Fish.Audio voices (public library + user's own)
+  app.get('/api/fish-audio/voices', async (req: any, res) => {
+    try {
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Fish.Audio is not available. API key is not configured." 
+        });
+      }
+
+      const { 
+        page_size = '20', 
+        page_number = '1', 
+        title, 
+        tag, 
+        self, 
+        language,
+        sort_by = 'score'
+      } = req.query;
+
+      const voices = await fishAudioListVoices({
+        pageSize: parseInt(page_size as string),
+        pageNumber: parseInt(page_number as string),
+        title: title as string | undefined,
+        tag: tag as string | undefined,
+        self: self === 'true',
+        language: language as string | undefined,
+        sortBy: sort_by as 'score' | 'task_count' | 'created_at',
+      });
+
+      res.json(voices);
+    } catch (error: any) {
+      console.error('Error fetching Fish.Audio voices:', error);
+      res.status(500).json({ message: error.message || "Failed to fetch voices" });
+    }
+  });
+
+  // Get single Fish.Audio voice details
+  app.get('/api/fish-audio/voices/:modelId', async (req, res) => {
+    try {
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Fish.Audio is not available. API key is not configured." 
+        });
+      }
+
+      const { modelId } = req.params;
+      const voice = await fishAudioGetVoice(modelId);
+
+      if (!voice) {
+        return res.status(404).json({ message: "Voice not found" });
+      }
+
+      res.json(voice);
+    } catch (error: any) {
+      console.error('Error fetching Fish.Audio voice:', error);
+      res.status(500).json({ message: error.message || "Failed to fetch voice" });
+    }
+  });
+
+  // Fish.Audio TTS generation (synchronous - returns audio directly)
+  app.post('/api/fish-audio/tts', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Fish.Audio is not available. API key is not configured." 
+        });
+      }
+
+      const { 
+        text, 
+        referenceId, 
+        temperature = 0.9, 
+        topP = 0.9, 
+        speed = 1, 
+        volume = 0,
+        format = 'mp3'
+      } = req.body;
+
+      if (!text || !referenceId) {
+        return res.status(400).json({ message: "text and referenceId are required" });
+      }
+
+      if (text.length > 30000) {
+        return res.status(400).json({ message: "Text exceeds maximum length of 30,000 characters" });
+      }
+
+      // Get TTS cost from database
+      const cost = await getModelCost('fish-audio-tts');
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        // Generate speech using Fish.Audio S1 model
+        const audioBuffer = await fishAudioGenerateSpeech({
+          text,
+          referenceId,
+          format: format as 'mp3' | 'wav' | 'pcm' | 'opus',
+          temperature,
+          topP,
+          speed,
+          volume,
+        });
+
+        // Create generation record for history
+        await storage.createGeneration({
+          userId,
+          type: 'text-to-speech',
+          model: 'fish-audio-s1',
+          prompt: text.substring(0, 500),
+          parameters: { referenceId, temperature, topP, speed, volume, format },
+          status: 'completed',
+          creditsCost: cost,
+        });
+
+        // Set appropriate content type and send audio
+        const contentType = format === 'wav' ? 'audio/wav' : 
+                           format === 'opus' ? 'audio/opus' : 'audio/mpeg';
+        
+        res.set({
+          'Content-Type': contentType,
+          'Content-Length': audioBuffer.length.toString(),
+          'Content-Disposition': `attachment; filename="tts_${Date.now()}.${format}"`,
+        });
+        
+        res.send(audioBuffer);
+      } catch (error: any) {
+        // Refund credits on failure
+        const currentUser = await storage.getUser(userId);
+        if (currentUser && typeof currentUser.credits === 'number') {
+          await storage.updateUserCredits(userId, currentUser.credits + cost);
+          console.log(`[FishAudio] Refunded ${cost} credits to user ${userId}`);
+        }
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('Fish.Audio TTS error:', error);
+      res.status(500).json({ message: error.message || "Failed to generate speech" });
+    }
+  });
+
+  // Fish.Audio Voice Cloning (create new voice model)
+  app.post('/api/fish-audio/voice-clone', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Fish.Audio is not available. API key is not configured." 
+        });
+      }
+
+      const { 
+        title, 
+        description, 
+        visibility = 'private', 
+        tags = [],
+        audioFiles,
+        texts = []
+      } = req.body;
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ message: "Voice name (title) is required" });
+      }
+
+      if (!audioFiles || audioFiles.length === 0) {
+        return res.status(400).json({ message: "At least one audio file is required" });
+      }
+
+      // Validate all files are base64 data URLs (prevent SSRF)
+      for (const file of audioFiles) {
+        if (!file.startsWith('data:audio/') && !file.startsWith('data:video/')) {
+          return res.status(400).json({ message: "Only base64 encoded audio files are accepted" });
+        }
+      }
+
+      // Get voice cloning cost from database
+      const cost = await getModelCost('fish-audio-voice-clone');
+
+      // Deduct credits atomically
+      const user = await storage.deductCreditsAtomic(userId, cost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        // Process audio files (convert base64 to buffers)
+        console.log(`[FishAudio] Processing ${audioFiles.length} audio files for cloning...`);
+        const audioBuffers = await fishAudioProcessAudioFiles(audioFiles);
+        console.log(`[FishAudio] ✓ Processed ${audioBuffers.length} audio files`);
+
+        // Create voice model using Fish.Audio API
+        console.log(`[FishAudio] Creating voice model: "${title}"`);
+        const result = await fishAudioCreateVoiceModel({
+          title: title.trim(),
+          description: description?.trim(),
+          visibility: visibility as 'public' | 'unlist' | 'private',
+          tags,
+          audioBuffers,
+          texts,
+          trainMode: 'fast',
+        });
+        console.log(`[FishAudio] ✓ Voice model created: ${result._id}`);
+
+        // Save voice clone to database (for user's reference)
+        const voiceClone = await storage.createVoiceClone({
+          userId,
+          name: title.trim(),
+          voiceId: result._id,
+          description: description?.trim() || '',
+          provider: 'fish-audio',
+          isActive: true,
+        });
+
+        res.json({ 
+          success: true, 
+          voiceClone,
+          fishAudioModel: result,
+          message: "Voice cloned successfully! It's now available in Text-to-Speech." 
+        });
+      } catch (error: any) {
+        // Refund credits on failure
+        const currentUser = await storage.getUser(userId);
+        if (currentUser && typeof currentUser.credits === 'number') {
+          await storage.updateUserCredits(userId, currentUser.credits + cost);
+          console.log(`[FishAudio] Refunded ${cost} credits to user ${userId}`);
+        }
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('[FishAudio] Voice cloning error:', error);
+      res.status(500).json({ message: error.message || "Voice cloning failed" });
+    }
+  });
+
+  // Get user's Fish.Audio voice clones
+  app.get('/api/fish-audio/my-voices', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const voices = await storage.getUserVoiceClones(userId);
+      // Filter to only show Fish.Audio voices
+      const fishAudioVoices = voices.filter(v => v.provider === 'fish-audio');
+      res.json(fishAudioVoices);
+    } catch (error) {
+      console.error('Error fetching user Fish.Audio voices:', error);
+      res.status(500).json({ message: "Failed to fetch your voices" });
+    }
+  });
+
+  // Delete Fish.Audio voice clone
+  app.delete('/api/fish-audio/voices/:voiceId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { voiceId } = req.params;
+
+      // Verify ownership in our database
+      const existingVoice = await storage.getVoiceClone(voiceId);
+      if (!existingVoice) {
+        return res.status(404).json({ message: "Voice clone not found" });
+      }
+      if (existingVoice.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden - not your voice clone" });
+      }
+
+      // Delete from Fish.Audio (best effort)
+      if (isFishAudioConfigured() && existingVoice.provider === 'fish-audio') {
+        try {
+          await fishAudioDeleteVoiceModel(voiceId);
+          console.log(`[FishAudio] Deleted voice model ${voiceId}`);
+        } catch (error: any) {
+          console.warn(`[FishAudio] Could not delete voice ${voiceId}:`, error.message);
+        }
+      }
+
+      // Delete from our database
+      await storage.deleteVoiceClone(voiceId);
+      res.json({ success: true, message: "Voice clone deleted" });
+    } catch (error) {
+      console.error('Error deleting Fish.Audio voice:', error);
+      res.status(500).json({ message: "Failed to delete voice clone" });
     }
   });
 
