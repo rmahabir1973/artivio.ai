@@ -65,6 +65,18 @@ const ERROR_PATTERNS: Array<{
     message: 'Content violates our guidelines',
     recommendation: 'Please ensure your content follows our usage policies. Avoid offensive or explicit material.'
   },
+  {
+    pattern: /rejected.*google.*content.*policy|google.*content.*policy|public.*error.*minor.*upload/i,
+    type: 'GOOGLE_CONTENT_POLICY',
+    message: 'Content was rejected by Google\'s content policy',
+    recommendation: 'Your image or prompt was flagged by Google\'s safety filters. Try using different images with less recognizable faces, or modify your prompt to be more general. Avoid photos of real people or celebrities.'
+  },
+  {
+    pattern: /veo.*fallback|turn.*on.*veo.*3.*fallback/i,
+    type: 'VEO_FALLBACK_SUGGESTION',
+    message: 'Content was rejected by the primary model',
+    recommendation: 'The content was flagged by safety filters. Try using different images with less recognizable faces, or use a different video model that may have different content policies.'
+  },
 
   // Video Errors
   {

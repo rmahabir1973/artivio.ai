@@ -2,7 +2,34 @@ import { ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, ExternalLink, Eye, FileVideo, FileImage, FileAudio } from "lucide-react";
+import { Download, ExternalLink, Eye, FileVideo, FileImage, FileAudio, AlertCircle, Lightbulb } from "lucide-react";
+
+interface ParsedError {
+  message: string;
+  recommendation?: string;
+  errorType?: string;
+}
+
+function parseErrorMessage(errorMessage: string | null | undefined): ParsedError {
+  if (!errorMessage) {
+    return { message: 'Generation failed' };
+  }
+  
+  try {
+    const parsed = JSON.parse(errorMessage);
+    if (parsed._type === 'DETAILED_ERROR') {
+      return {
+        message: parsed.message || 'Generation failed',
+        recommendation: parsed.recommendation,
+        errorType: parsed.errorType,
+      };
+    }
+  } catch (e) {
+    // Not JSON, treat as plain text
+  }
+  
+  return { message: errorMessage };
+}
 
 interface PreviewPanelProps {
   title?: string;
@@ -60,12 +87,28 @@ export function PreviewPanel({
       return customContent;
     }
 
-    if (status === "failed" && errorMessage) {
+    if (status === "failed") {
+      const parsedError = parseErrorMessage(errorMessage);
       return (
-        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-          <div className="text-destructive mb-4">{getIcon()}</div>
-          <h3 className="text-lg font-semibold mb-2">Generation Failed</h3>
-          <p className="text-sm text-muted-foreground max-w-md">{errorMessage}</p>
+        <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2 text-destructive">Generation Failed</h3>
+          <p className="text-sm text-muted-foreground max-w-md mb-4" data-testid="error-message">
+            {parsedError.message}
+          </p>
+          {parsedError.recommendation && (
+            <div className="bg-muted/50 rounded-lg p-4 max-w-md text-left" data-testid="error-recommendation">
+              <div className="flex items-start gap-3">
+                <Lightbulb className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium mb-1">Tip for next time:</p>
+                  <p className="text-sm text-muted-foreground">{parsedError.recommendation}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
