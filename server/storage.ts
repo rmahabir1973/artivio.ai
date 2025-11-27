@@ -128,6 +128,7 @@ export interface IStorage {
   getPricingById(id: string): Promise<Pricing | undefined>;
   createPricing(pricing: InsertPricing): Promise<Pricing>;
   updatePricing(id: string, updates: UpdatePricing): Promise<Pricing | undefined>;
+  deletePricing(id: string): Promise<boolean>;
 
   // Plan Economics operations (singleton)
   getPlanEconomics(): Promise<PlanEconomics | undefined>;
@@ -526,6 +527,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(pricing.id, id))
       .returning();
     return price;
+  }
+
+  async deletePricing(id: string): Promise<boolean> {
+    const result = await db
+      .delete(pricing)
+      .where(eq(pricing.id, id))
+      .returning();
+    return result.length > 0;
   }
 
   // Plan Economics operations (singleton)

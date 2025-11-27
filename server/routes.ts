@@ -5178,6 +5178,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/admin/pricing/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { id } = req.params;
+      const deleted = await storage.deletePricing(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Pricing entry not found' });
+      }
+
+      res.json({ success: true, message: 'Pricing entry deleted' });
+    } catch (error: any) {
+      console.error('Error deleting pricing:', error);
+      res.status(400).json({ message: 'Failed to delete pricing', error: error.message });
+    }
+  });
+
   // ========== PLAN ECONOMICS ROUTES ==========
   
   // Admin: Get plan economics settings

@@ -72,6 +72,7 @@ export default function Admin() {
     features: "[]",
   });
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+  const [deletingPricingId, setDeletingPricingId] = useState<string | null>(null);
   const [resettingPlans, setResettingPlans] = useState(false);
   
   // Home page content state
@@ -297,6 +298,21 @@ export default function Admin() {
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message || "Failed to add pricing", variant: "destructive" });
+    },
+  });
+
+  const deletePricingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/admin/pricing/${id}`);
+    },
+    onSuccess: () => {
+      setDeletingPricingId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pricing"] });
+      toast({ title: "Success", description: "Pricing entry deleted successfully" });
+    },
+    onError: (error: Error) => {
+      setDeletingPricingId(null);
+      toast({ title: "Error", description: error.message || "Failed to delete pricing", variant: "destructive" });
     },
   });
 
@@ -931,24 +947,39 @@ export default function Admin() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setEditingPricingId(pricing.id);
-                              setEditPricing({
-                                feature: pricing.feature,
-                                model: pricing.model,
-                                category: pricing.category,
-                                creditCost: pricing.creditCost.toString(),
-                                kieCreditCost: pricing.kieCreditCost?.toString() || "",
-                                description: pricing.description || "",
-                              });
-                            }}
-                            data-testid={`button-edit-pricing-${pricing.id}`}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingPricingId(pricing.id);
+                                setEditPricing({
+                                  feature: pricing.feature,
+                                  model: pricing.model,
+                                  category: pricing.category,
+                                  creditCost: pricing.creditCost.toString(),
+                                  kieCreditCost: pricing.kieCreditCost?.toString() || "",
+                                  description: pricing.description || "",
+                                });
+                              }}
+                              data-testid={`button-edit-pricing-${pricing.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                if (!deletePricingMutation.isPending) {
+                                  setDeletingPricingId(pricing.id);
+                                }
+                              }}
+                              disabled={deletePricingMutation.isPending}
+                              data-testid={`button-delete-pricing-${pricing.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2583,6 +2614,39 @@ export default function Admin() {
                 </>
               ) : (
                 "Delete Plan"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Pricing Confirmation */}
+      <AlertDialog open={deletingPricingId !== null} onOpenChange={(open) => !open && setDeletingPricingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Pricing Entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the pricing entry for "{pricingList.find(p => p.id === deletingPricingId)?.feature} - {pricingList.find(p => p.id === deletingPricingId)?.model}".
+              {' '}This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletePricingMutation.isPending} data-testid="button-cancel-delete-pricing">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingPricingId && deletePricingMutation.mutate(deletingPricingId)}
+              disabled={deletePricingMutation.isPending}
+              data-testid="button-confirm-delete-pricing"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletePricingMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Pricing"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
