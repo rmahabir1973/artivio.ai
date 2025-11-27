@@ -29,6 +29,7 @@ import {
   Mic
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
+import { fetchWithAuth } from "@/lib/authBridge";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 interface FishAudioVoice {
@@ -140,7 +141,7 @@ export default function TextToSpeech() {
       speed: number;
       volume: number;
     }) => {
-      const response = await fetch("/api/fish-audio/tts", {
+      const response = await fetchWithAuth("/api/fish-audio/tts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -90,6 +90,7 @@ export default function VoiceClone() {
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const recordingTimeRef = useRef(0);
 
   const { data: myVoices = [], isLoading: voicesLoading } = useQuery<MyVoice[]>({
     queryKey: ["/api/fish-audio/my-voices"],
@@ -271,9 +272,17 @@ export default function VoiceClone() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+        ? 'audio/webm;codecs=opus' 
+        : MediaRecorder.isTypeSupported('audio/webm') 
+          ? 'audio/webm' 
+          : 'audio/mp4';
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      recordingTimeRef.current = 0;
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -282,14 +291,15 @@ export default function VoiceClone() {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const finalDuration = recordingTimeRef.current;
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const audioUrl = URL.createObjectURL(audioBlob);
         setRecordedAudio(audioUrl);
         
         const reader = new FileReader();
         reader.onloadend = () => {
           setAudioFile(reader.result as string);
-          setAudioDuration(recordingTime);
+          setAudioDuration(finalDuration);
         };
         reader.readAsDataURL(audioBlob);
 
@@ -304,12 +314,14 @@ export default function VoiceClone() {
       setRecordingTime(0);
 
       timerIntervalRef.current = window.setInterval(() => {
+        recordingTimeRef.current += 1;
         setRecordingTime((prev) => {
-          if (prev >= MAX_DURATION) {
+          const newTime = prev + 1;
+          if (newTime >= MAX_DURATION) {
             stopRecording();
             return prev;
           }
-          return prev + 1;
+          return newTime;
         });
       }, 1000);
     } catch {
@@ -339,6 +351,7 @@ export default function VoiceClone() {
     setAudioFile(null);
     setRecordingTime(0);
     setAudioDuration(0);
+    recordingTimeRef.current = 0;
     audioChunksRef.current = [];
   };
 
