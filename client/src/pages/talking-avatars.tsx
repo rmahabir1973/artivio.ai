@@ -30,6 +30,13 @@ export default function TalkingAvatars() {
   const [audioFile, setAudioFile] = useState("");
   const [provider, setProvider] = useState("kling-ai");
   const [quality, setQuality] = useState("720p");
+
+  // Reset quality to default when provider changes
+  const handleProviderChange = (newProvider: string) => {
+    setProvider(newProvider);
+    // Default to 720p for Kling AI, 480p for Infinite Talk
+    setQuality(newProvider === "kling-ai" ? "720p" : "480p");
+  };
   const [emotion, setEmotion] = useState("");
   const [uploading, setUploading] = useState(false);
   const [seed, setSeed] = useState("");
@@ -453,7 +460,7 @@ export default function TalkingAvatars() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="provider">Provider</Label>
-                    <Select value={provider} onValueChange={setProvider}>
+                    <Select value={provider} onValueChange={handleProviderChange}>
                       <SelectTrigger id="provider" data-testid="select-provider">
                         <SelectValue />
                       </SelectTrigger>
@@ -471,8 +478,17 @@ export default function TalkingAvatars() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="480p">480p</SelectItem>
-                        <SelectItem value="720p">720p</SelectItem>
+                        {provider === "kling-ai" ? (
+                          <>
+                            <SelectItem value="720p">720p</SelectItem>
+                            <SelectItem value="1080p">1080p</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="480p">480p</SelectItem>
+                            <SelectItem value="720p">720p</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
