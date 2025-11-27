@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import { LivePlayerProvider } from "@twick/live-player";
 import { TwickStudio } from "@twick/studio";
 import { TimelineProvider, INITIAL_TIMELINE_DATA } from "@twick/timeline";
@@ -108,9 +108,9 @@ type CanvasPreset = {
 };
 
 const CANVAS_PRESETS: CanvasPreset[] = [
-  { name: "Landscape", width: 1920, height: 1080, icon: Monitor, ratio: "16:9" },
-  { name: "Portrait", width: 1080, height: 1920, icon: Smartphone, ratio: "9:16" },
-  { name: "Square", width: 1080, height: 1080, icon: Square, ratio: "1:1" },
+  { name: "Landscape (16:9)", width: 1280, height: 720, icon: Monitor, ratio: "16:9" },
+  { name: "Portrait (9:16)", width: 720, height: 1280, icon: Smartphone, ratio: "9:16" },
+  { name: "Square (1:1)", width: 1080, height: 1080, icon: Square, ratio: "1:1" },
 ];
 
 const normalizeTemplatePayload = (templateData: any, canvas: CanvasPreset): any => {
@@ -124,6 +124,20 @@ const normalizeTemplatePayload = (templateData: any, canvas: CanvasPreset): any 
   };
   cloned.width = canvas.width;
   cloned.height = canvas.height;
+  
+  cloned.properties = {
+    ...(cloned.properties || {}),
+    width: canvas.width,
+    height: canvas.height,
+  };
+  
+  if (cloned.input) {
+    cloned.input.properties = {
+      ...(cloned.input.properties || {}),
+      width: canvas.width,
+      height: canvas.height,
+    };
+  }
   
   if (cloned.elements && Array.isArray(cloned.elements)) {
     cloned.elements = cloned.elements.map((element: any) => {
@@ -4478,6 +4492,11 @@ export default function VideoEditor() {
   
   const [brandKitOpen, setBrandKitOpen] = useState(false);
   
+  useLayoutEffect(() => {
+    const orientation = selectedCanvas.width > selectedCanvas.height ? "horizontal" : "vertical";
+    localStorage.setItem("orientation", orientation);
+  }, [selectedCanvas]);
+  
   const currentTimelineDataRef = useRef<any>(INITIAL_TIMELINE_DATA);
   const lastSavedDataRef = useRef<string>("");
   
@@ -4593,6 +4612,8 @@ export default function VideoEditor() {
   const totalMediaCount = userMedia.videos.length + userMedia.images.length + userMedia.audio.length;
 
   const handleCanvasChange = (preset: CanvasPreset) => {
+    const orientation = preset.width > preset.height ? "horizontal" : "vertical";
+    localStorage.setItem("orientation", orientation);
     setSelectedCanvas(preset);
     setStudioKey(prev => prev + 1);
     setHasUnsavedChanges(true);
@@ -4778,6 +4799,9 @@ export default function VideoEditor() {
     const targetCanvas = matchingCanvas || CANVAS_PRESETS[0];
     const normalizedData = normalizeTemplatePayload(template.timelineData, targetCanvas);
     
+    const orientation = targetCanvas.width > targetCanvas.height ? "horizontal" : "vertical";
+    localStorage.setItem("orientation", orientation);
+    
     setSelectedCanvas(targetCanvas);
     setLoadedTimelineData(normalizedData);
     currentTimelineDataRef.current = normalizedData;
@@ -4835,6 +4859,8 @@ export default function VideoEditor() {
         c => c.width === project.settings.canvasWidth && c.height === project.settings.canvasHeight
       );
       if (matchingCanvas) {
+        const orientation = matchingCanvas.width > matchingCanvas.height ? "horizontal" : "vertical";
+        localStorage.setItem("orientation", orientation);
         setSelectedCanvas(matchingCanvas);
       }
     }
@@ -4971,15 +4997,7 @@ export default function VideoEditor() {
 
   const initialTimelineData = useMemo(() => {
     const baseData = loadedTimelineData || INITIAL_TIMELINE_DATA;
-    return {
-      ...baseData,
-      stage: {
-        width: selectedCanvas.width,
-        height: selectedCanvas.height,
-      },
-      width: selectedCanvas.width,
-      height: selectedCanvas.height,
-    };
+    return normalizeTemplatePayload(baseData, selectedCanvas);
   }, [loadedTimelineData, selectedCanvas]);
 
   return (
@@ -5446,14 +5464,16 @@ export default function VideoEditor() {
         )}
 
         <div ref={editorContainerRef} className="flex-1 min-h-0 relative" data-testid="video-editor-container">
-          <div className="twick-studio-wrapper">
-            <LivePlayerProvider>
+          <div className="twick-studio-wrapper" key={`wrapper-${studioKey}`}>
+            <LivePlayerProvider key={`player-${studioKey}`}>
               <TimelineProvider
-                key={studioKey}
+                key={`timeline-${studioKey}`}
                 initialData={initialTimelineData}
-                contextId="artivio-video-editor"
+                contextId={`artivio-video-editor-${studioKey}`}
+                resolution={{ width: selectedCanvas.width, height: selectedCanvas.height }}
               >
                 <TwickStudio
+                  key={`studio-${studioKey}`}
                   studioConfig={{
                     videoProps: {
                       width: selectedCanvas.width,
