@@ -17,7 +17,8 @@ import {
   Library, Copy, Video, Image, Music, X, Check, Settings2, Keyboard,
   Save, FolderOpen, Trash2, MoreVertical, Plus, Cloud, CloudOff,
   LayoutTemplate, Play, Quote, Briefcase, User, FileVideo, Droplets,
-  Type, ImageIcon, Palette
+  Type, ImageIcon, Palette, Subtitles, Upload, Globe, AlignCenter,
+  AlignLeft, AlignRight, Share2, Users, UserPlus, Link2, Eye, Pencil, Crown
 } from "lucide-react";
 import { SiYoutube, SiTiktok, SiInstagram, SiX } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -87,6 +88,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 
 type CanvasPreset = {
   name: string;
@@ -274,6 +285,54 @@ const saveWatermarkSettings = (settings: WatermarkSettings) => {
   } catch (e) {
     console.error('Failed to save watermark settings:', e);
   }
+};
+
+type CaptionPosition = 'top' | 'center' | 'bottom';
+type CaptionStyle = 'simple' | 'karaoke' | 'word-by-word';
+
+type CaptionSettings = {
+  language: string;
+  style: CaptionStyle;
+  position: CaptionPosition;
+  fontSize: number;
+  color: string;
+  backgroundColor: string;
+};
+
+type TranscriptSegment = {
+  start: number;
+  end: number;
+  text: string;
+};
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'ar', name: 'Arabic' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'ru', name: 'Russian' },
+];
+
+const CAPTION_STYLES: { id: CaptionStyle; name: string; description: string }[] = [
+  { id: 'simple', name: 'Simple', description: 'Standard subtitles at the bottom' },
+  { id: 'karaoke', name: 'Karaoke', description: 'Highlighted words as spoken' },
+  { id: 'word-by-word', name: 'Word by Word', description: 'One word at a time' },
+];
+
+const DEFAULT_CAPTION_SETTINGS: CaptionSettings = {
+  language: 'en',
+  style: 'simple',
+  position: 'bottom',
+  fontSize: 32,
+  color: '#ffffff',
+  backgroundColor: '#000000',
 };
 
 type TemplateCategory = 'social-media' | 'business' | 'personal' | 'blank';
@@ -1067,10 +1126,314 @@ type MediaItem = {
   createdAt: Date;
 };
 
+type TextStyleCategory = 'headings' | 'body' | 'accents' | 'animated';
+
+type TextStylePreset = {
+  id: string;
+  name: string;
+  category: TextStyleCategory;
+  preview: string;
+  style: {
+    fontFamily: string;
+    fontSize: number;
+    fontWeight: 'normal' | 'bold' | 'light';
+    fill: string;
+    stroke?: string;
+    strokeWidth?: number;
+    textAlign: 'left' | 'center' | 'right';
+    textTransform?: 'none' | 'uppercase' | 'lowercase';
+    letterSpacing?: number;
+    shadow?: string;
+    gradient?: string;
+  };
+  animationType?: 'fade-in' | 'slide-up' | 'typewriter' | 'bounce' | 'glow-pulse' | 'none';
+};
+
+const TEXT_STYLE_CATEGORIES: { id: TextStyleCategory | 'all'; name: string }[] = [
+  { id: 'all', name: 'All Styles' },
+  { id: 'headings', name: 'Headings' },
+  { id: 'body', name: 'Body' },
+  { id: 'accents', name: 'Accents' },
+  { id: 'animated', name: 'Animated' },
+];
+
+const TEXT_STYLE_PRESETS: TextStylePreset[] = [
+  {
+    id: 'modern-title',
+    name: 'Modern Title',
+    category: 'headings',
+    preview: 'Modern Title',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 72,
+      fontWeight: 'bold',
+      fill: '#ffffff',
+      textAlign: 'center',
+    },
+    animationType: 'fade-in',
+  },
+  {
+    id: 'bold-statement',
+    name: 'Bold Statement',
+    category: 'headings',
+    preview: 'BOLD STATEMENT',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 64,
+      fontWeight: 'bold',
+      fill: '#ffffff',
+      textAlign: 'center',
+      textTransform: 'uppercase',
+      letterSpacing: 4,
+    },
+    animationType: 'slide-up',
+  },
+  {
+    id: 'elegant-serif',
+    name: 'Elegant Serif',
+    category: 'headings',
+    preview: 'Elegant Serif',
+    style: {
+      fontFamily: 'Georgia',
+      fontSize: 64,
+      fontWeight: 'normal',
+      fill: '#f8f4e8',
+      textAlign: 'center',
+      letterSpacing: 2,
+    },
+    animationType: 'fade-in',
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    category: 'body',
+    preview: 'minimal text',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 32,
+      fontWeight: 'light',
+      fill: '#e5e5e5',
+      textAlign: 'center',
+      textTransform: 'lowercase',
+      letterSpacing: 1,
+    },
+    animationType: 'none',
+  },
+  {
+    id: 'clean-body',
+    name: 'Clean Body',
+    category: 'body',
+    preview: 'Clean, readable text for your content',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 28,
+      fontWeight: 'normal',
+      fill: '#ffffff',
+      textAlign: 'left',
+    },
+    animationType: 'none',
+  },
+  {
+    id: 'subtitle',
+    name: 'Subtitle',
+    category: 'body',
+    preview: 'Perfect for subtitles and captions',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 24,
+      fontWeight: 'normal',
+      fill: '#a3a3a3',
+      textAlign: 'center',
+    },
+    animationType: 'fade-in',
+  },
+  {
+    id: 'neon-glow',
+    name: 'Neon Glow',
+    category: 'accents',
+    preview: 'NEON GLOW',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 56,
+      fontWeight: 'bold',
+      fill: '#00ffff',
+      textAlign: 'center',
+      shadow: '0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff',
+    },
+    animationType: 'glow-pulse',
+  },
+  {
+    id: 'outlined',
+    name: 'Outlined',
+    category: 'accents',
+    preview: 'OUTLINED',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 64,
+      fontWeight: 'bold',
+      fill: 'transparent',
+      stroke: '#ffffff',
+      strokeWidth: 2,
+      textAlign: 'center',
+      textTransform: 'uppercase',
+    },
+    animationType: 'none',
+  },
+  {
+    id: 'shadow-pop',
+    name: 'Shadow Pop',
+    category: 'accents',
+    preview: 'Shadow Pop',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 56,
+      fontWeight: 'bold',
+      fill: '#ffffff',
+      textAlign: 'center',
+      shadow: '4px 4px 0px #ff6b6b, 8px 8px 0px #4ecdc4',
+    },
+    animationType: 'bounce',
+  },
+  {
+    id: 'gradient-text',
+    name: 'Gradient Text',
+    category: 'accents',
+    preview: 'Gradient Text',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 64,
+      fontWeight: 'bold',
+      fill: '#ffffff',
+      textAlign: 'center',
+      gradient: 'linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1)',
+    },
+    animationType: 'none',
+  },
+  {
+    id: 'retro',
+    name: 'Retro',
+    category: 'accents',
+    preview: 'RETRO VIBES',
+    style: {
+      fontFamily: 'Georgia',
+      fontSize: 52,
+      fontWeight: 'bold',
+      fill: '#ffd93d',
+      textAlign: 'center',
+      textTransform: 'uppercase',
+      shadow: '3px 3px 0px #c73e1d',
+    },
+    animationType: 'none',
+  },
+  {
+    id: 'typewriter',
+    name: 'Typewriter',
+    category: 'animated',
+    preview: 'Typewriter Effect...',
+    style: {
+      fontFamily: 'Courier New',
+      fontSize: 36,
+      fontWeight: 'normal',
+      fill: '#00ff00',
+      textAlign: 'left',
+    },
+    animationType: 'typewriter',
+  },
+  {
+    id: 'slide-reveal',
+    name: 'Slide Reveal',
+    category: 'animated',
+    preview: 'Slide Reveal',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 56,
+      fontWeight: 'bold',
+      fill: '#ffffff',
+      textAlign: 'center',
+    },
+    animationType: 'slide-up',
+  },
+  {
+    id: 'bounce-in',
+    name: 'Bounce In',
+    category: 'animated',
+    preview: 'Bounce!',
+    style: {
+      fontFamily: 'Inter',
+      fontSize: 64,
+      fontWeight: 'bold',
+      fill: '#ff6b6b',
+      textAlign: 'center',
+    },
+    animationType: 'bounce',
+  },
+];
+
 type ShortcutCategory = {
   name: string;
   shortcuts: { keys: string[]; description: string }[];
 };
+
+type BrandKitPalette = {
+  id: string;
+  name: string;
+  colors: string[];
+};
+
+type BrandKitFont = {
+  id: string;
+  name: string;
+  family: string;
+  weights?: number[];
+};
+
+type BrandKitLogo = {
+  id: string;
+  name: string;
+  url: string;
+  kind?: 'logo' | 'watermark';
+};
+
+type BrandKit = {
+  id: string;
+  userId: string;
+  name: string;
+  palettes: BrandKitPalette[] | null;
+  fonts: BrandKitFont[] | null;
+  logos: BrandKitLogo[] | null;
+};
+
+const SUGGESTED_PALETTES: { name: string; colors: string[] }[] = [
+  { name: 'Neon', colors: ['#FF00FF', '#00FFFF', '#FF0080', '#00FF00', '#FFFF00', '#FF6600'] },
+  { name: 'Pastel', colors: ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA', '#FFDFBA', '#E0BBE4'] },
+  { name: 'Earth Tones', colors: ['#8B4513', '#D2691E', '#CD853F', '#DEB887', '#F5DEB3', '#556B2F'] },
+  { name: 'Monochrome', colors: ['#000000', '#333333', '#666666', '#999999', '#CCCCCC', '#FFFFFF'] },
+  { name: 'Ocean', colors: ['#001F3F', '#0074D9', '#7FDBFF', '#39CCCC', '#3D9970', '#01FF70'] },
+  { name: 'Sunset', colors: ['#FF4136', '#FF851B', '#FFDC00', '#FF6B6B', '#C44D58', '#774F38'] },
+];
+
+const COMMON_FONTS = [
+  { family: 'Inter', name: 'Inter' },
+  { family: 'Roboto', name: 'Roboto' },
+  { family: 'Open Sans', name: 'Open Sans' },
+  { family: 'Lato', name: 'Lato' },
+  { family: 'Montserrat', name: 'Montserrat' },
+  { family: 'Poppins', name: 'Poppins' },
+  { family: 'Playfair Display', name: 'Playfair Display' },
+  { family: 'Oswald', name: 'Oswald' },
+  { family: 'Raleway', name: 'Raleway' },
+  { family: 'Ubuntu', name: 'Ubuntu' },
+  { family: 'Merriweather', name: 'Merriweather' },
+  { family: 'Source Sans Pro', name: 'Source Sans Pro' },
+  { family: 'PT Sans', name: 'PT Sans' },
+  { family: 'Nunito', name: 'Nunito' },
+  { family: 'Georgia', name: 'Georgia' },
+  { family: 'Arial', name: 'Arial' },
+  { family: 'Verdana', name: 'Verdana' },
+  { family: 'Courier New', name: 'Courier New' },
+];
+
+const FONT_WEIGHTS = [300, 400, 500, 600, 700, 800];
 
 const KEYBOARD_SHORTCUTS: ShortcutCategory[] = [
   {
@@ -1119,6 +1482,26 @@ type VideoProject = {
   thumbnailUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  role?: 'owner' | 'editor' | 'viewer';
+  collaboratorCount?: number;
+};
+
+type CollaboratorUser = {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
+};
+
+type ProjectCollaborator = {
+  id: string;
+  projectId: string;
+  userId: string;
+  role: string;
+  invitedBy: string | null;
+  createdAt: string;
+  user: CollaboratorUser | null;
 };
 
 const saveProjectSchema = z.object({
@@ -1596,6 +1979,454 @@ function WatermarkConfigDialog({
   );
 }
 
+function AutoCaptionsDialog({
+  open,
+  onOpenChange,
+  onApplyCaptions,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApplyCaptions: (segments: TranscriptSegment[], settings: CaptionSettings) => void;
+}) {
+  const { toast } = useToast();
+  const [mode, setMode] = useState<'url' | 'file'>('url');
+  const [audioUrl, setAudioUrl] = useState('');
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [settings, setSettings] = useState<CaptionSettings>(DEFAULT_CAPTION_SETTINGS);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [segments, setSegments] = useState<TranscriptSegment[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/ogg', 'video/mp4', 'video/webm'];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please upload an audio file (MP3, WAV, M4A, OGG) or video file (MP4, WebM)",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Please upload a file smaller than 25MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setAudioFile(file);
+    }
+  };
+
+  const handleTranscribe = async () => {
+    if (mode === 'url' && !audioUrl.trim()) {
+      toast({
+        title: "URL Required",
+        description: "Please enter an audio or video URL",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (mode === 'file' && !audioFile) {
+      toast({
+        title: "File Required",
+        description: "Please upload an audio or video file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTranscribing(true);
+    setSegments([]);
+
+    try {
+      let response;
+      if (mode === 'url') {
+        response = await fetch('/api/editor/transcribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            audioUrl: audioUrl.trim(),
+            language: settings.language 
+          }),
+        });
+      } else {
+        const formData = new FormData();
+        formData.append('audio', audioFile!);
+        formData.append('language', settings.language);
+        response = await fetch('/api/editor/transcribe', {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Transcription failed');
+      }
+
+      const data = await response.json();
+      setSegments(data.segments);
+      setShowPreview(true);
+      toast({
+        title: "Transcription Complete",
+        description: `Generated ${data.segments.length} caption segments`,
+      });
+    } catch (error: any) {
+      console.error('Transcription error:', error);
+      toast({
+        title: "Transcription Failed",
+        description: error.message || "Failed to transcribe audio",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleApply = () => {
+    onApplyCaptions(segments, settings);
+    onOpenChange(false);
+    toast({
+      title: "Captions Applied",
+      description: `${segments.length} caption segments added to timeline`,
+    });
+  };
+
+  const handleReset = () => {
+    setSegments([]);
+    setShowPreview(false);
+    setAudioUrl('');
+    setAudioFile(null);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 100);
+    return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Subtitles className="h-5 w-5" />
+            Auto Captions
+          </DialogTitle>
+          <DialogDescription>
+            Generate captions automatically from audio using AI transcription.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto space-y-6 py-4">
+          {!showPreview ? (
+            <>
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Audio Source</Label>
+                <Tabs value={mode} onValueChange={(v) => setMode(v as 'url' | 'file')}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="url" className="gap-2">
+                      <Globe className="h-4 w-4" />
+                      URL
+                    </TabsTrigger>
+                    <TabsTrigger value="file" className="gap-2">
+                      <Upload className="h-4 w-4" />
+                      Upload File
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="url" className="mt-3">
+                    <Input
+                      value={audioUrl}
+                      onChange={(e) => setAudioUrl(e.target.value)}
+                      placeholder="https://example.com/audio.mp3"
+                      data-testid="input-audio-url"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Enter a direct URL to an audio or video file (MP3, WAV, MP4, etc.)
+                    </p>
+                  </TabsContent>
+
+                  <TabsContent value="file" className="mt-3">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="audio/*,video/mp4,video/webm"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                    >
+                      {audioFile ? (
+                        <div className="space-y-2">
+                          <Music className="h-8 w-8 mx-auto text-primary" />
+                          <p className="text-sm font-medium">{audioFile.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(audioFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAudioFile(null);
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                          <p className="text-sm">Click to upload audio or video file</p>
+                          <p className="text-xs text-muted-foreground">
+                            MP3, WAV, M4A, OGG, MP4, WebM (max 25MB)
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Globe className="h-3.5 w-3.5" />
+                    Language
+                  </Label>
+                  <Select
+                    value={settings.language}
+                    onValueChange={(value) => setSettings(prev => ({ ...prev, language: value }))}
+                  >
+                    <SelectTrigger data-testid="select-caption-language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          {lang.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Caption Style</Label>
+                  <Select
+                    value={settings.style}
+                    onValueChange={(value: CaptionStyle) => setSettings(prev => ({ ...prev, style: value }))}
+                  >
+                    <SelectTrigger data-testid="select-caption-style">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CAPTION_STYLES.map((style) => (
+                        <SelectItem key={style.id} value={style.id}>
+                          {style.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Position</Label>
+                <RadioGroup
+                  value={settings.position}
+                  onValueChange={(value: CaptionPosition) => setSettings(prev => ({ ...prev, position: value }))}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="top" id="pos-top" />
+                    <Label htmlFor="pos-top" className="cursor-pointer">Top</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="center" id="pos-center" />
+                    <Label htmlFor="pos-center" className="cursor-pointer">Center</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="bottom" id="pos-bottom" />
+                    <Label htmlFor="pos-bottom" className="cursor-pointer">Bottom</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Font Size</Label>
+                  <Select
+                    value={String(settings.fontSize)}
+                    onValueChange={(value) => setSettings(prev => ({ ...prev, fontSize: parseInt(value) }))}
+                  >
+                    <SelectTrigger data-testid="select-caption-font-size">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[16, 20, 24, 28, 32, 36, 40, 48, 56, 64].map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size}px
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Palette className="h-3.5 w-3.5" />
+                    Text Color
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={settings.color}
+                      onChange={(e) => setSettings(prev => ({ ...prev, color: e.target.value }))}
+                      className="w-8 h-8 rounded border cursor-pointer"
+                      data-testid="input-caption-color"
+                    />
+                    <Input
+                      value={settings.color}
+                      onChange={(e) => setSettings(prev => ({ ...prev, color: e.target.value }))}
+                      placeholder="#ffffff"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Background Color</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={settings.backgroundColor}
+                    onChange={(e) => setSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                    className="w-8 h-8 rounded border cursor-pointer"
+                    data-testid="input-caption-bg-color"
+                  />
+                  <Input
+                    value={settings.backgroundColor}
+                    onChange={(e) => setSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                    placeholder="#000000"
+                    className="flex-1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Used for caption background
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">
+                  Caption Preview ({segments.length} segments)
+                </h3>
+                <Button variant="outline" size="sm" onClick={handleReset}>
+                  Start Over
+                </Button>
+              </div>
+
+              <ScrollArea className="h-[300px] border rounded-lg">
+                <div className="p-4 space-y-2">
+                  {segments.map((segment, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div className="text-xs text-muted-foreground font-mono whitespace-nowrap pt-0.5">
+                        {formatTime(segment.start)} - {formatTime(segment.end)}
+                      </div>
+                      <p className="text-sm flex-1">{segment.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+
+              <div className="p-4 rounded-lg border bg-muted/30">
+                <p className="text-sm font-medium mb-2">Preview</p>
+                <div 
+                  className="aspect-video rounded-md bg-black flex items-end justify-center relative overflow-hidden"
+                >
+                  <div 
+                    className={`px-4 py-2 text-center ${
+                      settings.position === 'top' ? 'absolute top-4' : 
+                      settings.position === 'center' ? 'absolute top-1/2 -translate-y-1/2' : 'mb-4'
+                    }`}
+                    style={{
+                      backgroundColor: `${settings.backgroundColor}cc`,
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <span 
+                      style={{ 
+                        color: settings.color,
+                        fontSize: Math.min(settings.fontSize / 2, 18),
+                        fontWeight: 600,
+                      }}
+                    >
+                      {segments[0]?.text || "Caption text appears here"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            data-testid="button-captions-cancel"
+          >
+            Cancel
+          </Button>
+          {showPreview ? (
+            <Button 
+              onClick={handleApply}
+              disabled={segments.length === 0}
+              data-testid="button-apply-captions"
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Apply Captions
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleTranscribe}
+              disabled={isTranscribing || (mode === 'url' ? !audioUrl.trim() : !audioFile)}
+              data-testid="button-generate-captions"
+            >
+              {isTranscribing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Transcribing...
+                </>
+              ) : (
+                <>
+                  <Subtitles className="h-4 w-4 mr-2" />
+                  Generate Captions
+                </>
+              )}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function TemplateCard({
   template,
   onSelect,
@@ -1707,6 +2538,872 @@ function TemplatesSheet({
               </div>
             )}
           </ScrollArea>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function TextStyleCard({
+  preset,
+  onSelect,
+}: {
+  preset: TextStylePreset;
+  onSelect: (preset: TextStylePreset) => void;
+}) {
+  const getPreviewStyles = (): React.CSSProperties => {
+    const styles: React.CSSProperties = {
+      fontFamily: preset.style.fontFamily,
+      fontSize: Math.min(preset.style.fontSize / 3, 24),
+      fontWeight: preset.style.fontWeight === 'bold' ? 700 : preset.style.fontWeight === 'light' ? 300 : 400,
+      color: preset.style.fill === 'transparent' ? undefined : preset.style.fill,
+      textAlign: preset.style.textAlign,
+      letterSpacing: preset.style.letterSpacing ? `${preset.style.letterSpacing / 3}px` : undefined,
+      textTransform: preset.style.textTransform as any,
+      WebkitTextStroke: preset.style.stroke ? `${Math.max(1, (preset.style.strokeWidth || 2) / 2)}px ${preset.style.stroke}` : undefined,
+      textShadow: preset.style.shadow,
+    };
+
+    if (preset.style.gradient) {
+      styles.background = preset.style.gradient;
+      styles.WebkitBackgroundClip = 'text';
+      styles.WebkitTextFillColor = 'transparent';
+      styles.backgroundClip = 'text';
+    }
+
+    return styles;
+  };
+
+  const getAnimationClass = () => {
+    switch (preset.animationType) {
+      case 'glow-pulse':
+        return 'animate-pulse';
+      case 'bounce':
+        return 'hover:animate-bounce';
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <button
+      onClick={() => onSelect(preset)}
+      className="flex flex-col items-start gap-3 p-4 rounded-lg border bg-card hover-elevate transition-all text-left w-full group"
+      data-testid={`text-style-card-${preset.id}`}
+    >
+      <div className="w-full h-20 rounded-md bg-zinc-900 flex items-center justify-center relative overflow-hidden px-3">
+        <span 
+          className={`truncate max-w-full ${getAnimationClass()}`}
+          style={getPreviewStyles()}
+        >
+          {preset.preview}
+        </span>
+        {preset.animationType && preset.animationType !== 'none' && (
+          <Badge 
+            variant="secondary" 
+            className="absolute top-2 right-2 text-[10px] px-1.5"
+          >
+            {preset.animationType.replace('-', ' ')}
+          </Badge>
+        )}
+      </div>
+      <div className="w-full">
+        <h4 className="text-sm font-medium group-hover:text-primary transition-colors">
+          {preset.name}
+        </h4>
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <Badge variant="outline" className="text-[10px] px-1.5">
+            {preset.style.fontFamily}
+          </Badge>
+          <Badge variant="outline" className="text-[10px] px-1.5">
+            {preset.style.fontSize}px
+          </Badge>
+          {preset.style.stroke && (
+            <Badge variant="outline" className="text-[10px] px-1.5">
+              Outlined
+            </Badge>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function TextStylesSheet({
+  open,
+  onOpenChange,
+  onSelectStyle,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelectStyle: (preset: TextStylePreset) => void;
+}) {
+  const [selectedCategory, setSelectedCategory] = useState<TextStyleCategory | 'all'>('all');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const filteredPresets = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return TEXT_STYLE_PRESETS;
+    }
+    return TEXT_STYLE_PRESETS.filter(p => p.category === selectedCategory);
+  }, [selectedCategory]);
+
+  const handleSelectStyle = (preset: TextStylePreset) => {
+    onSelectStyle(preset);
+    setCopiedId(preset.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Type className="h-5 w-5" />
+            Text Styles
+          </SheetTitle>
+          <SheetDescription>
+            Choose a text style preset. Click to copy the style, then add text to your timeline and apply the style in the properties panel.
+          </SheetDescription>
+        </SheetHeader>
+
+        <Tabs 
+          defaultValue="all" 
+          className="mt-6"
+          onValueChange={(v) => setSelectedCategory(v as TextStyleCategory | 'all')}
+        >
+          <TabsList className="grid w-full grid-cols-5">
+            {TEXT_STYLE_CATEGORIES.map((cat) => (
+              <TabsTrigger key={cat.id} value={cat.id} className="text-xs">
+                {cat.name.split(' ')[0]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <ScrollArea className="h-[calc(100vh-280px)] mt-4">
+            {copiedId && (
+              <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-600 dark:text-green-400">
+                  Style copied! Add text to your timeline and apply this style.
+                </span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3 pr-4">
+              {filteredPresets.map((preset) => (
+                <TextStyleCard
+                  key={preset.id}
+                  preset={preset}
+                  onSelect={handleSelectStyle}
+                />
+              ))}
+            </div>
+
+            {filteredPresets.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Type className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No styles in this category</p>
+              </div>
+            )}
+
+            <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Palette className="h-4 w-4" />
+                How to use text styles
+              </h4>
+              <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
+                <li>Click on a text style to copy its properties</li>
+                <li>Add a text element to your timeline using the editor toolbar</li>
+                <li>Select the text element on the canvas</li>
+                <li>Apply the copied style from the properties panel on the right</li>
+              </ol>
+            </div>
+          </ScrollArea>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function BrandKitSheet({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'colors' | 'fonts' | 'logos'>('colors');
+  const [newPaletteName, setNewPaletteName] = useState('');
+  const [newPaletteColors, setNewPaletteColors] = useState<string[]>(['#000000']);
+  const [showAddPalette, setShowAddPalette] = useState(false);
+  const [newFontFamily, setNewFontFamily] = useState('Inter');
+  const [newFontName, setNewFontName] = useState('');
+  const [newFontWeights, setNewFontWeights] = useState<number[]>([400, 700]);
+  const [showAddFont, setShowAddFont] = useState(false);
+  const [fontPreviewText, setFontPreviewText] = useState('The quick brown fox');
+  const [newLogoName, setNewLogoName] = useState('');
+  const [newLogoUrl, setNewLogoUrl] = useState('');
+  const [newLogoKind, setNewLogoKind] = useState<'logo' | 'watermark'>('logo');
+  const [showAddLogo, setShowAddLogo] = useState(false);
+  const [editingPaletteId, setEditingPaletteId] = useState<string | null>(null);
+  const [editingPaletteName, setEditingPaletteName] = useState('');
+
+  const { data: brandKit, isLoading } = useQuery<BrandKit>({
+    queryKey: ['/api/editor/brand-kit'],
+    enabled: open,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: Partial<BrandKit>) => {
+      const response = await apiRequest("PUT", "/api/editor/brand-kit", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/editor/brand-kit'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update brand kit",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCopyColor = async (color: string) => {
+    try {
+      await navigator.clipboard.writeText(color);
+      toast({
+        title: "Color Copied",
+        description: `${color} copied to clipboard`,
+      });
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const handleAddPalette = () => {
+    if (!newPaletteName.trim()) {
+      toast({ title: "Error", description: "Please enter a palette name", variant: "destructive" });
+      return;
+    }
+    const newPalette: BrandKitPalette = {
+      id: `palette-${Date.now()}`,
+      name: newPaletteName,
+      colors: newPaletteColors,
+    };
+    const currentPalettes = brandKit?.palettes || [];
+    updateMutation.mutate({ palettes: [...currentPalettes, newPalette] });
+    setNewPaletteName('');
+    setNewPaletteColors(['#000000']);
+    setShowAddPalette(false);
+    toast({ title: "Palette Added", description: `"${newPaletteName}" has been added to your brand kit` });
+  };
+
+  const handleAddSuggestedPalette = (suggested: { name: string; colors: string[] }) => {
+    const newPalette: BrandKitPalette = {
+      id: `palette-${Date.now()}`,
+      name: suggested.name,
+      colors: suggested.colors,
+    };
+    const currentPalettes = brandKit?.palettes || [];
+    updateMutation.mutate({ palettes: [...currentPalettes, newPalette] });
+    toast({ title: "Palette Added", description: `"${suggested.name}" has been added to your brand kit` });
+  };
+
+  const handleDeletePalette = (paletteId: string) => {
+    const currentPalettes = brandKit?.palettes || [];
+    updateMutation.mutate({ palettes: currentPalettes.filter(p => p.id !== paletteId) });
+    toast({ title: "Palette Deleted" });
+  };
+
+  const handleAddColorToPalette = (paletteId: string, color: string) => {
+    const currentPalettes = brandKit?.palettes || [];
+    const updatedPalettes = currentPalettes.map(p => 
+      p.id === paletteId ? { ...p, colors: [...p.colors, color] } : p
+    );
+    updateMutation.mutate({ palettes: updatedPalettes });
+  };
+
+  const handleRemoveColorFromPalette = (paletteId: string, colorIndex: number) => {
+    const currentPalettes = brandKit?.palettes || [];
+    const updatedPalettes = currentPalettes.map(p => 
+      p.id === paletteId ? { ...p, colors: p.colors.filter((_, i) => i !== colorIndex) } : p
+    );
+    updateMutation.mutate({ palettes: updatedPalettes });
+  };
+
+  const handleUpdatePaletteName = (paletteId: string, newName: string) => {
+    const currentPalettes = brandKit?.palettes || [];
+    const updatedPalettes = currentPalettes.map(p => 
+      p.id === paletteId ? { ...p, name: newName } : p
+    );
+    updateMutation.mutate({ palettes: updatedPalettes });
+    setEditingPaletteId(null);
+    setEditingPaletteName('');
+  };
+
+  const handleAddFont = () => {
+    if (!newFontName.trim()) {
+      toast({ title: "Error", description: "Please enter a font name", variant: "destructive" });
+      return;
+    }
+    const newFont: BrandKitFont = {
+      id: `font-${Date.now()}`,
+      name: newFontName,
+      family: newFontFamily,
+      weights: newFontWeights,
+    };
+    const currentFonts = brandKit?.fonts || [];
+    updateMutation.mutate({ fonts: [...currentFonts, newFont] });
+    setNewFontName('');
+    setNewFontFamily('Inter');
+    setNewFontWeights([400, 700]);
+    setShowAddFont(false);
+    toast({ title: "Font Added", description: `"${newFontName}" has been added to your brand kit` });
+  };
+
+  const handleDeleteFont = (fontId: string) => {
+    const currentFonts = brandKit?.fonts || [];
+    updateMutation.mutate({ fonts: currentFonts.filter(f => f.id !== fontId) });
+    toast({ title: "Font Deleted" });
+  };
+
+  const handleAddLogo = () => {
+    if (!newLogoName.trim() || !newLogoUrl.trim()) {
+      toast({ title: "Error", description: "Please enter logo name and URL", variant: "destructive" });
+      return;
+    }
+    const newLogo: BrandKitLogo = {
+      id: `logo-${Date.now()}`,
+      name: newLogoName,
+      url: newLogoUrl,
+      kind: newLogoKind,
+    };
+    const currentLogos = brandKit?.logos || [];
+    updateMutation.mutate({ logos: [...currentLogos, newLogo] });
+    setNewLogoName('');
+    setNewLogoUrl('');
+    setNewLogoKind('logo');
+    setShowAddLogo(false);
+    toast({ title: "Logo Added", description: `"${newLogoName}" has been added to your brand kit` });
+  };
+
+  const handleDeleteLogo = (logoId: string) => {
+    const currentLogos = brandKit?.logos || [];
+    updateMutation.mutate({ logos: currentLogos.filter(l => l.id !== logoId) });
+    toast({ title: "Logo Deleted" });
+  };
+
+  const handleCopyLogoUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "URL Copied",
+        description: "Logo URL copied to clipboard",
+      });
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Brand Kit
+          </SheetTitle>
+          <SheetDescription>
+            Manage your brand colors, fonts, and logos for consistent video branding.
+          </SheetDescription>
+        </SheetHeader>
+
+        <Tabs 
+          defaultValue="colors" 
+          className="mt-6"
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as 'colors' | 'fonts' | 'logos')}
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="colors" className="gap-1">
+              <Palette className="h-4 w-4" />
+              Colors
+            </TabsTrigger>
+            <TabsTrigger value="fonts" className="gap-1">
+              <Type className="h-4 w-4" />
+              Fonts
+            </TabsTrigger>
+            <TabsTrigger value="logos" className="gap-1">
+              <Image className="h-4 w-4" />
+              Logos
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="colors" className="mt-4">
+            <ScrollArea className="h-[calc(100vh-280px)]">
+              {isLoading ? (
+                <div className="space-y-4 pr-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="p-4 rounded-lg border">
+                      <Skeleton className="h-5 w-32 mb-3" />
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4].map((j) => (
+                          <Skeleton key={j} className="h-8 w-8 rounded" />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4 pr-4">
+                  {(brandKit?.palettes || []).map((palette) => (
+                    <div key={palette.id} className="p-4 rounded-lg border bg-card" data-testid={`palette-card-${palette.id}`}>
+                      <div className="flex items-center justify-between mb-3">
+                        {editingPaletteId === palette.id ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              value={editingPaletteName}
+                              onChange={(e) => setEditingPaletteName(e.target.value)}
+                              className="h-8 text-sm"
+                              autoFocus
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleUpdatePaletteName(palette.id, editingPaletteName)}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => { setEditingPaletteId(null); setEditingPaletteName(''); }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <h4 
+                            className="text-sm font-medium cursor-pointer hover:text-primary transition-colors"
+                            onClick={() => { setEditingPaletteId(palette.id); setEditingPaletteName(palette.name); }}
+                          >
+                            {palette.name}
+                          </h4>
+                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDeletePalette(palette.id)}
+                          className="text-destructive hover:text-destructive"
+                          data-testid={`button-delete-palette-${palette.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {palette.colors.map((color, index) => (
+                          <div key={index} className="group relative">
+                            <button
+                              onClick={() => handleCopyColor(color)}
+                              className="w-8 h-8 rounded border shadow-sm hover:scale-110 transition-transform"
+                              style={{ backgroundColor: color }}
+                              title={`Click to copy ${color}`}
+                              data-testid={`color-swatch-${palette.id}-${index}`}
+                            />
+                            <button
+                              onClick={() => handleRemoveColorFromPalette(palette.id, index)}
+                              className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="w-8 h-8 rounded border border-dashed flex items-center justify-center hover:bg-muted transition-colors">
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-3">
+                            <input
+                              type="color"
+                              defaultValue="#000000"
+                              onChange={(e) => handleAddColorToPalette(palette.id, e.target.value)}
+                              className="w-16 h-16 rounded cursor-pointer"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  ))}
+
+                  {showAddPalette ? (
+                    <div className="p-4 rounded-lg border bg-muted/50">
+                      <h4 className="text-sm font-medium mb-3">New Palette</h4>
+                      <div className="space-y-3">
+                        <Input
+                          placeholder="Palette name"
+                          value={newPaletteName}
+                          onChange={(e) => setNewPaletteName(e.target.value)}
+                          data-testid="input-new-palette-name"
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {newPaletteColors.map((color, index) => (
+                            <div key={index} className="relative group">
+                              <input
+                                type="color"
+                                value={color}
+                                onChange={(e) => {
+                                  const updated = [...newPaletteColors];
+                                  updated[index] = e.target.value;
+                                  setNewPaletteColors(updated);
+                                }}
+                                className="w-8 h-8 rounded cursor-pointer"
+                              />
+                              {newPaletteColors.length > 1 && (
+                                <button
+                                  onClick={() => setNewPaletteColors(newPaletteColors.filter((_, i) => i !== index))}
+                                  className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            onClick={() => setNewPaletteColors([...newPaletteColors, '#000000'])}
+                            className="w-8 h-8 rounded border border-dashed flex items-center justify-center hover:bg-muted transition-colors"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={handleAddPalette} disabled={updateMutation.isPending} data-testid="button-save-palette">
+                            {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Palette'}
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowAddPalette(false)}>Cancel</Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2"
+                      onClick={() => setShowAddPalette(true)}
+                      data-testid="button-add-palette"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Custom Palette
+                    </Button>
+                  )}
+
+                  <div className="mt-6 pt-4 border-t">
+                    <h4 className="text-sm font-medium mb-3">Suggested Palettes</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {SUGGESTED_PALETTES.map((palette) => (
+                        <button
+                          key={palette.name}
+                          onClick={() => handleAddSuggestedPalette(palette)}
+                          className="p-3 rounded-lg border bg-card hover-elevate transition-all text-left"
+                          data-testid={`button-suggested-palette-${palette.name.toLowerCase().replace(' ', '-')}`}
+                        >
+                          <p className="text-xs font-medium mb-2">{palette.name}</p>
+                          <div className="flex gap-1">
+                            {palette.colors.slice(0, 6).map((color, i) => (
+                              <div key={i} className="w-4 h-4 rounded" style={{ backgroundColor: color }} />
+                            ))}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="fonts" className="mt-4">
+            <ScrollArea className="h-[calc(100vh-280px)]">
+              {isLoading ? (
+                <div className="space-y-4 pr-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="p-4 rounded-lg border">
+                      <Skeleton className="h-5 w-32 mb-2" />
+                      <Skeleton className="h-4 w-24 mb-3" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4 pr-4">
+                  <div className="p-3 rounded-lg bg-muted/50 border mb-4">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Preview Text</Label>
+                    <Input
+                      value={fontPreviewText}
+                      onChange={(e) => setFontPreviewText(e.target.value)}
+                      placeholder="Type to preview fonts..."
+                      className="text-sm"
+                      data-testid="input-font-preview"
+                    />
+                  </div>
+
+                  {(brandKit?.fonts || []).map((font) => (
+                    <div key={font.id} className="p-4 rounded-lg border bg-card" data-testid={`font-card-${font.id}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h4 className="text-sm font-medium">{font.name}</h4>
+                          <p className="text-xs text-muted-foreground">{font.family}</p>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDeleteFont(font.id)}
+                          className="text-destructive hover:text-destructive"
+                          data-testid={`button-delete-font-${font.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {(font.weights || [400]).map((weight) => (
+                          <Badge key={weight} variant="outline" className="text-xs">
+                            {weight}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div 
+                        className="p-3 rounded bg-muted text-lg overflow-hidden text-ellipsis whitespace-nowrap"
+                        style={{ fontFamily: font.family, fontWeight: font.weights?.[0] || 400 }}
+                      >
+                        {fontPreviewText}
+                      </div>
+                    </div>
+                  ))}
+
+                  {showAddFont ? (
+                    <div className="p-4 rounded-lg border bg-muted/50">
+                      <h4 className="text-sm font-medium mb-3">Add Font</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Display Name</Label>
+                          <Input
+                            placeholder="e.g., Primary Heading Font"
+                            value={newFontName}
+                            onChange={(e) => setNewFontName(e.target.value)}
+                            data-testid="input-new-font-name"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Font Family</Label>
+                          <Select value={newFontFamily} onValueChange={setNewFontFamily}>
+                            <SelectTrigger data-testid="select-font-family">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {COMMON_FONTS.map((font) => (
+                                <SelectItem key={font.family} value={font.family}>
+                                  <span style={{ fontFamily: font.family }}>{font.name}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-2 block">Font Weights</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {FONT_WEIGHTS.map((weight) => (
+                              <button
+                                key={weight}
+                                onClick={() => {
+                                  if (newFontWeights.includes(weight)) {
+                                    setNewFontWeights(newFontWeights.filter(w => w !== weight));
+                                  } else {
+                                    setNewFontWeights([...newFontWeights, weight].sort((a, b) => a - b));
+                                  }
+                                }}
+                                className={`px-3 py-1.5 rounded border text-sm transition-colors ${
+                                  newFontWeights.includes(weight) 
+                                    ? 'bg-primary text-primary-foreground border-primary' 
+                                    : 'hover:bg-muted'
+                                }`}
+                              >
+                                {weight}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div 
+                          className="p-3 rounded bg-muted text-lg"
+                          style={{ fontFamily: newFontFamily, fontWeight: newFontWeights[0] || 400 }}
+                        >
+                          {fontPreviewText}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={handleAddFont} disabled={updateMutation.isPending} data-testid="button-save-font">
+                            {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Font'}
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowAddFont(false)}>Cancel</Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2"
+                      onClick={() => setShowAddFont(true)}
+                      data-testid="button-add-font"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Font
+                    </Button>
+                  )}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="logos" className="mt-4">
+            <ScrollArea className="h-[calc(100vh-280px)]">
+              {isLoading ? (
+                <div className="space-y-4 pr-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="p-4 rounded-lg border flex gap-4">
+                      <Skeleton className="w-16 h-16 rounded" />
+                      <div className="flex-1">
+                        <Skeleton className="h-5 w-32 mb-2" />
+                        <Skeleton className="h-4 w-48" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4 pr-4">
+                  {(brandKit?.logos || []).map((logo) => (
+                    <div key={logo.id} className="p-4 rounded-lg border bg-card flex gap-4" data-testid={`logo-card-${logo.id}`}>
+                      <div className="w-16 h-16 rounded bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <img 
+                          src={logo.url} 
+                          alt={logo.name}
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-sm font-medium truncate">{logo.name}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {logo.kind || 'logo'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate mb-2">{logo.url}</p>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCopyLogoUrl(logo.url)}
+                            className="gap-1"
+                            data-testid={`button-copy-logo-${logo.id}`}
+                          >
+                            <Copy className="h-3 w-3" />
+                            Copy URL
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteLogo(logo.id)}
+                            className="text-destructive hover:text-destructive"
+                            data-testid={`button-delete-logo-${logo.id}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {showAddLogo ? (
+                    <div className="p-4 rounded-lg border bg-muted/50">
+                      <h4 className="text-sm font-medium mb-3">Add Logo</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Logo Name</Label>
+                          <Input
+                            placeholder="e.g., Company Logo"
+                            value={newLogoName}
+                            onChange={(e) => setNewLogoName(e.target.value)}
+                            data-testid="input-new-logo-name"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Logo URL</Label>
+                          <Input
+                            placeholder="https://example.com/logo.png"
+                            value={newLogoUrl}
+                            onChange={(e) => setNewLogoUrl(e.target.value)}
+                            data-testid="input-new-logo-url"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Type</Label>
+                          <Select value={newLogoKind} onValueChange={(v) => setNewLogoKind(v as 'logo' | 'watermark')}>
+                            <SelectTrigger data-testid="select-logo-kind">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="logo">Logo</SelectItem>
+                              <SelectItem value="watermark">Watermark</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {newLogoUrl && (
+                          <div className="p-3 rounded bg-muted flex items-center justify-center">
+                            <img 
+                              src={newLogoUrl} 
+                              alt="Preview" 
+                              className="max-w-32 max-h-20 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="10" y="50" fill="gray">Invalid URL</text></svg>';
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Button onClick={handleAddLogo} disabled={updateMutation.isPending} data-testid="button-save-logo">
+                            {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Logo'}
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowAddLogo(false)}>Cancel</Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2"
+                      onClick={() => setShowAddLogo(true)}
+                      data-testid="button-add-logo"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Logo
+                    </Button>
+                  )}
+
+                  {(brandKit?.logos || []).length === 0 && !showAddLogo && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No logos yet</p>
+                      <p className="text-sm">Add logos to use in your video projects</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
         </Tabs>
       </SheetContent>
     </Sheet>
@@ -1941,23 +3638,388 @@ function SaveProjectDialog({
   );
 }
 
+function ShareProjectDialog({
+  open,
+  onOpenChange,
+  project,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  project: VideoProject;
+}) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"viewer" | "editor">("viewer");
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const { data: collaborators, isLoading: isLoadingCollaborators, refetch } = useQuery<ProjectCollaborator[]>({
+    queryKey: ['/api/editor/projects', project.id, 'collaborators'],
+    enabled: open,
+  });
+
+  const addCollaboratorMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const response = await apiRequest("POST", `/api/editor/projects/${project.id}/collaborators`, {
+        userId,
+        role,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/editor/projects', project.id, 'collaborators'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/editor/projects'] });
+      toast({
+        title: "Collaborator Added",
+        description: "The collaborator has been added successfully.",
+      });
+      setEmail("");
+      setSearchError(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Add Collaborator",
+        description: error.message || "Could not add collaborator",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const response = await apiRequest("PATCH", `/api/editor/projects/${project.id}/collaborators/${userId}`, {
+        role,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/editor/projects', project.id, 'collaborators'] });
+      toast({
+        title: "Role Updated",
+        description: "Collaborator role has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Update Role",
+        description: error.message || "Could not update role",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeCollaboratorMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await apiRequest("DELETE", `/api/editor/projects/${project.id}/collaborators/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/editor/projects', project.id, 'collaborators'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/editor/projects'] });
+      toast({
+        title: "Collaborator Removed",
+        description: "The collaborator has been removed.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Remove Collaborator",
+        description: error.message || "Could not remove collaborator",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddCollaborator = async () => {
+    if (!email.trim()) {
+      setSearchError("Please enter an email address");
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      const response = await fetch(`/api/users/search?email=${encodeURIComponent(email.trim())}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setSearchError("No user found with that email address");
+        } else {
+          setSearchError("Failed to search for user");
+        }
+        setIsSearching(false);
+        return;
+      }
+
+      const user = await response.json();
+      addCollaboratorMutation.mutate({ userId: user.id, role });
+    } catch (error) {
+      setSearchError("Failed to search for user");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    const shareUrl = `${window.location.origin}/video-editor?project=${project.id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link Copied",
+        description: "Share link has been copied to clipboard.",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to Copy",
+        description: "Could not copy link to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getInitials = (user: CollaboratorUser | null) => {
+    if (!user) return "?";
+    if (user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    if (user.email) {
+      return user.email[0].toUpperCase();
+    }
+    return "?";
+  };
+
+  const getDisplayName = (user: CollaboratorUser | null) => {
+    if (!user) return "Unknown User";
+    if (user.firstName || user.lastName) {
+      return `${user.firstName || ""} ${user.lastName || ""}`.trim();
+    }
+    return user.email || "Unknown User";
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5" />
+            Share Project
+          </DialogTitle>
+          <DialogDescription>
+            Share "{project.title}" with collaborators.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Add Collaborators</Label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  placeholder="Enter email address"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setSearchError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddCollaborator();
+                    }
+                  }}
+                  data-testid="input-collaborator-email"
+                />
+                {searchError && (
+                  <p className="text-xs text-destructive mt-1">{searchError}</p>
+                )}
+              </div>
+              <Select value={role} onValueChange={(v) => setRole(v as "viewer" | "editor")}>
+                <SelectTrigger className="w-28" data-testid="select-collaborator-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">
+                    <div className="flex items-center gap-1.5">
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Viewer</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="editor">
+                    <div className="flex items-center gap-1.5">
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span>Editor</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={handleAddCollaborator}
+                disabled={isSearching || addCollaboratorMutation.isPending}
+                data-testid="button-add-collaborator"
+              >
+                {isSearching || addCollaboratorMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Current Collaborators</Label>
+            <ScrollArea className="h-[200px] rounded-md border p-3">
+              {isLoadingCollaborators ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : !collaborators || collaborators.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Users className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    No collaborators yet
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add collaborators by entering their email above
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {collaborators.map((collab) => (
+                    <div
+                      key={collab.id}
+                      className="flex items-center gap-3 p-2 rounded-md hover-elevate"
+                      data-testid={`collaborator-${collab.userId}`}
+                    >
+                      <Avatar className="h-8 w-8">
+                        {collab.user?.profileImageUrl && (
+                          <AvatarImage src={collab.user.profileImageUrl} />
+                        )}
+                        <AvatarFallback className="text-xs">
+                          {getInitials(collab.user)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {getDisplayName(collab.user)}
+                        </p>
+                        {collab.user?.email && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {collab.user.email}
+                          </p>
+                        )}
+                      </div>
+                      <Select
+                        value={collab.role}
+                        onValueChange={(newRole) => 
+                          updateRoleMutation.mutate({ userId: collab.userId, role: newRole })
+                        }
+                      >
+                        <SelectTrigger className="w-24 h-8 text-xs" data-testid={`select-role-${collab.userId}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                          <SelectItem value="editor">Editor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => removeCollaboratorMutation.mutate(collab.userId)}
+                        disabled={removeCollaboratorMutation.isPending}
+                        data-testid={`button-remove-${collab.userId}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <div className="pt-2 border-t">
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleCopyShareLink}
+              data-testid="button-copy-share-link"
+            >
+              <Link2 className="h-4 w-4" />
+              Copy Share Link
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ProjectCard({
   project,
   onOpen,
   onDelete,
   onDuplicate,
+  onShare,
+  currentUserId,
 }: {
   project: VideoProject;
   onOpen: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onShare: () => void;
+  currentUserId: string;
 }) {
+  const isOwner = project.ownerUserId === currentUserId;
+  const role = project.role || (isOwner ? 'owner' : undefined);
+  const isViewer = role === 'viewer';
+  
+  const getRoleBadge = () => {
+    if (role === 'owner') {
+      return (
+        <Badge variant="default" className="text-xs gap-1">
+          <Crown className="h-3 w-3" />
+          Owner
+        </Badge>
+      );
+    }
+    if (role === 'editor') {
+      return (
+        <Badge variant="secondary" className="text-xs gap-1">
+          <Pencil className="h-3 w-3" />
+          Editor
+        </Badge>
+      );
+    }
+    if (role === 'viewer') {
+      return (
+        <Badge variant="outline" className="text-xs gap-1">
+          <Eye className="h-3 w-3" />
+          View Only
+        </Badge>
+      );
+    }
+    return null;
+  };
+
   return (
     <div 
       className="flex items-center gap-4 p-4 rounded-lg border bg-card hover-elevate transition-colors"
       data-testid={`project-card-${project.id}`}
     >
-      <div className="w-20 h-14 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+      <div className="w-20 h-14 rounded-md bg-muted flex items-center justify-center flex-shrink-0 relative">
         {project.thumbnailUrl ? (
           <img 
             src={project.thumbnailUrl} 
@@ -1967,13 +4029,25 @@ function ProjectCard({
         ) : (
           <Film className="h-6 w-6 text-muted-foreground" />
         )}
+        {!isOwner && (
+          <div className="absolute -top-1 -right-1">
+            <Users className="h-4 w-4 text-primary" />
+          </div>
+        )}
       </div>
       
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h4 className="text-sm font-medium truncate">{project.title}</h4>
           {project.isTemplate && (
             <Badge variant="secondary" className="text-xs">Template</Badge>
+          )}
+          {getRoleBadge()}
+          {project.collaboratorCount !== undefined && project.collaboratorCount > 0 && (
+            <Badge variant="outline" className="text-xs gap-1">
+              <Users className="h-3 w-3" />
+              {project.collaboratorCount}
+            </Badge>
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-1">
@@ -2006,6 +4080,18 @@ function ProjectCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {isOwner && (
+              <>
+                <DropdownMenuItem 
+                  onClick={onShare}
+                  data-testid={`button-share-project-${project.id}`}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem 
               onClick={onDuplicate}
               data-testid={`button-duplicate-project-${project.id}`}
@@ -2013,15 +4099,19 @@ function ProjectCard({
               <Copy className="h-4 w-4 mr-2" />
               Duplicate
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={onDelete}
-              className="text-destructive focus:text-destructive"
-              data-testid={`button-delete-project-${project.id}`}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
+            {isOwner && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={onDelete}
+                  className="text-destructive focus:text-destructive"
+                  data-testid={`button-delete-project-${project.id}`}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -2033,13 +4123,16 @@ function ProjectsDialog({
   open,
   onOpenChange,
   onOpenProject,
+  currentUserId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenProject: (project: VideoProject) => void;
+  currentUserId: string;
 }) {
   const { toast } = useToast();
   const [deleteConfirm, setDeleteConfirm] = useState<VideoProject | null>(null);
+  const [shareProject, setShareProject] = useState<VideoProject | null>(null);
 
   const { data: projects, isLoading } = useQuery<VideoProject[]>({
     queryKey: ['/api/editor/projects'],
@@ -2144,6 +4237,8 @@ function ProjectsDialog({
                     onOpen={() => handleOpenProject(project)}
                     onDelete={() => setDeleteConfirm(project)}
                     onDuplicate={() => duplicateMutation.mutate(project)}
+                    onShare={() => setShareProject(project)}
+                    currentUserId={currentUserId}
                   />
                 ))}
               </div>
@@ -2176,6 +4271,14 @@ function ProjectsDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {shareProject && (
+        <ShareProjectDialog
+          open={!!shareProject}
+          onOpenChange={(open) => !open && setShareProject(null)}
+          project={shareProject}
+        />
+      )}
     </>
   );
 }
@@ -2310,6 +4413,13 @@ export default function VideoEditor() {
   const [pendingTemplate, setPendingTemplate] = useState<VideoTemplate | null>(null);
   const [confirmTemplateOpen, setConfirmTemplateOpen] = useState(false);
   
+  const [textStylesOpen, setTextStylesOpen] = useState(false);
+  const [selectedTextStyle, setSelectedTextStyle] = useState<TextStylePreset | null>(null);
+  
+  const [autoCaptionsOpen, setAutoCaptionsOpen] = useState(false);
+  
+  const [brandKitOpen, setBrandKitOpen] = useState(false);
+  
   const currentTimelineDataRef = useRef<any>(INITIAL_TIMELINE_DATA);
   const lastSavedDataRef = useRef<string>("");
   
@@ -2434,6 +4544,59 @@ export default function VideoEditor() {
     });
   };
 
+  const handleApplyCaptions = useCallback((segments: TranscriptSegment[], settings: CaptionSettings) => {
+    const currentData = currentTimelineDataRef.current;
+    const positionY = settings.position === 'top' ? 50 : settings.position === 'center' ? selectedCanvas.height / 2 - 50 : selectedCanvas.height - 100;
+    
+    const captionElements = segments.map((segment, index) => ({
+      id: `caption-${Date.now()}-${index}`,
+      type: "text",
+      name: `Caption ${index + 1}`,
+      x: selectedCanvas.width / 2 - 200,
+      y: positionY,
+      width: 400,
+      height: 80,
+      rotation: 0,
+      opacity: 1,
+      details: {
+        text: segment.text,
+        fontSize: settings.fontSize,
+        fontFamily: "Inter",
+        fontWeight: "600",
+        color: settings.color,
+        backgroundColor: `${settings.backgroundColor}cc`,
+        textAlign: "center",
+      },
+      trim: {
+        from: segment.start,
+        to: segment.end,
+      },
+    }));
+
+    const updatedData = {
+      ...currentData,
+      tracks: [
+        ...currentData.tracks,
+        {
+          id: `captions-track-${Date.now()}`,
+          name: "Captions",
+          items: captionElements.map((element, index) => ({
+            id: element.id,
+            type: "text",
+            display: element,
+            from: segments[index].start,
+            duration: segments[index].end - segments[index].start,
+          })),
+        },
+      ],
+    };
+
+    setLoadedTimelineData(updatedData);
+    currentTimelineDataRef.current = updatedData;
+    setHasUnsavedChanges(true);
+    setStudioKey(prev => prev + 1);
+  }, [selectedCanvas]);
+
   const handlePlatformPreset = (platform: PlatformPreset) => {
     const matchingQuality = QUALITY_PRESETS.find(q => q.name === platform.quality) || QUALITY_PRESETS[1];
     const matchingFPS = FPS_PRESETS.find(f => f.value === platform.fps) || FPS_PRESETS[1];
@@ -2497,6 +4660,14 @@ export default function VideoEditor() {
       setConfirmTemplateOpen(false);
     }
   }, [pendingTemplate, applyTemplate]);
+
+  const handleSelectTextStyle = useCallback((preset: TextStylePreset) => {
+    setSelectedTextStyle(preset);
+    toast({
+      title: "Style Copied!",
+      description: `"${preset.name}" style is ready. Add text to your timeline and apply this style in the properties panel.`,
+    });
+  }, [toast]);
 
   const handleSaveSuccess = useCallback((project: VideoProject) => {
     setCurrentProject(project);
@@ -2691,8 +4862,41 @@ export default function VideoEditor() {
               <span className="hidden sm:inline">Templates</span>
             </Button>
 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTextStylesOpen(true)}
+              className="gap-2"
+              data-testid="button-text-styles"
+            >
+              <Type className="h-4 w-4" />
+              <span className="hidden sm:inline">Text Styles</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAutoCaptionsOpen(true)}
+              className="gap-2"
+              data-testid="button-auto-captions"
+            >
+              <Subtitles className="h-4 w-4" />
+              <span className="hidden sm:inline">Auto Captions</span>
+            </Button>
+
             {isAuthenticated && (
               <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBrandKitOpen(true)}
+                  className="gap-2"
+                  data-testid="button-brand-kit"
+                >
+                  <Palette className="h-4 w-4" />
+                  <span className="hidden sm:inline">Brand Kit</span>
+                </Button>
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -3061,12 +5265,19 @@ export default function VideoEditor() {
           open={projectsDialogOpen}
           onOpenChange={setProjectsDialogOpen}
           onOpenProject={handleOpenProject}
+          currentUserId={user?.id || ""}
         />
 
         <TemplatesSheet
           open={templatesOpen}
           onOpenChange={setTemplatesOpen}
           onSelectTemplate={handleSelectTemplate}
+        />
+
+        <TextStylesSheet
+          open={textStylesOpen}
+          onOpenChange={setTextStylesOpen}
+          onSelectStyle={handleSelectTextStyle}
         />
 
         <ApplyTemplateDialog
@@ -3081,6 +5292,17 @@ export default function VideoEditor() {
           onOpenChange={setWatermarkDialogOpen}
           watermarkSettings={watermarkSettings}
           onWatermarkChange={handleWatermarkChange}
+        />
+
+        <AutoCaptionsDialog
+          open={autoCaptionsOpen}
+          onOpenChange={setAutoCaptionsOpen}
+          onApplyCaptions={handleApplyCaptions}
+        />
+
+        <BrandKitSheet
+          open={brandKitOpen}
+          onOpenChange={setBrandKitOpen}
         />
       </div>
     </SidebarInset>

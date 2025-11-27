@@ -5,6 +5,8 @@ import axios from "axios";
 import path from "path";
 import fs from "fs/promises";
 import { nanoid } from "nanoid";
+import multer from "multer";
+import OpenAI from "openai";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { storage } from "./storage";
@@ -6480,7 +6482,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const projects = await storage.getUserAccessibleProjects(userId);
-      res.json(projects);
+      
+      const projectsWithMeta = await Promise.all(
+        projects.map(async (project) => {
+          const collaborators = await storage.getProjectCollaborators(project.id);
+          const isOwner = project.ownerUserId === userId;
+          let role: 'owner' | 'editor' | 'viewer' = 'owner';
+          
+          if (!isOwner) {
+            const userCollab = collaborators.find(c => c.userId === userId);
+            role = (userCollab?.role as 'editor' | 'viewer') || 'viewer';
+          }
+          
+          return {
+            ...project,
+            role,
+            collaboratorCount: collaborators.length,
+          };
+        })
+      );
+      
+      res.json(projectsWithMeta);
     } catch (error: any) {
       console.error('[Editor] Error fetching projects:', error);
       res.status(500).json({ error: 'Failed to fetch projects' });
@@ -6659,10 +6681,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===========================================
+  // User Search Routes (for collaborator lookup)
+  // ===========================================
+
+  // Search for a user by email (for adding collaborators)
+  app.get('/api/users/search', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { email } = req.query;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Email query parameter is required' });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Return safe user info (no sensitive data)
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+      });
+    } catch (error: any) {
+      console.error('[Users] Error searching for user:', error);
+      res.status(500).json({ error: 'Failed to search for user' });
+    }
+  });
+
+  // ===========================================
   // Project Collaborators Routes
   // ===========================================
 
-  // Get project collaborators
+  // Get project collaborators (with user info)
   app.get('/api/editor/projects/:id/collaborators', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user?.id;
@@ -6683,7 +6741,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const collaborators = await storage.getProjectCollaborators(id);
-      res.json(collaborators);
+      
+      // Enrich collaborators with user info
+      const enrichedCollaborators = await Promise.all(
+        collaborators.map(async (collab) => {
+          const user = await storage.getUser(collab.userId);
+          return {
+            ...collab,
+            user: user ? {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              profileImageUrl: user.profileImageUrl,
+            } : null,
+          };
+        })
+      );
+      
+      res.json(enrichedCollaborators);
     } catch (error: any) {
       console.error('[Editor] Error fetching collaborators:', error);
       res.status(500).json({ error: 'Failed to fetch collaborators' });
@@ -6890,6 +6966,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('[Editor] Error updating brand kit:', error);
       res.status(500).json({ error: 'Failed to update brand kit' });
+    }
+  });
+
+  // ===========================================
+  // Auto Captions / Transcription Routes
+  // ===========================================
+
+  const audioUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 25 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/ogg', 'audio/x-m4a', 'video/mp4', 'video/webm'];
+      if (allowedTypes.includes(file.mimetype) || file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Please upload an audio or video file.'));
+      }
+    },
+  });
+
+  app.post('/api/editor/transcribe', audioUpload.single('audio'), async (req: any, res) => {
+    try {
+      const openaiApiKey = process.env.OPENAI_API_KEY;
+      if (!openaiApiKey) {
+        return res.status(500).json({ error: 'OpenAI API key not configured' });
+      }
+
+      const openai = new OpenAI({ apiKey: openaiApiKey });
+      const language = req.body?.language || 'en';
+
+      let transcription: any;
+
+      if (req.file) {
+        const buffer = req.file.buffer;
+        const filename = req.file.originalname || 'audio.mp3';
+        const file = new File([buffer], filename, { type: req.file.mimetype });
+
+        transcription = await openai.audio.transcriptions.create({
+          file,
+          model: 'whisper-1',
+          language,
+          response_format: 'verbose_json',
+          timestamp_granularities: ['segment'],
+        });
+      } else if (req.body?.audioUrl) {
+        const audioUrl = req.body.audioUrl;
+        
+        const response = await axios.get(audioUrl, {
+          responseType: 'arraybuffer',
+          timeout: 60000,
+          maxContentLength: 25 * 1024 * 1024,
+        });
+
+        const contentType = response.headers['content-type'] || 'audio/mpeg';
+        const urlPath = new URL(audioUrl).pathname;
+        const ext = path.extname(urlPath) || '.mp3';
+        const filename = `audio${ext}`;
+        
+        const buffer = Buffer.from(response.data);
+        const file = new File([buffer], filename, { type: contentType });
+
+        transcription = await openai.audio.transcriptions.create({
+          file,
+          model: 'whisper-1',
+          language,
+          response_format: 'verbose_json',
+          timestamp_granularities: ['segment'],
+        });
+      } else {
+        return res.status(400).json({ error: 'No audio file or URL provided' });
+      }
+
+      const segments = (transcription.segments || []).map((seg: any) => ({
+        start: seg.start,
+        end: seg.end,
+        text: seg.text.trim(),
+      }));
+
+      res.json({ 
+        segments,
+        text: transcription.text,
+        language: transcription.language,
+        duration: transcription.duration,
+      });
+    } catch (error: any) {
+      console.error('[Transcription] Error:', error);
+      
+      if (error.status === 400) {
+        return res.status(400).json({ error: 'Invalid audio format or file too short' });
+      }
+      if (error.status === 413) {
+        return res.status(413).json({ error: 'Audio file too large. Maximum size is 25MB.' });
+      }
+      if (axios.isAxiosError(error)) {
+        return res.status(400).json({ error: 'Failed to download audio from URL' });
+      }
+      
+      res.status(500).json({ error: error.message || 'Failed to transcribe audio' });
     }
   });
 
