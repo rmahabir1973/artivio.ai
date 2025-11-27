@@ -7103,6 +7103,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===========================================
+  // Temporary Image Upload for Transitions
+  // ===========================================
+  
+  const imageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Please upload an image file (JPEG, PNG, WebP, or GIF).'));
+      }
+    },
+  });
+
+  app.post('/api/upload-temp-image', requireJWT, imageUpload.single('image'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      const buffer = req.file.buffer;
+      const mimeType = req.file.mimetype;
+      
+      // Convert buffer to base64 data URI
+      const base64Content = buffer.toString('base64');
+      const dataUri = `data:${mimeType};base64,${base64Content}`;
+      
+      // Use existing saveBase64Image function to save and get URL
+      const url = await saveBase64Image(dataUri);
+      
+      res.json({ url });
+    } catch (error: any) {
+      console.error('[Upload Temp Image] Error:', error);
+      
+      // Handle multer errors specifically
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'Image file too large. Maximum size is 10MB.' });
+      }
+      if (error.message?.includes('Invalid file type')) {
+        return res.status(400).json({ error: error.message });
+      }
+      
+      res.status(500).json({ error: error.message || 'Failed to upload image' });
+    }
+  });
+
   // Get showcase videos for the models page
   app.get('/api/showcase-videos', async (req: any, res) => {
     try {

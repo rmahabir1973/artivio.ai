@@ -373,3 +373,97 @@
 .twick-studio-wrapper .aspect-ratio-toggle {
   display: none !important;
 }
+
+/* ========================================
+   TWICK STUDIO MOBILE RESPONSIVENESS
+   Make the video editor usable on phones
+   ======================================== */
+
+/* Mobile devices (portrait and landscape) */
+@media screen and (max-width: 768px) {
+  .twick-studio-wrapper {
+    overflow: auto;
+    min-height: auto;
+    height: auto;
+  }
+
+  /* Make the SDK layout vertical on mobile */
+  .twick-studio-wrapper > div > div {
+    flex-direction: column !important;
+    min-height: 100vh !important;
+    height: auto !important;
+  }
+
+  /* Collapse side panels to smaller widths on mobile */
+  .twick-studio-wrapper .sidebar,
+  .twick-studio-wrapper [class*="leftPanel"],
+  .twick-studio-wrapper [class*="left-panel"],
+  .twick-studio-wrapper [class*="LeftPanel"] {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+  }
+
+  /* Collapse right properties panel on mobile */
+  .twick-studio-wrapper .properties-panel,
+  .twick-studio-wrapper [class*="rightPanel"],
+  .twick-studio-wrapper [class*="right-panel"],
+  .twick-studio-wrapper [class*="RightPanel"],
+  .twick-studio-wrapper [class*="properties"],
+  .twick-studio-wrapper [class*="Properties"] {
+    min-width: 200px !important;
+    width: 200px !important;
+    max-width: 200px !important;
+  }
+
+  /* Canvas scales to fill available width */
+  .twick-studio-wrapper .canvas-container,
+  .twick-studio-wrapper [class*="canvas"],
+  .twick-studio-wrapper [class*="Canvas"],
+  .twick-studio-wrapper [class*="preview"],
+  .twick-studio-wrapper [class*="Preview"] {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Timeline should be scrollable */
+  .twick-studio-wrapper .timeline-track,
+  .twick-studio-wrapper [class*="timeline"],
+  .twick-studio-wrapper [class*="Timeline"] {
+    overflow-x: auto !important;
+    max-width: 100vw !important;
+  }
+
+  /* Video editor header should wrap on mobile */
+  .video-editor-header {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* Very small devices (phones in portrait) */
+@media screen and (max-width: 480px) {
+  /* Hide side panels completely on very small screens */
+  .twick-studio-wrapper .sidebar,
+  .twick-studio-wrapper [class*="leftPanel"],
+  .twick-studio-wrapper [class*="left-panel"],
+  .twick-studio-wrapper [class*="LeftPanel"] {
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+  }
+
+  /* Hide properties panel text, show only icons */
+  .twick-studio-wrapper .properties-panel,
+  .twick-studio-wrapper [class*="rightPanel"],
+  .twick-studio-wrapper [class*="right-panel"],
+  .twick-studio-wrapper [class*="RightPanel"],
+  .twick-studio-wrapper [class*="properties"],
+  .twick-studio-wrapper [class*="Properties"] {
+    min-width: 160px !important;
+    width: 160px !important;
+    max-width: 160px !important;
+    font-size: 12px !important;
+  }
+}
