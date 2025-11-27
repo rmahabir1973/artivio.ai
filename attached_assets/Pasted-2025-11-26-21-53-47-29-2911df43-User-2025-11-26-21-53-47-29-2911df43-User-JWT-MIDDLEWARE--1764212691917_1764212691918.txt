@@ -1,0 +1,92 @@
+2025-11-26 21:53:47.29
+2911df43
+User
+}
+2025-11-26 21:53:47.29
+2911df43
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-26 21:53:47.31
+2911df43
+User
+2:53:47 AM [express] GET /api/pricing 304 in 64ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-11-26 21:53:47.32
+2911df43
+User
+2:53:47 AM [express] GET /api/favorites 304 in 49ms :: []
+2025-11-26 21:53:47.36
+2911df43
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-26 21:53:47.40
+2911df43
+User
+2:53:47 AM [express] GET /api/subscriptions/current 304 in 128ms
+2025-11-26 21:53:49.44
+2911df43
+User
+[/api/generations] Array query completed in 2151ms, found 15 generations
+2025-11-26 21:53:49.76
+2911df43
+User
+2:53:49 AM [express] GET /api/generations 304 in 2342ms :: [{"id":"ccbb5fc5-ea92-4862-aaba-44517f454…
+2025-11-26 21:53:49.78
+2911df43
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-26 21:53:49.80
+2911df43
+User
+2:53:49 AM [express] GET /api/generations/[object%20Object] 404 in 43ms :: {"message":"Generation no…
+2025-11-26 21:54:12.25
+2911df43
+User
+2:54:12 AM [express] GET /api/announcements/active 304 in 21ms :: []
+2025-11-26 22:01:18.12
+2911df43
+User
+3:01:18 AM [express] GET /api/announcements/active 304 in 122ms :: []
+2025-11-26 22:01:20.20
+2911df43
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-26 22:01:20.22
+2911df43
+User
+3:01:20 AM [express] GET /api/avatar/generations 200 in 53ms :: [{"id":"8b0452df-769f-4e90-9c8e-85d8…
+2025-11-26 22:01:20.31
+2911df43
+User
+3:01:20 AM [express] GET /api/pricing 304 in 124ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-11-26 22:02:18.33
+2911df43
+User
+3:02:18 AM [express] GET /api/announcements/active 304 in 133ms :: []
+2025-11-26 22:02:35.68
+2911df43
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-26 22:02:35.74
+2911df43
+User
+Converting base64 audio to hosted URL for avatar...
+2025-11-26 22:02:35.76
+2911df43
+User
+3:02:35 AM [express] POST /api/avatar/generate 500 in 101ms :: {"message":"Invalid base64 audio data…
+2025-11-26 22:03:24.12
+1f1d786a
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
+2025-11-26 22:03:24.12
+1f1d786a
+System
+starting up user application
+2025-11-26 22:03:24.12
+1f1d786a
+System
+forwarding local port 5000 to external port 80 (mapped as 1104)
+2025-11-26 22:03:25.42
+1f1d786a
+User
+> rest-express@1.0.0 start

@@ -34,9 +34,13 @@ async function ensureUploadsDir() {
 export async function saveBase64Audio(base64Data: string): Promise<string> {
   await ensureUploadsDir();
 
-  // Extract base64 content from data URI (e.g., "data:audio/mpeg;base64,...")
-  const matches = base64Data.match(/^data:(audio\/[\w+-]+);base64,(.+)$/);
+  // Extract base64 content from data URI
+  // Handles formats like:
+  //   "data:audio/mpeg;base64,..."
+  //   "data:audio/webm;codecs=opus;base64,..." (browser recordings with codec info)
+  const matches = base64Data.match(/^data:(audio\/[\w+-]+)(?:;[^;]+)*;base64,(.+)$/);
   if (!matches) {
+    console.error('[audioHosting] Failed to parse base64 audio. Preview:', base64Data.substring(0, 100));
     throw new Error('Invalid base64 audio data URI format');
   }
 
