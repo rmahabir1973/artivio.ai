@@ -6127,11 +6127,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Send to AWS Lambda (fire and forget, will poll for status)
-      const lambdaResponse = await fetch(lambdaApiUrl, {
+      // Ensure the Lambda URL ends with /prod/export
+      let lambdaEndpoint = lambdaApiUrl.replace(/\/+$/, ''); // Remove trailing slashes
+      
+      // Build the correct endpoint URL
+      let fullLambdaUrl: string;
+      if (lambdaEndpoint.endsWith('/prod/export')) {
+        fullLambdaUrl = lambdaEndpoint;
+      } else if (lambdaEndpoint.endsWith('/prod')) {
+        fullLambdaUrl = `${lambdaEndpoint}/export`;
+      } else if (lambdaEndpoint.endsWith('/export')) {
+        fullLambdaUrl = lambdaEndpoint; // Already has export
+      } else {
+        fullLambdaUrl = `${lambdaEndpoint}/prod/export`;
+      }
+      
+      const lambdaHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add API key if configured for API Gateway authentication
+      const awsApiKey = process.env.AWS_API_KEY;
+      if (awsApiKey) {
+        lambdaHeaders['x-api-key'] = awsApiKey;
+      }
+      
+      console.log(`[Video Editor] Calling Lambda at: ${fullLambdaUrl}`);
+      
+      const lambdaResponse = await fetch(fullLambdaUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: lambdaHeaders,
         body: JSON.stringify({
           project,
           videoSettings,
@@ -6143,13 +6168,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!lambdaResponse.ok) {
         const errorText = await lambdaResponse.text();
-        console.error(`[Video Editor] Lambda error for job ${jobId}:`, errorText);
+        console.error(`[Video Editor] Lambda error for job ${jobId} (status ${lambdaResponse.status}):`, errorText);
         videoExportJobs.set(jobId, {
           status: 'failed',
-          error: 'Export service error',
+          error: `Export service error: ${lambdaResponse.status}`,
           createdAt: new Date(),
         });
-        return res.status(500).json({ message: "Failed to start video export" });
+        
+        // Provide more specific error messages
+        let userMessage = "Failed to start video export";
+        if (lambdaResponse.status === 403) {
+          userMessage = "Export service authentication failed. Please contact support.";
+        } else if (lambdaResponse.status === 404) {
+          userMessage = "Export service not found. Please contact support.";
+        } else if (lambdaResponse.status >= 500) {
+          userMessage = "Export service is temporarily unavailable. Please try again later.";
+        }
+        
+        return res.status(500).json({ message: userMessage });
       }
       
       const lambdaResult = await lambdaResponse.json();

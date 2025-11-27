@@ -4485,12 +4485,7 @@ export default function VideoEditor() {
   const [pendingTemplate, setPendingTemplate] = useState<VideoTemplate | null>(null);
   const [confirmTemplateOpen, setConfirmTemplateOpen] = useState(false);
   
-  const [textStylesOpen, setTextStylesOpen] = useState(false);
-  const [selectedTextStyle, setSelectedTextStyle] = useState<TextStylePreset | null>(null);
-  
   const [autoCaptionsOpen, setAutoCaptionsOpen] = useState(false);
-  
-  const [brandKitOpen, setBrandKitOpen] = useState(false);
   
   useLayoutEffect(() => {
     const orientation = selectedCanvas.width > selectedCanvas.height ? "horizontal" : "vertical";
@@ -4833,14 +4828,6 @@ export default function VideoEditor() {
     }
   }, [pendingTemplate, applyTemplate]);
 
-  const handleSelectTextStyle = useCallback((preset: TextStylePreset) => {
-    setSelectedTextStyle(preset);
-    toast({
-      title: "Style Copied!",
-      description: `"${preset.name}" style is ready. Add text to your timeline and apply this style in the properties panel.`,
-    });
-  }, [toast]);
-
   const handleSaveSuccess = useCallback((project: VideoProject) => {
     setCurrentProject(project);
     lastSavedDataRef.current = JSON.stringify(currentTimelineDataRef.current);
@@ -5042,17 +5029,6 @@ export default function VideoEditor() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setTextStylesOpen(true)}
-              className="gap-2"
-              data-testid="button-text-styles"
-            >
-              <Type className="h-4 w-4" />
-              <span className="hidden sm:inline">Text Styles</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
               onClick={() => setAutoCaptionsOpen(true)}
               className="gap-2"
               data-testid="button-auto-captions"
@@ -5063,17 +5039,6 @@ export default function VideoEditor() {
 
             {isAuthenticated && (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setBrandKitOpen(true)}
-                  className="gap-2"
-                  data-testid="button-brand-kit"
-                >
-                  <Palette className="h-4 w-4" />
-                  <span className="hidden sm:inline">Brand Kit</span>
-                </Button>
-
                 <Button
                   variant="outline"
                   size="sm"
@@ -5530,12 +5495,6 @@ export default function VideoEditor() {
           onSelectTemplate={handleSelectTemplate}
         />
 
-        <TextStylesSheet
-          open={textStylesOpen}
-          onOpenChange={setTextStylesOpen}
-          onSelectStyle={handleSelectTextStyle}
-        />
-
         <ApplyTemplateDialog
           open={confirmTemplateOpen}
           onOpenChange={setConfirmTemplateOpen}
@@ -5554,11 +5513,6 @@ export default function VideoEditor() {
           open={autoCaptionsOpen}
           onOpenChange={setAutoCaptionsOpen}
           onApplyCaptions={handleApplyCaptions}
-        />
-
-        <BrandKitSheet
-          open={brandKitOpen}
-          onOpenChange={setBrandKitOpen}
         />
       </div>
     </SidebarInset>
