@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
+import { spawn } from 'child_process';
 import { getBaseUrl } from './urlUtils';
 
 const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads', 'audio');
@@ -18,6 +19,46 @@ const ALLOWED_MIME_TYPES = [
   'audio/mp4'     // Some systems report M4A as audio/mp4
 ];
 
+// Formats that need conversion to MP3 for Kie.ai compatibility
+const FORMATS_NEEDING_CONVERSION = ['webm', 'ogg'];
+
+/**
+ * Convert audio file to MP3 using FFmpeg
+ */
+async function convertToMp3(inputPath: string, outputPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const ffmpeg = spawn('ffmpeg', [
+      '-i', inputPath,
+      '-vn',              // No video
+      '-ar', '44100',     // Sample rate
+      '-ac', '2',         // Stereo
+      '-b:a', '192k',     // Bitrate
+      '-f', 'mp3',        // Force MP3 format
+      '-y',               // Overwrite output
+      outputPath
+    ]);
+
+    let stderr = '';
+    ffmpeg.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    ffmpeg.on('close', (code) => {
+      if (code === 0) {
+        console.log(`✓ Audio converted to MP3: ${outputPath}`);
+        resolve();
+      } else {
+        console.error(`FFmpeg conversion failed with code ${code}:`, stderr);
+        reject(new Error(`Audio conversion failed: ${stderr.slice(-500)}`));
+      }
+    });
+
+    ffmpeg.on('error', (err) => {
+      reject(new Error(`FFmpeg spawn error: ${err.message}`));
+    });
+  });
+}
+
 // Ensure uploads directory exists
 async function ensureUploadsDir() {
   try {
@@ -30,6 +71,7 @@ async function ensureUploadsDir() {
 /**
  * Convert base64 data URI to hosted URL with strict validation
  * Saves the audio to public/uploads/audio and returns the public URL
+ * Automatically converts WebM/OGG to MP3 for Kie.ai compatibility
  */
 export async function saveBase64Audio(base64Data: string): Promise<string> {
   await ensureUploadsDir();
@@ -38,13 +80,20 @@ export async function saveBase64Audio(base64Data: string): Promise<string> {
   // Handles formats like:
   //   "data:audio/mpeg;base64,..."
   //   "data:audio/webm;codecs=opus;base64,..." (browser recordings with codec info)
-  const matches = base64Data.match(/^data:(audio\/[\w+-]+)(?:;[^;]+)*;base64,(.+)$/);
+  //   "data:video/webm;base64,..." (some browsers record audio as video/webm)
+  const matches = base64Data.match(/^data:((?:audio|video)\/[\w+-]+)(?:;[^;]+)*;base64,(.+)$/);
   if (!matches) {
     console.error('[audioHosting] Failed to parse base64 audio. Preview:', base64Data.substring(0, 100));
     throw new Error('Invalid base64 audio data URI format');
   }
 
-  const [, mimeType, base64Content] = matches;
+  let [, mimeType, base64Content] = matches;
+  
+  // Normalize video/webm to audio/webm (browsers record audio as video/webm)
+  if (mimeType === 'video/webm') {
+    console.log('[audioHosting] Converting video/webm MIME type to audio/webm...');
+    mimeType = 'audio/webm';
+  }
   
   // Validate MIME type
   if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
@@ -67,14 +116,42 @@ export async function saveBase64Audio(base64Data: string): Promise<string> {
   
   // Generate unique filename with hash to prevent duplicates
   const hash = crypto.createHash('md5').update(buffer).digest('hex');
+  const baseUrl = getBaseUrl();
+  
+  // Check if format needs conversion to MP3 (WebM, OGG not supported by Kie.ai)
+  if (FORMATS_NEEDING_CONVERSION.includes(extension)) {
+    console.log(`[audioHosting] Converting ${extension.toUpperCase()} to MP3 for Kie.ai compatibility...`);
+    
+    // Save original file temporarily
+    const tempFilename = `${Date.now()}-${hash}-temp.${extension}`;
+    const tempPath = path.join(UPLOADS_DIR, tempFilename);
+    await fs.writeFile(tempPath, buffer);
+    
+    // Convert to MP3
+    const mp3Filename = `${Date.now()}-${hash}.mp3`;
+    const mp3Path = path.join(UPLOADS_DIR, mp3Filename);
+    
+    try {
+      await convertToMp3(tempPath, mp3Path);
+      
+      // Clean up temp file
+      await fs.unlink(tempPath).catch(() => {});
+      
+      console.log(`✓ Audio converted and saved as: ${mp3Filename}`);
+      return `${baseUrl}/uploads/audio/${mp3Filename}`;
+    } catch (conversionError) {
+      // Clean up on failure
+      await fs.unlink(tempPath).catch(() => {});
+      await fs.unlink(mp3Path).catch(() => {});
+      throw conversionError;
+    }
+  }
+  
+  // For already-compatible formats, save directly
   const filename = `${Date.now()}-${hash}.${extension}`;
   const filePath = path.join(UPLOADS_DIR, filename);
-  
-  // Save file
   await fs.writeFile(filePath, buffer);
   
-  // Return public URL (prefer production domain if available)
-  const baseUrl = getBaseUrl();
   return `${baseUrl}/uploads/audio/${filename}`;
 }
 
