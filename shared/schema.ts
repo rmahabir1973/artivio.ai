@@ -1537,6 +1537,104 @@ export const insertProjectCollaboratorSchema = createInsertSchema(projectCollabo
 export type InsertProjectCollaborator = z.infer<typeof insertProjectCollaboratorSchema>;
 export type ProjectCollaborator = typeof projectCollaborators.$inferSelect;
 
+// Story Studio Projects table
+export const storyProjects = pgTable("story_projects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar("title", { length: 200 }).notNull(),
+  mode: varchar("mode").notNull().default('instant'), // 'instant' or 'advanced'
+  status: varchar("status").notNull().default('draft'), // 'draft', 'generating', 'completed', 'failed'
+  settings: jsonb("settings"), // Store generation settings (voice, speed, temperature, etc.)
+  totalDurationMs: integer("total_duration_ms"), // Total audio duration in milliseconds
+  combinedAudioUrl: text("combined_audio_url"), // Final combined audio for advanced stories
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("story_projects_user_idx").on(table.userId),
+  index("story_projects_status_idx").on(table.status),
+]);
+
+export const insertStoryProjectSchema = createInsertSchema(storyProjects).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateStoryProjectSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  mode: z.enum(['instant', 'advanced']).optional(),
+  status: z.enum(['draft', 'generating', 'completed', 'failed']).optional(),
+  settings: z.any().optional(),
+  totalDurationMs: z.number().int().optional(),
+  combinedAudioUrl: z.string().optional(),
+});
+
+export type InsertStoryProject = z.infer<typeof insertStoryProjectSchema>;
+export type UpdateStoryProject = z.infer<typeof updateStoryProjectSchema>;
+export type StoryProject = typeof storyProjects.$inferSelect;
+
+// Story Project Segments table (for multi-character advanced stories)
+export const storyProjectSegments = pgTable("story_project_segments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => storyProjects.id, { onDelete: 'cascade' }),
+  orderIndex: integer("order_index").notNull(), // Position in the story
+  speakerLabel: varchar("speaker_label", { length: 100 }), // Character name (e.g., "Narrator", "Alice", "Bob")
+  voiceId: varchar("voice_id"), // Fish.Audio voice ID
+  voiceName: varchar("voice_name", { length: 200 }), // Display name of the voice
+  text: text("text").notNull(), // The text content for this segment
+  emotionTags: text("emotion_tags").array(), // Array of emotion tags used (e.g., ["happy", "excited"])
+  durationMs: integer("duration_ms"), // Audio duration in milliseconds
+  audioUrl: text("audio_url"), // Generated audio URL for this segment
+  status: varchar("status").notNull().default('pending'), // 'pending', 'generating', 'completed', 'failed'
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata"), // Additional settings per segment
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("story_segments_project_idx").on(table.projectId),
+  index("story_segments_order_idx").on(table.projectId, table.orderIndex),
+]);
+
+export const insertStoryProjectSegmentSchema = createInsertSchema(storyProjectSegments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateStoryProjectSegmentSchema = z.object({
+  orderIndex: z.number().int().optional(),
+  speakerLabel: z.string().max(100).optional(),
+  voiceId: z.string().optional(),
+  voiceName: z.string().max(200).optional(),
+  text: z.string().optional(),
+  emotionTags: z.array(z.string()).optional(),
+  durationMs: z.number().int().optional(),
+  audioUrl: z.string().optional(),
+  status: z.enum(['pending', 'generating', 'completed', 'failed']).optional(),
+  errorMessage: z.string().optional(),
+  metadata: z.any().optional(),
+});
+
+export type InsertStoryProjectSegment = z.infer<typeof insertStoryProjectSegmentSchema>;
+export type UpdateStoryProjectSegment = z.infer<typeof updateStoryProjectSegmentSchema>;
+export type StoryProjectSegment = typeof storyProjectSegments.$inferSelect;
+
+// Story Projects Relations
+export const storyProjectsRelations = relations(storyProjects, ({ one, many }) => ({
+  user: one(users, {
+    fields: [storyProjects.userId],
+    references: [users.id],
+  }),
+  segments: many(storyProjectSegments),
+}));
+
+export const storyProjectSegmentsRelations = relations(storyProjectSegments, ({ one }) => ({
+  project: one(storyProjects, {
+    fields: [storyProjectSegments.projectId],
+    references: [storyProjects.id],
+  }),
+}));
+
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({
   user: one(users, {
     fields: [conversations.userId],
