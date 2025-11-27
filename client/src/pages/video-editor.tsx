@@ -4988,7 +4988,7 @@ export default function VideoEditor() {
   }, [loadedTimelineData, selectedCanvas]);
 
   return (
-    <SidebarInset>
+    <SidebarInset className="video-editor-page">
       <div className="flex flex-col h-screen w-full overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b flex-wrap gap-2">
           <div className="flex items-center gap-3">

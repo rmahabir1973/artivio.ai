@@ -379,6 +379,52 @@
    Make the video editor usable on phones
    ======================================== */
 
+/* Mobile landscape - enable vertical scrolling to reach timeline */
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  /* Make the page container scrollable */
+  .video-editor-page,
+  .video-editor-page > div,
+  [data-sidebar="inset"] {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: auto !important;
+    min-height: 100svh !important;
+  }
+
+  /* Remove overflow hidden from any ancestor that clips */
+  .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  /* Make the Twick wrapper scrollable */
+  .twick-studio-wrapper {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: auto !important;
+    min-height: 100svh !important;
+    max-height: none !important;
+  }
+
+  /* Ensure Twick internal containers don't clip */
+  .twick-studio-wrapper > div,
+  .twick-studio-wrapper > div > div {
+    height: auto !important;
+    min-height: 100svh !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure timeline is accessible at the bottom */
+  .twick-studio-wrapper [class*="timeline"],
+  .twick-studio-wrapper [class*="Timeline"] {
+    position: relative !important;
+    min-height: 120px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
 /* Mobile devices (portrait and landscape) */
 @media screen and (max-width: 768px) {
   .twick-studio-wrapper {
