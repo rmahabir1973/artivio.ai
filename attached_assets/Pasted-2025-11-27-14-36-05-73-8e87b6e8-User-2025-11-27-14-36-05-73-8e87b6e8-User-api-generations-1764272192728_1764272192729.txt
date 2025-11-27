@@ -1,0 +1,108 @@
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+}
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[/api/generations] Request received {
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+cursor: undefined
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+hasUser: true,
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+userId: '49729939',
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+isPaginated: false,
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+cursor: undefined
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+hasUser: true,
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+userId: '49729939',
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+isPaginated: false,
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+}
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[/api/generations] Request received {
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+cursor: undefined
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+}
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+hasUser: true,
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+userId: '49729939',
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+isPaginated: false,
+2025-11-27 14:36:05.73
+8e87b6e8
+User
+[/api/generations] Request received {
+2025-11-27 14:36:07.85
+8e87b6e8
+User
+[/api/generations] Array query completed in 2124ms, found 12 generations
+2025-11-27 14:36:08.04
+8e87b6e8
+User
+7:36:08 PM [express] GET /api/generations 304 in 2341ms :: [{"id":"bebdbc08-7ff2-4584-80f2-ed8d42315…
+2025-11-27 14:36:08.04
+8e87b6e8
+User
+7:36:08 PM [express] GET /api/generations 304 in 2341ms :: [{"id":"bebdbc08-7ff2-4584-80f2-ed8d42315…

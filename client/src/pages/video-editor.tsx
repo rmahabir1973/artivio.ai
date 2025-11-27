@@ -245,33 +245,35 @@ export default function VideoEditor() {
     })
   );
 
-  const { data: generationsData, isLoading: generationsLoading } = useQuery<{
-    items: Generation[];
-    nextCursor: string | null;
-    totalCount?: number;
-  }>({
+  const { data: generationsData, isLoading: generationsLoading } = useQuery<Generation[]>({
     queryKey: ["/api/generations", { type: "video", page }],
     queryFn: async () => {
-      const offset = (page - 1) * ITEMS_PER_PAGE;
-      const url = `/api/generations?type=video&limit=${ITEMS_PER_PAGE}&offset=${offset}`;
-      const response = await fetchWithAuth(url);
+      const response = await fetchWithAuth(`/api/generations?limit=100`);
       if (!response.ok) throw new Error("Failed to fetch videos");
-      return response.json();
+      const data = await response.json();
+      // Handle both array response (legacy) and paginated object response
+      return Array.isArray(data) ? data : data.items || [];
     },
     enabled: isAuthenticated,
   });
 
-  const videos = useMemo(() => {
-    if (!generationsData?.items) return [];
-    return generationsData.items.filter(
+  // Filter for completed videos and apply client-side pagination
+  const allVideos = useMemo(() => {
+    if (!generationsData) return [];
+    return generationsData.filter(
       (g) => g.type === "video" && g.status === "completed" && g.resultUrl
     );
   }, [generationsData]);
 
+  // Apply client-side pagination
+  const videos = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    return allVideos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [allVideos, page]);
+
   const totalPages = useMemo(() => {
-    const totalCount = generationsData?.totalCount || videos.length;
-    return Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
-  }, [generationsData, videos.length]);
+    return Math.max(1, Math.ceil(allVideos.length / ITEMS_PER_PAGE));
+  }, [allVideos.length]);
 
   const stopPolling = () => {
     if (pollingIntervalRef.current) {
@@ -376,14 +378,14 @@ export default function VideoEditor() {
       return;
     }
 
-    const clips: VideoClip[] = videos
+    const clips: VideoClip[] = allVideos
       .filter((v) => selectedIds.has(v.id))
       .map((v) => ({
         id: v.id,
         url: v.resultUrl!,
         thumbnailUrl: v.thumbnailUrl,
         prompt: v.prompt,
-        createdAt: v.createdAt,
+        createdAt: v.createdAt instanceof Date ? v.createdAt.toISOString() : String(v.createdAt),
       }));
 
     setOrderedClips(clips);
