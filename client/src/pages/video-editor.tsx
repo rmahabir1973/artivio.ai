@@ -113,6 +113,46 @@ const CANVAS_PRESETS: CanvasPreset[] = [
   { name: "Square", width: 1080, height: 1080, icon: Square, ratio: "1:1" },
 ];
 
+const normalizeTemplatePayload = (templateData: any, canvas: CanvasPreset): any => {
+  if (!templateData) return templateData;
+  
+  const cloned = JSON.parse(JSON.stringify(templateData));
+  
+  cloned.stage = {
+    width: canvas.width,
+    height: canvas.height,
+  };
+  cloned.width = canvas.width;
+  cloned.height = canvas.height;
+  
+  if (cloned.elements && Array.isArray(cloned.elements)) {
+    cloned.elements = cloned.elements.map((element: any) => {
+      if (element.name === 'Background' || element.type === 'shape') {
+        return {
+          ...element,
+          width: canvas.width,
+          height: canvas.height,
+          x: 0,
+          y: 0,
+        };
+      }
+      
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const elementWidth = element.width || 400;
+      const elementHeight = element.height || 100;
+      
+      return {
+        ...element,
+        x: centerX - elementWidth / 2,
+        y: element.y !== undefined ? Math.min(element.y, canvas.height - elementHeight - 50) : centerY,
+      };
+    });
+  }
+  
+  return cloned;
+};
+
 type QualityPreset = {
   name: string;
   width: number;
@@ -4316,7 +4356,11 @@ function SaveStatusIndicator({
   );
 }
 
-function LibraryItem({ item, onCopy }: { item: MediaItem; onCopy: (url: string) => void }) {
+function LibraryItem({ item, onCopy, onAddToTimeline }: { 
+  item: MediaItem; 
+  onCopy: (url: string) => void;
+  onAddToTimeline?: (item: MediaItem) => void;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -4371,19 +4415,33 @@ function LibraryItem({ item, onCopy }: { item: MediaItem; onCopy: (url: string) 
         </p>
       </div>
       
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleCopy}
-        className="flex-shrink-0"
-        data-testid={`button-copy-${item.id}`}
-      >
-        {copied ? (
-          <Check className="h-4 w-4 text-green-500" />
-        ) : (
-          <Copy className="h-4 w-4" />
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {onAddToTimeline && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => onAddToTimeline(item)}
+            className="gap-1"
+            data-testid={`button-add-${item.id}`}
+          >
+            <Plus className="h-3 w-3" />
+            Use
+          </Button>
         )}
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleCopy}
+          title="Copy URL"
+          data-testid={`button-copy-${item.id}`}
+        >
+          {copied ? (
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -4517,6 +4575,62 @@ export default function VideoEditor() {
     });
   };
 
+  const handleAddToTimeline = useCallback((item: MediaItem) => {
+    const currentData = currentTimelineDataRef.current || { tracks: [], elements: [], duration: 30000 };
+    const cloned = JSON.parse(JSON.stringify(currentData));
+    
+    const newElementId = `media-${Date.now()}`;
+    const newItemId = `item-${Date.now()}`;
+    
+    const newElement: any = {
+      id: newElementId,
+      type: item.type === 'video' ? 'video' : item.type === 'image' ? 'image' : 'audio',
+      name: item.name,
+      x: 0,
+      y: 0,
+      width: selectedCanvas.width,
+      height: selectedCanvas.height,
+      rotation: 0,
+      opacity: 1,
+      details: {
+        src: item.url,
+      },
+    };
+    
+    if (!cloned.elements) cloned.elements = [];
+    cloned.elements.push(newElement);
+    
+    const duration = (item.duration || 5) * 1000;
+    const newTrackItem = {
+      id: newItemId,
+      type: 'element',
+      elementId: newElementId,
+      start: 0,
+      duration: duration,
+    };
+    
+    if (!cloned.tracks || cloned.tracks.length === 0) {
+      cloned.tracks = [{ id: 'track-1', name: 'Media', items: [newTrackItem] }];
+    } else {
+      cloned.tracks[0].items.push(newTrackItem);
+    }
+    
+    if (cloned.duration < duration) {
+      cloned.duration = duration;
+    }
+    
+    const normalizedData = normalizeTemplatePayload(cloned, selectedCanvas);
+    setLoadedTimelineData(normalizedData);
+    currentTimelineDataRef.current = normalizedData;
+    setHasUnsavedChanges(true);
+    setStudioKey(Date.now());
+    
+    toast({
+      title: "Media Added",
+      description: `${item.name} has been added to your timeline.`,
+    });
+  }, [selectedCanvas, toast]);
+
   const handleQualityChange = (quality: QualityPreset) => {
     setExportSettings(prev => ({ ...prev, quality, platform: null }));
     toast({
@@ -4627,16 +4741,16 @@ export default function VideoEditor() {
       c => c.ratio === template.aspectRatio
     );
     
-    if (matchingCanvas) {
-      setSelectedCanvas(matchingCanvas);
-    }
+    const targetCanvas = matchingCanvas || CANVAS_PRESETS[0];
+    const normalizedData = normalizeTemplatePayload(template.timelineData, targetCanvas);
     
-    setLoadedTimelineData(template.timelineData);
-    currentTimelineDataRef.current = template.timelineData;
+    setSelectedCanvas(targetCanvas);
+    setLoadedTimelineData(normalizedData);
+    currentTimelineDataRef.current = normalizedData;
     lastSavedDataRef.current = "";
     setHasUnsavedChanges(true);
     setCurrentProject(null);
-    setStudioKey(prev => prev + 1);
+    setStudioKey(Date.now());
     
     toast({
       title: "Template Applied",
@@ -4825,7 +4939,7 @@ export default function VideoEditor() {
 
   return (
     <SidebarInset>
-      <div className="flex flex-col h-full w-full">
+      <div className="flex flex-col h-screen w-full overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -5125,7 +5239,7 @@ export default function VideoEditor() {
                         ) : (
                           <div className="space-y-2 pr-4">
                             {userMedia.videos.map((item) => (
-                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} />
+                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} onAddToTimeline={handleAddToTimeline} />
                             ))}
                           </div>
                         )}
@@ -5143,7 +5257,7 @@ export default function VideoEditor() {
                         ) : (
                           <div className="space-y-2 pr-4">
                             {userMedia.images.map((item) => (
-                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} />
+                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} onAddToTimeline={handleAddToTimeline} />
                             ))}
                           </div>
                         )}
@@ -5161,7 +5275,7 @@ export default function VideoEditor() {
                         ) : (
                           <div className="space-y-2 pr-4">
                             {userMedia.audio.map((item) => (
-                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} />
+                              <LibraryItem key={item.id} item={item} onCopy={handleCopyUrl} onAddToTimeline={handleAddToTimeline} />
                             ))}
                           </div>
                         )}
@@ -5211,7 +5325,7 @@ export default function VideoEditor() {
           </Alert>
         )}
 
-        <div ref={editorContainerRef} className="flex-1 relative twick-studio-wrapper" data-testid="video-editor-container">
+        <div ref={editorContainerRef} className="flex-1 min-h-0 relative twick-studio-wrapper" data-testid="video-editor-container">
           <LivePlayerProvider>
             <TimelineProvider
               key={studioKey}
