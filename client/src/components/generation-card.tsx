@@ -289,7 +289,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                     src={generation.resultUrl}
                     className="w-full h-full object-cover"
                     data-testid={`video-result-${generation.id}`}
-                    poster={generation.thumbnailUrl || generation.resultUrl}
+                    poster={generation.thumbnailUrl || undefined}
                     preload="metadata"
                     playsInline
                   />
@@ -567,6 +567,8 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                 src={generation.resultUrl}
                 controls
                 autoPlay
+                preload="auto"
+                playsInline
                 className="w-full h-full"
                 data-testid={`video-dialog-${generation.id}`}
               />

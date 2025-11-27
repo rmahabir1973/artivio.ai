@@ -88,6 +88,8 @@ export function PreviewPanel({
               <video
                 src={resultUrl}
                 controls
+                preload="auto"
+                playsInline
                 className="max-w-full max-h-full"
                 data-testid="preview-video"
               >

@@ -24,6 +24,9 @@ const ASPECT_RATIOS = [
   { value: "9:16", label: "9:16 (Portrait)" },
 ];
 
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 export default function GenerateTransition() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -64,6 +67,17 @@ export default function GenerateTransition() {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({
+        title: "File Too Large",
+        description: `File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the maximum allowed size of ${MAX_FILE_SIZE_MB}MB. Please compress or resize your image.`,
+        variant: "destructive",
+      });
+      e.target.value = ''; // Reset input
+      return;
+    }
+    
     setUploadingFirst(true);
     try {
       const url = await uploadImage(file);
@@ -71,7 +85,7 @@ export default function GenerateTransition() {
     } catch (error) {
       toast({
         title: "Upload Failed",
-        description: "Failed to upload the first frame image.",
+        description: "Failed to upload the first frame image. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -83,6 +97,17 @@ export default function GenerateTransition() {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({
+        title: "File Too Large",
+        description: `File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds the maximum allowed size of ${MAX_FILE_SIZE_MB}MB. Please compress or resize your image.`,
+        variant: "destructive",
+      });
+      e.target.value = ''; // Reset input
+      return;
+    }
+    
     setUploadingLast(true);
     try {
       const url = await uploadImage(file);
@@ -90,7 +115,7 @@ export default function GenerateTransition() {
     } catch (error) {
       toast({
         title: "Upload Failed",
-        description: "Failed to upload the last frame image.",
+        description: "Failed to upload the last frame image. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -239,6 +264,9 @@ export default function GenerateTransition() {
                 <p className="font-medium text-sm">First & Last Frames</p>
                 <p className="text-sm text-muted-foreground">
                   Upload a first frame and last frame. The AI will generate a smooth video transition between them.
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                  Maximum file size: {MAX_FILE_SIZE_MB}MB per image. Larger files will be rejected.
                 </p>
               </div>
             </div>

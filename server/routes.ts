@@ -1397,24 +1397,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
             (async () => {
               try {
                 if (gen.type === 'video') {
-                  // Re-encode video for optimized streaming (async background job)
-                  console.log(`🎬 Starting video optimization for ${generationId}...`);
-                  const optimizedUrl = await reencodeVideoForStreaming(resultUrl, generationId);
+                  let thumbnailGenerated = false;
                   
-                  // Update generation with optimized URL
-                  await storage.updateGeneration(generationId, { resultUrl: optimizedUrl });
-                  console.log(`✓ Video optimized and URL updated for ${generationId}: ${optimizedUrl}`);
+                  // Step 1: Try to re-encode video for optimized streaming
+                  try {
+                    console.log(`🎬 Starting video optimization for ${generationId}...`);
+                    const optimizedUrl = await reencodeVideoForStreaming(resultUrl, generationId);
+                    
+                    // Update generation with optimized URL
+                    await storage.updateGeneration(generationId, { resultUrl: optimizedUrl });
+                    console.log(`✓ Video optimized and URL updated for ${generationId}: ${optimizedUrl}`);
+                    
+                    // Generate thumbnail from optimized local video (more efficient)
+                    const localVideoPath = path.join(process.cwd(), 'public', optimizedUrl.replace(/^\//,''));
+                    try {
+                      const thumbResult = await generateThumbnail({
+                        videoPath: localVideoPath,
+                        generationId: generationId,
+                        timestampSeconds: 1,
+                      });
+                      await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+                      console.log(`✓ Thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                      thumbnailGenerated = true;
+                    } catch (thumbError: any) {
+                      console.error(`⚠️  Thumbnail from local video failed for ${generationId}:`, thumbError.message);
+                    }
+                  } catch (encodeError: any) {
+                    console.error(`⚠️  Video optimization failed for ${generationId}:`, encodeError.message);
+                    // Keep original URL - video still works, just not optimized
+                  }
                   
-                  // Generate thumbnail from optimized video (use local path for efficiency)
-                  const localVideoPath = path.join(process.cwd(), 'public', optimizedUrl.replace(/^\//,''));
-                  const thumbResult = await generateThumbnail({
-                    videoPath: localVideoPath,
-                    generationId: generationId,
-                    timestampSeconds: 1, // Extract frame at 1 second mark
-                  });
-                  
-                  await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
-                  console.log(`✓ Thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                  // Step 2: Fallback - generate thumbnail from original URL if not done yet
+                  if (!thumbnailGenerated) {
+                    console.log(`🖼️  Fallback: generating thumbnail from original URL for ${generationId}...`);
+                    try {
+                      const thumbResult = await generateThumbnail({
+                        videoUrl: resultUrl,
+                        generationId: generationId,
+                        timestampSeconds: 1,
+                      });
+                      await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+                      console.log(`✓ Thumbnail generated from original URL for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                    } catch (thumbError: any) {
+                      console.error(`⚠️  Thumbnail generation failed for ${generationId}:`, thumbError.message);
+                    }
+                  }
                 } else if (['image', 'upscaling', 'background-remover'].includes(gen.type)) {
                   // Generate thumbnail for image types
                   console.log(`🖼️  Generating image thumbnail for ${generationId}...`);
@@ -1424,7 +1451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   console.log(`✓ Image thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
                 }
               } catch (error: any) {
-                console.error(`⚠️  Thumbnail generation failed for ${generationId}:`, error.message);
+                console.error(`⚠️  Background processing failed for ${generationId}:`, error.message);
                 // Don't break user experience - thumbnails are optional
               }
             })().catch((error) => {
