@@ -4557,21 +4557,22 @@ export default function VideoEditor() {
     
     setIsLoadingMore(true);
     try {
-      const response = await fetch(`/api/generations?cursor=${encodeURIComponent(generationsCursor)}`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAllGenerations(prev => [...prev, ...(data.items || [])]);
-        setGenerationsCursor(data.nextCursor);
-        setHasMoreGenerations(!!data.nextCursor);
-      }
+      const response = await apiRequest('GET', `/api/generations?cursor=${encodeURIComponent(generationsCursor)}`);
+      const data = await response.json();
+      setAllGenerations(prev => [...prev, ...(data.items || [])]);
+      setGenerationsCursor(data.nextCursor);
+      setHasMoreGenerations(!!data.nextCursor);
     } catch (error) {
       console.error('Failed to load more generations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load more items. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoadingMore(false);
     }
-  }, [generationsCursor, isLoadingMore]);
+  }, [generationsCursor, isLoadingMore, toast]);
 
   const userMedia = useMemo(() => {
     if (!allGenerations.length) return { videos: [] as MediaItem[], images: [] as MediaItem[], audio: [] as MediaItem[] };

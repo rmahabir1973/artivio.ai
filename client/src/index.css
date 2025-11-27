@@ -374,6 +374,22 @@
   display: none !important;
 }
 
+/* Hide Icons feature - relies on external Iconify API that may be blocked */
+/* Target common patterns for icon buttons/panels in Twick SDK */
+.twick-studio-wrapper button[title*="Icon" i],
+.twick-studio-wrapper button[aria-label*="Icon" i],
+.twick-studio-wrapper [data-panel*="icon" i],
+.twick-studio-wrapper [class*="icon-panel" i] {
+  display: none !important;
+}
+
+/* Hide elements that contain icon-related SVGs using :has selector */
+.twick-studio-wrapper button:has(svg[class*="infinity"]),
+.twick-studio-wrapper button:has(svg[data-lucide="infinity"]),
+.twick-studio-wrapper [role="button"]:has(svg[class*="infinity"]) {
+  display: none !important;
+}
+
 /* ========================================
    TWICK STUDIO MOBILE RESPONSIVENESS
    Make the video editor usable on phones
