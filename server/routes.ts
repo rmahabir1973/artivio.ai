@@ -7073,17 +7073,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Create generation record
-        await storage.createGeneration({
+        const generation = await storage.createGeneration({
           userId,
           type: 'video-editor',
           status: 'completed',
           resultUrl: lambdaResult.downloadUrl,
-          model: 'twick-video-editor',
+          model: 'Video Editor',
           prompt: 'Video Editor Export',
           parameters: videoSettings || {},
           creditsCost: 0, // Free for now, can add pricing later
           processingStage: 'completed',
         });
+        
+        // Generate thumbnail for the exported video (non-blocking)
+        if (generation?.id) {
+          generateThumbnail({
+            videoUrl: lambdaResult.downloadUrl,
+            generationId: generation.id,
+            timestampSeconds: 2,
+          }).then(async (thumbResult) => {
+            await storage.updateGeneration(generation.id, { thumbnailUrl: thumbResult.thumbnailUrl });
+            console.log(`✓ Thumbnail generated for video editor export ${generation.id}`);
+          }).catch((error) => {
+            console.error(`⚠️  Thumbnail generation failed for video editor export:`, error.message);
+          });
+        }
         
         return res.json({
           status: 'completed',
@@ -8510,13 +8524,14 @@ async function combineVideosInBackground(combinationId: string, videoUrls: strin
     // Also create a generation record so it shows up in history
     const combination = await storage.getVideoCombinationById(combinationId);
     if (combination) {
-      await storage.createGeneration({
+      const generation = await storage.createGeneration({
         userId: combination.userId,
         type: 'video-editor',
         status: 'completed',
         resultUrl: result.outputPath,
-        model: 'video-editor',
-        prompt: 'Video Editor Combination',
+        thumbnailUrl: combination.thumbnailUrl || undefined, // Use thumbnail from combination if available
+        model: 'Video Editor',
+        prompt: 'Video Editor Export',
         parameters: {
           sourceVideoIds: combination.sourceVideoIds,
           enhancements: combination.enhancements,
@@ -8524,6 +8539,20 @@ async function combineVideosInBackground(combinationId: string, videoUrls: strin
         creditsCost: combination.creditsCost,
         processingStage: 'completed',
       });
+      
+      // Generate thumbnail if not already set (non-blocking)
+      if (generation?.id && !combination.thumbnailUrl) {
+        generateThumbnail({
+          videoPath: result.outputPath,
+          generationId: generation.id,
+          timestampSeconds: 2,
+        }).then(async (thumbResult) => {
+          await storage.updateGeneration(generation.id, { thumbnailUrl: thumbResult.thumbnailUrl });
+          console.log(`✓ Thumbnail generated for video combination ${generation.id}`);
+        }).catch((error) => {
+          console.error(`⚠️  Thumbnail generation failed for video combination:`, error.message);
+        });
+      }
     }
 
     console.log(`Video combination ${combinationId} completed: ${result.outputPath}`);
