@@ -65,6 +65,7 @@ import Contact from "@/pages/contact";
 import Referrals from "@/pages/referrals";
 import Leaderboard from "@/pages/leaderboard";
 import VideoModelsShowcase from "@/pages/video-models-showcase";
+import Newsletter from "@/pages/newsletter";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />
       <Route path="/pricing" component={Pricing} />
+      <Route path="/newsletter" component={Newsletter} />
 
       {/* Auth routes - only show when not authenticated */}
       {!isAuthenticated && (
