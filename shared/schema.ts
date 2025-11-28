@@ -127,6 +127,36 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
 
+// Public API Keys table for Tasklet/external integrations
+export const publicApiKeys = pgTable("public_api_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar("name").notNull(),
+  keyPrefix: varchar("key_prefix").notNull(),
+  keyHash: text("key_hash").notNull(),
+  lastFourChars: varchar("last_four_chars").notNull(),
+  permissions: text("permissions").array().notNull().default(sql`ARRAY['video', 'image', 'audio']::text[]`),
+  rateLimit: integer("rate_limit").notNull().default(100),
+  usageCount: integer("usage_count").notNull().default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  isActive: boolean("is_active").notNull().default(true),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("public_api_key_user_idx").on(table.userId),
+  index("public_api_key_hash_idx").on(table.keyHash),
+]);
+
+export const insertPublicApiKeySchema = createInsertSchema(publicApiKeys).omit({
+  id: true,
+  usageCount: true,
+  lastUsedAt: true,
+  createdAt: true,
+});
+
+export type InsertPublicApiKey = z.infer<typeof insertPublicApiKeySchema>;
+export type PublicApiKey = typeof publicApiKeys.$inferSelect;
+
 // Pricing table for configurable feature costs
 export const pricing = pgTable("pricing", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

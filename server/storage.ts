@@ -1,6 +1,7 @@
 import {
   users,
   apiKeys,
+  publicApiKeys,
   pricing,
   planEconomics,
   generations,
@@ -38,6 +39,8 @@ import {
   type InsertReferral,
   type ApiKey,
   type InsertApiKey,
+  type PublicApiKey,
+  type InsertPublicApiKey,
   type Pricing,
   type InsertPricing,
   type UpdatePricing,
@@ -129,6 +132,14 @@ export interface IStorage {
   addApiKey(key: InsertApiKey): Promise<ApiKey>;
   toggleApiKey(keyId: string, isActive: boolean): Promise<ApiKey | undefined>;
   deleteApiKey(keyId: string): Promise<void>;
+
+  // Public API Key operations (for Tasklet/external integrations)
+  getPublicApiKeyByHash(keyHash: string): Promise<PublicApiKey | undefined>;
+  getUserPublicApiKeys(userId: string): Promise<PublicApiKey[]>;
+  createPublicApiKey(key: InsertPublicApiKey): Promise<PublicApiKey>;
+  updatePublicApiKeyUsage(keyId: string): Promise<void>;
+  revokePublicApiKey(keyId: string): Promise<void>;
+  deletePublicApiKey(keyId: string): Promise<void>;
 
   // Pricing operations
   getAllPricing(): Promise<Pricing[]>;
@@ -506,6 +517,49 @@ export class DatabaseStorage implements IStorage {
       .where(eq(apiKeys.id, keyId))
       .returning();
     return key;
+  }
+
+  // Public API Key operations (for Tasklet/external integrations)
+  async getPublicApiKeyByHash(keyHash: string): Promise<PublicApiKey | undefined> {
+    const [key] = await db
+      .select()
+      .from(publicApiKeys)
+      .where(and(eq(publicApiKeys.keyHash, keyHash), eq(publicApiKeys.isActive, true)));
+    return key;
+  }
+
+  async getUserPublicApiKeys(userId: string): Promise<PublicApiKey[]> {
+    return await db
+      .select()
+      .from(publicApiKeys)
+      .where(eq(publicApiKeys.userId, userId))
+      .orderBy(desc(publicApiKeys.createdAt));
+  }
+
+  async createPublicApiKey(key: InsertPublicApiKey): Promise<PublicApiKey> {
+    const [apiKey] = await db.insert(publicApiKeys).values(key).returning();
+    return apiKey;
+  }
+
+  async updatePublicApiKeyUsage(keyId: string): Promise<void> {
+    await db
+      .update(publicApiKeys)
+      .set({
+        usageCount: sql`${publicApiKeys.usageCount} + 1`,
+        lastUsedAt: new Date(),
+      })
+      .where(eq(publicApiKeys.id, keyId));
+  }
+
+  async revokePublicApiKey(keyId: string): Promise<void> {
+    await db
+      .update(publicApiKeys)
+      .set({ isActive: false })
+      .where(eq(publicApiKeys.id, keyId));
+  }
+
+  async deletePublicApiKey(keyId: string): Promise<void> {
+    await db.delete(publicApiKeys).where(eq(publicApiKeys.id, keyId));
   }
 
   // Pricing operations
