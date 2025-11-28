@@ -1017,15 +1017,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email via Postmark
       const postmarkClient = new ServerClient(process.env.POSTMARK_SERVER_TOKEN);
       
-      await postmarkClient.sendEmail({
+      console.log('[CONTACT FORM] Attempting to send email via Postmark...');
+      console.log('[CONTACT FORM] From: hello@artivio.ai, To: hello@artivio.ai');
+      
+      const postmarkResponse = await postmarkClient.sendEmail({
         From: 'hello@artivio.ai',
         To: 'hello@artivio.ai',
         Subject: `Contact Form: ${subject}`,
         TextBody: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
         ReplyTo: email,
+        MessageStream: 'outbound',
       });
 
-      console.log('[CONTACT FORM] Email sent successfully');
+      console.log('[CONTACT FORM] Postmark response:', JSON.stringify(postmarkResponse, null, 2));
+      console.log('[CONTACT FORM] Email sent successfully - MessageID:', postmarkResponse.MessageID);
       
       res.json({ 
         success: true, 
@@ -1048,6 +1053,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle Postmark errors
       if (error.statusCode) {
+        console.error('[CONTACT FORM] Postmark error details:', {
+          statusCode: error.statusCode,
+          message: error.message,
+          code: error.code,
+          errorCode: error.errorCode,
+        });
         return res.status(500).json({ 
           message: 'Failed to send email. Please try again later.' 
         });
