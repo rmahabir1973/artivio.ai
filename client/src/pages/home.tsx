@@ -397,11 +397,11 @@ export default function Home() {
             </p>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight break-words px-2 leading-tight">
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-violet-500 bg-clip-text text-transparent">
-                What would you like to create today?
+                What will you create today?
               </span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl font-semibold text-muted-foreground max-w-2xl mx-auto px-2">
-              Choose from 12+ AI tools. Generate anything in seconds.
+              Powered by advanced AI technology.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               {isGuestMode ? (

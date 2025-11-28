@@ -314,7 +314,7 @@ function AppContent() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="text-sm font-medium gap-1" data-testid="nav-tools">
-                        <Wrench className="h-4 w-4" />
+                        <Wrench className="h-4 w-4 text-emerald-400" />
                         Tools
                         <ChevronDown className="h-3 w-3 opacity-70" />
                       </Button>
@@ -345,7 +345,7 @@ function AppContent() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="text-sm font-medium gap-1" data-testid="nav-community">
-                        <Users className="h-4 w-4" />
+                        <Users className="h-4 w-4 text-orange-400" />
                         Community
                         <ChevronDown className="h-3 w-3 opacity-70" />
                       </Button>

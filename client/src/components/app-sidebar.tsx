@@ -84,7 +84,7 @@ const menuSections: MenuSection[] = [
     label: "Main",
     category: "main",
     items: [
-      { title: "Home", url: "/", icon: Home },
+      { title: "Home", url: "/dashboard", icon: Home },
       { title: "My Library", url: "/history", icon: Library },
     ],
   },
