@@ -309,15 +309,17 @@ export default function GenerateImage() {
     refetchOnWindowFocus: false,
   });
 
-  // Update generatedImage when poll data arrives
+  // Update generatedImage when poll data arrives with resultUrl or completed status
   useEffect(() => {
-    if (pollData?.resultUrl) {
+    if (pollData?.resultUrl || pollData?.status === 'completed') {
       setGeneratedImage(pollData);
       setIsGenerating(false);
-      toast({
-        title: "Image Generated!",
-        description: "Your image is ready to view and download.",
-      });
+      if (pollData?.resultUrl) {
+        toast({
+          title: "Image Generated!",
+          description: "Your image is ready to view and download.",
+        });
+      }
     } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
       setGeneratedImage(pollData);
       setIsGenerating(false);

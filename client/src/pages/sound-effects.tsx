@@ -66,15 +66,17 @@ export default function SoundEffects() {
     refetchOnWindowFocus: false,
   });
 
-  // Update generatedAudio when poll data arrives with resultUrl
+  // Update generatedAudio when poll data arrives with resultUrl or completed status
   useEffect(() => {
-    if (pollData?.resultUrl) {
+    if (pollData?.resultUrl || pollData?.status === 'completed') {
       setGeneratedAudio(pollData);
       setIsGenerating(false);
-      toast({
-        title: "Sound Effect Generated!",
-        description: "Your sound effect is ready to play and download.",
-      });
+      if (pollData?.resultUrl) {
+        toast({
+          title: "Sound Effect Generated!",
+          description: "Your sound effect is ready to play and download.",
+        });
+      }
     } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
       setGeneratedAudio(pollData);
       setIsGenerating(false);

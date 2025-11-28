@@ -60,15 +60,17 @@ export default function GenerateSora() {
     refetchOnWindowFocus: false,
   });
 
-  // Update generatedVideo when poll data arrives
+  // Update generatedVideo when poll data arrives with resultUrl or completed status
   useEffect(() => {
-    if (pollData?.resultUrl) {
+    if (pollData?.resultUrl || pollData?.status === 'completed') {
       setGeneratedVideo(pollData);
       setIsGenerating(false);
-      toast({
-        title: "Video Generated!",
-        description: "Your Sora 2 Pro video is ready to view and download.",
-      });
+      if (pollData?.resultUrl) {
+        toast({
+          title: "Video Generated!",
+          description: "Your Sora 2 Pro video is ready to view and download.",
+        });
+      }
     } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
       setGeneratedVideo(pollData);
       setIsGenerating(false);
