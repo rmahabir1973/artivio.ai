@@ -1649,6 +1649,57 @@ export type InsertStoryProjectSegment = z.infer<typeof insertStoryProjectSegment
 export type UpdateStoryProjectSegment = z.infer<typeof updateStoryProjectSegmentSchema>;
 export type StoryProjectSegment = typeof storyProjectSegments.$inferSelect;
 
+// Blog Posts table for public blog content
+export const blogPosts = pgTable("blog_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 300 }).notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: varchar("excerpt", { length: 300 }), // Short preview for listings
+  author: varchar("author", { length: 100 }).notNull().default('Artivio Team'),
+  tags: jsonb("tags").$type<string[]>().default([]), // Array of tag strings
+  category: varchar("category", { length: 50 }).notNull().default('Announcement'), // Tutorial, Case Study, Feature, Announcement
+  featuredImageUrl: text("featured_image_url"),
+  metaDescription: varchar("meta_description", { length: 200 }), // For SEO
+  publishedDate: timestamp("published_date"),
+  updatedDate: timestamp("updated_date"),
+  status: varchar("status", { length: 20 }).notNull().default('draft'), // 'draft', 'published'
+  viewCount: integer("view_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  uniqueIndex("blog_posts_slug_idx").on(table.slug),
+  index("blog_posts_status_idx").on(table.status),
+  index("blog_posts_category_idx").on(table.category),
+  index("blog_posts_published_date_idx").on(table.publishedDate),
+]);
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  viewCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateBlogPostSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  slug: z.string().min(1).max(300).optional(),
+  content: z.string().min(1).optional(),
+  excerpt: z.string().max(300).optional().nullable(),
+  author: z.string().max(100).optional(),
+  tags: z.array(z.string()).optional(),
+  category: z.enum(['Tutorial', 'Case Study', 'Feature', 'Announcement']).optional(),
+  featuredImageUrl: z.string().optional().nullable(),
+  metaDescription: z.string().max(200).optional().nullable(),
+  publishedDate: z.date().optional().nullable(),
+  updatedDate: z.date().optional().nullable(),
+  status: z.enum(['draft', 'published']).optional(),
+});
+
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type UpdateBlogPost = z.infer<typeof updateBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
+
 // Story Projects Relations
 export const storyProjectsRelations = relations(storyProjects, ({ one, many }) => ({
   user: one(users, {

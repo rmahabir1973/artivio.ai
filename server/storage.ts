@@ -109,9 +109,13 @@ import {
   type StoryProjectSegment,
   type InsertStoryProjectSegment,
   type UpdateStoryProjectSegment,
+  blogPosts,
+  type BlogPost,
+  type InsertBlogPost,
+  type UpdateBlogPost,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, gte, sql, inArray, ilike, or, asc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -384,6 +388,24 @@ export interface IStorage {
   deleteStorySegment(id: string): Promise<boolean>;
   reorderProjectSegments(projectId: string, segmentIds: string[]): Promise<void>;
   createBulkSegments(segments: InsertStoryProjectSegment[]): Promise<StoryProjectSegment[]>;
+
+  // Blog Post operations (public content)
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  getBlogPostById(id: string): Promise<BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  getPublishedBlogPosts(options: { 
+    page?: number; 
+    limit?: number; 
+    category?: string; 
+    sortBy?: 'latest' | 'oldest' | 'popular';
+  }): Promise<{ posts: BlogPost[]; total: number; totalPages: number }>;
+  getAllBlogPosts(): Promise<BlogPost[]>;
+  updateBlogPost(id: string, updates: UpdateBlogPost): Promise<BlogPost | undefined>;
+  deleteBlogPost(id: string): Promise<boolean>;
+  incrementBlogPostViews(id: string): Promise<void>;
+  searchBlogPosts(query: string): Promise<BlogPost[]>;
+  getBlogTags(): Promise<{ tag: string; count: number }[]>;
+  getRelatedBlogPosts(category: string, excludeId: string, limit?: number): Promise<BlogPost[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2759,6 +2781,173 @@ export class DatabaseStorage implements IStorage {
       .values(segments)
       .returning();
     return created;
+  }
+
+  // Blog Post operations
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const [created] = await db
+      .insert(blogPosts)
+      .values(post)
+      .returning();
+    return created;
+  }
+
+  async getBlogPostById(id: string): Promise<BlogPost | undefined> {
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id));
+    return post;
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.slug, slug));
+    return post;
+  }
+
+  async getPublishedBlogPosts(options: { 
+    page?: number; 
+    limit?: number; 
+    category?: string;
+    sortBy?: 'latest' | 'oldest' | 'popular';
+  }): Promise<{ posts: BlogPost[]; total: number; totalPages: number }> {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const offset = (page - 1) * limit;
+
+    // Build where conditions
+    const conditions = [eq(blogPosts.status, 'published')];
+    if (options.category) {
+      conditions.push(eq(blogPosts.category, options.category));
+    }
+
+    // Get total count
+    const countResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(blogPosts)
+      .where(and(...conditions));
+    const total = countResult[0]?.count || 0;
+
+    // Determine sort order
+    let orderBy;
+    switch (options.sortBy) {
+      case 'oldest':
+        orderBy = asc(blogPosts.publishedDate);
+        break;
+      case 'popular':
+        orderBy = desc(blogPosts.viewCount);
+        break;
+      case 'latest':
+      default:
+        orderBy = desc(blogPosts.publishedDate);
+    }
+
+    // Get posts with pagination
+    const posts = await db
+      .select()
+      .from(blogPosts)
+      .where(and(...conditions))
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      posts,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getAllBlogPosts(): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .orderBy(desc(blogPosts.createdAt));
+  }
+
+  async updateBlogPost(id: string, updates: UpdateBlogPost): Promise<BlogPost | undefined> {
+    const [updated] = await db
+      .update(blogPosts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBlogPost(id: string): Promise<boolean> {
+    const result = await db
+      .delete(blogPosts)
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async incrementBlogPostViews(id: string): Promise<void> {
+    await db
+      .update(blogPosts)
+      .set({ viewCount: sql`${blogPosts.viewCount} + 1` })
+      .where(eq(blogPosts.id, id));
+  }
+
+  async searchBlogPosts(query: string): Promise<BlogPost[]> {
+    const searchPattern = `%${query}%`;
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(
+        and(
+          eq(blogPosts.status, 'published'),
+          or(
+            ilike(blogPosts.title, searchPattern),
+            ilike(blogPosts.content, searchPattern),
+            ilike(blogPosts.excerpt, searchPattern)
+          )
+        )
+      )
+      .orderBy(desc(blogPosts.publishedDate))
+      .limit(20);
+  }
+
+  async getBlogTags(): Promise<{ tag: string; count: number }[]> {
+    // Get all published posts with tags
+    const posts = await db
+      .select({ tags: blogPosts.tags })
+      .from(blogPosts)
+      .where(eq(blogPosts.status, 'published'));
+
+    // Count tags
+    const tagCounts = new Map<string, number>();
+    for (const post of posts) {
+      const tags = post.tags as string[] | null;
+      if (tags && Array.isArray(tags)) {
+        for (const tag of tags) {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        }
+      }
+    }
+
+    // Convert to array and sort by count
+    return Array.from(tagCounts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  async getRelatedBlogPosts(category: string, excludeId: string, limit: number = 3): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(
+        and(
+          eq(blogPosts.status, 'published'),
+          eq(blogPosts.category, category),
+          sql`${blogPosts.id} != ${excludeId}`
+        )
+      )
+      .orderBy(desc(blogPosts.publishedDate))
+      .limit(limit);
   }
 }
 

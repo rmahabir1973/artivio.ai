@@ -88,7 +88,10 @@ import {
   updateAnnouncementSchema,
   loopsTestContactRequestSchema,
   contactFormRequestSchema,
-  type InsertSubscriptionPlan
+  insertBlogPostSchema,
+  updateBlogPostSchema,
+  type InsertSubscriptionPlan,
+  type BlogPost
 } from "@shared/schema";
 import { getBaseUrl } from "./urlUtils";
 import { ServerClient } from "postmark";
@@ -1133,6 +1136,285 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('[NEWSLETTER] Signup error:', error);
       res.status(500).json({ error: 'Server error. Please try again later.' });
+    }
+  });
+
+  // ========== BLOG API ENDPOINTS (Public + Admin) ==========
+  
+  // Helper function to generate URL-friendly slug from title
+  function generateSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-')     // Replace spaces with hyphens
+      .replace(/-+/g, '-')      // Replace multiple hyphens with single
+      .substring(0, 200);       // Limit length
+  }
+
+  // GET /api/blog/posts - Public: Get published posts with pagination
+  app.get('/api/blog/posts', async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const category = req.query.category as string | undefined;
+      const sortBy = (req.query.sort as 'latest' | 'oldest' | 'popular') || 'latest';
+
+      const result = await storage.getPublishedBlogPosts({
+        page,
+        limit,
+        category,
+        sortBy,
+      });
+
+      res.json({
+        posts: result.posts.map(post => ({
+          id: post.id,
+          title: post.title,
+          slug: post.slug,
+          excerpt: post.excerpt,
+          author: post.author,
+          publishedDate: post.publishedDate,
+          tags: post.tags,
+          featuredImageUrl: post.featuredImageUrl,
+          category: post.category,
+        })),
+        page,
+        totalPages: result.totalPages,
+        total: result.total,
+      });
+    } catch (error: any) {
+      console.error('[BLOG] Error fetching posts:', error);
+      res.status(500).json({ error: 'Failed to fetch blog posts' });
+    }
+  });
+
+  // GET /api/blog/posts/:slug - Public: Get single post by slug
+  app.get('/api/blog/posts/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const post = await storage.getBlogPostBySlug(slug);
+
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      // Only show published posts to public (draft posts require admin)
+      if (post.status !== 'published') {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      // Increment view count
+      await storage.incrementBlogPostViews(post.id);
+
+      // Get related posts
+      const relatedPosts = await storage.getRelatedBlogPosts(post.category, post.id, 3);
+
+      res.json({
+        ...post,
+        relatedPosts: relatedPosts.map(p => ({
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          excerpt: p.excerpt,
+          featuredImageUrl: p.featuredImageUrl,
+          publishedDate: p.publishedDate,
+        })),
+      });
+    } catch (error: any) {
+      console.error('[BLOG] Error fetching post:', error);
+      res.status(500).json({ error: 'Failed to fetch blog post' });
+    }
+  });
+
+  // GET /api/blog/tags - Public: Get all tags with counts
+  app.get('/api/blog/tags', async (req, res) => {
+    try {
+      const tags = await storage.getBlogTags();
+      res.json(tags);
+    } catch (error: any) {
+      console.error('[BLOG] Error fetching tags:', error);
+      res.status(500).json({ error: 'Failed to fetch tags' });
+    }
+  });
+
+  // GET /api/blog/search - Public: Search posts
+  app.get('/api/blog/search', async (req, res) => {
+    try {
+      const query = req.query.q as string;
+
+      if (!query || query.trim().length < 2) {
+        return res.status(400).json({ error: 'Search query must be at least 2 characters' });
+      }
+
+      const posts = await storage.searchBlogPosts(query.trim());
+      
+      res.json(posts.map(post => ({
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        publishedDate: post.publishedDate,
+      })));
+    } catch (error: any) {
+      console.error('[BLOG] Error searching posts:', error);
+      res.status(500).json({ error: 'Failed to search posts' });
+    }
+  });
+
+  // ========== BLOG ADMIN ENDPOINTS (Require Authentication) ==========
+
+  // GET /api/admin/blog/posts - Admin: Get all posts (including drafts)
+  app.get('/api/admin/blog/posts', requireJWT, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const posts = await storage.getAllBlogPosts();
+      res.json(posts);
+    } catch (error: any) {
+      console.error('[BLOG ADMIN] Error fetching posts:', error);
+      res.status(500).json({ error: 'Failed to fetch blog posts' });
+    }
+  });
+
+  // GET /api/admin/blog/posts/:id - Admin: Get post by ID (for editing)
+  app.get('/api/admin/blog/posts/:id', requireJWT, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const { id } = req.params;
+      const post = await storage.getBlogPostById(id);
+
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      res.json(post);
+    } catch (error: any) {
+      console.error('[BLOG ADMIN] Error fetching post:', error);
+      res.status(500).json({ error: 'Failed to fetch blog post' });
+    }
+  });
+
+  // POST /api/admin/blog/posts - Admin: Create new post
+  app.post('/api/admin/blog/posts', requireJWT, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const { title, content, excerpt, author, tags, category, featuredImageUrl, metaDescription, status } = req.body;
+
+      if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
+      }
+
+      // Generate slug from title
+      let slug = generateSlug(title);
+      
+      // Check if slug already exists, append number if so
+      const existingPost = await storage.getBlogPostBySlug(slug);
+      if (existingPost) {
+        slug = `${slug}-${Date.now()}`;
+      }
+
+      const postData = {
+        title,
+        slug,
+        content,
+        excerpt: excerpt || content.substring(0, 200).replace(/[#*_`]/g, '').trim() + '...',
+        author: author || 'Artivio Team',
+        tags: tags || [],
+        category: category || 'Announcement',
+        featuredImageUrl: featuredImageUrl || null,
+        metaDescription: metaDescription || null,
+        status: status || 'draft',
+        publishedDate: status === 'published' ? new Date() : null,
+        updatedDate: null,
+      };
+
+      const post = await storage.createBlogPost(postData);
+      console.log('[BLOG ADMIN] Created post:', post.id, post.title);
+
+      res.status(201).json(post);
+    } catch (error: any) {
+      console.error('[BLOG ADMIN] Error creating post:', error);
+      res.status(500).json({ error: 'Failed to create blog post' });
+    }
+  });
+
+  // PATCH /api/admin/blog/posts/:id - Admin: Update post
+  app.patch('/api/admin/blog/posts/:id', requireJWT, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const { id } = req.params;
+      const existingPost = await storage.getBlogPostById(id);
+
+      if (!existingPost) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      const updates: any = { ...req.body };
+
+      // If title changed, regenerate slug
+      if (updates.title && updates.title !== existingPost.title) {
+        let newSlug = generateSlug(updates.title);
+        const slugCheck = await storage.getBlogPostBySlug(newSlug);
+        if (slugCheck && slugCheck.id !== id) {
+          newSlug = `${newSlug}-${Date.now()}`;
+        }
+        updates.slug = newSlug;
+      }
+
+      // If publishing for the first time, set published date
+      if (updates.status === 'published' && existingPost.status !== 'published') {
+        updates.publishedDate = new Date();
+      }
+
+      // Always set updated date
+      updates.updatedDate = new Date();
+
+      const post = await storage.updateBlogPost(id, updates);
+      console.log('[BLOG ADMIN] Updated post:', id);
+
+      res.json(post);
+    } catch (error: any) {
+      console.error('[BLOG ADMIN] Error updating post:', error);
+      res.status(500).json({ error: 'Failed to update blog post' });
+    }
+  });
+
+  // DELETE /api/admin/blog/posts/:id - Admin: Delete post
+  app.delete('/api/admin/blog/posts/:id', requireJWT, async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const { id } = req.params;
+      const deleted = await storage.deleteBlogPost(id);
+
+      if (!deleted) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      console.log('[BLOG ADMIN] Deleted post:', id);
+      res.json({ success: true, message: 'Post deleted successfully' });
+    } catch (error: any) {
+      console.error('[BLOG ADMIN] Error deleting post:', error);
+      res.status(500).json({ error: 'Failed to delete blog post' });
     }
   });
 

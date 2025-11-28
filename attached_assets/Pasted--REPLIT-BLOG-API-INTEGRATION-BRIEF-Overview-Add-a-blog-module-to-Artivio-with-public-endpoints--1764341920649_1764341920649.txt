@@ -1,0 +1,89 @@
+📋 REPLIT BLOG API INTEGRATION BRIEF
+Overview
+Add a blog module to Artivio with public endpoints, database integration, and SEO-friendly structure.
+
+DATABASE SCHEMA (Add to existing DB)
+posts table:
+- id (Primary Key, UUID)
+- title (String, required)
+- slug (String, unique, required) - URL-friendly version of title
+- content (Text/Rich Text, required)
+- excerpt (String, 200 chars max) - For preview/meta description
+- author (String, default: "Artivio Team")
+- tags (JSON Array or separate table)
+- category (String: "Tutorial", "Case Study", "Feature", "Announcement")
+- featured_image_url (String, optional)
+- meta_description (String, 160 chars max) - For SEO
+- published_date (DateTime, required)
+- updated_date (DateTime)
+- status (String: "draft", "published")
+- view_count (Integer, default: 0)
+- created_at (DateTime)
+- updated_at (DateTime)
+API ENDPOINTS TO BUILD
+1. GET /api/blog/posts
+Returns: Array of all published posts (paginated, 10 per page)
+Query params: ?page=1&category=Tutorial&sort=latest
+Response: [{ id, title, slug, excerpt, author, published_date, tags, featured_image_url, category }]
+No authentication required (public)
+2. GET /api/blog/posts/:slug
+Returns: Full post content
+Response: { id, title, slug, content, excerpt, author, published_date, tags, featured_image_url, category, meta_description, view_count }
+Increment view_count on retrieval
+No authentication required (public)
+3. POST /api/blog/posts (Admin/Authenticated)
+Create new blog post
+Required fields: title, content, author
+Auto-generate slug from title
+Set published_date to current date
+Requires: Admin authentication
+4. PATCH /api/blog/posts/:id (Admin/Authenticated)
+Update existing post
+Can update: title, content, excerpt, tags, category, featured_image_url, meta_description, status
+Auto-update updated_date
+Requires: Admin authentication
+5. GET /api/blog/tags
+Returns: Array of all unique tags with post count
+Response: [{ tag: "AI", count: 5 }, { tag: "Creator", count: 3 }]
+No authentication required
+6. GET /api/blog/search
+Query params: ?q=search+term
+Returns: Posts matching title, content, or tags
+Response: [{ id, title, slug, excerpt, published_date }]
+No authentication required
+FRONTEND PAGES TO CREATE
+1. GET /blog
+List view of all published posts
+Pagination (10 posts per page)
+Filter by category/tags
+Search bar
+Meta tags for SEO
+2. GET /blog/:slug
+Individual post page
+Markdown/HTML rendering of content
+Featured image if available
+Author & date info
+Meta tags (title, description, image for social sharing)
+Related posts (same category, 3 posts)
+"Back to blog" link
+3. GET /admin/blog (If dashboard exists)
+Admin dashboard for creating/editing posts
+Form with: title, content editor, excerpt, tags, category, featured_image_url, publish button
+List of all drafts & published posts
+Edit/Delete buttons
+Requires: Admin authentication
+SEO REQUIREMENTS
+Each post page: meta title, meta description, og:image, og:title, og:description
+Sitemap: /sitemap.xml includes /blog/* URLs
+Clean, descriptive slugs (lowercase, hyphens)
+PERFORMANCE
+Cache frequently accessed posts (Redis or simple in-memory cache)
+Paginate results (don't load all posts at once)
+IMPLEMENTATION TIMELINE
+MVP (list + single post + API): 4-6 hours
+With admin dashboard: 6-8 hours
+NOTES
+Use existing database connection
+Follow same authentication pattern as other admin endpoints
+All public endpoints should be cacheable
+Blog is secondary to core product → design for simplicity
