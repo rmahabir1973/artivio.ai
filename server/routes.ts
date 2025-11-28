@@ -6472,8 +6472,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { project, videoSettings } = req.body;
       
-      if (!project) {
-        return res.status(400).json({ message: "Project data is required" });
+      if (!project || !project.clips || !Array.isArray(project.clips) || project.clips.length < 1) {
+        return res.status(400).json({ message: "Project with at least one clip is required" });
       }
       
       const lambdaApiUrl = process.env.AWS_LAMBDA_API_URL;
@@ -6487,7 +6487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate unique job ID
       const jobId = `export-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      console.log(`[Video Editor] Starting export job ${jobId} for user ${userId}`);
+      console.log(`[Video Editor] Starting export job ${jobId} for user ${userId} with ${project.clips.length} clips`);
       
       // Store job in tracking map
       videoExportJobs.set(jobId, {
@@ -6495,9 +6495,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: new Date(),
       });
       
-      // Send to AWS Lambda (fire and forget, will poll for status)
-      // Ensure the Lambda URL ends with /prod/export
-      let lambdaEndpoint = lambdaApiUrl.replace(/\/+$/, ''); // Remove trailing slashes
+      // Build standardized Lambda payload
+      // Normalize clips to ensure they have sourceUrl (handle both url and sourceUrl from frontend)
+      const normalizedClips = project.clips.map((clip: any, index: number) => {
+        const sourceUrl = clip.sourceUrl || clip.url;
+        if (!sourceUrl) {
+          throw new Error(`Clip ${index + 1} is missing a video URL`);
+        }
+        return {
+          id: clip.id || `clip-${index}`,
+          sourceUrl,
+          order: clip.order ?? index,
+          startTime: clip.startTime,
+          endTime: clip.endTime,
+          transitionAfter: clip.transitionAfter,
+        };
+      });
+      
+      // Sort clips by order to ensure correct concatenation sequence
+      normalizedClips.sort((a: any, b: any) => a.order - b.order);
+      
+      const lambdaPayload = {
+        jobId,
+        userId,
+        outputBucket: s3Bucket,
+        videoSettings: {
+          format: videoSettings?.format || 'mp4',
+          quality: videoSettings?.quality || 'high',
+          frameRate: videoSettings?.frameRate,
+          resolution: videoSettings?.resolution,
+        },
+        project: {
+          clips: normalizedClips,
+          audioTracks: project.audioTracks,
+          watermark: project.watermark,
+        },
+        // Include callback URL for async completion notification
+        callbackUrl: `${getBaseUrl()}/api/video-editor/callback/${jobId}`,
+      };
+      
+      // Send to AWS Lambda
+      let lambdaEndpoint = lambdaApiUrl.replace(/\/+$/, '');
       
       // Build the correct endpoint URL
       let fullLambdaUrl: string;
@@ -6506,7 +6544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (lambdaEndpoint.endsWith('/prod')) {
         fullLambdaUrl = `${lambdaEndpoint}/export`;
       } else if (lambdaEndpoint.endsWith('/export')) {
-        fullLambdaUrl = lambdaEndpoint; // Already has export
+        fullLambdaUrl = lambdaEndpoint;
       } else {
         fullLambdaUrl = `${lambdaEndpoint}/prod/export`;
       }
@@ -6522,17 +6560,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`[Video Editor] Calling Lambda at: ${fullLambdaUrl}`);
+      console.log(`[Video Editor] Payload:`, JSON.stringify(lambdaPayload, null, 2));
       
       const lambdaResponse = await fetch(fullLambdaUrl, {
         method: 'POST',
         headers: lambdaHeaders,
-        body: JSON.stringify({
-          project,
-          videoSettings,
-          outputBucket: s3Bucket,
-          jobId,
-          userId,
-        }),
+        body: JSON.stringify(lambdaPayload),
       });
       
       if (!lambdaResponse.ok) {

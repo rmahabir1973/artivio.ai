@@ -355,10 +355,11 @@ export default function VideoEditor() {
     mutationFn: async (clips: VideoClip[]) => {
       setExportProgress(10);
 
+      // Build project payload with clip source URLs in order
       const project = {
         clips: clips.map((clip, index) => ({
           id: clip.id,
-          url: clip.url,
+          sourceUrl: clip.url,
           order: index,
         })),
       };
