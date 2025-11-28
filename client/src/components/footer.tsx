@@ -44,6 +44,7 @@ export function Footer() {
     {
       title: "Company",
       links: [
+        { label: "Blog", href: "/blog" },
         { label: "Pricing", href: "/pricing" },
         { label: "Affiliates", href: "/affiliates" },
         { label: "Support", href: "/support" },
