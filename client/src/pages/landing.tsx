@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Video, Image, Music, Zap, Shield, Sparkles, Loader2, ChevronRight, Play, Palette, Mic, Film,
   Award, DollarSign, Droplet, Monitor, Smartphone, Tablet, Check, Star, Laptop,
@@ -336,6 +337,7 @@ function PricingSection() {
 
 export default function Landing() {
   const [videoLoadFailed, setVideoLoadFailed] = useState(false);
+  const [demoVideoModalOpen, setDemoVideoModalOpen] = useState(false);
   
   const { data: content, isLoading } = useQuery<HomePageContent>({
     queryKey: ["/api/homepage"],
@@ -480,13 +482,11 @@ export default function Landing() {
                 size="lg" 
                 variant="outline" 
                 className="border-white/30 bg-black/30 backdrop-blur-sm hover:bg-white/10 text-lg px-8 h-14 shadow-2xl"
-                asChild
+                onClick={() => setDemoVideoModalOpen(true)}
                 data-testid="button-hero-see-action"
               >
-                <a href="#features">
-                  <Play className="mr-2 h-5 w-5" />
-                  Watch 2-min Demo
-                </a>
+                <Play className="mr-2 h-5 w-5" />
+                Watch 2-min Demo
               </Button>
             </div>
           </div>
@@ -1524,6 +1524,34 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Demo Video Modal */}
+      <Dialog open={demoVideoModalOpen} onOpenChange={setDemoVideoModalOpen}>
+        <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black border-white/10">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="text-white">Watch How Artivio Works</DialogTitle>
+          </DialogHeader>
+          <div className="aspect-video w-full">
+            {content?.demoVideoUrl ? (
+              <iframe
+                src={normalizeVimeoUrl(content.demoVideoUrl).url || content.demoVideoUrl}
+                className="w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title="Artivio Demo Video"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-blue-900/50">
+                <div className="text-center p-8">
+                  <Play className="h-16 w-16 text-white/50 mx-auto mb-4" />
+                  <p className="text-white/70 text-lg">Demo video coming soon!</p>
+                  <p className="text-white/50 text-sm mt-2">Check back later for our full product walkthrough.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -86,6 +86,7 @@ export default function Admin() {
     featureImageUrl: "",
     featureMusicUrl: "",
     pricingVideoUrl: "",
+    demoVideoUrl: "",
     creatorsTitle: "",
     creatorsDescription: "",
     creatorsImageUrl: "",
@@ -219,6 +220,7 @@ export default function Admin() {
         featureImageUrl: homePageContent.featureImageUrl || "",
         featureMusicUrl: homePageContent.featureMusicUrl || "",
         pricingVideoUrl: homePageContent.pricingVideoUrl || "",
+        demoVideoUrl: homePageContent.demoVideoUrl || "",
         creatorsTitle: homePageContent.creatorsTitle || "",
         creatorsDescription: homePageContent.creatorsDescription || "",
         creatorsImageUrl: homePageContent.creatorsImageUrl || "",
@@ -1604,6 +1606,17 @@ export default function Admin() {
                       />
                       <p className="text-xs text-muted-foreground mt-1">Video that plays in popup when users click "Watch Video" on pricing page</p>
                     </div>
+                    <div>
+                      <Label htmlFor="demoVideoUrl">Landing Page Demo Video URL (Vimeo)</Label>
+                      <Input
+                        id="demoVideoUrl"
+                        value={homePageFormData.demoVideoUrl}
+                        onChange={(e) => setHomePageFormData({ ...homePageFormData, demoVideoUrl: e.target.value })}
+                        placeholder="https://player.vimeo.com/video/..."
+                        data-testid="input-demo-video-url"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">2-minute demo video that plays in popup when users click "Watch Demo" on landing page</p>
+                    </div>
                     <Button
                       onClick={() => {
                         updateHomePageMutation.mutate({
@@ -1611,6 +1624,7 @@ export default function Admin() {
                           featureImageUrl: homePageFormData.featureImageUrl.trim() || undefined,
                           featureMusicUrl: homePageFormData.featureMusicUrl.trim() || undefined,
                           pricingVideoUrl: homePageFormData.pricingVideoUrl.trim() || undefined,
+                          demoVideoUrl: homePageFormData.demoVideoUrl.trim() || undefined,
                         });
                       }}
                       disabled={updateHomePageMutation.isPending}

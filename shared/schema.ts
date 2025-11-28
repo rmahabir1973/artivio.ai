@@ -1474,6 +1474,9 @@ export const homePageContent = pgTable("home_page_content", {
   // Pricing page video
   pricingVideoUrl: text("pricing_video_url"), // Pricing page popup video URL
   
+  // Demo video for landing page modal
+  demoVideoUrl: text("demo_video_url"), // 2-min demo video Vimeo embed URL
+  
   // Product sections
   creatorsTitle: text("creators_title").default('Creators'),
   creatorsDescription: text("creators_description"),
