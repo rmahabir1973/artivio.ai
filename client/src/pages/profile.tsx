@@ -42,7 +42,8 @@ export default function Profile() {
   // Create API key mutation
   const createApiKeyMutation = useMutation({
     mutationFn: async (name: string) => {
-      return await apiRequest("POST", "/api/user/api-keys", { name });
+      const response = await apiRequest("POST", "/api/user/api-keys", { name });
+      return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/api-keys"] });
