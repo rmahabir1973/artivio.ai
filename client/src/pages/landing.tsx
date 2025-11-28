@@ -356,6 +356,76 @@ export default function Landing() {
     return null;
   }, [content?.heroVideoUrl, videoLoadFailed]);
 
+  // Normalize feature video URLs (supports Vimeo & PeerTube)
+  const normalizedFeatureVideoUrl = useMemo(() => {
+    if (content?.featureVideoUrl && isValidVideoUrl(content.featureVideoUrl)) {
+      const result = normalizeVideoUrl(content.featureVideoUrl);
+      if (result.success && result.info?.embedUrl) {
+        // Use playback URL (not background autoplay)
+        const url = new URL(result.info.embedUrl);
+        url.searchParams.set('autoplay', '0');
+        url.searchParams.set('controls', '1');
+        url.searchParams.set('muted', '0');
+        if (result.info.provider === 'vimeo') {
+          url.searchParams.delete('background');
+        }
+        return url.toString();
+      }
+    }
+    return content?.featureVideoUrl || null;
+  }, [content?.featureVideoUrl]);
+
+  const normalizedFeatureImageUrl = useMemo(() => {
+    if (content?.featureImageUrl && isValidVideoUrl(content.featureImageUrl)) {
+      const result = normalizeVideoUrl(content.featureImageUrl);
+      if (result.success && result.info?.embedUrl) {
+        const url = new URL(result.info.embedUrl);
+        url.searchParams.set('autoplay', '0');
+        url.searchParams.set('controls', '1');
+        url.searchParams.set('muted', '0');
+        if (result.info.provider === 'vimeo') {
+          url.searchParams.delete('background');
+        }
+        return url.toString();
+      }
+    }
+    return content?.featureImageUrl || null;
+  }, [content?.featureImageUrl]);
+
+  const normalizedFeatureMusicUrl = useMemo(() => {
+    if (content?.featureMusicUrl && isValidVideoUrl(content.featureMusicUrl)) {
+      const result = normalizeVideoUrl(content.featureMusicUrl);
+      if (result.success && result.info?.embedUrl) {
+        const url = new URL(result.info.embedUrl);
+        url.searchParams.set('autoplay', '0');
+        url.searchParams.set('controls', '1');
+        url.searchParams.set('muted', '0');
+        if (result.info.provider === 'vimeo') {
+          url.searchParams.delete('background');
+        }
+        return url.toString();
+      }
+    }
+    return content?.featureMusicUrl || null;
+  }, [content?.featureMusicUrl]);
+
+  const normalizedDemoVideoUrl = useMemo(() => {
+    if (content?.demoVideoUrl && isValidVideoUrl(content.demoVideoUrl)) {
+      const result = normalizeVideoUrl(content.demoVideoUrl);
+      if (result.success && result.info?.embedUrl) {
+        const url = new URL(result.info.embedUrl);
+        url.searchParams.set('autoplay', '0');
+        url.searchParams.set('controls', '1');
+        url.searchParams.set('muted', '0');
+        if (result.info.provider === 'vimeo') {
+          url.searchParams.delete('background');
+        }
+        return url.toString();
+      }
+    }
+    return content?.demoVideoUrl || null;
+  }, [content?.demoVideoUrl]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#0F0F0F]">
@@ -773,9 +843,9 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl blur-2xl" />
               <div className="relative aspect-video bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
-                {content?.featureVideoUrl ? (
+                {normalizedFeatureVideoUrl ? (
                   <iframe
-                    src={content.featureVideoUrl}
+                    src={normalizedFeatureVideoUrl}
                     className="absolute inset-0 w-full h-full"
                     frameBorder="0"
                     allow="autoplay; fullscreen; picture-in-picture"
@@ -852,9 +922,9 @@ export default function Landing() {
             <div className="relative md:order-2">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-3xl blur-2xl" />
               <div className="relative aspect-video bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
-                {content?.featureImageUrl ? (
+                {normalizedFeatureImageUrl ? (
                   <iframe
-                    src={content.featureImageUrl}
+                    src={normalizedFeatureImageUrl}
                     className="absolute inset-0 w-full h-full"
                     frameBorder="0"
                     allow="autoplay; fullscreen; picture-in-picture"
@@ -875,9 +945,9 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl blur-2xl" />
               <div className="relative aspect-video bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden">
-                {content?.featureMusicUrl ? (
+                {normalizedFeatureMusicUrl ? (
                   <iframe
-                    src={content.featureMusicUrl}
+                    src={normalizedFeatureMusicUrl}
                     className="absolute inset-0 w-full h-full"
                     frameBorder="0"
                     allow="autoplay; fullscreen; picture-in-picture"
@@ -1535,9 +1605,9 @@ export default function Landing() {
             <DialogTitle className="text-white">Watch How Artivio Works</DialogTitle>
           </DialogHeader>
           <div className="aspect-video w-full">
-            {content?.demoVideoUrl && isValidVideoUrl(content.demoVideoUrl) ? (
+            {normalizedDemoVideoUrl ? (
               <iframe
-                src={normalizeVideoUrl(content.demoVideoUrl).info?.embedUrl?.replace('background=1', 'background=0').replace('autoplay=1', 'autoplay=0') || content.demoVideoUrl}
+                src={normalizedDemoVideoUrl}
                 className="w-full h-full"
                 allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
