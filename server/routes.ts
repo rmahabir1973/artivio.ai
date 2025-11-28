@@ -1070,6 +1070,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Newsletter signup (public endpoint) - Loops.so integration
+  app.post('/api/public/newsletter-signup', async (req, res) => {
+    try {
+      const { email, firstName } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+
+      console.log('[NEWSLETTER] Signup request received:', { email, firstName });
+
+      // Check if Loops API key is configured
+      if (!process.env.LOOPS_API_KEY) {
+        console.error('[NEWSLETTER] LOOPS_API_KEY not configured');
+        return res.status(500).json({ error: 'Newsletter service not configured' });
+      }
+
+      // Call Loops.so API to add contact to mailing list
+      const loopsResponse = await fetch('https://app.loops.so/api/v1/contacts/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.LOOPS_API_KEY}`
+        },
+        body: JSON.stringify({
+          email: email,
+          firstName: firstName || undefined,
+          mailingLists: {
+            'cmho6d4k70p4b0i23ae4q7z20': true // Free Trial / Newsletter list
+          },
+          subscribed: true,
+          source: 'website_newsletter'
+        })
+      });
+
+      const loopsData = await loopsResponse.json();
+      
+      console.log('[NEWSLETTER] Loops.so response:', {
+        status: loopsResponse.status,
+        data: loopsData
+      });
+
+      if (loopsResponse.ok) {
+        console.log('[NEWSLETTER] Successfully subscribed:', email);
+        res.status(200).json({ 
+          success: true, 
+          message: 'Successfully subscribed! Check your email for confirmation.' 
+        });
+      } else {
+        console.error('[NEWSLETTER] Loops.so error:', loopsData);
+        res.status(400).json({ 
+          error: loopsData.message || 'Failed to subscribe. Please try again.' 
+        });
+      }
+    } catch (error: any) {
+      console.error('[NEWSLETTER] Signup error:', error);
+      res.status(500).json({ error: 'Server error. Please try again later.' });
+    }
+  });
+
   // ========== AUTH ENDPOINTS ==========
   // Auth routes (register, login, Google OAuth, logout) are now in authRoutes.ts
   // GET /api/auth/user is handled in authRoutes.ts
