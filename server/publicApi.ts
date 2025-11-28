@@ -3,6 +3,14 @@ import crypto from 'crypto';
 import { storage } from './storage';
 import { requireJWT } from './jwtMiddleware';
 import type { PublicApiKey } from '@shared/schema';
+import { generateVideo, generateImage, generateMusic } from './kieai';
+import { getBaseUrl } from './urlUtils';
+
+// Helper to get callback URL for Kie.ai
+function getCallbackUrl(generationId: string): string {
+  const baseUrl = getBaseUrl();
+  return `${baseUrl}/api/callback/kie/${generationId}`;
+}
 
 // Rate limiting in-memory store (per API key)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -330,7 +338,6 @@ export function registerPublicApiRoutes(app: Express) {
       });
       
       // Return immediately with generation ID - actual processing happens async
-      // The callback system will update the generation status
       res.status(202).json({
         id: generation.id,
         status: 'pending',
@@ -340,9 +347,48 @@ export function registerPublicApiRoutes(app: Express) {
         webhook: webhook ? 'Webhook will be called on completion' : undefined,
       });
       
-      // TODO: Trigger actual Kie.ai generation here
-      // For now, we rely on the existing callback system
+      // Trigger actual Kie.ai generation in background (fire and forget)
       console.log(`[PUBLIC API] Video generation started: ${generation.id} by user ${userId}`);
+      
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+          
+          const callbackUrl = getCallbackUrl(generation.id);
+          console.log(`[PUBLIC API] Calling Kie.ai for video ${generation.id} with callback: ${callbackUrl}`);
+          
+          const { result, keyName } = await generateVideo({
+            model: pricingModel,
+            prompt,
+            generationType: imageUrl ? 'image-to-video' : 'text-to-video',
+            referenceImages: imageUrl ? [imageUrl] : undefined,
+            parameters: {
+              aspectRatio: aspectRatio || '16:9',
+              duration: duration || 5,
+              negativePrompt: negativePrompt || null,
+              callBackUrl: callbackUrl,
+            },
+          });
+          
+          // Store task ID for tracking
+          const taskId = result?.data?.taskId || result?.taskId;
+          if (taskId) {
+            await storage.updateGeneration(generation.id, { 
+              externalTaskId: taskId,
+              apiKeyUsed: keyName,
+            });
+            console.log(`[PUBLIC API] ✓ Kie.ai video task created: ${taskId}`);
+          }
+        } catch (error: any) {
+          console.error(`[PUBLIC API] Video generation failed for ${generation.id}:`, error.message);
+          await storage.finalizeGeneration(generation.id, 'failure', {
+            errorMessage: error.message || 'Video generation failed',
+          });
+          // Refund credits on failure
+          await storage.addCreditsAtomic(userId, creditCost);
+          console.log(`[PUBLIC API] Credits refunded for failed video: ${creditCost}`);
+        }
+      })();
       
     } catch (error: any) {
       console.error('[PUBLIC API] Video generation error:', error);
@@ -410,7 +456,57 @@ export function registerPublicApiRoutes(app: Express) {
         message: 'Image generation started. Use GET /api/v1/generations/:id to check status.',
       });
       
+      // Trigger actual Kie.ai generation in background (fire and forget)
       console.log(`[PUBLIC API] Image generation started: ${generation.id} by user ${userId}`);
+      
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+          
+          const callbackUrl = getCallbackUrl(generation.id);
+          console.log(`[PUBLIC API] Calling Kie.ai for image ${generation.id} with callback: ${callbackUrl}`);
+          
+          const { result, keyName } = await generateImage({
+            model: pricingModel,
+            prompt,
+            mode: imageUrl ? 'image-editing' : 'text-to-image',
+            referenceImages: imageUrl ? [imageUrl] : undefined,
+            parameters: {
+              aspectRatio: aspectRatio || '1:1',
+              negativePrompt: negativePrompt || null,
+              callBackUrl: callbackUrl,
+            },
+          });
+          
+          // Store task ID for tracking
+          const taskId = result?.data?.taskId || result?.taskId;
+          if (taskId) {
+            await storage.updateGeneration(generation.id, { 
+              externalTaskId: taskId,
+              apiKeyUsed: keyName,
+            });
+            console.log(`[PUBLIC API] ✓ Kie.ai image task created: ${taskId}`);
+          }
+          
+          // Some models return URL directly
+          const resultUrl = result?.imageUrl || result?.data?.imageUrl || result?.url;
+          if (resultUrl) {
+            await storage.finalizeGeneration(generation.id, 'success', {
+              resultUrl,
+              apiKeyUsed: keyName,
+            });
+            console.log(`[PUBLIC API] ✓ Image completed immediately: ${generation.id}`);
+          }
+        } catch (error: any) {
+          console.error(`[PUBLIC API] Image generation failed for ${generation.id}:`, error.message);
+          await storage.finalizeGeneration(generation.id, 'failure', {
+            errorMessage: error.message || 'Image generation failed',
+          });
+          // Refund credits on failure
+          await storage.addCreditsAtomic(userId, creditCost);
+          console.log(`[PUBLIC API] Credits refunded for failed image: ${creditCost}`);
+        }
+      })();
       
     } catch (error: any) {
       console.error('[PUBLIC API] Image generation error:', error);
@@ -476,7 +572,46 @@ export function registerPublicApiRoutes(app: Express) {
         message: 'Audio generation started. Use GET /api/v1/generations/:id to check status.',
       });
       
+      // Trigger actual Kie.ai generation in background (fire and forget)
       console.log(`[PUBLIC API] Audio generation started: ${generation.id} by user ${userId}`);
+      
+      (async () => {
+        try {
+          await storage.updateGeneration(generation.id, { status: 'processing' });
+          
+          const callbackUrl = getCallbackUrl(generation.id);
+          console.log(`[PUBLIC API] Calling Kie.ai for audio ${generation.id} with callback: ${callbackUrl}`);
+          
+          const { result, keyName } = await generateMusic({
+            model: pricingModel,
+            prompt: lyrics || prompt,
+            parameters: {
+              duration: duration || 30,
+              genre: genre || null,
+              customMode: !!lyrics,
+              callBackUrl: callbackUrl,
+            },
+          });
+          
+          // Store task ID for tracking
+          const taskId = result?.data?.taskId || result?.taskId;
+          if (taskId) {
+            await storage.updateGeneration(generation.id, { 
+              externalTaskId: taskId,
+              apiKeyUsed: keyName,
+            });
+            console.log(`[PUBLIC API] ✓ Kie.ai audio task created: ${taskId}`);
+          }
+        } catch (error: any) {
+          console.error(`[PUBLIC API] Audio generation failed for ${generation.id}:`, error.message);
+          await storage.finalizeGeneration(generation.id, 'failure', {
+            errorMessage: error.message || 'Audio generation failed',
+          });
+          // Refund credits on failure
+          await storage.addCreditsAtomic(userId, creditCost);
+          console.log(`[PUBLIC API] Credits refunded for failed audio: ${creditCost}`);
+        }
+      })();
       
     } catch (error: any) {
       console.error('[PUBLIC API] Audio generation error:', error);
