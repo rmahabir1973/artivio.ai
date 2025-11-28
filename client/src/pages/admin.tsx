@@ -1499,15 +1499,15 @@ export default function Admin() {
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
-                        <Label htmlFor="heroVideoUrl">Hero Video URL (Vimeo)</Label>
+                        <Label htmlFor="heroVideoUrl">Hero Video URL</Label>
                         <Input
                           id="heroVideoUrl"
                           value={homePageFormData.heroVideoUrl}
                           onChange={(e) => setHomePageFormData({ ...homePageFormData, heroVideoUrl: e.target.value })}
-                          placeholder="https://player.vimeo.com/video/..."
+                          placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
                           data-testid="input-hero-video-url"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Vimeo player URL</p>
+                        <p className="text-xs text-muted-foreground mt-1">Supports Vimeo and PeerTube URLs</p>
                       </div>
                       <div>
                         <Label htmlFor="heroImageUrl">Hero Image URL (fallback)</Label>
@@ -1553,7 +1553,7 @@ export default function Admin() {
             <Card>
               <CardHeader>
                 <CardTitle>Feature Section Videos</CardTitle>
-                <CardDescription>Vimeo video URLs for the three feature sections on the landing page</CardDescription>
+                <CardDescription>Video URLs for the landing page feature sections (supports Vimeo and PeerTube)</CardDescription>
               </CardHeader>
               <CardContent>
                 {homePageLoading ? (
@@ -1563,59 +1563,59 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="featureVideoUrl">"Create videos that captivate" Section Video URL (Vimeo)</Label>
+                      <Label htmlFor="featureVideoUrl">"Create videos that captivate" Section Video URL</Label>
                       <Input
                         id="featureVideoUrl"
                         value={homePageFormData.featureVideoUrl}
                         onChange={(e) => setHomePageFormData({ ...homePageFormData, featureVideoUrl: e.target.value })}
-                        placeholder="https://player.vimeo.com/video/..."
+                        placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
                         data-testid="input-feature-video-url"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Video placeholder for "Create videos that captivate" section</p>
+                      <p className="text-xs text-muted-foreground mt-1">Supports Vimeo and PeerTube URLs</p>
                     </div>
                     <div>
-                      <Label htmlFor="featureImageUrl">"Images that inspire" Section Video URL (Vimeo)</Label>
+                      <Label htmlFor="featureImageUrl">"Images that inspire" Section Video URL</Label>
                       <Input
                         id="featureImageUrl"
                         value={homePageFormData.featureImageUrl}
                         onChange={(e) => setHomePageFormData({ ...homePageFormData, featureImageUrl: e.target.value })}
-                        placeholder="https://player.vimeo.com/video/..."
+                        placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
                         data-testid="input-feature-image-url"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Video placeholder for "Images that inspire" section</p>
+                      <p className="text-xs text-muted-foreground mt-1">Supports Vimeo and PeerTube URLs</p>
                     </div>
                     <div>
-                      <Label htmlFor="featureMusicUrl">"Music that moves" Section Video URL (Vimeo)</Label>
+                      <Label htmlFor="featureMusicUrl">"Music that moves" Section Video URL</Label>
                       <Input
                         id="featureMusicUrl"
                         value={homePageFormData.featureMusicUrl}
                         onChange={(e) => setHomePageFormData({ ...homePageFormData, featureMusicUrl: e.target.value })}
-                        placeholder="https://player.vimeo.com/video/..."
+                        placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
                         data-testid="input-feature-music-url"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Video placeholder for "Music that moves" section</p>
+                      <p className="text-xs text-muted-foreground mt-1">Supports Vimeo and PeerTube URLs</p>
                     </div>
                     <div>
-                      <Label htmlFor="pricingVideoUrl">Pricing Page Popup Video URL (Vimeo)</Label>
+                      <Label htmlFor="pricingVideoUrl">Pricing Page Popup Video URL</Label>
                       <Input
                         id="pricingVideoUrl"
                         value={homePageFormData.pricingVideoUrl}
                         onChange={(e) => setHomePageFormData({ ...homePageFormData, pricingVideoUrl: e.target.value })}
-                        placeholder="https://player.vimeo.com/video/..."
+                        placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
                         data-testid="input-pricing-video-url"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Video that plays in popup when users click "Watch Video" on pricing page</p>
+                      <p className="text-xs text-muted-foreground mt-1">Video that plays in popup when users click "Watch Video" on pricing page (supports Vimeo/PeerTube)</p>
                     </div>
                     <div>
-                      <Label htmlFor="demoVideoUrl">Landing Page Demo Video URL (Vimeo)</Label>
+                      <Label htmlFor="demoVideoUrl">Landing Page Demo Video URL</Label>
                       <Input
                         id="demoVideoUrl"
                         value={homePageFormData.demoVideoUrl}
                         onChange={(e) => setHomePageFormData({ ...homePageFormData, demoVideoUrl: e.target.value })}
-                        placeholder="https://player.vimeo.com/video/..."
+                        placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
                         data-testid="input-demo-video-url"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">2-minute demo video that plays in popup when users click "Watch Demo" on landing page</p>
+                      <p className="text-xs text-muted-foreground mt-1">2-minute demo video that plays in popup when users click "Watch Demo" (supports Vimeo/PeerTube)</p>
                     </div>
                     <Button
                       onClick={() => {
@@ -2309,11 +2309,11 @@ export default function Admin() {
                 id="showcaseVideoUrl"
                 value={showcaseVideo.url}
                 onChange={(e) => setShowcaseVideo({ ...showcaseVideo, url: e.target.value })}
-                placeholder="https://player.vimeo.com/video/..."
+                placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
                 data-testid="input-showcase-video-url"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Must be a vimeo.com URL (e.g., https://player.vimeo.com/video/123456789)
+                Supports Vimeo URLs (e.g., https://vimeo.com/123456789) and PeerTube URLs
               </p>
             </div>
             <div>
@@ -2352,8 +2352,10 @@ export default function Admin() {
                   toast({ title: "Error", description: "Video URL is required", variant: "destructive" });
                   return;
                 }
-                if (!trimmedUrl.includes('vimeo.com')) {
-                  toast({ title: "Error", description: "Must be a Vimeo URL", variant: "destructive" });
+                const isVimeo = trimmedUrl.includes('vimeo.com');
+                const isPeerTube = trimmedUrl.includes('/videos/watch/') || trimmedUrl.includes('/w/') || trimmedUrl.includes('/videos/embed/');
+                if (!isVimeo && !isPeerTube) {
+                  toast({ title: "Error", description: "Must be a Vimeo or PeerTube URL", variant: "destructive" });
                   return;
                 }
                 

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { SiApple, SiAndroid, SiIos } from "react-icons/si";
 import type { HomePageContent, SubscriptionPlan } from "@shared/schema";
-import { normalizeVimeoUrl } from "@/lib/vimeo";
+import { normalizeVideoUrl, detectProvider, isValidVideoUrl } from "@/lib/videoProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { fetchWithAuth } from "@/lib/authBridge";
@@ -343,14 +343,14 @@ export default function Landing() {
     queryKey: ["/api/homepage"],
   });
 
-  // Normalize Vimeo URL outside of render to avoid hook violations
+  // Normalize video URL outside of render to avoid hook violations (supports Vimeo & PeerTube)
   const normalizedVideoUrl = useMemo(() => {
-    if (content?.heroVideoUrl && content.heroVideoUrl.includes('vimeo.com') && !videoLoadFailed) {
-      const result = normalizeVimeoUrl(content.heroVideoUrl);
-      if (result.success && result.url) {
-        return result.url;
+    if (content?.heroVideoUrl && isValidVideoUrl(content.heroVideoUrl) && !videoLoadFailed) {
+      const result = normalizeVideoUrl(content.heroVideoUrl);
+      if (result.success && result.info?.embedUrl) {
+        return result.info.embedUrl;
       } else {
-        console.error('Vimeo URL normalization failed:', result.error);
+        console.error('Video URL normalization failed:', result.error);
       }
     }
     return null;
@@ -1048,9 +1048,12 @@ export default function Landing() {
 
             <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {content.showcaseVideos.map((video, index) => {
-                const normalizedUrl = video.url.includes('vimeo.com') 
-                  ? normalizeVimeoUrl(video.url)
-                  : { success: false, url: '', error: 'Not a Vimeo URL' };
+                const result = isValidVideoUrl(video.url) 
+                  ? normalizeVideoUrl(video.url)
+                  : { success: false, error: 'Invalid video URL' };
+                const embedUrl = result.success && result.info?.embedUrl 
+                  ? result.info.embedUrl.replace('background=1', 'background=0').replace('autoplay=1', 'autoplay=0')
+                  : null;
 
                 return (
                   <div 
@@ -1059,9 +1062,9 @@ export default function Landing() {
                     data-testid={`showcase-video-${index}`}
                   >
                     <div className="relative aspect-video bg-black">
-                      {normalizedUrl.success ? (
+                      {embedUrl ? (
                         <iframe
-                          src={normalizedUrl.url?.replace('background=1', 'background=0')}
+                          src={embedUrl}
                           className="absolute inset-0 w-full h-full"
                           frameBorder="0"
                           allow="autoplay; fullscreen; picture-in-picture"
@@ -1532,9 +1535,9 @@ export default function Landing() {
             <DialogTitle className="text-white">Watch How Artivio Works</DialogTitle>
           </DialogHeader>
           <div className="aspect-video w-full">
-            {content?.demoVideoUrl ? (
+            {content?.demoVideoUrl && isValidVideoUrl(content.demoVideoUrl) ? (
               <iframe
-                src={normalizeVimeoUrl(content.demoVideoUrl).url || content.demoVideoUrl}
+                src={normalizeVideoUrl(content.demoVideoUrl).info?.embedUrl?.replace('background=1', 'background=0').replace('autoplay=1', 'autoplay=0') || content.demoVideoUrl}
                 className="w-full h-full"
                 allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
