@@ -585,15 +585,12 @@ export default function Landing() {
                 From concept to completion in minutes.
               </p>
               {/* Pricing Banner */}
-              <div className="bg-gradient-to-r from-amber-600 to-yellow-500 rounded-lg p-3 mb-4" data-testid="video-pricing-banner">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded">NEW</span>
-                  <span className="text-black font-bold text-sm">The Unbeatable Lowest Price</span>
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                  <span className="text-black/90"><strong>Veo3:</strong> $0.86/video</span>
-                  <span className="text-black/90"><strong>Veo3.1:</strong> $1.03/video</span>
-                  <span className="text-black/90"><strong>Runway:</strong> $0.50/video</span>
+              <div className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-lg px-3 py-2 mb-4" data-testid="video-pricing-banner">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-purple-300 font-semibold">Lowest Rates:</span>
+                  <span className="text-gray-300">Veo 3.1 <strong className="text-white">$0.93</strong></span>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-300">Runway <strong className="text-white">$0.37</strong></span>
                 </div>
               </div>
               <a href="/generate/video" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-video">
