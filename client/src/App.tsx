@@ -37,6 +37,13 @@ import {
   Settings,
   CreditCard,
   BookOpen,
+  MessageSquare,
+  Scissors,
+  ScanSearch,
+  ZoomIn,
+  Eraser,
+  QrCode,
+  Workflow,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 
@@ -323,22 +330,40 @@ function AppContent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-56">
                       <DropdownMenuItem asChild>
-                        <Link href="/chat" className="cursor-pointer">AI Chat</Link>
+                        <Link href="/chat" className="cursor-pointer">
+                          <MessageSquare className="h-4 w-4 mr-2 text-emerald-400" />
+                          AI Chat
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/video-editor" className="cursor-pointer">Video Editor</Link>
+                        <Link href="/video-editor" className="cursor-pointer">
+                          <Scissors className="h-4 w-4 mr-2 text-blue-400" />
+                          Video Editor
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/analyze-image" className="cursor-pointer">Image Analysis</Link>
+                        <Link href="/analyze-image" className="cursor-pointer">
+                          <ScanSearch className="h-4 w-4 mr-2 text-amber-400" />
+                          Image Analysis
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/topaz-upscaler" className="cursor-pointer">Image Upscaler</Link>
+                        <Link href="/topaz-upscaler" className="cursor-pointer">
+                          <ZoomIn className="h-4 w-4 mr-2 text-cyan-400" />
+                          Image Upscaler
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/background-remover" className="cursor-pointer">Background Remover</Link>
+                        <Link href="/background-remover" className="cursor-pointer">
+                          <Eraser className="h-4 w-4 mr-2 text-pink-400" />
+                          Background Remover
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/qr-generator" className="cursor-pointer">QR Generator</Link>
+                        <Link href="/qr-generator" className="cursor-pointer">
+                          <QrCode className="h-4 w-4 mr-2 text-violet-400" />
+                          QR Generator
+                        </Link>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -354,11 +379,14 @@ function AppContent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-48">
                       <DropdownMenuItem asChild>
-                        <Link href="/workflows" className="cursor-pointer">Workflows</Link>
+                        <Link href="/workflows" className="cursor-pointer">
+                          <Workflow className="h-4 w-4 mr-2 text-orange-400" />
+                          Workflows
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/blog" className="cursor-pointer">
-                          <BookOpen className="h-4 w-4 mr-2" />
+                          <BookOpen className="h-4 w-4 mr-2 text-teal-400" />
                           Blog
                         </Link>
                       </DropdownMenuItem>
