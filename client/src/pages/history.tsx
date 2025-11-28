@@ -173,6 +173,17 @@ function GenerationListItem({
     }
   };
 
+  const handleShare = async () => {
+    if (!generation.resultUrl) return;
+    
+    try {
+      await navigator.clipboard.writeText(generation.resultUrl);
+      toast({ title: "Link copied!", description: "The URL has been copied to your clipboard" });
+    } catch (error) {
+      toast({ title: "Failed to copy", description: "Could not copy the link", variant: "destructive" });
+    }
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async () => apiRequest("DELETE", `/api/generations/${generation.id}`),
     onSuccess: () => {
@@ -281,14 +292,26 @@ function GenerationListItem({
       {!isSelectionMode && (
         <div className="flex items-center gap-1 shrink-0">
           {generation.status === 'completed' && generation.resultUrl && (
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-              data-testid={`button-download-${generation.id}`}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            <>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => { e.stopPropagation(); handleShare(); }}
+                data-testid={`button-share-${generation.id}`}
+                title="Copy link"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                data-testid={`button-download-${generation.id}`}
+                title="Download"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -799,6 +822,17 @@ export default function History() {
       toast({ title: "Download started", description: "Your file is being downloaded" });
     } catch (error) {
       toast({ title: "Download failed", description: "Could not download the file", variant: "destructive" });
+    }
+  };
+
+  const handleDetailShare = async () => {
+    if (!selectedGeneration?.resultUrl) return;
+    
+    try {
+      await navigator.clipboard.writeText(selectedGeneration.resultUrl);
+      toast({ title: "Link copied!", description: "The URL has been copied to your clipboard" });
+    } catch (error) {
+      toast({ title: "Failed to copy", description: "Could not copy the link", variant: "destructive" });
     }
   };
 
@@ -1833,14 +1867,24 @@ export default function History() {
                       <Label className="text-xs text-muted-foreground uppercase tracking-wider">Actions</Label>
                       <div className="grid grid-cols-2 gap-2">
                         {selectedGeneration.status === 'completed' && selectedGeneration.resultUrl && (
-                          <Button
-                            variant="outline"
-                            onClick={handleDetailDownload}
-                            data-testid="button-detail-download"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </Button>
+                          <>
+                            <Button
+                              variant="outline"
+                              onClick={handleDetailShare}
+                              data-testid="button-detail-share"
+                            >
+                              <Share2 className="h-4 w-4 mr-2" />
+                              Copy Link
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={handleDetailDownload}
+                              data-testid="button-detail-download"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </Button>
+                          </>
                         )}
 
                         {selectedGeneration.status === 'completed' && (
