@@ -125,7 +125,7 @@ function PricingSection() {
             body: JSON.stringify({ planName: plan.name }),
           });
           if (response.ok) {
-            window.location.href = '/register';
+            window.location.href = '/dashboard';
           }
         } else {
           window.location.href = '/login';
@@ -374,7 +374,7 @@ export default function Landing() {
             Free tier now available: Daily video generations (No card required)
           </p>
           <a 
-            href="/register" 
+            href="/dashboard" 
             className="bg-white text-purple-600 px-4 py-1.5 rounded-md text-xs font-bold hover:scale-105 transition-transform whitespace-nowrap"
             data-testid="banner-cta"
           >
@@ -473,7 +473,7 @@ export default function Landing() {
                 asChild
                 data-testid="button-hero-get-started"
               >
-                <a href="/register">
+                <a href="/dashboard">
                   Start Creating Free - No Card Required
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </a>
@@ -756,7 +756,7 @@ export default function Landing() {
               asChild
               data-testid="button-comparison-cta"
             >
-              <a href="/register">
+              <a href="/dashboard">
                 Start Creating Free
                 <ChevronRight className="ml-2 h-5 w-5" />
               </a>
