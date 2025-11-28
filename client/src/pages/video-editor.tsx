@@ -60,6 +60,12 @@ interface VideoCombination {
   errorMessage?: string;
 }
 
+interface ExportJobStatus {
+  status: 'processing' | 'completed' | 'failed';
+  downloadUrl?: string;
+  error?: string;
+}
+
 interface VideoClip {
   id: string;
   url: string;
@@ -234,7 +240,7 @@ export default function VideoEditor() {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
-  const [activeCombinationId, setActiveCombinationId] = useState<string | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const ITEMS_PER_PAGE = 12;
@@ -308,71 +314,96 @@ export default function VideoEditor() {
     return () => stopPolling();
   }, []);
 
-  const pollCombinationStatus = async (combinationId: string) => {
+  const pollExportStatus = async (jobId: string) => {
     try {
-      const response = await fetchWithAuth('/api/video-combinations');
+      const response = await fetchWithAuth(`/api/video-editor/export/${jobId}`);
       if (!response.ok) return;
 
-      const combinations: VideoCombination[] = await response.json();
-      const combination = combinations.find(c => c.id === combinationId);
+      const status: ExportJobStatus = await response.json();
 
-      if (!combination) return;
-
-      if (combination.status === 'processing') {
-        setExportProgress(prev => Math.min(prev + 10, 90));
-      } else if (combination.status === 'completed' && combination.outputPath) {
+      if (status.status === 'processing') {
+        setExportProgress(prev => Math.min(prev + 5, 90));
+      } else if (status.status === 'completed' && status.downloadUrl) {
         stopPolling();
         setExportProgress(100);
-        setExportedUrl(combination.outputPath);
-        setActiveCombinationId(null);
+        setExportedUrl(status.downloadUrl);
+        setActiveJobId(null);
         
         queryClient.invalidateQueries({ queryKey: ['/api/generations'] });
         
         toast({
           title: "Export Complete",
-          description: "Your video has been successfully combined!",
+          description: "Your video has been successfully exported to cloud storage!",
         });
-      } else if (combination.status === 'failed') {
+      } else if (status.status === 'failed') {
         stopPolling();
         setExportProgress(0);
-        setActiveCombinationId(null);
+        setActiveJobId(null);
         
         toast({
           title: "Export Failed",
-          description: combination.errorMessage || "Failed to combine videos",
+          description: status.error || "Failed to export video",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Error polling combination status:', error);
+      console.error('Error polling export status:', error);
     }
   };
 
   const exportMutation = useMutation({
-    mutationFn: async (videoIds: string[]) => {
+    mutationFn: async (clips: VideoClip[]) => {
       setExportProgress(10);
 
-      const response = await apiRequest("POST", "/api/combine-videos", { videoIds });
+      const project = {
+        clips: clips.map((clip, index) => ({
+          id: clip.id,
+          url: clip.url,
+          order: index,
+        })),
+      };
+
+      const response = await apiRequest("POST", "/api/video-editor/export", { 
+        project,
+        videoSettings: {
+          format: 'mp4',
+          quality: 'high',
+        }
+      });
       const result = await response.json();
+
+      if (result.status === 'completed' && result.downloadUrl) {
+        return { ...result, immediate: true };
+      }
 
       setExportProgress(20);
       return result;
     },
-    onSuccess: (data: { combinationId: string; message: string }) => {
-      setActiveCombinationId(data.combinationId);
+    onSuccess: (data: { status: string; jobId: string; downloadUrl?: string; immediate?: boolean }) => {
+      if (data.immediate && data.downloadUrl) {
+        setExportProgress(100);
+        setExportedUrl(data.downloadUrl);
+        queryClient.invalidateQueries({ queryKey: ['/api/generations'] });
+        toast({
+          title: "Export Complete",
+          description: "Your video has been successfully exported!",
+        });
+        return;
+      }
 
-      // Clear any existing polling interval before starting a new one
+      setActiveJobId(data.jobId);
+
       stopPolling();
       
       pollingIntervalRef.current = setInterval(() => {
-        pollCombinationStatus(data.combinationId);
-      }, 2000);
+        pollExportStatus(data.jobId);
+      }, 3000);
     },
     onError: (error: Error) => {
       setExportProgress(0);
       toast({
         title: "Export Failed",
-        description: error.message || "Failed to start video combination",
+        description: error.message || "Failed to start video export",
         variant: "destructive",
       });
     },
@@ -455,8 +486,7 @@ export default function VideoEditor() {
       return;
     }
 
-    const videoIds = orderedClips.map((clip) => clip.id);
-    exportMutation.mutate(videoIds);
+    exportMutation.mutate(orderedClips);
   };
 
   const goBack = () => {
@@ -467,7 +497,7 @@ export default function VideoEditor() {
       setStep(2);
       setExportProgress(0);
       setExportedUrl(null);
-      setActiveCombinationId(null);
+      setActiveJobId(null);
     }
   };
 
@@ -478,7 +508,7 @@ export default function VideoEditor() {
     setOrderedClips([]);
     setExportProgress(0);
     setExportedUrl(null);
-    setActiveCombinationId(null);
+    setActiveJobId(null);
   };
 
   const stepTitles: Record<WizardStep, string> = {
