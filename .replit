@@ -32,6 +32,10 @@ localPort = 43719
 externalPort = 3002
 
 [[ports]]
+localPort = 44931
+externalPort = 5173
+
+[[ports]]
 localPort = 45857
 externalPort = 3001
 
@@ -70,5 +74,5 @@ integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.
 
 [userenv.shared]
 AWS_S3_BUCKET = "artivio-video-exports"
-AWS_LAMBDA_API_URL = "https://0okz1km51i.execute-api.us-east-1.amazonaws.com"
+AWS_LAMBDA_API_URL = "https://4yauflrwnoeli3mcimb3mod62a0pzxhb.lambda-url.us-east-1.on.aws"
 AWS_REGION = "us-east-1"

@@ -6535,19 +6535,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Send to AWS Lambda
-      let lambdaEndpoint = lambdaApiUrl.replace(/\/+$/, '');
-      
-      // Build the correct endpoint URL
-      let fullLambdaUrl: string;
-      if (lambdaEndpoint.endsWith('/prod/export')) {
-        fullLambdaUrl = lambdaEndpoint;
-      } else if (lambdaEndpoint.endsWith('/prod')) {
-        fullLambdaUrl = `${lambdaEndpoint}/export`;
-      } else if (lambdaEndpoint.endsWith('/export')) {
-        fullLambdaUrl = lambdaEndpoint;
-      } else {
-        fullLambdaUrl = `${lambdaEndpoint}/prod/export`;
-      }
+      // Lambda Function URLs don't need path suffixes - just call the root URL directly
+      const fullLambdaUrl = lambdaApiUrl.replace(/\/+$/, '');
       
       const lambdaHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
