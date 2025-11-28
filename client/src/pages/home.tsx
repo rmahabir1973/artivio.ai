@@ -392,19 +392,16 @@ export default function Home() {
         <div className="absolute inset-0 bg-grid-white/5 bg-[size:20px_20px]" style={{ maskImage: 'linear-gradient(to bottom, transparent, black, transparent)' }} />
         <div className="relative max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center space-y-4 sm:space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Welcome back, {userFirstName}</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight break-words px-2">
-              <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                Create Anything
+            <p className="text-base sm:text-lg text-muted-foreground mb-2">
+              Welcome back, {userFirstName}
+            </p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight break-words px-2 leading-tight">
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-violet-500 bg-clip-text text-transparent">
+                What would you like to create today?
               </span>
-              <br />
-              <span className="text-foreground">with AI Power</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
-              12+ powerful AI tools at your fingertips. Generate videos, images, music, voices, and more.
+            <p className="text-lg sm:text-xl md:text-2xl font-semibold text-muted-foreground max-w-2xl mx-auto px-2">
+              Choose from 12+ AI tools. Generate anything in seconds.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
               {isGuestMode ? (

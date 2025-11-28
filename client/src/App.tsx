@@ -21,7 +21,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AuthProvider, useAuth } from "@/contexts/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Loader2, User, LogOut, Home as HomeIcon, DollarSign } from "lucide-react";
+import { 
+  Loader2, 
+  User, 
+  LogOut, 
+  Home as HomeIcon, 
+  DollarSign,
+  Video,
+  Image as ImageIcon,
+  Music,
+  Sparkles,
+  Wrench,
+  Users,
+  ChevronDown,
+  Settings,
+  CreditCard,
+  BookOpen,
+} from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 
 // Pages
@@ -234,36 +250,142 @@ function AppContent() {
         <div className="flex h-screen w-full overflow-x-hidden">
           <AppSidebar />
           <div className="flex flex-col flex-1 min-w-0">
-            <header className="flex items-center justify-between p-3 border-b h-14 flex-shrink-0 gap-2">
-              <div className="flex items-center gap-2">
+            <header className="flex items-center justify-between px-4 border-b border-sidebar-border h-14 flex-shrink-0 gap-3 bg-sidebar/50 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
+                
+                {/* Top Navigation with Dropdowns - visible on larger screens */}
+                <nav className="hidden lg:flex items-center gap-1">
+                  <Link href="/dashboard">
+                    <Button 
+                      variant={location === "/" || location === "/dashboard" ? "secondary" : "ghost"} 
+                      size="sm" 
+                      className="text-sm font-medium"
+                      data-testid="nav-home"
+                    >
+                      <HomeIcon className="h-4 w-4 mr-1.5" />
+                      Home
+                    </Button>
+                  </Link>
+                  
+                  {/* Create Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-sm font-medium gap-1" data-testid="nav-create">
+                        <Sparkles className="h-4 w-4" />
+                        Create
+                        <ChevronDown className="h-3 w-3 opacity-70" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Video</DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
+                        <Link href="/generate/video" className="cursor-pointer">
+                          <Video className="h-4 w-4 mr-2 text-blue-400" />
+                          Video Generation
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/generate/sora" className="cursor-pointer">
+                          <Sparkles className="h-4 w-4 mr-2 text-purple-400" />
+                          Sora 2 Pro
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Image</DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
+                        <Link href="/generate/image" className="cursor-pointer">
+                          <ImageIcon className="h-4 w-4 mr-2 text-pink-400" />
+                          Image Generation
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Audio</DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
+                        <Link href="/generate/music" className="cursor-pointer">
+                          <Music className="h-4 w-4 mr-2 text-violet-400" />
+                          Music Generation
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Tools Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-sm font-medium gap-1" data-testid="nav-tools">
+                        <Wrench className="h-4 w-4" />
+                        Tools
+                        <ChevronDown className="h-3 w-3 opacity-70" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuItem asChild>
+                        <Link href="/chat" className="cursor-pointer">AI Chat</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/video-editor" className="cursor-pointer">Video Editor</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/analyze-image" className="cursor-pointer">Image Analysis</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/topaz-upscaler" className="cursor-pointer">Image Upscaler</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/background-remover" className="cursor-pointer">Background Remover</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/qr-generator" className="cursor-pointer">QR Generator</Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Community Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-sm font-medium gap-1" data-testid="nav-community">
+                        <Users className="h-4 w-4" />
+                        Community
+                        <ChevronDown className="h-3 w-3 opacity-70" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link href="/workflows" className="cursor-pointer">Workflows</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/blog" className="cursor-pointer">
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          Blog
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Link href="/pricing">
+                    <Button 
+                      variant={location === "/pricing" ? "secondary" : "ghost"} 
+                      size="sm" 
+                      className="text-sm font-medium"
+                      data-testid="nav-pricing"
+                    >
+                      Pricing
+                    </Button>
+                  </Link>
+                  
+                  <Link href="/affiliates">
+                    <Button 
+                      size="sm" 
+                      className="text-sm font-medium bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white"
+                      data-testid="nav-affiliates"
+                    >
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Earn 30%
+                    </Button>
+                  </Link>
+                </nav>
               </div>
-              
-              {/* Navigation links - visible for all users */}
-              <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-                <Link href="/dashboard">
-                  <Button variant={location === "/dashboard" ? "default" : "ghost"} size="sm" data-testid="nav-home">
-                    <HomeIcon className="h-4 w-4 mr-1" />
-                    Home
-                  </Button>
-                </Link>
-                <Link href="/affiliates">
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700"
-                    data-testid="nav-affiliates"
-                  >
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    Earn 30%
-                  </Button>
-                </Link>
-                <Link href="/pricing">
-                  <Button variant={location === "/pricing" ? "default" : "ghost"} size="sm" data-testid="nav-pricing">
-                    Pricing
-                  </Button>
-                </Link>
-              </nav>
               
               <div className="flex items-center gap-2">
                 {/* Credits display for authenticated users */}
@@ -283,25 +405,30 @@ function AppContent() {
                         <User className="h-5 w-5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>
-                        {user ? (user as any).email : "My Account"}
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium">{user ? (user as any).firstName || "User" : "My Account"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user ? (user as any).email : ""}</p>
+                        </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/profile" data-testid="menu-profile">
+                        <Link href="/profile" className="cursor-pointer" data-testid="menu-profile">
+                          <Settings className="h-4 w-4 mr-2" />
                           Profile
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/billing" data-testid="menu-billing">
+                        <Link href="/billing" className="cursor-pointer" data-testid="menu-billing">
+                          <CreditCard className="h-4 w-4 mr-2" />
                           Billing
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={logout}
-                        className="text-destructive focus:text-destructive"
+                        className="text-destructive focus:text-destructive cursor-pointer"
                         data-testid="menu-logout"
                       >
                         <LogOut className="h-4 w-4 mr-2" />

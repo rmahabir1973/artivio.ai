@@ -1,0 +1,114 @@
+📝 DETAILED IMPLEMENTATION NOTES FOR REPLIT
+Sidebar Collapsible Structure:
+<div class="sidebar">
+  <div class="section" data-section="video">
+    <div class="section-header">
+      <span class="section-title">Video</span>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="section-content">
+      <a href="/video-generation" class="menu-item">
+        <span class="icon">🎬</span>
+        <span class="label">Video Generation</span>
+      </a>
+      <!-- More items -->
+    </div>
+  </div>
+  <!-- More sections -->
+</div>
+Styling:
+
+.section-header {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #a78bfa;
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 500px; /* Adjust per section */
+  transition: max-height 0.3s ease;
+}
+
+.section-content.collapsed {
+  max-height: 0;
+  overflow: hidden;
+}
+
+.menu-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #2d2d5f;
+}
+
+.menu-item.active {
+  background-color: #7c3aed;
+}
+Top Nav Implementation:
+<nav class="top-nav">
+  <div class="nav-left">
+    <a href="/" class="logo">🎨 Artivio AI</a>
+  </div>
+  <div class="nav-center">
+    <div class="dropdown">
+      <button>Create ▼</button>
+      <div class="dropdown-content">
+        <a href="/video">Video Generation</a>
+        <a href="/image">Image Generation</a>
+        <a href="/audio">Audio Generation</a>
+      </div>
+    </div>
+    <!-- More dropdowns -->
+  </div>
+  <div class="nav-right">
+    <span class="credits">💰 9,600 credits</span>
+    <button class="settings">⚙️</button>
+    <button class="profile">👤</button>
+  </div>
+</nav>
+Main Content Title Update:
+<div class="main-content">
+  <div class="welcome">
+    <p class="greeting">Welcome back, Ryan 👋</p>
+    <h1 class="main-title">What would you like to create today?</h1>
+    <p class="subtitle">Choose from 12+ AI tools. Generate anything in seconds.</p>
+  </div>
+  <!-- Rest of content -->
+</div>
+.greeting {
+  font-size: 16px;
+  color: #a0aec0;
+  margin-bottom: 8px;
+}
+
+.main-title {
+  font-size: 56px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #a0aec0;
+}

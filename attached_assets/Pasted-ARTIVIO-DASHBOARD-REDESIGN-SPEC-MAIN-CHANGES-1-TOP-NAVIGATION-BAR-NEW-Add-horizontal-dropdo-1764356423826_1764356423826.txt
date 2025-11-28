@@ -1,0 +1,96 @@
+ARTIVIO DASHBOARD REDESIGN SPEC
+🎯 MAIN CHANGES
+1. TOP NAVIGATION BAR (NEW)
+Add horizontal dropdown menu above the sidebar:
+
+Artivio AI     |  Create  ▼  |  Generate  ▼  |  Tools  ▼  |  Community  ▼  |  Pricing  |  Blog
+                Home | Earn 30% |              [Credits: 9,600]  [Settings] [Profile]
+Implementation:
+
+Logo on left
+5 main dropdowns: Create (Video, Image, Audio), Generate (All Tools), Tools, Community, Pricing/Blog
+Right side: Credits display, Settings, Profile menu
+Background: Dark purple (#1a1a3e or similar)
+Font: Bold, white text, 13px minimum
+2. SIDEBAR - COLLAPSIBLE SECTIONS (MAJOR CHANGE)
+Replace long scrolling list with grouped, collapsible sections:
+
+VIDEO                    [▼ Expanded]
+  ├─ 🎬 Video Generation
+  ├─ ✂️  Video Editor
+  ├─ ➡️  Transition
+  ├─ 🎥 Sora 2 Pro
+  └─ 🗣️  Talking Avatars
+
+IMAGE                    [▼ Expanded]
+  ├─ 🖼️  Image Generation
+  ├─ 🔍 Image Analysis
+  ├─ 🎨 Background Remover
+  └─ 📤 Image Upscaler
+
+AUDIO & MUSIC            [▼ Expanded]
+  ├─ 🎵 Music Generation
+  ├─ 🔊 Sound Effects
+  ├─ 🎙️  Text to Speech
+  ├─ 🎭 Voice Cloning
+  └─ 📢 Lip Sync
+
+TOOLS                    [▼ Expanded]
+  ├─ 💬 AI Chat
+  ├─ 🤖 QR Generator
+  └─ ⚙️  Utilities
+
+COMMUNITY                [▼ Expanded]
+  ├─ 🤝 Workflows
+  └─ 💰 Affiliates
+Implementation:
+
+Sections collapse/expand with arrow icon
+Bold section headers: 12px, all caps, dark purple text
+Each menu item has colorful emoji/icon
+Selected item: Light purple background (#2d2d5f or similar)
+No scrollbar needed (sections collapse)
+Hover effect: Subtle light purple highlight
+3. ICON STYLING & COLOR PALETTE
+Make icons more vibrant with distinct colors per category:
+
+Category	Icons	Colors
+VIDEO	🎬 ✂️ ➡️ 🎥 🗣️	Gradient Blue → Cyan
+IMAGE	🖼️ 🔍 🎨 📤	Gradient Pink → Magenta
+AUDIO	🎵 🔊 🎙️ 🎭 📢	Gradient Purple → Violet
+TOOLS	💬 🤖 ⚙️	Gradient Green → Teal
+COMMUNITY	🤝 💰	Gradient Orange → Gold
+Implementation:
+
+Use emoji OR SVG icons with colored backgrounds
+Icon backgrounds: 32x32px rounded squares with gradient
+Example: Video icon has blue-to-cyan gradient background
+4. MAIN CONTENT AREA - UPDATED TITLE/SUBTITLE
+CURRENT:
+
+"Create Anything"
+"with AI Power"
+RECOMMENDED:
+
+"Welcome back, Ryan 👋"
+(smaller text)
+
+"What would you like to create today?"
+(Main heading - 48px, bold, white/gradient blue-to-purple)
+
+Subtitle:
+"Choose from 12+ AI tools. Generate anything in seconds."
+(24px, gray text)
+Implementation:
+
+Add personalized greeting at top
+Larger, bolder main heading (48px → 56px)
+Increase heading letter-spacing
+Use gradient text: Blue → Purple for main heading
+5. FONTS - BIGGER & BOLDER
+Element	Current	NEW
+Main Title	32px	56px, 800 weight
+Subtitle	16px	24px, 600 weight
+Section Headers	14px	16px, 700 weight
+Menu Items	13px	14px, 600 weight
+Body Text	12px	13px, 400 weight
