@@ -113,6 +113,17 @@ export default function Admin() {
     endDate: "",
   });
 
+  // Create User dialog state
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    credits: "0",
+    isAdmin: false,
+  });
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
@@ -226,6 +237,42 @@ export default function Admin() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (data: { email: string; password: string; firstName?: string; lastName?: string; credits?: number; isAdmin?: boolean }) => {
+      return await apiRequest("POST", "/api/admin/users", data);
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "User created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setCreatingUser(false);
+      setNewUserData({ email: "", password: "", firstName: "", lastName: "", credits: "0", isAdmin: false });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleAdminMutation = useMutation({
+    mutationFn: async ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) => {
+      return await apiRequest("PATCH", `/api/admin/users/${userId}/admin`, { isAdmin });
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Admin status updated" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update admin status",
         variant: "destructive",
       });
     },
@@ -532,9 +579,15 @@ export default function Admin() {
 
         <TabsContent value="users">
           <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>View and manage all users</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>View and manage all users</CardDescription>
+              </div>
+              <Button onClick={() => setCreatingUser(true)} data-testid="button-create-user">
+                <Plus className="h-4 w-4 mr-2" />
+                Create User
+              </Button>
             </CardHeader>
             <CardContent>
               {usersLoading ? (
@@ -624,9 +677,34 @@ export default function Admin() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={u.isAdmin ? "default" : "secondary"}>
-                            {u.isAdmin ? 'Admin' : 'User'}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={u.isAdmin ? "default" : "secondary"}>
+                              {u.isAdmin ? 'Admin' : 'User'}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (u.id === user?.id && u.isAdmin) {
+                                  toast({
+                                    title: "Cannot Remove",
+                                    description: "You cannot remove your own admin status",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                toggleAdminMutation.mutate({ userId: u.id, isAdmin: !u.isAdmin });
+                              }}
+                              disabled={toggleAdminMutation.isPending}
+                              data-testid={`button-toggle-admin-${u.id}`}
+                            >
+                              {u.isAdmin ? (
+                                <ToggleRight className="h-4 w-4" />
+                              ) : (
+                                <ToggleLeft className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell>
                           {u.createdAt ? formatDistanceToNow(new Date(u.createdAt), { addSuffix: true }) : 'N/A'}
@@ -666,6 +744,122 @@ export default function Admin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Create User Dialog */}
+        <Dialog open={creatingUser} onOpenChange={setCreatingUser}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+              <DialogDescription>
+                Create a new user account with email and password
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="new-user-email">Email *</Label>
+                <Input
+                  id="new-user-email"
+                  type="email"
+                  value={newUserData.email}
+                  onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                  placeholder="user@example.com"
+                  data-testid="input-new-user-email"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="new-user-password">Password *</Label>
+                <Input
+                  id="new-user-password"
+                  type="password"
+                  value={newUserData.password}
+                  onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                  placeholder="Secure password"
+                  data-testid="input-new-user-password"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="new-user-firstname">First Name</Label>
+                  <Input
+                    id="new-user-firstname"
+                    value={newUserData.firstName}
+                    onChange={(e) => setNewUserData({ ...newUserData, firstName: e.target.value })}
+                    placeholder="John"
+                    data-testid="input-new-user-firstname"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="new-user-lastname">Last Name</Label>
+                  <Input
+                    id="new-user-lastname"
+                    value={newUserData.lastName}
+                    onChange={(e) => setNewUserData({ ...newUserData, lastName: e.target.value })}
+                    placeholder="Doe"
+                    data-testid="input-new-user-lastname"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="new-user-credits">Starting Credits</Label>
+                <Input
+                  id="new-user-credits"
+                  type="number"
+                  value={newUserData.credits}
+                  onChange={(e) => setNewUserData({ ...newUserData, credits: e.target.value })}
+                  placeholder="0"
+                  data-testid="input-new-user-credits"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="new-user-admin"
+                  checked={newUserData.isAdmin}
+                  onChange={(e) => setNewUserData({ ...newUserData, isAdmin: e.target.checked })}
+                  className="h-4 w-4"
+                  data-testid="checkbox-new-user-admin"
+                />
+                <Label htmlFor="new-user-admin">Grant Admin Access</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreatingUser(false)} data-testid="button-cancel-create-user">
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (!newUserData.email || !newUserData.password) {
+                    toast({
+                      title: "Validation Error",
+                      description: "Email and password are required",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  createUserMutation.mutate({
+                    email: newUserData.email,
+                    password: newUserData.password,
+                    firstName: newUserData.firstName || undefined,
+                    lastName: newUserData.lastName || undefined,
+                    credits: parseInt(newUserData.credits) || 0,
+                    isAdmin: newUserData.isAdmin,
+                  });
+                }}
+                disabled={createUserMutation.isPending}
+                data-testid="button-submit-create-user"
+              >
+                {createUserMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create User"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <TabsContent value="api-keys">
           <div className="grid gap-6 md:grid-cols-3 mb-6">

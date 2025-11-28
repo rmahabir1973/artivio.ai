@@ -13,6 +13,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { db } from "./db";
 import { registerAuthRoutes } from "./authRoutes";
+import { registerPublicApiRoutes, requireApiKey } from './publicApi';
 import { requireJWT, requireAdmin } from "./jwtMiddleware";
 import { 
   generateVideo, 
@@ -906,6 +907,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.error('FATAL: Failed to setup authentication:', error);
     throw new Error('Cannot start server without authentication. Please check your environment configuration.');
   }
+
+  // Register public API routes for external integrations (Tasklet, etc.)
+  try {
+    registerPublicApiRoutes(app);
+    console.log('✓ Public API routes initialized successfully');
+  } catch (error) {
+    console.warn('Warning: Failed to initialize public API routes:', error);
+  }
   
   // Initialize API keys in database
   // This can fail gracefully - admin can configure keys later via admin panel
@@ -917,11 +926,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.warn('API keys can be configured later via the admin panel.');
   }
 
-  // Hardcoded admin emails for access control
+  // Helper function to check admin status based on database isAdmin field
+  // Hardcoded emails are kept as fallback for initial admin access
   const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai', 'joe@joecodeswell.com', 'jordanlambrecht@gmail.com', 'admin@example.com'];
-  
-  // Helper function to check admin status based on email
+
   const isUserAdmin = (user: any): boolean => {
+    // First check database isAdmin field
+    if (user?.isAdmin === true) {
+      return true;
+    }
+    // Fallback to hardcoded emails for initial access
     return user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false;
   };
 
@@ -5208,6 +5222,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating credits:', error);
       res.status(500).json({ message: "Failed to update credits" });
+    }
+  });
+
+  // Admin: Create new user
+  app.post('/api/admin/users', requireJWT, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { email, password, firstName, lastName, credits, isAdmin } = req.body;
+      
+      // Validate required fields
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "A user with this email already exists" });
+      }
+      
+      // Hash the password
+      const bcrypt = await import('bcrypt');
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      
+      // Create the user
+      const newUser = await storage.upsertUser({
+        email: email.toLowerCase().trim(),
+        password: hashedPassword,
+        authProvider: 'local',
+        firstName: firstName || null,
+        lastName: lastName || null,
+        credits: credits || 0,
+        isAdmin: isAdmin || false,
+      });
+      
+      console.log(`[ADMIN] User created by admin ${admin?.email}: ${newUser.email} (isAdmin: ${newUser.isAdmin})`);
+      
+      res.status(201).json({
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        credits: newUser.credits,
+        isAdmin: newUser.isAdmin,
+        createdAt: newUser.createdAt,
+      });
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ message: "Failed to create user", error: error.message });
+    }
+  });
+
+  // Admin: Toggle user admin status
+  app.patch('/api/admin/users/:userId/admin', requireJWT, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { userId } = req.params;
+      const { isAdmin: newAdminStatus } = req.body;
+      
+      if (typeof newAdminStatus !== 'boolean') {
+        return res.status(400).json({ message: "isAdmin must be a boolean" });
+      }
+      
+      // Prevent admin from removing their own admin status
+      if (userId === adminId && !newAdminStatus) {
+        return res.status(400).json({ message: "You cannot remove your own admin status" });
+      }
+      
+      // Get the target user
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update admin status using db directly
+      const { db } = await import('./db');
+      const { users } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const [updatedUser] = await db
+        .update(users)
+        .set({ isAdmin: newAdminStatus, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      console.log(`[ADMIN] User admin status changed by ${admin?.email}: ${targetUser.email} -> isAdmin: ${newAdminStatus}`);
+      
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+        message: newAdminStatus ? "User is now an admin" : "User admin status removed"
+      });
+    } catch (error: any) {
+      console.error('Error updating admin status:', error);
+      res.status(500).json({ message: "Failed to update admin status", error: error.message });
     }
   });
 
