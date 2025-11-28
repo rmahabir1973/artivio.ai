@@ -380,6 +380,18 @@ export default function GenerateVideo() {
     }
   }, [model, selectedModel, generationType, toast]);
 
+  // Auto-switch from Veo 3.1 Quality to Veo 3.1 Fast when Reference Video is selected
+  useEffect(() => {
+    if (model === 'veo-3.1' && generationType === 'reference-2-video') {
+      setModel('veo-3.1-fast');
+      toast({
+        title: "Model switched to Veo 3.1 Fast",
+        description: "Reference Video only supports Veo 3.1 Fast. Model has been automatically switched.",
+        variant: "default",
+      });
+    }
+  }, [model, generationType, toast]);
+
   // Auto-reset quality to 720p when Runway Gen-3 is selected
   useEffect(() => {
     if (model === 'runway-gen3-alpha-turbo' && quality !== '720p') {
@@ -922,14 +934,25 @@ export default function GenerateVideo() {
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  {VIDEO_MODELS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      <div className="flex items-center gap-2">
-                        <ModelIcon modelValue={m.value} />
-                        <span>{m.label} ({m.cost} credits)</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {VIDEO_MODELS.map((m) => {
+                    const isDisabledForReference = m.value === 'veo-3.1' && generationType === 'reference-2-video';
+                    return (
+                      <SelectItem 
+                        key={m.value} 
+                        value={m.value}
+                        disabled={isDisabledForReference}
+                        className={isDisabledForReference ? "opacity-50" : ""}
+                      >
+                        <div className="flex items-center gap-2">
+                          <ModelIcon modelValue={m.value} />
+                          <span className={isDisabledForReference ? "text-muted-foreground" : ""}>
+                            {m.label} ({m.cost} credits)
+                            {isDisabledForReference && " - Not supported for Reference Video"}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               {selectedModel?.description && (
