@@ -50,6 +50,7 @@ import {
 import { analyzeImageWithVision } from "./openaiVision";
 import { processImageInputs, saveBase64Image, saveBase64Images, saveBase64Video } from "./imageHosting";
 import { saveBase64Audio, saveBase64AudioFiles } from "./audioHosting";
+import * as s3 from "./services/awsS3";
 import { chatService } from "./chatService";
 import { combineVideos, generateThumbnail, generateImageThumbnail, reencodeVideoForStreaming } from "./videoProcessor";
 import { LoopsService } from "./loops";
@@ -4876,13 +4877,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           volume,
         });
 
-        // Save audio to public folder for later playback/download
+        // Save audio to S3 or local storage for later playback/download
         const filename = `tts-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${format}`;
-        const audioPath = `public/uploads/audio/${filename}`;
-        const fs = await import('fs/promises');
-        await fs.mkdir('public/uploads/audio', { recursive: true });
-        await fs.writeFile(audioPath, audioBuffer);
-        const audioUrl = `/uploads/audio/${filename}`;
+        let audioUrl: string;
+        
+        if (s3.isS3Enabled()) {
+          try {
+            console.log(`[FishAudio TTS] Uploading audio to S3...`);
+            const contentType = format === 'wav' ? 'audio/wav' : 
+                               format === 'opus' ? 'audio/opus' : 'audio/mpeg';
+            const result = await s3.uploadBuffer(audioBuffer, {
+              prefix: 'uploads/audio',
+              contentType,
+              filename,
+            });
+            audioUrl = result.signedUrl;
+            console.log(`✓ TTS audio uploaded to S3: ${result.key}`);
+          } catch (s3Error) {
+            console.error('[FishAudio TTS] S3 upload failed, falling back to local:', s3Error);
+            const audioPath = `public/uploads/audio/${filename}`;
+            const fsLocal = await import('fs/promises');
+            await fsLocal.mkdir('public/uploads/audio', { recursive: true });
+            await fsLocal.writeFile(audioPath, audioBuffer);
+            audioUrl = `/uploads/audio/${filename}`;
+          }
+        } else {
+          const audioPath = `public/uploads/audio/${filename}`;
+          const fsLocal = await import('fs/promises');
+          await fsLocal.mkdir('public/uploads/audio', { recursive: true });
+          await fsLocal.writeFile(audioPath, audioBuffer);
+          audioUrl = `/uploads/audio/${filename}`;
+        }
 
         // Create generation record for history with audio URL
         await storage.createGeneration({
