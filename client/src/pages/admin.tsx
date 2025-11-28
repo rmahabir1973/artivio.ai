@@ -14,11 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, Generation } from "@shared/schema";
+import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, Generation, BlogPost } from "@shared/schema";
 
 interface UserWithSubscription extends User {
   subscription: {
@@ -124,6 +124,23 @@ export default function Admin() {
     isAdmin: false,
   });
 
+  // Blog management state
+  const [creatingBlogPost, setCreatingBlogPost] = useState(false);
+  const [editingBlogPostId, setEditingBlogPostId] = useState<string | null>(null);
+  const [deletingBlogPostId, setDeletingBlogPostId] = useState<string | null>(null);
+  const [blogPostForm, setBlogPostForm] = useState({
+    title: "",
+    slug: "",
+    content: "",
+    excerpt: "",
+    author: "Artivio Team",
+    category: "Announcement" as "Tutorial" | "Case Study" | "Feature" | "Announcement",
+    tags: "",
+    featuredImageUrl: "",
+    metaDescription: "",
+    status: "draft" as "draft" | "published",
+  });
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
@@ -183,6 +200,11 @@ export default function Admin() {
 
   const { data: adminGenerations = [], isLoading: generationsLoading } = useQuery<Generation[]>({
     queryKey: ["/api/admin/generations"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const { data: blogPosts = [], isLoading: blogPostsLoading } = useQuery<BlogPost[]>({
+    queryKey: ["/api/admin/blog/posts"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
@@ -506,6 +528,118 @@ export default function Admin() {
     },
   });
 
+  const createBlogPostMutation = useMutation({
+    mutationFn: async (data: {
+      title: string;
+      slug: string;
+      content: string;
+      excerpt?: string;
+      author?: string;
+      category?: string;
+      tags?: string[];
+      featuredImageUrl?: string;
+      metaDescription?: string;
+      status?: string;
+      publishedDate?: string;
+    }) => {
+      return await apiRequest("POST", "/api/admin/blog/posts", data);
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Blog post created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blog/posts"] });
+      setCreatingBlogPost(false);
+      setBlogPostForm({
+        title: "",
+        slug: "",
+        content: "",
+        excerpt: "",
+        author: "Artivio Team",
+        category: "Announcement",
+        tags: "",
+        featuredImageUrl: "",
+        metaDescription: "",
+        status: "draft",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create blog post",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateBlogPostMutation = useMutation({
+    mutationFn: async ({ id, ...data }: {
+      id: string;
+      title?: string;
+      slug?: string;
+      content?: string;
+      excerpt?: string;
+      author?: string;
+      category?: string;
+      tags?: string[];
+      featuredImageUrl?: string;
+      metaDescription?: string;
+      status?: string;
+      publishedDate?: string;
+    }) => {
+      return await apiRequest("PATCH", `/api/admin/blog/posts/${id}`, data);
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Blog post updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blog/posts"] });
+      setEditingBlogPostId(null);
+      setBlogPostForm({
+        title: "",
+        slug: "",
+        content: "",
+        excerpt: "",
+        author: "Artivio Team",
+        category: "Announcement",
+        tags: "",
+        featuredImageUrl: "",
+        metaDescription: "",
+        status: "draft",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update blog post",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteBlogPostMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/admin/blog/posts/${id}`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Blog post deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blog/posts"] });
+      setDeletingBlogPostId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete blog post",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  };
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -574,6 +708,10 @@ export default function Admin() {
           <TabsTrigger value="showcase" data-testid="tab-showcase">
             <Eye className="h-4 w-4 mr-2" />
             Showcase
+          </TabsTrigger>
+          <TabsTrigger value="blog" data-testid="tab-blog">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Blog
           </TabsTrigger>
         </TabsList>
 
@@ -1997,6 +2135,148 @@ export default function Admin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="blog">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle>Blog Management</CardTitle>
+                <CardDescription>Create and manage blog posts</CardDescription>
+              </div>
+              <Button 
+                onClick={() => {
+                  setBlogPostForm({
+                    title: "",
+                    slug: "",
+                    content: "",
+                    excerpt: "",
+                    author: "Artivio Team",
+                    category: "Announcement",
+                    tags: "",
+                    featuredImageUrl: "",
+                    metaDescription: "",
+                    status: "draft",
+                  });
+                  setEditingBlogPostId(null);
+                  setCreatingBlogPost(true);
+                }} 
+                data-testid="button-create-blog-post"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Post
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {blogPostsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : blogPosts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No blog posts found. Create your first post!
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Slug</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Published Date</TableHead>
+                      <TableHead>View Count</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {blogPosts.map((post) => (
+                      <TableRow key={post.id} data-testid={`row-blog-post-${post.id}`}>
+                        <TableCell className="font-medium max-w-[200px]">
+                          <div className="line-clamp-1">{post.title}</div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground font-mono max-w-[150px]">
+                          <div className="line-clamp-1">{post.slug}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{post.category}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
+                            {post.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {post.publishedDate 
+                            ? new Date(post.publishedDate).toLocaleDateString() 
+                            : '-'}
+                        </TableCell>
+                        <TableCell className="text-sm">{post.viewCount}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost"
+                                  onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
+                                  data-testid={`button-preview-blog-post-${post.id}`}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Preview</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setBlogPostForm({
+                                      title: post.title,
+                                      slug: post.slug,
+                                      content: post.content,
+                                      excerpt: post.excerpt || "",
+                                      author: post.author || "Artivio Team",
+                                      category: post.category as any || "Announcement",
+                                      tags: Array.isArray(post.tags) ? post.tags.join(", ") : "",
+                                      featuredImageUrl: post.featuredImageUrl || "",
+                                      metaDescription: post.metaDescription || "",
+                                      status: post.status as any || "draft",
+                                    });
+                                    setEditingBlogPostId(post.id);
+                                    setCreatingBlogPost(true);
+                                  }}
+                                  data-testid={`button-edit-blog-post-${post.id}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost"
+                                  onClick={() => setDeletingBlogPostId(post.id)}
+                                  data-testid={`button-delete-blog-post-${post.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Showcase Video Dialog */}
@@ -3073,6 +3353,259 @@ export default function Admin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create/Edit Blog Post Dialog */}
+      <Dialog open={creatingBlogPost} onOpenChange={setCreatingBlogPost}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingBlogPostId ? "Edit" : "Create"} Blog Post</DialogTitle>
+            <DialogDescription>
+              {editingBlogPostId ? "Update the blog post details" : "Create a new blog post"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="blog-title">Title *</Label>
+                <Input
+                  id="blog-title"
+                  value={blogPostForm.title}
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    setBlogPostForm({ 
+                      ...blogPostForm, 
+                      title: newTitle,
+                      slug: !editingBlogPostId ? generateSlug(newTitle) : blogPostForm.slug
+                    });
+                  }}
+                  placeholder="Enter post title..."
+                  data-testid="input-blog-title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="blog-slug">Slug</Label>
+                <Input
+                  id="blog-slug"
+                  value={blogPostForm.slug}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, slug: e.target.value })}
+                  placeholder="post-url-slug"
+                  data-testid="input-blog-slug"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  URL-friendly identifier (auto-generated from title)
+                </p>
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="blog-content">Content (Markdown)</Label>
+              <Textarea
+                id="blog-content"
+                value={blogPostForm.content}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, content: e.target.value })}
+                placeholder="Write your blog post content in Markdown..."
+                rows={10}
+                className="font-mono text-sm"
+                data-testid="input-blog-content"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="blog-excerpt">Excerpt</Label>
+              <Textarea
+                id="blog-excerpt"
+                value={blogPostForm.excerpt}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, excerpt: e.target.value })}
+                placeholder="A short description of the post..."
+                rows={2}
+                data-testid="input-blog-excerpt"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="blog-author">Author</Label>
+                <Input
+                  id="blog-author"
+                  value={blogPostForm.author}
+                  onChange={(e) => setBlogPostForm({ ...blogPostForm, author: e.target.value })}
+                  placeholder="Author name..."
+                  data-testid="input-blog-author"
+                />
+              </div>
+              <div>
+                <Label htmlFor="blog-category">Category</Label>
+                <Select
+                  value={blogPostForm.category}
+                  onValueChange={(value: any) => setBlogPostForm({ ...blogPostForm, category: value })}
+                >
+                  <SelectTrigger data-testid="select-blog-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Tutorial">Tutorial</SelectItem>
+                    <SelectItem value="Case Study">Case Study</SelectItem>
+                    <SelectItem value="Feature">Feature</SelectItem>
+                    <SelectItem value="Announcement">Announcement</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="blog-tags">Tags (comma-separated)</Label>
+              <Input
+                id="blog-tags"
+                value={blogPostForm.tags}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, tags: e.target.value })}
+                placeholder="ai, video, tutorial..."
+                data-testid="input-blog-tags"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="blog-featured-image">Featured Image URL</Label>
+              <Input
+                id="blog-featured-image"
+                value={blogPostForm.featuredImageUrl}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, featuredImageUrl: e.target.value })}
+                placeholder="https://example.com/image.jpg"
+                data-testid="input-blog-featured-image"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="blog-meta-description">Meta Description (SEO)</Label>
+              <Textarea
+                id="blog-meta-description"
+                value={blogPostForm.metaDescription}
+                onChange={(e) => setBlogPostForm({ ...blogPostForm, metaDescription: e.target.value })}
+                placeholder="A brief description for search engines..."
+                rows={2}
+                maxLength={160}
+                data-testid="input-blog-meta-description"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {blogPostForm.metaDescription.length}/160 characters
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="blog-status">Status</Label>
+              <Select
+                value={blogPostForm.status}
+                onValueChange={(value: any) => setBlogPostForm({ ...blogPostForm, status: value })}
+              >
+                <SelectTrigger data-testid="select-blog-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreatingBlogPost(false)}
+              data-testid="button-cancel-blog-post"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!blogPostForm.title.trim()) {
+                  toast({
+                    title: "Error",
+                    description: "Title is required",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                if (!blogPostForm.slug.trim()) {
+                  toast({
+                    title: "Error",
+                    description: "Slug is required",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                const tagsArray = blogPostForm.tags
+                  .split(",")
+                  .map((tag) => tag.trim())
+                  .filter((tag) => tag.length > 0);
+
+                const payload = {
+                  title: blogPostForm.title.trim(),
+                  slug: blogPostForm.slug.trim(),
+                  content: blogPostForm.content,
+                  excerpt: blogPostForm.excerpt || null,
+                  author: blogPostForm.author || null,
+                  category: blogPostForm.category,
+                  tags: tagsArray,
+                  featuredImageUrl: blogPostForm.featuredImageUrl || null,
+                  metaDescription: blogPostForm.metaDescription || null,
+                  status: blogPostForm.status,
+                  publishedDate: blogPostForm.status === 'published' ? new Date().toISOString() : null,
+                };
+
+                if (editingBlogPostId) {
+                  updateBlogPostMutation.mutate({ id: editingBlogPostId, ...payload });
+                } else {
+                  createBlogPostMutation.mutate(payload);
+                }
+              }}
+              disabled={createBlogPostMutation.isPending || updateBlogPostMutation.isPending}
+              data-testid="button-save-blog-post"
+            >
+              {(createBlogPostMutation.isPending || updateBlogPostMutation.isPending) ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                editingBlogPostId ? "Update Post" : "Create Post"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Blog Post Confirmation */}
+      <AlertDialog open={!!deletingBlogPostId} onOpenChange={(open) => !open && setDeletingBlogPostId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Blog Post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the blog post.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-blog-post">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingBlogPostId) {
+                  deleteBlogPostMutation.mutate(deletingBlogPostId);
+                }
+              }}
+              disabled={deleteBlogPostMutation.isPending}
+              data-testid="button-confirm-delete-blog-post"
+            >
+              {deleteBlogPostMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
