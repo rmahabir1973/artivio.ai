@@ -4876,15 +4876,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           volume,
         });
 
-        // Create generation record for history
+        // Save audio to public folder for later playback/download
+        const filename = `tts-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${format}`;
+        const audioPath = `public/uploads/audio/${filename}`;
+        const fs = await import('fs/promises');
+        await fs.mkdir('public/uploads/audio', { recursive: true });
+        await fs.writeFile(audioPath, audioBuffer);
+        const audioUrl = `/uploads/audio/${filename}`;
+
+        // Create generation record for history with audio URL
         await storage.createGeneration({
           userId,
-          type: 'text-to-speech',
+          type: 'audio',
           model: 'fish-audio-s1',
           prompt: text.substring(0, 500),
           parameters: { referenceId, temperature, topP, speed, volume, format },
           status: 'completed',
+          resultUrl: audioUrl,
           creditsCost: cost,
+          generationType: 'text-to-speech',
         });
 
         // Set appropriate content type and send audio
