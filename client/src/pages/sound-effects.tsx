@@ -59,35 +59,49 @@ export default function SoundEffects() {
     queryKey: ["/api/generations", generationId],
     queryFn: async () => {
       if (!generationId) return null;
-      return await apiRequest("GET", `/api/generations/${generationId}`);
+      console.log(`[POLL] Fetching generation ${generationId}`);
+      const result = await apiRequest("GET", `/api/generations/${generationId}`);
+      console.log(`[POLL] Response:`, { status: result?.status, hasResultUrl: !!result?.resultUrl });
+      return result;
     },
     enabled: !!generationId && isGenerating && isAuthenticated,
-    refetchInterval: 2000, // Poll every 2 seconds while generating
+    refetchInterval: 2000,
     refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
   });
 
-  // Update generatedAudio when poll data arrives with resultUrl or completed status
+  // Update generatedAudio when poll data arrives with resultUrl AND completed status
   useEffect(() => {
-    if (pollData?.resultUrl || pollData?.status === 'completed') {
+    console.log(`[POLL EFFECT] pollData changed:`, { 
+      status: pollData?.status, 
+      hasResultUrl: !!pollData?.resultUrl,
+      isGenerating 
+    });
+    
+    if (pollData?.status === 'completed' && pollData?.resultUrl) {
+      console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedAudio(pollData);
       setIsGenerating(false);
-      if (pollData?.resultUrl) {
-        toast({
-          title: "Sound Effect Generated!",
-          description: "Your sound effect is ready to play and download.",
-        });
-      }
+      setGenerationId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      toast({
+        title: "Sound Effect Generated!",
+        description: "Your sound effect is ready to play and download.",
+      });
     } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+      console.log(`[POLL] ✗ Generation failed`);
       setGeneratedAudio(pollData);
       setIsGenerating(false);
-      setGenerationId(null); // Stop polling
+      setGenerationId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
       toast({
         title: "Generation Failed",
         description: pollData?.errorMessage || "Failed to generate sound effect",
         variant: "destructive",
       });
     }
-  }, [pollData, toast]);
+  }, [pollData, toast, queryClient, isGenerating]);
 
   const generateSoundEffectsMutation = useMutation({
     mutationFn: async () => {

@@ -42,35 +42,49 @@ export default function GenerateGrok() {
     queryKey: ["/api/generations", generationId],
     queryFn: async () => {
       if (!generationId) return null;
-      return await apiRequest("GET", `/api/generations/${generationId}`);
+      console.log(`[POLL] Fetching generation ${generationId}`);
+      const result = await apiRequest("GET", `/api/generations/${generationId}`);
+      console.log(`[POLL] Response:`, { status: result?.status, hasResultUrl: !!result?.resultUrl });
+      return result;
     },
     enabled: !!generationId && isGenerating,
     refetchInterval: 2000,
     refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
   });
 
-  // Update generatedVideo when poll data arrives with resultUrl or completed status
+  // Update generatedVideo when poll data arrives with resultUrl AND completed status
   useEffect(() => {
-    if (pollData?.resultUrl || pollData?.status === 'completed') {
-      setGeneratedVideo(pollData);
-      setIsGenerating(false);
-      if (pollData?.resultUrl) {
-        toast({
-          title: "Video Generated!",
-          description: "Your Grok video is ready to view and download.",
-        });
-      }
-    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+    console.log(`[POLL EFFECT] pollData changed:`, { 
+      status: pollData?.status, 
+      hasResultUrl: !!pollData?.resultUrl,
+      isGenerating 
+    });
+    
+    if (pollData?.status === 'completed' && pollData?.resultUrl) {
+      console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedVideo(pollData);
       setIsGenerating(false);
       setGenerationId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      toast({
+        title: "Video Generated!",
+        description: "Your Grok video is ready to view and download.",
+      });
+    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+      console.log(`[POLL] ✗ Generation failed`);
+      setGeneratedVideo(pollData);
+      setIsGenerating(false);
+      setGenerationId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
       toast({
         title: "Generation Failed",
         description: pollData?.errorMessage || "Failed to generate video",
         variant: "destructive",
       });
     }
-  }, [pollData, toast]);
+  }, [pollData, toast, queryClient, isGenerating]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {

@@ -1,0 +1,100 @@
+2025-11-28 16:12:23.89
+7e229388
+User
+9:12:23 PM [express] GET /api/generations 200 in 348ms :: {"items":[{"id":"b57059ee-053e-4949-b202-0…
+2025-11-28 16:12:24.47
+7e229388
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-28 16:12:24.47
+7e229388
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-28 16:12:24.47
+7e229388
+User
+}
+2025-11-28 16:12:24.47
+7e229388
+User
+isPaginated: true,
+2025-11-28 16:12:24.47
+7e229388
+User
+[/api/generations] Request received {
+2025-11-28 16:12:24.47
+7e229388
+User
+cursor: 'eyJjcmVhdGVkQXQiOiIyMDI1LTExLTI1VDE3OjQ0OjQ2LjM5NVoiLCJpZCI6ImU1NWUxNTM5LTlkOWYtNDdmMC1iNjI1LTFjNTA4YjNkZWUwYyJ9'
+2025-11-28 16:12:24.47
+7e229388
+User
+hasUser: true,
+2025-11-28 16:12:24.47
+7e229388
+User
+userId: '49729939',
+2025-11-28 16:12:24.77
+7e229388
+User
+[/api/generations] Paginated query completed in 300ms, found 15 generations, hasMore: true
+2025-11-28 16:12:24.79
+7e229388
+User
+9:12:24 PM [express] GET /api/generations 200 in 337ms :: {"items":[{"id":"dbd94480-128d-4461-b4e3-6…
+2025-11-28 16:12:25.25
+cb862949
+System
+system: received signal terminated
+2025-11-28 16:12:31.12
+7e229388
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '9914c6d8' }
+2025-11-28 16:12:31.16
+7e229388
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '9914c6d8-479c-4221-aa03-3ac809393a4a' }
+2025-11-28 16:12:31.19
+7e229388
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-28 16:12:31.19
+7e229388
+User
+userId: '49729939',
+2025-11-28 16:12:31.19
+7e229388
+User
+[AUTH] ✓ Bootstrap successful {
+2025-11-28 16:12:31.19
+7e229388
+User
+isAdmin: true
+2025-11-28 16:12:31.19
+7e229388
+User
+tokenId: '9914c6d8',
+2025-11-28 16:12:31.19
+7e229388
+User
+}
+2025-11-28 16:12:31.19
+7e229388
+User
+9:12:31 PM [express] GET /api/auth/bootstrap 200 in 73ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-11-28 16:12:31.39
+7e229388
+User
+9:12:31 PM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-11-28 16:12:31.41
+7e229388
+User
+9:12:31 PM [express] GET /api/pricing 304 in 50ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-11-28 16:12:31.41
+7e229388
+User
+9:12:31 PM [express] GET /api/pricing 304 in 50ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-11-28 16:12:31.41
+7e229388
+User
+9:12:31 PM [express] GET /api/pricing 304 in 50ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
