@@ -3128,7 +3128,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         video: { ext: 'mp4', contentType: 'video/mp4' },
         image: { ext: 'png', contentType: 'image/png' },
         music: { ext: 'mp3', contentType: 'audio/mpeg' },
+        audio: { ext: 'mp3', contentType: 'audio/mpeg' },
         'sound-effects': { ext: 'mp3', contentType: 'audio/mpeg' },
+        'text-to-speech': { ext: 'mp3', contentType: 'audio/mpeg' },
         upscaling: { ext: 'png', contentType: 'image/png' },
         'background-remover': { ext: 'png', contentType: 'image/png' },
         'talking-avatar': { ext: 'mp4', contentType: 'video/mp4' },
@@ -3164,17 +3166,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check if file exists
         if (!fsSync.existsSync(localPath)) {
           console.error(`Download proxy: File not found at ${localPath}`);
-          return res.status(404).json({ message: "File not found on server" });
+          return res.status(404).json({ message: "File not found on server. It may have been stored in cloud storage but the URL was lost. Please try regenerating." });
         }
         
         // Stream the local file
         const fileStream = fsSync.createReadStream(localPath);
         fileStream.pipe(res);
       } else {
-        // External URL - fetch via axios
+        // External URL - check if it's an S3 URL that might need refreshing
+        let downloadUrl = generation.resultUrl;
+        
+        if (s3.isS3SignedUrl(downloadUrl)) {
+          try {
+            // Refresh the signed URL in case it expired
+            downloadUrl = await s3.refreshSignedUrl(downloadUrl);
+            console.log(`[Download] Refreshed S3 signed URL for generation ${id}`);
+          } catch (refreshError) {
+            console.error('[Download] Failed to refresh S3 URL:', refreshError);
+            // Continue with original URL, might still work
+          }
+        }
+        
         const fileResponse = await axios({
           method: 'GET',
-          url: generation.resultUrl,
+          url: downloadUrl,
           responseType: 'stream',
         });
         

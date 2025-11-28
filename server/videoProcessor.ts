@@ -6,6 +6,7 @@ import path from 'path';
 import axios from 'axios';
 import { nanoid } from 'nanoid';
 import type { VideoEnhancements } from '@shared/schema';
+import * as s3 from './services/awsS3';
 
 const execAsync = promisify(exec);
 
@@ -589,12 +590,34 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       maxBuffer: 50 * 1024 * 1024,
     });
 
+    // Upload to S3 if enabled
+    let finalUrl: string;
+    if (s3.isS3Enabled()) {
+      try {
+        onProgress?.('upload', 'Uploading to cloud storage...');
+        const videoBuffer = await fs.readFile(outputPath);
+        const result = await s3.uploadBuffer(videoBuffer, {
+          prefix: 'video-exports',
+          contentType: 'video/mp4',
+          filename: outputFilename,
+        });
+        finalUrl = result.signedUrl;
+        console.log(`✓ Combined video uploaded to S3: ${result.key}`);
+        
+        // Clean up local file after successful S3 upload
+        await fs.unlink(outputPath).catch(() => {});
+      } catch (s3Error) {
+        console.error('[VideoProcessor] S3 upload failed, using local path:', s3Error);
+        finalUrl = `/video-combinations/${outputFilename}`;
+      }
+    } else {
+      finalUrl = `/video-combinations/${outputFilename}`;
+    }
+
     onProgress?.('complete', 'Video combination complete!');
 
-    const relativePath = `/video-combinations/${outputFilename}`;
-
     return {
-      outputPath: relativePath,
+      outputPath: finalUrl,
       durationSeconds: Math.round(totalDuration),
       tempFiles,
     };
@@ -709,7 +732,6 @@ export async function generateThumbnail(options: GenerateThumbnailOptions): Prom
     
     const thumbnailFilename = `${generationId}.jpg`;
     const thumbnailPath = path.join(THUMBNAIL_DIR, thumbnailFilename);
-    const thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
     
     const command = `ffmpeg -ss ${timestampSeconds} -i "${tempVideoPath}" -frames:v 1 -q:v 2 "${thumbnailPath}" -y`;
     
@@ -723,7 +745,28 @@ export async function generateThumbnail(options: GenerateThumbnailOptions): Prom
       throw new Error('Generated thumbnail is empty');
     }
     
-    console.log(`✓ Generated thumbnail for ${generationId}: ${thumbnailPath}`);
+    // Upload to S3 if enabled
+    let thumbnailUrl: string;
+    if (s3.isS3Enabled()) {
+      try {
+        const thumbnailBuffer = await fs.readFile(thumbnailPath);
+        const result = await s3.uploadBuffer(thumbnailBuffer, {
+          prefix: 'uploads/images',
+          contentType: 'image/jpeg',
+          filename: `thumb-${thumbnailFilename}`,
+        });
+        thumbnailUrl = result.signedUrl;
+        console.log(`✓ Thumbnail uploaded to S3 for ${generationId}`);
+        await fs.unlink(thumbnailPath).catch(() => {});
+      } catch (s3Error) {
+        console.error('[Thumbnail] S3 upload failed, using local path:', s3Error);
+        thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
+      }
+    } else {
+      thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
+    }
+    
+    console.log(`✓ Generated thumbnail for ${generationId}: ${thumbnailUrl}`);
     
     return {
       thumbnailUrl,
@@ -767,7 +810,6 @@ export async function generateImageThumbnail(imageUrl: string, generationId: str
     // Generate thumbnail by resizing image to 300x300 max (ffmpeg works for images too)
     const thumbnailFilename = `${generationId}.jpg`;
     const thumbnailPath = path.join(THUMBNAIL_DIR, thumbnailFilename);
-    const thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
     
     // Use ffmpeg to resize image to 300x300 max while maintaining aspect ratio
     const command = `ffmpeg -i "${tempImagePath}" -vf "scale=300:300:force_original_aspect_ratio=decrease" -q:v 5 "${thumbnailPath}" -y`;
@@ -782,7 +824,28 @@ export async function generateImageThumbnail(imageUrl: string, generationId: str
       throw new Error('Generated thumbnail is empty');
     }
     
-    console.log(`✓ Generated image thumbnail for ${generationId}: ${thumbnailPath}`);
+    // Upload to S3 if enabled
+    let thumbnailUrl: string;
+    if (s3.isS3Enabled()) {
+      try {
+        const thumbnailBuffer = await fs.readFile(thumbnailPath);
+        const result = await s3.uploadBuffer(thumbnailBuffer, {
+          prefix: 'uploads/images',
+          contentType: 'image/jpeg',
+          filename: `img-thumb-${thumbnailFilename}`,
+        });
+        thumbnailUrl = result.signedUrl;
+        console.log(`✓ Image thumbnail uploaded to S3 for ${generationId}`);
+        await fs.unlink(thumbnailPath).catch(() => {});
+      } catch (s3Error) {
+        console.error('[ImageThumbnail] S3 upload failed, using local path:', s3Error);
+        thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
+      }
+    } else {
+      thumbnailUrl = `/thumbnails/${thumbnailFilename}`;
+    }
+    
+    console.log(`✓ Generated image thumbnail for ${generationId}: ${thumbnailUrl}`);
     
     return {
       thumbnailUrl,
@@ -824,11 +887,30 @@ export async function reencodeVideoForStreaming(videoUrl: string, generationId: 
     console.log(`Re-encoding video for streaming optimization...`);
     await normalizeVideo(originalPath, optimizedPath);
     
+    // Upload to S3 if enabled
+    let publicUrl: string;
+    if (s3.isS3Enabled()) {
+      try {
+        const videoBuffer = await fs.readFile(optimizedPath);
+        const result = await s3.uploadBuffer(videoBuffer, {
+          prefix: 'video-exports',
+          contentType: 'video/mp4',
+          filename: optimizedFilename,
+        });
+        publicUrl = result.signedUrl;
+        console.log(`✓ Re-encoded video uploaded to S3: ${result.key}`);
+        await fs.unlink(optimizedPath).catch(() => {});
+      } catch (s3Error) {
+        console.error('[ReencodeVideo] S3 upload failed, using local path:', s3Error);
+        publicUrl = `/video-combinations/${optimizedFilename}`;
+      }
+    } else {
+      publicUrl = `/video-combinations/${optimizedFilename}`;
+    }
+    
     // Clean up temp directory
     await fs.rm(tempDir, { recursive: true, force: true });
     
-    // Return public URL path
-    const publicUrl = `/video-combinations/${optimizedFilename}`;
     console.log(`✓ Video re-encoded and optimized: ${publicUrl}`);
     return publicUrl;
   } catch (error: any) {
