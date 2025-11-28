@@ -66,7 +66,7 @@ const resultsData = [
   { stat: "4.2x", label: "More Content Per Week", detail: "Creators posting daily instead of weekly", quote: "Consistency = more followers" },
   { stat: "87%", label: "Report Viral Videos", detail: "vs 34% creating content manually", quote: "My engagement tripled" },
   { stat: "$0", label: "Cost to Start", detail: "Free tier includes daily generations", quote: "Test before you commit" },
-  { stat: "9", label: "Platforms Covered", detail: "TikTok, Instagram, YouTube, LinkedIn, more", quote: "One tool, all platforms" },
+  { stat: "10+", label: "AI Models Available", detail: "Veo 3.1, Runway, Sora, Kling, and more", quote: "Industry's best AI at lowest prices" },
   { stat: "48K+", label: "Active Creators", detail: "Growing 30% month-over-month", quote: "Join the fastest-growing creator community" }
 ];
 
@@ -77,7 +77,7 @@ const comparisonData = [
   { feature: "Learning Curve", artivio: "5 minutes", manual: "Weeks/Months", others: "1-2 hours" },
   { feature: "Cost Per Video", artivio: "$0.30-1.00", manual: "$0 (your time)", others: "$1-5" },
   { feature: "AI Voice Quality", artivio: "Natural/Human", manual: "N/A", others: "Robotic" },
-  { feature: "Multi-Platform Export", artivio: "All 9 Platforms", manual: "Manual Resize", others: "Basic 2-3" },
+  { feature: "Auto Multi-Platform", artivio: "Coming Soon", manual: "Manual Resize", others: "Basic 2-3" },
   { feature: "Free Trial Available", artivio: "Yes - Daily Free", manual: "N/A", others: "Limited 3 days" },
   { feature: "24/7 Support", artivio: "Yes", manual: "N/A", others: "Business Hours" }
 ];
@@ -88,7 +88,7 @@ const additionalFaqs = [
   { question: "Do I need special software or equipment?", answer: "No! You only need a web browser and an internet connection. Artivio runs completely online. No downloads, no installations." },
   { question: "What happens if I don't like the generated video?", answer: "You get unlimited regenerations with your credits. Adjust your prompt, try different styles, or pick different music. Full creative control." },
   { question: "Can I use these videos commercially?", answer: "Yes! All content created with Artivio is yours to use commercially. Post to social media, YouTube, your website - complete ownership." },
-  { question: "What if I want to post to multiple platforms?", answer: "Artivio auto-formats for all platforms (TikTok, Instagram, YouTube, LinkedIn, etc). One generation, multiple formats, ready to post." },
+  { question: "What if I want to post to multiple platforms?", answer: "We're building auto-format support for all major platforms (TikTok, Instagram, YouTube, LinkedIn, etc) - coming soon! For now, you can easily resize your content using our video editor." },
   { question: "Is there a refund if I'm not satisfied?", answer: "Yes. 30-day full refund guarantee, no questions asked. We're confident you'll love Artivio." }
 ];
 
@@ -461,7 +461,7 @@ export default function Landing() {
               {" "}in Minutes, Not Weeks
             </h1>
             <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto drop-shadow-lg leading-relaxed">
-              Generate stunning AI videos, images & audio. Post to 9 platforms instantly. 
+              Generate stunning AI videos, images & audio. Built for multi-platform creators. 
               Get results in hours, not months.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -580,10 +580,22 @@ export default function Landing() {
                 <Video className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3">AI Video</h3>
-              <p className="text-gray-400 mb-6 leading-relaxed">
+              <p className="text-gray-400 mb-4 leading-relaxed">
                 Generate professional videos with Veo 3.1, Runway, and more. 
                 From concept to completion in minutes.
               </p>
+              {/* Pricing Banner */}
+              <div className="bg-gradient-to-r from-amber-600 to-yellow-500 rounded-lg p-3 mb-4" data-testid="video-pricing-banner">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded">NEW</span>
+                  <span className="text-black font-bold text-sm">The Unbeatable Lowest Price</span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  <span className="text-black/90"><strong>Veo3:</strong> $0.86/video</span>
+                  <span className="text-black/90"><strong>Veo3.1:</strong> $1.03/video</span>
+                  <span className="text-black/90"><strong>Runway:</strong> $0.50/video</span>
+                </div>
+              </div>
               <a href="/generate/video" className="text-purple-400 hover:text-purple-300 inline-flex items-center gap-2 group" data-testid="link-feature-video">
                 Learn More
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
