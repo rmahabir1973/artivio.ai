@@ -153,8 +153,6 @@ interface VideoCardProps {
 }
 
 function VideoCard({ generation, isSelected, onToggle }: VideoCardProps) {
-  const thumbnail = generation.thumbnailUrl || generation.resultUrl;
-
   return (
     <div
       className={cn(
@@ -165,12 +163,19 @@ function VideoCard({ generation, isSelected, onToggle }: VideoCardProps) {
       data-testid={`video-card-${generation.id}`}
     >
       <div className="relative aspect-video bg-muted">
-        {thumbnail ? (
+        {generation.resultUrl ? (
           <video
-            src={thumbnail}
+            src={generation.resultUrl}
+            poster={generation.thumbnailUrl || undefined}
             className="w-full h-full object-cover"
             muted
             preload="metadata"
+          />
+        ) : generation.thumbnailUrl ? (
+          <img
+            src={generation.thumbnailUrl}
+            alt={generation.prompt}
+            className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

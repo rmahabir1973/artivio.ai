@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import axios from "axios";
 import path from "path";
 import fs from "fs/promises";
+import * as fsSync from "fs";
 import { nanoid } from "nanoid";
 import multer from "multer";
 import OpenAI from "openai";
@@ -2748,23 +2749,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Generation does not have a result URL" });
       }
 
-      // Fetch the file from the external URL
-      const fileResponse = await axios({
-        method: 'GET',
-        url: generation.resultUrl,
-        responseType: 'stream',
-      });
-
       // Determine file extension and content type based on generation type
       const extensionMap: Record<string, { ext: string; contentType: string }> = {
         video: { ext: 'mp4', contentType: 'video/mp4' },
         image: { ext: 'png', contentType: 'image/png' },
         music: { ext: 'mp3', contentType: 'audio/mpeg' },
         'sound-effects': { ext: 'mp3', contentType: 'audio/mpeg' },
-        upscaling: { ext: 'png', contentType: 'image/png' }, // Default to image for upscaling
-        'background-remover': { ext: 'png', contentType: 'image/png' }, // Background remover outputs PNG
-        'talking-avatar': { ext: 'mp4', contentType: 'video/mp4' }, // Avatar videos are MP4
-        'avatar': { ext: 'mp4', contentType: 'video/mp4' }, // Avatar videos are MP4
+        upscaling: { ext: 'png', contentType: 'image/png' },
+        'background-remover': { ext: 'png', contentType: 'image/png' },
+        'talking-avatar': { ext: 'mp4', contentType: 'video/mp4' },
+        'avatar': { ext: 'mp4', contentType: 'video/mp4' },
+        'video-editor': { ext: 'mp4', contentType: 'video/mp4' },
       };
 
       let fileInfo = extensionMap[generation.type];
@@ -2785,8 +2780,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Type', fileInfo.contentType);
 
-      // Stream the file to the client
-      fileResponse.data.pipe(res);
+      // Check if this is a local file path (starts with /)
+      if (generation.resultUrl.startsWith('/')) {
+        // Local file - serve from filesystem
+        // Strip leading slash to avoid path.join treating it as absolute
+        const relativePath = generation.resultUrl.slice(1);
+        const localPath = path.join(process.cwd(), 'public', relativePath);
+        
+        // Check if file exists
+        if (!fsSync.existsSync(localPath)) {
+          console.error(`Download proxy: File not found at ${localPath}`);
+          return res.status(404).json({ message: "File not found on server" });
+        }
+        
+        // Stream the local file
+        const fileStream = fsSync.createReadStream(localPath);
+        fileStream.pipe(res);
+      } else {
+        // External URL - fetch via axios
+        const fileResponse = await axios({
+          method: 'GET',
+          url: generation.resultUrl,
+          responseType: 'stream',
+        });
+        
+        // Stream the file to the client
+        fileResponse.data.pipe(res);
+      }
     } catch (error: any) {
       console.error('Download proxy error:', error);
       res.status(500).json({ message: error.message || "Failed to download file" });
