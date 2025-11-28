@@ -3,7 +3,9 @@
 ## Overview
 The Artivio AI Public API allows external AI agents like Tasklet to generate videos, images, and audio content programmatically. This documentation provides everything needed to integrate with the API.
 
-**Base URL**: `https://your-domain.replit.app/api/v1`
+**Base URL**: `https://artivio.replit.app/api/v1`
+
+> **Note**: Replace with your actual domain if different.
 
 ---
 
@@ -71,36 +73,17 @@ GET /api/v1/credits
 }
 ```
 
-### Credit Costs by Category
+### Credit Costs
 
-#### Video Generation
-| Model | Credits per Generation |
-|-------|----------------------|
-| veo-3.1 | 100 |
-| runway-gen3 | 150 |
-| kling-2.5-turbo | 80 |
-| seedance-pro | 120 |
-| seedance-lite | 60 |
-| wan-2.5 | 90 |
-| sora-2-pro | 200 |
-| grok-imagine | 100 |
+Credit costs are dynamic and fetched from the pricing database. Default costs if no specific pricing is configured:
 
-#### Image Generation
-| Model | Credits per Generation |
-|-------|----------------------|
-| seedream-4.0 | 50 |
-| 4o-image | 40 |
-| flux-kontext | 60 |
-| nano-banana | 30 |
+| Category | Default Credits |
+|----------|----------------|
+| Video | 100 |
+| Image | 50 |
+| Audio/Music | 80 |
 
-#### Audio/Music Generation
-| Model | Credits per Generation |
-|-------|----------------------|
-| suno-v5 | 100 |
-| suno-v4.5-plus | 80 |
-| suno-v4.5 | 60 |
-| suno-v4 | 50 |
-| suno-v3.5 | 40 |
+> **Note**: Actual costs may vary by model. Check `/api/v1/credits` before generation to verify your balance.
 
 ---
 
@@ -146,13 +129,11 @@ POST /api/v1/video/generate
 **Response (202 Accepted):**
 ```json
 {
-  "success": true,
-  "generationId": "gen_abc123xyz",
-  "message": "Video generation started",
-  "creditsUsed": 100,
+  "id": "uuid-generation-id",
+  "status": "pending",
+  "creditsCost": 100,
   "creditsRemaining": 4900,
-  "estimatedTime": "2-5 minutes",
-  "statusUrl": "/api/v1/generations/gen_abc123xyz"
+  "message": "Video generation started. Use GET /api/v1/generations/:id to check status."
 }
 ```
 
@@ -192,13 +173,11 @@ POST /api/v1/image/generate
 **Response (202 Accepted):**
 ```json
 {
-  "success": true,
-  "generationId": "gen_def456uvw",
-  "message": "Image generation started",
-  "creditsUsed": 50,
+  "id": "uuid-generation-id",
+  "status": "pending",
+  "creditsCost": 50,
   "creditsRemaining": 4850,
-  "estimatedTime": "30-60 seconds",
-  "statusUrl": "/api/v1/generations/gen_def456uvw"
+  "message": "Image generation started. Use GET /api/v1/generations/:id to check status."
 }
 ```
 
@@ -241,13 +220,11 @@ POST /api/v1/audio/generate
 **Response (202 Accepted):**
 ```json
 {
-  "success": true,
-  "generationId": "gen_ghi789rst",
-  "message": "Audio generation started",
-  "creditsUsed": 100,
+  "id": "uuid-generation-id",
+  "status": "pending",
+  "creditsCost": 80,
   "creditsRemaining": 4750,
-  "estimatedTime": "1-3 minutes",
-  "statusUrl": "/api/v1/generations/gen_ghi789rst"
+  "message": "Audio generation started. Use GET /api/v1/generations/:id to check status."
 }
 ```
 
@@ -256,55 +233,36 @@ POST /api/v1/audio/generate
 ### 4. Check Generation Status
 
 ```
-GET /api/v1/generations/:generationId
+GET /api/v1/generations/:id
 ```
 
-**Response (Processing):**
+**Response:**
 ```json
 {
-  "id": "gen_abc123xyz",
-  "status": "processing",
+  "id": "uuid-generation-id",
   "type": "video",
   "model": "veo-3.1",
-  "prompt": "A sunset over mountains",
-  "progress": 45,
-  "createdAt": "2025-11-28T10:30:00Z",
-  "estimatedCompletion": "2025-11-28T10:33:00Z"
-}
-```
-
-**Response (Completed):**
-```json
-{
-  "id": "gen_abc123xyz",
   "status": "completed",
-  "type": "video",
-  "model": "veo-3.1",
-  "prompt": "A sunset over mountains",
   "resultUrl": "https://storage.example.com/video.mp4",
-  "thumbnailUrl": "https://storage.example.com/thumb.jpg",
+  "creditsCost": 100,
   "createdAt": "2025-11-28T10:30:00Z",
   "completedAt": "2025-11-28T10:32:45Z",
-  "metadata": {
-    "duration": 5,
-    "aspectRatio": "16:9",
-    "resolution": "1080p"
-  }
+  "errorMessage": null
 }
 ```
 
 **Response (Failed):**
 ```json
 {
-  "id": "gen_abc123xyz",
-  "status": "failed",
+  "id": "uuid-generation-id",
   "type": "video",
   "model": "veo-3.1",
-  "prompt": "A sunset over mountains",
-  "error": "Content moderation filter triggered",
+  "status": "failed",
+  "resultUrl": null,
+  "creditsCost": 100,
   "createdAt": "2025-11-28T10:30:00Z",
-  "failedAt": "2025-11-28T10:31:00Z",
-  "creditsRefunded": true
+  "completedAt": null,
+  "errorMessage": "Content moderation filter triggered"
 }
 ```
 
@@ -319,37 +277,34 @@ GET /api/v1/generations/:generationId
 
 ---
 
-## Webhook Callbacks
+### 5. List Generations
 
-If you provide a `webhookUrl` in your request, Artivio will send a POST request when the generation completes or fails.
-
-### Webhook Payload (Success)
-```json
-{
-  "event": "generation.completed",
-  "generationId": "gen_abc123xyz",
-  "status": "completed",
-  "type": "video",
-  "resultUrl": "https://storage.example.com/video.mp4",
-  "thumbnailUrl": "https://storage.example.com/thumb.jpg",
-  "metadata": {
-    "duration": 5,
-    "aspectRatio": "16:9"
-  },
-  "timestamp": "2025-11-28T10:32:45Z"
-}
+```
+GET /api/v1/generations
 ```
 
-### Webhook Payload (Failure)
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| limit | number | Max results (default: 20, max: 100) |
+| type | string | Filter by type: "video", "image", "music" |
+
+**Response:**
 ```json
 {
-  "event": "generation.failed",
-  "generationId": "gen_abc123xyz",
-  "status": "failed",
-  "type": "video",
-  "error": "Content moderation filter triggered",
-  "creditsRefunded": true,
-  "timestamp": "2025-11-28T10:31:00Z"
+  "generations": [
+    {
+      "id": "uuid-generation-id",
+      "type": "video",
+      "model": "veo-3.1",
+      "status": "completed",
+      "resultUrl": "https://storage.example.com/video.mp4",
+      "creditsCost": 100,
+      "createdAt": "2025-11-28T10:30:00Z",
+      "completedAt": "2025-11-28T10:32:45Z"
+    }
+  ],
+  "count": 1
 }
 ```
 
@@ -393,25 +348,27 @@ All errors follow a consistent format:
 ## Best Practices for Tasklet Integration
 
 ### 1. Polling Strategy
-When not using webhooks, poll the status endpoint:
-- Initial delay: 10 seconds
+Poll the status endpoint to check generation progress:
+- Initial delay: 10 seconds after starting
 - Polling interval: 5-10 seconds
-- Maximum polls: 60 (5 minutes timeout)
+- Maximum polls: 60 (5 minutes timeout for videos)
+- Check `status` field: "pending" or "processing" means keep polling
 
 ### 2. Error Handling
 - Retry 5xx errors with exponential backoff
 - Don't retry 4xx errors (except 429)
 - For 429, wait for `retryAfter` seconds
+- Check `errorMessage` field for failure details
 
 ### 3. Credit Management
-- Check credits before generation to avoid failures
+- Check `/api/v1/credits` before generation
 - Monitor `creditsRemaining` in responses
-- Notify users when credits are low
+- Video: ~100 credits, Image: ~50 credits, Audio: ~80 credits
 
 ### 4. Content Guidelines
 - Avoid prompts that may trigger content filters
 - Be specific with prompts for better results
-- Use reference images for more accurate video generation
+- Use reference images (imageUrl) for image-to-video
 
 ---
 
@@ -420,13 +377,16 @@ When not using webhooks, poll the status endpoint:
 ```javascript
 // Tasklet integration example
 const ARTIVIO_API_KEY = "art_live_your_key_here";
-const BASE_URL = "https://your-domain.replit.app/api/v1";
+const BASE_URL = "https://artivio.replit.app/api/v1";
 
 async function generateVideo(prompt, options = {}) {
+  const headers = {
+    "Authorization": `Bearer ${ARTIVIO_API_KEY}`,
+    "Content-Type": "application/json"
+  };
+
   // Step 1: Check credits
-  const creditsResponse = await fetch(`${BASE_URL}/credits`, {
-    headers: { "Authorization": `Bearer ${ARTIVIO_API_KEY}` }
-  });
+  const creditsResponse = await fetch(`${BASE_URL}/credits`, { headers });
   const { credits } = await creditsResponse.json();
   
   if (credits < 100) {
@@ -436,13 +396,10 @@ async function generateVideo(prompt, options = {}) {
   // Step 2: Start generation
   const genResponse = await fetch(`${BASE_URL}/video/generate`, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${ARTIVIO_API_KEY}`,
-      "Content-Type": "application/json"
-    },
+    headers,
     body: JSON.stringify({
       prompt,
-      model: options.model || "veo-3.1",
+      model: options.model || "wan-2.5",
       aspectRatio: options.aspectRatio || "16:9",
       duration: options.duration || 5
     })
@@ -450,22 +407,22 @@ async function generateVideo(prompt, options = {}) {
   
   if (!genResponse.ok) {
     const error = await genResponse.json();
-    throw new Error(error.message);
+    throw new Error(error.message || error.error);
   }
   
-  const { generationId } = await genResponse.json();
+  const { id: generationId } = await genResponse.json();
   
   // Step 3: Poll for completion
-  let status = "processing";
+  let status = "pending";
   let result = null;
+  let attempts = 0;
+  const maxAttempts = 60;
   
-  while (status === "processing" || status === "pending") {
+  while ((status === "processing" || status === "pending") && attempts < maxAttempts) {
     await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10s
+    attempts++;
     
-    const statusResponse = await fetch(`${BASE_URL}/generations/${generationId}`, {
-      headers: { "Authorization": `Bearer ${ARTIVIO_API_KEY}` }
-    });
-    
+    const statusResponse = await fetch(`${BASE_URL}/generations/${generationId}`, { headers });
     result = await statusResponse.json();
     status = result.status;
   }
@@ -473,16 +430,17 @@ async function generateVideo(prompt, options = {}) {
   if (status === "completed") {
     return result.resultUrl;
   } else {
-    throw new Error(result.error || "Generation failed");
+    throw new Error(result.errorMessage || "Generation failed or timed out");
   }
 }
 
 // Usage
 const videoUrl = await generateVideo("A cinematic sunset over mountains", {
-  model: "veo-3.1",
+  model: "wan-2.5",
   aspectRatio: "16:9",
   duration: 5
 });
+console.log("Video ready:", videoUrl);
 ```
 
 ---
