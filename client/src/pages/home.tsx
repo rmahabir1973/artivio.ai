@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { GenerationsQueue } from "@/components/generations-queue";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Video, 
   Image as ImageIcon, 
@@ -37,7 +38,10 @@ import {
   ZoomIn,
   Maximize2,
   Film,
-  Wand2
+  Wand2,
+  Mail,
+  CheckCircle,
+  Loader2
 } from "lucide-react";
 
 interface FeatureCard {
@@ -77,6 +81,39 @@ export default function Home() {
     queryKey: ['/api/subscriptions/current'],
     enabled: !!user,
   });
+
+  // Newsletter signup state
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+
+  const newsletterMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await apiRequest("POST", "/api/public/newsletter-signup", { email });
+      return await response.json();
+    },
+    onSuccess: () => {
+      setNewsletterSubscribed(true);
+      setNewsletterEmail("");
+      toast({
+        title: "Subscribed!",
+        description: "Check your email for AI tips and exclusive offers.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Subscription failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newsletterEmail) {
+      newsletterMutation.mutate(newsletterEmail);
+    }
+  };
 
   // Fetch user's favorite workflows
   type FavoriteWorkflow = {
@@ -771,6 +808,64 @@ export default function Home() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Newsletter Signup Section */}
+        <div className="mb-12">
+          <Card className="bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5 border border-primary/20">
+            <CardContent className="py-8 px-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left space-y-2 flex-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2">
+                    <Mail className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-primary">Weekly AI Tips</span>
+                  </div>
+                  <h3 className="text-xl font-bold">Get AI Creation Tips in Your Inbox</h3>
+                  <p className="text-muted-foreground text-sm max-w-md">
+                    Join thousands of creators getting weekly tips, tutorials, and exclusive offers for AI video, image, and music generation.
+                  </p>
+                </div>
+                <div className="w-full md:w-auto md:min-w-[320px]">
+                  {newsletterSubscribed ? (
+                    <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="text-green-600 dark:text-green-400 font-medium">You're subscribed! Check your email.</span>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={newsletterEmail}
+                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                        required
+                        className="flex-1"
+                        data-testid="input-newsletter-email"
+                      />
+                      <Button 
+                        type="submit" 
+                        disabled={newsletterMutation.isPending}
+                        className="whitespace-nowrap"
+                        data-testid="button-newsletter-subscribe"
+                      >
+                        {newsletterMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Subscribing...
+                          </>
+                        ) : (
+                          "Subscribe"
+                        )}
+                      </Button>
+                    </form>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2 text-center md:text-left">
+                    No spam. Unsubscribe anytime.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Recent Generations */}
