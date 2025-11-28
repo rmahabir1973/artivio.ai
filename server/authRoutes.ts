@@ -16,6 +16,7 @@ import {
   JWTPayload,
 } from "./jwtUtils";
 import { requireJWT } from "./jwtMiddleware";
+import { LoopsService } from "./loops";
 
 // Helper to determine if request is over HTTPS
 function isSecureRequest(req: Request): boolean {
@@ -110,6 +111,26 @@ export function registerAuthRoutes(app: Express) {
       console.log("[AUTH] ✓ User registered successfully", {
         userId: newUser.id,
         email: newUser.email,
+      });
+
+      // Add new user to Loops.so 7-Day Trial Nurture funnel (fire and forget)
+      LoopsService.addToSevenDayFunnel(
+        newUser.email || email.toLowerCase(),
+        finalFirstName || undefined,
+        finalLastName || undefined,
+        newUser.id.toString()
+      ).then(result => {
+        if (result.success) {
+          console.log("[AUTH] ✓ User added to 7-Day Trial Nurture funnel", {
+            userId: newUser.id,
+            email: newUser.email,
+          });
+        }
+      }).catch(err => {
+        console.error("[AUTH] Failed to add user to Loops funnel (non-blocking)", {
+          error: err.message,
+          userId: newUser.id,
+        });
       });
 
       // Admin email whitelist

@@ -7,6 +7,7 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { getBaseUrl } from "./urlUtils";
+import { LoopsService } from "./loops";
 
 const SALT_ROUNDS = 10;
 
@@ -191,6 +192,26 @@ export function initializePassportStrategies(app?: Express) {
             console.log("[AUTH DEBUG] Google OAuth - new user created", {
               userId: newUser.id,
               email: newUser.email,
+            });
+
+            // Add new user to Loops.so 7-Day Trial Nurture funnel (fire and forget)
+            LoopsService.addToSevenDayFunnel(
+              newUser.email || email.toLowerCase(),
+              profile.name?.givenName || undefined,
+              profile.name?.familyName || undefined,
+              newUser.id.toString()
+            ).then(result => {
+              if (result.success) {
+                console.log("[AUTH] ✓ Google OAuth user added to 7-Day Trial Nurture funnel", {
+                  userId: newUser.id,
+                  email: newUser.email,
+                });
+              }
+            }).catch(err => {
+              console.error("[AUTH] Failed to add Google OAuth user to Loops funnel (non-blocking)", {
+                error: err.message,
+                userId: newUser.id,
+              });
             });
 
             return done(null, toExpressUser(newUser));
