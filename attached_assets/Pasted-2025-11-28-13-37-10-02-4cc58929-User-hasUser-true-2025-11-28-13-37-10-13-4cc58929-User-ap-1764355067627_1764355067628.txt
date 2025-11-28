@@ -1,0 +1,129 @@
+2025-11-28 13:37:10.02
+4cc58929
+User
+hasUser: true,
+2025-11-28 13:37:10.13
+4cc58929
+User
+[/api/generations] Array query completed in 104ms, found 15 generations
+2025-11-28 13:37:10.13
+4cc58929
+User
+6:37:10 PM [express] GET /api/generations 200 in 133ms :: [{"id":"92c2b7c9-f557-4ae9-83ee-61502fde27…
+2025-11-28 13:37:10.13
+4cc58929
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: 'ee739ba6' }
+2025-11-28 13:37:10.13
+4cc58929
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+
+2025-11-28 13:37:10.16
+4cc58929
+User
+6:37:10 PM [express] GET /api/subscriptions/current 304 in 171ms
+2025-11-28 13:37:10.16
+4cc58929
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-28 13:37:10.19
+4cc58929
+User
+6:37:10 PM [express] GET /api/favorites 200 in 190ms :: []
+2025-11-28 13:37:10.21
+4cc58929
+User
+userId: '49729939',
+2025-11-28 13:37:10.21
+4cc58929
+User
+email: 'ryan.mahabir@outlook.com',
+2025-11-28 13:37:10.21
+4cc58929
+User
+isAdmin: true
+2025-11-28 13:37:10.21
+4cc58929
+User
+tokenId: 'ee739ba6',
+2025-11-28 13:37:10.31
+4cc58929
+User
+"billingPeriod": "trial",
+2025-11-28 13:37:10.31
+4cc58929
+User
+"Access to all AI models and features",
+2025-11-28 13:37:10.31
+4cc58929
+User
+"trialDays": 7,
+2025-11-28 13:37:10.31
+4cc58929
+User
+[API] /api/plans - First plan: {
+2025-11-28 13:37:10.31
+4cc58929
+User
+"name": "free",
+2025-11-28 13:37:10.31
+4cc58929
+User
+"1,000 credits to start creating",
+2025-11-28 13:37:10.31
+4cc58929
+User
+"description": "Experience the full power of AI creation with no commitment. Perfect for exploring all our features risk-free.",
+2025-11-28 13:37:10.31
+4cc58929
+User
+"savingsPercentage": 0,
+2025-11-28 13:37:10.31
+4cc58929
+User
+"creditsPerMonth": 1000,
+2025-11-28 13:37:10.31
+4cc58929
+User
+"sortOrder": 0,
+2025-11-28 13:37:10.31
+4cc58929
+User
+"creditRolloverLimit": 0,
+2025-11-28 13:37:10.31
+4cc58929
+User
+"id": "ec642013-8aa6-4dfc-8f1d-5a6d21840c68",
+2025-11-28 13:37:10.31
+4cc58929
+User
+"Generate videos, images, and music",
+2025-11-28 13:37:10.34
+4cc58929
+User
+6:37:10 PM [express] GET /api/subscriptions/current 304 in 47ms
+2025-11-28 13:37:12.20
+4cc58929
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-28 13:37:12.20
+4cc58929
+User
+[/api/generations] Request received { userId: '49729939', hasUser: true, isPaginated: true, cursor: '' }
+2025-11-28 13:37:12.20
+4cc58929
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-28 13:37:12.20
+4cc58929
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-28 13:37:12.21
+4cc58929
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-28 13:37:12.22
+4cc58929
+User
+6:37:12 PM [express] GET /api/collections 200 in 46ms :: [{"id":"d98bcda5-4ab5-4b2b-98c9-c1faf271a95…
