@@ -223,6 +223,8 @@ function AppContent() {
     '/profile',
     '/admin',
     '/billing',
+    '/story-studio',
+    '/workflows',
   ];
   
   const isAppPage = appPages.some(page => location.startsWith(page));

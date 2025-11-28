@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarInset } from "@/components/ui/sidebar";
 import {
   Zap,
   Video,
@@ -490,7 +491,7 @@ export default function Workflows() {
   const categories = Array.from(new Set(workflows.map(w => w.category)));
 
   return (
-    <div className="min-h-screen bg-background">
+    <SidebarInset className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="text-center space-y-3">
@@ -707,6 +708,6 @@ export default function Workflows() {
 
       {/* Footer */}
       <Footer />
-    </div>
+    </SidebarInset>
   );
 }

@@ -116,8 +116,6 @@ export default function Chat() {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setIsStreaming(false);
-      setStreamingMessage('');
-      setOptimisticUserMessage('');
     }
   };
 
@@ -481,8 +479,8 @@ export default function Chat() {
                     }}
                     placeholder="Ask anything..."
                     disabled={isStreaming}
-                    className="flex-1 min-h-[24px] max-h-[200px] resize-none text-[15px] border-0 shadow-none focus-visible:ring-0 p-0 bg-transparent placeholder:text-muted-foreground/50"
-                    rows={1}
+                    className="flex-1 min-h-[96px] max-h-[200px] resize-none text-[15px] border-0 shadow-none focus-visible:ring-0 p-0 bg-transparent placeholder:text-muted-foreground/50"
+                    rows={4}
                   />
                   <Button
                     data-testid="button-send-message"
