@@ -53,6 +53,8 @@ import { AIAssistantWidget } from "@/components/ai-assistant-widget";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import VerifyEmail from "@/pages/verify-email";
+import ResendVerification from "@/pages/resend-verification";
 import Pricing from "@/pages/pricing";
 import Affiliates from "@/pages/affiliates";
 import Home from "@/pages/home";
@@ -141,6 +143,8 @@ function Router() {
         <>
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
+          <Route path="/verify-email" component={VerifyEmail} />
+          <Route path="/resend-verification" component={ResendVerification} />
         </>
       )}
 

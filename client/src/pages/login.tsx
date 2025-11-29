@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthProvider";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Mail } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 export default function Login() {
@@ -15,6 +15,9 @@ export default function Login() {
   const { toast } = useToast();
   const { login, setUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -35,7 +38,14 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Login failed");
+        // Check if email verification is required
+        if (data.code === "EMAIL_NOT_VERIFIED") {
+          setUnverifiedEmail(data.email || formData.email);
+          setEmailNotVerified(true);
+          setIsLoading(false);
+          return;
+        }
+        throw new Error(data.message || data.error || "Login failed");
       }
 
       // Store the access token in AuthProvider
@@ -74,9 +84,103 @@ export default function Login() {
     }
   };
 
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Verification email sent",
+          description: "Check your inbox for the verification link.",
+        });
+      } else {
+        toast({
+          title: "Failed to send",
+          description: data.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send verification email.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleGoogleLogin = () => {
     window.location.href = "/auth/google";
   };
+
+  if (emailNotVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-black p-4">
+        <div className="w-full max-w-md">
+          <div className="flex flex-col items-center mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-8 w-8 text-purple-400" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Artivio AI
+              </h1>
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4">
+                <Mail className="h-12 w-12 text-yellow-500" />
+              </div>
+              <CardTitle>Verify Your Email</CardTitle>
+              <CardDescription>
+                Please verify your email address before logging in
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                We sent a verification link to <strong>{unverifiedEmail}</strong>. 
+                Click the link in your email to verify your account.
+              </p>
+              <Button
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                onClick={handleResendVerification}
+                disabled={isResending}
+                data-testid="button-resend-verification"
+              >
+                {isResending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Resend Verification Email"
+                )}
+              </Button>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => {
+                  setEmailNotVerified(false);
+                  setFormData({ email: "", password: "" });
+                }}
+                data-testid="button-try-different-email"
+              >
+                Try Different Email
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-black p-4">

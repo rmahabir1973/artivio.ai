@@ -1,18 +1,20 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthProvider";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Mail, CheckCircle } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 export default function Register() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { login, setUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -63,32 +65,15 @@ export default function Register() {
         throw new Error(data.error || "Registration failed");
       }
 
-      // Store the access token in AuthProvider
-      if (data.accessToken) {
-        login(data.accessToken);
-
-        // Fetch user data with the access token
-        const userResponse = await fetch("/api/auth/user", {
-          headers: {
-            Authorization: `Bearer ${data.accessToken}`,
-          },
-          credentials: "include",
+      // Email verification required - show success state
+      if (data.requiresVerification) {
+        setRegisteredEmail(data.email || formData.email);
+        setRegistrationComplete(true);
+        toast({
+          title: "Check your email",
+          description: "We've sent you a verification link to complete your registration.",
         });
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUser(userData);
-        }
       }
-
-      toast({
-        title: "Account created!",
-        description: "Welcome to Artivio AI. Please select a subscription plan to get started.",
-      });
-
-      // Redirect to pricing page to select subscription plan (including Free Trial)
-      // Use window.location.href for reliable navigation after auth state changes
-      window.location.href = "/pricing";
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
@@ -103,6 +88,58 @@ export default function Register() {
   const handleGoogleSignup = () => {
     window.location.href = "/auth/google";
   };
+
+  if (registrationComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-black p-4">
+        <div className="w-full max-w-md">
+          <div className="flex flex-col items-center mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-8 w-8 text-purple-400" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                Artivio AI
+              </h1>
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4">
+                <CheckCircle className="h-12 w-12 text-green-500" />
+              </div>
+              <CardTitle>Check Your Email</CardTitle>
+              <CardDescription>
+                We've sent a verification link to <strong>{registeredEmail}</strong>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Click the link in your email to verify your account. The link will expire in 24 hours.
+              </p>
+              <p className="text-sm text-muted-foreground text-center">
+                Don't see it? Check your spam folder or{" "}
+                <a
+                  href="/resend-verification"
+                  className="text-purple-400 hover:text-purple-300 font-medium"
+                  data-testid="link-resend-verification"
+                >
+                  request a new link
+                </a>
+              </p>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => setLocation("/login")}
+                data-testid="button-go-to-login"
+              >
+                Go to Login
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-black p-4">
