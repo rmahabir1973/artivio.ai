@@ -29,7 +29,7 @@ export function PeerTubePreview({
   const [embedUrl, setEmbedUrl] = useState<string | null>(null);
 
   const { data: homeContent } = useQuery<any>({
-    queryKey: ["/api/home-content"],
+    queryKey: ["/api/homepage"],
   });
 
   useEffect(() => {
