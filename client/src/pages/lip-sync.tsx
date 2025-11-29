@@ -67,6 +67,16 @@ export default function LipSync() {
     enabled: isAuthenticated,
   });
 
+  // Reset isGenerating when generation completes
+  useEffect(() => {
+    if (isGenerating && generations.length > 0) {
+      const latestGeneration = generations[0];
+      if (latestGeneration?.status === "completed" || latestGeneration?.status === "failed") {
+        setIsGenerating(false);
+      }
+    }
+  }, [isGenerating, generations]);
+
   // Generate mutation
   const generateMutation = useMutation({
     mutationFn: async (params: { imageUrl: string; audioUrl: string; prompt?: string; resolution: string; seed?: string }) => {
@@ -458,8 +468,8 @@ export default function LipSync() {
           </div>
           <Input id="seed" type="number" placeholder="Leave empty for random" value={seed} onChange={(e) => setSeed(e.target.value)} min="10000" max="1000000" disabled={seedLocked} data-testid="input-seed" />
           <p className="text-xs text-muted-foreground">Range: 10000 - 1000000</p>
-          <SavedSeedsLibrary currentSeed={seed} onApplySeed={(appliedSeed) => {
-            setSeed(appliedSeed);
+          <SavedSeedsLibrary currentSeed={seed ? parseInt(seed, 10) : 0} onApplySeed={(appliedSeed) => {
+            setSeed(String(appliedSeed));
             setSeedLocked(true);
           }} />
         </div>
@@ -516,7 +526,15 @@ export default function LipSync() {
   );
 
   const previewContent = (
-    <PreviewPanel item={previewItem} type="video" isLoading={isLoading} isEmpty={generations.length === 0} emptyMessage="No lip-sync videos generated yet" />
+    <PreviewPanel 
+      title="Lip Sync Preview"
+      description="Your generated lip-sync video will appear here"
+      status={generateMutation.isPending ? "generating" : previewItem?.status === "completed" ? "completed" : previewItem?.status === "failed" ? "failed" : "idle"}
+      resultUrl={previewItem?.resultUrl}
+      resultType="video"
+      errorMessage={previewItem?.errorMessage}
+      emptyStateMessage="No lip-sync videos generated yet. Upload an image and audio to get started."
+    />
   );
 
   return (
