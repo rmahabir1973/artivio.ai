@@ -18,6 +18,7 @@ import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiGoogle } from "react-icons/si";
+import { GenerationProgress } from "@/components/generation-progress";
 
 const ASPECT_RATIOS = [
   { value: "16:9", label: "16:9 (Landscape)" },
@@ -454,6 +455,13 @@ export default function GenerateTransition() {
                 </>
               )}
             </Button>
+
+            {/* Generation Progress */}
+            <GenerationProgress
+              isActive={isGenerating}
+              modelId="veo-3.1-first-and-last-frames"
+              generationType="video"
+            />
           </CardContent>
         </Card>
       }

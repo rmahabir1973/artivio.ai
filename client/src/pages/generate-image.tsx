@@ -23,6 +23,7 @@ import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiOpenai } from "react-icons/si";
+import { GenerationProgress } from "@/components/generation-progress";
 
 // Model icon component for consistent styling
 const ImageModelIcon = ({ modelValue, className = "h-4 w-4" }: { modelValue: string; className?: string }) => {
@@ -1148,6 +1149,13 @@ export default function GenerateImage() {
                   <>{mode === "text-to-image" ? "Generate Image" : "Edit Image"} ({selectedModel?.cost} credits)</>
                 )}
               </Button>
+
+              {/* Generation Progress */}
+              <GenerationProgress
+                isActive={isGenerating}
+                modelId={model}
+                generationType="image"
+              />
 
               {/* Model Comparison - Collapsible */}
               <Collapsible className="mt-6">

@@ -18,6 +18,7 @@ import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { GenerationProgress } from "@/components/generation-progress";
 
 interface Scene {
   id: string;
@@ -755,6 +756,13 @@ export default function GenerateSora() {
                     </>
                   )}
                 </Button>
+
+                {/* Generation Progress */}
+                <GenerationProgress
+                  isActive={isGenerating}
+                  modelId="sora-2-pro"
+                  generationType="video"
+                />
 
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="flex items-start gap-2">

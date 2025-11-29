@@ -26,6 +26,7 @@ import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { useLocation } from "wouter";
 import { SiGoogle } from "react-icons/si";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { GenerationProgress } from "@/components/generation-progress";
 
 // Model icon component for consistent styling
 const ModelIcon = ({ modelValue, className = "h-4 w-4" }: { modelValue: string; className?: string }) => {
@@ -1253,6 +1254,14 @@ export default function GenerateVideo() {
                 <>Generate Video ({selectedModel?.cost} credits)</>
               )}
             </Button>
+
+            {/* Generation Progress */}
+            <GenerationProgress
+              isActive={isGenerating}
+              modelId={model}
+              generationType="video"
+            />
+
             {/* Model Comparison - Collapsible */}
             <Collapsible className="mt-6">
               <CollapsibleTrigger asChild>

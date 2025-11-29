@@ -21,6 +21,7 @@ import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { GenerationProgress } from "@/components/generation-progress";
 
 const OUTPUT_FORMATS = [
   { value: "mp3_44100_128", label: "MP3 44.1kHz 128kbps (Recommended)" },
@@ -285,6 +286,13 @@ export default function SoundEffects() {
                   </>
                 )}
               </Button>
+
+              {/* Generation Progress */}
+              <GenerationProgress
+                isActive={isGenerating}
+                modelId="elevenlabs-sfx"
+                generationType="audio"
+              />
 
               {/* Tips & Best Practices */}
               <Collapsible className="mt-6">

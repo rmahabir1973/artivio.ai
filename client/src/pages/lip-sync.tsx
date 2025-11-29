@@ -20,6 +20,7 @@ import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PreviewPanel } from "@/components/preview-panel";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import type { Generation } from "@shared/schema";
+import { GenerationProgress } from "@/components/generation-progress";
 
 const MAX_AUDIO_DURATION = 15; // Maximum audio duration in seconds
 
@@ -50,6 +51,9 @@ export default function LipSync() {
 
   // Upload state
   const [uploading, setUploading] = useState(false);
+  
+  // Generation state
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -72,6 +76,7 @@ export default function LipSync() {
       toast({ title: "Success", description: "Lip sync generation started! Check below for updates." });
       queryClient.invalidateQueries({ queryKey: ["/api/lip-sync/generations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setIsGenerating(true);
       setImageUrl("");
       setImageFile("");
       setAudioUrl("");
@@ -498,6 +503,13 @@ export default function LipSync() {
           <Button onClick={handleGenerate} disabled={generateMutation.isPending || !imageUrl || !audioUrl} className="w-full" data-testid="button-generate">
             {generateMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <>Generate ({cost} credits)</>}
           </Button>
+          
+          {/* Generation Progress */}
+          <GenerationProgress
+            isActive={isGenerating}
+            modelId="lip-sync"
+            generationType="lip-sync"
+          />
         </div>
       </CardContent>
     </Card>
