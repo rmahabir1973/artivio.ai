@@ -6,6 +6,10 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 ## User Preferences
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
+## Recent Updates (Nov 29, 2025)
+- **Stripe Configuration Fix**: Stripe Price IDs are now managed EXCLUSIVELY through Admin Panel → Subscription Plans. Removed all hardcoded Stripe IDs from seedPlans.ts. Seeding only creates plan structure; Stripe IDs must be configured via Admin Panel. Added detailed logging for checkout debugging.
+- **Agency Plans Removed**: Removed Agency subscription plans per user request. Only Free Trial, Starter, Professional, and Business tiers remain.
+
 ## Recent Updates (Nov 28, 2025)
 - **AWS S3 Storage Integration**: Implemented scalable cloud storage for user uploads (images, audio, video). Uses feature flag `USE_S3=true` with automatic fallback to local storage. Signed URLs valid for 7 days. S3 bucket: `artivio-video-exports`, region: `us-east-1`.
 - **Video Editor Lambda Processing**: Video combination now uses AWS Lambda with FFmpeg layer for scalable processing, outputs to S3 with signed URLs.

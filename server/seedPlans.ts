@@ -2,7 +2,10 @@ import { db } from "./db";
 import { subscriptionPlans } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-// Default subscription plans with marketing copy and Stripe IDs
+// Default subscription plans with marketing copy
+// NOTE: Stripe IDs (stripePriceId, stripeProductId) are NOT set here
+// They must be configured via Admin Panel → Subscription Plans
+// This ensures admin changes are always authoritative
 export const defaultPlans = [
   {
     name: "free",
@@ -46,8 +49,8 @@ export const defaultPlans = [
       "Priority support via email",
       "Rollover up to 2,000 unused credits"
     ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXC65KvkQIROMzfKMV2IETR",
+    stripeProductId: null, // Set via Admin Panel
+    stripePriceId: null,   // Set via Admin Panel
     isActive: true,
     sortOrder: 1,
   },
@@ -70,8 +73,8 @@ export const defaultPlans = [
       "Rollover up to 2,000 unused credits",
       "Save 35% with annual billing"
     ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXCABKvkQIROMzfCUt5gQFq",
+    stripeProductId: null, // Set via Admin Panel
+    stripePriceId: null,   // Set via Admin Panel
     isActive: true,
     sortOrder: 2,
   },
@@ -94,8 +97,8 @@ export const defaultPlans = [
       "Rollover up to 5,000 unused credits",
       "Early access to new features & models"
     ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXCUZKvkQIROMzflhWxr4hz",
+    stripeProductId: null, // Set via Admin Panel
+    stripePriceId: null,   // Set via Admin Panel
     isActive: true,
     sortOrder: 3,
   },
@@ -119,8 +122,8 @@ export const defaultPlans = [
       "Early access to new features & models",
       "Save 35% with annual billing"
     ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXCVhKvkQIROMzfOktck8wI",
+    stripeProductId: null, // Set via Admin Panel
+    stripePriceId: null,   // Set via Admin Panel
     isActive: true,
     sortOrder: 4,
   },
@@ -144,8 +147,8 @@ export const defaultPlans = [
       "Early access to new features & models",
       "Dedicated account manager"
     ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXCWefvkQIROMzfH2Mgwnvv",
+    stripeProductId: null, // Set via Admin Panel
+    stripePriceId: null,   // Set via Admin Panel
     isActive: true,
     sortOrder: 5,
   },
@@ -170,63 +173,10 @@ export const defaultPlans = [
       "Dedicated account manager",
       "Save 35% with annual billing"
     ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXCX9KvkQIROMzf8mRWcyyy",
+    stripeProductId: null, // Set via Admin Panel
+    stripePriceId: null,   // Set via Admin Panel
     isActive: true,
     sortOrder: 6,
-  },
-  {
-    name: "agency-monthly",
-    displayName: "Agency",
-    description: "Enterprise-grade AI content generation at scale. Perfect for agencies, studios, and large organizations.",
-    price: 24900, // $249/month
-    monthlyPrice: 24900,
-    annualPrice: null,
-    billingPeriod: "monthly",
-    creditsPerMonth: 50000,
-    creditRolloverLimit: 25000,
-    savingsPercentage: 0,
-    features: [
-      "50,000 credits per month",
-      "Access to all premium AI models",
-      "Highest priority processing queue",
-      "Premium 24/7 support (email, chat & phone)",
-      "Rollover up to 25,000 unused credits",
-      "Early access to new features & models",
-      "Dedicated account manager",
-      "Custom integration support"
-    ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXCYOKvkQIROMzfu2heHfcM",
-    isActive: true,
-    sortOrder: 7,
-  },
-  {
-    name: "agency-yearly",
-    displayName: "Agency (Annual)",
-    description: "Enterprise-grade AI at scale with 35% savings. Perfect for agencies, studios, and large organizations.",
-    price: 194220, // $1,942.20/year
-    monthlyPrice: null,
-    annualPrice: 194220,
-    billingPeriod: "annual",
-    creditsPerMonth: 50000,
-    creditRolloverLimit: 25000,
-    savingsPercentage: 35,
-    features: [
-      "50,000 credits per month",
-      "Access to all premium AI models",
-      "Highest priority processing queue",
-      "Premium 24/7 support (email, chat & phone)",
-      "Rollover up to 25,000 unused credits",
-      "Early access to new features & models",
-      "Dedicated account manager",
-      "Custom integration support",
-      "Save 35% with annual billing"
-    ],
-    stripeProductId: "prod_TUAOGMBKxiYbwT",
-    stripePriceId: "price_1SXCYKKvkQIROMzfCRlLjHb1",
-    isActive: true,
-    sortOrder: 8,
   },
 ];
 
@@ -234,6 +184,9 @@ export const defaultPlans = [
  * Initialize subscription plans in the database
  * ONLY creates plans that don't exist - NEVER overwrites existing plans
  * This ensures admin panel changes persist across server restarts
+ * 
+ * IMPORTANT: Stripe IDs (stripePriceId, stripeProductId) are NOT set by seeding.
+ * They must be configured via Admin Panel → Subscription Plans after plans are created.
  */
 export async function initializePlans() {
   console.log('📋 Initializing subscription plans...');
@@ -252,10 +205,11 @@ export async function initializePlans() {
         console.log(`  ⏭️  Skipped plan (already exists): ${planData.displayName}`);
       } else {
         // Create new plan only if it doesn't exist
+        // Note: Stripe IDs will need to be set via Admin Panel
         await db
           .insert(subscriptionPlans)
           .values(planData);
-        console.log(`  ✓ Created plan: ${planData.displayName}`);
+        console.log(`  ✓ Created plan: ${planData.displayName} (configure Stripe IDs in Admin Panel)`);
       }
     } catch (error) {
       console.error(`  ✗ Error initializing plan ${planData.displayName}:`, error);
@@ -263,4 +217,5 @@ export async function initializePlans() {
   }
   
   console.log('✓ Subscription plans initialized successfully');
+  console.log('📝 Remember: Configure Stripe Price IDs in Admin Panel → Subscription Plans');
 }
