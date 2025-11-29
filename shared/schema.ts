@@ -1492,6 +1492,21 @@ export const homePageContent = pgTable("home_page_content", {
     answer: string;
   }[]>().default([]),
   
+  // Preview videos for generation pages (PeerTube embed URLs)
+  previewVideoVideo: text("preview_video_video"), // AI Video generation page
+  previewVideoImage: text("preview_video_image"), // AI Image generation page
+  previewVideoTransition: text("preview_video_transition"), // Video Transition page
+  previewVideoSora: text("preview_video_sora"), // Sora 2 Pro page
+  previewVideoGrok: text("preview_video_grok"), // Grok Imagine page
+  previewVideoSoundEffects: text("preview_video_sound_effects"), // Sound Effects page
+  previewVideoMusic: text("preview_video_music"), // AI Music page
+  previewVideoVoiceClone: text("preview_video_voice_clone"), // Voice Cloning page
+  previewVideoLipSync: text("preview_video_lip_sync"), // Lip Sync page
+  previewVideoTts: text("preview_video_tts"), // Text-to-Speech page
+  previewVideoUpscaler: text("preview_video_upscaler"), // Image Upscaler page
+  previewVideoVideoUpscaler: text("preview_video_video_upscaler"), // Video Upscaler page
+  previewVideoBgRemover: text("preview_video_bg_remover"), // Background Remover page
+  
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
