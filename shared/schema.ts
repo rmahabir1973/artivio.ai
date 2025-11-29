@@ -43,6 +43,9 @@ export const users = pgTable("users", {
   referralCode: varchar("referral_code").unique(), // Unique code for sharing with friends
   referredBy: varchar("referred_by"), // ID of user who referred them
   tokenVersion: integer("token_version").notNull().default(0), // For forced logout / token invalidation
+  emailVerified: boolean("email_verified").notNull().default(false), // For email verification
+  emailVerificationToken: varchar("email_verification_token"), // Token for email verification
+  emailVerificationExpires: timestamp("email_verification_expires"), // Token expiration time
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

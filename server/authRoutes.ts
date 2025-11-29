@@ -17,6 +17,13 @@ import {
 } from "./jwtUtils";
 import { requireJWT } from "./jwtMiddleware";
 import { LoopsService } from "./loops";
+import {
+  generateVerificationToken,
+  getTokenExpiration,
+  sendVerificationEmail,
+  verifyEmail,
+  resendVerificationEmail,
+} from "./emailVerification";
 
 // Helper to determine if request is over HTTPS
 function isSecureRequest(req: Request): boolean {
@@ -95,7 +102,11 @@ export function registerAuthRoutes(app: Express) {
       // Hash password
       const hashedPassword = await hashPassword(password);
 
-      // Create user (credits will be assigned during onboarding)
+      // Generate email verification token
+      const verificationToken = generateVerificationToken();
+      const verificationExpires = getTokenExpiration();
+
+      // Create user with verification token (credits will be assigned during onboarding)
       const [newUser] = await db
         .insert(users)
         .values({
@@ -105,12 +116,39 @@ export function registerAuthRoutes(app: Express) {
           firstName: finalFirstName,
           lastName: finalLastName,
           credits: 0, // Will be set during onboarding
+          emailVerified: false,
+          emailVerificationToken: verificationToken,
+          emailVerificationExpires: verificationExpires,
         })
         .returning();
 
-      console.log("[AUTH] ✓ User registered successfully", {
+      console.log("[AUTH] ✓ User registered successfully (pending verification)", {
         userId: newUser.id,
         email: newUser.email,
+      });
+
+      // Send verification email (fire and forget - don't block registration)
+      sendVerificationEmail(
+        newUser.email || email.toLowerCase(),
+        verificationToken,
+        finalFirstName || undefined
+      ).then(result => {
+        if (result.success) {
+          console.log("[AUTH] ✓ Verification email sent", {
+            userId: newUser.id,
+            email: newUser.email,
+          });
+        } else {
+          console.error("[AUTH] Failed to send verification email (non-blocking)", {
+            error: result.error,
+            userId: newUser.id,
+          });
+        }
+      }).catch(err => {
+        console.error("[AUTH] Failed to send verification email (non-blocking)", {
+          error: err.message,
+          userId: newUser.id,
+        });
       });
 
       // Add new user to Loops.so 7-Day Trial Nurture funnel (fire and forget)
@@ -133,69 +171,12 @@ export function registerAuthRoutes(app: Express) {
         });
       });
 
-      // Admin email whitelist
-      const ADMIN_EMAILS = [
-        "ryan.mahabir@outlook.com",
-        "admin@artivio.ai",
-        "joe@joecodeswell.com",
-        "jordanlambrecht@gmail.com",
-      ];
-      const isAdmin = ADMIN_EMAILS.includes(newUser.email?.toLowerCase() || "");
-
-      // Generate JWT tokens
-      const accessToken = generateAccessToken({
-        userId: newUser.id,
-        email: newUser.email || email.toLowerCase(),
-        tokenVersion: newUser.tokenVersion || 0,
-        isAdmin,
-      });
-
-      const refreshToken = generateRefreshToken();
-      const deviceInfo = req.headers["user-agent"] || "unknown";
-
-      // Store refresh token in database FIRST - catch errors
-      let tokenId;
-      try {
-        tokenId = await storeRefreshToken(
-          newUser.id,
-          refreshToken,
-          newUser.tokenVersion || 0,
-          deviceInfo
-        );
-      } catch (storeError: any) {
-        console.error("[AUTH ERROR] Failed to store refresh token during registration", {
-          error: storeError.message,
-          userId: newUser.id,
-        });
-        // Don't set cookies if database operation failed
-        return res.status(503).json({
-          message: "Database error during registration. Please try again.",
-          code: "TOKEN_STORE_ERROR",
-        });
-      }
-
-      // Only set cookies AFTER successful database storage
-      const cookieOptions = getCookieOptions(req);
-      res.cookie("refreshToken", refreshToken, cookieOptions);
-      res.cookie("tokenId", tokenId, cookieOptions);
-
-      console.log("[AUTH] ✓ JWT tokens generated and stored", {
-        userId: newUser.id,
-        email: newUser.email,
-        tokenId: tokenId?.substring(0, 8),
-      });
-
-      // Return access token and user data
+      // Return success with email verification required message
+      // Do NOT issue JWT tokens until email is verified
       res.json({
-        message: "Registration successful",
-        accessToken,
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
-          isAdmin,
-        },
+        message: "Registration successful! Please check your email to verify your account.",
+        requiresVerification: true,
+        email: newUser.email,
       });
     } catch (error: any) {
       console.error("[AUTH ERROR] Registration error", {
@@ -244,6 +225,20 @@ export function registerAuthRoutes(app: Express) {
           });
           return res.status(401).json({
             message: info?.message || "Invalid email or password",
+          });
+        }
+
+        // Check email verification for local auth users
+        // Google OAuth users are automatically verified (Google handles email verification)
+        if (user.authProvider === "local" && !user.emailVerified) {
+          console.log("[AUTH] Login blocked - email not verified", {
+            userId: user.id,
+            email: user.email,
+          });
+          return res.status(403).json({
+            message: "Please verify your email before logging in. Check your inbox for the verification link.",
+            code: "EMAIL_NOT_VERIFIED",
+            email: user.email,
           });
         }
 
@@ -844,6 +839,73 @@ export function registerAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[AUTH ERROR] Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Email verification endpoint
+  app.get("/api/auth/verify-email", async (req, res) => {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Verification token is required",
+        });
+      }
+
+      console.log("[AUTH] Email verification attempt");
+
+      const result = await verifyEmail(token);
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: result.message,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: result.message,
+          error: result.error,
+        });
+      }
+    } catch (error: any) {
+      console.error("[AUTH ERROR] Email verification error:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Verification failed. Please try again.",
+      });
+    }
+  });
+
+  // Resend verification email endpoint
+  app.post("/api/auth/resend-verification", async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "Email is required",
+        });
+      }
+
+      console.log("[AUTH] Resend verification request for:", email);
+
+      const result = await resendVerificationEmail(email);
+
+      // Always return 200 to prevent email enumeration
+      res.json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error: any) {
+      console.error("[AUTH ERROR] Resend verification error:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Failed to resend verification email. Please try again.",
+      });
     }
   });
 
