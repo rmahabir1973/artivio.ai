@@ -93,6 +93,12 @@ export default function Admin() {
     businessTitle: "",
     businessDescription: "",
     businessImageUrl: "",
+    previewVideoVideo: "",
+    previewVideoImage: "",
+    previewVideoTransition: "",
+    previewVideoSora: "",
+    previewVideoGrok: "",
+    previewVideoSoundEffects: "",
   });
   const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
   const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
@@ -227,6 +233,12 @@ export default function Admin() {
         businessTitle: homePageContent.businessTitle || "",
         businessDescription: homePageContent.businessDescription || "",
         businessImageUrl: homePageContent.businessImageUrl || "",
+        previewVideoVideo: homePageContent.previewVideoVideo || "",
+        previewVideoImage: homePageContent.previewVideoImage || "",
+        previewVideoTransition: homePageContent.previewVideoTransition || "",
+        previewVideoSora: homePageContent.previewVideoSora || "",
+        previewVideoGrok: homePageContent.previewVideoGrok || "",
+        previewVideoSoundEffects: homePageContent.previewVideoSoundEffects || "",
       });
     }
   }, [homePageContent, editingHomePage]);
@@ -1639,6 +1651,115 @@ export default function Admin() {
                         <>
                           <Save className="mr-2 h-4 w-4" />
                           Save Feature Videos
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Generation Page Previews</CardTitle>
+                <CardDescription>PeerTube video URLs shown in the preview panel of each generation page</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {homePageLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="previewVideoVideo">Video Generation Preview</Label>
+                        <Input
+                          id="previewVideoVideo"
+                          value={homePageFormData.previewVideoVideo}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoVideo: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-video"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="previewVideoImage">Image Generation Preview</Label>
+                        <Input
+                          id="previewVideoImage"
+                          value={homePageFormData.previewVideoImage}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoImage: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-image"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="previewVideoTransition">Transition Video Preview</Label>
+                        <Input
+                          id="previewVideoTransition"
+                          value={homePageFormData.previewVideoTransition}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoTransition: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-transition"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="previewVideoSora">Sora AI Preview</Label>
+                        <Input
+                          id="previewVideoSora"
+                          value={homePageFormData.previewVideoSora}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoSora: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-sora"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="previewVideoGrok">Grok Imagine Preview</Label>
+                        <Input
+                          id="previewVideoGrok"
+                          value={homePageFormData.previewVideoGrok}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoGrok: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-grok"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="previewVideoSoundEffects">Sound Effects Preview</Label>
+                        <Input
+                          id="previewVideoSoundEffects"
+                          value={homePageFormData.previewVideoSoundEffects}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoSoundEffects: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-sound-effects"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        updateHomePageMutation.mutate({
+                          previewVideoVideo: homePageFormData.previewVideoVideo.trim() || undefined,
+                          previewVideoImage: homePageFormData.previewVideoImage.trim() || undefined,
+                          previewVideoTransition: homePageFormData.previewVideoTransition.trim() || undefined,
+                          previewVideoSora: homePageFormData.previewVideoSora.trim() || undefined,
+                          previewVideoGrok: homePageFormData.previewVideoGrok.trim() || undefined,
+                          previewVideoSoundEffects: homePageFormData.previewVideoSoundEffects.trim() || undefined,
+                        });
+                      }}
+                      disabled={updateHomePageMutation.isPending}
+                      data-testid="button-save-preview-videos"
+                    >
+                      {updateHomePageMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Preview Videos
                         </>
                       )}
                     </Button>
