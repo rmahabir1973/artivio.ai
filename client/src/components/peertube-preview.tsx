@@ -8,7 +8,7 @@ interface PeerTubePreviewProps {
   pageType: "video" | "image" | "transition" | "sora" | "grok" | "sound-effects" | "music" | 
     "brand-product-ad" | "brand-influencer-ad" | "brand-logo-animation" | "brand-unboxing" |
     "brand-flash-sale" | "brand-brand-story" | "brand-testimonial" | "brand-social-promo" |
-    "brand-before-after" | "brand-showcase";
+    "brand-before-after" | "brand-showcase" | "background-remover";
   title?: string;
   description?: string;
   showGeneratingMessage?: boolean;
@@ -32,6 +32,7 @@ const PAGE_TYPE_TO_FIELD: Record<PeerTubePreviewProps["pageType"], string> = {
   "brand-social-promo": "previewVideoBrandSocialPromo",
   "brand-before-after": "previewVideoBrandBeforeAfter",
   "brand-showcase": "previewVideoBrandShowcase",
+  "background-remover": "previewVideoBgRemover",
 };
 
 export function PeerTubePreview({

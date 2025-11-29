@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, Upload, Download, Copy, Check, Wand2 } from "lucide-react";
+import { Loader2, Upload, Download, Copy, Check, Wand2, Library } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { PeerTubePreview } from "@/components/peertube-preview";
+import { Link } from "wouter";
 
 const BACKGROUND_REMOVER_COST = 3;
 
@@ -101,6 +103,8 @@ export default function BackgroundRemover() {
       if (typeof userCredits === "number" && userCredits < currentCost) {
         throw new Error(`Insufficient credits. Need ${currentCost}, have ${userCredits}.`);
       }
+
+      setResultUrl(null);
 
       const response: any = await apiRequest("POST", "/api/background-remover", {
         imageData: base64Image,
@@ -309,43 +313,38 @@ export default function BackgroundRemover() {
     </Card>
   );
 
-  const preview = (
-    <Card>
-      <CardHeader>
-        <CardTitle>Preview</CardTitle>
-        <CardDescription>Your result will appear here</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="aspect-square rounded-lg bg-muted overflow-hidden flex items-center justify-center">
-          {resultUrl ? (
+  const preview = resultUrl ? (
+    <div className="w-full sticky top-8">
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl blur-lg opacity-30 group-hover:opacity-50 transition duration-500" />
+        
+        <div className="relative bg-gradient-to-br from-[#0f0f1e]/95 via-[#0a0a15]/95 to-[#050510]/95 rounded-2xl border border-purple-500/20 overflow-hidden backdrop-blur-xl shadow-2xl shadow-purple-900/20">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/20 bg-gradient-to-r from-purple-900/20 to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500 blur-md opacity-50" />
+                <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">Background Removed</h3>
+                <p className="text-sm text-purple-300/70">Ready to download</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative aspect-square bg-gradient-to-br from-[#0a0a15] to-[#050510] flex items-center justify-center p-4">
             <img
               src={resultUrl}
               alt="Background Removed"
-              className="w-full h-full object-contain"
+              className="max-w-full max-h-full object-contain rounded-lg"
               data-testid="preview-removed-background"
             />
-          ) : (
-            <div className="text-center text-muted-foreground">
-              {isPolling ? (
-                <div className="space-y-2">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                  <p className="text-sm">Processing your image...</p>
-                </div>
-              ) : imageUrl ? (
-                <div className="space-y-2">
-                  <Loader2 className="h-8 w-8 mx-auto opacity-50" />
-                  <p className="text-sm">Ready to process</p>
-                </div>
-              ) : (
-                <p className="text-sm">Upload an image to get started</p>
-              )}
-            </div>
-          )}
-        </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050510]/80 via-transparent to-transparent pointer-events-none" />
+          </div>
 
-        {/* Download/Copy buttons */}
-        {resultUrl && (
-          <div className="space-y-2">
+          <div className="px-6 py-4 border-t border-purple-500/20 space-y-3">
             <Button
               onClick={handleDownload}
               variant="default"
@@ -365,9 +364,25 @@ export default function BackgroundRemover() {
               {copied ? "Copied!" : "Copy URL"}
             </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-center gap-2 text-sm text-purple-400/60">
+        <Library className="w-4 h-4" />
+        <Link href="/history" className="hover:text-purple-300 transition-colors">
+          View all your creations in the Library
+        </Link>
+      </div>
+    </div>
+  ) : (
+    <PeerTubePreview
+      pageType="background-remover"
+      title="Background Remover"
+      description="See AI-powered background removal in action"
+      showGeneratingMessage={isPolling || removalMutation.isPending}
+    />
   );
 
   return (

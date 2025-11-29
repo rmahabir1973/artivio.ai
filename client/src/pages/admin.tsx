@@ -100,6 +100,7 @@ export default function Admin() {
     previewVideoGrok: "",
     previewVideoSoundEffects: "",
     previewVideoMusic: "",
+    previewVideoBgRemover: "",
     previewVideoBrandProductAd: "",
     previewVideoBrandInfluencerAd: "",
     previewVideoBrandLogoAnimation: "",
@@ -251,6 +252,7 @@ export default function Admin() {
         previewVideoGrok: homePageContent.previewVideoGrok || "",
         previewVideoSoundEffects: homePageContent.previewVideoSoundEffects || "",
         previewVideoMusic: homePageContent.previewVideoMusic || "",
+        previewVideoBgRemover: homePageContent.previewVideoBgRemover || "",
         previewVideoBrandProductAd: homePageContent.previewVideoBrandProductAd || "",
         previewVideoBrandInfluencerAd: homePageContent.previewVideoBrandInfluencerAd || "",
         previewVideoBrandLogoAnimation: homePageContent.previewVideoBrandLogoAnimation || "",
@@ -1770,6 +1772,16 @@ export default function Admin() {
                           data-testid="input-preview-video-music"
                         />
                       </div>
+                      <div>
+                        <Label htmlFor="previewVideoBgRemover">Background Remover Preview</Label>
+                        <Input
+                          id="previewVideoBgRemover"
+                          value={homePageFormData.previewVideoBgRemover}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBgRemover: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-bg-remover"
+                        />
+                      </div>
                     </div>
                     
                     <div className="mt-6 pt-6 border-t">
@@ -1896,6 +1908,7 @@ export default function Admin() {
                           previewVideoGrok: homePageFormData.previewVideoGrok.trim() || undefined,
                           previewVideoSoundEffects: homePageFormData.previewVideoSoundEffects.trim() || undefined,
                           previewVideoMusic: homePageFormData.previewVideoMusic.trim() || undefined,
+                          previewVideoBgRemover: homePageFormData.previewVideoBgRemover.trim() || undefined,
                           previewVideoBrandProductAd: homePageFormData.previewVideoBrandProductAd.trim() || undefined,
                           previewVideoBrandInfluencerAd: homePageFormData.previewVideoBrandInfluencerAd.trim() || undefined,
                           previewVideoBrandLogoAnimation: homePageFormData.previewVideoBrandLogoAnimation.trim() || undefined,
