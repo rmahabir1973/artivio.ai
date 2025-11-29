@@ -323,7 +323,8 @@ export default function GenerateImage() {
       isGenerating 
     });
     
-    if (pollData?.status === 'completed' && pollData?.resultUrl) {
+    const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedImage(pollData);
       setIsGenerating(false);

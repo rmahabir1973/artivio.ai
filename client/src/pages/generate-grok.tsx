@@ -63,7 +63,8 @@ export default function GenerateGrok() {
       isGenerating 
     });
     
-    if (pollData?.status === 'completed' && pollData?.resultUrl) {
+    const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedVideo(pollData);
       setIsGenerating(false);

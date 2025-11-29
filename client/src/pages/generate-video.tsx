@@ -313,8 +313,9 @@ export default function GenerateVideo() {
       isGenerating 
     });
     
-    // Check for completed generation - must have BOTH status completed AND resultUrl
-    if (pollData?.status === 'completed' && pollData?.resultUrl) {
+    // Check for completed generation - must have BOTH status completed/success AND resultUrl
+    const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedVideo(pollData);
       setIsGenerating(false);
