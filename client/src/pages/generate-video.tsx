@@ -288,6 +288,7 @@ export default function GenerateVideo() {
   }, []); // Empty deps - run only once on mount
 
   // Poll for generation result when generationId is set
+  // Keep polling active based ONLY on generationId - don't gate on isGenerating (causes race condition)
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
     queryFn: async () => {
@@ -298,23 +299,27 @@ export default function GenerateVideo() {
       console.log(`[POLL] Response:`, { status: data?.status, hasResultUrl: !!data?.resultUrl });
       return data;
     },
-    enabled: isAuthenticated && !!generationId && isGenerating,
-    refetchInterval: 2000, // Poll every 2 seconds while generating
+    enabled: isAuthenticated && !!generationId,
+    refetchInterval: generationId ? 2000 : false, // Poll every 2 seconds while generationId exists
     refetchOnWindowFocus: false,
     staleTime: 0, // Always refetch
     gcTime: 0, // Don't cache (formerly cacheTime)
   });
 
-  // Update generatedVideo when poll data arrives with resultUrl or completed status
+  // Update generatedVideo when poll data arrives with terminal status
   useEffect(() => {
-    console.log(`[POLL EFFECT] pollData changed:`, { 
+    if (!pollData || !generationId) return; // Skip if no data or already processed
+    
+    console.log(`[POLL EFFECT] pollData:`, { 
       status: pollData?.status, 
       hasResultUrl: !!pollData?.resultUrl,
-      isGenerating 
+      generationId
     });
     
-    // Check for completed generation - must have BOTH status completed/success AND resultUrl
+    // Check for completed generation - accept both 'completed' and 'success' statuses
     const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    const isFailed = pollData?.status === 'failed' || pollData?.status === 'failure';
+    
     if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedVideo(pollData);
@@ -325,7 +330,7 @@ export default function GenerateVideo() {
         title: "Video Generated!",
         description: "Your video is ready to view and download.",
       });
-    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+    } else if (isFailed) {
       console.log(`[POLL] ✗ Generation failed`);
       setGeneratedVideo(pollData);
       setIsGenerating(false);
@@ -337,7 +342,7 @@ export default function GenerateVideo() {
         variant: "destructive",
       });
     }
-  }, [pollData, toast, queryClient, isGenerating]);
+  }, [pollData, generationId, toast, queryClient]);
 
   const selectedModel = VIDEO_MODELS.find(m => m.value === model);
   const maxImages = selectedModel?.maxImages || 1;

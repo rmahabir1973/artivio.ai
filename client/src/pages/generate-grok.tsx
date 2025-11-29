@@ -38,6 +38,7 @@ export default function GenerateGrok() {
   const modelCost = getModelCost('grok-imagine', 400);
 
   // Poll for generation result
+  // Keep polling active based ONLY on generationId - don't gate on isGenerating (causes race condition)
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
     queryFn: async () => {
@@ -48,22 +49,26 @@ export default function GenerateGrok() {
       console.log(`[POLL] Response:`, { status: data?.status, hasResultUrl: !!data?.resultUrl });
       return data;
     },
-    enabled: !!generationId && isGenerating,
-    refetchInterval: 2000,
+    enabled: !!generationId,
+    refetchInterval: generationId ? 2000 : false,
     refetchOnWindowFocus: false,
     staleTime: 0,
     gcTime: 0,
   });
 
-  // Update generatedVideo when poll data arrives with resultUrl AND completed status
+  // Update generatedVideo when poll data arrives with terminal status
   useEffect(() => {
-    console.log(`[POLL EFFECT] pollData changed:`, { 
+    if (!pollData || !generationId) return;
+    
+    console.log(`[POLL EFFECT] pollData:`, { 
       status: pollData?.status, 
       hasResultUrl: !!pollData?.resultUrl,
-      isGenerating 
+      generationId
     });
     
     const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    const isFailed = pollData?.status === 'failed' || pollData?.status === 'failure';
+    
     if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedVideo(pollData);
@@ -74,7 +79,7 @@ export default function GenerateGrok() {
         title: "Video Generated!",
         description: "Your Grok video is ready to view and download.",
       });
-    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+    } else if (isFailed) {
       console.log(`[POLL] ✗ Generation failed`);
       setGeneratedVideo(pollData);
       setIsGenerating(false);
@@ -86,7 +91,7 @@ export default function GenerateGrok() {
         variant: "destructive",
       });
     }
-  }, [pollData, toast, queryClient, isGenerating]);
+  }, [pollData, generationId, toast, queryClient]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {

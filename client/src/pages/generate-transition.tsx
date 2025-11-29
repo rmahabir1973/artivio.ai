@@ -156,6 +156,7 @@ export default function GenerateTransition() {
   });
 
   // Poll for generation result
+  // Keep polling active based ONLY on generationId - don't gate on isGenerating (causes race condition)
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
     queryFn: async () => {
@@ -166,22 +167,26 @@ export default function GenerateTransition() {
       console.log(`[POLL] Response:`, { status: data?.status, hasResultUrl: !!data?.resultUrl });
       return data;
     },
-    enabled: isAuthenticated && !!generationId && isGenerating,
-    refetchInterval: 2000,
+    enabled: isAuthenticated && !!generationId,
+    refetchInterval: generationId ? 2000 : false,
     refetchOnWindowFocus: false,
     staleTime: 0,
     gcTime: 0,
   });
 
-  // Update generatedVideo when poll data arrives with resultUrl AND completed status
+  // Update generatedVideo when poll data arrives with terminal status
   useEffect(() => {
-    console.log(`[POLL EFFECT] pollData changed:`, { 
+    if (!pollData || !generationId) return;
+    
+    console.log(`[POLL EFFECT] pollData:`, { 
       status: pollData?.status, 
       hasResultUrl: !!pollData?.resultUrl,
-      isGenerating 
+      generationId
     });
     
     const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    const isFailed = pollData?.status === 'failed' || pollData?.status === 'failure';
+    
     if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedVideo(pollData);
@@ -192,7 +197,7 @@ export default function GenerateTransition() {
         title: "Video Generated!",
         description: "Your transition video is ready to view and download.",
       });
-    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+    } else if (isFailed) {
       console.log(`[POLL] ✗ Generation failed`);
       setGeneratedVideo(pollData);
       setIsGenerating(false);
@@ -204,7 +209,7 @@ export default function GenerateTransition() {
         variant: "destructive",
       });
     }
-  }, [pollData, toast, queryClient, isGenerating]);
+  }, [pollData, generationId, toast, queryClient]);
 
   const handleGenerate = () => {
     // Guest check - prompt sign up if not authenticated

@@ -55,6 +55,7 @@ export default function SoundEffects() {
 
 
   // Poll for generation result when generationId is set
+  // Keep polling active based ONLY on generationId - don't gate on isGenerating (causes race condition)
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
     queryFn: async () => {
@@ -65,22 +66,26 @@ export default function SoundEffects() {
       console.log(`[POLL] Response:`, { status: data?.status, hasResultUrl: !!data?.resultUrl });
       return data;
     },
-    enabled: !!generationId && isGenerating && isAuthenticated,
-    refetchInterval: 2000,
+    enabled: !!generationId && isAuthenticated,
+    refetchInterval: generationId ? 2000 : false,
     refetchOnWindowFocus: false,
     staleTime: 0,
     gcTime: 0,
   });
 
-  // Update generatedAudio when poll data arrives with resultUrl AND completed status
+  // Update generatedAudio when poll data arrives with terminal status
   useEffect(() => {
-    console.log(`[POLL EFFECT] pollData changed:`, { 
+    if (!pollData || !generationId) return;
+    
+    console.log(`[POLL EFFECT] pollData:`, { 
       status: pollData?.status, 
       hasResultUrl: !!pollData?.resultUrl,
-      isGenerating 
+      generationId
     });
     
     const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    const isFailed = pollData?.status === 'failed' || pollData?.status === 'failure';
+    
     if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedAudio(pollData);
@@ -91,7 +96,7 @@ export default function SoundEffects() {
         title: "Sound Effect Generated!",
         description: "Your sound effect is ready to play and download.",
       });
-    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+    } else if (isFailed) {
       console.log(`[POLL] ✗ Generation failed`);
       setGeneratedAudio(pollData);
       setIsGenerating(false);
@@ -103,7 +108,7 @@ export default function SoundEffects() {
         variant: "destructive",
       });
     }
-  }, [pollData, toast, queryClient, isGenerating]);
+  }, [pollData, generationId, toast, queryClient]);
 
   const generateSoundEffectsMutation = useMutation({
     mutationFn: async () => {

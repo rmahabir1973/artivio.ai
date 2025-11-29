@@ -298,6 +298,7 @@ export default function GenerateImage() {
   const [generatedImage, setGeneratedImage] = useState<any>(null);
 
   // Poll for generation result when generationId is set
+  // Keep polling active based ONLY on generationId - don't gate on isGenerating (causes race condition)
   const { data: pollData } = useQuery<any>({
     queryKey: ["/api/generations", generationId],
     queryFn: async () => {
@@ -308,22 +309,26 @@ export default function GenerateImage() {
       console.log(`[POLL] Response:`, { status: data?.status, hasResultUrl: !!data?.resultUrl });
       return data;
     },
-    enabled: isAuthenticated && !!generationId && isGenerating,
-    refetchInterval: 2000,
+    enabled: isAuthenticated && !!generationId,
+    refetchInterval: generationId ? 2000 : false,
     refetchOnWindowFocus: false,
     staleTime: 0,
     gcTime: 0,
   });
 
-  // Update generatedImage when poll data arrives with resultUrl AND completed status
+  // Update generatedImage when poll data arrives with terminal status
   useEffect(() => {
-    console.log(`[POLL EFFECT] pollData changed:`, { 
+    if (!pollData || !generationId) return;
+    
+    console.log(`[POLL EFFECT] pollData:`, { 
       status: pollData?.status, 
       hasResultUrl: !!pollData?.resultUrl,
-      isGenerating 
+      generationId
     });
     
     const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    const isFailed = pollData?.status === 'failed' || pollData?.status === 'failure';
+    
     if (isCompleted && pollData?.resultUrl) {
       console.log(`[POLL] ✓ Generation completed with resultUrl`);
       setGeneratedImage(pollData);
@@ -334,7 +339,7 @@ export default function GenerateImage() {
         title: "Image Generated!",
         description: "Your image is ready to view and download.",
       });
-    } else if (pollData?.status === 'failed' || pollData?.status === 'failure') {
+    } else if (isFailed) {
       console.log(`[POLL] ✗ Generation failed`);
       setGeneratedImage(pollData);
       setIsGenerating(false);
@@ -346,7 +351,7 @@ export default function GenerateImage() {
         variant: "destructive",
       });
     }
-  }, [pollData, toast, queryClient, isGenerating]);
+  }, [pollData, generationId, toast, queryClient]);
 
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
