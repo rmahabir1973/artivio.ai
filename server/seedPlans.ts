@@ -234,6 +234,7 @@ export const defaultPlans = [
  * Initialize subscription plans in the database
  * Creates default plans if they don't exist
  * Updates existing plans if they already exist
+ * IMPORTANT: Preserves admin-configured Stripe IDs to avoid overwriting
  */
 export async function initializePlans() {
   console.log('📋 Initializing subscription plans...');
@@ -248,13 +249,19 @@ export async function initializePlans() {
         .limit(1);
 
       if (existingPlan) {
-        // Update existing plan
+        // Update existing plan but PRESERVE admin-configured Stripe IDs
+        // Only use seed Stripe IDs if no IDs are set in the database
+        const updateData = {
+          ...planData,
+          // Preserve existing Stripe IDs if they're already set in the database
+          stripePriceId: existingPlan.stripePriceId || planData.stripePriceId,
+          stripeProductId: existingPlan.stripeProductId || planData.stripeProductId,
+          updatedAt: new Date(),
+        };
+        
         await db
           .update(subscriptionPlans)
-          .set({
-            ...planData,
-            updatedAt: new Date(),
-          })
+          .set(updateData)
           .where(eq(subscriptionPlans.name, planData.name));
         console.log(`  ✓ Updated plan: ${planData.displayName}`);
       } else {
