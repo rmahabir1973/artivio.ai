@@ -196,18 +196,19 @@ export default function ProductAd() {
       return;
     }
 
-    if (!productImage) {
+    if (!personImage) {
       toast({
-        title: "Missing Product Image",
-        description: "Please upload a product image.",
+        title: "Missing Person Image",
+        description: "Please upload a person image for the first frame.",
         variant: "destructive",
       });
       return;
     }
 
-    const referenceImages = personImage ? [productImage, personImage] : [productImage];
-    const generationType = personImage ? 'first-and-last-frames-to-video' : 'image-to-video';
-    const model = personImage ? 'veo-3.1-fast-first-and-last-frames' : 'veo-3.1-fast';
+    // First frame: person, Last frame: product (if provided)
+    const referenceImages = productImage ? [personImage, productImage] : [personImage];
+    const generationType = productImage ? 'first-and-last-frames-to-video' : 'image-to-video';
+    const model = productImage ? 'veo-3.1-fast-first-and-last-frames' : 'veo-3.1-fast';
 
     generateMutation.mutate({
       model,
@@ -269,59 +270,14 @@ export default function ProductAd() {
               </div>
 
               <div className="space-y-3">
-                <Label>Product Image (Required)</Label>
-                {productImage ? (
-                  <div className="relative group">
-                    <img 
-                      src={productImage} 
-                      alt="Product"
-                      className="w-full h-48 object-cover rounded-md border-2 border-border"
-                    />
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => setProductImage(null)}
-                      data-testid="button-remove-product-image"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                    <Badge className="absolute bottom-2 left-2" variant="secondary">Product</Badge>
-                  </div>
-                ) : (
-                  <label className="block">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleProductImageUpload}
-                      className="hidden"
-                      disabled={uploadingProduct}
-                      data-testid="input-upload-product-image"
-                    />
-                    <div className="border-2 border-dashed border-border rounded-md p-6 hover-elevate active-elevate-2 cursor-pointer text-center transition-colors h-48 flex flex-col items-center justify-center">
-                      {uploadingProduct ? (
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                      ) : (
-                        <>
-                          <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                          <p className="text-sm font-medium">Upload Product Image</p>
-                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to {MAX_FILE_SIZE_MB}MB</p>
-                        </>
-                      )}
-                    </div>
-                  </label>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <Label>Person Image (Optional)</Label>
-                <p className="text-xs text-muted-foreground">Add a person to create a transition-style product showcase</p>
+                <Label>Person Image (First Frame)</Label>
+                <p className="text-xs text-muted-foreground">Upload the starting image - typically a person or influencer</p>
                 {personImage ? (
                   <div className="relative group">
                     <img 
                       src={personImage} 
                       alt="Person"
-                      className="w-full h-32 object-cover rounded-md border-2 border-border"
+                      className="w-full h-48 object-cover rounded-md border-2 border-border"
                     />
                     <Button
                       size="icon"
@@ -344,13 +300,59 @@ export default function ProductAd() {
                       disabled={uploadingPerson}
                       data-testid="input-upload-person-image"
                     />
-                    <div className="border-2 border-dashed border-border rounded-md p-4 hover-elevate active-elevate-2 cursor-pointer text-center transition-colors h-32 flex flex-col items-center justify-center">
+                    <div className="border-2 border-dashed border-border rounded-md p-6 hover-elevate active-elevate-2 cursor-pointer text-center transition-colors h-48 flex flex-col items-center justify-center">
                       {uploadingPerson ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                          <p className="text-sm font-medium">Upload Person Image</p>
+                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to {MAX_FILE_SIZE_MB}MB</p>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <Label>Product Image (Last Frame)</Label>
+                <p className="text-xs text-muted-foreground">Upload the ending image - your product showcase</p>
+                {productImage ? (
+                  <div className="relative group">
+                    <img 
+                      src={productImage} 
+                      alt="Product"
+                      className="w-full h-32 object-cover rounded-md border-2 border-border"
+                    />
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setProductImage(null)}
+                      data-testid="button-remove-product-image"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <Badge className="absolute bottom-2 left-2" variant="secondary">Product</Badge>
+                  </div>
+                ) : (
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProductImageUpload}
+                      className="hidden"
+                      disabled={uploadingProduct}
+                      data-testid="input-upload-product-image"
+                    />
+                    <div className="border-2 border-dashed border-border rounded-md p-4 hover-elevate active-elevate-2 cursor-pointer text-center transition-colors h-32 flex flex-col items-center justify-center">
+                      {uploadingProduct ? (
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                       ) : (
                         <>
                           <Upload className="h-6 w-6 mb-1 text-muted-foreground" />
-                          <p className="text-xs font-medium">Add Person (Optional)</p>
+                          <p className="text-xs font-medium">Add Product Image</p>
                         </>
                       )}
                     </div>
@@ -376,7 +378,7 @@ export default function ProductAd() {
 
               <Button
                 onClick={handleGenerate}
-                disabled={generateMutation.isPending || isGenerating || !productImage}
+                disabled={generateMutation.isPending || isGenerating || !personImage}
                 className="w-full"
                 size="lg"
                 data-testid="button-generate"
