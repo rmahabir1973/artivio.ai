@@ -398,13 +398,11 @@ export default function GenerateSora() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="t2v-prompt">Prompt</Label>
-                  {prompt.length >= 3 && (
-                    <RefinePromptButton
-                      prompt={prompt}
-                      onRefined={setPrompt}
-                      context="video"
-                    />
-                  )}
+                  <RefinePromptButton
+                    prompt={prompt}
+                    onRefined={setPrompt}
+                    context="video"
+                  />
                 </div>
                 <Textarea
                   id="t2v-prompt"

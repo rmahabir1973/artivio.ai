@@ -422,13 +422,11 @@ export default function GenerateTransition() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Transition Description</Label>
-                {prompt.length >= 3 && (
-                  <RefinePromptButton
-                    prompt={prompt}
-                    onRefined={setPrompt}
-                    context="video"
-                  />
-                )}
+                <RefinePromptButton
+                  prompt={prompt}
+                  onRefined={setPrompt}
+                  context="video"
+                />
               </div>
               <Textarea
                 placeholder="Describe how the video should transition between the frames... (e.g., 'The scene slowly zooms in as clouds drift across the sky')"

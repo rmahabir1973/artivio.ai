@@ -188,13 +188,11 @@ export default function SoundEffects() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="text">Describe the Sound Effect</Label>
-                  {text.length >= 3 && (
-                    <RefinePromptButton
-                      prompt={text}
-                      onRefined={setText}
-                      context="audio"
-                    />
-                  )}
+                  <RefinePromptButton
+                    prompt={text}
+                    onRefined={setText}
+                    context="audio"
+                  />
                 </div>
                 <Textarea
                   id="text"

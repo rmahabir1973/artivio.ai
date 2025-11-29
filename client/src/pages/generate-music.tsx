@@ -820,13 +820,11 @@ export default function GenerateMusic() {
                   <div className="flex items-center justify-between gap-2">
                     <Label htmlFor="prompt">Music Description</Label>
                     <div className="flex items-center gap-2">
-                      {prompt.length >= 3 && (
-                        <RefinePromptButton
-                          prompt={prompt}
-                          onRefined={(refined) => setPrompt(refined.slice(0, 500))}
-                          context="audio"
-                        />
-                      )}
+                      <RefinePromptButton
+                        prompt={prompt}
+                        onRefined={(refined) => setPrompt(refined.slice(0, 500))}
+                        context="audio"
+                      />
                       <span className="text-xs text-muted-foreground">{prompt.length}/500</span>
                     </div>
                   </div>

@@ -692,13 +692,11 @@ export default function GenerateImage() {
                   <Label htmlFor="prompt">
                     {mode === "text-to-image" ? "Image Description" : "Editing Instructions"}
                   </Label>
-                  {prompt.length >= 3 && (
-                    <RefinePromptButton
-                      prompt={prompt}
-                      onRefined={setPrompt}
-                      context="image"
-                    />
-                  )}
+                  <RefinePromptButton
+                    prompt={prompt}
+                    onRefined={setPrompt}
+                    context="image"
+                  />
                 </div>
                 <Textarea
                   id="prompt"

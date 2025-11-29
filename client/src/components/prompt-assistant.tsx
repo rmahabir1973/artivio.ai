@@ -65,22 +65,23 @@ export function RefinePromptButton({ prompt, onRefined, context, disabled = fals
       <TooltipTrigger asChild>
         <Button
           type="button"
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={handleRefine}
           disabled={isDisabled}
           data-testid="button-refine-prompt"
-          className="shrink-0"
+          className="shrink-0 gap-1.5 bg-gradient-to-r from-purple-500/10 to-violet-500/10 border-purple-500/30 hover:border-purple-500/50 hover:from-purple-500/20 hover:to-violet-500/20 text-purple-400"
         >
           {isRefining ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Sparkles className="h-4 w-4" />
+            <Sparkles className="h-3.5 w-3.5" />
           )}
+          <span className="text-xs font-medium">Enhance with AI</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        <p>{isRefining ? "Refining prompt..." : "Refine prompt with AI"}</p>
+        <p>{isRefining ? "Enhancing your prompt..." : "Use AI to improve your prompt for better results"}</p>
       </TooltipContent>
     </Tooltip>
   );

@@ -995,13 +995,11 @@ export default function GenerateVideo() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="prompt">Video Description</Label>
-                {prompt.length >= 3 && (
-                  <RefinePromptButton
-                    prompt={prompt}
-                    onRefined={setPrompt}
-                    context="video"
-                  />
-                )}
+                <RefinePromptButton
+                  prompt={prompt}
+                  onRefined={setPrompt}
+                  context="video"
+                />
               </div>
               <Textarea
                 id="prompt"
