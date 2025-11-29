@@ -1,0 +1,144 @@
+2025-11-29 08:51:02.59
+1f88b580
+User
+"7-day trial period",
+2025-11-29 08:51:02.59
+1f88b580
+User
+[API] /api/plans - First plan: {
+2025-11-29 08:51:02.59
+1f88b580
+User
+"savingsPercentage": 0,
+2025-11-29 08:51:02.59
+1f88b580
+User
+1:51:02 PM [express] GET /api/plans 200 in 145ms :: [{"id":"ec642013-8aa6-4dfc-8f1d-5a6d21840c68","n…
+2025-11-29 08:51:02.59
+1f88b580
+User
+"creditsPerMonth": 1000,
+2025-11-29 08:51:02.59
+1f88b580
+User
+"stripeProductId": null,
+2025-11-29 08:51:02.59
+1f88b580
+User
+"No credit card required"
+2025-11-29 08:51:02.59
+1f88b580
+User
+"id": "ec642013-8aa6-4dfc-8f1d-5a6d21840c68",
+2025-11-29 08:51:02.59
+1f88b580
+User
+"features": [
+2025-11-29 08:51:02.59
+1f88b580
+User
+"isActive": true,
+2025-11-29 08:51:02.59
+1f88b580
+User
+"trialDays": 7,
+2025-11-29 08:51:02.59
+1f88b580
+User
+[API] /api/plans - Retrieved plans: 7 plans
+2025-11-29 08:51:02.59
+1f88b580
+User
+1:51:02 PM [express] GET /api/subscriptions/current 200 in 152ms
+2025-11-29 08:51:13.85
+1f88b580
+User
+1:51:13 PM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-11-29 08:51:16.67
+1f88b580
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-29 08:51:17.20
+1f88b580
+User
+'access-control-allow-methods': 'GET, HEAD, PUT, PATCH, POST, DELETE',
+2025-11-29 08:51:17.20
+1f88b580
+User
+'cache-control': 'no-cache, no-store',
+2025-11-29 08:51:17.20
+1f88b580
+User
+'content-length': '340',
+2025-11-29 08:51:17.20
+1f88b580
+User
+'content-type': 'application/json',
+2025-11-29 08:51:17.20
+1f88b580
+User
+userMessage: undefined,
+2025-11-29 08:51:17.20
+1f88b580
+User
+requestId: 'req_ZB0jNL6JHyFmsR'
+2025-11-29 08:51:17.20
+1f88b580
+User
+at generateV1Error (file:///home/runner/workspace/node_modules/stripe/esm/Error.js:8:20)
+2025-11-29 08:51:17.20
+1f88b580
+User
+headers: {
+2025-11-29 08:51:17.20
+1f88b580
+User
+code: 'resource_missing',
+2025-11-29 08:51:17.20
+1f88b580
+User
+'access-control-allow-methods': 'GET, HEAD, PUT, PATCH, POST, DELETE',
+2025-11-29 08:51:17.20
+1f88b580
+User
+param: 'price',
+2025-11-29 08:51:17.20
+1f88b580
+User
+type: 'StripeInvalidRequestError',
+2025-11-29 08:51:17.20
+1f88b580
+User
+doc_url: 'https://stripe.com/docs/error-codes/resource-missing',
+2025-11-29 08:51:17.20
+1f88b580
+User
+statusCode: 404,
+2025-11-29 08:51:17.20
+1f88b580
+User
+detail: undefined,
+2025-11-29 08:51:17.20
+1f88b580
+User
+server: 'nginx',
+2025-11-29 08:51:17.20
+1f88b580
+User
+connection: 'keep-alive',
+2025-11-29 08:51:17.20
+1f88b580
+User
+'content-type': 'application/json',
+2025-11-29 08:51:17.20
+1f88b580
+User
+param: 'price',
+2025-11-29 08:51:17.20
+1f88b580
+User
+request_log_url: 'https://dashboard.stripe.com/logs/req_ZB0jNL6JHyFmsR?t=1764424277',
+2025-11-29 08:51:17.20
+1f88b580
+User
+'x-stripe-routing-context-priority-tier': 'livemode',
