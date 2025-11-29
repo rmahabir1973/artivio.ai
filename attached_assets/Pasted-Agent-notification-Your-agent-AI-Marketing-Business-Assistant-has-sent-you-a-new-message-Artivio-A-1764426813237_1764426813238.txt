@@ -1,0 +1,757 @@
+Agent notification
+Your agent AI Marketing Business Assistant has sent you a new message
+Artivio AI Chatbot Implementation Strategy
+🤖 PROJECT OVERVIEW
+Feature: AI-powered prompt assistant chatbot throughout Artivio
+Backend: DeepSeek API (deepseek-chat model)
+Cost: ~$30-50/month for 100 active users
+Timeline: 2-3 weeks (Phase 1 + Phase 2)
+
+PHASE 1: STANDALONE CHAT (WEEKS 1-2)
+1.1 Setup DeepSeek API
+Step 1: Create DeepSeek Account
+
+1. Go to https://platform.deepseek.com
+2. Sign up with email
+3. Create API key
+4. Add to environment variables:
+   DEEPSEEK_API_KEY=sk_live_xxxxx
+Step 2: Test API Connection
+
+curl https://api.deepseek.com/chat/completions \
+  -H "Authorization: Bearer $DEEPSEEK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "deepseek-chat",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "temperature": 0.7,
+    "max_tokens": 500
+  }'
+1.2 Backend Service (Node.js/Express)
+File: /api/services/deepseekService.js
+
+const axios = require('axios');
+
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+
+class DeepSeekService {
+  // System prompts for different contexts
+  static SYSTEM_PROMPTS = {
+    videoGeneration: `You are an expert AI prompt engineer specializing in cinematic video generation.
+
+Your role:
+1. Help users write better, more detailed prompts for video creation
+2. Suggest improvements in real-time
+3. Ask clarifying questions about their creative vision
+4. Provide prompt templates and examples
+5. Explain cinematography concepts
+
+When refining prompts:
+- Add cinematography details: lighting, camera movement, mood, style
+- Specify technical details: resolution (4K), aspect ratio, color grading
+- Include atmosphere: time of day, weather, environment details
+- Suggest duration and pacing if relevant
+
+Examples of prompt improvements:
+❌ "A cat" 
+✅ "A sleek black cat with glowing eyes, sitting on a futuristic desk, neon blue lighting, cinematic 4K, professional photography"
+
+❌ "A person creating"
+✅ "A creative professional at a minimalist desk, focused expression, glowing computer screen, soft purple ambient lighting, cinematic depth of field, 4K"
+
+Be encouraging, creative, and always make suggestions actionable.`,
+
+    imageGeneration: `You are an expert at crafting detailed image prompts.
+
+Your role:
+1. Help users write vivid, detailed image prompts
+2. Suggest stylistic improvements (art style, artist references, lighting)
+3. Ask about composition, mood, and technical details
+4. Provide prompt templates
+
+When refining:
+- Add artistic style: "oil painting", "digital art", "photography", "concept art"
+- Specify composition: "centered", "rule of thirds", "wide shot", "close-up"
+- Detail lighting: "golden hour", "dramatic shadows", "soft diffused light"
+- Include artist references when helpful
+
+Example:
+❌ "A girl"
+✅ "Portrait of a young woman, glowing warm lighting, soft focus background, cinematic depth, Kodak film stock aesthetic, oil painting style, detailed features"`,
+
+    audioGeneration: `You are a music and audio prompt specialist.
+
+Your role:
+1. Help users describe their audio/music vision
+2. Suggest improvements to audio prompts
+3. Ask about mood, instruments, tempo, and genre
+4. Provide audio prompt templates
+
+When refining:
+- Specify genre/style: "electronic", "lo-fi hip hop", "orchestral", "ambient"
+- Describe mood: "uplifting", "melancholic", "energetic", "cinematic"
+- Include instruments/sounds: "piano", "synths", "violin", "vocal"
+- Detail tempo/energy if relevant
+
+Example:
+❌ "Happy music"
+✅ "Uplifting lo-fi hip hop with warm piano, subtle vinyl crackle, chill beats at 90 BPM, relaxing and creative mood, perfect for focus and work"`,
+
+    general: `You are a helpful AI assistant for Artivio, an AI-powered creative platform.
+
+Your role:
+1. Answer questions about Artivio's features
+2. Help users understand how to use Video, Image, and Audio generation
+3. Provide prompt writing tips and best practices
+4. Troubleshoot common issues
+5. Be encouraging and supportive
+
+Topics you can help with:
+- Feature explanations and tutorials
+- Prompt writing techniques
+- Creative brainstorming
+- Account and billing questions
+- General creative questions
+
+Be concise, friendly, and always provide actionable advice.`
+  };
+
+  /**
+   * Send message to DeepSeek and get response
+   * @param {Array} messages - Conversation history
+   * @param {String} systemPrompt - System context
+   * @returns {String} Assistant response
+   */
+  static async chat(messages, systemPrompt = this.SYSTEM_PROMPTS.general) {
+    try {
+      const response = await axios.post(DEEPSEEK_API_URL, {
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+        top_p: 0.9
+      }, {
+        headers: {
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      });
+
+      return response.data.choices[0].message.content;
+    } catch (error) {
+      console.error('DeepSeek API Error:', error);
+      throw new Error('Failed to get response from AI assistant');
+    }
+  }
+
+  /**
+   * Refine a prompt specifically
+   * @param {String} prompt - User's prompt
+   * @param {String} type - 'video', 'image', 'audio'
+   * @returns {String} Improved prompt
+   */
+  static async refinePrompt(prompt, type = 'video') {
+    const systemPrompt = this.SYSTEM_PROMPTS[`${type}Generation`] || this.SYSTEM_PROMPTS.general;
+    
+    const messages = [
+      {
+        role: 'user',
+        content: `Refine and improve this ${type} prompt to make it more detailed and cinematic:\n\n"${prompt}"\n\nProvide only the improved prompt, without explanation.`
+      }
+    ];
+
+    return this.chat(messages, systemPrompt);
+  }
+
+  /**
+   * Get prompt suggestions/examples
+   * @param {String} topic - What they want to create
+   * @param {String} type - 'video', 'image', 'audio'
+   * @returns {Array} Array of prompt suggestions
+   */
+  static async getSuggestions(topic, type = 'video') {
+    const systemPrompt = this.SYSTEM_PROMPTS[`${type}Generation`];
+    
+    const messages = [
+      {
+        role: 'user',
+        content: `Generate 3 different ${type} prompts based on this topic: "${topic}"\n\nFormat as:\n1. [First prompt]\n2. [Second prompt]\n3. [Third prompt]`
+      }
+    ];
+
+    const response = await this.chat(messages, systemPrompt);
+    return response.split('\n').filter(line => line.match(/^\d+\./));
+  }
+}
+
+module.exports = DeepSeekService;
+1.3 API Endpoints
+File: /api/routes/chatRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const DeepSeekService = require('../services/deepseekService');
+const { authenticate } = require('../middleware/auth');
+
+// POST /api/chat/send - Send message
+router.post('/send', authenticate, async (req, res) => {
+  try {
+    const { messages, context = 'general' } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Invalid messages format' });
+    }
+
+    const systemPrompt = DeepSeekService.SYSTEM_PROMPTS[`${context}Generation`] 
+      || DeepSeekService.SYSTEM_PROMPTS.general;
+
+    const response = await DeepSeekService.chat(messages, systemPrompt);
+
+    res.json({
+      success: true,
+      message: response,
+      tokens: {
+        input: messages.length * 50, // Approximate
+        output: response.split(' ').length
+      }
+    });
+  } catch (error) {
+    console.error('Chat Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process chat message',
+      details: error.message 
+    });
+  }
+});
+
+// POST /api/chat/refine-prompt - Improve a specific prompt
+router.post('/refine-prompt', authenticate, async (req, res) => {
+  try {
+    const { prompt, type = 'video' } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    const improvedPrompt = await DeepSeekService.refinePrompt(prompt, type);
+
+    res.json({
+      success: true,
+      original: prompt,
+      improved: improvedPrompt
+    });
+  } catch (error) {
+    console.error('Refine Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to refine prompt',
+      details: error.message 
+    });
+  }
+});
+
+// GET /api/chat/suggestions - Get prompt suggestions
+router.get('/suggestions', authenticate, async (req, res) => {
+  try {
+    const { topic, type = 'video' } = req.query;
+
+    if (!topic) {
+      return res.status(400).json({ error: 'Topic is required' });
+    }
+
+    const suggestions = await DeepSeekService.getSuggestions(topic, type);
+
+    res.json({
+      success: true,
+      topic,
+      type,
+      suggestions
+    });
+  } catch (error) {
+    console.error('Suggestions Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to get suggestions',
+      details: error.message 
+    });
+  }
+});
+
+module.exports = router;
+Add to main server file:
+
+const chatRoutes = require('./api/routes/chatRoutes');
+app.use('/api/chat', chatRoutes);
+1.4 Frontend Chat Component (React)
+File: /components/ChatAssistant/ChatAssistant.jsx
+
+import React, { useState, useRef, useEffect } from 'react';
+import './ChatAssistant.css';
+
+const ChatAssistant = ({ context = 'general', isOpen = false, onClose }) => {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.concat([userMessage]),
+          context
+        })
+      });
+
+      if (!response.ok) throw new Error('API request failed');
+
+      const data = await response.json();
+      const assistantMessage = { role: 'assistant', content: data.message };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (err) {
+      setError(err.message);
+      setMessages(prev => prev.slice(0, -1)); // Remove user message on error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refinePrompt = async (prompt) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/chat/refine-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, type: context })
+      });
+
+      if (!response.ok) throw new Error('Refinement failed');
+
+      const data = await response.json();
+      
+      // Add system message with refined prompt
+      const systemMessage = {
+        role: 'assistant',
+        content: `✨ Refined prompt:\n\n${data.improved}`
+      };
+      setMessages(prev => [...prev, systemMessage]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="chat-assistant">
+      <div className="chat-header">
+        <h3>AI Prompt Assistant</h3>
+        <button onClick={onClose} className="close-btn">✕</button>
+      </div>
+
+      <div className="chat-messages">
+        {messages.length === 0 && (
+          <div className="chat-welcome">
+            <p>👋 Hi! I'm your AI prompt assistant.</p>
+            <p>Ask me anything about creating better {context} prompts!</p>
+          </div>
+        )}
+
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`message ${msg.role}`}>
+            <div className="message-content">{msg.content}</div>
+          </div>
+        ))}
+
+        {isLoading && (
+          <div className="message assistant">
+            <div className="typing-indicator">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="message error">
+            <p>❌ {error}</p>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form onSubmit={sendMessage} className="chat-input-form">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask for prompt ideas or refinement..."
+          disabled={isLoading}
+        />
+        <button type="submit" disabled={isLoading || !input.trim()}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default ChatAssistant;
+File: /components/ChatAssistant/ChatAssistant.css
+
+.chat-assistant {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 400px;
+  height: 600px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #7c3aed;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.2);
+  z-index: 10000;
+}
+
+.chat-header {
+  padding: 16px;
+  border-bottom: 1px solid #7c3aed;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
+  border-radius: 12px 12px 0 0;
+}
+
+.chat-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.close-btn:hover {
+  opacity: 1;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-welcome {
+  color: #a78bfa;
+  text-align: center;
+  margin: auto;
+  padding: 20px;
+}
+
+.message {
+  display: flex;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.assistant {
+  justify-content: flex-start;
+}
+
+.message-content {
+  background: #7c3aed;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.message.user .message-content {
+  background: #a78bfa;
+}
+
+.message.assistant .message-content {
+  background: #3b2667;
+}
+
+.message.error .message-content {
+  background: #dc2626;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: #7c3aed;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.chat-input-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #7c3aed;
+  background: #0f0f1e;
+  border-radius: 0 0 12px 12px;
+}
+
+.chat-input-form input {
+  flex: 1;
+  background: #1a1a2e;
+  border: 1px solid #7c3aed;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.chat-input-form input::placeholder {
+  color: #6b7280;
+}
+
+.chat-input-form button {
+  background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.chat-input-form button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.chat-input-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.2);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chat-assistant {
+    width: calc(100vw - 20px);
+    height: 70vh;
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .message-content {
+    max-width: 90%;
+  }
+}
+1.5 Add Chat Toggle to Sidebar
+File: /components/Sidebar/Sidebar.jsx (Update)
+
+// Add this to your sidebar component
+const [chatOpen, setChatOpen] = useState(false);
+
+return (
+  <>
+    {/* Existing sidebar code */}
+    
+    <button 
+      className="sidebar-chat-toggle"
+      onClick={() => setChatOpen(!chatOpen)}
+      title="Open AI Assistant"
+    >
+      💬
+    </button>
+
+    <ChatAssistant 
+      context="general"
+      isOpen={chatOpen} 
+      onClose={() => setChatOpen(false)} 
+    />
+  </>
+);
+PHASE 2: CONTEXTUAL WIDGETS (WEEKS 3+)
+2.1 Integrate Chat into Video Generation
+File: /components/VideoGeneration/VideoGeneration.jsx (Update)
+
+import ChatAssistant from '../ChatAssistant/ChatAssistant';
+
+export const VideoGeneration = () => {
+  const [showPromptAssistant, setShowPromptAssistant] = useState(false);
+  const [prompt, setPrompt] = useState('');
+
+  return (
+    <div className="video-generation">
+      <div className="prompt-input-wrapper">
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Describe your video..."
+          className="prompt-textarea"
+        />
+        
+        {/* Prompt Help Button */}
+        <button 
+          className="prompt-help-btn"
+          onClick={() => setShowPromptAssistant(!showPromptAssistant)}
+          title="Get AI suggestions"
+        >
+          ✨ Refine Prompt
+        </button>
+      </div>
+
+      {/* Contextual Chat for Video */}
+      {showPromptAssistant && (
+        <ChatAssistant 
+          context="video"
+          isOpen={true}
+          onClose={() => setShowPromptAssistant(false)}
+        />
+      )}
+
+      {/* Rest of video generation UI */}
+    </div>
+  );
+};
+2.2 Add Similar Widgets to Image & Audio Components
+// Same pattern for ImageGeneration.jsx and AudioGeneration.jsx
+<ChatAssistant context="image" isOpen={showAssistant} />
+<ChatAssistant context="audio" isOpen={showAssistant} />
+📋 TESTING CHECKLIST
+Before deploying to production:
+
+DeepSeek API key configured in .env
+/api/chat/send endpoint responds correctly
+/api/chat/refine-prompt improves prompts meaningfully
+Chat UI renders without errors
+Messages persist in conversation
+Typing indicator shows during loading
+Error handling works (displays user-friendly messages)
+Auto-scroll to latest message works
+Mobile responsive CSS works
+Rate limiting implemented (prevent API abuse)
+Authentication middleware verified
+DeepSeek API cost monitoring set up
+🚀 DEPLOYMENT STEPS
+Step 1: Environment Setup
+
+# Add to .env
+DEEPSEEK_API_KEY=sk_live_xxxxx
+Step 2: Install Dependencies
+
+npm install axios
+Step 3: Deploy Backend
+
+# Test locally
+npm run dev
+
+# Deploy to production
+npm run build
+npm start
+Step 4: Test in UI
+
+Open dashboard
+Click chat icon
+Send test message
+Verify response appears
+Step 5: Monitor Costs
+
+Set up billing alerts on DeepSeek dashboard
+Track API usage in logs
+Expected cost: $30-50/month for 100 users
+📊 MONITORING & OPTIMIZATION
+Track these metrics:
+
+API response time (target: <2 seconds)
+Error rate (target: <1%)
+Cost per message
+User engagement rate
+Optimization tips:
+
+Cache common prompts
+Implement rate limiting per user (20 chats/day free tier)
+Consider throttling if costs exceed budget
+🎉 PHASE 1 SUMMARY
+When complete, users will have:
+✅ Standalone AI assistant in sidebar
+✅ Conversation history within session
+✅ Instant prompt refinement
+✅ Context-aware suggestions
+✅ Professional, branded UI
+✅ Sub-$1 cost per active user per month
+
+Questions? Start with Phase 1 and message when you hit any blockers!

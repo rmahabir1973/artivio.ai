@@ -27,6 +27,7 @@ import { useLocation } from "wouter";
 import { SiGoogle } from "react-icons/si";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { GenerationProgress } from "@/components/generation-progress";
+import { RefinePromptButton } from "@/components/prompt-assistant";
 
 // Model icon component for consistent styling
 const ModelIcon = ({ modelValue, className = "h-4 w-4" }: { modelValue: string; className?: string }) => {
@@ -992,7 +993,16 @@ export default function GenerateVideo() {
 
             {/* Prompt */}
             <div className="space-y-2">
-              <Label htmlFor="prompt">Video Description</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="prompt">Video Description</Label>
+                {prompt.length >= 3 && (
+                  <RefinePromptButton
+                    prompt={prompt}
+                    onRefined={setPrompt}
+                    context="video"
+                  />
+                )}
+              </div>
               <Textarea
                 id="prompt"
                 placeholder={

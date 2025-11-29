@@ -91,6 +91,7 @@ import {
   contactFormRequestSchema,
   insertBlogPostSchema,
   updateBlogPostSchema,
+  promptRefineRequestSchema,
   type InsertSubscriptionPlan,
   type BlogPost
 } from "@shared/schema";
@@ -2875,6 +2876,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error deleting lyrics:', error);
       res.status(500).json({ message: error.message || "Failed to delete lyrics" });
+    }
+  });
+
+  // Prompt Refinement using Deepseek AI
+  app.post('/api/prompts/refine', requireJWT, async (req: any, res) => {
+    try {
+      const validationResult = promptRefineRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid request", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { prompt, context } = validationResult.data;
+
+      // Context-specific system prompts
+      const systemPrompts: Record<string, string> = {
+        video: `You are an expert AI video prompt engineer. Your task is to enhance and refine prompts for AI video generation.
+
+Focus on:
+- Cinematography: camera angles, movements (dolly, pan, tracking, crane shots)
+- Lighting: golden hour, dramatic shadows, neon, studio lighting
+- Atmosphere: mood, tone, weather conditions
+- Visual quality: 4K, cinematic, film grain, color grading
+- Motion: slow motion, time-lapse, dynamic movement
+- Composition: framing, depth of field, focal points
+
+Respond ONLY with the refined prompt text. Do not include explanations, markdown formatting, or any other text.`,
+
+        image: `You are an expert AI image prompt engineer. Your task is to enhance and refine prompts for AI image generation.
+
+Focus on:
+- Art style: photorealistic, digital art, oil painting, illustration, anime
+- Composition: rule of thirds, symmetry, leading lines, framing
+- Lighting: natural light, rim lighting, chiaroscuro, volumetric
+- Detail: intricate details, textures, materials
+- Artist references: "in the style of", artistic movements
+- Quality descriptors: masterpiece, highly detailed, 8K, award-winning
+
+Respond ONLY with the refined prompt text. Do not include explanations, markdown formatting, or any other text.`,
+
+        audio: `You are an expert AI audio/music prompt engineer. Your task is to enhance and refine prompts for AI music and audio generation.
+
+Focus on:
+- Genre: specific music genre and sub-genres
+- Mood: emotional tone, energy level, atmosphere
+- Instruments: specific instruments, synths, acoustic/electronic
+- Tempo: BPM range, rhythm patterns
+- Production: mixing style, reverb, stereo width
+- Structure: intro, verses, chorus, bridge, outro
+
+Respond ONLY with the refined prompt text. Do not include explanations, markdown formatting, or any other text.`,
+
+        general: `You are an expert AI prompt engineer. Your task is to enhance and refine prompts for AI content generation.
+
+Focus on:
+- Clarity: make the prompt clear and specific
+- Detail: add relevant descriptive details
+- Structure: organize the prompt logically
+- Quality: include quality-enhancing keywords
+
+Respond ONLY with the refined prompt text. Do not include explanations, markdown formatting, or any other text.`
+      };
+
+      const systemPrompt = systemPrompts[context] || systemPrompts.general;
+
+      const refinedPrompt = await chatService.chat(
+        'deepseek',
+        'deepseek-chat',
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Please refine this prompt for better AI generation results:\n\n${prompt}` }
+        ]
+      );
+
+      res.json({
+        original: prompt,
+        refined: refinedPrompt.trim(),
+      });
+    } catch (error: any) {
+      console.error('Prompt refinement error:', error);
+      res.status(500).json({ message: error.message || "Failed to refine prompt" });
     }
   });
 

@@ -22,6 +22,7 @@ import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { GenerationProgress } from "@/components/generation-progress";
+import { RefinePromptButton } from "@/components/prompt-assistant";
 
 const OUTPUT_FORMATS = [
   { value: "mp3_44100_128", label: "MP3 44.1kHz 128kbps (Recommended)" },
@@ -185,7 +186,16 @@ export default function SoundEffects() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="text">Describe the Sound Effect</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="text">Describe the Sound Effect</Label>
+                  {text.length >= 3 && (
+                    <RefinePromptButton
+                      prompt={text}
+                      onRefined={setText}
+                      context="audio"
+                    />
+                  )}
+                </div>
                 <Textarea
                   id="text"
                   data-testid="input-text"

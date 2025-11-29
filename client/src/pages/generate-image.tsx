@@ -24,6 +24,7 @@ import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiOpenai } from "react-icons/si";
 import { GenerationProgress } from "@/components/generation-progress";
+import { RefinePromptButton } from "@/components/prompt-assistant";
 
 // Model icon component for consistent styling
 const ImageModelIcon = ({ modelValue, className = "h-4 w-4" }: { modelValue: string; className?: string }) => {
@@ -687,9 +688,18 @@ export default function GenerateImage() {
 
               {/* Prompt */}
               <div className="space-y-2">
-                <Label htmlFor="prompt">
-                  {mode === "text-to-image" ? "Image Description" : "Editing Instructions"}
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="prompt">
+                    {mode === "text-to-image" ? "Image Description" : "Editing Instructions"}
+                  </Label>
+                  {prompt.length >= 3 && (
+                    <RefinePromptButton
+                      prompt={prompt}
+                      onRefined={setPrompt}
+                      context="image"
+                    />
+                  )}
+                </div>
                 <Textarea
                   id="prompt"
                   placeholder={

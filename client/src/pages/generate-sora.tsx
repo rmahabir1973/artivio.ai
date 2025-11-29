@@ -19,6 +19,7 @@ import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { GenerationProgress } from "@/components/generation-progress";
+import { RefinePromptButton } from "@/components/prompt-assistant";
 
 interface Scene {
   id: string;
@@ -395,7 +396,16 @@ export default function GenerateSora() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="t2v-prompt">Prompt</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="t2v-prompt">Prompt</Label>
+                  {prompt.length >= 3 && (
+                    <RefinePromptButton
+                      prompt={prompt}
+                      onRefined={setPrompt}
+                      context="video"
+                    />
+                  )}
+                </div>
                 <Textarea
                   id="t2v-prompt"
                   data-testid="input-t2v-prompt"

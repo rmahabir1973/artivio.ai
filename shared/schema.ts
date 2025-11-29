@@ -469,6 +469,22 @@ export const analyzeImageRequestSchema = z.object({
 
 export type AnalyzeImageRequest = z.infer<typeof analyzeImageRequestSchema>;
 
+// Prompt Refinement schemas
+export const promptRefineRequestSchema = z.object({
+  prompt: z.string().min(1).max(5000),
+  context: z.enum(['video', 'image', 'audio', 'general']),
+});
+
+export type PromptRefineRequest = z.infer<typeof promptRefineRequestSchema>;
+
+export const promptRefineResponseSchema = z.object({
+  original: z.string(),
+  refined: z.string(),
+  suggestions: z.array(z.string()).optional(),
+});
+
+export type PromptRefineResponse = z.infer<typeof promptRefineResponseSchema>;
+
 // Loops.so Test Contact Request Schema
 export const loopsTestContactRequestSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),

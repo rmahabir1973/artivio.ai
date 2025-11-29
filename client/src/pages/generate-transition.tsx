@@ -19,6 +19,7 @@ import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiGoogle } from "react-icons/si";
 import { GenerationProgress } from "@/components/generation-progress";
+import { RefinePromptButton } from "@/components/prompt-assistant";
 
 const ASPECT_RATIOS = [
   { value: "16:9", label: "16:9 (Landscape)" },
@@ -419,7 +420,16 @@ export default function GenerateTransition() {
 
             {/* Prompt */}
             <div className="space-y-3">
-              <Label>Transition Description</Label>
+              <div className="flex items-center justify-between">
+                <Label>Transition Description</Label>
+                {prompt.length >= 3 && (
+                  <RefinePromptButton
+                    prompt={prompt}
+                    onRefined={setPrompt}
+                    context="video"
+                  />
+                )}
+              </div>
               <Textarea
                 placeholder="Describe how the video should transition between the frames... (e.g., 'The scene slowly zooms in as clouds drift across the sky')"
                 value={prompt}

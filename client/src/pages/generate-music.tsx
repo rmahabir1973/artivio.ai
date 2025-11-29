@@ -23,6 +23,7 @@ import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiSoundcloud } from "react-icons/si";
+import { RefinePromptButton } from "@/components/prompt-assistant";
 
 // Music model icon component - all Suno models use the same icon
 const MusicModelIcon = ({ className = "h-4 w-4" }: { className?: string }) => {
@@ -815,9 +816,18 @@ export default function GenerateMusic() {
 
                 {/* Prompt */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <Label htmlFor="prompt">Music Description</Label>
-                    <span className="text-xs text-muted-foreground">{prompt.length}/500</span>
+                    <div className="flex items-center gap-2">
+                      {prompt.length >= 3 && (
+                        <RefinePromptButton
+                          prompt={prompt}
+                          onRefined={(refined) => setPrompt(refined.slice(0, 500))}
+                          context="audio"
+                        />
+                      )}
+                      <span className="text-xs text-muted-foreground">{prompt.length}/500</span>
+                    </div>
                   </div>
                   <Textarea
                     id="prompt"
