@@ -489,6 +489,8 @@ export const backgroundMusicEnhancementSchema = z.object({
   volume: z.number().min(0.0).max(1.0).default(0.3),
   fadeInSeconds: z.number().min(0).max(10).optional(),
   fadeOutSeconds: z.number().min(0).max(10).optional(),
+  trimStartSeconds: z.number().min(0).optional(),
+  trimEndSeconds: z.number().min(0).optional(),
 }).optional();
 
 export const textOverlaySchema = z.object({

@@ -220,7 +220,9 @@ async function normalizeVideo(inputPath: string, outputPath: string): Promise<vo
     
     // Optimize for streaming: limit resolution to 720p and bitrate to 2500k
     // movflags +faststart enables instant playback by moving metadata to start of file
-    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart ${audioFlags} -y "${outputPath}"`;
+    // CRITICAL: Use pad filter to ensure all videos are EXACTLY 1280x720 for proper concatenation
+    // Without padding, videos with different aspect ratios cause distortion when joined
+    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart ${audioFlags} -y "${outputPath}"`;
     
     await execAsync(command, {
       timeout: 300000,
@@ -452,7 +454,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
     // Download all videos in parallel for speed
     const downloadedPaths = await Promise.all(
-      videoUrls.map((url, i) => downloadVideo(url, tempDir, i))
+      videoUrls.map((url, i) => downloadVideo(url, tempDir!, i))
     );
     downloadedPaths.forEach(filepath => tempFiles.push(filepath));
 
@@ -470,7 +472,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       
       if (needsNormalization) {
         onProgress?.('normalize', `Video ${i + 1} needs format conversion...`);
-        const normalizedPath = path.join(tempDir, `normalized_${i}.mp4`);
+        const normalizedPath = path.join(tempDir!, `normalized_${i}.mp4`);
         await normalizeVideo(filepath, normalizedPath);
         tempFiles.push(normalizedPath);
         return normalizedPath;
@@ -483,7 +485,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     let musicPath: string | undefined;
     if (enhancements?.backgroundMusic?.audioUrl) {
       onProgress?.('download', 'Downloading background music...');
-      musicPath = await downloadAudio(enhancements.backgroundMusic.audioUrl, tempDir);
+      musicPath = await downloadAudio(enhancements.backgroundMusic.audioUrl, tempDir!);
       tempFiles.push(musicPath);
     }
 
@@ -491,8 +493,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       enhancements?.transitions?.mode === 'crossfade' ||
       enhancements?.backgroundMusic ||
       (enhancements?.textOverlays && enhancements.textOverlays.length > 0) ||
-      (enhancements?.speed && enhancements.speed.mode !== 'none') ||
-      (enhancements?.clipTrims && Object.keys(enhancements.clipTrims).length > 0)
+      (enhancements?.speed && enhancements.speed.mode !== 'none')
     );
 
     const outputFilename = `combined_${jobId}.mp4`;
@@ -511,7 +512,9 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
       // Re-encode with HTML5-compatible settings and bitrate limiting for fast streaming
       // Resolution: max 720p | Bitrate: 2500k | Preset: fast | CRF: 24 | movflags: faststart
-      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k "${outputPath}"`;
+      // CRITICAL: Use pad filter to ensure all videos are EXACTLY 1280x720 for proper concatenation
+      // Without padding, videos with different aspect ratios cause distortion when joined
+      ffmpegCommand = `ffmpeg -f concat -safe 0 -i "${concatFilePath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k "${outputPath}"`;
     } else {
       onProgress?.('process', 'Applying enhancements and combining...');
 
@@ -580,7 +583,9 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
       // Optimized for streaming: resolution capped at 720p, bitrate limited to 2500k
       // Resolution: max 720p | Bitrate: 2500k | Preset: fast | CRF: 24 | movflags: faststart
-      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -vf "scale=1280:720:force_original_aspect_ratio=decrease" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k "${outputPath}"`;
+      // CRITICAL: Use pad filter to ensure all videos are EXACTLY 1280x720 for proper concatenation
+      // Without padding, videos with different aspect ratios cause distortion when joined
+      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k "${outputPath}"`;
     }
 
     onProgress?.('process', 'Running FFmpeg...');
