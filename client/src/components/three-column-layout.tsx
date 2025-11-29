@@ -28,10 +28,10 @@ export function ThreeColumnLayout({
           </aside>
         )}
 
-        {/* Center Form Panel */}
+        {/* Center Form Panel - Narrower to give more space to video */}
         <div
-          className={`flex-1 ${
-            showPreview ? "lg:max-w-xl xl:max-w-2xl" : ""
+          className={`flex-shrink-0 ${
+            showPreview ? "w-full lg:w-[380px] xl:w-[420px]" : "flex-1"
           } border-r`}
         >
           <div className="min-h-screen overflow-y-auto">
@@ -39,11 +39,13 @@ export function ThreeColumnLayout({
           </div>
         </div>
 
-        {/* Right Preview Panel */}
+        {/* Right Preview Panel - Takes remaining space for larger video */}
         {showPreview && preview && (
-          <div className="hidden lg:block flex-1">
-            <div className="min-h-screen flex items-center justify-center bg-muted/20">
-              {preview}
+          <div className="hidden lg:flex flex-1 min-w-0">
+            <div className="min-h-screen w-full flex items-start justify-center p-8 bg-muted/10">
+              <div className="w-full max-w-4xl">
+                {preview}
+              </div>
             </div>
           </div>
         )}
