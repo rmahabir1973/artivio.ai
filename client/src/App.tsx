@@ -91,6 +91,7 @@ import VideoModelsShowcase from "@/pages/video-models-showcase";
 import Newsletter from "@/pages/newsletter";
 import Blog from "@/pages/blog";
 import BlogPost from "@/pages/blog-post";
+import Tutorials from "@/pages/tutorials";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/newsletter" component={Newsletter} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/tutorials" component={Tutorials} />
 
       {/* Auth routes - only show when not authenticated */}
       {!isAuthenticated && (
@@ -232,6 +234,7 @@ function AppContent() {
     '/billing',
     '/story-studio',
     '/workflows',
+    '/tutorials',
   ];
   
   const isAppPage = appPages.some(page => location.startsWith(page));

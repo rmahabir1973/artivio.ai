@@ -40,6 +40,7 @@ import {
   Eraser,
   Maximize,
   Users,
+  GraduationCap,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -86,6 +87,7 @@ const menuSections: MenuSection[] = [
     items: [
       { title: "Home", url: "/dashboard", icon: Home },
       { title: "My Library", url: "/history", icon: Library },
+      { title: "Tutorials", url: "/tutorials", icon: GraduationCap },
     ],
   },
   {
