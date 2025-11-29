@@ -1538,6 +1538,18 @@ export const homePageContent = pgTable("home_page_content", {
   previewVideoVideoUpscaler: text("preview_video_video_upscaler"), // Video Upscaler page
   previewVideoBgRemover: text("preview_video_bg_remover"), // Background Remover page
   
+  // Brand Builder preview videos
+  previewVideoBrandProductAd: text("preview_video_brand_product_ad"), // Brand Builder: Product Ad
+  previewVideoBrandInfluencerAd: text("preview_video_brand_influencer_ad"), // Brand Builder: Influencer Ad
+  previewVideoBrandLogoAnimation: text("preview_video_brand_logo_animation"), // Brand Builder: Logo Animation
+  previewVideoBrandUnboxing: text("preview_video_brand_unboxing"), // Brand Builder: Unboxing
+  previewVideoBrandFlashSale: text("preview_video_brand_flash_sale"), // Brand Builder: Flash Sale
+  previewVideoBrandBrandStory: text("preview_video_brand_brand_story"), // Brand Builder: Brand Story
+  previewVideoBrandTestimonial: text("preview_video_brand_testimonial"), // Brand Builder: Testimonial
+  previewVideoBrandSocialPromo: text("preview_video_brand_social_promo"), // Brand Builder: Social Promo
+  previewVideoBrandBeforeAfter: text("preview_video_brand_before_after"), // Brand Builder: Before & After
+  previewVideoBrandShowcase: text("preview_video_brand_showcase"), // Brand Builder: Showcase
+  
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
