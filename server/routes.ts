@@ -950,11 +950,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { planName } = req.body;
       
-      // Validate plan name
-      const validPlans = ['free', 'starter', 'pro'];
-      if (!planName || !validPlans.includes(planName)) {
+      // Validate plan name - accept any non-empty string
+      // Actual plan validation happens when creating checkout session
+      if (!planName || typeof planName !== 'string') {
         return res.status(400).json({ 
-          message: "Invalid plan name. Must be 'free', 'starter', or 'pro'" 
+          message: "Plan name is required" 
         });
       }
 
