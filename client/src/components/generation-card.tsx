@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Zap, Heart, AlertCircle } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Zap, Heart, AlertCircle, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
@@ -202,6 +202,24 @@ export function GenerationCard({ generation }: GenerationCardProps) {
       title: "Copied",
       description: "Prompt copied to clipboard",
     });
+  };
+
+  const handleCopyUrl = async () => {
+    if (!generation.resultUrl) return;
+    
+    try {
+      await navigator.clipboard.writeText(generation.resultUrl);
+      toast({
+        title: "URL Copied",
+        description: "Download link copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy the URL",
+        variant: "destructive",
+      });
+    }
   };
 
   // Supported types for regeneration
@@ -434,7 +452,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             </Button>
           </div>
 
-          <div className={`grid ${canUpscale ? 'grid-cols-3' : 'grid-cols-2'} gap-2 w-full`}>
+          <div className={`grid ${canUpscale ? 'grid-cols-4' : 'grid-cols-3'} gap-2 w-full`}>
             {generation.status === 'completed' && generation.resultUrl && (
               <>
                 <Button 
@@ -450,9 +468,21 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                 <Button 
                   variant="outline" 
                   size="sm"
+                  onClick={handleCopyUrl}
+                  className="w-full"
+                  data-testid={`button-copy-url-${generation.id}`}
+                  title="Copy download URL"
+                >
+                  <Link2 className="h-4 w-4 mr-1" />
+                  URL
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
                   onClick={handleCopyPrompt}
                   className="w-full"
                   data-testid={`button-copy-${generation.id}`}
+                  title="Copy prompt"
                 >
                   <Copy className="h-4 w-4 mr-1" />
                   Copy
