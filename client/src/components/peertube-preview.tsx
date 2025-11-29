@@ -5,7 +5,10 @@ import { normalizeVideoUrl } from "@/lib/videoProvider";
 import { Link } from "wouter";
 
 interface PeerTubePreviewProps {
-  pageType: "video" | "image" | "transition" | "sora" | "grok" | "sound-effects" | "music";
+  pageType: "video" | "image" | "transition" | "sora" | "grok" | "sound-effects" | "music" | 
+    "brand-product-ad" | "brand-influencer-ad" | "brand-logo-animation" | "brand-unboxing" |
+    "brand-flash-sale" | "brand-brand-story" | "brand-testimonial" | "brand-social-promo" |
+    "brand-before-after" | "brand-showcase";
   title?: string;
   description?: string;
   showGeneratingMessage?: boolean;
@@ -19,6 +22,16 @@ const PAGE_TYPE_TO_FIELD: Record<PeerTubePreviewProps["pageType"], string> = {
   "grok": "previewVideoGrok",
   "sound-effects": "previewVideoSoundEffects",
   "music": "previewVideoMusic",
+  "brand-product-ad": "previewVideoBrandProductAd",
+  "brand-influencer-ad": "previewVideoBrandInfluencerAd",
+  "brand-logo-animation": "previewVideoBrandLogoAnimation",
+  "brand-unboxing": "previewVideoBrandUnboxing",
+  "brand-flash-sale": "previewVideoBrandFlashSale",
+  "brand-brand-story": "previewVideoBrandBrandStory",
+  "brand-testimonial": "previewVideoBrandTestimonial",
+  "brand-social-promo": "previewVideoBrandSocialPromo",
+  "brand-before-after": "previewVideoBrandBeforeAfter",
+  "brand-showcase": "previewVideoBrandShowcase",
 };
 
 export function PeerTubePreview({
