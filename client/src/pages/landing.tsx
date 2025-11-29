@@ -496,10 +496,14 @@ export default function Landing() {
 
       {/* Hero Section - Full Screen with Background Video */}
       <section className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden pt-32 md:pt-36">
-        {/* Background Video or Gradient */}
+        {/* Mobile: Always show gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20 z-0 md:hidden" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl z-0 md:hidden" />
+        
+        {/* Desktop: Show video if available, otherwise gradient */}
         {normalizedVideoUrl ? (
           <>
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 hidden md:block">
               <iframe
                 src={normalizedVideoUrl}
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]"
@@ -513,13 +517,13 @@ export default function Landing() {
                 }}
               />
             </div>
-            {/* Dark overlay for text readability */}
-            <div className="absolute inset-0 bg-black/60 z-[1]" />
+            {/* Dark overlay for text readability - desktop only */}
+            <div className="absolute inset-0 bg-black/60 z-[1] hidden md:block" />
           </>
         ) : (
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20 z-0" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl z-0" />
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20 z-0 hidden md:block" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl z-0 hidden md:block" />
           </>
         )}
         
