@@ -100,6 +100,16 @@ export default function Admin() {
     previewVideoGrok: "",
     previewVideoSoundEffects: "",
     previewVideoMusic: "",
+    previewVideoBrandProductAd: "",
+    previewVideoBrandInfluencerAd: "",
+    previewVideoBrandLogoAnimation: "",
+    previewVideoBrandUnboxing: "",
+    previewVideoBrandFlashSale: "",
+    previewVideoBrandBrandStory: "",
+    previewVideoBrandTestimonial: "",
+    previewVideoBrandSocialPromo: "",
+    previewVideoBrandBeforeAfter: "",
+    previewVideoBrandShowcase: "",
   });
   const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
   const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
@@ -241,6 +251,16 @@ export default function Admin() {
         previewVideoGrok: homePageContent.previewVideoGrok || "",
         previewVideoSoundEffects: homePageContent.previewVideoSoundEffects || "",
         previewVideoMusic: homePageContent.previewVideoMusic || "",
+        previewVideoBrandProductAd: homePageContent.previewVideoBrandProductAd || "",
+        previewVideoBrandInfluencerAd: homePageContent.previewVideoBrandInfluencerAd || "",
+        previewVideoBrandLogoAnimation: homePageContent.previewVideoBrandLogoAnimation || "",
+        previewVideoBrandUnboxing: homePageContent.previewVideoBrandUnboxing || "",
+        previewVideoBrandFlashSale: homePageContent.previewVideoBrandFlashSale || "",
+        previewVideoBrandBrandStory: homePageContent.previewVideoBrandBrandStory || "",
+        previewVideoBrandTestimonial: homePageContent.previewVideoBrandTestimonial || "",
+        previewVideoBrandSocialPromo: homePageContent.previewVideoBrandSocialPromo || "",
+        previewVideoBrandBeforeAfter: homePageContent.previewVideoBrandBeforeAfter || "",
+        previewVideoBrandShowcase: homePageContent.previewVideoBrandShowcase || "",
       });
     }
   }, [homePageContent, editingHomePage]);
@@ -1751,6 +1771,121 @@ export default function Admin() {
                         />
                       </div>
                     </div>
+                    
+                    <div className="mt-6 pt-6 border-t">
+                      <h4 className="text-sm font-medium mb-4">Brand Builder Preview Videos</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label htmlFor="previewVideoBrandProductAd">Product Ad</Label>
+                          <Input
+                            id="previewVideoBrandProductAd"
+                            value={homePageFormData.previewVideoBrandProductAd}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandProductAd: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-product-ad"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="previewVideoBrandInfluencerAd">Influencer Ad</Label>
+                          <Input
+                            id="previewVideoBrandInfluencerAd"
+                            value={homePageFormData.previewVideoBrandInfluencerAd}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandInfluencerAd: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-influencer-ad"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2 mt-4">
+                        <div>
+                          <Label htmlFor="previewVideoBrandLogoAnimation">Logo Animation</Label>
+                          <Input
+                            id="previewVideoBrandLogoAnimation"
+                            value={homePageFormData.previewVideoBrandLogoAnimation}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandLogoAnimation: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-logo-animation"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="previewVideoBrandUnboxing">Unboxing</Label>
+                          <Input
+                            id="previewVideoBrandUnboxing"
+                            value={homePageFormData.previewVideoBrandUnboxing}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandUnboxing: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-unboxing"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2 mt-4">
+                        <div>
+                          <Label htmlFor="previewVideoBrandFlashSale">Flash Sale</Label>
+                          <Input
+                            id="previewVideoBrandFlashSale"
+                            value={homePageFormData.previewVideoBrandFlashSale}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandFlashSale: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-flash-sale"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="previewVideoBrandBrandStory">Brand Story</Label>
+                          <Input
+                            id="previewVideoBrandBrandStory"
+                            value={homePageFormData.previewVideoBrandBrandStory}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandBrandStory: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-brand-story"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2 mt-4">
+                        <div>
+                          <Label htmlFor="previewVideoBrandTestimonial">Testimonial</Label>
+                          <Input
+                            id="previewVideoBrandTestimonial"
+                            value={homePageFormData.previewVideoBrandTestimonial}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandTestimonial: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-testimonial"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="previewVideoBrandSocialPromo">Social Promo</Label>
+                          <Input
+                            id="previewVideoBrandSocialPromo"
+                            value={homePageFormData.previewVideoBrandSocialPromo}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandSocialPromo: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-social-promo"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2 mt-4">
+                        <div>
+                          <Label htmlFor="previewVideoBrandBeforeAfter">Before & After</Label>
+                          <Input
+                            id="previewVideoBrandBeforeAfter"
+                            value={homePageFormData.previewVideoBrandBeforeAfter}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandBeforeAfter: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-before-after"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="previewVideoBrandShowcase">Showcase</Label>
+                          <Input
+                            id="previewVideoBrandShowcase"
+                            value={homePageFormData.previewVideoBrandShowcase}
+                            onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoBrandShowcase: e.target.value })}
+                            placeholder="https://peertube.example.com/videos/watch/..."
+                            data-testid="input-preview-video-brand-showcase"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
                     <Button
                       onClick={() => {
                         updateHomePageMutation.mutate({
@@ -1761,6 +1896,16 @@ export default function Admin() {
                           previewVideoGrok: homePageFormData.previewVideoGrok.trim() || undefined,
                           previewVideoSoundEffects: homePageFormData.previewVideoSoundEffects.trim() || undefined,
                           previewVideoMusic: homePageFormData.previewVideoMusic.trim() || undefined,
+                          previewVideoBrandProductAd: homePageFormData.previewVideoBrandProductAd.trim() || undefined,
+                          previewVideoBrandInfluencerAd: homePageFormData.previewVideoBrandInfluencerAd.trim() || undefined,
+                          previewVideoBrandLogoAnimation: homePageFormData.previewVideoBrandLogoAnimation.trim() || undefined,
+                          previewVideoBrandUnboxing: homePageFormData.previewVideoBrandUnboxing.trim() || undefined,
+                          previewVideoBrandFlashSale: homePageFormData.previewVideoBrandFlashSale.trim() || undefined,
+                          previewVideoBrandBrandStory: homePageFormData.previewVideoBrandBrandStory.trim() || undefined,
+                          previewVideoBrandTestimonial: homePageFormData.previewVideoBrandTestimonial.trim() || undefined,
+                          previewVideoBrandSocialPromo: homePageFormData.previewVideoBrandSocialPromo.trim() || undefined,
+                          previewVideoBrandBeforeAfter: homePageFormData.previewVideoBrandBeforeAfter.trim() || undefined,
+                          previewVideoBrandShowcase: homePageFormData.previewVideoBrandShowcase.trim() || undefined,
                         });
                       }}
                       disabled={updateHomePageMutation.isPending}
