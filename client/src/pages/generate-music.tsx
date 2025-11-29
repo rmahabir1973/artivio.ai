@@ -11,7 +11,6 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
-import { SidebarInset } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -22,6 +21,8 @@ import { Loader2, Music, ChevronDown, Sparkles, Upload, Plus, AudioLines, Mic, L
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { SiSoundcloud } from "react-icons/si";
 import { RefinePromptButton } from "@/components/prompt-assistant";
 
@@ -727,20 +728,21 @@ export default function GenerateMusic() {
   }
 
   return (
-    <SidebarInset>
-      <div className="h-full overflow-y-auto">
-        <div className="p-8 max-w-7xl mx-auto">
-      <div className="space-y-2 mb-8">
-        <h1 className="text-4xl font-bold flex items-center gap-3">
-          <Music className="h-10 w-10 text-primary" />
-          Music Studio
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Create, extend, and edit original music with AI-powered Suno models
-        </p>
-      </div>
+    <>
+    <ThreeColumnLayout
+      form={
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <Music className="h-8 w-8 text-primary" />
+              Music Studio
+            </h1>
+            <p className="text-muted-foreground">
+              Create, extend, and edit original music with AI-powered Suno models
+            </p>
+          </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
           <TabsTrigger value="generate" data-testid="tab-generate">
             <Music className="h-4 w-4 mr-2" />
@@ -770,7 +772,6 @@ export default function GenerateMusic() {
 
         {/* Generate Tab */}
         <TabsContent value="generate" className="space-y-6">
-          <div className="grid lg:grid-cols-2 gap-8">
             <Card>
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
@@ -1143,50 +1144,6 @@ export default function GenerateMusic() {
                 </Collapsible>
               </CardContent>
             </Card>
-
-            {/* Model Comparison */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">Available Models</h2>
-              <div className="space-y-4">
-                {MUSIC_MODELS.map((m) => (
-                  <Card key={m.value} className={model === m.value ? "border-primary" : ""}>
-                    <CardHeader>
-                      <div className="flex items-center gap-3">
-                        <MusicModelIcon className="h-5 w-5" />
-                        <div>
-                          <CardTitle className="text-lg">{m.label}</CardTitle>
-                          <CardDescription>{m.description}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold">{m.cost}</span>
-                        <span className="text-sm text-muted-foreground">credits per track</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              <Card className="bg-accent/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Pro Tips</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm">
-                    • For best results with vocals, provide structured lyrics with verse/chorus/bridge sections
-                  </p>
-                  <p className="text-sm">
-                    • Instrumental tracks work great when you focus on mood, instruments, and tempo
-                  </p>
-                  <p className="text-sm">
-                    • Use advanced settings to fine-tune creativity and style adherence
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
         </TabsContent>
 
         {/* Extend Music Tab */}
@@ -2141,15 +2098,24 @@ export default function GenerateMusic() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+          </Tabs>
         </div>
-      </div>
+      }
+      preview={
+        <PeerTubePreview
+          pageType="music"
+          title="Music Preview"
+          description="See what's possible with AI music"
+          showGeneratingMessage={generateMutation.isPending}
+        />
+      }
+    />
       
-      <GuestGenerateModal
-        open={showGuestModal}
-        onOpenChange={setShowGuestModal}
-        featureName="Music"
-      />
-    </SidebarInset>
+    <GuestGenerateModal
+      open={showGuestModal}
+      onOpenChange={setShowGuestModal}
+      featureName="Music"
+    />
+    </>
   );
 }

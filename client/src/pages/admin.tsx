@@ -99,6 +99,7 @@ export default function Admin() {
     previewVideoSora: "",
     previewVideoGrok: "",
     previewVideoSoundEffects: "",
+    previewVideoMusic: "",
   });
   const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
   const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
@@ -239,6 +240,7 @@ export default function Admin() {
         previewVideoSora: homePageContent.previewVideoSora || "",
         previewVideoGrok: homePageContent.previewVideoGrok || "",
         previewVideoSoundEffects: homePageContent.previewVideoSoundEffects || "",
+        previewVideoMusic: homePageContent.previewVideoMusic || "",
       });
     }
   }, [homePageContent, editingHomePage]);
@@ -1737,6 +1739,18 @@ export default function Admin() {
                         />
                       </div>
                     </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="previewVideoMusic">Music Generation Preview</Label>
+                        <Input
+                          id="previewVideoMusic"
+                          value={homePageFormData.previewVideoMusic}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoMusic: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-music"
+                        />
+                      </div>
+                    </div>
                     <Button
                       onClick={() => {
                         updateHomePageMutation.mutate({
@@ -1746,6 +1760,7 @@ export default function Admin() {
                           previewVideoSora: homePageFormData.previewVideoSora.trim() || undefined,
                           previewVideoGrok: homePageFormData.previewVideoGrok.trim() || undefined,
                           previewVideoSoundEffects: homePageFormData.previewVideoSoundEffects.trim() || undefined,
+                          previewVideoMusic: homePageFormData.previewVideoMusic.trim() || undefined,
                         });
                       }}
                       disabled={updateHomePageMutation.isPending}

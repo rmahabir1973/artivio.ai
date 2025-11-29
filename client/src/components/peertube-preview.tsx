@@ -5,7 +5,7 @@ import { normalizeVideoUrl } from "@/lib/videoProvider";
 import { Link } from "wouter";
 
 interface PeerTubePreviewProps {
-  pageType: "video" | "image" | "transition" | "sora" | "grok" | "sound-effects";
+  pageType: "video" | "image" | "transition" | "sora" | "grok" | "sound-effects" | "music";
   title?: string;
   description?: string;
   showGeneratingMessage?: boolean;
@@ -18,6 +18,7 @@ const PAGE_TYPE_TO_FIELD: Record<PeerTubePreviewProps["pageType"], string> = {
   "sora": "previewVideoSora",
   "grok": "previewVideoGrok",
   "sound-effects": "previewVideoSoundEffects",
+  "music": "previewVideoMusic",
 };
 
 export function PeerTubePreview({
