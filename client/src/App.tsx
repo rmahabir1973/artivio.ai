@@ -44,6 +44,7 @@ import {
   Eraser,
   QrCode,
   Workflow,
+  Megaphone,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { AIAssistantWidget } from "@/components/ai-assistant-widget";
@@ -82,7 +83,6 @@ import Billing from "@/pages/billing";
 import BillingSuccess from "@/pages/billing-success";
 import BillingCanceled from "@/pages/billing-canceled";
 import Support from "@/pages/support";
-import Workflows from "@/pages/workflows";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Contact from "@/pages/contact";
@@ -93,6 +93,17 @@ import Newsletter from "@/pages/newsletter";
 import Blog from "@/pages/blog";
 import BlogPost from "@/pages/blog-post";
 import Tutorials from "@/pages/tutorials";
+import BrandBuilder from "@/pages/brand-builder";
+import ProductAd from "@/pages/brand-builder/product-ad";
+import Showcase from "@/pages/brand-builder/showcase";
+import BeforeAfter from "@/pages/brand-builder/before-after";
+import SocialPromo from "@/pages/brand-builder/social-promo";
+import Testimonial from "@/pages/brand-builder/testimonial";
+import BrandStory from "@/pages/brand-builder/brand-story";
+import FlashSale from "@/pages/brand-builder/flash-sale";
+import Unboxing from "@/pages/brand-builder/unboxing";
+import LogoAnimation from "@/pages/brand-builder/logo-animation";
+import InfluencerAd from "@/pages/brand-builder/influencer-ad";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -102,8 +113,6 @@ function Router() {
     <Switch>
       {/* Public routes available to all users */}
       <Route path="/support" component={Support} />
-      <Route path="/workflows" component={Workflows} />
-      <Route path="/templates" component={Workflows} /> {/* Alias for /workflows */}
       <Route path="/affiliates" component={Affiliates} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/video-models" component={VideoModelsShowcase} />
@@ -115,6 +124,17 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/tutorials" component={Tutorials} />
+      <Route path="/brand-builder" component={BrandBuilder} />
+      <Route path="/brand-builder/product-ad" component={ProductAd} />
+      <Route path="/brand-builder/showcase" component={Showcase} />
+      <Route path="/brand-builder/before-after" component={BeforeAfter} />
+      <Route path="/brand-builder/social-promo" component={SocialPromo} />
+      <Route path="/brand-builder/testimonial" component={Testimonial} />
+      <Route path="/brand-builder/brand-story" component={BrandStory} />
+      <Route path="/brand-builder/flash-sale" component={FlashSale} />
+      <Route path="/brand-builder/unboxing" component={Unboxing} />
+      <Route path="/brand-builder/logo-animation" component={LogoAnimation} />
+      <Route path="/brand-builder/influencer-ad" component={InfluencerAd} />
 
       {/* Auth routes - only show when not authenticated */}
       {!isAuthenticated && (
@@ -234,8 +254,8 @@ function AppContent() {
     '/admin',
     '/billing',
     '/story-studio',
-    '/workflows',
     '/tutorials',
+    '/brand-builder',
   ];
   
   const isAppPage = appPages.some(page => location.startsWith(page));
@@ -372,6 +392,19 @@ function AppContent() {
                     </DropdownMenuContent>
                   </DropdownMenu>
 
+                  {/* Brand Builder Link */}
+                  <Link href="/brand-builder">
+                    <Button 
+                      variant={location.startsWith("/brand-builder") ? "secondary" : "ghost"} 
+                      size="sm" 
+                      className="text-sm font-medium gap-1"
+                      data-testid="nav-brand-builder"
+                    >
+                      <Megaphone className="h-4 w-4 text-yellow-400" />
+                      Brand Builder
+                    </Button>
+                  </Link>
+
                   {/* Community Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -382,12 +415,6 @@ function AppContent() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <Link href="/workflows" className="cursor-pointer">
-                          <Workflow className="h-4 w-4 mr-2 text-orange-400" />
-                          Workflows
-                        </Link>
-                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/blog" className="cursor-pointer">
                           <BookOpen className="h-4 w-4 mr-2 text-teal-400" />

@@ -41,12 +41,18 @@ import {
   Maximize,
   Users,
   GraduationCap,
+  ShoppingBag,
+  Presentation,
+  Quote,
+  Package,
+  Star,
+  Share2,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
-type CategoryType = 'main' | 'video' | 'image' | 'audio' | 'tools' | 'community' | 'account';
+type CategoryType = 'main' | 'brand' | 'video' | 'image' | 'audio' | 'tools' | 'community' | 'account';
 
 interface MenuItem {
   title: string;
@@ -62,6 +68,7 @@ interface MenuSection {
 
 const categoryGradients: Record<CategoryType, string> = {
   main: "from-gray-400 to-gray-600",
+  brand: "from-yellow-400 to-orange-500",
   video: "from-blue-400 to-cyan-500",
   image: "from-pink-400 to-rose-500",
   audio: "from-purple-400 to-violet-500",
@@ -72,6 +79,7 @@ const categoryGradients: Record<CategoryType, string> = {
 
 const categoryIconColors: Record<CategoryType, string> = {
   main: "text-gray-400",
+  brand: "text-yellow-400",
   video: "text-blue-400",
   image: "text-pink-400",
   audio: "text-purple-400",
@@ -88,6 +96,22 @@ const menuSections: MenuSection[] = [
       { title: "Home", url: "/dashboard", icon: Home },
       { title: "My Library", url: "/history", icon: Library },
       { title: "Tutorials", url: "/tutorials", icon: GraduationCap },
+    ],
+  },
+  {
+    label: "Brand Builder",
+    category: "brand",
+    items: [
+      { title: "Instant Product Ad", url: "/brand-builder/product-ad", icon: ShoppingBag },
+      { title: "Product Showcase", url: "/brand-builder/showcase", icon: Presentation },
+      { title: "Before & After", url: "/brand-builder/before-after", icon: ArrowLeftRight },
+      { title: "Social Media Promo", url: "/brand-builder/social-promo", icon: Share2 },
+      { title: "Testimonial Video", url: "/brand-builder/testimonial", icon: Quote },
+      { title: "Brand Story", url: "/brand-builder/brand-story", icon: Film },
+      { title: "Flash Sale Promo", url: "/brand-builder/flash-sale", icon: Zap },
+      { title: "Product Unboxing", url: "/brand-builder/unboxing", icon: Package },
+      { title: "Logo Animation", url: "/brand-builder/logo-animation", icon: Sparkles },
+      { title: "Influencer Ad", url: "/brand-builder/influencer-ad", icon: Star },
     ],
   },
   {
@@ -138,7 +162,6 @@ const menuSections: MenuSection[] = [
     label: "Community",
     category: "community",
     items: [
-      { title: "Workflows", url: "/workflows", icon: Users },
       { title: "Affiliates", url: "/affiliates", icon: DollarSign },
     ],
   },
