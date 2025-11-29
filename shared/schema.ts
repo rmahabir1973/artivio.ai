@@ -485,6 +485,19 @@ export const promptRefineResponseSchema = z.object({
 
 export type PromptRefineResponse = z.infer<typeof promptRefineResponseSchema>;
 
+// AI Assistant Chat schemas
+export const assistantChatRequestSchema = z.object({
+  message: z.string().min(1).max(2000),
+});
+
+export type AssistantChatRequest = z.infer<typeof assistantChatRequestSchema>;
+
+export const assistantChatResponseSchema = z.object({
+  message: z.string(),
+});
+
+export type AssistantChatResponse = z.infer<typeof assistantChatResponseSchema>;
+
 // Loops.so Test Contact Request Schema
 export const loopsTestContactRequestSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),

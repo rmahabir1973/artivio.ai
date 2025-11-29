@@ -46,6 +46,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
+import { AIAssistantWidget } from "@/components/ai-assistant-widget";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -483,6 +484,7 @@ function AppContent() {
             </main>
           </div>
         </div>
+        <AIAssistantWidget />
       </SidebarProvider>
     );
   }
@@ -495,6 +497,7 @@ function AppContent() {
         <Router />
       </main>
       <Footer />
+      <AIAssistantWidget />
     </div>
   );
 }
