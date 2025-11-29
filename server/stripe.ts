@@ -31,6 +31,12 @@ export async function createCheckoutSession(params: {
     throw new Error('Plan does not have a Stripe price ID configured');
   }
 
+  console.log('[Stripe Checkout] Creating session for plan:', {
+    planId: plan.id,
+    planName: plan.displayName,
+    stripePriceId: plan.stripePriceId,
+  });
+
   const user = await storage.getUser(userId);
   if (!user) {
     throw new Error('User not found');
@@ -58,7 +64,18 @@ export async function createCheckoutSession(params: {
   }
 
   // Fetch the price from Stripe to get recurring info for inline price_data
-  const stripePrice = await stripe.prices.retrieve(plan.stripePriceId);
+  let stripePrice;
+  try {
+    stripePrice = await stripe.prices.retrieve(plan.stripePriceId);
+    console.log('[Stripe Checkout] Successfully retrieved price from Stripe:', plan.stripePriceId);
+  } catch (error: any) {
+    console.error('[Stripe Checkout] Failed to retrieve price from Stripe:', {
+      stripePriceId: plan.stripePriceId,
+      planName: plan.displayName,
+      error: error.message,
+    });
+    throw new Error(`Invalid Stripe Price ID for plan "${plan.displayName}". Please update the Stripe Price ID in Admin Panel → Subscription Plans. Error: ${error.message}`);
+  }
   
   // Build display name with billing period (e.g., "Starter - Monthly" or "Professional - Annual")
   const billingLabel = plan.billingPeriod === 'annual' ? 'Annual' : 'Monthly';
