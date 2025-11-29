@@ -346,9 +346,9 @@ export default function Unboxing() {
         }
         preview={
           <PeerTubePreview
-            pageType="video"
+            pageType="brand-unboxing"
             title="Unboxing Preview"
-            description="Your generated unboxing video will appear here"
+            description="See a sample unboxing video"
             showGeneratingMessage={isGenerating}
           />
         }

@@ -382,9 +382,9 @@ export default function LogoAnimation() {
         }
         preview={
           <PeerTubePreview
-            pageType="video"
+            pageType="brand-logo-animation"
             title="Logo Animation Preview"
-            description="Your animated logo will appear here"
+            description="See a sample logo animation"
             showGeneratingMessage={isGenerating}
           />
         }

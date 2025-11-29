@@ -360,9 +360,9 @@ export default function FlashSale() {
         }
         preview={
           <PeerTubePreview
-            pageType="video"
+            pageType="brand-flash-sale"
             title="Flash Sale Preview"
-            description="Your generated promo will appear here"
+            description="See a sample flash sale promo"
             showGeneratingMessage={isGenerating}
           />
         }

@@ -15,7 +15,7 @@ import { Loader2, Upload, X, Info, ArrowLeft, Quote } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { GenerationProgress } from "@/components/generation-progress";
 import { Link } from "wouter";
@@ -354,13 +354,11 @@ export default function Testimonial() {
           </Card>
         }
         preview={
-          <PreviewPanel
+          <PeerTubePreview
+            pageType="brand-testimonial"
             title="Testimonial Preview"
-            description="Your generated testimonial will appear here"
-            status={isGenerating ? "generating" : generatedVideo?.resultUrl ? "completed" : "idle"}
-            resultUrl={generatedVideo?.resultUrl}
-            resultType="video"
-            emptyStateMessage="Upload a person image and enter testimonial text to get started."
+            description="See a sample testimonial video"
+            showGeneratingMessage={isGenerating}
           />
         }
       />

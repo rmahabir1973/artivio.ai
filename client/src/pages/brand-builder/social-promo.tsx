@@ -355,9 +355,9 @@ export default function SocialPromo() {
         }
         preview={
           <PeerTubePreview
-            pageType="video"
+            pageType="brand-social-promo"
             title="Social Promo Preview"
-            description="Your generated promo will appear here"
+            description="See a sample social media promo"
             showGeneratingMessage={isGenerating}
           />
         }

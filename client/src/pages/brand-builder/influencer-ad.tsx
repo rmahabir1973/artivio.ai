@@ -409,9 +409,9 @@ export default function InfluencerAd() {
         }
         preview={
           <PeerTubePreview
-            pageType="transition"
+            pageType="brand-influencer-ad"
             title="Influencer Ad Preview"
-            description="Your generated ad will appear here"
+            description="See a sample influencer advertisement"
             showGeneratingMessage={isGenerating}
           />
         }

@@ -347,9 +347,9 @@ export default function Showcase() {
         }
         preview={
           <PeerTubePreview
-            pageType="video"
+            pageType="brand-showcase"
             title="Showcase Preview"
-            description="Your generated product showcase will appear here"
+            description="See a sample product showcase"
             showGeneratingMessage={isGenerating}
           />
         }

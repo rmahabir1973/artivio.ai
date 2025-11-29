@@ -423,9 +423,9 @@ export default function BeforeAfter() {
         }
         preview={
           <PeerTubePreview
-            pageType="transition"
+            pageType="brand-before-after"
             title="Transformation Preview"
-            description="Your before & after video will appear here"
+            description="See a sample before & after video"
             showGeneratingMessage={isGenerating}
           />
         }

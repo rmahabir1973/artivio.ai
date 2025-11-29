@@ -379,9 +379,9 @@ export default function BrandStory() {
         }
         preview={
           <PeerTubePreview
-            pageType="video"
+            pageType="brand-brand-story"
             title="Brand Story Preview"
-            description="Your generated brand story will appear here"
+            description="See a sample brand story video"
             showGeneratingMessage={isGenerating}
           />
         }

@@ -404,9 +404,9 @@ export default function ProductAd() {
         }
         preview={
           <PeerTubePreview
-            pageType="video"
+            pageType="brand-product-ad"
             title="Product Ad Preview"
-            description="Your generated product ad will appear here"
+            description="See a sample product advertisement"
             showGeneratingMessage={isGenerating}
           />
         }
