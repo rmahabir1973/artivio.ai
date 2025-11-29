@@ -138,13 +138,15 @@ function Router() {
       <Route path="/brand-builder/logo-animation" component={LogoAnimation} />
       <Route path="/brand-builder/influencer-ad" component={InfluencerAd} />
 
+      {/* Email verification routes - always accessible */}
+      <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/resend-verification" component={ResendVerification} />
+
       {/* Auth routes - only show when not authenticated */}
       {!isAuthenticated && (
         <>
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
-          <Route path="/verify-email" component={VerifyEmail} />
-          <Route path="/resend-verification" component={ResendVerification} />
         </>
       )}
 
