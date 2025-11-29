@@ -19,7 +19,7 @@ import { Loader2, Wand2, Download, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 const OUTPUT_FORMATS = [
@@ -333,40 +333,12 @@ export default function SoundEffects() {
           </div>
         }
         preview={
-          <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-6">
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Generating Sound Effect...</h3>
-                  <p className="text-sm text-muted-foreground">This may take a moment</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-48 h-48 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center">
-                  <Wand2 className="h-24 w-24 text-primary" />
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold">Sound Effects Generator</h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Your generated sound effects will be saved to your History page where you can play and download them.
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  asChild
-                  className="mt-4"
-                  data-testid="button-view-history"
-                >
-                  <a href="/history">
-                    View History
-                  </a>
-                </Button>
-              </>
-            )}
-          </div>
+          <PeerTubePreview
+            pageType="sound-effects"
+            title="Sound Effects Preview"
+            description="AI-powered sound generation"
+            showGeneratingMessage={isGenerating}
+          />
         }
       />
       <GuestGenerateModal

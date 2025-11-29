@@ -17,7 +17,7 @@ import { Loader2, Image as ImageIcon, Upload, X, ChevronDown, Sparkles, Zap, Pal
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
@@ -1231,23 +1231,11 @@ export default function GenerateImage() {
           </Card>
       }
       preview={
-        <PreviewPanel
-          status={
-            isGenerating ? "generating" :
-            generatedImage?.resultUrl ? "completed" :
-            generatedImage?.status === 'failed' ? "failed" :
-            "idle"
-          }
+        <PeerTubePreview
+          pageType="image"
           title="Image Preview"
-          description="Your generated image will appear here"
-          resultUrl={generatedImage?.resultUrl}
-          resultType="image"
-          errorMessage={generatedImage?.errorMessage}
-          onDownload={() => {
-            if (generatedImage?.id) {
-              window.location.href = `/api/generations/${generatedImage.id}/download`;
-            }
-          }}
+          description="See what's possible with AI images"
+          showGeneratingMessage={isGenerating}
         />
       }
     />

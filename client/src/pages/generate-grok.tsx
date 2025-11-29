@@ -14,7 +14,7 @@ import { Loader2, Upload, X, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 
 const GROK_MODES = [
   { value: "normal", label: "Normal", description: "Standard image-to-video transformation" },
@@ -200,7 +200,7 @@ export default function GenerateGrok() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
       <ThreeColumnLayout
-        leftPanel={
+        form={
           <Card className="border-0 bg-transparent shadow-none">
             <CardHeader className="px-0 pt-0">
               <CardTitle>Grok Imagine</CardTitle>
@@ -288,7 +288,7 @@ export default function GenerateGrok() {
               </div>
 
               {/* Cost Warning */}
-              <CreditCostWarning cost={modelCost} />
+              <CreditCostWarning cost={modelCost} featureName="Grok Imagine" />
 
               {/* Generate Button */}
               <Button
@@ -310,11 +310,12 @@ export default function GenerateGrok() {
             </CardContent>
           </Card>
         }
-        rightPanel={
-          <PreviewPanel
-            generation={generatedVideo}
-            isGenerating={isGenerating}
-            type="video"
+        preview={
+          <PeerTubePreview
+            pageType="grok"
+            title="Grok Imagine Preview"
+            description="Creative image-to-video transformation"
+            showGeneratingMessage={isGenerating}
           />
         }
       />

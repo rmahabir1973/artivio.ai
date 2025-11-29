@@ -15,7 +15,7 @@ import { Loader2, Upload, X, Info, ArrowLeftRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { SiGoogle } from "react-icons/si";
 
@@ -458,14 +458,11 @@ export default function GenerateTransition() {
         </Card>
       }
       preview={
-        <PreviewPanel
-          title="Video Preview"
-          description="Your generated transition video will appear here"
-          status={getPreviewStatus()}
-          resultUrl={generatedVideo?.resultUrl}
-          resultType="video"
-          errorMessage={generatedVideo?.errorMessage}
-          emptyStateMessage="No content generated yet. Upload first and last frame images, add a description, and click Generate to get started."
+        <PeerTubePreview
+          pageType="transition"
+          title="Transition Preview"
+          description="See smooth video transitions"
+          showGeneratingMessage={isGenerating}
         />
       }
     />

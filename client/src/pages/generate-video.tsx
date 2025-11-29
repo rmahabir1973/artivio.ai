@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SeedControl } from "@/components/SeedControl";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
@@ -1345,23 +1345,11 @@ export default function GenerateVideo() {
         </Card>
       }
       preview={
-        <PreviewPanel
-          status={
-            isGenerating ? "generating" :
-            generatedVideo?.resultUrl ? "completed" :
-            generatedVideo?.status === 'failed' ? "failed" :
-            "idle"
-          }
+        <PeerTubePreview
+          pageType="video"
           title="Video Preview"
-          description="Your generated video will appear here"
-          resultUrl={generatedVideo?.resultUrl}
-          resultType="video"
-          errorMessage={generatedVideo?.errorMessage}
-          onDownload={() => {
-            if (generatedVideo?.id) {
-              window.location.href = `/api/generations/${generatedVideo.id}/download`;
-            }
-          }}
+          description="See what's possible with AI video"
+          showGeneratingMessage={isGenerating}
         />
       }
     />

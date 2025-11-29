@@ -16,7 +16,7 @@ import { Loader2, Sparkles, Upload, X, Info, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 
 interface Scene {
@@ -771,23 +771,11 @@ export default function GenerateSora() {
         </Card>
       }
       preview={
-        <PreviewPanel
-          status={
-            isGenerating ? "generating" :
-            generatedVideo?.resultUrl ? "completed" :
-            generatedVideo?.status === 'failed' ? "failed" :
-            "idle"
-          }
-          title="Video Preview"
-          description="Your generated Sora 2 video will appear here"
-          resultUrl={generatedVideo?.resultUrl}
-          resultType="video"
-          errorMessage={generatedVideo?.errorMessage}
-          onDownload={() => {
-            if (generatedVideo?.id) {
-              window.location.href = `/api/generations/${generatedVideo.id}/download`;
-            }
-          }}
+        <PeerTubePreview
+          pageType="sora"
+          title="Sora 2 Pro Preview"
+          description="Advanced AI video generation"
+          showGeneratingMessage={isGenerating}
         />
       }
     />
