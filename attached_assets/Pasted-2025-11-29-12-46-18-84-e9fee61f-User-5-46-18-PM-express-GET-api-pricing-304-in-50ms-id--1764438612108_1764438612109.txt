@@ -1,0 +1,148 @@
+2025-11-29 12:46:18.84
+e9fee61f
+User
+5:46:18 PM [express] GET /api/pricing 304 in 50ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"content-length": "1734",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-forwarded-proto": "https",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+Request Headers: {
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-replit-user-profile-image": "",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-cloud-trace-context": "26a2e59241b18187708280ad2752409d/9169928086245877969;o=1",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"accept": "text/html,application/json,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"cache-control": "no-cache",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+Callback Data: {
+2025-11-29 12:46:23.67
+e9fee61f
+User
+🔔 ===== RECEIVED KIE.AI CALLBACK =====
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"accept-language": "zh-CN,zh;q=0.8",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"code": 400,
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"data": {
+2025-11-29 12:46:23.67
+e9fee61f
+User
+======================================
+2025-11-29 12:46:23.67
+e9fee61f
+User
+}
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-replit-user-name": "",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 Hutool",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"fallbackFlag": false,
+2025-11-29 12:46:23.67
+e9fee61f
+User
+Generation ID: 1f9bf9df-2c23-45ba-a5e4-6993c3c1a3c8
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"traceparent": "00-26a2e59241b18187708280ad2752409d-7f422102949028d1-01",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-replit-user-bio": "",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-forwarded-host": "artivio.ai",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+}
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"pragma": "no-cache",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-replit-user-id": "",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"x-replit-user-roles": "",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+},
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"via": "1.1 google",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"promptJson": "{\"aspectRatio\":\"9:16\",\"callBackUrl\":\"https://artivio.ai/api/callback/kie/1f9bf9df-2c23-45ba-a5e4-6993c3c1a3c8\",\"enableFallback\":false,\"enableTranslation\":true,\"generationType\":\"FIRST_AND_LAST_FRAMES_2_VIDEO\",\"imageUrls\":[\"https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/1764438330769-fcbd220b7dc7bd6c29438fcf90c7bc4b.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251129%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251129T174531Z&X-Amz-Expires=604800&X-Amz-Signature=678b17059e23cf19894b1842512992f27f8137901d69ce4093cd6b3d9711d81c&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject\",\"https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/1764438339953-c0826410d82a07dec4f9dbc5f0579d12.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251129%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251129T174540Z&X-Amz-Expires=604800&X-Amz-Signature=00574c2141662348cab0a75090c3d241082962179d06c8f899b121d8382171e6&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject\"],\"model\":\"veo3_fast\",\"prompt\":\"Create a professional product advertisement video with dynamic camera movements, highlighting the product from multiple angles with smooth transitions. The video should feel premium and eye-catching for social media.\",\"seeds\":32102}",
+2025-11-29 12:46:23.67
+e9fee61f
+User
+"content-type": "application/json;charset=UTF-8",
+2025-11-29 12:46:23.75
+e9fee61f
+User
+Status: undefined
+2025-11-29 12:46:23.75
+e9fee61f
+User
+"msg": "Rejected by Google's content policy (public error minor upload). Please revise your prompt/image or turn on our Veo 3 Fallback API. See the docs for details."
+2025-11-29 12:46:23.75
+e9fee61f
+User
+Error Code: 400
+2025-11-29 12:46:23.75
+e9fee61f
+User
+- callbackData.data?.result_image_url (Aleph): undefined
+2025-11-29 12:46:23.75
+e9fee61f
+User
+Generation ID: 1f9bf9df-2c23-45ba-a5e4-6993c3c1a3c8
+2025-11-29 12:46:23.75
+e9fee61f
+User
+- Full data structure keys: fallbackFlag, promptJson, taskId
+2025-11-29 12:46:23.75
+e9fee61f
+User
+"code": 400,
