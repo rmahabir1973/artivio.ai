@@ -28,6 +28,8 @@ function toExpressUser(dbUser: typeof users.$inferSelect): Express.User {
     email: dbUser.email || "",
     tokenVersion: dbUser.tokenVersion,
     isAdmin,
+    emailVerified: dbUser.emailVerified,
+    authProvider: dbUser.authProvider,
   };
 }
 

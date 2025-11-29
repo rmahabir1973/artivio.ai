@@ -14,6 +14,8 @@ declare global {
       email: string;
       tokenVersion: number;
       isAdmin?: boolean;
+      emailVerified?: boolean;
+      authProvider?: string;
     }
   }
 }
