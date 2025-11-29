@@ -60,9 +60,10 @@ export default function SoundEffects() {
     queryFn: async () => {
       if (!generationId) return null;
       console.log(`[POLL] Fetching generation ${generationId}`);
-      const result = await apiRequest("GET", `/api/generations/${generationId}`);
-      console.log(`[POLL] Response:`, { status: result?.status, hasResultUrl: !!result?.resultUrl });
-      return result;
+      const response = await apiRequest("GET", `/api/generations/${generationId}`);
+      const data = await response.json();
+      console.log(`[POLL] Response:`, { status: data?.status, hasResultUrl: !!data?.resultUrl });
+      return data;
     },
     enabled: !!generationId && isGenerating && isAuthenticated,
     refetchInterval: 2000,
