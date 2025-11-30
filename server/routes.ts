@@ -5669,6 +5669,260 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // ========== TESTIMONIAL ROUTES ==========
+  // Combined TTS + Lip-Sync workflow for testimonial videos
+
+  // Generate testimonial video (text-to-speech + lip-sync)
+  app.post('/api/testimonial/generate', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      let { imageUrl, text, resolution, voiceId } = req.body;
+
+      // Validate required fields
+      if (!imageUrl) {
+        return res.status(400).json({ message: "Image URL is required" });
+      }
+      if (!text || !text.trim()) {
+        return res.status(400).json({ message: "Testimonial text is required" });
+      }
+
+      // Default voice for testimonials (Rachel - natural female voice)
+      const testimonialVoiceId = voiceId || 'Xb7hH8MSUJpSbSDYk0k2';
+      
+      // Calculate total cost: TTS + Lip-sync
+      const lipSyncModelName = resolution === '480p' ? 'infinitalk-lip-sync-480p' : 'infinitalk-lip-sync-720p';
+      const lipSyncCost = await getModelCost(lipSyncModelName);
+      const ttsCost = await getModelCost('elevenlabs-tts-multilingual-v2');
+      const totalCost = lipSyncCost + ttsCost;
+
+      // Deduct credits upfront for both TTS and lip-sync
+      const user = await storage.deductCreditsAtomic(userId, totalCost);
+      if (!user) {
+        return res.status(400).json({ message: "Insufficient credits" });
+      }
+
+      try {
+        // Create the testimonial generation record
+        const generation = await storage.createGeneration({
+          userId,
+          type: 'video',
+          model: lipSyncModelName,
+          prompt: text.trim(),
+          parameters: {
+            resolution: resolution || '720p',
+            imageUrl,
+            testimonialText: text.trim(),
+            voiceId: testimonialVoiceId,
+            workflow: 'testimonial',
+          },
+          generationType: 'testimonial',
+          status: 'pending',
+          creditsCost: totalCost,
+        });
+
+        // Background processing: TTS first, then Lip-Sync
+        (async () => {
+          try {
+            await storage.updateGeneration(generation.id, { 
+              status: 'processing',
+              statusDetail: 'generating_audio'
+            });
+            
+            console.log(`🎙️ [Testimonial ${generation.id}] Starting TTS generation...`);
+            
+            // Create a temporary TTS generation to track the audio generation
+            const ttsGeneration = await storage.createGeneration({
+              userId,
+              type: 'text-to-speech',
+              model: 'elevenlabs-tts-multilingual-v2',
+              prompt: text.trim(),
+              parameters: { 
+                voiceId: testimonialVoiceId, 
+                voiceName: 'Rachel',
+                parentTestimonialId: generation.id 
+              },
+              generationType: 'text-to-speech',
+              status: 'pending',
+              creditsCost: 0, // Already charged in testimonial
+              parentGenerationId: generation.id,
+            });
+            
+            // Generate TTS with callback
+            const callbackUrl = getCallbackUrl(ttsGeneration.id);
+            console.log(`📞 [Testimonial ${generation.id}] TTS callback URL: ${callbackUrl}`);
+            
+            const { result: ttsResult, keyName } = await generateTTS({
+              text: text.trim(),
+              voiceId: testimonialVoiceId,
+              voiceName: 'Rachel',
+              model: 'elevenlabs-tts-multilingual-v2',
+              callBackUrl: callbackUrl,
+            });
+            
+            // Check if TTS returned direct URL (synchronous result)
+            const directAudioUrl = ttsResult?.url || ttsResult?.audioUrl || ttsResult?.data?.url ||
+              (ttsResult?.data?.data && Array.isArray(ttsResult.data.data) && ttsResult.data.data[0]?.audioUrl) ||
+              ttsResult?.data?.data?.audioUrl;
+            
+            if (directAudioUrl) {
+              console.log(`✓ [Testimonial ${generation.id}] TTS completed immediately: ${directAudioUrl}`);
+              await storage.finalizeGeneration(ttsGeneration.id, 'success', { resultUrl: directAudioUrl });
+              
+              // Proceed directly to lip-sync
+              await startLipSyncForTestimonial(generation.id, userId, imageUrl, directAudioUrl, resolution);
+            } else {
+              // TTS is async - store taskId and wait for callback
+              const taskId = ttsResult?.data?.taskId;
+              if (!taskId) {
+                throw new Error('TTS API did not return taskId or audio URL');
+              }
+              
+              console.log(`📋 [Testimonial ${generation.id}] TTS queued with taskId: ${taskId}`);
+              await storage.updateGeneration(ttsGeneration.id, {
+                status: 'processing',
+                apiKeyUsed: keyName,
+                externalTaskId: taskId,
+                statusDetail: 'queued',
+              });
+              
+              // Poll for TTS completion
+              const audioUrl = await pollForTTSCompletion(ttsGeneration.id, 120000); // 2 min timeout
+              
+              if (!audioUrl) {
+                throw new Error('TTS generation timed out or failed');
+              }
+              
+              console.log(`✓ [Testimonial ${generation.id}] TTS completed: ${audioUrl}`);
+              
+              // Now start lip-sync with the generated audio
+              await startLipSyncForTestimonial(generation.id, userId, imageUrl, audioUrl, resolution);
+            }
+          } catch (error: any) {
+            console.error(`❌ [Testimonial ${generation.id}] Failed:`, error);
+            
+            // Refund credits
+            await storage.addCreditsAtomic(userId, totalCost);
+            console.log(`💰 [Testimonial ${generation.id}] Refunded ${totalCost} credits`);
+            
+            await storage.finalizeGeneration(generation.id, 'failure', {
+              errorMessage: error.message || 'Testimonial generation failed'
+            });
+          }
+        })();
+
+        res.json({ 
+          generationId: generation.id, 
+          message: "Testimonial video generation started" 
+        });
+      } catch (error: any) {
+        await storage.addCreditsAtomic(userId, totalCost);
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('[Testimonial] Error:', error);
+      res.status(500).json({ message: error.message || "Failed to generate testimonial video" });
+    }
+  });
+
+  // Helper function to poll for TTS completion
+  async function pollForTTSCompletion(ttsGenerationId: string, timeoutMs: number = 120000): Promise<string | null> {
+    const startTime = Date.now();
+    const pollInterval = 2000; // Poll every 2 seconds
+    
+    while (Date.now() - startTime < timeoutMs) {
+      const gen = await storage.getGeneration(ttsGenerationId);
+      if (!gen) return null;
+      
+      if (gen.status === 'completed' || gen.status === 'success') {
+        return gen.resultUrl || null;
+      }
+      
+      if (gen.status === 'failed' || gen.status === 'failure') {
+        throw new Error(gen.errorMessage || 'TTS generation failed');
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+    
+    return null;
+  }
+
+  // Helper function to start lip-sync for testimonial
+  async function startLipSyncForTestimonial(
+    testimonialId: string,
+    userId: string,
+    imageUrl: string,
+    audioUrl: string,
+    resolution: string = '720p'
+  ) {
+    try {
+      await storage.updateGeneration(testimonialId, { 
+        statusDetail: 'generating_video'
+      });
+      
+      console.log(`🎥 [Testimonial ${testimonialId}] Starting lip-sync generation...`);
+      
+      const callbackUrl = getCallbackUrl(testimonialId);
+      const { result } = await generateLipSync({
+        imageUrl,
+        audioUrl,
+        resolution: (resolution || '720p') as '480p' | '720p',
+        callBackUrl: callbackUrl,
+      });
+
+      const taskId = result?.data?.taskId || result?.taskId;
+      const directUrl = result?.url || result?.videoUrl || result?.data?.url;
+
+      if (directUrl) {
+        console.log(`✓ [Testimonial ${testimonialId}] Lip-sync completed immediately`);
+        await storage.finalizeGeneration(testimonialId, 'success', {
+          resultUrl: directUrl,
+        });
+      } else if (taskId) {
+        console.log(`📋 [Testimonial ${testimonialId}] Lip-sync queued with taskId: ${taskId}`);
+        await storage.updateGeneration(testimonialId, {
+          status: 'processing',
+          externalTaskId: taskId,
+          statusDetail: 'lip_sync_processing',
+        });
+      } else {
+        throw new Error('Lip-sync API did not return taskId or video URL');
+      }
+    } catch (error: any) {
+      console.error(`❌ [Testimonial ${testimonialId}] Lip-sync failed:`, error);
+      throw error;
+    }
+  }
+
+  // Get user's testimonial generations
+  app.get('/api/testimonial/generations', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const generations = await storage.getUserGenerations(userId);
+      const testimonialGenerations = generations.filter((g) => g.generationType === 'testimonial');
+      res.json(testimonialGenerations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch testimonial generations" });
+    }
+  });
+
+  // Get specific testimonial generation
+  app.get('/api/testimonial/generations/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const generation = await storage.getGeneration(id);
+      
+      if (!generation || generation.userId !== userId) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      
+      res.json(generation);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch generation" });
+    }
+  });
+
   // ========== SUNO AUDIO PROCESSING ROUTES ==========
   // These routes process Suno-generated music (require taskId and audioId from music generation)
 

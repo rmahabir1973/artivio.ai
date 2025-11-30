@@ -1,0 +1,148 @@
+2025-11-29 22:09:13.66
+788eafec
+User
+libavfilter 9. 12.100 / 9. 12.100
+2025-11-29 22:09:13.66
+788eafec
+User
+[in#0 @ 0x33b8bac0] Error opening input: No such file or directory
+2025-11-29 22:09:13.66
+788eafec
+User
+libswresample 4. 12.100 / 4. 12.100
+2025-11-29 22:09:13.66
+788eafec
+User
+Error opening input file /home/runner/workspace/public/https:/artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-bcfe25d3-1b53-455a-91af-7f4f5a55adc6.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251130%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251130T030913Z&X-Amz-Expires=604800&X-Amz-Signature=07ac27c22a706383425acd0f432210c4074e83e6b874530ce213b54d3f85fd9f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject.
+2025-11-29 22:09:13.66
+788eafec
+User
+configuration: --disable-static --prefix=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1 --target_os=linux --arch=x86_64 --pkg-config=pkg-config --enable-gpl --enable-version3 --disable-nonfree --disable-static --enable-shared --enable-pic --disable-thumb --disable-small --enable-runtime-cpudetect --disable-gray --enable-swscale-alpha --enable-hardcoded-tables --enable-safe-bitstream-reader --enable-pthreads --disable-w32threads --disable-os2threads --enable-network --enable-pixelutils --datadir=/nix/store/71hcrwn1g6ncki859v14jq18i8fx84sk-ffmpeg-6.1.1-data/share/ffmpeg --enable-ffmpeg --enable-ffplay --enable-ffprobe --bindir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-bin/bin --enable-avcodec --enable-avdevice --enable-avfilter --enable-avformat --enable-avutil --enable-postproc --enable-swresample --enable-swscale --libdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-lib/lib --incdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-dev/include --enable-doc --enable-htmlpages --enable-manpages --mandir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-man/share/man --enable-podpages --enable-txtpages --docdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-doc/share/doc/ffmpeg --enable-alsa --disable-libaom --disable-appkit --disable-libaribcaption --enable-libass --disable-audiotoolbox --disable-avfoundation --disable-avisynth --disable-libbluray --disable-libbs2b --enable-bzlib --disable-libcaca --disable-libcelt --disable-chromaprint --disable-libcodec2 --disable-coreimage --disable-cuda --disable-cuda-llvm --enable-cuvid --enable-libdav1d --disable-libdc1394 --enable-libdrm --disable-libfdk-aac --enable-ffnvcodec --disable-libflite --enable-fontconfig --enable-libfontconfig --enable-libfreetype --disable-frei0r --disable-libfribidi --disable-libgme --enable-gnutls --disable-libgsm --enable-libharfbuzz --enable-iconv --disable-libjack --disable-libjxl --disable-ladspa --enable-lzma --disable-libmfx --disable-libmodplug --enable-libmp3lame --disable-libmysofa --enable-nvdec --enable-nvenc --disable-openal --disable-opencl --disable-libopencore-amrnb --disable-libopencore-amrwb --disable-opengl --disable-libopenh264 --disable-libopenjpeg --disable-libopenmpt --enable-libopus --disable-libplacebo --enable-libpulse --disable-librav1e --disable-librtmp --disable-libsmbclient --enable-sdl2 --disable-libshaderc --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --disable-librsvg --enable-libsvtav1 --disable-libtensorflow --enable-libtheora --enable-libv4l2 --enable-v4l2-m2m --enable-vaapi --enable-vdpau --disable-libvpl --disable-videotoolbox --disable-libvidstab --disable-libvmaf --disable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-vulkan --disable-libwebp --enable-libx264 --enable-libx265 --disable-libxavs --disable-libxcb --disable-libxcb-shape --disable-libxcb-shm --disable-libxcb-xfixes --disable-xlib --disable-libxml2 --enable-libxvid --enable-libzimg --enable-zlib --disable-libzmq --disable-debug --enable-optimizations --disable-extra-warnings --disable-stripping
+2025-11-29 22:09:13.66
+788eafec
+User
+libavfilter 9. 12.100 / 9. 12.100
+2025-11-29 22:09:13.66
+788eafec
+User
+configuration: --disable-static --prefix=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1 --target_os=linux --arch=x86_64 --pkg-config=pkg-config --enable-gpl --enable-version3 --disable-nonfree --disable-static --enable-shared --enable-pic --disable-thumb --disable-small --enable-runtime-cpudetect --disable-gray --enable-swscale-alpha --enable-hardcoded-tables --enable-safe-bitstream-reader --enable-pthreads --disable-w32threads --disable-os2threads --enable-network --enable-pixelutils --datadir=/nix/store/71hcrwn1g6ncki859v14jq18i8fx84sk-ffmpeg-6.1.1-data/share/ffmpeg --enable-ffmpeg --enable-ffplay --enable-ffprobe --bindir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-bin/bin --enable-avcodec --enable-avdevice --enable-avfilter --enable-avformat --enable-avutil --enable-postproc --enable-swresample --enable-swscale --libdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-lib/lib --incdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-dev/include --enable-doc --enable-htmlpages --enable-manpages --mandir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-man/share/man --enable-podpages --enable-txtpages --docdir=/nix/store/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffmpeg-6.1.1-doc/share/doc/ffmpeg --enable-alsa --disable-libaom --disable-appkit --disable-libaribcaption --enable-libass --disable-audiotoolbox --disable-avfoundation --disable-avisynth --disable-libbluray --disable-libbs2b --enable-bzlib --disable-libcaca --disable-libcelt --disable-chromaprint --disable-libcodec2 --disable-coreimage --disable-cuda --disable-cuda-llvm --enable-cuvid --enable-libdav1d --disable-libdc1394 --enable-libdrm --disable-libfdk-aac --enable-ffnvcodec --disable-libflite --enable-fontconfig --enable-libfontconfig --enable-libfreetype --disable-frei0r --disable-libfribidi --disable-libgme --enable-gnutls --disable-libgsm --enable-libharfbuzz --enable-iconv --disable-libjack --disable-libjxl --disable-ladspa --enable-lzma --disable-libmfx --disable-libmodplug --enable-libmp3lame --disable-libmysofa --enable-nvdec --enable-nvenc --disable-openal --disable-opencl --disable-libopencore-amrnb --disable-libopencore-amrwb --disable-opengl --disable-libopenh264 --disable-libopenjpeg --disable-libopenmpt --enable-libopus --disable-libplacebo --enable-libpulse --disable-librav1e --disable-librtmp --disable-libsmbclient --enable-sdl2 --disable-libshaderc --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --disable-librsvg --enable-libsvtav1 --disable-libtensorflow --enable-libtheora --enable-libv4l2 --enable-v4l2-m2m --enable-vaapi --enable-vdpau --disable-libvpl --disable-videotoolbox --disable-libvidstab --disable-libvmaf --disable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-vulkan --disable-libwebp --enable-libx264 --enable-libx265 --disable-libxavs --disable-libxcb --disable-libxcb-shape --disable-libxcb-shm --disable-libxcb-xfixes --disable-xlib --disable-libxml2 --enable-libxvid --enable-libzimg --enable-zlib --disable-libzmq --disable-debug --enable-optimizations --disable-extra-warnings --disable-stripping
+2025-11-29 22:09:13.66
+788eafec
+User
+libavformat 60. 16.100 / 60. 16.100
+2025-11-29 22:09:13.66
+788eafec
+User
+built with gcc 13.2.0 (GCC)
+2025-11-29 22:09:13.66
+788eafec
+User
+libavdevice 60. 3.100 / 60. 3.100
+2025-11-29 22:09:13.66
+788eafec
+User
+Error opening input files: No such file or directory
+2025-11-29 22:09:13.66
+788eafec
+User
+libavdevice 60. 3.100 / 60. 3.100
+2025-11-29 22:09:13.66
+788eafec
+User
+libavcodec 60. 31.102 / 60. 31.102
+2025-11-29 22:09:13.66
+788eafec
+User
+built with gcc 13.2.0 (GCC)
+2025-11-29 22:09:13.66
+788eafec
+User
+Error opening input file /home/runner/workspace/public/https:/artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-bcfe25d3-1b53-455a-91af-7f4f5a55adc6.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251130%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251130T030913Z&X-Amz-Expires=604800&X-Amz-Signature=07ac27c22a706383425acd0f432210c4074e83e6b874530ce213b54d3f85fd9f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject.
+2025-11-29 22:09:13.66
+788eafec
+User
+🖼️ Fallback: generating thumbnail from original URL for bcfe25d3-1b53-455a-91af-7f4f5a55adc6...
+2025-11-29 22:09:13.66
+788eafec
+User
+libpostproc 57. 3.100 / 57. 3.100
+2025-11-29 22:09:13.66
+788eafec
+User
+libswscale 7. 5.100 / 7. 5.100
+2025-11-29 22:09:13.66
+788eafec
+User
+libavformat 60. 16.100 / 60. 16.100
+2025-11-29 22:09:13.71
+788eafec
+User
+✓ Downloaded video 0: /home/runner/workspace/temp/video-processing/thumb-rXhwH7UB8DlyXi5CFHQgb/input_0.mp4 (2.68MB)
+2025-11-29 22:09:13.85
+788eafec
+User
+[S3] Uploading 129369 bytes to uploads/images/thumb-bcfe25d3-1b53-455a-91af-7f4f5a55adc6.jpg (image/jpeg)
+2025-11-29 22:09:13.96
+788eafec
+User
+[S3] Upload complete: uploads/images/thumb-bcfe25d3-1b53-455a-91af-7f4f5a55adc6.jpg
+2025-11-29 22:09:13.96
+788eafec
+User
+✓ Thumbnail uploaded to S3 for bcfe25d3-1b53-455a-91af-7f4f5a55adc6
+2025-11-29 22:09:13.96
+788eafec
+User
+✓ Generated thumbnail for bcfe25d3-1b53-455a-91af-7f4f5a55adc6: https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/thumb-bcfe25d3-1b53-455a-91af-7f4f5a55adc6.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251130%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251130T030913Z&X-Amz-Expires=604800&X-Amz-Signature=da7d0dae81112683b21262c9b26e7fe68380e2b32f4b14f2f415e24b82a5dbc1&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+2025-11-29 22:09:13.99
+788eafec
+User
+✓ Thumbnail generated from original URL for bcfe25d3-1b53-455a-91af-7f4f5a55adc6: https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/thumb-bcfe25d3-1b53-455a-91af-7f4f5a55adc6.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251130%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251130T030913Z&X-Amz-Expires=604800&X-Amz-Signature=da7d0dae81112683b21262c9b26e7fe68380e2b32f4b14f2f415e24b82a5dbc1&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+2025-11-29 22:09:17.04
+788eafec
+User
+3:09:17 AM [express] POST /api/assistant/chat 200 in 9334ms :: {"message":"Of course! Here's a testi…
+2025-11-29 22:09:27.29
+788eafec
+User
+3:09:27 AM [express] GET /api/announcements/active 304 in 22ms :: []
+2025-11-29 22:09:49.42
+788eafec
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-29 22:09:49.43
+788eafec
+User
+[S3] Uploading 224530 bytes to uploads/images/1764472189433-8c130a7b3adb8f5f63c7b0299d3ae9cf.jpeg (image/jpeg)
+2025-11-29 22:09:49.43
+788eafec
+User
+[Upload] Uploading image to S3...
+2025-11-29 22:09:49.84
+788eafec
+User
+[S3] Upload complete: uploads/images/1764472189433-8c130a7b3adb8f5f63c7b0299d3ae9cf.jpeg
+2025-11-29 22:09:49.84
+788eafec
+User
+3:09:49 AM [express] POST /api/upload-temp-image 200 in 441ms :: {"url":"https://artivio-video-expor…
+2025-11-29 22:09:58.95
+788eafec
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-29 22:09:58.95
+788eafec
+User
+3:09:58 AM [express] POST /api/lip-sync/generate 400 in 25ms :: {"message":"Image URL and audio URL …
+2025-11-29 22:10:23.84
+788eafec
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-29 22:10:23.84
+788eafec
+User
+3:10:23 AM [express] POST /api/lip-sync/generate 400 in 23ms :: {"message":"Image URL and audio URL …
+2025-11-29 22:10:27.37
+788eafec
+User
+3:10:27 AM [express] GET /api/announcements/active 304 in 23ms :: []

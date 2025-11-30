@@ -38,7 +38,10 @@ export default function Testimonial() {
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
-  const creditCost = getModelCost('infinitalk-lip-sync-720p', 60) || 250;
+  // Testimonial includes both TTS + Lip-sync costs
+  const lipSyncCost = getModelCost(resolution === '480p' ? 'infinitalk-lip-sync-480p' : 'infinitalk-lip-sync-720p', 60) || 250;
+  const ttsCost = getModelCost('elevenlabs-tts-multilingual-v2', 60) || 50;
+  const creditCost = lipSyncCost + ttsCost;
 
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -88,7 +91,7 @@ export default function Testimonial() {
 
   const generateMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/lip-sync/generate", data);
+      return await apiRequest("POST", "/api/testimonial/generate", data);
     },
     onSuccess: (data: any) => {
       setGenerationId(data.generationId);
@@ -96,9 +99,9 @@ export default function Testimonial() {
       setGeneratedVideo(null);
       toast({
         title: "Generation Started",
-        description: "Your testimonial video is being generated.",
+        description: "Creating audio from text, then generating lip-sync video...",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/lip-sync/generations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testimonial/generations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
     onError: (error: Error) => {
@@ -119,10 +122,10 @@ export default function Testimonial() {
   });
 
   const { data: pollData } = useQuery<any>({
-    queryKey: ["/api/lip-sync/generations", generationId],
+    queryKey: ["/api/testimonial/generations", generationId],
     queryFn: async () => {
       if (!generationId) return null;
-      const response = await apiRequest("GET", `/api/lip-sync/generations/${generationId}`);
+      const response = await apiRequest("GET", `/api/testimonial/generations/${generationId}`);
       const data = await response.json();
       return data;
     },
@@ -143,7 +146,7 @@ export default function Testimonial() {
       setGeneratedVideo(pollData);
       setIsGenerating(false);
       setGenerationId(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/lip-sync/generations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testimonial/generations"] });
       toast({
         title: "Video Generated!",
         description: "Your testimonial video is ready to view and download.",
@@ -152,7 +155,7 @@ export default function Testimonial() {
       setGeneratedVideo(pollData);
       setIsGenerating(false);
       setGenerationId(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/lip-sync/generations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/testimonial/generations"] });
       toast({
         title: "Generation Failed",
         description: pollData?.errorMessage || "Failed to generate video",
@@ -198,7 +201,6 @@ export default function Testimonial() {
       imageUrl: personImage,
       text: testimonialText.trim(),
       resolution,
-      prompt: "Speak naturally with a friendly, genuine expression as if giving an authentic customer testimonial.",
     });
   };
 
