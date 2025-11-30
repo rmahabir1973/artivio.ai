@@ -6,11 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Image as ImageIcon, Video, Upload, Mic, Square, Play, Pause, ChevronDown, AlertTriangle, Info, Clock } from "lucide-react";
+import { Loader2, Image as ImageIcon, Video, Upload, Mic, Square, Play, Pause, ChevronDown, Info, Clock } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
@@ -254,7 +253,11 @@ export default function TalkingAvatars() {
       timerIntervalRef.current = window.setInterval(() => {
         setRecordingTime((prev) => {
           const newTime = prev + 1;
-          if (newTime >= MAX_AUDIO_DURATION) {
+          if (newTime >= MAX_AUDIO_DURATION - 1) {
+            toast({
+              title: "Recording Complete",
+              description: `Maximum recording duration of ${MAX_AUDIO_DURATION} seconds reached.`,
+            });
             stopRecording();
             return MAX_AUDIO_DURATION;
           }
@@ -335,6 +338,24 @@ export default function TalkingAvatars() {
       toast({
         title: "Validation Error",
         description: "Please upload or record audio.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (audioDuration === null) {
+      toast({
+        title: "Validation Error",
+        description: "Audio duration could not be determined. Please re-upload or re-record.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (audioDuration > MAX_AUDIO_DURATION) {
+      toast({
+        title: "Validation Error",
+        description: `Audio duration exceeds maximum of ${MAX_AUDIO_DURATION} seconds.`,
         variant: "destructive",
       });
       return;
@@ -520,7 +541,6 @@ export default function TalkingAvatars() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="infinite-talk">Infinite Talk ({getModelCost("infinite-talk", 300)} credits)</SelectItem>
-                  <SelectItem value="kling-ai">Kling AI ({getModelCost("kling-ai", 350)} credits)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -532,30 +552,12 @@ export default function TalkingAvatars() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {provider === "kling-ai" ? (
-                    <>
-                      <SelectItem value="720p">720p</SelectItem>
-                      <SelectItem value="1080p">1080p</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="480p">480p</SelectItem>
-                      <SelectItem value="720p">720p</SelectItem>
-                    </>
-                  )}
+                  <SelectItem value="480p">480p</SelectItem>
+                  <SelectItem value="720p">720p</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-
-          {provider === "kling-ai" && (
-            <Alert variant="destructive" className="bg-yellow-500/10 border-yellow-500/50">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
-              <AlertDescription className="text-yellow-600 dark:text-yellow-400">
-                Kling AI may be deprecated or unavailable on Kie.ai. Consider using Infinite Talk for more reliable results.
-              </AlertDescription>
-            </Alert>
-          )}
 
           <div className="space-y-2">
             <Label htmlFor="emotion">Emotion/Style (Optional)</Label>
