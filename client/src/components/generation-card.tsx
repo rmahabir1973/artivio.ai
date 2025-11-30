@@ -379,6 +379,27 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   />
                 </div>
               )}
+              {generation.type === 'talking-avatar' && (
+                <>
+                  <video 
+                    src={generation.resultUrl}
+                    className="w-full h-full object-cover"
+                    data-testid={`video-result-${generation.id}`}
+                    poster={generation.thumbnailUrl || undefined}
+                    preload="metadata"
+                    playsInline
+                  />
+                  <div 
+                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    onClick={() => setShowVideoDialog(true)}
+                    data-testid={`video-overlay-${generation.id}`}
+                  >
+                    <div className="bg-white/90 rounded-full p-4 hover:bg-white transition-colors">
+                      <Play className="h-8 w-8 text-black fill-black" />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
           
