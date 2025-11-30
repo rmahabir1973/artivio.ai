@@ -27,7 +27,6 @@ export default function SpeechToText() {
   const [audioFileName, setAudioFileName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [language, setLanguage] = useState("");
-  const [diarization, setDiarization] = useState(false);
   const [timestamps, setTimestamps] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -61,7 +60,6 @@ export default function SpeechToText() {
       setAudioFile("");
       setAudioFileName("");
       setLanguage("");
-      setDiarization(false);
       setTimestamps(false);
     },
     onError: (error: any) => {
@@ -148,10 +146,9 @@ export default function SpeechToText() {
 
     transcribeMutation.mutate({
       audioFile,
-      model: "scribe-v1",
+      model: "fish-audio-asr",
       language: language || undefined,
       parameters: {
-        diarization,
         timestamps,
       },
     });
@@ -240,19 +237,6 @@ export default function SpeechToText() {
           
           <div className="flex items-center space-x-2">
             <Checkbox
-              id="diarization"
-              checked={diarization}
-              onCheckedChange={(checked) => setDiarization(checked as boolean)}
-              data-testid="checkbox-diarization"
-            />
-            <Label htmlFor="diarization" className="cursor-pointer">
-              Speaker Diarization
-            </Label>
-          </div>
-          <p className="text-xs text-muted-foreground ml-6">Identify different speakers in the audio</p>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
               id="timestamps"
               checked={timestamps}
               onCheckedChange={(checked) => setTimestamps(checked as boolean)}
@@ -300,10 +284,10 @@ export default function SpeechToText() {
             </Card>
             <Card>
               <CardHeader className="p-4">
-                <CardTitle className="text-sm">Use Diarization for Multiple Speakers</CardTitle>
+                <CardTitle className="text-sm">Use Timestamps for Reference</CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                <p className="text-xs text-muted-foreground">Enable diarization to identify different speakers in your audio. Perfect for interviews, meetings, and podcasts.</p>
+                <p className="text-xs text-muted-foreground">Enable timestamps to add time markers to your transcription. Perfect for finding specific parts of your audio.</p>
               </CardContent>
             </Card>
           </CollapsibleContent>

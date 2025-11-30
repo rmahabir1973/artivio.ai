@@ -139,6 +139,9 @@ async function getModelCost(model: string): Promise<number> {
     'eleven_multilingual_v2': 20,
     'eleven_turbo_v2.5': 15,
     'scribe-v1': 25,
+    'elevenlabs-stt': 25,
+    'fish-audio-stt': 25,  // Fish Audio ASR
+    'fish-audio-tts': 20,  // Fish Audio TTS
     'kling-ai': 350,
     'infinite-talk': 300,
     'wav-conversion': 15,
