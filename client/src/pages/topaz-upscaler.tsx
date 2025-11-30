@@ -12,6 +12,7 @@ import { Loader2, Upload, Download, Zap, Copy, Check } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { PeerTubePreview } from "@/components/peertube-preview";
 
 interface UpsculerCosts {
   "2": number;
@@ -340,70 +341,19 @@ export default function TopazUpscaler() {
     </Card>
   );
 
-  const preview = (
-    <Card>
-      <CardHeader>
-        <CardTitle>Preview</CardTitle>
-        <CardDescription>Your upscaled image will appear here</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="aspect-square rounded-lg bg-muted overflow-hidden flex items-center justify-center">
-          {resultUrl ? (
-            <img
-              src={resultUrl}
-              alt="Upscaled"
-              className="w-full h-full object-contain"
-              data-testid="preview-upscaled-image"
-            />
-          ) : (
-            <div className="text-center text-muted-foreground">
-              {isPolling ? (
-                <div className="space-y-2">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                  <p className="text-sm">Processing your image...</p>
-                </div>
-              ) : imageUrl ? (
-                <div className="space-y-2">
-                  <Loader2 className="h-8 w-8 mx-auto opacity-50" />
-                  <p className="text-sm">Ready to upscale</p>
-                </div>
-              ) : (
-                <p className="text-sm">Upload an image to get started</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Download/Copy buttons */}
-        {resultUrl && (
-          <div className="space-y-2">
-            <Button
-              onClick={handleDownload}
-              variant="default"
-              className="w-full"
-              data-testid="button-download-upscaled"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download Upscaled Image
-            </Button>
-            <Button
-              onClick={handleCopyUrl}
-              variant="outline"
-              className="w-full"
-              data-testid="button-copy-url"
-            >
-              {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-              {copied ? "Copied!" : "Copy URL"}
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
   return (
     <SidebarInset>
-      <ThreeColumnLayout form={form} preview={preview} />
+      <ThreeColumnLayout 
+        form={form} 
+        preview={
+          <PeerTubePreview
+            pageType="image-upscaler"
+            title="Image Upscaler"
+            description="Enhance image resolution with AI"
+            showGeneratingMessage={isPolling}
+          />
+        }
+      />
       <GuestGenerateModal
         open={showGuestModal}
         onOpenChange={setShowGuestModal}

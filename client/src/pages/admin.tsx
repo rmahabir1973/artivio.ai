@@ -112,6 +112,7 @@ export default function Admin() {
     previewVideoBrandSocialPromo: "",
     previewVideoBrandBeforeAfter: "",
     previewVideoBrandShowcase: "",
+    previewVideoUpscaler: "",
   });
   const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
   const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
@@ -265,6 +266,7 @@ export default function Admin() {
         previewVideoBrandSocialPromo: homePageContent.previewVideoBrandSocialPromo || "",
         previewVideoBrandBeforeAfter: homePageContent.previewVideoBrandBeforeAfter || "",
         previewVideoBrandShowcase: homePageContent.previewVideoBrandShowcase || "",
+        previewVideoUpscaler: homePageContent.previewVideoUpscaler || "",
       });
     }
   }, [homePageContent, editingHomePage]);
@@ -1796,6 +1798,16 @@ export default function Admin() {
                           data-testid="input-preview-video-talking-avatar"
                         />
                       </div>
+                      <div>
+                        <Label htmlFor="previewVideoUpscaler">Image Upscaler Preview</Label>
+                        <Input
+                          id="previewVideoUpscaler"
+                          value={homePageFormData.previewVideoUpscaler}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoUpscaler: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-image-upscaler"
+                        />
+                      </div>
                     </div>
                     
                     <div className="mt-6 pt-6 border-t">
@@ -1934,6 +1946,7 @@ export default function Admin() {
                           previewVideoBrandSocialPromo: homePageFormData.previewVideoBrandSocialPromo.trim() || undefined,
                           previewVideoBrandBeforeAfter: homePageFormData.previewVideoBrandBeforeAfter.trim() || undefined,
                           previewVideoBrandShowcase: homePageFormData.previewVideoBrandShowcase.trim() || undefined,
+                          previewVideoUpscaler: homePageFormData.previewVideoUpscaler.trim() || undefined,
                         });
                       }}
                       disabled={updateHomePageMutation.isPending}
