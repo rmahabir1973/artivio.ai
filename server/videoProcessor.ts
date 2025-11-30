@@ -392,12 +392,17 @@ function buildFilterGraph(
     videoFilterSteps.push('[vout]null[vfinal]');
   }
 
-  // CRITICAL: Use async resampling to prevent audio drift from floating-point timestamp offsets
+  // CRITICAL FIX: Enhanced audio processing to eliminate glitches between scenes
+  // 1. Resample to consistent 44100Hz
+  // 2. Reset timestamps with asetpts=PTS-STARTPTS to ensure clean alignment
+  // 3. Apply lowpass filter to remove high-frequency artifacts at transition points
   const resampledLabels: string[] = [];
   for (let i = 0; i < audioStreamLabels.length; i++) {
     const resampledLabel = `[ar${i}]`;
-    // async=1 and first_pts=0 ensure audio timestamps align correctly during crossfade
-    audioFilterSteps.push(`${audioStreamLabels[i]}aresample=44100:async=1:first_pts=0${resampledLabel}`);
+    // Chain: resample -> reset timestamps -> gentle highpass to remove DC offset
+    // async=1 handles variable-rate sources, first_pts=0 aligns start
+    // asetpts=PTS-STARTPTS resets each clip's timestamps to 0
+    audioFilterSteps.push(`${audioStreamLabels[i]}aresample=44100:async=1:first_pts=0,asetpts=PTS-STARTPTS,highpass=f=20${resampledLabel}`);
     resampledLabels.push(resampledLabel);
   }
 
@@ -409,7 +414,8 @@ function buildFilterGraph(
       const isLast = i === videoCount - 1;
       // Use intermediate label for crossfade, then add apad to final
       const nextLabel = isLast ? '[axfout]' : `[a${i}xf]`;
-      audioFilterSteps.push(`${currentAudioStream}${resampledLabels[i]}acrossfade=d=${duration.toFixed(3)}${nextLabel}`);
+      // Use curve=tri for smoother triangular crossfade (less abrupt than default)
+      audioFilterSteps.push(`${currentAudioStream}${resampledLabels[i]}acrossfade=d=${duration.toFixed(3)}:c1=tri:c2=tri${nextLabel}`);
       currentAudioStream = nextLabel;
     }
     
@@ -523,6 +529,19 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
     const normalizedPaths = await Promise.all(normalizePromises);
 
+    // CRITICAL FIX: Re-probe normalized videos for accurate duration
+    // The original metadata may differ after normalization (fps change, re-encoding)
+    // This fixes duration mismatch issues (e.g., showing 1:48 when actual is 0:48)
+    onProgress?.('validate', 'Verifying normalized video durations...');
+    const normalizedMetadata = await Promise.all(
+      normalizedPaths.map(filepath => getVideoMetadata(filepath))
+    );
+    // Update metadataList with accurate durations from normalized videos
+    for (let i = 0; i < metadataList.length; i++) {
+      metadataList[i].duration = normalizedMetadata[i].duration;
+      console.log(`✓ Clip ${i + 1} normalized duration: ${normalizedMetadata[i].duration.toFixed(3)}s`);
+    }
+
     let musicPath: string | undefined;
     if (enhancements?.backgroundMusic?.audioUrl) {
       onProgress?.('download', 'Downloading background music...');
@@ -631,9 +650,10 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
       // Optimized for streaming: resolution capped at 720p, bitrate limited to 2500k
       // Resolution: max 720p | Bitrate: 2500k | Preset: fast | CRF: 24 | movflags: faststart
-      // CRITICAL: Use pad filter to ensure all videos are EXACTLY 1280x720 for proper concatenation
-      // Without padding, videos with different aspect ratios cause distortion when joined
-      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k "${outputPath}"`;
+      // CRITICAL: Videos are already normalized to 720p in normalizeVideo() step
+      // DO NOT add -vf here - it conflicts with filter_complex outputs and causes artifacts
+      // The normalized inputs already have consistent 720p, 30fps, 44100Hz audio
+      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k -ar 44100 "${outputPath}"`;
     }
 
     onProgress?.('process', 'Running FFmpeg...');
@@ -642,6 +662,17 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       timeout: FFMPEG_TIMEOUT,
       maxBuffer: 50 * 1024 * 1024,
     });
+
+    // CRITICAL FIX: Get actual duration from output file instead of calculating
+    // This ensures the duration we report matches what the video player will show
+    try {
+      const outputMetadata = await getVideoMetadata(outputPath);
+      totalDuration = outputMetadata.duration;
+      console.log(`✓ Final output duration verified: ${totalDuration.toFixed(3)}s`);
+    } catch (probeError) {
+      console.warn('Could not verify output duration, using calculated value:', probeError);
+      // Keep the calculated totalDuration as fallback
+    }
 
     // Upload to S3 if enabled
     let finalUrl: string;
