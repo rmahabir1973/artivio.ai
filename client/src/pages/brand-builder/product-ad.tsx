@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { fetchWithAuth } from "@/lib/authBridge";
-import { Loader2, Upload, X, Info, ArrowLeft, ShoppingBag } from "lucide-react";
+import { Loader2, Upload, X, Info, ArrowLeft, ShoppingBag, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
@@ -21,6 +22,11 @@ import { Link } from "wouter";
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+const ASPECT_RATIOS = [
+  { value: "16:9", label: "16:9 (Landscape)", hint: "Best for YouTube, websites" },
+  { value: "9:16", label: "9:16 (Portrait)", hint: "Best for TikTok, Reels, Shorts" },
+];
 
 export default function ProductAd() {
   const { toast } = useToast();
@@ -33,6 +39,7 @@ export default function ProductAd() {
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [uploadingProduct, setUploadingProduct] = useState(false);
   const [uploadingPerson, setUploadingPerson] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState("16:9");
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
@@ -216,7 +223,7 @@ export default function ProductAd() {
       generationType,
       referenceImages,
       parameters: {
-        aspectRatio: '9:16',
+        aspectRatio,
       },
     });
   };
@@ -260,10 +267,29 @@ export default function ProductAd() {
                 </div>
               </div>
 
+              <div className="space-y-3">
+                <Label>Video Aspect Ratio</Label>
+                <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                  <SelectTrigger data-testid="select-aspect-ratio">
+                    <SelectValue placeholder="Select aspect ratio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASPECT_RATIOS.map((ar) => (
+                      <SelectItem key={ar.value} value={ar.value} data-testid={`aspect-ratio-${ar.value}`}>
+                        <div className="flex flex-col">
+                          <span>{ar.label}</span>
+                          <span className="text-xs text-muted-foreground">{ar.hint}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                 <ShoppingBag className="h-5 w-5 text-yellow-500" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium">9:16 Portrait Format</p>
+                  <p className="text-sm font-medium">{aspectRatio} Format</p>
                   <p className="text-xs text-muted-foreground">Optimized for social media</p>
                 </div>
                 <Badge variant="secondary">{creditCost} credits</Badge>
@@ -271,6 +297,11 @@ export default function ProductAd() {
 
               <div className="space-y-3">
                 <Label>Person Image (First Frame)</Label>
+                <p className="text-xs text-muted-foreground">
+                  {aspectRatio === '16:9' 
+                    ? 'Upload a landscape image (wider than tall) for best results'
+                    : 'Upload a portrait image (taller than wide) for best results'}
+                </p>
                 <p className="text-xs text-muted-foreground">Upload the starting image - typically a person or influencer</p>
                 {personImage ? (
                   <div className="relative group">

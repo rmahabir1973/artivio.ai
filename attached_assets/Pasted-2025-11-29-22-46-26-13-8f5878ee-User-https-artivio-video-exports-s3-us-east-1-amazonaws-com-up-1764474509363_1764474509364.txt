@@ -1,0 +1,120 @@
+2025-11-29 22:46:26.13
+8f5878ee
+User
+"https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/1764474383884-648332fb880ca66491c5ec7f61098df0.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251130%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251130T034624Z&X-Amz-Expires=604800&X-Amz-Signature=b07083704af544a1b189be9bb9b432df133e581b6e1761ed5e6c8e70a21fd915&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+2025-11-29 22:46:26.13
+8f5878ee
+User
+"model": "veo3_fast",
+2025-11-29 22:46:26.33
+8f5878ee
+User
+"data": null
+2025-11-29 22:46:26.33
+8f5878ee
+User
+"message": "material to video aspect ratio must be 16:9"
+2025-11-29 22:46:26.33
+8f5878ee
+User
+Full error details: {
+2025-11-29 22:46:26.33
+8f5878ee
+User
+✅ Kie.ai API Response from /api/v1/veo/generate: {
+2025-11-29 22:46:26.33
+8f5878ee
+User
+❌ Kie.ai API Error for /api/v1/veo/generate: material to video aspect ratio must be 16:9
+2025-11-29 22:46:26.33
+8f5878ee
+User
+"code": 422,
+2025-11-29 22:46:26.33
+8f5878ee
+User
+}
+2025-11-29 22:46:26.33
+8f5878ee
+User
+❌ Kie.ai returned error code 422: material to video aspect ratio must be 16:9
+2025-11-29 22:46:26.33
+8f5878ee
+User
+}
+2025-11-29 22:46:26.33
+8f5878ee
+User
+"msg": "material to video aspect ratio must be 16:9",
+2025-11-29 22:46:26.33
+8f5878ee
+User
+"endpoint": "/api/v1/veo/generate"
+2025-11-29 22:46:26.33
+8f5878ee
+User
+}
+2025-11-29 22:46:26.33
+8f5878ee
+User
+}
+2025-11-29 22:46:26.33
+8f5878ee
+User
+🔍 Kie.ai Error Details: {
+2025-11-29 22:46:26.33
+8f5878ee
+User
+Background video generation failed: {
+2025-11-29 22:46:26.33
+8f5878ee
+User
+"kieaiDetails": {
+2025-11-29 22:46:26.33
+8f5878ee
+User
+}
+2025-11-29 22:46:26.85
+8f5878ee
+User
+✓ [finalizeGeneration] Generation 917c13b4-3c92-47d0-be60-95b07a26709a finalized as failure
+2025-11-29 22:46:26.85
+8f5878ee
+User
+✓ [CREDIT REFUND] Refunded 125 credits to user 49729939 for failed generation 917c13b4-3c92-47d0-be60-95b07a26709a
+2025-11-29 22:46:30.96
+8f5878ee
+User
+3:46:30 AM [express] GET /api/announcements/active 304 in 25ms :: []
+2025-11-29 22:46:48.47
+8f5878ee
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-29 22:46:48.47
+8f5878ee
+User
+[Upload] Uploading image to S3...
+2025-11-29 22:46:48.47
+8f5878ee
+User
+[S3] Uploading 43826 bytes to uploads/images/1764474408479-648332fb880ca66491c5ec7f61098df0.jpeg (image/jpeg)
+2025-11-29 22:46:48.70
+8f5878ee
+User
+[S3] Upload complete: uploads/images/1764474408479-648332fb880ca66491c5ec7f61098df0.jpeg
+2025-11-29 22:46:48.70
+8f5878ee
+User
+3:46:48 AM [express] POST /api/upload-temp-image 200 in 254ms :: {"url":"https://artivio-video-expor…
+2025-11-29 22:46:54.99
+8f5878ee
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-29 22:46:54.99
+8f5878ee
+User
+[S3] Uploading 108482 bytes to uploads/images/1764474414992-84d05b57c20f34b4d4d0eaabc05cf425.jpeg (image/jpeg)
+2025-11-29 22:46:54.99
+8f5878ee
+User
+[Upload] Uploading image to S3...

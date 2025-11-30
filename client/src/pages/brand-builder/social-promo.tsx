@@ -11,7 +11,7 @@ import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { fetchWithAuth } from "@/lib/authBridge";
-import { Loader2, Upload, X, Info, ArrowLeft, Share2 } from "lucide-react";
+import { Loader2, Upload, X, Info, ArrowLeft, Share2, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
@@ -22,6 +22,11 @@ import { Link } from "wouter";
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+const ASPECT_RATIOS = [
+  { value: "16:9", label: "16:9 (Landscape)", hint: "Best for YouTube, websites" },
+  { value: "9:16", label: "9:16 (Portrait)", hint: "Best for TikTok, Reels, Shorts" },
+];
 
 const PLATFORMS = [
   { value: "tiktok", label: "TikTok", prompt: "Create a trendy, fast-paced TikTok-style promotional video with energetic transitions, zoom effects, and attention-grabbing movements. Perfect for viral social content." },
@@ -39,12 +44,30 @@ export default function SocialPromo() {
   const [prompt, setPrompt] = useState(PLATFORMS[0].prompt);
   const [productImage, setProductImage] = useState<string | null>(null);
   const [uploadingProduct, setUploadingProduct] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
   const creditCost = getModelCost('veo-3.1-fast', 400) || 120;
+
+  const checkImageAspectRatio = (width: number, height: number): { matches: boolean, actual: string, suggestion: string } => {
+    const ratio = width / height;
+    const targetRatio = aspectRatio === '16:9' ? 16/9 : 9/16;
+    const tolerance = 0.15;
+    const matches = Math.abs(ratio - targetRatio) < tolerance;
+    const actual = ratio > 1 ? 'landscape' : ratio < 1 ? 'portrait' : 'square';
+    const suggestion = aspectRatio === '16:9' 
+      ? 'Use a landscape image (wider than tall)' 
+      : 'Use a portrait image (taller than wide)';
+    return { matches, actual, suggestion };
+  };
+
+  const aspectRatioMismatch = imageDimensions 
+    ? !checkImageAspectRatio(imageDimensions.width, imageDimensions.height).matches 
+    : false;
 
   const handlePlatformChange = (value: string) => {
     setPlatform(value);
@@ -89,6 +112,12 @@ export default function SocialPromo() {
     try {
       const url = await uploadImage(file);
       setProductImage(url);
+      
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.width, height: img.height });
+      };
+      img.src = url;
     } catch (error) {
       toast({
         title: "Upload Failed",
@@ -196,7 +225,7 @@ export default function SocialPromo() {
       generationType: 'image-to-video',
       referenceImages: [productImage],
       parameters: {
-        aspectRatio: '9:16',
+        aspectRatio,
       },
     });
   };
@@ -240,11 +269,30 @@ export default function SocialPromo() {
                 </div>
               </div>
 
+              <div className="space-y-3">
+                <Label>Video Aspect Ratio</Label>
+                <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                  <SelectTrigger data-testid="select-aspect-ratio">
+                    <SelectValue placeholder="Select aspect ratio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASPECT_RATIOS.map((ar) => (
+                      <SelectItem key={ar.value} value={ar.value} data-testid={`aspect-ratio-${ar.value}`}>
+                        <div className="flex flex-col">
+                          <span>{ar.label}</span>
+                          <span className="text-xs text-muted-foreground">{ar.hint}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                 <Share2 className="h-5 w-5 text-yellow-500" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium">9:16 Portrait Format</p>
-                  <p className="text-xs text-muted-foreground">Optimized for vertical scrolling</p>
+                  <p className="text-sm font-medium">{aspectRatio} Format</p>
+                  <p className="text-xs text-muted-foreground">Optimized for social media</p>
                 </div>
                 <Badge variant="secondary">{creditCost} credits</Badge>
               </div>
@@ -267,22 +315,44 @@ export default function SocialPromo() {
 
               <div className="space-y-3">
                 <Label>Product/Brand Image</Label>
+                <p className="text-xs text-muted-foreground">
+                  {aspectRatio === '16:9' 
+                    ? 'Upload a landscape image (wider than tall) for best results'
+                    : 'Upload a portrait image (taller than wide) for best results'}
+                </p>
                 {productImage ? (
-                  <div className="relative group">
-                    <img 
-                      src={productImage} 
-                      alt="Product"
-                      className="w-full h-48 object-cover rounded-md border-2 border-border"
-                    />
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => setProductImage(null)}
-                      data-testid="button-remove-product-image"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="relative group">
+                      <img 
+                        src={productImage} 
+                        alt="Product"
+                        className="w-full h-48 object-cover rounded-md border-2 border-border"
+                      />
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setProductImage(null);
+                          setImageDimensions(null);
+                        }}
+                        data-testid="button-remove-product-image"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    {aspectRatioMismatch && imageDimensions && (
+                      <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
+                        <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium text-yellow-500">Image may not match aspect ratio</p>
+                          <p className="text-muted-foreground text-xs mt-1">
+                            Your image ({imageDimensions.width}x{imageDimensions.height}) appears to be {checkImageAspectRatio(imageDimensions.width, imageDimensions.height).actual}.
+                            For {aspectRatio} video, {checkImageAspectRatio(imageDimensions.width, imageDimensions.height).suggestion.toLowerCase()}.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <label className="block">
