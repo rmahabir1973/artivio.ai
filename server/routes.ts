@@ -45,6 +45,8 @@ import {
   createVoiceModel as fishAudioCreateVoiceModel,
   deleteVoiceModel as fishAudioDeleteVoiceModel,
   processAudioFilesForCloning as fishAudioProcessAudioFiles,
+  transcribeAudio as fishAudioTranscribeAudio,
+  base64ToBuffer as fishAudioBase64ToBuffer,
   isFishAudioConfigured
 } from "./fishAudio";
 import { analyzeImageWithVision } from "./openaiVision";
@@ -5335,12 +5337,18 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
 
   // ========== SPEECH-TO-TEXT ROUTES ==========
 
-  // Transcribe audio (STT) - Uses Kie.ai jobs API with callbacks
+  // Transcribe audio (STT) - Uses Fish Audio ASR API (synchronous)
   app.post('/api/stt/transcribe', requireJWT, async (req: any, res) => {
     let sttGeneration: any = undefined;
     
     try {
       const userId = req.user.id;
+
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Speech-to-Text is not available. Fish.Audio API key is not configured." 
+        });
+      }
 
       // Validate request
       const validationResult = generateSTTRequestSchema.safeParse(req.body);
@@ -5352,7 +5360,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       }
 
       const { audioFile, language, parameters } = validationResult.data!;
-      const cost = await getModelCost('elevenlabs-stt');
+      const cost = await getModelCost('fish-audio-stt');
 
       // Deduct credits atomically
       const user = await storage.deductCreditsAtomic(userId, cost);
@@ -5361,74 +5369,58 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       }
 
       try {
-        // Convert base64 audio to hosted URL
-        console.log('Converting audio file to hosted URL for STT...');
-        const tempHostedUrl = await saveBase64AudioFiles([audioFile]);
-        
-        if (!tempHostedUrl || tempHostedUrl.length === 0) {
-          throw new Error('Failed to host audio file');
-        }
-        
-        const audioUrl = tempHostedUrl[0];
-        console.log(`✓ Audio hosted at: ${audioUrl}`);
+        // Convert base64 audio to buffer for Fish Audio
+        console.log('[FishAudio STT] Processing audio file...');
+        const { buffer, mimeType, filename } = fishAudioBase64ToBuffer(audioFile);
+        console.log(`[FishAudio STT] Audio buffer ready: ${buffer.length} bytes, ${mimeType}`);
 
         // Create STT generation record
         sttGeneration = await storage.createSttGeneration({
           userId,
-          audioUrl,
-          model: 'elevenlabs/speech-to-text',
+          audioUrl: `base64:${filename}`,
+          model: 'fish-audio-asr',
           language: language || null,
           transcription: null,
-          status: 'pending',
+          status: 'processing',
           errorMessage: null,
           creditsCost: cost,
         });
 
-        // Start async transcription with callback
-        const callbackUrl = getCallbackUrl(sttGeneration.id);
-        
-        // Background processing
-        (async () => {
-          try {
-            const { result } = await transcribeAudio({
-              audioUrl,
-              language,
-              parameters: {
-                diarization: parameters?.diarization,
-                tagAudioEvents: false, // Can add UI option later
-              },
-              callBackUrl: callbackUrl,
-            });
+        // Call Fish Audio ASR API directly (synchronous)
+        const transcriptionResult = await fishAudioTranscribeAudio({
+          audioBuffer: buffer,
+          filename,
+          mimeType,
+          language: language || undefined,
+          includeTimestamps: parameters?.timestamps || false,
+        });
 
-            const taskId = result?.data?.taskId || result?.taskId;
-            
-            if (taskId) {
-              await storage.updateSttGeneration(sttGeneration.id, {
-                status: 'processing',
-              });
-              console.log(`✓ STT task started: ${taskId}`);
-            } else {
-              throw new Error('No taskId returned from Kie.ai');
-            }
-          } catch (error: any) {
-            console.error('STT background processing error:', error);
-            await storage.addCreditsAtomic(userId, cost);
-            await storage.updateSttGeneration(sttGeneration.id, {
-              status: 'failed',
-              errorMessage: error.message || 'Transcription failed',
-              completedAt: new Date(),
-            });
-          }
-        })();
+        // Format transcription with timestamps if available
+        let formattedTranscription = transcriptionResult.text;
+        if (parameters?.timestamps && transcriptionResult.segments && transcriptionResult.segments.length > 0) {
+          formattedTranscription = transcriptionResult.segments.map(seg => 
+            `[${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s] ${seg.text}`
+          ).join('\n');
+        }
 
-        // Return immediately with generation ID
+        // Update generation with result
+        await storage.updateSttGeneration(sttGeneration.id, {
+          transcription: formattedTranscription,
+          status: 'completed',
+          completedAt: new Date(),
+        });
+
+        console.log(`[FishAudio STT] Transcription completed: ${formattedTranscription.length} chars`);
+
         return res.json({ 
           success: true, 
           generationId: sttGeneration.id,
-          message: "Transcription started" 
+          transcription: formattedTranscription,
+          duration: transcriptionResult.duration,
+          message: "Transcription completed" 
         });
       } catch (error: any) {
-        console.error('STT setup error:', error);
+        console.error('[FishAudio STT] Error:', error);
         await storage.addCreditsAtomic(userId, cost);
         
         if (sttGeneration) {
@@ -5439,10 +5431,10 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           });
         }
         
-        return res.status(500).json({ message: error.message || "Failed to start transcription" });
+        return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
       }
     } catch (error: any) {
-      console.error('STT transcription error:', error);
+      console.error('[FishAudio STT] Transcription error:', error);
       return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
     }
   });
