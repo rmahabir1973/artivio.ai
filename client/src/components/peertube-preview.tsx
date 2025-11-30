@@ -8,7 +8,8 @@ interface PeerTubePreviewProps {
   pageType: "video" | "image" | "transition" | "sora" | "grok" | "sound-effects" | "music" | 
     "brand-product-ad" | "brand-influencer-ad" | "brand-logo-animation" | "brand-unboxing" |
     "brand-flash-sale" | "brand-brand-story" | "brand-testimonial" | "brand-social-promo" |
-    "brand-before-after" | "brand-showcase" | "background-remover" | "talking-avatar" | "image-upscaler";
+    "brand-before-after" | "brand-showcase" | "background-remover" | "talking-avatar" | 
+    "image-upscaler" | "video-upscaler";
   title?: string;
   description?: string;
   showGeneratingMessage?: boolean;
@@ -35,6 +36,7 @@ const PAGE_TYPE_TO_FIELD: Record<PeerTubePreviewProps["pageType"], string> = {
   "background-remover": "previewVideoBgRemover",
   "talking-avatar": "previewVideoTalkingAvatar",
   "image-upscaler": "previewVideoUpscaler",
+  "video-upscaler": "previewVideoVideoUpscaler",
 };
 
 export function PeerTubePreview({

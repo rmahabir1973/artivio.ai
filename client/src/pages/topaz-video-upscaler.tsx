@@ -12,6 +12,7 @@ import { Loader2, Upload, Download, Zap, Copy, Check } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { PeerTubePreview } from "@/components/peertube-preview";
 
 // Duration-based tiered pricing (Kie.ai charges 12 credits/second)
 // 0-10s tier: 120 Kie credits → 180 user credits (50% markup)
@@ -442,70 +443,19 @@ export default function TopazVideoUpscaler() {
     </Card>
   );
 
-  const preview = (
-    <Card>
-      <CardHeader>
-        <CardTitle>Preview</CardTitle>
-        <CardDescription>Your upscaled video will appear here</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="aspect-video rounded-lg bg-muted overflow-hidden flex items-center justify-center">
-          {resultUrl ? (
-            <video
-              src={resultUrl}
-              controls
-              className="w-full h-full object-contain"
-              data-testid="preview-upscaled-video"
-            />
-          ) : (
-            <div className="text-center text-muted-foreground">
-              {isPolling ? (
-                <div className="space-y-2">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                  <p className="text-sm">Processing your video...</p>
-                </div>
-              ) : videoUrl ? (
-                <div className="space-y-2">
-                  <Loader2 className="h-8 w-8 mx-auto opacity-50" />
-                  <p className="text-sm">Ready to upscale</p>
-                </div>
-              ) : (
-                <p className="text-sm">Upload a video to get started</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Download/Copy buttons */}
-        {resultUrl && (
-          <div className="space-y-2">
-            <Button
-              onClick={handleDownload}
-              variant="default"
-              className="w-full"
-              data-testid="button-download-upscaled-video"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download Upscaled Video
-            </Button>
-            <Button
-              onClick={handleCopyUrl}
-              variant="outline"
-              className="w-full"
-              data-testid="button-copy-video-url"
-            >
-              {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-              {copied ? "Copied!" : "Copy URL"}
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
   return (
     <SidebarInset>
-      <ThreeColumnLayout form={form} preview={preview} />
+      <ThreeColumnLayout 
+        form={form} 
+        preview={
+          <PeerTubePreview
+            pageType="video-upscaler"
+            title="Video Upscaler"
+            description="Enhance video resolution with AI"
+            showGeneratingMessage={isPolling}
+          />
+        }
+      />
       <GuestGenerateModal
         open={showGuestModal}
         onOpenChange={setShowGuestModal}
