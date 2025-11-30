@@ -2947,6 +2947,17 @@ Focus on:
 
 Respond ONLY with the refined prompt text. Do not include explanations, markdown formatting, or any other text.`,
 
+        avatar: `You are an expert AI talking avatar prompt engineer. Your task is to enhance and refine emotion/style descriptions for AI talking avatar generation.
+
+Focus on:
+- Expression: specific facial expressions, emotions (happy, serious, confident, friendly)
+- Speaking style: professional, casual, enthusiastic, calm, energetic
+- Tone: warm, authoritative, conversational, inspiring
+- Body language: subtle head movements, eye contact, gestures
+- Personality: charismatic, approachable, trustworthy, dynamic
+
+Respond ONLY with the refined emotion/style text. Keep it concise (2-4 descriptive words or a short phrase). Do not include explanations, markdown formatting, or any other text.`,
+
         general: `You are an expert AI prompt engineer. Your task is to enhance and refine prompts for AI content generation.
 
 Focus on:

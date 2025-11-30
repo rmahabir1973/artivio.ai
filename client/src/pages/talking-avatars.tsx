@@ -16,6 +16,7 @@ import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { PeerTubePreview } from "@/components/peertube-preview";
+import { RefinePromptButton } from "@/components/prompt-assistant";
 
 const MAX_AUDIO_DURATION = 15;
 
@@ -561,13 +562,21 @@ export default function TalkingAvatars() {
 
           <div className="space-y-2">
             <Label htmlFor="emotion">Emotion/Style (Optional)</Label>
-            <Input
-              id="emotion"
-              placeholder="e.g., professional, enthusiastic, friendly"
-              value={emotion}
-              onChange={(e) => setEmotion(e.target.value)}
-              data-testid="input-emotion"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="emotion"
+                placeholder="e.g., professional, enthusiastic, friendly"
+                value={emotion}
+                onChange={(e) => setEmotion(e.target.value)}
+                data-testid="input-emotion"
+                className="flex-1"
+              />
+              <RefinePromptButton
+                prompt={emotion}
+                onRefined={setEmotion}
+                context="avatar"
+              />
+            </div>
           </div>
 
           {provider === "infinite-talk" && (

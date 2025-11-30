@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Sparkles } from "lucide-react";
 
-type PromptContext = 'video' | 'image' | 'audio';
+type PromptContext = 'video' | 'image' | 'audio' | 'avatar';
 
 interface RefinePromptButtonProps {
   prompt: string;
