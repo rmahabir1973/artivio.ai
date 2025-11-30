@@ -217,7 +217,7 @@ export default function Privacy() {
               </p>
               <div className="mt-4">
                 <p><strong>Email:</strong> hello@artivio.ai</p>
-                <p><strong>Support:</strong> https://helpdesk.artivio.ai/</p>
+                <p><strong>Support:</strong> support@artivio.ai</p>
               </div>
             </CardContent>
           </Card>

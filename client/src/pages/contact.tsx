@@ -228,15 +228,13 @@ export default function Contact() {
                   </a>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Support Portal</p>
+                  <p className="text-sm text-muted-foreground mb-1">Support Email</p>
                   <a 
-                    href="https://helpdesk.artivio.ai/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                    href="mailto:support@artivio.ai"
                     className="text-primary hover:underline font-medium"
-                    data-testid="link-helpdesk"
+                    data-testid="link-support-email"
                   >
-                    helpdesk.artivio.ai
+                    support@artivio.ai
                   </a>
                 </div>
               </CardContent>

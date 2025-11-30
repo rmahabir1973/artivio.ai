@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, HelpCircle, Bug, Lightbulb, MessageSquare, BookOpen, Zap } from "lucide-react";
+import { HelpCircle, Bug, Lightbulb, MessageSquare, BookOpen, Zap, Mail } from "lucide-react";
 
 export default function Support() {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -123,7 +123,7 @@ export default function Support() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="hover-elevate cursor-pointer" onClick={() => window.open('https://helpdesk.artivio.ai/', '_blank')}>
+          <Card className="hover-elevate cursor-pointer" onClick={() => window.location.href = 'mailto:support@artivio.ai?subject=Bug Report'}>
             <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Bug className="h-5 w-5 text-primary" />
@@ -135,13 +135,13 @@ export default function Support() {
             </CardHeader>
             <CardContent>
               <Button variant="outline" size="sm" className="w-full gap-2" data-testid="button-report-bug">
-                Open Help Desk
-                <ExternalLink className="h-3 w-3" />
+                Email Support
+                <Mail className="h-3 w-3" />
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="hover-elevate cursor-pointer" onClick={() => window.open('https://helpdesk.artivio.ai/', '_blank')}>
+          <Card className="hover-elevate cursor-pointer" onClick={() => window.location.href = 'mailto:support@artivio.ai?subject=Feature Request'}>
             <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-3">
               <div className="p-2 rounded-lg bg-purple-500/10">
                 <Lightbulb className="h-5 w-5 text-purple-500" />
@@ -153,13 +153,13 @@ export default function Support() {
             </CardHeader>
             <CardContent>
               <Button variant="outline" size="sm" className="w-full gap-2" data-testid="button-request-feature">
-                Submit Request
-                <ExternalLink className="h-3 w-3" />
+                Email Support
+                <Mail className="h-3 w-3" />
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="hover-elevate cursor-pointer" onClick={() => window.open('https://helpdesk.artivio.ai/', '_blank')}>
+          <Card className="hover-elevate cursor-pointer" onClick={() => window.location.href = 'mailto:support@artivio.ai'}>
             <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-3">
               <div className="p-2 rounded-lg bg-green-500/10">
                 <MessageSquare className="h-5 w-5 text-green-500" />
@@ -171,8 +171,8 @@ export default function Support() {
             </CardHeader>
             <CardContent>
               <Button variant="outline" size="sm" className="w-full gap-2" data-testid="button-contact-support">
-                Open Ticket
-                <ExternalLink className="h-3 w-3" />
+                Email Support
+                <Mail className="h-3 w-3" />
               </Button>
             </CardContent>
           </Card>
@@ -241,12 +241,12 @@ export default function Support() {
                 Our support team is here to assist you with any questions or issues
               </p>
               <Button 
-                onClick={() => window.open('https://helpdesk.artivio.ai/', '_blank')}
+                onClick={() => window.location.href = 'mailto:support@artivio.ai'}
                 className="gap-2"
-                data-testid="button-help-desk"
+                data-testid="button-email-support"
               >
-                Visit Help Desk
-                <ExternalLink className="h-4 w-4" />
+                Email Support
+                <Mail className="h-4 w-4" />
               </Button>
             </div>
           </CardContent>
