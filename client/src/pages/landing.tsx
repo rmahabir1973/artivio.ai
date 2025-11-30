@@ -95,7 +95,7 @@ const additionalFaqs = [
 
 // Pricing Section Component
 function PricingSection() {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual" | "trial">("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<'annual' | 'monthly'>('annual');
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -105,48 +105,132 @@ function PricingSection() {
     queryKey: ['/api/plans'],
   });
 
-  const plans = plansData?.map(plan => ({
-    ...plan,
-    popular: plan.name === 'starter',
-  })) || [];
+  const trialPlan = plansData?.find(p => p.billingPeriod === 'trial');
 
-  const handleSelectPlan = async (plan: SubscriptionPlan & { popular?: boolean }) => {
+  const { monthlyPlans, annualPlans } = useMemo(() => {
+    if (!plansData) return { monthlyPlans: [], annualPlans: [] };
+    
+    const monthly = plansData
+      .filter(p => p.billingPeriod === 'monthly' && p.price > 0)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    
+    const seenTiers = new Set<number>();
+    const uniqueMonthly = monthly.filter(plan => {
+      const tier = getPlanTierFromName(plan.displayName || plan.name);
+      if (seenTiers.has(tier)) return false;
+      seenTiers.add(tier);
+      return true;
+    });
+    
+    const annual = plansData
+      .filter(p => p.billingPeriod === 'annual')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+    
+    return { monthlyPlans: uniqueMonthly, annualPlans: annual };
+  }, [plansData]);
+
+  const displayPlans = billingPeriod === 'annual' ? annualPlans : monthlyPlans;
+
+  function getPlanTierFromName(name: string): number {
+    const lower = name.toLowerCase();
+    if (lower.includes('trial') || lower.includes('free')) return 0;
+    if (lower.includes('starter')) return 1;
+    if (lower.includes('professional') || (lower.includes('pro') && !lower.includes('business'))) return 2;
+    if (lower.includes('business')) return 3;
+    if (lower.includes('agency') || lower.includes('enterprise')) return 4;
+    return 1;
+  }
+
+  const isPro = (plan: SubscriptionPlan): boolean => {
+    const name = (plan.displayName || plan.name).toLowerCase();
+    return name.includes('professional') || (name.includes('pro') && !name.includes('business'));
+  };
+
+  const getMonthlyEquivalent = (plan: SubscriptionPlan): number => {
+    if (plan.billingPeriod === 'annual') {
+      const annual = plan.annualPrice || plan.price;
+      return Math.round(annual / 12);
+    }
+    return plan.monthlyPrice || plan.price;
+  };
+
+  const getTotalPrice = (plan: SubscriptionPlan): number => {
+    if (plan.billingPeriod === 'annual') {
+      return plan.annualPrice || plan.price;
+    }
+    return plan.monthlyPrice || plan.price;
+  };
+
+  const formatPrice = (priceInCents: number): string => {
+    const price = priceInCents / 100;
+    return price % 1 === 0 ? price.toFixed(0) : price.toFixed(2);
+  };
+
+  const isTrial = (plan: SubscriptionPlan) => plan.billingPeriod === 'trial';
+
+  const handleSelectPlan = async (plan: SubscriptionPlan) => {
     setSelectedPlan(plan.name);
     setIsSubmitting(true);
 
     try {
-      if (!user) {
-        // Redirect unauthenticated users to register with plan selection
-        if (plan.price === 0) {
+      // Handle free trial plan separately
+      if (isTrial(plan)) {
+        if (user) {
+          const response = await fetchWithAuth('/api/billing/start-free-trial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to start free trial');
+          }
+          toast({
+            title: "Welcome to Artivio AI!",
+            description: `Your free trial has started! You've received ${data.creditsGranted} credits.`,
+          });
+          window.location.href = '/dashboard';
+        } else {
           const response = await fetch('/api/public/plan-selection', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ planName: plan.name }),
           });
-          if (response.ok) {
-            window.location.href = '/dashboard';
+          if (!response.ok) {
+            throw new Error('Failed to store plan selection');
           }
-        } else {
-          window.location.href = '/login';
+          window.location.href = '/register';
         }
       } else {
-        // Authenticated users go to checkout
-        const response = await fetchWithAuth('/api/billing/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ planId: plan.id }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to create checkout session');
-        }
-        if (data.url) {
-          window.location.href = data.url;
+        // Handle paid plans
+        if (!user) {
+          const response = await fetch('/api/public/plan-selection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ planName: plan.name }),
+          });
+          if (!response.ok) {
+            throw new Error('Failed to store plan selection');
+          }
+          window.location.href = '/register';
         } else {
-          throw new Error('No checkout URL returned');
+          const response = await fetchWithAuth('/api/billing/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ planId: plan.id }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to create checkout session');
+          }
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            throw new Error('No checkout URL returned');
+          }
         }
       }
     } catch (error: any) {
@@ -160,26 +244,42 @@ function PricingSection() {
     }
   };
 
-  const getPriceDisplay = (priceInCents: number): string => {
-    const price = priceInCents / 100;
-    return price % 1 === 0 ? price.toFixed(0) : price.toFixed(2);
-  };
-
-  const isTrial = (plan: SubscriptionPlan) => plan.billingPeriod === 'trial';
-
   return (
-    <section id="pricing" className="py-20 px-6">
+    <section id="pricing" className="py-20 px-6 bg-[#0a0a0a]">
       <div className="container mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-bold px-4 py-2 rounded-full mb-4">
-            SIMPLE, TRANSPARENT PRICING
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Plans Built for Every Creator
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold mb-3 text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Plans & Pricing
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Choose the perfect plan to unlock unlimited AI-powered content creation. Start free, upgrade anytime.
-          </p>
+          <p className="text-gray-400">Start free and upgrade to unlock more features.</p>
+        </div>
+
+        {/* Billing Toggle */}
+        <div className="flex justify-center mb-10">
+          <div className="inline-flex bg-[#1a1a1a] border border-[#333] rounded-full p-1">
+            <button
+              onClick={() => setBillingPeriod('monthly')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+                billingPeriod === 'monthly'
+                  ? 'bg-white text-black'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              data-testid="button-pricing-monthly"
+            >
+              MONTHLY
+            </button>
+            <button
+              onClick={() => setBillingPeriod('annual')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                billingPeriod === 'annual'
+                  ? 'bg-white text-black'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              data-testid="button-pricing-annual"
+            >
+              ANNUAL <span className={billingPeriod === 'annual' ? 'text-purple-600' : 'text-purple-500'}>(35% OFF)</span>
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -191,134 +291,194 @@ function PricingSection() {
             <p className="text-red-400 font-semibold mb-2">Failed to load pricing plans</p>
             <p className="text-gray-400 text-sm mb-4">Please refresh the page to try again</p>
           </div>
+        ) : displayPlans.length === 0 && !trialPlan ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <p className="text-gray-400 font-semibold mb-2">No pricing plans available</p>
+            <p className="text-gray-500 text-sm">Please contact support if this persists.</p>
+          </div>
         ) : (
           <>
-            {/* Billing Period Toggle */}
-            <div className="flex justify-center mb-12">
-              <div className="inline-flex items-center gap-2 p-1 bg-[#1A1A1A]/50 border border-white/10 rounded-lg">
-                <button
-                  onClick={() => setBillingPeriod("monthly")}
-                  className={`px-6 py-2 rounded-md font-medium transition-all ${
-                    billingPeriod === "monthly"
-                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md"
-                      : "text-gray-400 hover:text-gray-200"
-                  }`}
-                  data-testid="button-pricing-monthly"
+            {/* Plan Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto mb-12">
+              {/* Free Trial Card */}
+              {trialPlan && (
+                <div 
+                  className="bg-[#111111] border border-[#222] rounded-xl p-6 flex flex-col"
+                  data-testid="pricing-card-trial"
                 >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setBillingPeriod("annual")}
-                  className={`px-6 py-2 rounded-md font-medium transition-all ${
-                    billingPeriod === "annual"
-                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md"
-                      : "text-gray-400 hover:text-gray-200"
-                  }`}
-                  data-testid="button-pricing-annual"
-                >
-                  Annual
-                </button>
-              </div>
-            </div>
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold text-white italic" style={{ fontFamily: "'Playfair Display', serif" }}>Free</h3>
+                    <p className="text-sm text-gray-500 mt-1">Try your first AI creations</p>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-white">$0</span>
+                    <span className="text-gray-500 ml-1">/month</span>
+                  </div>
 
-            {/* Plans Grid */}
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {plans
-                .filter(p => p.billingPeriod === billingPeriod)
-                .map((plan) => {
-                  const features = Array.isArray(plan.features) ? plan.features : [];
-                  return (
-                    <Card 
-                      key={plan.id}
-                      className={`relative hover-elevate transition-all flex flex-col border ${
-                        plan.popular 
-                          ? 'border-purple-500/50 bg-gradient-to-br from-purple-900/20 to-blue-900/20 md:scale-105 shadow-xl' 
-                          : 'border-white/10 bg-[#1A1A1A]'
-                      } ${
-                        selectedPlan === plan.name ? 'ring-2 ring-purple-500' : ''
-                      }`}
-                      data-testid={`pricing-card-${plan.name}`}
-                    >
-                      {plan.popular && (
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                          <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                            <Zap className="w-3 h-3" />
-                            Most Popular
-                          </span>
-                        </div>
+                  <Button
+                    onClick={() => handleSelectPlan(trialPlan)}
+                    disabled={isSubmitting}
+                    variant="outline"
+                    className="w-full mb-6 bg-transparent border-[#333] text-white hover:bg-white hover:text-black"
+                    data-testid="button-pricing-select-trial"
+                  >
+                    {isSubmitting && selectedPlan === trialPlan.name ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Get Started"
+                    )}
+                  </Button>
+
+                  <div className="space-y-4 flex-1">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">USAGE LIMITS</p>
+                      <ul className="space-y-2">
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          {trialPlan.creditsPerMonth.toLocaleString()} credits
+                        </li>
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          7 day access
+                        </li>
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          No credit card required
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">FEATURES</p>
+                      <ul className="space-y-2">
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          All AI models
+                        </li>
+                        <li className="flex items-center gap-2 text-sm text-gray-300">
+                          <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                          All tools & features
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Paid Plan Cards */}
+              {displayPlans.map((plan) => {
+                const isProPlan = isPro(plan);
+                const monthlyPrice = getMonthlyEquivalent(plan);
+                const totalPrice = getTotalPrice(plan);
+                
+                return (
+                  <div 
+                    key={plan.id}
+                    className={`relative bg-[#111111] rounded-xl p-6 flex flex-col ${
+                      isProPlan 
+                        ? 'border-2 border-purple-500' 
+                        : 'border border-[#222]'
+                    }`}
+                    data-testid={`pricing-card-${plan.name}`}
+                  >
+                    {isProPlan && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="bg-purple-500/20 text-purple-400 border border-purple-500/50 px-4 py-1 rounded-full text-xs font-medium">
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+
+                    <div className={`mb-4 ${isProPlan ? 'pt-2' : ''}`}>
+                      <h3 className="text-xl font-semibold text-white italic" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        {plan.displayName.replace(' (Annual)', '')}
+                      </h3>
+                      {plan.description && (
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-1">{plan.description}</p>
                       )}
-                      
-                      <CardHeader className="text-center pt-8 pb-4">
-                        <CardTitle className="text-2xl mb-2">{plan.displayName}</CardTitle>
-                        {plan.description && (
-                          <CardDescription className="text-sm text-gray-400">
-                            {plan.description}
-                          </CardDescription>
-                        )}
-                        
-                        <div className="mt-6 flex flex-col items-center gap-2">
-                          {plan.price === 0 ? (
-                            <div className="text-4xl font-bold text-purple-400">
-                              FREE
-                            </div>
-                          ) : (
-                            <>
-                              <div className="text-5xl font-bold text-purple-400">
-                                ${getPriceDisplay(plan.price)}
-                              </div>
-                              <p className="text-gray-400 text-sm">
-                                {isTrial(plan) ? 'one-time' : billingPeriod === 'annual' ? '/year' : '/month'}
-                              </p>
-                            </>
-                          )}
-                          <p className="text-sm text-gray-400 mt-2">
-                            <span className="text-lg font-semibold text-purple-400">{plan.creditsPerMonth.toLocaleString()}</span>
-                            {' '}credits {isTrial(plan) ? '(one-time)' : 'per month'}
-                          </p>
-                        </div>
-                      </CardHeader>
+                    </div>
+                    
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold text-white">${formatPrice(monthlyPrice)}</span>
+                      <span className="text-gray-500 ml-1">/month</span>
+                      {billingPeriod === 'annual' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          ${formatPrice(totalPrice)} billed yearly
+                        </p>
+                      )}
+                    </div>
 
-                      <CardContent className="flex-1">
-                        <ul className="space-y-3">
-                          {features.map((feature: string, index: number) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <Check className="h-5 w-5 text-purple-400 shrink-0 mt-0.5" />
-                              <span className="text-sm text-gray-300">{feature}</span>
-                            </li>
-                          ))}
+                    <Button
+                      onClick={() => handleSelectPlan(plan)}
+                      disabled={isSubmitting}
+                      variant={isProPlan ? "default" : "outline"}
+                      className={`w-full mb-6 ${
+                        isProPlan 
+                          ? 'bg-purple-500 hover:bg-purple-600 text-white border-0' 
+                          : 'bg-transparent border-[#333] text-white hover:bg-white hover:text-black'
+                      }`}
+                      data-testid={`button-pricing-select-${plan.name}`}
+                    >
+                      {isSubmitting && selectedPlan === plan.name ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        "Get Started"
+                      )}
+                    </Button>
+
+                    <div className="space-y-4 flex-1">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">USAGE LIMITS</p>
+                        <ul className="space-y-2">
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            {plan.creditsPerMonth.toLocaleString()} credits/month
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            {plan.creditRolloverLimit ? `${plan.creditRolloverLimit.toLocaleString()} rollover limit` : 'Credit rollover'}
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            Priority generation
+                          </li>
                         </ul>
-                      </CardContent>
-
-                      <CardFooter className="pt-4">
-                        <Button
-                          onClick={() => handleSelectPlan(plan)}
-                          disabled={isSubmitting}
-                          className={`w-full ${
-                            plan.popular
-                              ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
-                              : ''
-                          }`}
-                          variant={plan.popular ? "default" : "outline"}
-                          size="lg"
-                          data-testid={`button-pricing-select-${plan.name}`}
-                        >
-                          {isSubmitting && selectedPlan === plan.name ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                              {plan.price === 0 ? "Starting..." : "Processing..."}
-                            </>
-                          ) : (
-                            plan.price === 0 ? "Start Free" : "Get Started"
-                          )}
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">FEATURES</p>
+                        <ul className="space-y-2">
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            All AI video models
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            All AI image models
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            Suno music generation
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-300">
+                            <Check className="h-4 w-4 text-purple-400 shrink-0" />
+                            Voice cloning & TTS
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Features Info */}
-            <div className="mt-16 max-w-4xl mx-auto text-center">
+            <div className="max-w-4xl mx-auto text-center">
               <p className="text-gray-300 mb-4">
                 All plans include full access to every AI model and tool. No credit card required to start.
               </p>
