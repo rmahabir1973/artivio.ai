@@ -34,6 +34,14 @@ const PLATFORMS = [
   { value: "youtube", label: "YouTube Shorts", prompt: "Create an engaging YouTube Shorts promotional video with dynamic content, captivating visuals, and professional quality. Optimized for the short-form video audience." },
 ];
 
+// Model selection based on aspect ratio
+// Veo 3.1 image-to-video only supports 16:9 output
+// Kling 2.5 Turbo supports all aspect ratios for image-to-video
+const getModelForAspectRatio = (aspectRatio: string) => {
+  // Use Kling 2.5 Turbo for image-to-video as it properly supports all aspect ratios
+  return 'kling-2.5-turbo';
+};
+
 export default function SocialPromo() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -51,7 +59,8 @@ export default function SocialPromo() {
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
-  const creditCost = getModelCost('veo-3.1-fast', 400) || 120;
+  // Use Kling 2.5 Turbo for image-to-video (5s duration) - supports all aspect ratios
+  const creditCost = getModelCost('kling-2.5-turbo-i2v-5s', 400) || 90;
 
   const checkImageAspectRatio = (width: number, height: number): { matches: boolean, actual: string, suggestion: string } => {
     const ratio = width / height;
@@ -219,13 +228,15 @@ export default function SocialPromo() {
       return;
     }
 
+    // Use Kling 2.5 Turbo for image-to-video (supports all aspect ratios properly)
     generateMutation.mutate({
-      model: 'veo-3.1-fast',
+      model: 'kling-2.5-turbo',
       prompt: prompt.trim(),
       generationType: 'image-to-video',
       referenceImages: [productImage],
       parameters: {
         aspectRatio,
+        duration: '5', // 5 seconds for social media content
       },
     });
   };
@@ -417,7 +428,7 @@ export default function SocialPromo() {
 
               <GenerationProgress
                 isActive={isGenerating}
-                modelId="veo-3.1-fast"
+                modelId="kling-2.5-turbo"
                 generationType="video"
               />
             </CardContent>
