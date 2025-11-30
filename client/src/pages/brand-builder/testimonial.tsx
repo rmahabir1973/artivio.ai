@@ -40,7 +40,7 @@ export default function Testimonial() {
   
   // Testimonial includes both TTS + Lip-sync costs
   const lipSyncCost = getModelCost(resolution === '480p' ? 'infinitalk-lip-sync-480p' : 'infinitalk-lip-sync-720p', 60) || 250;
-  const ttsCost = getModelCost('elevenlabs-tts-multilingual-v2', 60) || 50;
+  const ttsCost = getModelCost('fish-audio-tts', 60) || 20;
   const creditCost = lipSyncCost + ttsCost;
 
   const uploadImage = async (file: File): Promise<string> => {

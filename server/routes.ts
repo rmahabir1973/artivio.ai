@@ -5713,13 +5713,21 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         return res.status(400).json({ message: "Testimonial text is required" });
       }
 
-      // Default voice for testimonials (Rachel - natural female voice)
-      const testimonialVoiceId = voiceId || 'Xb7hH8MSUJpSbSDYk0k2';
+      // Check Fish Audio is configured
+      if (!isFishAudioConfigured()) {
+        return res.status(503).json({ 
+          message: "Testimonial generation is not available. Fish.Audio API key is not configured." 
+        });
+      }
+
+      // Default voice for testimonials - use Fish Audio default S1 model voice
+      // Or allow custom voice ID for cloned voices
+      const testimonialVoiceId = voiceId || '7f92f8afb8ec43bf81429cc1c9199cb1'; // Fish Audio default voice
       
       // Calculate total cost: TTS + Lip-sync
       const lipSyncModelName = resolution === '480p' ? 'infinitalk-lip-sync-480p' : 'infinitalk-lip-sync-720p';
       const lipSyncCost = await getModelCost(lipSyncModelName);
-      const ttsCost = await getModelCost('elevenlabs-tts-multilingual-v2');
+      const ttsCost = await getModelCost('fish-audio-tts');
       const totalCost = lipSyncCost + ttsCost;
 
       // Deduct credits upfront for both TTS and lip-sync
@@ -5747,7 +5755,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           creditsCost: totalCost,
         });
 
-        // Background processing: TTS first, then Lip-Sync
+        // Background processing: TTS first (synchronous with Fish Audio), then Lip-Sync
         (async () => {
           try {
             await storage.updateGeneration(generation.id, { 
@@ -5755,75 +5763,47 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
               statusDetail: 'generating_audio'
             });
             
-            console.log(`🎙️ [Testimonial ${generation.id}] Starting TTS generation...`);
+            console.log(`🎙️ [Testimonial ${generation.id}] Starting Fish Audio TTS generation...`);
             
-            // Create a temporary TTS generation to track the audio generation
-            const ttsGeneration = await storage.createGeneration({
-              userId,
-              type: 'text-to-speech',
-              model: 'elevenlabs-tts-multilingual-v2',
-              prompt: text.trim(),
-              parameters: { 
-                voiceId: testimonialVoiceId, 
-                voiceName: 'Rachel',
-                parentTestimonialId: generation.id 
-              },
-              generationType: 'text-to-speech',
-              status: 'pending',
-              creditsCost: 0, // Already charged in testimonial
-              parentGenerationId: generation.id,
-            });
-            
-            // Generate TTS with callback
-            const callbackUrl = getCallbackUrl(ttsGeneration.id);
-            console.log(`📞 [Testimonial ${generation.id}] TTS callback URL: ${callbackUrl}`);
-            
-            const { result: ttsResult, keyName } = await generateTTS({
+            // Generate TTS using Fish Audio (synchronous - returns audio buffer directly)
+            const audioBuffer = await fishAudioGenerateSpeech({
               text: text.trim(),
-              voiceId: testimonialVoiceId,
-              voiceName: 'Rachel',
-              model: 'elevenlabs-tts-multilingual-v2',
-              callBackUrl: callbackUrl,
+              referenceId: testimonialVoiceId,
+              format: 'mp3',
+              temperature: 0.9,
+              topP: 0.9,
+              speed: 1,
+              volume: 0,
             });
             
-            // Check if TTS returned direct URL (synchronous result)
-            const directAudioUrl = ttsResult?.url || ttsResult?.audioUrl || ttsResult?.data?.url ||
-              (ttsResult?.data?.data && Array.isArray(ttsResult.data.data) && ttsResult.data.data[0]?.audioUrl) ||
-              ttsResult?.data?.data?.audioUrl;
+            console.log(`✓ [Testimonial ${generation.id}] TTS generated: ${audioBuffer.length} bytes`);
             
-            if (directAudioUrl) {
-              console.log(`✓ [Testimonial ${generation.id}] TTS completed immediately: ${directAudioUrl}`);
-              await storage.finalizeGeneration(ttsGeneration.id, 'success', { resultUrl: directAudioUrl });
-              
-              // Proceed directly to lip-sync
-              await startLipSyncForTestimonial(generation.id, userId, imageUrl, directAudioUrl, resolution);
-            } else {
-              // TTS is async - store taskId and wait for callback
-              const taskId = ttsResult?.data?.taskId;
-              if (!taskId) {
-                throw new Error('TTS API did not return taskId or audio URL');
-              }
-              
-              console.log(`📋 [Testimonial ${generation.id}] TTS queued with taskId: ${taskId}`);
-              await storage.updateGeneration(ttsGeneration.id, {
-                status: 'processing',
-                apiKeyUsed: keyName,
-                externalTaskId: taskId,
-                statusDetail: 'queued',
+            // Save audio buffer to storage to get a URL for lip sync
+            const filename = `testimonial-tts-${generation.id}-${Date.now()}.mp3`;
+            let audioUrl: string;
+            
+            if (s3.isS3Enabled()) {
+              // Upload to S3
+              const result = await s3.uploadBuffer(audioBuffer, {
+                prefix: 'uploads/audio',
+                contentType: 'audio/mpeg',
+                filename,
               });
-              
-              // Poll for TTS completion
-              const audioUrl = await pollForTTSCompletion(ttsGeneration.id, 120000); // 2 min timeout
-              
-              if (!audioUrl) {
-                throw new Error('TTS generation timed out or failed');
-              }
-              
-              console.log(`✓ [Testimonial ${generation.id}] TTS completed: ${audioUrl}`);
-              
-              // Now start lip-sync with the generated audio
-              await startLipSyncForTestimonial(generation.id, userId, imageUrl, audioUrl, resolution);
+              audioUrl = result.signedUrl;
+              console.log(`✓ [Testimonial ${generation.id}] Audio uploaded to S3: ${audioUrl}`);
+            } else {
+              // Fall back to local storage (public/uploads is served by express.static)
+              const audioDir = path.join(process.cwd(), 'public', 'uploads', 'audio');
+              await fs.mkdir(audioDir, { recursive: true });
+              const audioPath = path.join(audioDir, filename);
+              await fs.writeFile(audioPath, audioBuffer);
+              audioUrl = `${getBaseUrl()}/uploads/audio/${filename}`;
+              console.log(`✓ [Testimonial ${generation.id}] Audio saved locally: ${audioUrl}`);
             }
+            
+            // Proceed to lip-sync with the generated audio
+            await startLipSyncForTestimonial(generation.id, userId, imageUrl, audioUrl, resolution);
+            
           } catch (error: any) {
             console.error(`❌ [Testimonial ${generation.id}] Failed:`, error);
             
@@ -5850,29 +5830,6 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       res.status(500).json({ message: error.message || "Failed to generate testimonial video" });
     }
   });
-
-  // Helper function to poll for TTS completion
-  async function pollForTTSCompletion(ttsGenerationId: string, timeoutMs: number = 120000): Promise<string | null> {
-    const startTime = Date.now();
-    const pollInterval = 2000; // Poll every 2 seconds
-    
-    while (Date.now() - startTime < timeoutMs) {
-      const gen = await storage.getGeneration(ttsGenerationId);
-      if (!gen) return null;
-      
-      if (gen.status === 'completed' || gen.status === 'success') {
-        return gen.resultUrl || null;
-      }
-      
-      if (gen.status === 'failed' || gen.status === 'failure') {
-        throw new Error(gen.errorMessage || 'TTS generation failed');
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-    }
-    
-    return null;
-  }
 
   // Helper function to start lip-sync for testimonial
   async function startLipSyncForTestimonial(
