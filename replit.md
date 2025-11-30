@@ -6,6 +6,16 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 ## User Preferences
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
+## Recent Updates (Nov 30, 2025)
+- **Video Editor Quality Fixes**: Comprehensive FFmpeg filter graph improvements:
+  - All videos now normalized to 30fps, 720p max resolution, 44100Hz audio sample rate
+  - Crossfade offsets computed from cumulative start times for precise transitions
+  - tpad/apad scaled to (n-1)*transitionDuration to preserve full original duration
+  - Async audio resampling with `first_pts=0` to eliminate audio drift/noise
+  - 5 clips × 8s with 0.5s crossfade now correctly outputs 40s (not 38s)
+- **Music Page UI**: Changed crowded 6-column tabs to 2-row layout (3 columns each)
+- **Landing Page Footer**: Removed duplicate inline footer, kept comprehensive Footer component
+
 ## Recent Updates (Nov 29, 2025)
 - **Stripe Configuration Fix**: Stripe Price IDs are now managed EXCLUSIVELY through Admin Panel → Subscription Plans. Removed all hardcoded Stripe IDs from seedPlans.ts. Seeding only creates plan structure; Stripe IDs must be configured via Admin Panel. Added detailed logging for checkout debugging.
 - **Agency Plans Removed**: Removed Agency subscription plans per user request. Only Free Trial, Starter, Professional, and Business tiers remain.
