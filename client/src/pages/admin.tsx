@@ -3349,8 +3349,10 @@ export default function Admin() {
                   
                   const stripePriceId = editPlanData.stripePriceId.trim();
                   const stripeProductId = editPlanData.stripeProductId.trim();
-                  if (stripePriceId) updates.stripePriceId = stripePriceId;
-                  if (stripeProductId) updates.stripeProductId = stripeProductId;
+                  // Always send stripe IDs - empty strings become null in backend
+                  // This ensures clearing a field actually removes the value
+                  updates.stripePriceId = stripePriceId || null;
+                  updates.stripeProductId = stripeProductId || null;
 
                   updatePlanMutation.mutate(updates);
                 }
