@@ -100,6 +100,12 @@ export default function Admin() {
     previewVideoGrok: "",
     previewVideoSoundEffects: "",
     previewVideoMusic: "",
+    previewVideoVoiceClone: "",
+    previewVideoLipSync: "",
+    previewVideoTts: "",
+    previewVideoStt: "",
+    previewVideoUpscaler: "",
+    previewVideoVideoUpscaler: "",
     previewVideoBgRemover: "",
     previewVideoTalkingAvatar: "",
     previewVideoBrandProductAd: "",
@@ -112,10 +118,6 @@ export default function Admin() {
     previewVideoBrandSocialPromo: "",
     previewVideoBrandBeforeAfter: "",
     previewVideoBrandShowcase: "",
-    previewVideoUpscaler: "",
-    previewVideoVideoUpscaler: "",
-    previewVideoLipSync: "",
-    previewVideoStt: "",
   });
   const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
   const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
@@ -257,6 +259,12 @@ export default function Admin() {
         previewVideoGrok: homePageContent.previewVideoGrok || "",
         previewVideoSoundEffects: homePageContent.previewVideoSoundEffects || "",
         previewVideoMusic: homePageContent.previewVideoMusic || "",
+        previewVideoVoiceClone: homePageContent.previewVideoVoiceClone || "",
+        previewVideoLipSync: homePageContent.previewVideoLipSync || "",
+        previewVideoTts: homePageContent.previewVideoTts || "",
+        previewVideoStt: homePageContent.previewVideoStt || "",
+        previewVideoUpscaler: homePageContent.previewVideoUpscaler || "",
+        previewVideoVideoUpscaler: homePageContent.previewVideoVideoUpscaler || "",
         previewVideoBgRemover: homePageContent.previewVideoBgRemover || "",
         previewVideoTalkingAvatar: homePageContent.previewVideoTalkingAvatar || "",
         previewVideoBrandProductAd: homePageContent.previewVideoBrandProductAd || "",
@@ -269,10 +277,6 @@ export default function Admin() {
         previewVideoBrandSocialPromo: homePageContent.previewVideoBrandSocialPromo || "",
         previewVideoBrandBeforeAfter: homePageContent.previewVideoBrandBeforeAfter || "",
         previewVideoBrandShowcase: homePageContent.previewVideoBrandShowcase || "",
-        previewVideoUpscaler: homePageContent.previewVideoUpscaler || "",
-        previewVideoVideoUpscaler: homePageContent.previewVideoVideoUpscaler || "",
-        previewVideoLipSync: homePageContent.previewVideoLipSync || "",
-        previewVideoStt: homePageContent.previewVideoStt || "",
       });
     }
   }, [homePageContent, editingHomePage]);
@@ -1783,6 +1787,28 @@ export default function Admin() {
                         />
                       </div>
                       <div>
+                        <Label htmlFor="previewVideoVoiceClone">Voice Clone Preview</Label>
+                        <Input
+                          id="previewVideoVoiceClone"
+                          value={homePageFormData.previewVideoVoiceClone}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoVoiceClone: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-voice-clone"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="previewVideoTts">Text-to-Speech Preview</Label>
+                        <Input
+                          id="previewVideoTts"
+                          value={homePageFormData.previewVideoTts}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoTts: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-tts"
+                        />
+                      </div>
+                      <div>
                         <Label htmlFor="previewVideoBgRemover">Background Remover Preview</Label>
                         <Input
                           id="previewVideoBgRemover"
@@ -1974,6 +2000,12 @@ export default function Admin() {
                           previewVideoGrok: homePageFormData.previewVideoGrok.trim() || undefined,
                           previewVideoSoundEffects: homePageFormData.previewVideoSoundEffects.trim() || undefined,
                           previewVideoMusic: homePageFormData.previewVideoMusic.trim() || undefined,
+                          previewVideoVoiceClone: homePageFormData.previewVideoVoiceClone.trim() || undefined,
+                          previewVideoLipSync: homePageFormData.previewVideoLipSync.trim() || undefined,
+                          previewVideoTts: homePageFormData.previewVideoTts.trim() || undefined,
+                          previewVideoStt: homePageFormData.previewVideoStt.trim() || undefined,
+                          previewVideoUpscaler: homePageFormData.previewVideoUpscaler.trim() || undefined,
+                          previewVideoVideoUpscaler: homePageFormData.previewVideoVideoUpscaler.trim() || undefined,
                           previewVideoBgRemover: homePageFormData.previewVideoBgRemover.trim() || undefined,
                           previewVideoTalkingAvatar: homePageFormData.previewVideoTalkingAvatar.trim() || undefined,
                           previewVideoBrandProductAd: homePageFormData.previewVideoBrandProductAd.trim() || undefined,
@@ -1986,10 +2018,6 @@ export default function Admin() {
                           previewVideoBrandSocialPromo: homePageFormData.previewVideoBrandSocialPromo.trim() || undefined,
                           previewVideoBrandBeforeAfter: homePageFormData.previewVideoBrandBeforeAfter.trim() || undefined,
                           previewVideoBrandShowcase: homePageFormData.previewVideoBrandShowcase.trim() || undefined,
-                          previewVideoUpscaler: homePageFormData.previewVideoUpscaler.trim() || undefined,
-                          previewVideoVideoUpscaler: homePageFormData.previewVideoVideoUpscaler.trim() || undefined,
-                          previewVideoLipSync: homePageFormData.previewVideoLipSync.trim() || undefined,
-                          previewVideoStt: homePageFormData.previewVideoStt.trim() || undefined,
                         });
                       }}
                       disabled={updateHomePageMutation.isPending}
