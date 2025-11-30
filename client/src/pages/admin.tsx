@@ -101,6 +101,7 @@ export default function Admin() {
     previewVideoSoundEffects: "",
     previewVideoMusic: "",
     previewVideoBgRemover: "",
+    previewVideoTalkingAvatar: "",
     previewVideoBrandProductAd: "",
     previewVideoBrandInfluencerAd: "",
     previewVideoBrandLogoAnimation: "",
@@ -253,6 +254,7 @@ export default function Admin() {
         previewVideoSoundEffects: homePageContent.previewVideoSoundEffects || "",
         previewVideoMusic: homePageContent.previewVideoMusic || "",
         previewVideoBgRemover: homePageContent.previewVideoBgRemover || "",
+        previewVideoTalkingAvatar: homePageContent.previewVideoTalkingAvatar || "",
         previewVideoBrandProductAd: homePageContent.previewVideoBrandProductAd || "",
         previewVideoBrandInfluencerAd: homePageContent.previewVideoBrandInfluencerAd || "",
         previewVideoBrandLogoAnimation: homePageContent.previewVideoBrandLogoAnimation || "",
@@ -1783,6 +1785,18 @@ export default function Admin() {
                         />
                       </div>
                     </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="previewVideoTalkingAvatar">Talking Avatar Preview</Label>
+                        <Input
+                          id="previewVideoTalkingAvatar"
+                          value={homePageFormData.previewVideoTalkingAvatar}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoTalkingAvatar: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-talking-avatar"
+                        />
+                      </div>
+                    </div>
                     
                     <div className="mt-6 pt-6 border-t">
                       <h4 className="text-sm font-medium mb-4">Brand Builder Preview Videos</h4>
@@ -1909,6 +1923,7 @@ export default function Admin() {
                           previewVideoSoundEffects: homePageFormData.previewVideoSoundEffects.trim() || undefined,
                           previewVideoMusic: homePageFormData.previewVideoMusic.trim() || undefined,
                           previewVideoBgRemover: homePageFormData.previewVideoBgRemover.trim() || undefined,
+                          previewVideoTalkingAvatar: homePageFormData.previewVideoTalkingAvatar.trim() || undefined,
                           previewVideoBrandProductAd: homePageFormData.previewVideoBrandProductAd.trim() || undefined,
                           previewVideoBrandInfluencerAd: homePageFormData.previewVideoBrandInfluencerAd.trim() || undefined,
                           previewVideoBrandLogoAnimation: homePageFormData.previewVideoBrandLogoAnimation.trim() || undefined,

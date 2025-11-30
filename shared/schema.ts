@@ -1540,6 +1540,7 @@ export const homePageContent = pgTable("home_page_content", {
   previewVideoUpscaler: text("preview_video_upscaler"), // Image Upscaler page
   previewVideoVideoUpscaler: text("preview_video_video_upscaler"), // Video Upscaler page
   previewVideoBgRemover: text("preview_video_bg_remover"), // Background Remover page
+  previewVideoTalkingAvatar: text("preview_video_talking_avatar"), // Talking Avatar page
   
   // Brand Builder preview videos
   previewVideoBrandProductAd: text("preview_video_brand_product_ad"), // Brand Builder: Product Ad
