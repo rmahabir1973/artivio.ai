@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Zap, Heart, AlertCircle, Link2 } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Zap, Heart, AlertCircle, Link2, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
@@ -30,6 +30,7 @@ const getFallbackDisplay = (type: string): { icon: React.ReactNode; bgColor: str
     'analyze-image': { icon: <Zap className="h-12 w-12" />, bgColor: 'from-yellow-900/20 to-orange-900/20', label: 'Image Analysis' },
     'audio-converter': { icon: <FileAudio className="h-12 w-12" />, bgColor: 'from-green-900/20 to-teal-900/20', label: 'Audio Converter' },
     'talking-avatar': { icon: <Users className="h-12 w-12" />, bgColor: 'from-rose-900/20 to-pink-900/20', label: 'Talking Avatar' },
+    'video-editor': { icon: <Film className="h-12 w-12" />, bgColor: 'from-violet-900/20 to-purple-900/20', label: 'Video Editor' },
     'qr-generator': { icon: <QrCode className="h-12 w-12" />, bgColor: 'from-slate-900/20 to-gray-900/20', label: 'QR Code' },
     'chat': { icon: <MessageSquare className="h-12 w-12" />, bgColor: 'from-emerald-900/20 to-green-900/20', label: 'Chat' },
   };
@@ -379,7 +380,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   />
                 </div>
               )}
-              {generation.type === 'talking-avatar' && (
+              {(generation.type === 'talking-avatar' || generation.type === 'video-editor') && (
                 <>
                   <video 
                     src={generation.resultUrl}
