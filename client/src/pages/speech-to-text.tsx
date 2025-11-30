@@ -146,7 +146,7 @@ export default function SpeechToText() {
 
     transcribeMutation.mutate({
       audioFile,
-      model: "fish-audio-asr",
+      model: "fish-audio-stt",
       language: language || undefined,
       parameters: {
         timestamps,
