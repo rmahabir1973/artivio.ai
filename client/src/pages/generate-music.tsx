@@ -743,28 +743,28 @@ export default function GenerateMusic() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="generate" data-testid="tab-generate">
+        <TabsList className="grid w-full grid-cols-3 gap-1 h-auto p-1">
+          <TabsTrigger value="generate" data-testid="tab-generate" className="py-2">
             <Music className="h-4 w-4 mr-2" />
             Generate
           </TabsTrigger>
-          <TabsTrigger value="extend" data-testid="tab-extend">
+          <TabsTrigger value="extend" data-testid="tab-extend" className="py-2">
             <Plus className="h-4 w-4 mr-2" />
             Extend
           </TabsTrigger>
-          <TabsTrigger value="lyrics" data-testid="tab-lyrics">
+          <TabsTrigger value="lyrics" data-testid="tab-lyrics" className="py-2">
             <Sparkles className="h-4 w-4 mr-2" />
             Lyrics
           </TabsTrigger>
-          <TabsTrigger value="cover" data-testid="tab-cover">
+          <TabsTrigger value="cover" data-testid="tab-cover" className="py-2">
             <Upload className="h-4 w-4 mr-2" />
             Cover
           </TabsTrigger>
-          <TabsTrigger value="upload-extend" data-testid="tab-upload-extend">
-            <Upload className="h-4 w-4 mr-2" />
+          <TabsTrigger value="upload-extend" data-testid="tab-upload-extend" className="py-2">
+            <Layers className="h-4 w-4 mr-2" />
             Upload & Extend
           </TabsTrigger>
-          <TabsTrigger value="process" data-testid="tab-process">
+          <TabsTrigger value="process" data-testid="tab-process" className="py-2">
             <AudioLines className="h-4 w-4 mr-2" />
             Process
           </TabsTrigger>
