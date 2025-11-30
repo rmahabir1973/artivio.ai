@@ -359,4 +359,102 @@ export async function processAudioFilesForCloning(audioFiles: string[]): Promise
   return results;
 }
 
+export interface TranscriptionSegment {
+  text: string;
+  start: number;
+  end: number;
+}
+
+export interface TranscriptionResult {
+  text: string;
+  duration: number;
+  segments?: TranscriptionSegment[];
+}
+
+export async function transcribeAudio(params: {
+  audioBuffer: Buffer;
+  filename: string;
+  mimeType: string;
+  language?: string;
+  includeTimestamps?: boolean;
+}): Promise<TranscriptionResult> {
+  const apiKey = getApiKey();
+  
+  console.log(`[FishAudio] Transcribing audio file (${params.audioBuffer.length} bytes, ${params.mimeType})`);
+  
+  const formData = new FormData();
+  formData.append('audio', params.audioBuffer, {
+    filename: params.filename,
+    contentType: params.mimeType,
+  });
+  
+  if (params.language) {
+    formData.append('language', params.language);
+  }
+  
+  formData.append('ignore_timestamps', params.includeTimestamps ? 'false' : 'true');
+  
+  try {
+    const response = await axios.post<TranscriptionResult>(
+      `${FISH_AUDIO_API_URL}/v1/asr`,
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          ...formData.getHeaders(),
+        },
+        timeout: 300000,
+      }
+    );
+    
+    console.log(`[FishAudio] Transcription successful: ${response.data.text?.length || 0} chars, ${response.data.duration?.toFixed(2) || 0}s`);
+    return response.data;
+  } catch (error: any) {
+    console.error('[FishAudio] Transcription failed:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+    
+    const errorMessage = error.response?.data?.detail 
+      || error.response?.data?.message 
+      || error.message 
+      || 'Transcription failed';
+    
+    throw new Error(errorMessage);
+  }
+}
+
+export async function transcribeAudioFromUrl(params: {
+  audioUrl: string;
+  language?: string;
+  includeTimestamps?: boolean;
+}): Promise<TranscriptionResult> {
+  console.log(`[FishAudio] Downloading audio from URL for transcription: ${params.audioUrl.substring(0, 100)}...`);
+  
+  try {
+    const response = await axios.get(params.audioUrl, {
+      responseType: 'arraybuffer',
+      timeout: 60000,
+      maxContentLength: 100 * 1024 * 1024,
+    });
+    
+    const mimeType = response.headers['content-type'] || 'audio/mpeg';
+    const buffer = Buffer.from(response.data);
+    const ext = mimeType.includes('wav') ? 'wav' : mimeType.includes('webm') ? 'webm' : mimeType.includes('ogg') ? 'ogg' : 'mp3';
+    const filename = `audio_${Date.now()}.${ext}`;
+    
+    return await transcribeAudio({
+      audioBuffer: buffer,
+      filename,
+      mimeType,
+      language: params.language,
+      includeTimestamps: params.includeTimestamps,
+    });
+  } catch (error: any) {
+    console.error('[FishAudio] Failed to download audio for transcription:', error.message);
+    throw new Error(`Failed to download audio file: ${error.message}`);
+  }
+}
+
 export type { FishAudioVoice, ListVoicesResponse, CreateModelResponse };
