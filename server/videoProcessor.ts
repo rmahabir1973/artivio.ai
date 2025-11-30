@@ -140,13 +140,15 @@ async function getVideoMetadata(filepath: string): Promise<VideoMetadata> {
     throw new Error(`Cannot access video file: ${error.message}`);
   }
 
-  const command = `ffprobe -v error -show_entries stream=codec_type,codec_name,width,height,duration -of json "${filepath}"`;
+  // Use format duration for precise timing (more accurate than stream duration)
+  const command = `ffprobe -v error -show_entries format=duration -show_entries stream=codec_type,codec_name,width,height -of json "${filepath}"`;
   
   try {
     const { stdout, stderr } = await execAsync(command, { timeout: 10000 });
     
     const data = JSON.parse(stdout);
     const streams = data.streams || [];
+    const format = data.format || {};
 
     if (streams.length === 0) {
       throw new Error('No streams found in video');
@@ -159,8 +161,11 @@ async function getVideoMetadata(filepath: string): Promise<VideoMetadata> {
 
     const audioStream = streams.find((s: any) => s.codec_type === 'audio');
 
+    // Use format.duration for precise timing (avoids rounding issues)
+    const duration = format.duration ? parseFloat(format.duration) : 0;
+
     const metadata = {
-      duration: parseFloat(videoStream.duration) || 0,
+      duration,
       codec: videoStream.codec_name || 'unknown',
       width: parseInt(videoStream.width) || 0,
       height: parseInt(videoStream.height) || 0,
@@ -207,6 +212,7 @@ async function getAudioDuration(filepath: string): Promise<number> {
 
 /**
  * Normalize video to standard format (MP4 with H.264 + AAC) with bitrate limiting
+ * CRITICAL: Ensures consistent fps, resolution, and audio sample rate for smooth transitions
  */
 async function normalizeVideo(inputPath: string, outputPath: string): Promise<void> {
   try {
@@ -214,22 +220,24 @@ async function normalizeVideo(inputPath: string, outputPath: string): Promise<vo
     const metadata = await getVideoMetadata(inputPath);
     
     // Build audio encoding based on whether video has audio
+    // CRITICAL: Force 44100Hz sample rate and stereo for consistent audio concatenation
     const audioFlags = metadata.hasAudio 
-      ? '-c:a aac -b:a 128k' 
+      ? '-c:a aac -b:a 128k -ar 44100 -ac 2' 
       : '-an'; // No audio output if input has no audio
     
     // Optimize for streaming: limit resolution to 720p and bitrate to 2500k
     // movflags +faststart enables instant playback by moving metadata to start of file
     // CRITICAL: Use pad filter to ensure all videos are EXACTLY 1280x720 for proper concatenation
-    // Without padding, videos with different aspect ratios cause distortion when joined
-    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart ${audioFlags} -y "${outputPath}"`;
+    // CRITICAL: Force 30fps for consistent frame timing across all clips (prevents transition jitter)
+    // Without consistent fps, xfade transitions produce visual artifacts
+    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black,fps=30" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart ${audioFlags} -y "${outputPath}"`;
     
     await execAsync(command, {
       timeout: 300000,
       maxBuffer: 50 * 1024 * 1024,
     });
 
-    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'}, resolution: 720p max, bitrate: 2500k)`);
+    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'}, resolution: 720p, fps: 30, bitrate: 2500k)`);
   } catch (error: any) {
     console.error(`Normalization error for ${inputPath}:`, error.message);
     throw new Error(`Failed to normalize video: ${error.message}`);
@@ -267,13 +275,18 @@ function buildFilterGraph(
   enhancements: VideoEnhancements | undefined,
   metadataList: VideoMetadata[],
   hasBackgroundMusic: boolean
-): { videoFilters: string; audioFilters: string; adjustedDurations: number[] } {
+): { videoFilters: string; audioFilters: string; adjustedDurations: number[]; transitionDuration: number } {
   const videoFilterSteps: string[] = [];
   const audioFilterSteps: string[] = [];
   const adjustedDurations: number[] = [];
   
   let videoStreams: string[] = [];
   let audioStreamLabels: string[] = [];
+  
+  // Get transition duration (used for offset calculations and tpad)
+  const transitionDuration = (enhancements?.transitions?.mode === 'crossfade' && videoCount > 1) 
+    ? (enhancements.transitions.durationSeconds || 1.0) 
+    : 0;
   
   for (let i = 0; i < videoCount; i++) {
     const speedFactor = getSpeedFactorForClip(i, enhancements?.speed);
@@ -294,7 +307,7 @@ function buildFilterGraph(
         audioFilterSteps.push(aSpeed);
         audioStreamLabels.push(`[a${i}s]`);
       } else {
-        audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${adjustedDuration.toFixed(2)}[a${i}s]`);
+        audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${adjustedDuration.toFixed(3)}[a${i}s]`);
         audioStreamLabels.push(`[a${i}s]`);
       }
     } else {
@@ -302,29 +315,52 @@ function buildFilterGraph(
       if (hasAudio) {
         audioStreamLabels.push(`[${i}:a]`);
       } else {
-        audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${originalDuration.toFixed(2)}[a${i}s]`);
+        audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${originalDuration.toFixed(3)}[a${i}s]`);
         audioStreamLabels.push(`[a${i}s]`);
       }
     }
   }
 
+  // Precompute start times for each clip (cumulative sum of previous durations)
+  // CRITICAL FIX: Calculate proper xfade offsets to prevent early clipping
   if (enhancements?.transitions?.mode === 'crossfade' && videoCount > 1) {
-    const duration = enhancements.transitions.durationSeconds || 1.0;
+    const duration = transitionDuration;
     let currentStream = videoStreams[0];
     
+    // Calculate cumulative start times for each clip
+    const startTimes: number[] = [0];
     for (let i = 1; i < videoCount; i++) {
-      const offset = adjustedDurations.slice(0, i).reduce((sum, d) => sum + d, 0) - duration;
-      const nextLabel = i === videoCount - 1 ? 'vout' : `v${i}xf`;
-      videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=fade:duration=${duration}:offset=${offset.toFixed(2)}[${nextLabel}]`);
+      // Each clip starts at the end of the previous clip minus the transition overlap
+      startTimes.push(startTimes[i - 1] + adjustedDurations[i - 1] - duration);
+    }
+    
+    for (let i = 1; i < videoCount; i++) {
+      // Offset is the start time of clip i (clamped to >= 0)
+      const offset = Math.max(0, startTimes[i]);
+      const isLast = i === videoCount - 1;
+      // Use intermediate label for the xfade output, then apply tpad to final
+      const nextLabel = isLast ? 'vxfout' : `v${i}xf`;
+      videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=fade:duration=${duration.toFixed(3)}:offset=${offset.toFixed(3)}[${nextLabel}]`);
       currentStream = `[${nextLabel}]`;
     }
+    
+    // CRITICAL: Add tpad to preserve full original duration
+    // Crossfade consumes (n-1)*transitionDuration, so we pad that much back
+    const totalPadDuration = (videoCount - 1) * duration;
+    videoFilterSteps.push(`[vxfout]tpad=stop_duration=${totalPadDuration.toFixed(3)}[vout]`);
   } else if (videoCount > 1) {
     videoFilterSteps.push(`${videoStreams.join('')}concat=n=${videoCount}:v=1:a=0[vout]`);
   } else {
     videoFilterSteps.push(`${videoStreams[0]}null[vout]`);
   }
 
-  const totalDuration = adjustedDurations.reduce((sum, d) => sum + d, 0);
+  // Calculate effective total duration accounting for crossfade overlap and tpad
+  const rawTotalDuration = adjustedDurations.reduce((sum, d) => sum + d, 0);
+  const crossfadeOverlap = transitionDuration > 0 ? (videoCount - 1) * transitionDuration : 0;
+  const totalPadDuration = transitionDuration > 0 ? (videoCount - 1) * transitionDuration : 0;
+  // Final duration = raw sum - overlap + totalPadDuration (preserves original duration)
+  const effectiveTotalDuration = rawTotalDuration - crossfadeOverlap + totalPadDuration;
+  
   if (enhancements?.textOverlays && enhancements.textOverlays.length > 0) {
     let textFilter = '[vout]';
     
@@ -344,7 +380,7 @@ function buildFilterGraph(
         enableClause = `:enable='between(t,0,${dur})'`;
       } else if (overlay.timing === 'outro') {
         const dur = overlay.displaySeconds || 3;
-        enableClause = `:enable='gte(t,${totalDuration - dur})'`;
+        enableClause = `:enable='gte(t,${effectiveTotalDuration - dur})'`;
       }
       
       videoFilterSteps.push(
@@ -356,22 +392,31 @@ function buildFilterGraph(
     videoFilterSteps.push('[vout]null[vfinal]');
   }
 
+  // CRITICAL: Use async resampling to prevent audio drift from floating-point timestamp offsets
   const resampledLabels: string[] = [];
   for (let i = 0; i < audioStreamLabels.length; i++) {
     const resampledLabel = `[ar${i}]`;
-    audioFilterSteps.push(`${audioStreamLabels[i]}aresample=44100${resampledLabel}`);
+    // async=1 and first_pts=0 ensure audio timestamps align correctly during crossfade
+    audioFilterSteps.push(`${audioStreamLabels[i]}aresample=44100:async=1:first_pts=0${resampledLabel}`);
     resampledLabels.push(resampledLabel);
   }
 
   if (videoCount > 1 && enhancements?.transitions?.mode === 'crossfade') {
-    const duration = enhancements.transitions.durationSeconds || 1.0;
+    const duration = transitionDuration;
     let currentAudioStream = resampledLabels[0];
     
     for (let i = 1; i < videoCount; i++) {
-      const nextLabel = i === videoCount - 1 ? '[aout]' : `[a${i}xf]`;
-      audioFilterSteps.push(`${currentAudioStream}${resampledLabels[i]}acrossfade=d=${duration}${nextLabel}`);
+      const isLast = i === videoCount - 1;
+      // Use intermediate label for crossfade, then add apad to final
+      const nextLabel = isLast ? '[axfout]' : `[a${i}xf]`;
+      audioFilterSteps.push(`${currentAudioStream}${resampledLabels[i]}acrossfade=d=${duration.toFixed(3)}${nextLabel}`);
       currentAudioStream = nextLabel;
     }
+    
+    // CRITICAL: Add apad to preserve audio duration matching video tpad
+    // Scale padding to (n-1)*transitionDuration to match video tpad
+    const totalAudioPadDuration = (videoCount - 1) * duration;
+    audioFilterSteps.push(`[axfout]apad=pad_dur=${totalAudioPadDuration.toFixed(3)}[aout]`);
   } else if (videoCount > 1) {
     audioFilterSteps.push(`${resampledLabels.join('')}concat=n=${videoCount}:v=0:a=1[aout]`);
   } else {
@@ -381,7 +426,7 @@ function buildFilterGraph(
   const videoFilters = videoFilterSteps.join(';');
   const audioFilters = audioFilterSteps.join(';');
 
-  return { videoFilters, audioFilters, adjustedDurations };
+  return { videoFilters, audioFilters, adjustedDurations, transitionDuration };
 }
 
 function getSpeedFactorForClip(
@@ -465,19 +510,15 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       downloadedPaths.map(filepath => getVideoMetadata(filepath))
     );
 
-    // Check which videos need normalization and normalize in parallel
+    // CRITICAL: Always normalize ALL videos to ensure consistent fps (30), resolution (720p), 
+    // and audio sample rate (44100Hz) for smooth crossfade transitions
+    // Without consistent parameters, xfade transitions produce visual/audio artifacts
     const normalizePromises = downloadedPaths.map(async (filepath, i) => {
-      const metadata = metadataList[i];
-      const needsNormalization = metadata.codec !== 'h264' || !metadata.hasAudio;
-      
-      if (needsNormalization) {
-        onProgress?.('normalize', `Video ${i + 1} needs format conversion...`);
-        const normalizedPath = path.join(tempDir!, `normalized_${i}.mp4`);
-        await normalizeVideo(filepath, normalizedPath);
-        tempFiles.push(normalizedPath);
-        return normalizedPath;
-      }
-      return filepath;
+      onProgress?.('normalize', `Normalizing video ${i + 1}/${downloadedPaths.length}...`);
+      const normalizedPath = path.join(tempDir!, `normalized_${i}.mp4`);
+      await normalizeVideo(filepath, normalizedPath);
+      tempFiles.push(normalizedPath);
+      return normalizedPath;
     });
 
     const normalizedPaths = await Promise.all(normalizePromises);
@@ -521,14 +562,21 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       const inputFlags = normalizedPaths.map(p => `-i "${p}"`).join(' ');
       const musicInputFlag = musicPath ? `-i "${musicPath}"` : '';
 
-      const { videoFilters, audioFilters, adjustedDurations } = buildFilterGraph(
+      const { videoFilters, audioFilters, adjustedDurations, transitionDuration } = buildFilterGraph(
         normalizedPaths.length,
         enhancements,
         metadataList,
         !!musicPath
       );
 
-      totalDuration = adjustedDurations.reduce((sum, d) => sum + d, 0);
+      // CRITICAL FIX: Calculate total duration accounting for crossfade overlap and tpad
+      // When using crossfade, each transition overlaps by transitionDuration
+      // tpad/apad add back (n-1)*transitionDuration to preserve full original duration
+      const rawDuration = adjustedDurations.reduce((sum, d) => sum + d, 0);
+      const crossfadeOverlap = transitionDuration > 0 ? (normalizedPaths.length - 1) * transitionDuration : 0;
+      const totalPadDuration = transitionDuration > 0 ? (normalizedPaths.length - 1) * transitionDuration : 0;
+      // Final duration = raw sum - overlap + totalPadDuration (preserves original duration)
+      totalDuration = rawDuration - crossfadeOverlap + totalPadDuration;
 
       let completeAudioFilter = audioFilters;
       let finalAudioLabel = '[aout]';
