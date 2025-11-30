@@ -132,6 +132,75 @@ export function GenerationCard({ generation }: GenerationCardProps) {
     },
   });
 
+  // Regeneration mutation - actually re-submits the generation with same parameters
+  const regenerateMutation = useMutation({
+    mutationFn: async () => {
+      const params = generation.parameters as Record<string, any> || {};
+      
+      if (generation.type === 'video') {
+        // Determine generationType based on stored parameters or referenceImages
+        let generationType = params.generationType || 'text-to-video';
+        if (generation.referenceImages && generation.referenceImages.length > 0) {
+          generationType = 'image-to-video';
+        }
+        
+        return await apiRequest("POST", "/api/generate/video", {
+          model: generation.model,
+          prompt: generation.prompt,
+          generationType,
+          referenceImages: generation.referenceImages || [],
+          parameters: {
+            aspectRatio: params.aspectRatio || '16:9',
+            duration: params.duration,
+            seed: generation.seed,
+            ...params,
+          },
+        });
+      } else if (generation.type === 'image') {
+        return await apiRequest("POST", "/api/generate/image", {
+          model: generation.model,
+          prompt: generation.prompt,
+          mode: params.mode || 'text-to-image',
+          referenceImages: generation.referenceImages || [],
+          parameters: {
+            aspectRatio: params.aspectRatio,
+            seed: generation.seed,
+            ...params,
+          },
+        });
+      } else if (generation.type === 'music') {
+        return await apiRequest("POST", "/api/generate/music", {
+          model: generation.model,
+          prompt: generation.prompt,
+          parameters: {
+            ...params,
+          },
+        });
+      }
+      throw new Error(`Regeneration not supported for type: ${generation.type}`);
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Regenerating",
+        description: "Your content is being regenerated with the same settings.",
+      });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.startsWith('/api/generations');
+        }
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Regeneration Failed",
+        description: error.message || "Failed to regenerate. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDownload = async () => {
     if (!generation.resultUrl) return;
     
@@ -233,6 +302,13 @@ export function GenerationCard({ generation }: GenerationCardProps) {
   const canRegenerate = generation.type in typeRoutes;
   
   const handleRegenerate = () => {
+    // For failed generations, directly regenerate with same parameters
+    if (generation.status === 'failed') {
+      regenerateMutation.mutate();
+      return;
+    }
+    
+    // For completed generations, navigate to the generation page with pre-filled values
     const route = typeRoutes[generation.type];
     if (route) {
       // Store the prompt and seed in sessionStorage to pre-fill the form
@@ -561,11 +637,12 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                 variant="outline" 
                 size="sm"
                 onClick={handleRegenerate}
+                disabled={regenerateMutation.isPending}
                 className="w-full"
                 data-testid={`button-regenerate-${generation.id}`}
               >
-                <RotateCw className="h-4 w-4 mr-1" />
-                Regenerate
+                <RotateCw className={cn("h-4 w-4 mr-1", regenerateMutation.isPending && "animate-spin")} />
+                {regenerateMutation.isPending ? "Regenerating..." : "Regenerate"}
               </Button>
             )}
             {generation.seed && canRegenerate && (
