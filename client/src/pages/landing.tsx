@@ -8,7 +8,7 @@ import {
   Video, Image, Music, Zap, Shield, Sparkles, Loader2, ChevronRight, Play, Palette, Mic, Film,
   Award, DollarSign, Droplet, Monitor, Smartphone, Tablet, Check, Star, Laptop,
   Wand2, Volume2, Sliders, MessageSquare, User, Shuffle, Maximize, Maximize2, Clock, TrendingUp,
-  Users, Globe, Lock, Quote
+  Users, Globe, Lock, Quote, Megaphone, Eraser, BookOpen, Crown
 } from "lucide-react";
 import { SiApple, SiAndroid, SiIos } from "react-icons/si";
 import type { HomePageContent, SubscriptionPlan } from "@shared/schema";
@@ -1451,6 +1451,73 @@ export default function Landing() {
                   Upscale videos with professional quality enhancement
                 </p>
                 <p className="text-sm text-purple-400">72 credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Sora 2 Pro */}
+            <Card className="bg-[#1A1A1A] border-white/10 relative" data-testid="feature-sora2">
+              <CardHeader>
+                <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 p-3 rounded-lg w-fit mb-3">
+                  <Crown className="h-6 w-6 text-yellow-500" />
+                </div>
+                <CardTitle className="flex items-center gap-2">
+                  Sora 2
+                  <span className="text-xs bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold px-2 py-0.5 rounded">PREMIUM</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  OpenAI's most advanced video generation with Storyboard mode
+                </p>
+                <p className="text-sm text-purple-400">500+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Brand Builder Tools */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-brand-builder">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Megaphone className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Brand Builder Tools</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Create professional marketing content with AI-powered workflows
+                </p>
+                <p className="text-sm text-purple-400">Varies by workflow</p>
+              </CardContent>
+            </Card>
+
+            {/* Background Remover */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-background-remover">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <Eraser className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Background Remover</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Remove backgrounds from images with AI precision
+                </p>
+                <p className="text-sm text-purple-400">10+ credits</p>
+              </CardContent>
+            </Card>
+
+            {/* Story Studio */}
+            <Card className="bg-[#1A1A1A] border-white/10" data-testid="feature-story-studio">
+              <CardHeader>
+                <div className="bg-purple-500/10 p-3 rounded-lg w-fit mb-3">
+                  <BookOpen className="h-6 w-6 text-purple-500" />
+                </div>
+                <CardTitle>Story Studio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400 mb-3">
+                  Create engaging stories with AI-generated visuals and narratives
+                </p>
+                <p className="text-sm text-purple-400">Coming Soon</p>
               </CardContent>
             </Card>
           </div>
