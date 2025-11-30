@@ -7,6 +7,11 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
 ## Recent Updates (Nov 30, 2025)
+- **Fish Audio Voice Services Migration**: All voice services now use Fish Audio exclusively:
+  - Voice Cloning: Uses Fish Audio's voice model creation API
+  - Text-to-Speech: Uses Fish Audio TTS with S1 model
+  - Speech-to-Text: Migrated from ElevenLabs/Kie.ai to Fish Audio ASR API (synchronous processing)
+  - Fixed microphone recording MIME type handling for codec specifications (audio/webm;codecs=opus)
 - **Video Editor Quality Fixes**: Comprehensive FFmpeg filter graph improvements:
   - All videos now normalized to 30fps, 720p max resolution, 44100Hz audio sample rate
   - Crossfade offsets computed from cumulative start times for precise transitions
@@ -60,12 +65,13 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **AI Image Generation**: Integrates Seedream 4.0, 4o Image API, Flux Kontext, and Nano Banana for text-to-image and advanced editing with multi-image uploads, aspect ratio support, and various output formats.
 -   **AI Music Generation**: Utilizes Suno V3.5, V4, V4.5, V4.5 Plus, and V5, supporting custom lyrics, extended durations, and diverse genre options.
 -   **AI Sound Effects**: ElevenLabs Sound Effect V2 with customizable duration, prompt influence, loop option, and multiple output formats.
--   **AI Text-to-Speech**: ElevenLabs TTS Multilingual V2 with numerous pre-made voices, adjustable parameters, and multi-language support.
+-   **AI Text-to-Speech**: Fish Audio TTS with S1 model, supporting multiple voices, adjustable parameters, and multi-language support.
 -   **AI Image Analysis**: Uses OpenAI GPT-4o Vision API for comprehensive image analysis.
 -   **Video Editor/Combiner**: Server-side FFmpeg-based tool to combine AI-generated videos with a drag-and-drop interface.
 -   **QR Code Generator**: Client-side QR code generator with logo embedding, customization, and live preview.
 -   **AI Chat**: Dual provider support (Deepseek, OpenAI) with streaming responses, model selection, and persistent conversation history.
--   **Voice Cloning**: Direct ElevenLabs API integration (replaces non-functional Kie.ai), supporting audio uploads, recording, and SSRF-secure base64 validation.
+-   **Voice Cloning**: Fish Audio API integration for voice model creation, supporting audio uploads, microphone recording, and SSRF-secure base64 validation.
+-   **Speech-to-Text**: Fish Audio ASR API for synchronous audio transcription with timestamp support.
 -   **InfiniteTalk Lip Sync**: Creates lip-synced videos from images and audio using Kie.ai, featuring resolution-based pricing and seed parameters.
 -   **Admin Panel**: Comprehensive user management, API key management, Stripe integration, and home page content management.
 -   **Subscription Plans**: Supports manual admin assignment and Stripe-powered automated subscriptions.
