@@ -31,11 +31,11 @@ type OnboardingProgress = {
 const ONBOARDING_STEPS = [
   {
     id: 'exploredWorkflows',
-    title: 'Explore Workflows',
+    title: 'Explore Brand Builder',
     description: 'Browse our 20+ pre-built AI workflow templates',
     icon: Sparkles,
-    link: '/workflows',
-    dataTestId: 'onboarding-step-workflows'
+    link: '/brand-builder',
+    dataTestId: 'onboarding-step-brand-builder'
   },
   {
     id: 'triedTemplate',

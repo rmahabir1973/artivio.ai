@@ -76,7 +76,7 @@ export function ModernHeader() {
         { label: "Image Analysis", href: "/analyze-image", icon: ScanEye },
         { label: "AI Chat", href: "/chat", icon: MessageSquare },
         { label: "QR Generator", href: "/qr-generator", icon: QrCode },
-        { label: "Workflows", href: "/workflows", icon: Sparkles },
+        { label: "Brand Builder", href: "/brand-builder", icon: Sparkles },
         { label: "Affiliates", href: "/affiliates", icon: DollarSign },
       ]
     }

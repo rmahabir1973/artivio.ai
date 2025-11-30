@@ -339,11 +339,11 @@ export default function Home() {
       category: 'tools'
     },
     {
-      id: 'workflows',
-      title: 'Workflows',
+      id: 'brand-builder',
+      title: 'Brand Builder',
       description: 'Explore pre-built workflow templates to automate your content creation',
       icon: Zap,
-      route: '/workflows',
+      route: '/brand-builder',
       category: 'community',
       badge: 'Community'
     }
@@ -589,7 +589,7 @@ export default function Home() {
         </div>
         )}
 
-        {/* Favorite Workflows Quick Launch - Only for authenticated users */}
+        {/* Favorite Brand Builder Quick Launch - Only for authenticated users */}
         {!isGuestMode && favoriteWorkflows.length > 0 && (
           <div className="mb-8">
             <Card>
@@ -597,10 +597,10 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Star className="h-5 w-5 text-primary fill-primary" />
-                    <CardTitle>Favorite Workflows</CardTitle>
+                    <CardTitle>Favorite Brand Builder</CardTitle>
                   </div>
-                  <Link href="/workflows">
-                    <Button variant="ghost" size="sm" className="gap-2" data-testid="button-view-all-workflows">
+                  <Link href="/brand-builder">
+                    <Button variant="ghost" size="sm" className="gap-2" data-testid="button-view-all-brand-builder">
                       View All
                       <ArrowRight className="h-4 w-4" />
                     </Button>
@@ -632,7 +632,7 @@ export default function Home() {
                 </div>
                 {favoriteWorkflows.length > 6 && (
                   <div className="mt-3 text-center">
-                    <Link href="/workflows">
+                    <Link href="/brand-builder">
                       <Button variant="outline" size="sm" data-testid="button-more-favorites">
                         View {favoriteWorkflows.length - 6} More Favorites
                       </Button>
