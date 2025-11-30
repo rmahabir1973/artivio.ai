@@ -1794,19 +1794,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     await storage.updateGeneration(generationId, { resultUrl: optimizedUrl });
                     console.log(`✓ Video optimized and URL updated for ${generationId}: ${optimizedUrl}`);
                     
-                    // Generate thumbnail from optimized local video (more efficient)
-                    const localVideoPath = path.join(process.cwd(), 'public', optimizedUrl.replace(/^\//,''));
+                    // Generate thumbnail from optimized video
+                    // Check if optimizedUrl is an S3 URL (starts with http) or local path
+                    const isS3Url = optimizedUrl.startsWith('http://') || optimizedUrl.startsWith('https://');
+                    
                     try {
-                      const thumbResult = await generateThumbnail({
-                        videoPath: localVideoPath,
-                        generationId: generationId,
-                        timestampSeconds: 1,
-                      });
-                      await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
-                      console.log(`✓ Thumbnail generated for ${generationId}: ${thumbResult.thumbnailUrl}`);
-                      thumbnailGenerated = true;
+                      if (isS3Url) {
+                        // S3 URL - use videoUrl parameter to download and generate thumbnail
+                        const thumbResult = await generateThumbnail({
+                          videoUrl: optimizedUrl,
+                          generationId: generationId,
+                          timestampSeconds: 1,
+                        });
+                        await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+                        console.log(`✓ Thumbnail generated from S3 video for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                        thumbnailGenerated = true;
+                      } else {
+                        // Local path - use videoPath parameter
+                        const localVideoPath = path.join(process.cwd(), 'public', optimizedUrl.replace(/^\//,''));
+                        const thumbResult = await generateThumbnail({
+                          videoPath: localVideoPath,
+                          generationId: generationId,
+                          timestampSeconds: 1,
+                        });
+                        await storage.updateGeneration(generationId, { thumbnailUrl: thumbResult.thumbnailUrl });
+                        console.log(`✓ Thumbnail generated from local video for ${generationId}: ${thumbResult.thumbnailUrl}`);
+                        thumbnailGenerated = true;
+                      }
                     } catch (thumbError: any) {
-                      console.error(`⚠️  Thumbnail from local video failed for ${generationId}:`, thumbError.message);
+                      console.error(`⚠️  Thumbnail from optimized video failed for ${generationId}:`, thumbError.message);
                     }
                   } catch (encodeError: any) {
                     console.error(`⚠️  Video optimization failed for ${generationId}:`, encodeError.message);
