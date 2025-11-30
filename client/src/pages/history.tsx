@@ -203,7 +203,7 @@ function GenerationListItem({
   const getThumbnail = () => {
     if (generation.thumbnailUrl) return generation.thumbnailUrl;
     if (generation.resultUrl) {
-      if (generation.type === 'image') return generation.resultUrl;
+      if (generation.type === 'image' || generation.type === 'background-remover' || generation.type === 'upscaling') return generation.resultUrl;
       if (generation.type === 'video') return generation.resultUrl;
     }
     return null;
@@ -1570,7 +1570,7 @@ export default function History() {
                         className="w-full h-full object-contain"
                         data-testid="detail-video-player"
                       />
-                    ) : selectedGeneration.type === 'image' ? (
+                    ) : (selectedGeneration.type === 'image' || selectedGeneration.type === 'background-remover' || selectedGeneration.type === 'upscaling') ? (
                       selectedGeneration.resultUrls && selectedGeneration.resultUrls.length > 1 ? (
                         <div className="relative w-full h-full">
                           <img 

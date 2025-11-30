@@ -342,7 +342,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
 
   const canUpscale = generation.status === 'completed' && 
                      generation.resultUrl && 
-                     (generation.type === 'image' || generation.type === 'video') &&
+                     (generation.type === 'image' || generation.type === 'video' || generation.type === 'background-remover') &&
                      generation.processingStage !== 'upscale';
 
   return (
@@ -399,7 +399,7 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                   </div>
                 </>
               )}
-              {generation.type === 'image' && (
+              {(generation.type === 'image' || generation.type === 'background-remover' || generation.type === 'upscaling') && (
                 <>
                   {/* Multi-image grid for models that produce multiple images (Midjourney, Seedream, 4o-Image) */}
                   {generation.resultUrls && generation.resultUrls.length > 1 ? (
