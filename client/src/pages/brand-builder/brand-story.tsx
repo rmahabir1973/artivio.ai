@@ -44,7 +44,9 @@ export default function BrandStory() {
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
-  const creditCost = getModelCost('veo-3.1', 500) || 350;
+  // Credit cost depends on model: first-and-last-frames for 2+ images, regular veo-3.1 for 1 image
+  const modelForCost = brandImages.length >= 2 ? 'veo-3.1-first-and-last-frames' : 'veo-3.1';
+  const creditCost = getModelCost(modelForCost, 500) || 350;
 
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -206,11 +208,17 @@ export default function BrandStory() {
 
     const prompt = `Create a cinematic brand story video that tells a compelling narrative. ${narrative.trim()} Use smooth transitions, professional lighting, and emotional pacing to engage viewers. The video should feel authentic and inspiring.`;
 
+    // Determine model based on number of images:
+    // - 2+ images: use first-and-last-frames model
+    // - 1 image: use image-to-video
+    const model = brandImages.length >= 2 ? 'veo-3.1-first-and-last-frames' : 'veo-3.1';
+    const generationType = brandImages.length >= 2 ? 'first-and-last-frames-to-video' : 'image-to-video';
+
     generateMutation.mutate({
-      model: 'veo-3.1',
+      model,
       prompt,
-      generationType: brandImages.length > 1 ? 'first-and-last-frames-to-video' : 'image-to-video',
-      referenceImages: brandImages,
+      generationType,
+      referenceImages: brandImages.length >= 2 ? [brandImages[0], brandImages[brandImages.length - 1]] : brandImages,
       parameters: {
         aspectRatio,
         duration: 8,
