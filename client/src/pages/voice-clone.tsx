@@ -36,6 +36,8 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
+import { ThreeColumnLayout } from "@/components/three-column-layout";
+import { PeerTubePreview } from "@/components/peertube-preview";
 
 const SAMPLE_TEXT = `Please read this sample text aloud in a natural, conversational tone. Speak clearly and at a comfortable pace. 
 
@@ -459,24 +461,10 @@ export default function VoiceClone() {
 
   const cost = getModelCost("fish-audio-voice-clone", 500);
 
-  return (
-    <SidebarInset>
-      <div className="h-full overflow-y-auto">
-        <div className="p-8 max-w-7xl mx-auto">
-          <div className="space-y-2 mb-8">
-            <h1 className="text-4xl font-bold flex items-center gap-3">
-              <Mic className="h-10 w-10 text-primary" />
-              Build New Voice
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Create a custom AI voice clone with Fish.Audio instant cloning technology
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader className="pb-4">
+  const formContent = (
+    <>
+      <Card>
+      <CardHeader className="pb-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${step === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
@@ -845,10 +833,9 @@ export default function VoiceClone() {
                   )}
                 </CardContent>
               </Card>
-            </div>
 
-            <div className="lg:col-span-1">
-              <Card className="sticky top-4">
+              {/* Latest Activity Section */}
+              <Card className="mt-6">
                 <CardHeader>
                   <CardTitle className="text-lg">Latest Activity</CardTitle>
                 </CardHeader>
@@ -865,7 +852,7 @@ export default function VoiceClone() {
                       </p>
                     </div>
                   ) : (
-                    <ScrollArea className="h-[400px]">
+                    <ScrollArea className="h-[300px]">
                       <div className="space-y-3">
                         {myVoices.map((voice) => (
                           <div
@@ -900,11 +887,22 @@ export default function VoiceClone() {
                   )}
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </div>
-      </div>
+    </>
+  );
 
+  return (
+    <SidebarInset>
+      <ThreeColumnLayout 
+        form={formContent} 
+        preview={
+          <PeerTubePreview
+            pageType="voice-clone"
+            title="Voice Cloning Preview"
+            description="Create custom AI voice clones"
+            showGeneratingMessage={cloneMutation.isPending}
+          />
+        }
+      />
       <GuestGenerateModal 
         open={showGuestModal} 
         onOpenChange={setShowGuestModal}
