@@ -3274,7 +3274,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     
     // Helper function to check for timeouts
     function applyTimeoutCheck(items: any[]) {
-      const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+      const STANDARD_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes for most generations
+      const EXTENDED_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes for lip sync (InfiniTalk) and complex operations
       const now = Date.now();
       
       for (const gen of items) {
@@ -3282,7 +3283,11 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           const createdTime = new Date(gen.createdAt).getTime();
           const elapsedMs = now - createdTime;
           
-          if (elapsedMs > TIMEOUT_MS) {
+          // Use extended timeout for InfiniTalk lip sync which takes longer
+          const isLipSync = gen.modelId?.includes('infinitalk') || gen.modelId?.includes('lip-sync');
+          const timeoutMs = isLipSync ? EXTENDED_TIMEOUT_MS : STANDARD_TIMEOUT_MS;
+          
+          if (elapsedMs > timeoutMs) {
             console.warn(`⏱️  Generation ${gen.id} appears timed out - will be handled by background cleanup`);
             // Just update in-memory for this response - don't write to DB during request
             gen.status = 'failed';
