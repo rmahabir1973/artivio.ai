@@ -58,6 +58,14 @@ const testimonials = [
     followers: "15K",
     platforms: "LinkedIn • Twitter",
     avatar: "PP"
+  },
+  {
+    quote: "Brand Builder workflows changed everything. I create professional product videos, talking avatars, and music in one place. My small business looks like a Fortune 500.",
+    name: "David Kim",
+    title: "E-commerce Founder",
+    followers: "32K",
+    platforms: "Instagram • TikTok",
+    avatar: "DK"
   }
 ];
 
