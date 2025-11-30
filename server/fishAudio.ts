@@ -317,19 +317,21 @@ export async function deleteVoiceModel(modelId: string): Promise<boolean> {
 }
 
 export function base64ToBuffer(base64DataUrl: string): { buffer: Buffer; mimeType: string; filename: string } {
-  const matches = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const matches = base64DataUrl.match(/^data:(.+);base64,(.+)$/);
   if (!matches) {
     throw new Error('Invalid base64 data URL format');
   }
   
-  const mimeType = matches[1];
+  const fullMimeType = matches[1];
   const base64Data = matches[2];
   const buffer = Buffer.from(base64Data, 'base64');
   
-  const ext = mimeType.split('/')[1]?.replace('mpeg', 'mp3').replace('webm', 'webm').replace('wav', 'wav') || 'mp3';
+  const baseMimeType = fullMimeType.split(';')[0];
+  const subtype = baseMimeType.split('/')[1] || 'mp3';
+  const ext = subtype === 'mpeg' ? 'mp3' : subtype === 'webm' ? 'webm' : subtype === 'wav' ? 'wav' : subtype === 'ogg' ? 'ogg' : subtype === 'mp4' ? 'mp4' : 'mp3';
   const filename = `audio_${Date.now()}.${ext}`;
   
-  return { buffer, mimeType, filename };
+  return { buffer, mimeType: baseMimeType, filename };
 }
 
 export async function processAudioFilesForCloning(audioFiles: string[]): Promise<Array<{ buffer: Buffer; filename: string; mimeType: string }>> {
