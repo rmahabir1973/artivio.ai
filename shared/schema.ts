@@ -1537,6 +1537,7 @@ export const homePageContent = pgTable("home_page_content", {
   previewVideoVoiceClone: text("preview_video_voice_clone"), // Voice Cloning page
   previewVideoLipSync: text("preview_video_lip_sync"), // Lip Sync page
   previewVideoTts: text("preview_video_tts"), // Text-to-Speech page
+  previewVideoStt: text("preview_video_stt"), // Speech-to-Text page
   previewVideoUpscaler: text("preview_video_upscaler"), // Image Upscaler page
   previewVideoVideoUpscaler: text("preview_video_video_upscaler"), // Video Upscaler page
   previewVideoBgRemover: text("preview_video_bg_remover"), // Background Remover page

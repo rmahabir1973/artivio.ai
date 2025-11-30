@@ -17,10 +17,11 @@ import { Loader2, Upload, Mic, Square, Play, Pause, Volume2, ChevronDown, AlertT
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
-import { PreviewPanel } from "@/components/preview-panel";
+import { PeerTubePreview } from "@/components/peertube-preview";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import type { Generation } from "@shared/schema";
 import { GenerationProgress } from "@/components/generation-progress";
+import { SidebarInset } from "@/components/ui/sidebar";
 
 const MAX_AUDIO_DURATION = 15; // Maximum audio duration in seconds
 
@@ -525,87 +526,24 @@ export default function LipSync() {
     </Card>
   );
 
-  const previewContent = (
-    <PreviewPanel 
-      title="Lip Sync Preview"
-      description="Your generated lip-sync video will appear here"
-      status={generateMutation.isPending ? "generating" : previewItem?.status === "completed" ? "completed" : previewItem?.status === "failed" ? "failed" : "idle"}
-      resultUrl={previewItem?.resultUrl}
-      resultType="video"
-      errorMessage={previewItem?.errorMessage}
-      emptyStateMessage="No lip-sync videos generated yet. Upload an image and audio to get started."
-    />
-  );
-
   return (
-    <div className="space-y-6">
-      <div className="container mx-auto p-6 max-w-7xl">
-        <h1 className="text-3xl font-bold" data-testid="text-heading">
-          InfiniteTalk Lip Sync
-        </h1>
-        <p className="text-muted-foreground">
-          Create lip-synced videos from images and audio
-        </p>
-        <div className="mt-3 space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Transform static images into dynamic lip-synced videos with perfect audio synchronization. Upload your image and audio, and let AI handle the rest.
-          </p>
-          <p className="text-xs text-muted-foreground font-medium">
-            Features: Perfect lip-sync • Audio-to-mouth animation • 480p & 720p quality • Custom prompts • Seed control
-          </p>
-        </div>
-      </div>
-
-      <ThreeColumnLayout form={formContent} preview={previewContent} />
-
-      {generations.length > 0 && (
-        <div className="container mx-auto p-6 max-w-7xl">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Lip Sync Videos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {generations.map((gen) => (
-                    <Card key={gen.id} data-testid={`card-generation-${gen.id}`}>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm line-clamp-1">Lip Sync Video</CardTitle>
-                        <CardDescription className="text-xs">{new Date(gen.createdAt!).toLocaleDateString()}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {gen.status === "completed" && gen.resultUrl && (
-                          <video src={gen.resultUrl} controls className="w-full rounded-lg aspect-video bg-black" data-testid={`video-result-${gen.id}`} />
-                        )}
-                        {gen.status === "processing" && (
-                          <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin" />
-                          </div>
-                        )}
-                        {gen.status === "failed" && (
-                          <div className="w-full aspect-video bg-destructive/10 rounded-lg flex items-center justify-center text-destructive text-sm">
-                            Generation Failed
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
+    <SidebarInset>
+      <ThreeColumnLayout 
+        form={formContent} 
+        preview={
+          <PeerTubePreview
+            pageType="lip-sync"
+            title="Lip Sync Preview"
+            description="See what's possible with AI lip sync"
+            showGeneratingMessage={generateMutation.isPending || isGenerating}
+          />
+        }
+      />
       <GuestGenerateModal
         open={showGuestModal}
         onOpenChange={setShowGuestModal}
         featureName="Lip Sync"
       />
-    </div>
+    </SidebarInset>
   );
 }

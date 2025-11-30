@@ -114,6 +114,8 @@ export default function Admin() {
     previewVideoBrandShowcase: "",
     previewVideoUpscaler: "",
     previewVideoVideoUpscaler: "",
+    previewVideoLipSync: "",
+    previewVideoStt: "",
   });
   const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
   const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
@@ -269,6 +271,8 @@ export default function Admin() {
         previewVideoBrandShowcase: homePageContent.previewVideoBrandShowcase || "",
         previewVideoUpscaler: homePageContent.previewVideoUpscaler || "",
         previewVideoVideoUpscaler: homePageContent.previewVideoVideoUpscaler || "",
+        previewVideoLipSync: homePageContent.previewVideoLipSync || "",
+        previewVideoStt: homePageContent.previewVideoStt || "",
       });
     }
   }, [homePageContent, editingHomePage]);
@@ -1822,6 +1826,28 @@ export default function Admin() {
                           data-testid="input-preview-video-video-upscaler"
                         />
                       </div>
+                      <div>
+                        <Label htmlFor="previewVideoLipSync">Lip Sync Preview</Label>
+                        <Input
+                          id="previewVideoLipSync"
+                          value={homePageFormData.previewVideoLipSync}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoLipSync: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-lip-sync"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="previewVideoStt">Speech-to-Text Preview</Label>
+                        <Input
+                          id="previewVideoStt"
+                          value={homePageFormData.previewVideoStt}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, previewVideoStt: e.target.value })}
+                          placeholder="https://peertube.example.com/videos/watch/..."
+                          data-testid="input-preview-video-stt"
+                        />
+                      </div>
                     </div>
                     
                     <div className="mt-6 pt-6 border-t">
@@ -1962,6 +1988,8 @@ export default function Admin() {
                           previewVideoBrandShowcase: homePageFormData.previewVideoBrandShowcase.trim() || undefined,
                           previewVideoUpscaler: homePageFormData.previewVideoUpscaler.trim() || undefined,
                           previewVideoVideoUpscaler: homePageFormData.previewVideoVideoUpscaler.trim() || undefined,
+                          previewVideoLipSync: homePageFormData.previewVideoLipSync.trim() || undefined,
+                          previewVideoStt: homePageFormData.previewVideoStt.trim() || undefined,
                         });
                       }}
                       disabled={updateHomePageMutation.isPending}

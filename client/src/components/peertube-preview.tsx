@@ -9,7 +9,7 @@ interface PeerTubePreviewProps {
     "brand-product-ad" | "brand-influencer-ad" | "brand-logo-animation" | "brand-unboxing" |
     "brand-flash-sale" | "brand-brand-story" | "brand-testimonial" | "brand-social-promo" |
     "brand-before-after" | "brand-showcase" | "background-remover" | "talking-avatar" | 
-    "image-upscaler" | "video-upscaler";
+    "image-upscaler" | "video-upscaler" | "lip-sync" | "speech-to-text";
   title?: string;
   description?: string;
   showGeneratingMessage?: boolean;
@@ -37,6 +37,8 @@ const PAGE_TYPE_TO_FIELD: Record<PeerTubePreviewProps["pageType"], string> = {
   "talking-avatar": "previewVideoTalkingAvatar",
   "image-upscaler": "previewVideoUpscaler",
   "video-upscaler": "previewVideoVideoUpscaler",
+  "lip-sync": "previewVideoLipSync",
+  "speech-to-text": "previewVideoStt",
 };
 
 export function PeerTubePreview({
