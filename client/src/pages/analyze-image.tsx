@@ -357,12 +357,24 @@ export default function AnalyzeImage() {
                 >
                   <div className="flex items-start gap-4">
                     {analysis.imageUrl && (
-                      <img
-                        src={analysis.imageUrl}
-                        alt="Analyzed"
-                        className="w-24 h-24 object-cover rounded border"
-                        data-testid={`img-analyzed-${analysis.id}`}
-                      />
+                      <div className="w-24 h-24 rounded border flex-shrink-0 overflow-hidden bg-muted">
+                        <img
+                          src={analysis.imageUrl}
+                          alt="Analyzed"
+                          className="w-full h-full object-cover"
+                          data-testid={`img-analyzed-${analysis.id}`}
+                          onError={(e) => {
+                            // Hide broken image and show placeholder
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.classList.add('flex', 'items-center', 'justify-center');
+                              parent.innerHTML = '<div class="text-muted-foreground text-xs text-center p-1">Image expired</div>';
+                            }
+                          }}
+                        />
+                      </div>
                     )}
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center justify-between">
