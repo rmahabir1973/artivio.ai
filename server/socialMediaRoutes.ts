@@ -271,6 +271,7 @@ export function registerSocialMediaRoutes(app: Express) {
 
       // Get accounts from GetLate
       const { accounts: getLateAccounts } = await getLateService.getAccounts(profile.getLateProfileId);
+      console.log(`[Social] GetLate returned ${getLateAccounts?.length || 0} accounts:`, JSON.stringify(getLateAccounts, null, 2));
       const syncedAccounts: any[] = [];
 
       // Process each account from GetLate
