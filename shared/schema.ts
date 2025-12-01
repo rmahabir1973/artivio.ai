@@ -47,6 +47,8 @@ export const users = pgTable("users", {
   emailVerificationToken: varchar("email_verification_token"), // Token for email verification
   emailVerificationExpires: timestamp("email_verification_expires"), // Token expiration time
   hasSeenWelcome: boolean("has_seen_welcome").notNull().default(false), // Track if user has seen welcome onboarding
+  hasSocialPoster: boolean("has_social_poster").notNull().default(false), // Social Media Poster add-on ($25/month)
+  socialPosterSubscriptionId: varchar("social_poster_subscription_id"), // Stripe subscription ID for add-on
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

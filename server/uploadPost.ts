@@ -531,6 +531,67 @@ class UploadPostService {
   isConfigured(): boolean {
     return !!this.apiKey;
   }
+
+  async checkProfileExists(username: string): Promise<boolean> {
+    try {
+      await this.getUserProfile(username);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
 }
 
 export const uploadPostService = new UploadPostService();
+
+// Social Media Poster constants
+export const SOCIAL_POSTER_PRODUCT_ID = 'prod_TWdKgoLE1kfn4o';
+export const SOCIAL_POSTER_PRICE_ID = 'price_1SZa3PKvkQlROMzf7X2POgZX';
+export const SOCIAL_POSTER_PROFILE_NAME = 'artivio';
+export const SOCIAL_POSTER_LICENSE_LIMIT = 25;
+
+// Provision an Upload-Post profile for a user
+export async function provisionUploadPostProfile(
+  userId: string,
+  userEmail: string
+): Promise<{ success: boolean; uploadPostUsername: string; message: string }> {
+  if (!uploadPostService.isConfigured()) {
+    throw new Error('Upload-Post API is not configured');
+  }
+
+  // Generate stable username based on user ID
+  const uploadPostUsername = `${SOCIAL_POSTER_PROFILE_NAME}_${userId.replace(/-/g, '').substring(0, 12)}`;
+
+  try {
+    // Check if profile already exists
+    const exists = await uploadPostService.checkProfileExists(uploadPostUsername);
+    
+    if (exists) {
+      console.log(`[Upload-Post] Profile already exists: ${uploadPostUsername}`);
+      return {
+        success: true,
+        uploadPostUsername,
+        message: 'Profile already exists',
+      };
+    }
+
+    // Check license usage
+    const profiles = await uploadPostService.getUserProfiles();
+    if (profiles.profiles && profiles.profiles.length >= SOCIAL_POSTER_LICENSE_LIMIT) {
+      throw new Error(`Upload-Post license limit reached (${SOCIAL_POSTER_LICENSE_LIMIT})`);
+    }
+
+    // Create new profile
+    console.log(`[Upload-Post] Creating profile: ${uploadPostUsername} for user: ${userEmail}`);
+    await uploadPostService.createUserProfile(uploadPostUsername);
+
+    return {
+      success: true,
+      uploadPostUsername,
+      message: 'Profile created successfully',
+    };
+  } catch (error: any) {
+    console.error(`[Upload-Post] Failed to provision profile for user ${userId}:`, error.message);
+    throw error;
+  }
+}
