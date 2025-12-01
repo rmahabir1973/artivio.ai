@@ -684,17 +684,25 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found' });
       }
 
+      // Map frontend field names to backend field names
+      // Frontend sends: goal, platforms, duration, businessDescription, targetAudience
+      // Backend expects: primaryGoal, preferredPlatforms, postingFrequency, brandTopics, targetAudience
       const goalData = {
         socialProfileId: profile.id,
-        primaryGoal: req.body.primaryGoal,
-        postingFrequency: req.body.postingFrequency || 'daily',
-        brandTopics: req.body.brandTopics || [],
+        primaryGoal: req.body.primaryGoal || req.body.goal, // Accept both field names
+        postingFrequency: req.body.postingFrequency || req.body.duration || 'daily',
+        brandTopics: req.body.brandTopics || (req.body.businessDescription ? [req.body.businessDescription] : []),
         targetAudience: req.body.targetAudience || null,
         brandVoice: req.body.brandVoice || 'professional',
-        preferredPlatforms: req.body.preferredPlatforms || [],
+        preferredPlatforms: req.body.preferredPlatforms || req.body.platforms || [],
         websiteUrl: req.body.websiteUrl || null,
         isActive: true,
       };
+      
+      // Validate required fields
+      if (!goalData.primaryGoal) {
+        return res.status(400).json({ message: 'Primary goal is required' });
+      }
 
       // Check if goals exist
       const [existingGoals] = await db

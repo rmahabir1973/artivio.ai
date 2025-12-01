@@ -1,0 +1,148 @@
+2025-12-01 16:13:23.16
+6944f82b
+User
+where: undefined,
+2025-12-01 16:13:23.16
+6944f82b
+User
+file: 'execMain.c',
+2025-12-01 16:13:23.16
+6944f82b
+User
+at async NeonPreparedQuery.execute (file:///home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.js:76:20)
+2025-12-01 16:13:23.16
+6944f82b
+User
+dataType: undefined,
+2025-12-01 16:13:23.16
+6944f82b
+User
+length: 396,
+2025-12-01 16:13:23.16
+6944f82b
+User
+at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+2025-12-01 16:13:23.16
+6944f82b
+User
+code: '23502',
+2025-12-01 16:13:23.16
+6944f82b
+User
+column: 'primary_goal',
+2025-12-01 16:13:23.16
+6944f82b
+User
+internalPosition: undefined,
+2025-12-01 16:13:23.16
+6944f82b
+User
+}
+2025-12-01 16:13:23.16
+6944f82b
+User
+9:13:23 PM [express] POST /api/social/goals 500 in 125ms :: {"message":"Failed to save goals","error…
+2025-12-01 16:13:43.73
+6944f82b
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 16:13:43.83
+6944f82b
+User
+column: 'primary_goal',
+2025-12-01 16:13:43.83
+6944f82b
+User
+detail: 'Failing row contains (b9f7d317-4bd5-471e-8153-81a3c078ee2d, bbea3e34-e582-43f0-80d5-4f408ce8e74f, null, daily, {}, Influencers and marketers, professional, {}, null, t, 2025-12-01 21:13:43.819769, 2025-12-01 21:13:43.819769).',
+2025-12-01 16:13:43.83
+6944f82b
+User
+internalQuery: undefined,
+2025-12-01 16:13:43.83
+6944f82b
+User
+table: 'social_goals',
+2025-12-01 16:13:43.83
+6944f82b
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-01 16:13:43.83
+6944f82b
+User
+hint: undefined,
+2025-12-01 16:13:43.83
+6944f82b
+User
+at async NeonPreparedQuery.execute (file:///home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.js:76:20)
+2025-12-01 16:13:43.83
+6944f82b
+User
+where: undefined,
+2025-12-01 16:13:43.83
+6944f82b
+User
+file: 'execMain.c',
+2025-12-01 16:13:43.83
+6944f82b
+User
+schema: 'public',
+2025-12-01 16:13:43.83
+6944f82b
+User
+length: 417,
+2025-12-01 16:13:43.83
+6944f82b
+User
+severity: 'ERROR',
+2025-12-01 16:13:43.83
+6944f82b
+User
+line: '2015',
+2025-12-01 16:13:43.83
+6944f82b
+User
+}
+2025-12-01 16:13:43.83
+6944f82b
+User
+position: undefined,
+2025-12-01 16:13:43.83
+6944f82b
+User
+routine: 'ExecConstraints'
+2025-12-01 16:13:43.83
+6944f82b
+User
+at async file:///home/runner/workspace/dist/index.js:8530:19 {
+2025-12-01 16:13:43.83
+6944f82b
+User
+dataType: undefined,
+2025-12-01 16:13:43.83
+6944f82b
+User
+[Social] Error saving goals: error: null value in column "primary_goal" of relation "social_goals" violates not-null constraint
+2025-12-01 16:13:43.83
+6944f82b
+User
+constraint: undefined,
+2025-12-01 16:13:43.83
+6944f82b
+User
+at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+2025-12-01 16:13:43.83
+6944f82b
+User
+internalPosition: undefined,
+2025-12-01 16:13:43.83
+6944f82b
+User
+code: '23502',
+2025-12-01 16:13:43.83
+6944f82b
+User
+9:13:43 PM [express] POST /api/social/goals 500 in 214ms :: {"message":"Failed to save goals","error…
+2025-12-01 16:14:03.76
+6944f82b
+User
+9:14:03 PM [express] GET /api/announcements/active 304 in 90ms :: []
