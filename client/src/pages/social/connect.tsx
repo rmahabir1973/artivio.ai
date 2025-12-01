@@ -252,13 +252,21 @@ export default function SocialConnect() {
     },
     onSuccess: (data: any) => {
       setConnectingPlatform(null);
-      const connectUrl = data.authUrl || data.inviteUrl;
-      if (connectUrl) {
-        window.open(connectUrl, "_blank", "noopener,noreferrer");
+      // Use the secure proxy URL (never the raw OAuth URL)
+      const proxyUrl = data.proxyUrl;
+      if (proxyUrl) {
+        window.open(proxyUrl, "_blank", "noopener,noreferrer");
         toast({
           title: "Authorization Link Opened",
           description: "Complete the connection in the new tab. Once done, click 'Refresh' to sync your account.",
           duration: 8000,
+        });
+      } else {
+        console.error('[Social] No proxy URL in response:', data);
+        toast({
+          title: "Connection Error",
+          description: "Could not generate secure authorization link. Please try again.",
+          variant: "destructive",
         });
       }
     },

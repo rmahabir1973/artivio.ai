@@ -215,6 +215,7 @@ class GetLateService {
   async getAccounts(profileId?: string): Promise<{ accounts: GetLateAccount[] }> {
     console.log('[GetLate] Fetching accounts', profileId ? `for profile: ${profileId}` : '');
     
+    // Fetch accounts with optional profileId filter
     const url = profileId 
       ? `${this.baseUrl}/accounts?profileId=${profileId}`
       : `${this.baseUrl}/accounts`;
@@ -224,7 +225,10 @@ class GetLateService {
       headers: this.getAuthHeaders(),
     });
 
-    return this.handleResponse(response);
+    const result = await this.handleResponse<{ accounts: GetLateAccount[] }>(response);
+    console.log(`[GetLate] Accounts API returned ${result.accounts?.length || 0} accounts`);
+    
+    return result;
   }
 
   async getConnectUrl(profileId: string, platform: SocialPlatform): Promise<string> {

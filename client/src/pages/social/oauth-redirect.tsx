@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSearch, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
+import { fetchWithAuth } from "@/lib/authBridge";
 import { 
   SiInstagram, 
   SiTiktok, 
@@ -85,34 +86,51 @@ const PLATFORM_CONFIG: Record<string, {
 export default function OAuthRedirect() {
   const searchString = useSearch();
   const [, setLocation] = useLocation();
-  const [status, setStatus] = useState<"redirecting" | "success" | "error">("redirecting");
+  const [status, setStatus] = useState<"loading" | "redirecting" | "error">("loading");
   const [platform, setPlatform] = useState<string>("social");
-  const [redirectUrl, setRedirectUrl] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
     const params = new URLSearchParams(searchString);
-    const targetUrl = params.get("url");
+    const inviteId = params.get("invite");
+    const nonce = params.get("nonce");
     const platformParam = params.get("platform") || "social";
-    const mode = params.get("mode");
     
     setPlatform(platformParam);
 
-    if (mode === "callback") {
-      setStatus("success");
-      setTimeout(() => {
-        setLocation(`/social/connect?connected=${platformParam}`);
-      }, 2000);
+    if (!inviteId || !nonce) {
+      setStatus("error");
+      setErrorMessage("Invalid connection link. Please try connecting again from the dashboard.");
       return;
     }
 
-    if (targetUrl) {
-      setRedirectUrl(targetUrl);
-      setTimeout(() => {
-        window.location.href = targetUrl;
-      }, 1500);
-    } else {
-      setStatus("error");
-    }
+    // Fetch the secure redirect URL from the backend
+    const fetchRedirectUrl = async () => {
+      try {
+        const response = await fetchWithAuth(`/api/social/oauth-url/${inviteId}?nonce=${encodeURIComponent(nonce)}`);
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.message || "Failed to get authorization URL");
+        }
+        const data = await response.json();
+        
+        if (data.authUrl) {
+          setStatus("redirecting");
+          // Redirect after a brief delay to show the branded page
+          setTimeout(() => {
+            window.location.href = data.authUrl;
+          }, 1500);
+        } else {
+          throw new Error("No authorization URL received");
+        }
+      } catch (error: any) {
+        console.error('[OAuth] Error fetching redirect URL:', error);
+        setStatus("error");
+        setErrorMessage(error.message || "Failed to start authorization. Please try again.");
+      }
+    };
+
+    fetchRedirectUrl();
   }, [searchString, setLocation]);
 
   const config = PLATFORM_CONFIG[platform.toLowerCase()] || {
@@ -124,33 +142,6 @@ export default function OAuthRedirect() {
 
   const Icon = config.icon;
 
-  if (status === "success") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader className="pb-4">
-            <div className={`mx-auto w-20 h-20 bg-gradient-to-br ${config.bgGradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg`}>
-              <Icon className="w-10 h-10 text-white" />
-            </div>
-            <CardTitle className="text-2xl flex items-center justify-center gap-2">
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
-              Connection Complete
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Your {config.name} account has been successfully connected to Artivio AI.
-            </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Returning to dashboard...
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   if (status === "error") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
@@ -160,11 +151,12 @@ export default function OAuthRedirect() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Something went wrong. Please try again from the Connect Accounts page.
+              {errorMessage}
             </p>
             <button 
               onClick={() => setLocation("/social/connect")}
               className="text-primary hover:underline"
+              data-testid="link-return-connect"
             >
               Return to Connect Accounts
             </button>
@@ -190,7 +182,9 @@ export default function OAuthRedirect() {
           
           <div className="flex items-center justify-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">Preparing secure connection...</span>
+            <span className="text-sm text-muted-foreground">
+              {status === "loading" ? "Preparing secure connection..." : "Redirecting to " + config.name + "..."}
+            </span>
           </div>
 
           <div className="pt-4 border-t">

@@ -19,6 +19,71 @@ import { eq, and, desc, gte, lte } from "drizzle-orm";
 
 const ARTIVIO_LOGO_URL = "https://artivio.ai/logo.png";
 
+// Secure in-memory store for pending OAuth invites (URL never exposed to frontend)
+interface PendingInvite {
+  url: string;
+  platform: string;
+  userId: string;
+  expiresAt: Date;
+  createdAt: Date;
+  consumed: boolean;
+  nonce: string;
+}
+const pendingInvites = new Map<string, PendingInvite>();
+
+// Generate cryptographically secure nonce
+function generateNonce(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const randomValues = new Uint32Array(32);
+  crypto.getRandomValues(randomValues);
+  for (let i = 0; i < 32; i++) {
+    result += chars[randomValues[i] % chars.length];
+  }
+  return result;
+}
+
+// Validate URL is from allowed domain (GetLate only - strict validation)
+const ALLOWED_OAUTH_HOSTS = [
+  'getlate.dev',
+  'www.getlate.dev',
+  'app.getlate.dev',
+  'api.getlate.dev',
+  'auth.getlate.dev',
+];
+
+function isAllowedOAuthDomain(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Must be HTTPS
+    if (parsed.protocol !== 'https:') {
+      console.warn(`[Social] OAuth URL rejected: non-HTTPS protocol ${parsed.protocol}`);
+      return false;
+    }
+    // Must be exact match to allowed hosts (no wildcard subdomains)
+    if (!ALLOWED_OAUTH_HOSTS.includes(parsed.hostname)) {
+      console.warn(`[Social] OAuth URL rejected: unknown host ${parsed.hostname}`);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Clean up expired invites every 5 minutes
+setInterval(() => {
+  const now = new Date();
+  const keysToDelete: string[] = [];
+  pendingInvites.forEach((invite, id) => {
+    // Delete if expired, consumed, or older than 30 minutes
+    if (invite.expiresAt < now || invite.consumed || (now.getTime() - invite.createdAt.getTime()) > 30 * 60 * 1000) {
+      keysToDelete.push(id);
+    }
+  });
+  keysToDelete.forEach(id => pendingInvites.delete(id));
+}, 5 * 60 * 1000);
+
 // Middleware to check if user has Social Media Poster access
 async function requireSocialPoster(req: any, res: Response, next: NextFunction) {
   try {
@@ -187,51 +252,13 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Get connect URL for linking social accounts (creates platform invite)
+  // DEPRECATED: Legacy endpoint - returns error directing to secure flow
+  // Use /api/social/accounts/connect instead for secure OAuth with nonce protection
   app.post('/api/social/connect-url', requireJWT, requireSocialPoster, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { platform } = req.body;
-
-      if (!platform) {
-        return res.status(400).json({ message: 'Platform is required' });
-      }
-
-      // Get user's social profile
-      const [profile] = await db
-        .select()
-        .from(socialProfiles)
-        .where(eq(socialProfiles.userId, userId))
-        .limit(1);
-
-      if (!profile) {
-        return res.status(404).json({ message: 'Social profile not found. Please initialize first.' });
-      }
-
-      if (!getLateService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
-      }
-
-      if (!profile.getLateProfileId) {
-        return res.status(400).json({ message: 'GetLate profile not linked. Please reinitialize.' });
-      }
-
-      // Create platform invite via GetLate
-      const { invite } = await getLateService.createPlatformInvite(
-        profile.getLateProfileId,
-        platform as SocialPlatform
-      );
-
-      res.json({
-        accessUrl: invite.inviteUrl,
-        inviteId: invite._id,
-        platform,
-        expiresAt: invite.expiresAt,
-      });
-    } catch (error: any) {
-      console.error('[Social] Error generating connect URL:', error);
-      res.status(500).json({ message: 'Failed to generate connect URL', error: error.message });
-    }
+    return res.status(410).json({ 
+      message: 'This endpoint has been deprecated. Please use the Connect button in the dashboard.',
+      redirect: '/social/connect'
+    });
   });
 
   // Sync connected accounts from GetLate
@@ -270,7 +297,8 @@ export function registerSocialMediaRoutes(app: Express) {
       }
 
       // Get accounts from GetLate
-      const { accounts: getLateAccounts } = await getLateService.getAccounts(profile.getLateProfileId);
+      const getLateProfileId = profile.getLateProfileId || undefined;
+      const { accounts: getLateAccounts } = await getLateService.getAccounts(getLateProfileId);
       console.log(`[Social] GetLate returned ${getLateAccounts?.length || 0} accounts:`, JSON.stringify(getLateAccounts, null, 2));
       const syncedAccounts: any[] = [];
 
@@ -427,9 +455,31 @@ export function registerSocialMediaRoutes(app: Express) {
         platform as SocialPlatform
       );
 
+      // Validate the URL is from allowed domain
+      if (!isAllowedOAuthDomain(invite.inviteUrl)) {
+        console.error(`[Social] Invalid OAuth URL domain: ${invite.inviteUrl}`);
+        return res.status(500).json({ message: 'Invalid OAuth URL received' });
+      }
+
+      // Generate a secure nonce for this invite
+      const nonce = generateNonce();
+
+      // Store invite URL securely in session/cache for later retrieval
+      // Uses invite ID + nonce for added security
+      pendingInvites.set(invite._id, {
+        url: invite.inviteUrl,
+        platform,
+        userId,
+        expiresAt: new Date(invite.expiresAt),
+        createdAt: new Date(),
+        consumed: false,
+        nonce,
+      });
+
       // Generate Artivio proxy URL for white-label experience
+      // The proxy page will fetch the actual URL server-side using the invite ID + nonce
       const baseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
-      const proxyUrl = `${baseUrl}/social/oauth-redirect?platform=${platform}&url=${encodeURIComponent(invite.inviteUrl)}`;
+      const proxyUrl = `${baseUrl}/social/oauth-redirect?platform=${platform}&invite=${invite._id}&nonce=${nonce}`;
 
       res.json({
         authUrl: proxyUrl,
@@ -440,6 +490,73 @@ export function registerSocialMediaRoutes(app: Express) {
     } catch (error: any) {
       console.error('[Social] Error generating connect URL:', error);
       res.status(500).json({ message: 'Failed to generate connect URL', error: error.message });
+    }
+  });
+
+  // Secure endpoint to get OAuth URL - prevents URL from being exposed in frontend code
+  // This is called by the proxy page to get the actual redirect URL server-side
+  app.get('/api/social/oauth-url/:inviteId', requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { inviteId } = req.params;
+      const { nonce } = req.query;
+
+      // Look up the pending invite
+      const invite = pendingInvites.get(inviteId);
+
+      if (!invite) {
+        return res.status(404).json({ 
+          message: 'Invite not found or expired. Please try connecting again.' 
+        });
+      }
+
+      // Verify nonce matches (prevents replay attacks)
+      if (!nonce || invite.nonce !== nonce) {
+        console.warn(`[Social] Invalid nonce for invite ${inviteId}`);
+        return res.status(403).json({ 
+          message: 'Invalid invite token. Please try connecting again.' 
+        });
+      }
+
+      // Verify the invite belongs to this user
+      if (invite.userId !== userId) {
+        console.warn(`[Social] User ${userId} tried to access invite belonging to ${invite.userId}`);
+        return res.status(403).json({ 
+          message: 'Not authorized to use this invite' 
+        });
+      }
+
+      // Check if already consumed (single-use)
+      if (invite.consumed) {
+        return res.status(410).json({ 
+          message: 'This invite has already been used. Please try connecting again.' 
+        });
+      }
+
+      // Check if expired
+      if (invite.expiresAt < new Date()) {
+        pendingInvites.delete(inviteId);
+        return res.status(410).json({ 
+          message: 'Invite has expired. Please try connecting again.' 
+        });
+      }
+
+      // Mark as consumed and delete immediately to prevent race conditions
+      invite.consumed = true;
+      const authUrl = invite.url;
+      const invitePlatform = invite.platform;
+      
+      // Delete immediately after capturing the URL
+      pendingInvites.delete(inviteId);
+
+      // Return the actual OAuth URL
+      res.json({
+        authUrl,
+        platform: invitePlatform,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error fetching OAuth URL:', error);
+      res.status(500).json({ message: 'Failed to get authorization URL', error: error.message });
     }
   });
 
