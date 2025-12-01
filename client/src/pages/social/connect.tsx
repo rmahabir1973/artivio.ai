@@ -189,6 +189,9 @@ export default function SocialConnect() {
     },
   });
 
+  // Auto-sync accounts when user visits the page (handles return from OAuth)
+  const [hasAutoSynced, setHasAutoSynced] = useState(false);
+  
   useEffect(() => {
     const params = new URLSearchParams(searchString);
     
@@ -222,6 +225,15 @@ export default function SocialConnect() {
     enabled: !!user && !!socialProfile && subscriptionStatus?.hasSocialPoster === true,
     retry: 1,
   });
+
+  // Auto-sync on page load when user has social poster access
+  // This catches accounts connected via OAuth that redirected to GetLate's success page
+  useEffect(() => {
+    if (subscriptionStatus?.hasSocialPoster && socialProfile && !hasAutoSynced && !syncAccountsMutation.isPending) {
+      setHasAutoSynced(true);
+      syncAccountsMutation.mutate();
+    }
+  }, [subscriptionStatus?.hasSocialPoster, socialProfile, hasAutoSynced, syncAccountsMutation.isPending]);
 
   const initProfileMutation = useMutation({
     mutationFn: async () => {

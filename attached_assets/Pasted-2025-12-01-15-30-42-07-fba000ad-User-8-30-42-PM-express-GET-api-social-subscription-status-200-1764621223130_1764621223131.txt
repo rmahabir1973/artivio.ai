@@ -1,0 +1,156 @@
+2025-12-01 15:30:42.07
+fba000ad
+User
+8:30:42 PM [express] GET /api/social/subscription-status 200 in 47ms :: {"hasSocialPoster":true,"soc…
+2025-12-01 15:30:42.17
+fba000ad
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 15:30:42.26
+fba000ad
+User
+8:30:42 PM [express] GET /api/social/profile 200 in 114ms :: {"profile":{"id":"bbea3e34-e582-43f0-80…
+2025-12-01 15:30:42.37
+fba000ad
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 15:30:42.43
+fba000ad
+User
+8:30:42 PM [express] GET /api/social/accounts 200 in 92ms :: []
+2025-12-01 15:30:43.95
+fba000ad
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 15:30:44.01
+fba000ad
+User
+[GetLate] Creating platform invite for instagram on profile 692de851363442076b252193
+2025-12-01 15:30:44.89
+fba000ad
+User
+8:30:44 PM [express] POST /api/social/accounts/connect 200 in 961ms :: {"proxyUrl":"https://artivio.…
+2025-12-01 15:30:46.44
+fba000ad
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: 'd7102661' }
+2025-12-01 15:30:46.49
+fba000ad
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: 'd7102661-1757-4b8c-a138-8bd7d7fdce96' }
+2025-12-01 15:30:46.51
+fba000ad
+User
+userId: '49729939',
+2025-12-01 15:30:46.51
+fba000ad
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-01 15:30:46.51
+fba000ad
+User
+tokenId: 'd7102661',
+2025-12-01 15:30:46.51
+fba000ad
+User
+isAdmin: true
+2025-12-01 15:30:46.51
+fba000ad
+User
+}
+2025-12-01 15:30:46.51
+fba000ad
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-01 15:30:46.51
+fba000ad
+User
+8:30:46 PM [express] GET /api/auth/bootstrap 200 in 69ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-12-01 15:30:46.65
+fba000ad
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 15:30:46.66
+fba000ad
+User
+8:30:46 PM [express] GET /api/welcome 304 in 22ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-01 15:30:46.66
+fba000ad
+User
+8:30:46 PM [express] GET /api/announcements/active 304 in 21ms :: []
+2025-12-01 15:30:46.68
+fba000ad
+User
+8:30:46 PM [express] GET /api/social/oauth-url/692dfaf4f839fcc6f0be35a7 200 in 46ms :: {"authUrl":"h…
+2025-12-01 15:32:28.97
+fba000ad
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: 'd7102661' }
+2025-12-01 15:32:31.49
+fba000ad
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: 'd7102661-1757-4b8c-a138-8bd7d7fdce96' }
+2025-12-01 15:32:31.52
+fba000ad
+User
+tokenId: 'd7102661',
+2025-12-01 15:32:31.52
+fba000ad
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-01 15:32:31.52
+fba000ad
+User
+userId: '49729939',
+2025-12-01 15:32:31.52
+fba000ad
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-01 15:32:31.52
+fba000ad
+User
+}
+2025-12-01 15:32:31.52
+fba000ad
+User
+isAdmin: true
+2025-12-01 15:32:31.52
+fba000ad
+User
+8:32:31 PM [express] GET /api/auth/bootstrap 200 in 2547ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsIn…
+2025-12-01 15:32:31.62
+fba000ad
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 15:32:31.64
+fba000ad
+User
+8:32:31 PM [express] GET /api/social/subscription-status 304 in 46ms :: {"hasSocialPoster":true,"soc…
+2025-12-01 15:32:31.75
+fba000ad
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 15:32:31.85
+fba000ad
+User
+8:32:31 PM [express] GET /api/social/profile 304 in 128ms :: {"profile":{"id":"bbea3e34-e582-43f0-80…
+2025-12-01 15:32:31.97
+fba000ad
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 15:32:32.04
+fba000ad
+User
+8:32:32 PM [express] GET /api/social/accounts 304 in 94ms :: []
+2025-12-01 15:32:33.70
+fba000ad
+User
+8:32:33 PM [express] GET /api/announcements/active 304 in 2101ms :: []
+2025-12-01 15:32:33.71
+fba000ad
+User
+8:32:33 PM [express] GET /api/welcome 304 in 2102ms :: {"welcomeVideoUrl":"https://artivio-peertube-…
+2025-12-01 15:32:33.71
+fba000ad
+User
+8:32:33 PM [express] GET /api/welcome 304 in 2102ms :: {"welcomeVideoUrl":"https://artivio-peertube-…

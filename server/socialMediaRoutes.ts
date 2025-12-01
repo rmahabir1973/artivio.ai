@@ -468,18 +468,17 @@ export function registerSocialMediaRoutes(app: Express) {
       // Generate a secure nonce for this invite
       const nonce = generateNonce();
       
-      // Build base URL for callbacks and redirects
+      // Build base URL for redirects
       const artivioBaseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
       
-      // Modify the invite URL to use headless mode for white-label experience
-      // Headless mode redirects OAuth callbacks to our domain instead of GetLate's success page
-      const callbackUrl = `${artivioBaseUrl}/social/oauth-callback?platform=${platform}`;
-      const headlessInviteUrl = `${invite.inviteUrl}${invite.inviteUrl.includes('?') ? '&' : '?'}headless=true&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      // Note: GetLate's platform invite API doesn't support headless mode
+      // The user will see GetLate's success page after OAuth, then return to Artivio
+      // We handle this by auto-syncing accounts when users visit the connect page
 
-      // Store the headless invite URL securely in session/cache for later retrieval
+      // Store the invite URL securely in session/cache for later retrieval
       // Uses invite ID + nonce for added security
       pendingInvites.set(invite._id, {
-        url: headlessInviteUrl,
+        url: invite.inviteUrl,
         platform,
         userId,
         expiresAt: new Date(invite.expiresAt),

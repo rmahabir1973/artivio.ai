@@ -177,7 +177,7 @@ export default function OAuthRedirect() {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-muted-foreground">
-            You'll be redirected to {config.name} to authorize Artivio AI to post on your behalf.
+            You'll be redirected to {config.name} to authorize Artivio AI to post on your behalf. After completing the authorization, please return to Artivio.
           </p>
           
           <div className="flex items-center justify-center gap-3">
