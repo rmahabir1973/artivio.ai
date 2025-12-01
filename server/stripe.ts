@@ -462,3 +462,156 @@ export function verifyWebhookSignature(rawBody: Buffer, signature: string): Stri
     throw new Error('Webhook signature verification failed');
   }
 }
+
+// =====================================================
+// SOCIAL MEDIA POSTER ADD-ON ($25/month)
+// =====================================================
+import { provisionUploadPostProfile, SOCIAL_POSTER_PRODUCT_ID, SOCIAL_POSTER_PRICE_ID } from './uploadPost';
+import { socialProfiles } from '@shared/schema';
+
+export async function createSocialPosterCheckoutSession(params: {
+  userId: string;
+  userEmail: string;
+  successUrl: string;
+  cancelUrl: string;
+}): Promise<Stripe.Checkout.Session> {
+  const { userId, userEmail, successUrl, cancelUrl } = params;
+
+  const user = await storage.getUser(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  let customerId = user.stripeCustomerId || undefined;
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: userEmail,
+      metadata: { userId },
+    });
+    customerId = customer.id;
+    await storage.updateUser(userId, { stripeCustomerId: customerId });
+  }
+
+  console.log('[Stripe Checkout] Creating Social Poster add-on session for user:', userId);
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    line_items: [{
+      price: SOCIAL_POSTER_PRICE_ID,
+      quantity: 1,
+    }],
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    metadata: {
+      userId,
+      productType: 'social_poster_addon',
+    },
+    subscription_data: {
+      metadata: {
+        userId,
+        productType: 'social_poster_addon',
+      },
+    },
+  });
+
+  return session;
+}
+
+export async function handleSocialPosterCheckout(session: Stripe.Checkout.Session, eventId: string) {
+  console.log('[Stripe Webhook] Processing Social Poster checkout', session.id);
+
+  const userId = session.metadata?.userId;
+  const subscriptionId = session.subscription as string;
+
+  if (!userId) {
+    console.error('[Stripe Webhook] Missing userId in Social Poster checkout metadata');
+    return;
+  }
+
+  const user = await storage.getUser(userId);
+  if (!user) {
+    console.error('[Stripe Webhook] User not found for Social Poster checkout:', userId);
+    return;
+  }
+
+  try {
+    // Provision Upload-Post profile
+    const result = await provisionUploadPostProfile(userId, user.email || '');
+
+    // Create social profile in database
+    await db.transaction(async (tx) => {
+      // Check if profile already exists
+      const [existingProfile] = await tx
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId));
+
+      if (!existingProfile) {
+        await tx.insert(socialProfiles).values({
+          userId,
+          uploadPostUsername: result.uploadPostUsername,
+          isActive: true,
+        });
+      }
+
+      // Update user with Social Poster flag
+      await tx
+        .update(users)
+        .set({
+          hasSocialPoster: true,
+          socialPosterSubscriptionId: subscriptionId,
+        })
+        .where(eq(users.id, userId));
+    });
+
+    console.log(`[Stripe Webhook] ✅ Social Poster activated for user ${userId} with Upload-Post profile: ${result.uploadPostUsername}`);
+  } catch (error: any) {
+    console.error('[Stripe Webhook] Failed to provision Social Poster:', error.message);
+    throw error;
+  }
+}
+
+export async function handleSocialPosterSubscriptionDeleted(subscription: Stripe.Subscription) {
+  console.log('[Stripe Webhook] Processing Social Poster subscription.deleted', subscription.id);
+
+  const userId = subscription.metadata?.userId;
+  if (!userId) {
+    console.error('[Stripe Webhook] Missing userId in Social Poster subscription metadata');
+    return;
+  }
+
+  // Deactivate Social Poster for user
+  await db
+    .update(users)
+    .set({
+      hasSocialPoster: false,
+      socialPosterSubscriptionId: null,
+    })
+    .where(eq(users.id, userId));
+
+  // Also deactivate social profile
+  await db
+    .update(socialProfiles)
+    .set({ isActive: false })
+    .where(eq(socialProfiles.userId, userId));
+
+  console.log(`[Stripe Webhook] Social Poster deactivated for user ${userId}`);
+}
+
+export function isSocialPosterProduct(lineItems: Stripe.LineItem[] | undefined): boolean {
+  if (!lineItems) return false;
+  return lineItems.some(item => 
+    item.price?.product === SOCIAL_POSTER_PRODUCT_ID ||
+    item.price?.id === SOCIAL_POSTER_PRICE_ID
+  );
+}
+
+export function isSocialPosterSubscription(subscription: Stripe.Subscription): boolean {
+  if (!subscription.items?.data) return false;
+  return subscription.items.data.some(item =>
+    (item.price?.product as string) === SOCIAL_POSTER_PRODUCT_ID ||
+    item.price?.id === SOCIAL_POSTER_PRICE_ID
+  );
+}
