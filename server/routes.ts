@@ -68,7 +68,13 @@ import {
   handleInvoicePaymentFailed,
   handleSubscriptionUpdated,
   handleSubscriptionDeleted,
+  createSocialPosterCheckoutSession,
+  handleSocialPosterCheckout,
+  handleSocialPosterSubscriptionDeleted,
+  isSocialPosterSubscription,
+  stripe,
 } from "./stripe";
+import { provisionUploadPostProfile, SOCIAL_POSTER_PROFILE_NAME } from "./uploadPost";
 import { z } from "zod";
 import { 
   generateVideoRequestSchema, 
@@ -6186,6 +6192,142 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // Admin: Provision Social Media Poster for a user (manual testing)
+  app.post('/api/admin/users/:userId/social-poster', requireJWT, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { userId } = req.params;
+      const targetUser = await storage.getUser(userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user already has Social Poster
+      if (targetUser.hasSocialPoster) {
+        return res.status(400).json({ message: "User already has Social Media Poster access" });
+      }
+
+      // Provision Upload-Post profile
+      const result = await provisionUploadPostProfile(userId, targetUser.email || '');
+
+      // Create social profile in database
+      const { db } = await import('./db');
+      const { users, socialProfiles } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+
+      await db.transaction(async (tx) => {
+        // Check if profile already exists
+        const [existingProfile] = await tx
+          .select()
+          .from(socialProfiles)
+          .where(eq(socialProfiles.userId, userId));
+
+        if (!existingProfile) {
+          await tx.insert(socialProfiles).values({
+            userId,
+            uploadPostUsername: result.uploadPostUsername,
+            isActive: true,
+          });
+        } else {
+          // Update existing profile
+          await tx
+            .update(socialProfiles)
+            .set({ 
+              uploadPostUsername: result.uploadPostUsername,
+              isActive: true 
+            })
+            .where(eq(socialProfiles.userId, userId));
+        }
+
+        // Update user with Social Poster flag (no subscription ID for manual assignments)
+        await tx
+          .update(users)
+          .set({
+            hasSocialPoster: true,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId));
+      });
+
+      console.log(`[ADMIN] Social Media Poster provisioned for ${targetUser.email} by ${admin?.email}`);
+
+      res.json({ 
+        success: true,
+        message: "Social Media Poster access granted",
+        uploadPostUsername: result.uploadPostUsername
+      });
+    } catch (error: any) {
+      console.error('Error provisioning Social Poster:', error);
+      res.status(500).json({ message: "Failed to provision Social Media Poster", error: error.message });
+    }
+  });
+
+  // Admin: Revoke Social Media Poster access
+  app.delete('/api/admin/users/:userId/social-poster', requireJWT, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const admin = await storage.getUser(adminId);
+      
+      if (!isUserAdmin(admin)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { userId } = req.params;
+      const targetUser = await storage.getUser(userId);
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { db } = await import('./db');
+      const { users, socialProfiles } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+
+      // Cancel Stripe subscription if exists
+      if (targetUser.socialPosterSubscriptionId) {
+        try {
+          await stripe.subscriptions.cancel(targetUser.socialPosterSubscriptionId);
+          console.log(`[ADMIN] Cancelled Social Poster subscription ${targetUser.socialPosterSubscriptionId}`);
+        } catch (stripeError: any) {
+          console.warn(`[ADMIN] Could not cancel subscription: ${stripeError.message}`);
+        }
+      }
+
+      // Revoke access
+      await db
+        .update(users)
+        .set({
+          hasSocialPoster: false,
+          socialPosterSubscriptionId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+
+      // Deactivate social profile
+      await db
+        .update(socialProfiles)
+        .set({ isActive: false })
+        .where(eq(socialProfiles.userId, userId));
+
+      console.log(`[ADMIN] Social Media Poster revoked for ${targetUser.email} by ${admin?.email}`);
+
+      res.json({ 
+        success: true,
+        message: "Social Media Poster access revoked"
+      });
+    } catch (error: any) {
+      console.error('Error revoking Social Poster:', error);
+      res.status(500).json({ message: "Failed to revoke Social Media Poster", error: error.message });
+    }
+  });
+
   // Admin: Delete user
   app.delete('/api/admin/users/:userId', requireJWT, async (req: any, res) => {
     try {
@@ -7763,9 +7905,16 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
 
         // Handle the event
         switch (event.type) {
-          case 'checkout.session.completed':
-            await handleCheckoutCompleted(event.data.object as any, event.id);
+          case 'checkout.session.completed': {
+            const session = event.data.object as any;
+            // Check if this is a Social Poster add-on checkout
+            if (session.metadata?.productType === 'social_poster_addon') {
+              await handleSocialPosterCheckout(session, event.id);
+            } else {
+              await handleCheckoutCompleted(session, event.id);
+            }
             break;
+          }
           case 'invoice.paid':
             await handleInvoicePaid(event.data.object as any, event.id);
             break;
@@ -7775,9 +7924,16 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           case 'customer.subscription.updated':
             await handleSubscriptionUpdated(event.data.object as any);
             break;
-          case 'customer.subscription.deleted':
-            await handleSubscriptionDeleted(event.data.object as any);
+          case 'customer.subscription.deleted': {
+            const subscription = event.data.object as any;
+            // Check if this is a Social Poster subscription
+            if (isSocialPosterSubscription(subscription) || subscription.metadata?.productType === 'social_poster_addon') {
+              await handleSocialPosterSubscriptionDeleted(subscription);
+            } else {
+              await handleSubscriptionDeleted(subscription);
+            }
             break;
+          }
           default:
             console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
         }
