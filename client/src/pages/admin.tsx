@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -118,6 +118,8 @@ export default function Admin() {
     previewVideoBrandSocialPromo: "",
     previewVideoBrandBeforeAfter: "",
     previewVideoBrandShowcase: "",
+    welcomeVideoUrl: "",
+    welcomeSlides: "[]",
   });
   const [showcaseDialogOpen, setShowcaseDialogOpen] = useState(false);
   const [showcaseEditIndex, setShowcaseEditIndex] = useState<number | null>(null);
@@ -126,6 +128,11 @@ export default function Admin() {
   const [faqEditIndex, setFaqEditIndex] = useState<number | null>(null);
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
+  
+  // Welcome slides state
+  const [welcomeSlideDialogOpen, setWelcomeSlideDialogOpen] = useState(false);
+  const [welcomeSlideEditIndex, setWelcomeSlideEditIndex] = useState<number | null>(null);
+  const [welcomeSlideData, setWelcomeSlideData] = useState({ title: "", description: "", icon: "", highlight: "" });
   
   // Announcements state
   const [creatingAnnouncement, setCreatingAnnouncement] = useState(false);
@@ -277,6 +284,8 @@ export default function Admin() {
         previewVideoBrandSocialPromo: homePageContent.previewVideoBrandSocialPromo || "",
         previewVideoBrandBeforeAfter: homePageContent.previewVideoBrandBeforeAfter || "",
         previewVideoBrandShowcase: homePageContent.previewVideoBrandShowcase || "",
+        welcomeVideoUrl: homePageContent.welcomeVideoUrl || "",
+        welcomeSlides: JSON.stringify(homePageContent.welcomeSlides || []),
       });
     }
   }, [homePageContent, editingHomePage]);
@@ -2324,6 +2333,149 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gift className="h-5 w-5" />
+                    Welcome Onboarding
+                  </CardTitle>
+                  <CardDescription>Configure welcome video and onboarding slides for new users</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {homePageLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="welcomeVideoUrl" className="flex items-center gap-2">
+                          <Video className="h-4 w-4" />
+                          Welcome Video URL (plays for new users before slideshow)
+                        </Label>
+                        <Input
+                          id="welcomeVideoUrl"
+                          value={homePageFormData.welcomeVideoUrl}
+                          onChange={(e) => setHomePageFormData({ ...homePageFormData, welcomeVideoUrl: e.target.value })}
+                          placeholder="https://vimeo.com/... or https://peertube-instance/videos/watch/..."
+                          data-testid="input-welcome-video-url"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Supports Vimeo and PeerTube URLs. This video plays before the welcome slideshow for new users.</p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          updateHomePageMutation.mutate({
+                            welcomeVideoUrl: homePageFormData.welcomeVideoUrl.trim() || undefined,
+                          });
+                        }}
+                        disabled={updateHomePageMutation.isPending}
+                        data-testid="button-save-welcome-video"
+                      >
+                        {updateHomePageMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Welcome Video
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="text-sm font-medium flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" />
+                            Welcome Slides
+                          </h4>
+                          <p className="text-xs text-muted-foreground">Onboarding slides shown to new users after the welcome video</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setWelcomeSlideEditIndex(null);
+                            setWelcomeSlideData({ title: "", description: "", icon: "", highlight: "" });
+                            setWelcomeSlideDialogOpen(true);
+                          }}
+                          data-testid="button-add-welcome-slide"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Slide
+                        </Button>
+                      </div>
+
+                      {(homePageContent?.welcomeSlides || []).length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          No welcome slides added yet. Click "Add Slide" to get started.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {(homePageContent?.welcomeSlides || []).map((slide, index) => (
+                            <Card key={slide.id || index}>
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-sm font-medium">{slide.title}</p>
+                                      {slide.icon && (
+                                        <Badge variant="outline" className="text-xs">{slide.icon}</Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{slide.description}</p>
+                                    {slide.highlight && (
+                                      <p className="text-xs text-primary font-medium">{slide.highlight}</p>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setWelcomeSlideEditIndex(index);
+                                        setWelcomeSlideData({
+                                          title: slide.title || "",
+                                          description: slide.description || "",
+                                          icon: slide.icon || "",
+                                          highlight: slide.highlight || "",
+                                        });
+                                        setWelcomeSlideDialogOpen(true);
+                                      }}
+                                      data-testid={`button-edit-welcome-slide-${index}`}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const updated = [...(homePageContent?.welcomeSlides || [])];
+                                        updated.splice(index, 1);
+                                        updateHomePageMutation.mutate({ welcomeSlides: updated });
+                                      }}
+                                      data-testid={`button-delete-welcome-slide-${index}`}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
@@ -2847,6 +2999,119 @@ export default function Admin() {
               }}
               disabled={updateHomePageMutation.isPending}
               data-testid="button-save-faq"
+            >
+              {updateHomePageMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Welcome Slide Dialog */}
+      <Dialog open={welcomeSlideDialogOpen} onOpenChange={setWelcomeSlideDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{welcomeSlideEditIndex !== null ? "Edit" : "Add"} Welcome Slide</DialogTitle>
+            <DialogDescription>
+              Create an onboarding slide for new users
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="slideTitle">Title *</Label>
+              <Input
+                id="slideTitle"
+                value={welcomeSlideData.title}
+                onChange={(e) => setWelcomeSlideData({ ...welcomeSlideData, title: e.target.value })}
+                placeholder="Welcome to Artivio AI"
+                data-testid="input-slide-title"
+              />
+            </div>
+            <div>
+              <Label htmlFor="slideDescription">Description *</Label>
+              <Textarea
+                id="slideDescription"
+                value={welcomeSlideData.description}
+                onChange={(e) => setWelcomeSlideData({ ...welcomeSlideData, description: e.target.value })}
+                placeholder="Discover the power of AI-driven content creation..."
+                rows={3}
+                data-testid="input-slide-description"
+              />
+            </div>
+            <div>
+              <Label htmlFor="slideIcon">Icon (Lucide icon name, optional)</Label>
+              <Input
+                id="slideIcon"
+                value={welcomeSlideData.icon}
+                onChange={(e) => setWelcomeSlideData({ ...welcomeSlideData, icon: e.target.value })}
+                placeholder="Sparkles, Video, Image, Music, etc."
+                data-testid="input-slide-icon"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter a Lucide icon name (e.g., Sparkles, Video, Gift, Star)
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="slideHighlight">Highlight Text (optional)</Label>
+              <Input
+                id="slideHighlight"
+                value={welcomeSlideData.highlight}
+                onChange={(e) => setWelcomeSlideData({ ...welcomeSlideData, highlight: e.target.value })}
+                placeholder="Get started with 100 free credits!"
+                data-testid="input-slide-highlight"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Special highlighted text shown below the description
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWelcomeSlideDialogOpen(false)} data-testid="button-cancel-slide">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const trimmedTitle = welcomeSlideData.title.trim();
+                const trimmedDescription = welcomeSlideData.description.trim();
+                const trimmedIcon = welcomeSlideData.icon.trim();
+                const trimmedHighlight = welcomeSlideData.highlight.trim();
+                
+                if (!trimmedTitle || !trimmedDescription) {
+                  toast({ title: "Error", description: "Title and description are required", variant: "destructive" });
+                  return;
+                }
+                
+                const updated = [...(homePageContent?.welcomeSlides || [])];
+                const slideData: { id: string; title: string; description: string; icon?: string; highlight?: string } = {
+                  id: welcomeSlideEditIndex !== null ? (updated[welcomeSlideEditIndex]?.id || crypto.randomUUID()) : crypto.randomUUID(),
+                  title: trimmedTitle,
+                  description: trimmedDescription,
+                };
+                
+                if (trimmedIcon) {
+                  slideData.icon = trimmedIcon;
+                }
+                if (trimmedHighlight) {
+                  slideData.highlight = trimmedHighlight;
+                }
+                
+                if (welcomeSlideEditIndex !== null) {
+                  updated[welcomeSlideEditIndex] = slideData;
+                } else {
+                  updated.push(slideData);
+                }
+                
+                updateHomePageMutation.mutate({ welcomeSlides: updated });
+                setWelcomeSlideDialogOpen(false);
+              }}
+              disabled={updateHomePageMutation.isPending}
+              data-testid="button-save-slide"
             >
               {updateHomePageMutation.isPending ? (
                 <>
