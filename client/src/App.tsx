@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Switch, Route, useLocation, Link } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -48,6 +48,9 @@ import {
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { AIAssistantWidget } from "@/components/ai-assistant-widget";
+import { WelcomeModal } from "@/components/welcome-modal";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -213,7 +216,7 @@ function Router() {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { isAuthenticated, isLoading, user, logout, setUser } = useAuth();
   const [location] = useLocation();
 
   // Handle logout - clear React Query cache when redirected after logout
@@ -234,6 +237,46 @@ function AppContent() {
       console.log('[AUTH] ✓ Cache cleared and URL cleaned');
     }
   }, [location]);
+
+  // Welcome modal state
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  // Query to fetch welcome content (only when user is authenticated)
+  const { data: welcomeContent } = useQuery<{ welcomeVideoUrl: string | null; welcomeSlides: any[] }>({
+    queryKey: ['/api/welcome'],
+    queryFn: async () => {
+      const response = await fetch('/api/welcome');
+      if (!response.ok) throw new Error('Failed to fetch welcome content');
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  // Mutation to mark welcome as seen
+  const markWelcomeSeenMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/user/seen-welcome", {});
+    },
+    onSuccess: () => {
+      // Update local user state so the modal doesn't reopen
+      if (user) {
+        setUser({ ...user, hasSeenWelcome: true });
+      }
+    },
+  });
+
+  // Show welcome modal for authenticated users who haven't seen it yet
+  useEffect(() => {
+    if (isAuthenticated && user && !(user as any).hasSeenWelcome) {
+      setShowWelcome(true);
+    }
+  }, [isAuthenticated, user]);
+
+  // Handler for closing the welcome modal
+  const handleCloseWelcome = () => {
+    setShowWelcome(false);
+    markWelcomeSeenMutation.mutate();
+  };
 
   // Determine if we're on an "app page" that should show the sidebar layout
   // vs a "public page" that should show the traditional header/footer layout
@@ -285,10 +328,17 @@ function AppContent() {
     } as React.CSSProperties;
 
     return (
-      <SidebarProvider style={sidebarStyle}>
-        <div className="flex h-screen w-full overflow-x-hidden">
-          <AppSidebar />
-          <div className="flex flex-col flex-1 min-w-0">
+      <>
+        <WelcomeModal
+          isOpen={showWelcome}
+          onClose={handleCloseWelcome}
+          welcomeVideoUrl={welcomeContent?.welcomeVideoUrl || undefined}
+          slides={welcomeContent?.welcomeSlides}
+        />
+        <SidebarProvider style={sidebarStyle}>
+          <div className="flex h-screen w-full overflow-x-hidden">
+            <AppSidebar />
+            <div className="flex flex-col flex-1 min-w-0">
             <header className="flex items-center justify-between px-4 border-b border-sidebar-border h-14 flex-shrink-0 gap-3 bg-sidebar/50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
@@ -515,23 +565,32 @@ function AppContent() {
             <main className="flex-1 overflow-y-auto overflow-x-hidden">
               <Router />
             </main>
+            </div>
           </div>
-        </div>
-        <AIAssistantWidget />
-      </SidebarProvider>
+          <AIAssistantWidget />
+        </SidebarProvider>
+      </>
     );
   }
 
   // Traditional header/footer layout for public pages (landing, pricing, etc.)
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <ModernHeader />
-      <main className="flex-1 overflow-y-auto">
-        <Router />
-      </main>
-      <Footer />
-      <AIAssistantWidget />
-    </div>
+    <>
+      <WelcomeModal
+        isOpen={showWelcome}
+        onClose={handleCloseWelcome}
+        welcomeVideoUrl={welcomeContent?.welcomeVideoUrl || undefined}
+        slides={welcomeContent?.welcomeSlides}
+      />
+      <div className="flex flex-col min-h-screen bg-background">
+        <ModernHeader />
+        <main className="flex-1 overflow-y-auto">
+          <Router />
+        </main>
+        <Footer />
+        <AIAssistantWidget />
+      </div>
+    </>
   );
 }
 
