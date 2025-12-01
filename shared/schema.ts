@@ -1824,14 +1824,15 @@ export type UpdateBlogPost = z.infer<typeof updateBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
 
 // =====================================================
-// SOCIAL MEDIA HUB - Upload-Post Integration
+// SOCIAL MEDIA HUB - GetLate.dev Integration
 // =====================================================
 
-// Social profiles - links Artivio users to Upload-Post profiles
+// Social profiles - links Artivio users to GetLate.dev profiles
 export const socialProfiles = pgTable("social_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  uploadPostUsername: varchar("upload_post_username").notNull().unique(), // Username in Upload-Post system
+  getLateProfileId: varchar("getlate_profile_id"), // Profile ID in GetLate.dev system
+  uploadPostUsername: varchar("upload_post_username"), // Legacy: Username in Upload-Post system (deprecated)
   isActive: boolean("is_active").notNull().default(true),
   connectedAccountsCount: integer("connected_accounts_count").notNull().default(0),
   lastSyncAt: timestamp("last_sync_at"),
@@ -1839,7 +1840,7 @@ export const socialProfiles = pgTable("social_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => [
   uniqueIndex("social_profiles_user_idx").on(table.userId),
-  index("social_profiles_upload_post_idx").on(table.uploadPostUsername),
+  index("social_profiles_getlate_idx").on(table.getLateProfileId),
 ]);
 
 export const insertSocialProfileSchema = createInsertSchema(socialProfiles).omit({
@@ -1928,7 +1929,8 @@ export type SocialGoal = typeof socialGoals.$inferSelect;
 export const socialPosts = pgTable("social_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   socialProfileId: varchar("social_profile_id").notNull().references(() => socialProfiles.id, { onDelete: 'cascade' }),
-  uploadPostJobId: varchar("upload_post_job_id"), // Job ID from Upload-Post for scheduled posts
+  getLatePostId: varchar("getlate_post_id"), // Post ID from GetLate.dev for scheduled posts
+  uploadPostJobId: varchar("upload_post_job_id"), // Legacy: Job ID from Upload-Post (deprecated)
   postType: varchar("post_type").notNull(), // 'video', 'photo', 'text'
   platforms: text("platforms").array().notNull(), // Target platforms
   title: text("title").notNull(),
@@ -1953,7 +1955,7 @@ export const socialPosts = pgTable("social_posts", {
   index("social_posts_profile_idx").on(table.socialProfileId),
   index("social_posts_status_idx").on(table.status),
   index("social_posts_scheduled_idx").on(table.scheduledAt),
-  index("social_posts_job_id_idx").on(table.uploadPostJobId),
+  index("social_posts_getlate_id_idx").on(table.getLatePostId),
 ]);
 
 export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
@@ -1992,7 +1994,7 @@ export const socialAnalytics = pgTable("social_analytics", {
   engagement: integer("engagement"),
   profileViews: integer("profile_views"),
   postsPublished: integer("posts_published").notNull().default(0),
-  rawData: jsonb("raw_data"), // Full analytics response from Upload-Post
+  rawData: jsonb("raw_data"), // Full analytics response from GetLate.dev
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("social_analytics_profile_idx").on(table.socialProfileId),
