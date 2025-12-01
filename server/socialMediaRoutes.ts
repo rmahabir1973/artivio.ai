@@ -1715,6 +1715,57 @@ Response format:
             .values(goalData)
             .returning();
 
+          // Create posts from the AI-generated plan
+          const postsCreated: any[] = [];
+          const today = new Date();
+          
+          for (const postPlan of plan.posts) {
+            try {
+              // Calculate the scheduled date based on day number
+              const scheduledDate = new Date(today);
+              scheduledDate.setDate(today.getDate() + (postPlan.day - 1));
+              
+              // Parse time if provided (format: "09:00" or "14:30")
+              if (postPlan.time && typeof postPlan.time === 'string') {
+                const [hours, minutes] = postPlan.time.split(':').map(Number);
+                if (!isNaN(hours) && !isNaN(minutes)) {
+                  scheduledDate.setHours(hours, minutes, 0, 0);
+                }
+              }
+
+              const postData = {
+                socialProfileId: profile.id,
+                postType: postPlan.contentType || 'text',
+                platforms: [postPlan.platform?.toLowerCase() || filteredPlatforms[0]],
+                title: postPlan.captionIdea || postPlan.topic || 'AI-generated post',
+                description: postPlan.topic || null,
+                hashtags: Array.isArray(postPlan.hashtags) ? postPlan.hashtags : [],
+                scheduledAt: scheduledDate,
+                status: 'scheduled',
+                aiGenerated: true,
+                aiPromptUsed: `Goal: ${goal.trim()}`,
+              };
+
+              const [createdPost] = await db
+                .insert(socialPosts)
+                .values(postData)
+                .returning();
+              
+              postsCreated.push({
+                id: createdPost.id,
+                platform: postData.platforms[0],
+                caption: postData.title,
+                scheduledFor: scheduledDate.toISOString(),
+                status: 'scheduled',
+              });
+            } catch (postError) {
+              console.error('[Social AI] Error creating post:', postError);
+              // Continue with other posts
+            }
+          }
+
+          console.log(`[Social AI] Created ${postsCreated.length} posts from AI plan`);
+
           res.json({
             goal: {
               id: newGoal.id,
@@ -1725,6 +1776,7 @@ Response format:
               createdAt: newGoal.createdAt?.toISOString(),
             },
             plan,
+            postsCreated: postsCreated.length,
           });
         } else {
           return res.status(502).json({ message: 'AI response could not be parsed' });

@@ -134,14 +134,17 @@ export default function SocialStrategist() {
 
   const createGoalMutation = useMutation({
     mutationFn: async (goalData: any) => {
-      const response = await apiRequest("POST", "/api/social/goals", goalData);
+      // Call the AI plan generation endpoint which creates goals AND posts
+      const response = await apiRequest("POST", "/api/social/ai/generate-plan", goalData);
       return await response.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/social/goals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
+      const postsCount = data.postsCreated || 0;
       toast({
         title: "Strategy Created!",
-        description: "Your AI posting strategy is ready. Check your content calendar.",
+        description: `Your AI strategy is ready with ${postsCount} scheduled posts. Check your content calendar.`,
       });
       setStep(4);
     },
