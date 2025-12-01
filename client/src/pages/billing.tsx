@@ -3,8 +3,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CreditCard, ArrowUpRight } from "lucide-react";
+import { Loader2, CreditCard, ArrowUpRight, Share2, CheckCircle2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { fetchWithAuth } from "@/lib/authBridge";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -21,6 +22,19 @@ export default function BillingPage() {
 
   const { data: subscription, isLoading: subLoading } = useQuery<UserSubscription>({
     queryKey: ['/api/subscriptions/current'],
+    enabled: !!user,
+  });
+
+  const { data: socialPosterStatus, isLoading: socialPosterLoading } = useQuery<{
+    hasSocialPoster: boolean;
+    socialPosterSubscriptionId: string | null;
+  }>({
+    queryKey: ['/api/social/subscription-status'],
+    queryFn: async () => {
+      const response = await fetchWithAuth('/api/social/subscription-status');
+      if (!response.ok) return { hasSocialPoster: false, socialPosterSubscriptionId: null };
+      return response.json();
+    },
     enabled: !!user,
   });
 
@@ -43,7 +57,7 @@ export default function BillingPage() {
 
   const currentPlan = plans?.find(p => p.id === subscription?.planId);
 
-  if (plansLoading || subLoading) {
+  if (plansLoading || subLoading || socialPosterLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin" data-testid="loading-spinner" />
@@ -142,6 +156,65 @@ export default function BillingPage() {
           </CardFooter>
         </Card>
       )}
+
+      {/* Social Media Poster Add-On Section */}
+      <Card className="mt-8">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Share2 className="w-5 h-5" />
+                Social Media Poster
+              </CardTitle>
+              <CardDescription>Post to 9 platforms with AI-powered captions</CardDescription>
+            </div>
+            {socialPosterStatus?.hasSocialPoster ? (
+              <Badge variant="default" className="bg-green-600" data-testid="badge-social-poster-active">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Active
+              </Badge>
+            ) : (
+              <Badge variant="outline" data-testid="badge-social-poster-inactive">
+                Add-On
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {socialPosterStatus?.hasSocialPoster ? (
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Your Social Media Poster subscription is active. You can post to Instagram, TikTok, LinkedIn, YouTube, Facebook, X, Threads, Pinterest, and Bluesky.
+              </p>
+              <div className="flex gap-3">
+                <Button asChild variant="outline" data-testid="button-open-social-hub">
+                  <Link href="/social/connect">
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Open Social Media Hub
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Supercharge your content with automated social media posting across 9 platforms. Get AI-generated captions, a content calendar, and analytics dashboard.
+              </p>
+              <div className="flex items-center gap-4">
+                <div>
+                  <span className="text-2xl font-bold">$25</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <Button asChild data-testid="button-add-social-poster">
+                  <Link href="/social/upgrade">
+                    Add Social Media Poster
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
