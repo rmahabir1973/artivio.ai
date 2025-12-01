@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,9 @@ import {
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation, useSearch } from "wouter";
+import { fetchWithAuth } from "@/lib/authBridge";
+import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
 
 interface Platform {
   id: string;
@@ -126,20 +129,56 @@ interface SocialAccount {
   dailyLimit: number;
 }
 
+interface SubscriptionStatus {
+  hasSocialPoster: boolean;
+  status?: string;
+}
+
 export default function SocialConnect() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
+  const searchString = useSearch();
+  const [, setLocation] = useLocation();
+
+  const { data: subscriptionStatus, isLoading: statusLoading } = useQuery<SubscriptionStatus>({
+    queryKey: ["/api/social/subscription-status"],
+    queryFn: async () => {
+      const response = await fetchWithAuth("/api/social/subscription-status");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data.requiresSubscription) {
+          return { hasSocialPoster: false };
+        }
+        throw new Error("Failed to fetch subscription status");
+      }
+      return response.json();
+    },
+    enabled: !!user,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("success") === "true") {
+      toast({
+        title: "Social Media Poster activated!",
+        description: "You can now connect your social accounts and start posting.",
+      });
+      setLocation("/social/connect", { replace: true });
+    }
+  }, [searchString, toast, setLocation]);
 
   const { data: socialProfile, isLoading: profileLoading } = useQuery<any>({
     queryKey: ["/api/social/profile"],
-    enabled: !!user,
+    enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
     retry: 1,
   });
 
   const { data: connectedAccounts = [], isLoading: accountsLoading, refetch: refetchAccounts } = useQuery<SocialAccount[]>({
     queryKey: ["/api/social/accounts"],
-    enabled: !!user && !!socialProfile,
+    enabled: !!user && !!socialProfile && subscriptionStatus?.hasSocialPoster === true,
     retry: 1,
   });
 
@@ -220,6 +259,28 @@ export default function SocialConnect() {
   const getConnectedAccount = (platformId: string) => {
     return connectedAccounts.find(acc => acc.platform === platformId && acc.connected);
   };
+
+  if (statusLoading) {
+    return (
+      <div className="container mx-auto max-w-4xl py-8 px-4">
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground" data-testid="text-loading-status">
+            Checking subscription status...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!subscriptionStatus?.hasSocialPoster) {
+    return (
+      <SocialUpgradePrompt 
+        title="Unlock Social Media Connections"
+        description="Connect your social accounts and start posting AI-generated content to 9 platforms."
+      />
+    );
+  }
 
   if (profileLoading) {
     return (

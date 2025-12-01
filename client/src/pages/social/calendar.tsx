@@ -50,6 +50,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
 import { Link } from "wouter";
+import { fetchWithAuth } from "@/lib/authBridge";
+import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
 
 const PLATFORM_ICONS: Record<string, any> = {
   instagram: SiInstagram,
@@ -87,6 +89,11 @@ interface ScheduledPost {
   aiGenerated: boolean;
 }
 
+interface SubscriptionStatus {
+  hasSocialPoster: boolean;
+  status?: string;
+}
+
 export default function SocialCalendar() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -98,9 +105,27 @@ export default function SocialCalendar() {
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  const { data: subscriptionStatus, isLoading: statusLoading } = useQuery<SubscriptionStatus>({
+    queryKey: ["/api/social/subscription-status"],
+    queryFn: async () => {
+      const response = await fetchWithAuth("/api/social/subscription-status");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data.requiresSubscription) {
+          return { hasSocialPoster: false };
+        }
+        throw new Error("Failed to fetch subscription status");
+      }
+      return response.json();
+    },
+    enabled: !!user,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
   const { data: scheduledPosts = [], isLoading, refetch } = useQuery<ScheduledPost[]>({
     queryKey: ["/api/social/posts", format(weekStart, "yyyy-MM-dd")],
-    enabled: !!user,
+    enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
   });
 
   const deletePostMutation = useMutation({
@@ -172,6 +197,28 @@ export default function SocialCalendar() {
       default: return <FileText className="w-3 h-3" />;
     }
   };
+
+  if (statusLoading) {
+    return (
+      <div className="container mx-auto max-w-6xl py-8 px-4">
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground" data-testid="text-loading-status">
+            Checking subscription status...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!subscriptionStatus?.hasSocialPoster) {
+    return (
+      <SocialUpgradePrompt 
+        title="Unlock Content Calendar"
+        description="Plan and schedule your posts in advance with our intuitive drag-and-drop calendar interface."
+      />
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-6xl py-8 px-4">

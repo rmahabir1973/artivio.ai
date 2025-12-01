@@ -46,6 +46,8 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { fetchWithAuth } from "@/lib/authBridge";
+import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
 
 const PLATFORMS = [
   { id: "instagram", name: "Instagram", icon: SiInstagram },
@@ -86,6 +88,11 @@ interface PostGoal {
   createdAt: string;
 }
 
+interface SubscriptionStatus {
+  hasSocialPoster: boolean;
+  status?: string;
+}
+
 export default function SocialStrategist() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -97,14 +104,32 @@ export default function SocialStrategist() {
   const [businessDescription, setBusinessDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
 
+  const { data: subscriptionStatus, isLoading: statusLoading } = useQuery<SubscriptionStatus>({
+    queryKey: ["/api/social/subscription-status"],
+    queryFn: async () => {
+      const response = await fetchWithAuth("/api/social/subscription-status");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data.requiresSubscription) {
+          return { hasSocialPoster: false };
+        }
+        throw new Error("Failed to fetch subscription status");
+      }
+      return response.json();
+    },
+    enabled: !!user,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
   const { data: connectedAccounts = [] } = useQuery<any[]>({
     queryKey: ["/api/social/accounts"],
-    enabled: !!user,
+    enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
   });
 
   const { data: existingGoals = [], isLoading: goalsLoading } = useQuery<PostGoal[]>({
     queryKey: ["/api/social/goals"],
-    enabled: !!user,
+    enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
   });
 
   const createGoalMutation = useMutation({
@@ -159,6 +184,28 @@ export default function SocialStrategist() {
       targetAudience,
     });
   };
+
+  if (statusLoading) {
+    return (
+      <div className="container mx-auto max-w-2xl py-8 px-4">
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground" data-testid="text-loading-status">
+            Checking subscription status...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!subscriptionStatus?.hasSocialPoster) {
+    return (
+      <SocialUpgradePrompt 
+        title="Unlock AI Strategist"
+        description="Let AI create your perfect content strategy based on your goals."
+      />
+    );
+  }
 
   const renderStepContent = () => {
     switch (step) {
