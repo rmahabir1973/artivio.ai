@@ -110,6 +110,7 @@ import FlashSale from "@/pages/brand-builder/flash-sale";
 import Unboxing from "@/pages/brand-builder/unboxing";
 import LogoAnimation from "@/pages/brand-builder/logo-animation";
 import InfluencerAd from "@/pages/brand-builder/influencer-ad";
+import StockPhotos from "@/pages/stock-photos";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -184,6 +185,7 @@ function Router() {
       <Route path="/background-remover" component={BackgroundRemover} />
       <Route path="/video-editor" component={VideoEditor} />
       <Route path="/chat" component={Chat} />
+      <Route path="/stock-photos" component={StockPhotos} />
 
       {/* Account pages - require authentication */}
       <Route path="/history">

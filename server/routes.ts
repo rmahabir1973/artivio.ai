@@ -95,6 +95,7 @@ import {
   updateBlogPostSchema,
   promptRefineRequestSchema,
   assistantChatRequestSchema,
+  insertSavedStockImageSchema,
   type InsertSubscriptionPlan,
   type BlogPost
 } from "@shared/schema";
@@ -8971,6 +8972,282 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     } catch (error: any) {
       console.error('Story Studio advanced generation error:', error);
       res.status(500).json({ message: error.message || "Failed to start generation" });
+    }
+  });
+
+  // ==========================================
+  // STOCK PHOTOS API (Pixabay + Pexels)
+  // ==========================================
+  
+  // In-memory cache for stock photo search results (24-hour TTL)
+  const stockPhotoCache = new Map<string, { data: any; timestamp: number }>();
+  const STOCK_PHOTO_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  
+  // Cleanup expired cache entries periodically
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of stockPhotoCache.entries()) {
+      if (now - value.timestamp > STOCK_PHOTO_CACHE_TTL) {
+        stockPhotoCache.delete(key);
+      }
+    }
+  }, 60 * 60 * 1000); // Cleanup every hour
+  
+  // Search stock photos from Pixabay and/or Pexels
+  app.get('/api/stock-photos/search', requireJWT, async (req: any, res) => {
+    try {
+      const query = req.query.q as string || '';
+      const source = (req.query.source as string) || 'all';
+      const page = parseInt(req.query.page as string) || 1;
+      const perPage = Math.min(Math.max(parseInt(req.query.per_page as string) || 20, 3), 80);
+      const orientation = (req.query.orientation as string) || 'all';
+      const category = req.query.category as string;
+      const color = req.query.color as string;
+
+      if (!query) {
+        return res.status(400).json({ message: 'Search query is required' });
+      }
+      
+      // Check API key availability upfront
+      const pixabayKey = process.env.PIXABAY_API_KEY;
+      const pexelsKey = process.env.PEXELS_API_KEY;
+      
+      const pixabayRequested = source === 'all' || source === 'pixabay';
+      const pexelsRequested = source === 'all' || source === 'pexels';
+      
+      // Return 503 if any specifically requested provider lacks an API key
+      if (source === 'pixabay' && !pixabayKey) {
+        return res.status(503).json({ message: 'Pixabay service temporarily unavailable: API key not configured' });
+      }
+      if (source === 'pexels' && !pexelsKey) {
+        return res.status(503).json({ message: 'Pexels service temporarily unavailable: API key not configured' });
+      }
+      // For 'all' source, require at least one provider to be available
+      if (source === 'all' && !pixabayKey && !pexelsKey) {
+        return res.status(503).json({ message: 'Stock photo service temporarily unavailable: No API keys configured' });
+      }
+      
+      // Generate cache key
+      const cacheKey = `${query.toLowerCase()}-${source}-${page}-${perPage}-${orientation}-${category || ''}-${color || ''}`;
+      
+      // Check cache first
+      const cached = stockPhotoCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < STOCK_PHOTO_CACHE_TTL) {
+        return res.json(cached.data);
+      }
+
+      const results: any = { pixabay: null, pexels: null };
+      const promises: Promise<void>[] = [];
+
+      // Pixabay search
+      if (pixabayRequested && pixabayKey) {
+        const pixabayPromise = (async () => {
+          try {
+            const params = new URLSearchParams({
+              key: pixabayKey,
+              q: query,
+              page: page.toString(),
+              per_page: perPage.toString(),
+              safesearch: 'true',
+            });
+            if (orientation !== 'all') params.set('orientation', orientation);
+            if (category) params.set('category', category);
+            if (color) params.set('colors', color);
+
+            const response = await axios.get(`https://pixabay.com/api/?${params.toString()}`, {
+              timeout: 10000,
+            });
+
+            results.pixabay = {
+              total: response.data.totalHits,
+              images: response.data.hits.map((hit: any) => ({
+                id: hit.id.toString(),
+                source: 'pixabay',
+                previewUrl: hit.previewURL,
+                webformatUrl: hit.webformatURL,
+                largeUrl: hit.largeImageURL,
+                originalUrl: hit.imageURL || hit.largeImageURL,
+                width: hit.imageWidth,
+                height: hit.imageHeight,
+                tags: hit.tags,
+                photographer: hit.user,
+                photographerUrl: `https://pixabay.com/users/${hit.user}-${hit.user_id}/`,
+                pageUrl: hit.pageURL,
+                downloads: hit.downloads,
+                likes: hit.likes,
+              })),
+            };
+          } catch (error: any) {
+            console.error('Pixabay API error:', error.message);
+            results.pixabay = { error: error.message, total: 0, images: [] };
+          }
+        })();
+        promises.push(pixabayPromise);
+      }
+
+      // Pexels search
+      if (pexelsRequested && pexelsKey) {
+        const pexelsPromise = (async () => {
+          try {
+            const params = new URLSearchParams({
+              query,
+              page: page.toString(),
+              per_page: perPage.toString(),
+            });
+            if (orientation !== 'all') params.set('orientation', orientation);
+            if (color) params.set('color', color);
+
+            const response = await axios.get(`https://api.pexels.com/v1/search?${params.toString()}`, {
+              headers: { Authorization: pexelsKey },
+              timeout: 10000,
+            });
+
+            results.pexels = {
+              total: response.data.total_results,
+              images: response.data.photos.map((photo: any) => ({
+                id: photo.id.toString(),
+                source: 'pexels',
+                previewUrl: photo.src.tiny,
+                webformatUrl: photo.src.medium,
+                largeUrl: photo.src.large,
+                originalUrl: photo.src.original,
+                width: photo.width,
+                height: photo.height,
+                tags: photo.alt || '',
+                photographer: photo.photographer,
+                photographerUrl: photo.photographer_url,
+                pageUrl: photo.url,
+                avgColor: photo.avg_color,
+              })),
+            };
+          } catch (error: any) {
+            console.error('Pexels API error:', error.message);
+            results.pexels = { error: error.message, total: 0, images: [] };
+          }
+        })();
+        promises.push(pexelsPromise);
+      }
+
+      await Promise.all(promises);
+
+      // Combine results
+      const allImages = [
+        ...(results.pixabay?.images || []),
+        ...(results.pexels?.images || []),
+      ];
+
+      const responseData = {
+        query,
+        page,
+        perPage,
+        totalPixabay: results.pixabay?.total || 0,
+        totalPexels: results.pexels?.total || 0,
+        images: allImages,
+        sources: {
+          pixabay: pixabayRequested && pixabayKey ? { available: true, error: results.pixabay?.error } : { available: false, error: !pixabayKey ? 'API key not configured' : undefined },
+          pexels: pexelsRequested && pexelsKey ? { available: true, error: results.pexels?.error } : { available: false, error: !pexelsKey ? 'API key not configured' : undefined },
+        },
+      };
+      
+      // Cache the response
+      stockPhotoCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+      res.json(responseData);
+    } catch (error: any) {
+      console.error('Stock photos search error:', error);
+      res.status(500).json({ message: error.message || 'Failed to search stock photos' });
+    }
+  });
+
+  // Get user's saved stock images
+  app.get('/api/stock-photos/saved', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const offset = (page - 1) * limit;
+
+      const saved = await storage.getSavedStockImages(userId, limit, offset);
+      const total = await storage.countSavedStockImages(userId);
+
+      res.json({
+        images: saved,
+        total,
+        page,
+        limit,
+        hasMore: offset + saved.length < total,
+      });
+    } catch (error: any) {
+      console.error('Get saved stock images error:', error);
+      res.status(500).json({ message: error.message || 'Failed to get saved stock images' });
+    }
+  });
+
+  // Save a stock image to user's library
+  app.post('/api/stock-photos/save', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Validate request body with schema
+      const validationResult = insertSavedStockImageSchema.safeParse({
+        ...req.body,
+        userId, // Add userId from authenticated user
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: 'Invalid request data', 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const saved = await storage.saveStockImage(validationResult.data);
+
+      res.json({ success: true, image: saved });
+    } catch (error: any) {
+      // Handle duplicate
+      if (error.message?.includes('duplicate') || error.code === '23505') {
+        return res.status(409).json({ message: 'Image already saved to library' });
+      }
+      console.error('Save stock image error:', error);
+      res.status(500).json({ message: error.message || 'Failed to save stock image' });
+    }
+  });
+
+  // Remove a stock image from user's library
+  app.delete('/api/stock-photos/saved/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+
+      const deleted = await storage.deleteSavedStockImage(id, userId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Image not found or access denied' });
+      }
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Delete saved stock image error:', error);
+      res.status(500).json({ message: error.message || 'Failed to remove stock image' });
+    }
+  });
+
+  // Check if stock images are saved (bulk check)
+  app.post('/api/stock-photos/check-saved', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { images } = req.body; // Array of { source, externalId }
+
+      if (!Array.isArray(images)) {
+        return res.status(400).json({ message: 'images array is required' });
+      }
+
+      const savedIds = await storage.checkSavedStockImages(userId, images);
+      res.json({ savedIds });
+    } catch (error: any) {
+      console.error('Check saved stock images error:', error);
+      res.status(500).json({ message: error.message || 'Failed to check saved images' });
     }
   });
 

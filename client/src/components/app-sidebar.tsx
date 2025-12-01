@@ -48,6 +48,7 @@ import {
   Star,
   Share2,
   PlayCircle,
+  Images,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -157,6 +158,7 @@ const menuSections: MenuSection[] = [
     category: "tools",
     items: [
       { title: "AI Chat", url: "/chat", icon: MessageSquare },
+      { title: "Stock Photos", url: "/stock-photos", icon: Images },
       { title: "QR Generator", url: "/qr-generator", icon: QrCode },
     ],
   },

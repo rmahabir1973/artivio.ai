@@ -1124,6 +1124,50 @@ export const insertAudioConversionSchema = createInsertSchema(audioConversions).
 export type InsertAudioConversion = z.infer<typeof insertAudioConversionSchema>;
 export type AudioConversion = typeof audioConversions.$inferSelect;
 
+// Saved Stock Images table for user's stock photo library
+export const savedStockImages = pgTable("saved_stock_images", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  source: varchar("source").notNull(), // 'pixabay' or 'pexels'
+  externalId: varchar("external_id").notNull(), // ID from the source API
+  previewUrl: text("preview_url").notNull(), // Small preview image URL
+  webformatUrl: text("webformat_url").notNull(), // Medium resolution URL
+  largeUrl: text("large_url").notNull(), // Full resolution URL
+  originalUrl: text("original_url"), // Original/highest resolution URL
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  tags: text("tags"), // Comma-separated tags
+  photographer: varchar("photographer"), // Attribution
+  photographerUrl: text("photographer_url"), // Link to photographer profile
+  pageUrl: text("page_url"), // Link to original page
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("saved_stock_images_user_idx").on(table.userId),
+  index("saved_stock_images_source_idx").on(table.source),
+  uniqueIndex("saved_stock_images_user_external_idx").on(table.userId, table.source, table.externalId),
+]);
+
+export const insertSavedStockImageSchema = createInsertSchema(savedStockImages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSavedStockImage = z.infer<typeof insertSavedStockImageSchema>;
+export type SavedStockImage = typeof savedStockImages.$inferSelect;
+
+// Stock image search request validation
+export const stockImageSearchSchema = z.object({
+  query: z.string().min(1).max(100),
+  source: z.enum(['pixabay', 'pexels', 'all']).default('all'),
+  page: z.number().int().positive().default(1),
+  perPage: z.number().int().min(3).max(80).default(20),
+  orientation: z.enum(['all', 'horizontal', 'vertical']).default('all'),
+  category: z.string().optional(),
+  color: z.string().optional(),
+});
+
+export type StockImageSearchRequest = z.infer<typeof stockImageSearchSchema>;
+
 // Subscription Plans table
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

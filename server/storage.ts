@@ -113,6 +113,9 @@ import {
   type BlogPost,
   type InsertBlogPost,
   type UpdateBlogPost,
+  savedStockImages,
+  type SavedStockImage,
+  type InsertSavedStockImage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql, inArray, ilike, or, asc } from "drizzle-orm";
@@ -407,6 +410,13 @@ export interface IStorage {
   searchBlogPosts(query: string): Promise<BlogPost[]>;
   getBlogTags(): Promise<{ tag: string; count: number }[]>;
   getRelatedBlogPosts(category: string, excludeId: string, limit?: number): Promise<BlogPost[]>;
+
+  // Stock Photos operations
+  saveStockImage(image: InsertSavedStockImage): Promise<SavedStockImage>;
+  getSavedStockImages(userId: string, limit?: number, offset?: number): Promise<SavedStockImage[]>;
+  countSavedStockImages(userId: string): Promise<number>;
+  deleteSavedStockImage(id: string, userId: string): Promise<boolean>;
+  checkSavedStockImages(userId: string, images: Array<{ source: string; externalId: string }>): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2958,6 +2968,67 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(blogPosts.publishedDate))
       .limit(limit);
+  }
+
+  // Stock Photos operations
+  async saveStockImage(image: InsertSavedStockImage): Promise<SavedStockImage> {
+    const [saved] = await db
+      .insert(savedStockImages)
+      .values(image)
+      .returning();
+    return saved;
+  }
+
+  async getSavedStockImages(userId: string, limit: number = 50, offset: number = 0): Promise<SavedStockImage[]> {
+    return await db
+      .select()
+      .from(savedStockImages)
+      .where(eq(savedStockImages.userId, userId))
+      .orderBy(desc(savedStockImages.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async countSavedStockImages(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(savedStockImages)
+      .where(eq(savedStockImages.userId, userId));
+    return result[0]?.count || 0;
+  }
+
+  async deleteSavedStockImage(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(savedStockImages)
+      .where(
+        and(
+          eq(savedStockImages.id, id),
+          eq(savedStockImages.userId, userId)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  async checkSavedStockImages(userId: string, images: Array<{ source: string; externalId: string }>): Promise<string[]> {
+    if (images.length === 0) return [];
+    
+    // Get all saved images for this user in a single batched query
+    const allSaved = await db
+      .select({ 
+        source: savedStockImages.source, 
+        externalId: savedStockImages.externalId 
+      })
+      .from(savedStockImages)
+      .where(eq(savedStockImages.userId, userId));
+    
+    // Create a Set for O(1) lookups
+    const savedSet = new Set(allSaved.map(s => `${s.source}-${s.externalId}`));
+    
+    // Filter the input images to find which ones are saved
+    return images
+      .filter(img => savedSet.has(`${img.source}-${img.externalId}`))
+      .map(img => `${img.source}-${img.externalId}`);
   }
 }
 
