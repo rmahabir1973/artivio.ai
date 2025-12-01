@@ -92,31 +92,41 @@ export default function GettingStarted() {
   const slides = welcomeContent?.welcomeSlides?.length ? welcomeContent.welcomeSlides : defaultSlides;
   const rawVideoUrl = welcomeContent?.welcomeVideoUrl;
 
-  // Get video embed URL - returns null if URL is not from a supported provider
+  // Get video embed URL - supports PeerTube exclusively (per user requirement)
   const getVideoEmbedUrl = (url: string | null | undefined): string | null => {
     if (!url || url.trim() === '') return null;
-    
-    // YouTube
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.includes('youtu.be') 
-        ? url.split('youtu.be/')[1]?.split('?')[0]
-        : url.split('v=')[1]?.split('&')[0];
-      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+
+    try {
+      const lowerUrl = url.toLowerCase();
+
+      // PeerTube support (primary - user uses PeerTube exclusively)
+      if (lowerUrl.includes("/videos/watch/") || lowerUrl.includes("/w/") || lowerUrl.includes("/videos/embed/")) {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname;
+        
+        let videoId = "";
+        const watchMatch = url.match(/\/videos\/watch\/([a-zA-Z0-9-]+)/);
+        const shortMatch = url.match(/\/w\/([a-zA-Z0-9-]+)/);
+        const embedMatch = url.match(/\/videos\/embed\/([a-zA-Z0-9-]+)/);
+        
+        if (watchMatch) videoId = watchMatch[1];
+        else if (shortMatch) videoId = shortMatch[1];
+        else if (embedMatch) videoId = embedMatch[1];
+        
+        if (videoId) {
+          return `https://${hostname}/videos/embed/${videoId}`;
+        }
+      }
+
+      // Already an embed URL
+      if (url.includes("embed") || url.includes("player")) {
+        return url;
+      }
+
+      return null;
+    } catch {
+      return null;
     }
-    
-    // Vimeo
-    if (url.includes('vimeo.com')) {
-      const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
-      if (videoId) return `https://player.vimeo.com/video/${videoId}`;
-    }
-    
-    // Only allow URLs that are already embed URLs (contain 'embed')
-    if (url.includes('/embed/') || url.includes('/embed?')) {
-      return url;
-    }
-    
-    // Return null for unsupported video sources (like broken PeerTube links)
-    return null;
   };
 
   // Only show video if we have a valid embed URL

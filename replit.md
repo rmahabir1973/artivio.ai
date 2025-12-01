@@ -6,6 +6,11 @@ Artivio AI is a comprehensive platform for generating AI-powered videos, images,
 ## User Preferences
 I prefer simple language and detailed explanations. I want an iterative development process, where I'm asked before major changes are made. Do not make changes to the `server/storage.ts` or `client/src/App.tsx` files without explicit approval.
 
+## Recent Updates (Dec 1, 2025)
+- **PeerTube Video Exclusivity**: All video embeds use PeerTube ONLY (no YouTube/Vimeo). Supported URL patterns: `/videos/watch/`, `/w/`, `/videos/embed/`
+- **Getting Started Page**: Added sidebar link with PlayCircle icon. Shows welcome video (PeerTube) and platform highlights slideshow. Accessible after first-time welcome modal.
+- **Welcome Onboarding System**: WelcomeModal with video + slideshow for new users. Uses `hasSeenWelcome` flag in user context.
+
 ## Recent Updates (Nov 30, 2025)
 - **Fish Audio Voice Services Migration**: All voice services now use Fish Audio exclusively:
   - Voice Cloning: Uses Fish Audio's voice model creation API
