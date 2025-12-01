@@ -60,7 +60,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiInstagram, 
     color: "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400",
     description: "Share reels, stories, and posts",
-    dailyLimit: 3
+    dailyLimit: 50
   },
   { 
     id: "tiktok", 
@@ -68,7 +68,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiTiktok, 
     color: "bg-black dark:bg-zinc-900",
     description: "Post videos and engage with trends",
-    dailyLimit: 3
+    dailyLimit: 15
   },
   { 
     id: "linkedin", 
@@ -76,7 +76,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiLinkedin, 
     color: "bg-[#0A66C2]",
     description: "Professional content and networking",
-    dailyLimit: 2
+    dailyLimit: 150
   },
   { 
     id: "youtube", 
@@ -84,7 +84,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiYoutube, 
     color: "bg-[#FF0000]",
     description: "Long-form videos and Shorts",
-    dailyLimit: 2
+    dailyLimit: 10
   },
   { 
     id: "facebook", 
@@ -92,7 +92,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiFacebook, 
     color: "bg-[#1877F2]",
     description: "Posts, reels, and page content",
-    dailyLimit: 3
+    dailyLimit: 25
   },
   { 
     id: "x", 
@@ -100,7 +100,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiX, 
     color: "bg-black dark:bg-zinc-900",
     description: "Tweets and media posts",
-    dailyLimit: 5
+    dailyLimit: 50
   },
   { 
     id: "threads", 
@@ -108,7 +108,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiThreads, 
     color: "bg-black dark:bg-zinc-900",
     description: "Text and media updates",
-    dailyLimit: 3
+    dailyLimit: 50
   },
   { 
     id: "pinterest", 
@@ -116,7 +116,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiPinterest, 
     color: "bg-[#E60023]",
     description: "Pins and visual content",
-    dailyLimit: 5
+    dailyLimit: 20
   },
   { 
     id: "bluesky", 
@@ -124,7 +124,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiBluesky, 
     color: "bg-[#0085FF]",
     description: "Decentralized social posts",
-    dailyLimit: 5
+    dailyLimit: 50
   },
 ];
 

@@ -3,6 +3,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Select,
   SelectContent,
@@ -33,6 +37,9 @@ import {
   Plus,
   Eye,
   MoreHorizontal,
+  Send,
+  Hash,
+  X,
 } from "lucide-react";
 import { 
   SiInstagram, 
@@ -48,10 +55,16 @@ import {
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
-import { Link } from "wouter";
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, setHours, setMinutes } from "date-fns";
 import { fetchWithAuth } from "@/lib/authBridge";
 import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
+
+interface ConnectedAccount {
+  id: string;
+  platform: string;
+  accountUsername: string;
+  connected: boolean;
+}
 
 const PLATFORM_ICONS: Record<string, any> = {
   instagram: SiInstagram,
@@ -101,6 +114,16 @@ export default function SocialCalendar() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
   const [viewFilter, setViewFilter] = useState<string>("all");
+  
+  // Create Post Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [caption, setCaption] = useState("");
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [hashtagInput, setHashtagInput] = useState("");
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("12:00");
+  const [postMode, setPostMode] = useState<"schedule" | "now">("schedule");
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -127,6 +150,134 @@ export default function SocialCalendar() {
     queryKey: ["/api/social/posts", format(weekStart, "yyyy-MM-dd")],
     enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
   });
+
+  const { data: connectedAccounts = [] } = useQuery<ConnectedAccount[]>({
+    queryKey: ["/api/social/accounts"],
+    enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
+  });
+
+  const connectedPlatformsList = connectedAccounts.filter(acc => acc.connected);
+
+  const createPostMutation = useMutation({
+    mutationFn: async (postData: {
+      platforms: string[];
+      title: string;
+      hashtags: string[];
+      scheduledAt?: string;
+      publishNow?: boolean;
+    }) => {
+      const response = await apiRequest("POST", "/api/social/posts", {
+        ...postData,
+        postType: "text",
+        status: postData.publishNow ? "publishing" : "scheduled",
+      });
+      const result = await response.json();
+      
+      // If publishing now, call the publish endpoint
+      if (postData.publishNow && result.post?.id) {
+        await apiRequest("POST", `/api/social/posts/${result.post.id}/publish`);
+      }
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
+      resetCreateForm();
+      setShowCreateModal(false);
+      toast({
+        title: variables.publishNow ? "Publishing..." : "Post Scheduled",
+        description: variables.publishNow 
+          ? "Your post is being published now." 
+          : "Your post has been scheduled successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create post",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetCreateForm = () => {
+    setCaption("");
+    setSelectedPlatforms([]);
+    setHashtags([]);
+    setHashtagInput("");
+    setScheduleDate("");
+    setScheduleTime("12:00");
+    setPostMode("schedule");
+  };
+
+  const handleAddHashtag = () => {
+    const tag = hashtagInput.trim().replace(/^#/, "");
+    if (tag && !hashtags.includes(tag)) {
+      setHashtags([...hashtags, tag]);
+      setHashtagInput("");
+    }
+  };
+
+  const handleRemoveHashtag = (tag: string) => {
+    setHashtags(hashtags.filter(h => h !== tag));
+  };
+
+  const togglePlatform = (platformId: string) => {
+    if (selectedPlatforms.includes(platformId)) {
+      setSelectedPlatforms(prev => prev.filter(p => p !== platformId));
+    } else {
+      setSelectedPlatforms(prev => [...prev, platformId]);
+    }
+  };
+
+  const handleCreatePost = () => {
+    if (!caption.trim()) {
+      toast({
+        title: "Missing Caption",
+        description: "Please enter a caption for your post.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (selectedPlatforms.length === 0) {
+      toast({
+        title: "No Platforms Selected",
+        description: "Please select at least one platform to post to.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (postMode === "schedule") {
+      if (!scheduleDate) {
+        toast({
+          title: "Missing Date",
+          description: "Please select a date to schedule your post.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const [hours, minutes] = scheduleTime.split(":").map(Number);
+      let scheduledAt = new Date(scheduleDate);
+      scheduledAt = setHours(scheduledAt, hours);
+      scheduledAt = setMinutes(scheduledAt, minutes);
+
+      createPostMutation.mutate({
+        platforms: selectedPlatforms,
+        title: caption,
+        hashtags,
+        scheduledAt: scheduledAt.toISOString(),
+        publishNow: false,
+      });
+    } else {
+      createPostMutation.mutate({
+        platforms: selectedPlatforms,
+        title: caption,
+        hashtags,
+        publishNow: true,
+      });
+    }
+  };
 
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
@@ -231,11 +382,13 @@ export default function SocialCalendar() {
             View and manage your scheduled social media posts.
           </p>
         </div>
-        <Button asChild className="gap-2">
-          <Link href="/social/strategist">
-            <Plus className="w-4 h-4" />
-            Create Content
-          </Link>
+        <Button 
+          className="gap-2"
+          onClick={() => setShowCreateModal(true)}
+          data-testid="button-create-content"
+        >
+          <Plus className="w-4 h-4" />
+          Create Content
         </Button>
       </div>
 
@@ -445,6 +598,211 @@ export default function SocialCalendar() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Post Modal */}
+      <Dialog open={showCreateModal} onOpenChange={(open) => {
+        if (!open) resetCreateForm();
+        setShowCreateModal(open);
+      }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Create New Post
+            </DialogTitle>
+            <DialogDescription>
+              Create and schedule a post to your connected social media accounts.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Caption */}
+            <div className="space-y-2">
+              <Label htmlFor="caption">Caption</Label>
+              <Textarea
+                id="caption"
+                placeholder="What's on your mind? Write your post content here..."
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                className="min-h-[100px] resize-none"
+                data-testid="input-caption"
+              />
+              <p className="text-xs text-muted-foreground">
+                {caption.length} characters
+              </p>
+            </div>
+
+            {/* Platform Selection */}
+            <div className="space-y-2">
+              <Label>Select Platforms</Label>
+              {connectedPlatformsList.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No connected accounts. Please connect your social media accounts first.
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {connectedPlatformsList.map((account) => {
+                    const PlatformIcon = PLATFORM_ICONS[account.platform];
+                    const isSelected = selectedPlatforms.includes(account.platform);
+                    return (
+                      <button
+                        key={account.id}
+                        type="button"
+                        onClick={() => togglePlatform(account.platform)}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-all ${
+                          isSelected 
+                            ? "border-primary bg-primary/10" 
+                            : "border-border hover-elevate"
+                        }`}
+                        data-testid={`button-platform-${account.platform}`}
+                      >
+                        <div className={`w-8 h-8 ${PLATFORM_COLORS[account.platform]} rounded-lg flex items-center justify-center`}>
+                          {PlatformIcon && <PlatformIcon className="w-4 h-4 text-white" />}
+                        </div>
+                        <span className="text-xs capitalize">{account.platform}</span>
+                        {isSelected && (
+                          <div className="w-2 h-2 bg-primary rounded-full" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Hashtags */}
+            <div className="space-y-2">
+              <Label htmlFor="hashtags">Hashtags</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="hashtags"
+                    placeholder="Add hashtag"
+                    value={hashtagInput}
+                    onChange={(e) => setHashtagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddHashtag();
+                      }
+                    }}
+                    className="pl-9"
+                    data-testid="input-hashtag"
+                  />
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleAddHashtag}
+                  data-testid="button-add-hashtag"
+                >
+                  Add
+                </Button>
+              </div>
+              {hashtags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {hashtags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="gap-1">
+                      #{tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveHashtag(tag)}
+                        className="hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Post Mode Selection */}
+            <div className="space-y-3">
+              <Label>When to Post</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={postMode === "schedule" ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setPostMode("schedule")}
+                  data-testid="button-mode-schedule"
+                >
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  Schedule
+                </Button>
+                <Button
+                  type="button"
+                  variant={postMode === "now" ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setPostMode("now")}
+                  data-testid="button-mode-now"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Post Now
+                </Button>
+              </div>
+            </div>
+
+            {/* Schedule Date/Time */}
+            {postMode === "schedule" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={scheduleDate}
+                    onChange={(e) => setScheduleDate(e.target.value)}
+                    min={format(new Date(), "yyyy-MM-dd")}
+                    data-testid="input-schedule-date"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="time">Time</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    data-testid="input-schedule-time"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetCreateForm();
+                setShowCreateModal(false);
+              }}
+              data-testid="button-cancel-create"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreatePost}
+              disabled={createPostMutation.isPending || !caption.trim() || selectedPlatforms.length === 0}
+              data-testid="button-submit-post"
+            >
+              {createPostMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : postMode === "now" ? (
+                <Send className="w-4 h-4 mr-2" />
+              ) : (
+                <CalendarIcon className="w-4 h-4 mr-2" />
+              )}
+              {postMode === "now" ? "Post Now" : "Schedule Post"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
