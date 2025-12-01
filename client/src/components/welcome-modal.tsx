@@ -180,8 +180,11 @@ export function WelcomeModal({
   isOpen,
   onClose,
   welcomeVideoUrl,
-  slides = DEFAULT_SLIDES,
+  slides: propSlides,
 }: WelcomeModalProps) {
+  // Use DEFAULT_SLIDES if slides is undefined, null, or empty array
+  const slides = propSlides && propSlides.length > 0 ? propSlides : DEFAULT_SLIDES;
+  
   const [phase, setPhase] = useState<"video" | "slideshow">(
     welcomeVideoUrl ? "video" : "slideshow"
   );

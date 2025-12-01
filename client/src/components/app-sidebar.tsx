@@ -47,6 +47,7 @@ import {
   Package,
   Star,
   Share2,
+  PlayCircle,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -94,6 +95,7 @@ const menuSections: MenuSection[] = [
     category: "main",
     items: [
       { title: "Home", url: "/dashboard", icon: Home },
+      { title: "Getting Started", url: "/getting-started", icon: PlayCircle },
       { title: "My Library", url: "/history", icon: Library },
       { title: "Tutorials", url: "/tutorials", icon: GraduationCap },
     ],

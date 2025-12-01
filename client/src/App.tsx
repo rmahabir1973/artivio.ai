@@ -98,6 +98,7 @@ import Newsletter from "@/pages/newsletter";
 import Blog from "@/pages/blog";
 import BlogPost from "@/pages/blog-post";
 import Tutorials from "@/pages/tutorials";
+import GettingStarted from "@/pages/getting-started";
 import BrandBuilder from "@/pages/brand-builder";
 import ProductAd from "@/pages/brand-builder/product-ad";
 import Showcase from "@/pages/brand-builder/showcase";
@@ -129,6 +130,7 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/tutorials" component={Tutorials} />
+      <Route path="/getting-started" component={GettingStarted} />
       <Route path="/brand-builder" component={BrandBuilder} />
       <Route path="/brand-builder/product-ad" component={ProductAd} />
       <Route path="/brand-builder/showcase" component={Showcase} />
@@ -304,6 +306,7 @@ function AppContent() {
     '/billing',
     '/story-studio',
     '/tutorials',
+    '/getting-started',
     '/brand-builder',
   ];
   
