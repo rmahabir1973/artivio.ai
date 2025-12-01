@@ -127,6 +127,7 @@ export interface IStorage {
   deductCreditsAtomic(userId: string, cost: number): Promise<User | null>;
   addCreditsAtomic(userId: string, amount: number): Promise<User | undefined>;
   deleteUser(userId: string): Promise<void>;
+  updateUser(userId: string, updates: Partial<User>): Promise<User | undefined>;
 
   // API Key operations (round-robin system)
   getAllApiKeys(): Promise<ApiKey[]>;
@@ -484,6 +485,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(userId: string): Promise<void> {
     await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async updateUser(userId: string, updates: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 
   // API Key operations

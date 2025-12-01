@@ -6944,6 +6944,38 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // ========== WELCOME ONBOARDING ROUTES ==========
+
+  // Public: Get welcome onboarding content (video URL and slides)
+  app.get('/api/welcome', async (req, res) => {
+    try {
+      const content = await storage.getHomePageContent();
+      
+      res.json({
+        welcomeVideoUrl: content?.welcomeVideoUrl || null,
+        welcomeSlides: content?.welcomeSlides || [],
+      });
+    } catch (error) {
+      console.error('Error fetching welcome content:', error);
+      res.status(500).json({ message: "Failed to fetch welcome content" });
+    }
+  });
+
+  // Mark user as having seen the welcome onboarding
+  app.post('/api/user/seen-welcome', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Update user's hasSeenWelcome flag
+      await storage.updateUser(userId, { hasSeenWelcome: true });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating seen welcome status:', error);
+      res.status(500).json({ message: "Failed to update welcome status" });
+    }
+  });
+
   // ========== ANNOUNCEMENT ROUTES ==========
 
   // Get active announcements for current user
