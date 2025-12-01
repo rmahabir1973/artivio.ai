@@ -1,0 +1,117 @@
+2025-11-30 21:36:01.69
+0f3f913e
+User
+hasUser: true,
+
+2025-11-30 21:36:01.69
+0f3f913e
+User
+userId: '49729939',
+2025-11-30 21:36:01.69
+0f3f913e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-30 21:36:01.69
+0f3f913e
+User
+cursor: 'eyJjcmVhdGVkQXQiOiIyMDI1LTExLTMwVDE5OjE5OjM0LjE3OFoiLCJpZCI6IjBlMmU0NzBjLTc4ZDgtNGJjZC1iZjNhLTRlODBjMDU5YWU0OCJ9'
+2025-11-30 21:36:01.69
+0f3f913e
+User
+[/api/generations] Request received {
+2025-11-30 21:36:01.69
+0f3f913e
+User
+isPaginated: true,
+2025-11-30 21:36:01.69
+0f3f913e
+User
+[/api/generations] Querying database for userId: 49729939
+2025-11-30 21:36:01.75
+0f3f913e
+User
+[/api/generations] Paginated query completed in 51ms, found 15 generations, hasMore: true
+2025-11-30 21:36:01.75
+0f3f913e
+User
+2:36:01 AM [express] GET /api/generations 304 in 151ms :: {"items":[{"id":"cbd0fc20-ea57-4c31-86c1-f…
+2025-11-30 21:36:09.78
+0f3f913e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-30 21:36:09.83
+0f3f913e
+User
+2:36:09 AM [express] GET /api/generations/79304f40-4db3-48b1-b723-89be2dad8397/tags 200 in 74ms :: []
+2025-11-30 21:36:29.27
+0f3f913e
+User
+2:36:29 AM [express] GET /api/announcements/active 304 in 25ms :: []
+2025-11-30 21:37:08.34
+0f3f913e
+User
+2:37:08 AM [express] GET /api/pricing 304 in 164ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-11-30 21:37:29.36
+0f3f913e
+User
+2:37:29 AM [express] GET /api/announcements/active 304 in 22ms :: []
+2025-11-30 21:37:39.83
+0f3f913e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-30 21:37:48.33
+0f3f913e
+User
+2:37:48 AM [express] POST /api/prompts/refine 200 in 8518ms :: {"original":"Artivio AI, the all in o…
+2025-11-30 21:38:02.76
+0f3f913e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-11-30 21:38:02.85
+0f3f913e
+User
+2:38:02 AM [express] POST /api/generate/image 200 in 105ms :: {"generationId":"d2d1e618-b515-479c-a7…
+2025-11-30 21:38:02.87
+0f3f913e
+User
+📞 Sending callback URL to Kie.ai for image d2d1e618-b515-479c-a7b0-2ecff5fd8325: https://artivio.ai/api/callback/kie/d2d1e618-b515-479c-a7b0-2ecff5fd8325
+2025-11-30 21:38:02.91
+0f3f913e
+User
+}
+2025-11-30 21:38:02.91
+0f3f913e
+User
+"resolution": "2K",
+2025-11-30 21:38:02.91
+0f3f913e
+User
+"callBackUrl": "https://artivio.ai/api/callback/kie/d2d1e618-b515-479c-a7b0-2ecff5fd8325",
+2025-11-30 21:38:02.91
+0f3f913e
+User
+"aspect_ratio": "9:16",
+2025-11-30 21:38:02.91
+0f3f913e
+User
+"input": {
+2025-11-30 21:38:02.91
+0f3f913e
+User
+"prompt": "A stunning photorealistic digital illustration of Artivio AI, the all-in-one AI platform, visualized as a sleek, futuristic command center interface floating in a vast, glowing data cosmos. The scene is masterfully composed with dynamic symmetry and leading lines drawing the eye to the central holographic display. Volumetric lighting and soft rim light effects highlight intricate details of the interface, with translucent panels, shimmering data streams, and interactive icons. The background features a deep space nebula with swirling particles of light, creating a sense of infinite possibility. Rendered in ultra-high definition, 8K resolution, with meticulous attention to textures and luminous materials, evoking the style of Syd Mead and Beeple. Award-winning masterpiece, hyper-detailed, cinematic quality.",
+2025-11-30 21:38:02.91
+0f3f913e
+User
+🔵 Kie.ai API Request to /api/v1/jobs/createTask: {
+2025-11-30 21:38:02.91
+0f3f913e
+User
+}
+2025-11-30 21:38:02.91
+0f3f913e
+User
+"model": "nano-banana-pro",
+2025-11-30 21:38:02.91
+0f3f913e
+User
+"output_format": "PNG"

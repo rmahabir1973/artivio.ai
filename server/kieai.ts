@@ -798,7 +798,9 @@ export async function generateImage(params: {
     // Nano Banana - uses /api/v1/jobs/createTask (Bytedance Playground API)
     const aspectRatio = parameters.aspectRatio || '1:1';
     const resolution = parameters.resolution || '1K';
-    const outputFormat = parameters.outputFormat || 'png';
+    // CRITICAL: Kie.ai API expects lowercase output format (e.g., "png", "webp", "jpeg")
+    // Frontend sends uppercase "PNG", so normalize to lowercase
+    const outputFormat = (parameters.outputFormat || 'png').toLowerCase();
     
     // Build input object
     const inputPayload: any = {
