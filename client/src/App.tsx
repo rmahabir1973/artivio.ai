@@ -115,6 +115,7 @@ import SocialConnect from "@/pages/social/connect";
 import SocialStrategist from "@/pages/social/strategist";
 import SocialCalendar from "@/pages/social/calendar";
 import SocialAnalytics from "@/pages/social/analytics";
+import SocialUpgrade from "@/pages/social/upgrade";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -192,6 +193,7 @@ function Router() {
       <Route path="/stock-photos" component={StockPhotos} />
 
       {/* Social Media Hub - require authentication */}
+      <Route path="/social/upgrade" component={SocialUpgrade} />
       <Route path="/social/connect">
         <ProtectedRoute><SocialConnect /></ProtectedRoute>
       </Route>
