@@ -427,8 +427,12 @@ export function registerSocialMediaRoutes(app: Express) {
         platform as SocialPlatform
       );
 
+      // Generate Artivio proxy URL for white-label experience
+      const baseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
+      const proxyUrl = `${baseUrl}/social/oauth-redirect?platform=${platform}&url=${encodeURIComponent(invite.inviteUrl)}`;
+
       res.json({
-        authUrl: invite.inviteUrl,
+        authUrl: proxyUrl,
         inviteId: invite._id,
         platform,
         expiresAt: invite.expiresAt,
