@@ -45,6 +45,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Topaz Video Upscaler**: Standalone page for AI-powered video upscaling.
 -   **Social Media Hub**: AI Strategist, Content Calendar, and Analytics Dashboard for 9 social platforms.
 -   **Social Media Poster Add-on**: $25/month subscription (Stripe Product: prod_TWdKgoLE1kfn4o, Price: price_1SZa3PKvkQlROMzf7X2POgZX) powered by GetLate.dev API for social posting. Supports 10 platforms (Instagram, TikTok, LinkedIn, YouTube, Facebook, X, Threads, Pinterest, Bluesky, Reddit). Uses platform invite flow for OAuth connections. All social endpoints gated behind `requireSocialPoster` middleware.
+-   **Multi-Platform Posting**: Content Calendar supports scheduling posts to multiple platforms simultaneously with per-platform content type selection (post, story, reel, short, carousel, thread), platform-specific options (privacy settings, first comment, draft mode), and namespaced `platformSpecificData` storage to avoid field collisions. UI shows all target platforms in calendar cards with icon stacking.
 
 ### System Design Choices
 The project features a modular structure with a database schema supporting users, generations, conversations, and API keys. Video processing uses server-side FFmpeg with asynchronous job processing. Landing page content is managed via a singleton database row with JSONB. The generation queue provides real-time monitoring and smart retry functionality.

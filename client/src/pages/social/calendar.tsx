@@ -110,13 +110,24 @@ const PLATFORM_COLORS: Record<string, string> = {
   bluesky: "bg-[#0085FF]",
 };
 
+interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  thumbnailUrl?: string;
+  mimeType?: string;
+}
+
 interface ScheduledPost {
   id: string;
-  platform: string;
+  platform: string;  // Primary platform (first in array) for backward compat
+  platforms?: string[];  // All target platforms
   caption: string;
   hashtags: string[];
   mediaType: string;
-  mediaUrl?: string;
+  mediaUrl?: string;  // Legacy single media URL
+  mediaItems?: MediaItem[];  // Array of media items for carousels etc.
+  contentType?: string;  // Content type (post, story, reel, etc.)
+  platformSpecificData?: Record<string, Record<string, any>>;  // Per-platform namespaced data
   scheduledFor: string;
   status: string;
   aiGenerated: boolean;
@@ -148,9 +159,25 @@ export default function SocialCalendar() {
   // New state for enhanced modal
   const [contentType, setContentType] = useState<string>("post");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [platformSpecificData, setPlatformSpecificData] = useState<Record<string, any>>({});
+  // Platform-specific data is namespaced per platform: { instagram: { firstComment: "..." }, youtube: { privacyStatus: "public" } }
+  const [platformSpecificData, setPlatformSpecificData] = useState<Record<string, Record<string, any>>>({});
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to get/set platform-specific data for a given platform and field
+  const getPlatformFieldValue = (platform: string, fieldKey: string) => {
+    return platformSpecificData[platform]?.[fieldKey] ?? '';
+  };
+  
+  const setPlatformFieldValue = (platform: string, fieldKey: string, value: any) => {
+    setPlatformSpecificData(prev => ({
+      ...prev,
+      [platform]: {
+        ...prev[platform],
+        [fieldKey]: value
+      }
+    }));
+  };
 
   // Get common content types across all selected platforms
   const availableContentTypes = useMemo(() => {
@@ -260,7 +287,7 @@ export default function SocialCalendar() {
       publishNow?: boolean;
       contentType?: string;
       mediaItems?: { name: string; type: string; size: number }[];
-      platformSpecificData?: Record<string, any>;
+      platformSpecificData?: Record<string, Record<string, any>>; // Nested per-platform structure
     }) => {
       try {
         // Create the post first
@@ -370,9 +397,33 @@ export default function SocialCalendar() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Update platform-specific field - applies to all platforms that use this field
   const updatePlatformSpecificField = useCallback((key: string, value: any) => {
-    setPlatformSpecificData(prev => ({ ...prev, [key]: value }));
-  }, []);
+    setPlatformSpecificData(prev => {
+      const updated = { ...prev };
+      // Apply this field value to all selected platforms that have this field
+      selectedPlatforms.forEach(platform => {
+        const fields = getPlatformSpecificFields(platform as SocialPlatform, contentType as ContentType);
+        if (fields.some(f => f.key === key)) {
+          if (!updated[platform]) {
+            updated[platform] = {};
+          }
+          updated[platform][key] = value;
+        }
+      });
+      return updated;
+    });
+  }, [selectedPlatforms, contentType]);
+  
+  // Get the current value for a field (from first platform that has it)
+  const getFieldValue = useCallback((key: string) => {
+    for (const platform of selectedPlatforms) {
+      if (platformSpecificData[platform]?.[key] !== undefined) {
+        return platformSpecificData[platform][key];
+      }
+    }
+    return '';
+  }, [selectedPlatforms, platformSpecificData]);
 
   const handleAddHashtag = () => {
     const tag = hashtagInput.trim().replace(/^#/, "");
@@ -390,6 +441,14 @@ export default function SocialCalendar() {
     if (selectedPlatforms.includes(platformId)) {
       const newPlatforms = selectedPlatforms.filter(p => p !== platformId);
       setSelectedPlatforms(newPlatforms);
+      
+      // Clear platformSpecificData for deselected platform
+      setPlatformSpecificData(prev => {
+        const updated = { ...prev };
+        delete updated[platformId];
+        return updated;
+      });
+      
       // Reset content type if no longer valid for remaining platforms
       if (newPlatforms.length > 0) {
         const newAvailableTypes = newPlatforms.reduce((common, platform) => {
@@ -446,10 +505,19 @@ export default function SocialCalendar() {
       return;
     }
 
-    // Check for required platform-specific fields
-    const missingRequiredFields = allPlatformSpecificFields
-      .filter(({ field }) => field.required && !platformSpecificData[field.key])
-      .map(({ field }) => field.label);
+    // Check for required platform-specific fields (per platform)
+    const missingRequiredFields: string[] = [];
+    selectedPlatforms.forEach(platform => {
+      const fields = getPlatformSpecificFields(platform as SocialPlatform, contentType as ContentType);
+      fields.forEach(field => {
+        if (field.required && !platformSpecificData[platform]?.[field.key]) {
+          const fieldLabel = `${field.label} (${platform})`;
+          if (!missingRequiredFields.includes(fieldLabel)) {
+            missingRequiredFields.push(fieldLabel);
+          }
+        }
+      });
+    });
     
     if (missingRequiredFields.length > 0) {
       toast({
@@ -543,7 +611,9 @@ export default function SocialCalendar() {
     return scheduledPosts.filter(post => {
       const postDate = parseISO(post.scheduledFor);
       const matchesDay = isSameDay(postDate, date);
-      const matchesPlatform = viewFilter === "all" || post.platform === viewFilter;
+      // Support multi-platform posts: check if viewFilter matches any platform in the array
+      const postPlatforms = post.platforms || [post.platform];
+      const matchesPlatform = viewFilter === "all" || postPlatforms.includes(viewFilter);
       return matchesDay && matchesPlatform;
     });
   };
@@ -682,7 +752,8 @@ export default function SocialCalendar() {
                     </p>
                   ) : (
                     posts.map((post) => {
-                      const PlatformIcon = PLATFORM_ICONS[post.platform];
+                      // Get all platforms for this post
+                      const postPlatforms = post.platforms || [post.platform];
                       return (
                         <button
                           key={post.id}
@@ -691,8 +762,25 @@ export default function SocialCalendar() {
                           data-testid={`button-post-${post.id}`}
                         >
                           <div className="flex items-center gap-1 mb-1">
-                            <div className={`w-5 h-5 ${PLATFORM_COLORS[post.platform]} rounded flex items-center justify-center`}>
-                              {PlatformIcon && <PlatformIcon className="w-3 h-3 text-white" />}
+                            {/* Show all platform icons for multi-platform posts */}
+                            <div className="flex -space-x-1">
+                              {postPlatforms.slice(0, 3).map((platform, idx) => {
+                                const Icon = PLATFORM_ICONS[platform];
+                                return (
+                                  <div 
+                                    key={platform}
+                                    className={`w-5 h-5 ${PLATFORM_COLORS[platform]} rounded flex items-center justify-center border border-background`}
+                                    style={{ zIndex: 3 - idx }}
+                                  >
+                                    {Icon && <Icon className="w-3 h-3 text-white" />}
+                                  </div>
+                                );
+                              })}
+                              {postPlatforms.length > 3 && (
+                                <div className="w-5 h-5 bg-muted rounded flex items-center justify-center border border-background text-[10px] font-medium">
+                                  +{postPlatforms.length - 3}
+                                </div>
+                              )}
                             </div>
                             <span className="text-xs text-muted-foreground">
                               {format(parseISO(post.scheduledFor), "h:mm a")}
@@ -700,7 +788,7 @@ export default function SocialCalendar() {
                           </div>
                           <p className="text-xs line-clamp-2">{post.caption}</p>
                           <div className="flex items-center gap-1 mt-1">
-                            <MediaTypeIcon type={post.mediaType} />
+                            <MediaTypeIcon type={post.contentType || post.mediaType} />
                             <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(post.status)}`} />
                           </div>
                         </button>
@@ -720,30 +808,77 @@ export default function SocialCalendar() {
             <>
               <DialogHeader>
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 ${PLATFORM_COLORS[selectedPost.platform]} rounded-lg flex items-center justify-center`}>
-                    {PLATFORM_ICONS[selectedPost.platform] && 
-                      <span className="text-white">
-                        {(() => {
-                          const Icon = PLATFORM_ICONS[selectedPost.platform];
-                          return <Icon className="w-5 h-5" />;
-                        })()}
-                      </span>
-                    }
-                  </div>
+                  {/* Show all platform icons for multi-platform posts */}
+                  {(() => {
+                    const postPlatforms = selectedPost.platforms || [selectedPost.platform];
+                    return (
+                      <div className="flex -space-x-2">
+                        {postPlatforms.map((platform, idx) => {
+                          const Icon = PLATFORM_ICONS[platform];
+                          return (
+                            <div 
+                              key={platform}
+                              className={`w-10 h-10 ${PLATFORM_COLORS[platform]} rounded-lg flex items-center justify-center border-2 border-background`}
+                              style={{ zIndex: postPlatforms.length - idx }}
+                            >
+                              {Icon && <Icon className="w-5 h-5 text-white" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                   <div>
                     <DialogTitle className="capitalize">
-                      {selectedPost.platform} Post
+                      {(() => {
+                        const postPlatforms = selectedPost.platforms || [selectedPost.platform];
+                        if (postPlatforms.length === 1) {
+                          return `${postPlatforms[0]} Post`;
+                        }
+                        return `Multi-Platform Post (${postPlatforms.length})`;
+                      })()}
                     </DialogTitle>
                     <DialogDescription className="flex items-center gap-2">
                       <Clock className="w-3 h-3" />
                       {format(parseISO(selectedPost.scheduledFor), "MMM d, yyyy 'at' h:mm a")}
+                      {selectedPost.contentType && selectedPost.contentType !== 'post' && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {selectedPost.contentType.charAt(0).toUpperCase() + selectedPost.contentType.slice(1)}
+                        </Badge>
+                      )}
                     </DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
               
               <div className="space-y-4 py-4">
-                {selectedPost.mediaUrl && (
+                {/* Media Items (for carousels/galleries) */}
+                {selectedPost.mediaItems && selectedPost.mediaItems.length > 0 ? (
+                  <div className={selectedPost.mediaItems.length === 1 ? "" : "grid grid-cols-2 gap-2"}>
+                    {selectedPost.mediaItems.slice(0, 4).map((item, i) => (
+                      <div key={i} className="aspect-video bg-muted rounded-lg overflow-hidden relative">
+                        {item.type === "video" ? (
+                          <video 
+                            src={item.url} 
+                            controls 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <img 
+                            src={item.url} 
+                            alt={`Post media ${i + 1}`} 
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        {i === 3 && selectedPost.mediaItems!.length > 4 && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-medium">
+                            +{selectedPost.mediaItems!.length - 4} more
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : selectedPost.mediaUrl && (
                   <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                     {selectedPost.mediaType === "video" ? (
                       <video 
@@ -774,14 +909,52 @@ export default function SocialCalendar() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge className={getStatusColor(selectedPost.status)}>
                     {selectedPost.status}
                   </Badge>
                   {selectedPost.aiGenerated && (
                     <Badge variant="outline">AI Generated</Badge>
                   )}
+                  {/* Show target platforms */}
+                  {selectedPost.platforms && selectedPost.platforms.length > 1 && (
+                    <span className="text-xs text-muted-foreground">
+                      Posting to: {selectedPost.platforms.join(', ')}
+                    </span>
+                  )}
                 </div>
+                
+                {/* Platform-Specific Data (if available) */}
+                {selectedPost.platformSpecificData && Object.keys(selectedPost.platformSpecificData).length > 0 && (
+                  <div className="space-y-2">
+                    <Separator />
+                    <p className="text-xs font-medium text-muted-foreground">Platform Options</p>
+                    <div className="space-y-2">
+                      {Object.entries(selectedPost.platformSpecificData).map(([platform, fields]) => {
+                        const PlatformIcon = PLATFORM_ICONS[platform];
+                        const fieldEntries = Object.entries(fields as Record<string, any>).filter(([_, v]) => v !== null && v !== undefined && v !== '');
+                        if (fieldEntries.length === 0) return null;
+                        return (
+                          <div key={platform} className="flex items-start gap-2 bg-muted/50 rounded p-2">
+                            {PlatformIcon && (
+                              <div className={`w-5 h-5 ${PLATFORM_COLORS[platform]} rounded flex items-center justify-center flex-shrink-0`}>
+                                <PlatformIcon className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                            <div className="text-xs space-y-1">
+                              {fieldEntries.map(([key, value]) => (
+                                <div key={key} className="flex gap-1">
+                                  <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                  <span className="font-medium">{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
               
               <DialogFooter className="gap-2">
@@ -880,9 +1053,26 @@ export default function SocialCalendar() {
                   <Label htmlFor="content-type">Content Type</Label>
                   <Select 
                     value={contentType} 
-                    onValueChange={(value) => {
-                      setContentType(value);
+                    onValueChange={(newContentType) => {
+                      setContentType(newContentType);
                       setMediaFiles([]);
+                      // Prune platformSpecificData to only keep fields valid for new content type
+                      setPlatformSpecificData(prev => {
+                        const pruned: Record<string, Record<string, any>> = {};
+                        selectedPlatforms.forEach(platform => {
+                          const validFields = getPlatformSpecificFields(platform as SocialPlatform, newContentType as ContentType);
+                          const validKeys = validFields.map(f => f.key);
+                          if (prev[platform]) {
+                            pruned[platform] = {};
+                            Object.entries(prev[platform]).forEach(([key, value]) => {
+                              if (validKeys.includes(key)) {
+                                pruned[platform][key] = value;
+                              }
+                            });
+                          }
+                        });
+                        return pruned;
+                      });
                     }}
                     data-testid="select-content-type"
                   >
@@ -1081,7 +1271,7 @@ export default function SocialCalendar() {
                           id={`field-${field.key}`}
                           placeholder={field.placeholder}
                           maxLength={field.maxLength}
-                          value={platformSpecificData[field.key] || ''}
+                          value={getFieldValue(field.key) || ''}
                           onChange={(e) => updatePlatformSpecificField(field.key, e.target.value)}
                           data-testid={`input-${field.key}`}
                         />
@@ -1092,7 +1282,7 @@ export default function SocialCalendar() {
                           id={`field-${field.key}`}
                           placeholder={field.placeholder}
                           maxLength={field.maxLength}
-                          value={platformSpecificData[field.key] || ''}
+                          value={getFieldValue(field.key) || ''}
                           onChange={(e) => updatePlatformSpecificField(field.key, e.target.value)}
                           className="min-h-[80px] resize-none"
                           data-testid={`textarea-${field.key}`}
@@ -1101,7 +1291,7 @@ export default function SocialCalendar() {
                       
                       {field.type === 'select' && field.options && (
                         <Select 
-                          value={platformSpecificData[field.key] || ''} 
+                          value={getFieldValue(field.key) || ''} 
                           onValueChange={(value) => updatePlatformSpecificField(field.key, value)}
                         >
                           <SelectTrigger data-testid={`select-${field.key}`}>
@@ -1129,7 +1319,7 @@ export default function SocialCalendar() {
                           <span className="text-sm text-muted-foreground">{field.helpText}</span>
                           <Switch
                             id={`field-${field.key}`}
-                            checked={platformSpecificData[field.key] || false}
+                            checked={getFieldValue(field.key) || false}
                             onCheckedChange={(checked) => updatePlatformSpecificField(field.key, checked)}
                             data-testid={`switch-${field.key}`}
                           />

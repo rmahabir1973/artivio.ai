@@ -16,6 +16,14 @@ import {
   updateSocialPostSchema,
 } from "@shared/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { 
+  PLATFORM_CONFIGS, 
+  OPTIMAL_POSTING_TIMES, 
+  CONTENT_MIX_RECOMMENDATIONS, 
+  getContentTypes, 
+  type ContentType, 
+  type SocialPlatform as PlatformType 
+} from "../shared/socialPlatformConfig";
 
 const ARTIVIO_LOGO_URL = "https://artivio.ai/logo.png";
 
@@ -782,6 +790,7 @@ export function registerSocialMediaRoutes(app: Express) {
       const mappedPosts = filteredPosts.map(post => ({
         id: post.id,
         platform: (post.platforms as string[])?.[0] || 'unknown',
+        platforms: post.platforms || [],
         caption: post.title || '',
         hashtags: post.hashtags || [],
         mediaType: post.mediaType || 'text',
@@ -789,6 +798,10 @@ export function registerSocialMediaRoutes(app: Express) {
         scheduledFor: post.scheduledAt?.toISOString() || new Date().toISOString(),
         status: post.status,
         aiGenerated: post.aiGenerated || false,
+        // New fields for enhanced content types
+        contentType: post.contentType || post.postType || 'post',
+        mediaItems: post.mediaItems || null,
+        platformSpecificData: post.platformSpecificData || null,
       }));
 
       res.json(mappedPosts);
@@ -830,6 +843,10 @@ export function registerSocialMediaRoutes(app: Express) {
         aiGenerated: req.body.aiGenerated || false,
         aiPromptUsed: req.body.aiPromptUsed || null,
         generationId: req.body.generationId || null,
+        // New fields for enhanced content types
+        contentType: req.body.contentType || null,
+        mediaItems: req.body.mediaItems || null,
+        platformSpecificData: req.body.platformSpecificData || null,
       };
 
       const [post] = await db
@@ -1634,24 +1651,106 @@ Response format:
 
       const durationDays = duration === '1week' ? 7 : duration === '2weeks' ? 14 : 30;
 
-      const systemPrompt = `You are an expert social media strategist. Create a detailed content plan for a business.
+      // Build platform-specific configuration info for AI prompt
+      const platformInfo = filteredPlatforms.map((platform: string) => {
+        const config = PLATFORM_CONFIGS[platform as PlatformType];
+        const contentTypes = getContentTypes(platform as PlatformType);
+        const optimalTimes = OPTIMAL_POSTING_TIMES[platform as PlatformType];
+        const contentMix = CONTENT_MIX_RECOMMENDATIONS[platform as PlatformType];
+        
+        if (!config) return null;
+        
+        // Get valid content types and their descriptions
+        const validContentTypes = contentTypes.map(ct => ({
+          id: ct.id,
+          name: ct.name,
+          description: ct.description,
+          requiresMedia: ct.requiresMedia
+        }));
+        
+        // Get optimal times for each content type
+        const timesInfo = Object.entries(optimalTimes)
+          .filter(([_, times]) => (times as string[]).length > 0)
+          .map(([type, times]) => `${type}: ${(times as string[]).join(', ')}`);
+        
+        // Get content mix percentages (non-zero only)
+        const mixInfo = Object.entries(contentMix)
+          .filter(([_, pct]) => (pct as number) > 0)
+          .map(([type, pct]) => `${type}: ${pct}%`);
+        
+        return {
+          platform,
+          displayName: config.displayName,
+          maxCharacters: config.maxCharacters,
+          dailyLimit: config.dailyLimit,
+          contentTypes: validContentTypes.map(ct => ct.id),
+          contentTypeDetails: validContentTypes,
+          optimalTimes: timesInfo,
+          contentMix: mixInfo
+        };
+      }).filter(Boolean);
 
+      const platformConfigText = platformInfo.map((p: any) => `
+${p.displayName} (${p.platform}):
+  - Content Types: ${p.contentTypes.join(', ')}
+  - Character Limit: ${p.maxCharacters}
+  - Daily Post Limit: ${p.dailyLimit}
+  - Optimal Posting Times: ${p.optimalTimes.join('; ') || 'Flexible'}
+  - Recommended Content Mix: ${p.contentMix.join(', ') || 'Equal distribution'}
+  - Content Type Details:
+${p.contentTypeDetails.map((ct: any) => `    * ${ct.id}: ${ct.description}${ct.requiresMedia ? ' (requires media)' : ''}`).join('\n')}`
+      ).join('\n');
+
+      const systemPrompt = `You are an expert social media strategist. Create a detailed, optimized content plan for a business using platform-specific best practices.
+
+BUSINESS CONTEXT:
 Business: ${businessDescription || 'Not specified'}
 Goal: ${goal.trim()}
 Target audience: ${targetAudience || 'General audience'}
-Platforms: ${filteredPlatforms.join(', ')}
 Duration: ${durationDays} days
 
-Create a posting schedule with specific post ideas. For each day, suggest:
-- Optimal posting times
-- Content type (image, video, carousel, text)
-- Topic/theme
-- Brief caption idea
-- Relevant hashtags
+PLATFORM CONFIGURATIONS:
+${platformConfigText}
+
+CONTENT TYPE REFERENCE (use ONLY these valid values for contentType):
+- Instagram: 'post', 'reel', 'story', 'carousel'
+- YouTube: 'video', 'short'
+- TikTok: 'video'
+- LinkedIn: 'post', 'carousel'
+- Facebook: 'post', 'carousel', 'reel'
+- X/Twitter: 'post', 'thread'
+- Threads: 'post', 'thread'
+- Pinterest: 'pin'
+- Bluesky: 'post', 'thread'
+- Reddit: 'text', 'link', 'post'
+
+REQUIREMENTS:
+1. Use the EXACT contentType values from the reference above for each platform
+2. Follow the recommended content mix percentages for content type distribution
+3. Use the optimal posting times provided for each platform and content type
+4. Ensure captions respect the character limits for each platform
+5. Distribute posts evenly across the ${durationDays} days
+6. Create diverse content that supports the business goal
 
 IMPORTANT: Return ONLY valid JSON without any markdown formatting, code fences, or extra text.
+
 Response format:
-{"strategy": "Brief overall strategy explanation", "weeklyThemes": ["Theme 1", "Theme 2"], "posts": [{"day": 1, "platform": "instagram", "time": "09:00", "contentType": "image", "topic": "Topic", "captionIdea": "Caption", "hashtags": ["tag1"]}], "tips": ["Tip 1", "Tip 2"]}`;
+{
+  "strategy": "Brief overall strategy explanation based on the business goal",
+  "weeklyThemes": ["Theme 1", "Theme 2", "Theme 3"],
+  "posts": [
+    {
+      "day": 1,
+      "platform": "instagram",
+      "time": "09:00",
+      "contentType": "reel",
+      "topic": "Topic/Theme for this post",
+      "captionIdea": "Brief caption idea within platform character limits",
+      "hashtags": ["relevant", "hashtags"]
+    }
+  ],
+  "tips": ["Platform-specific tip 1", "Engagement tip 2"]
+}`;
 
       const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
@@ -1733,13 +1832,36 @@ Response format:
                 }
               }
 
+              // Determine the platform and get valid content type
+              const targetPlatform = postPlan.platform?.toLowerCase() || filteredPlatforms[0];
+              const platformConfig = PLATFORM_CONFIGS[targetPlatform as PlatformType];
+              const validContentTypes = platformConfig?.contentTypes.map(ct => ct.id) || ['post'];
+              
+              // Validate and normalize the content type
+              let contentType = postPlan.contentType || 'post';
+              if (!validContentTypes.includes(contentType as ContentType)) {
+                // Fall back to the first valid content type for this platform
+                contentType = validContentTypes[0];
+              }
+              
+              // Determine postType based on content type
+              let postType = 'text';
+              const contentTypeConfig = platformConfig?.contentTypes.find(ct => ct.id === contentType);
+              if (contentTypeConfig) {
+                if (contentTypeConfig.requiresMedia) {
+                  postType = contentTypeConfig.mediaTypes.includes('video') ? 'video' : 'photo';
+                }
+              }
+
               const postData = {
                 socialProfileId: profile.id,
-                postType: postPlan.contentType || 'text',
-                platforms: [postPlan.platform?.toLowerCase() || filteredPlatforms[0]],
+                postType,
+                contentType,
+                platforms: [targetPlatform],
                 title: postPlan.captionIdea || postPlan.topic || 'AI-generated post',
                 description: postPlan.topic || null,
                 hashtags: Array.isArray(postPlan.hashtags) ? postPlan.hashtags : [],
+                platformSpecificData: postPlan.platformSpecificData || null,
                 scheduledAt: scheduledDate,
                 status: 'scheduled',
                 aiGenerated: true,
@@ -1754,6 +1876,7 @@ Response format:
               postsCreated.push({
                 id: createdPost.id,
                 platform: postData.platforms[0],
+                contentType: postData.contentType,
                 caption: postData.title,
                 scheduledFor: scheduledDate.toISOString(),
                 status: 'scheduled',
