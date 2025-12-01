@@ -166,18 +166,32 @@ export default function SocialCalendar() {
       scheduledAt?: string;
       publishNow?: boolean;
     }) => {
-      const response = await apiRequest("POST", "/api/social/posts", {
-        ...postData,
-        postType: "text",
-        status: postData.publishNow ? "publishing" : "scheduled",
-      });
-      const result = await response.json();
-      
-      // If publishing now, call the publish endpoint
-      if (postData.publishNow && result.post?.id) {
-        await apiRequest("POST", `/api/social/posts/${result.post.id}/publish`);
+      try {
+        // Create the post first
+        const response = await apiRequest("POST", "/api/social/posts", {
+          ...postData,
+          postType: "text",
+          status: postData.publishNow ? "draft" : "scheduled",
+        });
+        
+        const result = await response.json();
+        
+        // If publishing now, call the publish endpoint
+        if (postData.publishNow) {
+          if (!result.post?.id) {
+            throw new Error("Post created but missing ID for publishing");
+          }
+          try {
+            await apiRequest("POST", `/api/social/posts/${result.post.id}/publish`);
+          } catch (publishError: any) {
+            throw new Error(publishError.message || "Post created but failed to publish immediately");
+          }
+        }
+        return result;
+      } catch (error: any) {
+        // Re-throw with a user-friendly message
+        throw new Error(error.message || "Failed to create post");
       }
-      return result;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
