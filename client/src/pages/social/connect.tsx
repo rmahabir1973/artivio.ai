@@ -121,7 +121,7 @@ const SUPPORTED_PLATFORMS: Platform[] = [
 ];
 
 interface SocialAccount {
-  id: number;
+  id: string;
   platform: string;
   platformAccountId: string;
   accountUsername: string;
@@ -252,16 +252,13 @@ export default function SocialConnect() {
     },
     onSuccess: (data: any) => {
       setConnectingPlatform(null);
-      if (data.authUrl) {
-        window.open(data.authUrl, "_blank", "width=600,height=700");
+      if (data.inviteUrl) {
+        window.open(data.inviteUrl, "_blank", "width=700,height=800");
         toast({
           title: "Connect Your Account",
-          description: "Complete the authorization in the popup window.",
+          description: "Complete the authorization in the popup. Then click 'Refresh' to sync your account.",
         });
       }
-      setTimeout(() => {
-        refetchAccounts();
-      }, 2000);
     },
     onError: (error: Error) => {
       setConnectingPlatform(null);
@@ -274,7 +271,7 @@ export default function SocialConnect() {
   });
 
   const disconnectAccountMutation = useMutation({
-    mutationFn: async (accountId: number) => {
+    mutationFn: async (accountId: string) => {
       return await apiRequest("DELETE", `/api/social/accounts/${accountId}`);
     },
     onSuccess: () => {

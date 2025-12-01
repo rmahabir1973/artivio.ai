@@ -78,7 +78,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 };
 
 interface ScheduledPost {
-  id: number;
+  id: string;
   platform: string;
   caption: string;
   hashtags: string[];
@@ -129,7 +129,7 @@ export default function SocialCalendar() {
   });
 
   const deletePostMutation = useMutation({
-    mutationFn: async (postId: number) => {
+    mutationFn: async (postId: string) => {
       return await apiRequest("DELETE", `/api/social/posts/${postId}`);
     },
     onSuccess: () => {
@@ -150,7 +150,7 @@ export default function SocialCalendar() {
   });
 
   const publishNowMutation = useMutation({
-    mutationFn: async (postId: number) => {
+    mutationFn: async (postId: string) => {
       const response = await apiRequest("POST", `/api/social/posts/${postId}/publish`);
       return await response.json();
     },
