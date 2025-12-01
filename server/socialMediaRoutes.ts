@@ -1,9 +1,9 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "./db";
 import { storage } from "./storage";
 import { requireJWT } from "./jwtMiddleware";
-import { uploadPostService, PLATFORM_DAILY_CAPS, type SocialPlatform } from "./uploadPost";
+import { uploadPostService, PLATFORM_DAILY_CAPS, type SocialPlatform, SOCIAL_POSTER_PRICE_ID } from "./uploadPost";
 import {
   socialProfiles,
   socialAccounts,
@@ -19,14 +19,73 @@ import { eq, and, desc, gte, lte } from "drizzle-orm";
 
 const ARTIVIO_LOGO_URL = "https://artivio.ai/logo.png";
 
+// Middleware to check if user has Social Media Poster access
+async function requireSocialPoster(req: any, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        message: 'Authentication required',
+        requiresSubscription: true,
+        priceId: SOCIAL_POSTER_PRICE_ID,
+      });
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user has Social Poster access
+    if (!user.hasSocialPoster) {
+      return res.status(403).json({ 
+        message: 'Social Media Poster subscription required',
+        requiresSubscription: true,
+        priceId: SOCIAL_POSTER_PRICE_ID,
+        upgradeUrl: '/social/upgrade',
+      });
+    }
+
+    next();
+  } catch (error: any) {
+    console.error('[Social] Subscription check failed:', error);
+    res.status(500).json({ message: 'Failed to verify subscription' });
+  }
+}
+
 export function registerSocialMediaRoutes(app: Express) {
   
+  // =====================================================
+  // SOCIAL POSTER SUBSCRIPTION STATUS
+  // =====================================================
+
+  // Check if user has Social Poster access (public endpoint for UI gating)
+  app.get('/api/social/subscription-status', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({
+        hasSocialPoster: user.hasSocialPoster || false,
+        socialPosterSubscriptionId: user.socialPosterSubscriptionId || null,
+        priceId: SOCIAL_POSTER_PRICE_ID,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error checking subscription status:', error);
+      res.status(500).json({ message: 'Failed to check subscription status' });
+    }
+  });
+
   // =====================================================
   // SOCIAL PROFILE MANAGEMENT
   // =====================================================
 
   // Get current user's social profile
-  app.get('/api/social/profile', requireJWT, async (req: any, res) => {
+  app.get('/api/social/profile', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       
@@ -66,7 +125,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Create/initialize social profile for user
-  app.post('/api/social/profile/init', requireJWT, async (req: any, res) => {
+  app.post('/api/social/profile/init', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const userEmail = req.user.email || '';
@@ -117,7 +176,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Get connect URL for linking social accounts
-  app.post('/api/social/connect-url', requireJWT, async (req: any, res) => {
+  app.post('/api/social/connect-url', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { platforms, redirectUrl } = req.body;
@@ -158,7 +217,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Sync connected accounts from Upload-Post
-  app.post('/api/social/sync-accounts', requireJWT, async (req: any, res) => {
+  app.post('/api/social/sync-accounts', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -246,7 +305,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Get connected accounts
-  app.get('/api/social/accounts', requireJWT, async (req: any, res) => {
+  app.get('/api/social/accounts', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -287,7 +346,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Connect a social account (generates auth URL)
-  app.post('/api/social/accounts/connect', requireJWT, async (req: any, res) => {
+  app.post('/api/social/accounts/connect', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { platform } = req.body;
@@ -330,7 +389,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Disconnect a social account
-  app.delete('/api/social/accounts/:accountId', requireJWT, async (req: any, res) => {
+  app.delete('/api/social/accounts/:accountId', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { accountId } = req.params;
@@ -388,7 +447,7 @@ export function registerSocialMediaRoutes(app: Express) {
   // =====================================================
 
   // Get or create goals
-  app.get('/api/social/goals', requireJWT, async (req: any, res) => {
+  app.get('/api/social/goals', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -429,7 +488,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Create or update goals
-  app.post('/api/social/goals', requireJWT, async (req: any, res) => {
+  app.post('/api/social/goals', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -491,7 +550,7 @@ export function registerSocialMediaRoutes(app: Express) {
   // =====================================================
 
   // Get all posts (with optional filters)
-  app.get('/api/social/posts', requireJWT, async (req: any, res) => {
+  app.get('/api/social/posts', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { status, startDate, endDate, limit = 50 } = req.query;
@@ -550,7 +609,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Create a new post
-  app.post('/api/social/posts', requireJWT, async (req: any, res) => {
+  app.post('/api/social/posts', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -596,7 +655,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Update a post
-  app.patch('/api/social/posts/:postId', requireJWT, async (req: any, res) => {
+  app.patch('/api/social/posts/:postId', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { postId } = req.params;
@@ -651,7 +710,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Delete a post
-  app.delete('/api/social/posts/:postId', requireJWT, async (req: any, res) => {
+  app.delete('/api/social/posts/:postId', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { postId } = req.params;
@@ -701,7 +760,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Schedule a post (sends to Upload-Post)
-  app.post('/api/social/posts/:postId/schedule', requireJWT, async (req: any, res) => {
+  app.post('/api/social/posts/:postId/schedule', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { postId } = req.params;
@@ -794,7 +853,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Publish a post immediately
-  app.post('/api/social/posts/:postId/publish', requireJWT, async (req: any, res) => {
+  app.post('/api/social/posts/:postId/publish', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { postId } = req.params;
@@ -885,7 +944,7 @@ export function registerSocialMediaRoutes(app: Express) {
   // =====================================================
 
   // Get analytics summary
-  app.get('/api/social/analytics', requireJWT, async (req: any, res) => {
+  app.get('/api/social/analytics', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { timeRange = '7days' } = req.query;
@@ -956,7 +1015,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Sync analytics from Upload-Post
-  app.post('/api/social/analytics/sync', requireJWT, async (req: any, res) => {
+  app.post('/api/social/analytics/sync', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -997,12 +1056,12 @@ export function registerSocialMediaRoutes(app: Express) {
   // =====================================================
 
   // Get platform daily caps
-  app.get('/api/social/platform-caps', requireJWT, async (req: any, res) => {
+  app.get('/api/social/platform-caps', requireJWT, requireSocialPoster, async (req: any, res) => {
     res.json({ caps: PLATFORM_DAILY_CAPS });
   });
 
   // Get Facebook pages for user
-  app.get('/api/social/facebook/pages', requireJWT, async (req: any, res) => {
+  app.get('/api/social/facebook/pages', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -1029,7 +1088,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Get LinkedIn pages for user
-  app.get('/api/social/linkedin/pages', requireJWT, async (req: any, res) => {
+  app.get('/api/social/linkedin/pages', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -1056,7 +1115,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Get Pinterest boards for user
-  app.get('/api/social/pinterest/boards', requireJWT, async (req: any, res) => {
+  app.get('/api/social/pinterest/boards', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -1083,7 +1142,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Get scheduled posts from Upload-Post
-  app.get('/api/social/scheduled', requireJWT, async (req: any, res) => {
+  app.get('/api/social/scheduled', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
 
@@ -1110,7 +1169,7 @@ export function registerSocialMediaRoutes(app: Express) {
   });
 
   // Get upload history from Upload-Post
-  app.get('/api/social/history', requireJWT, async (req: any, res) => {
+  app.get('/api/social/history', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const { page, limit } = req.query;
 
@@ -1135,7 +1194,7 @@ export function registerSocialMediaRoutes(app: Express) {
   // =====================================================
 
   // Generate AI caption and hashtags for a post
-  app.post('/api/social/ai/generate-caption', requireJWT, async (req: any, res) => {
+  app.post('/api/social/ai/generate-caption', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const { platform, contentType, topic, tone, targetAudience, includeEmoji, language } = req.body;
 
@@ -1279,7 +1338,7 @@ Response format:
   });
 
   // Generate AI content plan based on goals
-  app.post('/api/social/ai/generate-plan', requireJWT, async (req: any, res) => {
+  app.post('/api/social/ai/generate-plan', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { goal, platforms, duration, businessDescription, targetAudience } = req.body;
