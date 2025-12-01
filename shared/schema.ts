@@ -46,6 +46,7 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false), // For email verification
   emailVerificationToken: varchar("email_verification_token"), // Token for email verification
   emailVerificationExpires: timestamp("email_verification_expires"), // Token expiration time
+  hasSeenWelcome: boolean("has_seen_welcome").notNull().default(false), // Track if user has seen welcome onboarding
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -1554,6 +1555,16 @@ export const homePageContent = pgTable("home_page_content", {
   previewVideoBrandSocialPromo: text("preview_video_brand_social_promo"), // Brand Builder: Social Promo
   previewVideoBrandBeforeAfter: text("preview_video_brand_before_after"), // Brand Builder: Before & After
   previewVideoBrandShowcase: text("preview_video_brand_showcase"), // Brand Builder: Showcase
+  
+  // Welcome onboarding for new users
+  welcomeVideoUrl: text("welcome_video_url"), // Avatar/intro video URL for new user welcome
+  welcomeSlides: jsonb("welcome_slides").$type<{
+    id: string;
+    title: string;
+    description: string;
+    icon?: string; // Lucide icon name
+    highlight?: string; // Key benefit to emphasize
+  }[]>().default([]),
   
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 });
