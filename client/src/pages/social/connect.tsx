@@ -16,6 +16,7 @@ import {
   Info,
   Sparkles,
   Shield,
+  RefreshCw,
 } from "lucide-react";
 import { 
   SiInstagram, 
@@ -159,8 +160,38 @@ export default function SocialConnect() {
     refetchOnWindowFocus: false,
   });
 
+  const syncAccountsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/social/sync-accounts");
+      return await response.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+      if (data.accountCount > 0) {
+        toast({
+          title: "Accounts Synced",
+          description: `Found ${data.accountCount} connected account${data.accountCount > 1 ? 's' : ''}.`,
+        });
+      } else {
+        toast({
+          title: "No New Accounts",
+          description: "Complete the authorization in the popup to connect your account.",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      console.error('[Social] Sync error:', error);
+      toast({
+        title: "Sync Failed",
+        description: error.message || "Could not sync accounts. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     const params = new URLSearchParams(searchString);
+    
     if (params.get("success") === "true") {
       toast({
         title: "Social Media Poster activated!",
@@ -168,7 +199,17 @@ export default function SocialConnect() {
       });
       setLocation("/social/connect", { replace: true });
     }
-  }, [searchString, toast, setLocation]);
+    
+    const connectedPlatform = params.get("connected");
+    if (connectedPlatform && subscriptionStatus?.hasSocialPoster) {
+      toast({
+        title: "Syncing Account",
+        description: `Checking ${connectedPlatform} connection...`,
+      });
+      syncAccountsMutation.mutate();
+      setLocation("/social/connect", { replace: true });
+    }
+  }, [searchString, toast, setLocation, subscriptionStatus?.hasSocialPoster]);
 
   const { data: socialProfile, isLoading: profileLoading } = useQuery<any>({
     queryKey: ["/api/social/profile"],
@@ -344,13 +385,26 @@ export default function SocialConnect() {
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">
-          Connect Accounts
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Link your social media accounts to start scheduling AI-powered content.
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">
+            Connect Accounts
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Link your social media accounts to start scheduling AI-powered content.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => syncAccountsMutation.mutate()}
+          disabled={syncAccountsMutation.isPending}
+          className="gap-2 flex-shrink-0"
+          data-testid="button-refresh-accounts"
+        >
+          <RefreshCw className={`w-4 h-4 ${syncAccountsMutation.isPending ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       <Alert className="mb-6">

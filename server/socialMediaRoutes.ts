@@ -369,8 +369,26 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(503).json({ message: 'Social media integration is not configured' });
       }
 
+      // Build redirect URL to bring users back to Artivio after OAuth
+      // Priority: PRODUCTION_URL > request host > Replit env fallback
+      let baseUrl = process.env.PRODUCTION_URL;
+      if (!baseUrl) {
+        const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+        const host = req.get('host');
+        if (host) {
+          baseUrl = `${protocol}://${host}`;
+        } else if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+          baseUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+        } else {
+          baseUrl = 'https://artivio.ai';
+        }
+      }
+      const redirectUrl = `${baseUrl}/social/connect?connected=${platform}`;
+
       // Generate JWT URL for connecting this specific platform
       const result = await uploadPostService.generateJwtUrl(profile.uploadPostUsername, {
+        redirectUrl,
+        redirectButtonText: 'Return to Artivio',
         logoImage: ARTIVIO_LOGO_URL,
         connectTitle: `Connect ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
         connectDescription: `Link your ${platform} account to start posting with Artivio.`,
