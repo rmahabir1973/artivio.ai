@@ -252,8 +252,9 @@ export default function SocialConnect() {
     },
     onSuccess: (data: any) => {
       setConnectingPlatform(null);
-      if (data.inviteUrl) {
-        window.open(data.inviteUrl, "_blank", "noopener,noreferrer");
+      const connectUrl = data.authUrl || data.inviteUrl;
+      if (connectUrl) {
+        window.open(connectUrl, "_blank", "noopener,noreferrer");
         toast({
           title: "Authorization Link Opened",
           description: "Complete the connection in the new tab. Once done, click 'Refresh' to sync your account.",

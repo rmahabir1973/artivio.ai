@@ -1,0 +1,105 @@
+2025-12-01 14:18:28.99
+7598c26c
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: 'ceebf49b' }
+
+2025-12-01 14:18:29.06
+7598c26c
+User
+isAdmin: true
+2025-12-01 14:18:29.06
+7598c26c
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-01 14:18:29.06
+7598c26c
+User
+userId: '49729939',
+2025-12-01 14:18:29.06
+7598c26c
+User
+7:18:29 PM [express] GET /api/auth/bootstrap 200 in 70ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-12-01 14:18:29.20
+7598c26c
+User
+7:18:29 PM [express] GET /api/welcome 304 in 24ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-01 14:18:29.28
+7598c26c
+User
+}
+2025-12-01 14:18:29.28
+7598c26c
+User
+isPaginated: false,
+2025-12-01 14:18:29.28
+7598c26c
+User
+hasUser: true,
+2025-12-01 14:18:29.28
+7598c26c
+User
+userId: '49729939',
+2025-12-01 14:18:29.29
+7598c26c
+User
+7:18:29 PM [express] GET /api/pricing 304 in 107ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-12-01 14:18:35.31
+7598c26c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:18:35.33
+7598c26c
+User
+7:18:35 PM [express] GET /api/social/subscription-status 200 in 49ms :: {"hasSocialPoster":true,"soc…
+2025-12-01 14:18:35.44
+7598c26c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:18:35.54
+7598c26c
+User
+7:18:35 PM [express] GET /api/social/profile 200 in 131ms :: {"profile":{"id":"bbea3e34-e582-43f0-80…
+2025-12-01 14:18:35.68
+7598c26c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:18:35.75
+7598c26c
+User
+7:18:35 PM [express] GET /api/social/accounts 200 in 96ms :: []
+2025-12-01 14:18:37.32
+7598c26c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:18:37.39
+7598c26c
+User
+[GetLate] Fetching profiles
+2025-12-01 14:18:38.11
+7598c26c
+User
+[Social] Auto-linked GetLate profile: 692de851363442076b252193
+2025-12-01 14:18:38.11
+7598c26c
+User
+[GetLate] Creating platform invite for instagram on profile 692de851363442076b252193
+2025-12-01 14:18:38.85
+7598c26c
+User
+7:18:38 PM [express] POST /api/social/accounts/connect 200 in 1551ms :: {"authUrl":"https://getlate.…
+2025-12-01 14:21:42.78
+7598c26c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:21:42.83
+7598c26c
+User
+[GetLate] Creating platform invite for tiktok on profile 692de851363442076b252193
+2025-12-01 14:21:42.83
+7598c26c
+User
+[GetLate] Creating platform invite for tiktok on profile 692de851363442076b252193
+2025-12-01 14:21:43.67
+7598c26c
+User
+7:21:43 PM [express] POST /api/social/accounts/connect 200 in 3385ms :: {"authUrl":"https://getlate.…
