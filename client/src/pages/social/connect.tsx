@@ -1,10 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Loader2, 
   Link2, 
@@ -17,6 +24,7 @@ import {
   Sparkles,
   Shield,
   RefreshCw,
+  X,
 } from "lucide-react";
 import { 
   SiInstagram, 
@@ -141,6 +149,16 @@ export default function SocialConnect() {
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
   const searchString = useSearch();
   const [, setLocation] = useLocation();
+  
+  // Connection modal state
+  const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'waiting' | 'polling' | 'success' | 'timeout'>('waiting');
+  const [modalPlatform, setModalPlatform] = useState<Platform | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startDelayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialAccountCountRef = useRef<number>(0);
+  const pollCountRef = useRef<number>(0);
+  const MAX_POLL_ATTEMPTS = 60; // 5 minutes at 5-second intervals
 
   const { data: subscriptionStatus, isLoading: statusLoading } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/social/subscription-status"],
@@ -235,6 +253,89 @@ export default function SocialConnect() {
     }
   }, [subscriptionStatus?.hasSocialPoster, socialProfile, hasAutoSynced, syncAccountsMutation.isPending]);
 
+  // Stop polling and cleanup
+  const stopPolling = useCallback(() => {
+    // Clear the start delay timeout if modal is closed before polling starts
+    if (startDelayTimeoutRef.current) {
+      clearTimeout(startDelayTimeoutRef.current);
+      startDelayTimeoutRef.current = null;
+    }
+    // Clear the polling interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    pollCountRef.current = 0;
+  }, []);
+
+  // Close modal and cleanup
+  const closeConnectionModal = useCallback(() => {
+    stopPolling();
+    setShowConnectionModal(false);
+    setConnectionStatus('waiting');
+    setModalPlatform(null);
+  }, [stopPolling]);
+
+  // Poll for new accounts
+  const pollForNewAccount = useCallback(async () => {
+    pollCountRef.current += 1;
+    
+    if (pollCountRef.current >= MAX_POLL_ATTEMPTS) {
+      setConnectionStatus('timeout');
+      stopPolling();
+      return;
+    }
+
+    try {
+      // Sync accounts from GetLate
+      const syncResponse = await apiRequest("POST", "/api/social/sync-accounts");
+      const syncData = await syncResponse.json();
+      
+      // Check if we have more accounts than before
+      if (syncData.accountCount > initialAccountCountRef.current) {
+        setConnectionStatus('success');
+        stopPolling();
+        queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+        
+        // Auto-close after showing success
+        setTimeout(() => {
+          closeConnectionModal();
+        }, 2000);
+      } else {
+        setConnectionStatus('polling');
+      }
+    } catch (error) {
+      console.error('[Social] Poll error:', error);
+      // Continue polling on error
+      setConnectionStatus('polling');
+    }
+  }, [stopPolling, closeConnectionModal]);
+
+  // Start polling when modal opens
+  const startPolling = useCallback((platform: Platform, currentAccountCount: number) => {
+    // Clear any existing timers first
+    stopPolling();
+    
+    setModalPlatform(platform);
+    initialAccountCountRef.current = currentAccountCount;
+    pollCountRef.current = 0;
+    setConnectionStatus('waiting');
+    setShowConnectionModal(true);
+    
+    // Start polling after a short delay to give user time to complete OAuth
+    startDelayTimeoutRef.current = setTimeout(() => {
+      setConnectionStatus('polling');
+      pollingIntervalRef.current = setInterval(pollForNewAccount, 5000);
+    }, 3000);
+  }, [pollForNewAccount, stopPolling]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
+
   const initProfileMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/social/profile/init");
@@ -257,22 +358,22 @@ export default function SocialConnect() {
   });
 
   const connectAccountMutation = useMutation({
-    mutationFn: async (platform: string) => {
-      setConnectingPlatform(platform);
-      const response = await apiRequest("POST", "/api/social/accounts/connect", { platform });
-      return await response.json();
+    mutationFn: async (platform: Platform) => {
+      setConnectingPlatform(platform.id);
+      const response = await apiRequest("POST", "/api/social/accounts/connect", { platform: platform.id });
+      return { ...(await response.json()), platformObj: platform };
     },
     onSuccess: (data: any) => {
       setConnectingPlatform(null);
-      // Use the secure proxy URL (never the raw OAuth URL)
       const proxyUrl = data.proxyUrl;
+      const platform = data.platformObj as Platform;
+      
       if (proxyUrl) {
+        // Open OAuth in new tab
         window.open(proxyUrl, "_blank", "noopener,noreferrer");
-        toast({
-          title: "Authorization Link Opened",
-          description: "Complete the connection in the new tab. Once done, click 'Refresh' to sync your account.",
-          duration: 8000,
-        });
+        
+        // Show the connection modal with polling
+        startPolling(platform, connectedAccounts.length);
       } else {
         console.error('[Social] No proxy URL in response:', data);
         toast({
@@ -495,8 +596,8 @@ export default function SocialConnect() {
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => connectAccountMutation.mutate(platform.id)}
-                      disabled={isConnecting || connectAccountMutation.isPending}
+                      onClick={() => connectAccountMutation.mutate(platform)}
+                      disabled={isConnecting || connectAccountMutation.isPending || showConnectionModal}
                       className="gap-1"
                       data-testid={`button-connect-${platform.id}`}
                     >
@@ -542,6 +643,118 @@ export default function SocialConnect() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Connection Status Modal with Polling */}
+      <Dialog open={showConnectionModal} onOpenChange={(open) => !open && closeConnectionModal()}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-connection-status">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {modalPlatform && (
+                <>
+                  <div className={`w-10 h-10 rounded-lg ${modalPlatform.color} flex items-center justify-center`}>
+                    <modalPlatform.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span>Connecting to {modalPlatform.name}</span>
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Complete the authorization in the new tab that opened.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {connectionStatus === 'waiting' && (
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                  <ExternalLink className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium">Opening authorization page...</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    A new tab should open shortly
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {connectionStatus === 'polling' && (
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+                <div>
+                  <p className="font-medium">Waiting for authorization...</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Complete the login in the other tab. This will update automatically when done.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span>Checking every 5 seconds...</span>
+                </div>
+              </div>
+            )}
+            
+            {connectionStatus === 'success' && (
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-green-600 dark:text-green-400">
+                    Account Connected!
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Your {modalPlatform?.name} account has been successfully linked.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {connectionStatus === 'timeout' && (
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-amber-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-amber-600 dark:text-amber-400">
+                    Connection Timed Out
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    We didn't detect a new connection. You can close this and try again, or click "Check Now" if you completed the authorization.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setConnectionStatus('polling');
+                    pollCountRef.current = 0;
+                    pollingIntervalRef.current = setInterval(pollForNewAccount, 5000);
+                    pollForNewAccount();
+                  }}
+                  data-testid="button-check-connection"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Check Now
+                </Button>
+              </div>
+            )}
+          </div>
+          
+          {connectionStatus !== 'success' && (
+            <div className="flex justify-end">
+              <Button 
+                variant="ghost" 
+                onClick={closeConnectionModal}
+                data-testid="button-close-connection-modal"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
