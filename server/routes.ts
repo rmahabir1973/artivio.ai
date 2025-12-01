@@ -74,7 +74,7 @@ import {
   isSocialPosterSubscription,
   stripe,
 } from "./stripe";
-import { provisionUploadPostProfile, SOCIAL_POSTER_PROFILE_NAME } from "./uploadPost";
+import { getLateService } from "./getLate";
 import { z } from "zod";
 import { 
   generateVideoRequestSchema, 
@@ -935,7 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.warn('Warning: Failed to initialize public API routes:', error);
   }
 
-  // Register Social Media Hub routes (Upload-Post integration)
+  // Register Social Media Hub routes (GetLate.dev integration)
   try {
     registerSocialMediaRoutes(app);
   } catch (error) {
@@ -6214,8 +6214,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         return res.status(400).json({ message: "User already has Social Media Poster access" });
       }
 
-      // Provision Upload-Post profile
-      const result = await provisionUploadPostProfile(userId, targetUser.email || '');
+      // Check if GetLate is configured
+      if (!getLateService.isConfigured()) {
+        return res.status(503).json({ message: "Social media integration is not configured" });
+      }
+
+      // Provision GetLate profile
+      const userName = targetUser.firstName ? `${targetUser.firstName} ${targetUser.lastName || ''}`.trim() : undefined;
+      const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+      console.log(`[GetLate] Created profile: ${getLateProfile.name} for user: ${targetUser.email}`);
 
       // Create social profile in database
       const { db } = await import('./db');
@@ -6232,15 +6239,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         if (!existingProfile) {
           await tx.insert(socialProfiles).values({
             userId,
-            uploadPostUsername: result.uploadPostUsername,
+            getLateProfileId: getLateProfile._id,
             isActive: true,
           });
         } else {
-          // Update existing profile
+          // Update existing profile with GetLate ID
           await tx
             .update(socialProfiles)
             .set({ 
-              uploadPostUsername: result.uploadPostUsername,
+              getLateProfileId: getLateProfile._id,
               isActive: true 
             })
             .where(eq(socialProfiles.userId, userId));
@@ -6261,7 +6268,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       res.json({ 
         success: true,
         message: "Social Media Poster access granted",
-        uploadPostUsername: result.uploadPostUsername
+        getLateProfileId: getLateProfile._id
       });
     } catch (error: any) {
       console.error('Error provisioning Social Poster:', error);

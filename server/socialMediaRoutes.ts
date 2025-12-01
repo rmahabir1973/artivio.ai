@@ -239,8 +239,12 @@ export function registerSocialMediaRoutes(app: Express) {
     try {
       const userId = req.user.id;
 
+      if (!getLateService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
       // Get user's social profile
-      const [profile] = await db
+      let [profile] = await db
         .select()
         .from(socialProfiles)
         .where(eq(socialProfiles.userId, userId))
@@ -250,12 +254,19 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found' });
       }
 
-      if (!getLateService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
-      }
-
+      // Auto-link GetLate profile if missing
       if (!profile.getLateProfileId) {
-        return res.status(400).json({ message: 'GetLate profile not linked' });
+        const user = await storage.getUser(userId);
+        const userName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : undefined;
+        const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+        
+        await db
+          .update(socialProfiles)
+          .set({ getLateProfileId: getLateProfile._id })
+          .where(eq(socialProfiles.id, profile.id));
+        
+        profile = { ...profile, getLateProfileId: getLateProfile._id };
+        console.log(`[Social] Auto-linked GetLate profile during sync: ${getLateProfile._id}`);
       }
 
       // Get accounts from GetLate
@@ -366,27 +377,52 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(400).json({ message: 'Platform is required' });
       }
 
-      const [profile] = await db
+      if (!getLateService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      let [profile] = await db
         .select()
         .from(socialProfiles)
         .where(eq(socialProfiles.userId, userId))
         .limit(1);
 
+      // Auto-create profile if needed
       if (!profile) {
-        return res.status(404).json({ message: 'Social profile not found. Please initialize first.' });
+        const user = await storage.getUser(userId);
+        const userName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : undefined;
+        const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+        
+        const [newProfile] = await db
+          .insert(socialProfiles)
+          .values({
+            userId,
+            getLateProfileId: getLateProfile._id,
+            isActive: true,
+          })
+          .returning();
+        profile = newProfile;
+        console.log(`[Social] Auto-created profile with GetLate ID: ${getLateProfile._id}`);
       }
 
-      if (!getLateService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
-      }
-
+      // Auto-link GetLate profile if missing
       if (!profile.getLateProfileId) {
-        return res.status(400).json({ message: 'GetLate profile not linked. Please reinitialize.' });
+        const user = await storage.getUser(userId);
+        const userName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : undefined;
+        const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+        
+        await db
+          .update(socialProfiles)
+          .set({ getLateProfileId: getLateProfile._id })
+          .where(eq(socialProfiles.id, profile.id));
+        
+        profile = { ...profile, getLateProfileId: getLateProfile._id };
+        console.log(`[Social] Auto-linked GetLate profile: ${getLateProfile._id}`);
       }
 
       // Create platform invite via GetLate
       const { invite } = await getLateService.createPlatformInvite(
-        profile.getLateProfileId,
+        profile.getLateProfileId!,
         platform as SocialPlatform
       );
 

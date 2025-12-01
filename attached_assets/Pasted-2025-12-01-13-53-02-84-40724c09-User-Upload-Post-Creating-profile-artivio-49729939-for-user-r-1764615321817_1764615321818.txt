@@ -1,0 +1,148 @@
+2025-12-01 13:53:02.84
+40724c09
+User
+[Upload-Post] Creating profile: artivio_49729939 for user: ryan.mahabir@outlook.com
+2025-12-01 13:53:03.12
+40724c09
+User
+[ADMIN] Social Media Poster provisioned for ryan.mahabir@outlook.com by ryan.mahabir@outlook.com
+2025-12-01 13:53:03.12
+40724c09
+User
+6:53:03 PM [express] POST /api/admin/users/49729939/social-poster 200 in 1250ms :: {"success":true,"…
+2025-12-01 13:53:03.23
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:03.28
+40724c09
+User
+6:53:03 PM [express] GET /api/admin/users 200 in 72ms :: [{"id":"3f18c800-de2e-45e7-922a-23c6fbe23e0…
+2025-12-01 13:53:10.47
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:10.53
+40724c09
+User
+6:53:10 PM [express] PATCH /api/admin/users/49729939/credits 200 in 82ms :: {"id":"49729939","email"…
+2025-12-01 13:53:10.63
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:10.68
+40724c09
+User
+6:53:10 PM [express] GET /api/admin/users 200 in 70ms :: [{"id":"3f18c800-de2e-45e7-922a-23c6fbe23e0…
+2025-12-01 13:53:21.66
+40724c09
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '4cfa016b' }
+2025-12-01 13:53:21.71
+40724c09
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '4cfa016b-7724-4558-9cc4-bfcd51ea1fc2' }
+2025-12-01 13:53:21.73
+40724c09
+User
+isAdmin: true
+2025-12-01 13:53:21.73
+40724c09
+User
+tokenId: '4cfa016b',
+2025-12-01 13:53:21.73
+40724c09
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-01 13:53:21.73
+40724c09
+User
+}
+2025-12-01 13:53:21.73
+40724c09
+User
+userId: '49729939',
+2025-12-01 13:53:21.73
+40724c09
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-01 13:53:21.73
+40724c09
+User
+6:53:21 PM [express] GET /api/auth/bootstrap 200 in 73ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-12-01 13:53:21.87
+40724c09
+User
+6:53:21 PM [express] GET /api/welcome 304 in 26ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-01 13:53:21.87
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:21.87
+40724c09
+User
+6:53:21 PM [express] GET /api/announcements/active 304 in 26ms :: []
+2025-12-01 13:53:21.90
+40724c09
+User
+6:53:21 PM [express] GET /api/social/subscription-status 200 in 46ms :: {"hasSocialPoster":true,"soc…
+2025-12-01 13:53:22.04
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:22.14
+40724c09
+User
+6:53:22 PM [express] GET /api/social/profile 200 in 123ms :: {"profile":{"id":"bbea3e34-e582-43f0-80…
+2025-12-01 13:53:22.36
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:22.43
+40724c09
+User
+6:53:22 PM [express] GET /api/social/accounts 304 in 90ms :: []
+2025-12-01 13:53:32.96
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:33.03
+40724c09
+User
+6:53:33 PM [express] GET /api/social/goals 304 in 94ms :: []
+2025-12-01 13:53:35.33
+40724c09
+User
+6:53:35 PM [express] GET /api/social/posts/2025-11-30 200 in 3ms
+2025-12-01 13:53:40.34
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:40.39
+40724c09
+User
+6:53:40 PM [express] POST /api/social/accounts/connect 400 in 75ms :: {"message":"GetLate profile no…
+2025-12-01 13:53:46.55
+40724c09
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 13:53:46.60
+40724c09
+User
+6:53:46 PM [express] POST /api/social/sync-accounts 400 in 66ms :: {"message":"GetLate profile not l…
+2025-12-01 13:54:22.29
+40724c09
+User
+6:54:22 PM [express] GET /api/announcements/active 304 in 115ms :: []
+2025-12-01 13:54:51.15
+098172f5
+System
+system: received signal terminated
+2025-12-01 13:54:51.15
+098172f5
+System
+system: received signal terminated
+2025-12-01 13:54:51.15
+098172f5
+System
+system: received signal terminated

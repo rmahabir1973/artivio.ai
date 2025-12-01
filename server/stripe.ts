@@ -466,7 +466,7 @@ export function verifyWebhookSignature(rawBody: Buffer, signature: string): Stri
 // =====================================================
 // SOCIAL MEDIA POSTER ADD-ON ($25/month)
 // =====================================================
-import { provisionUploadPostProfile, SOCIAL_POSTER_PRODUCT_ID, SOCIAL_POSTER_PRICE_ID } from './uploadPost';
+import { getLateService, SOCIAL_POSTER_PRODUCT_ID, SOCIAL_POSTER_PRICE_ID } from './getLate';
 import { socialProfiles } from '@shared/schema';
 
 export async function createSocialPosterCheckoutSession(params: {
@@ -537,8 +537,15 @@ export async function handleSocialPosterCheckout(session: Stripe.Checkout.Sessio
   }
 
   try {
-    // Provision Upload-Post profile
-    const result = await provisionUploadPostProfile(userId, user.email || '');
+    // Check if GetLate is configured
+    if (!getLateService.isConfigured()) {
+      throw new Error('Social media integration is not configured');
+    }
+
+    // Provision GetLate profile
+    const userName = user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : undefined;
+    const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+    console.log(`[GetLate] Created profile: ${getLateProfile.name} for user: ${user.email}`);
 
     // Create social profile in database
     await db.transaction(async (tx) => {
@@ -551,9 +558,18 @@ export async function handleSocialPosterCheckout(session: Stripe.Checkout.Sessio
       if (!existingProfile) {
         await tx.insert(socialProfiles).values({
           userId,
-          uploadPostUsername: result.uploadPostUsername,
+          getLateProfileId: getLateProfile._id,
           isActive: true,
         });
+      } else {
+        // Update existing profile with GetLate ID
+        await tx
+          .update(socialProfiles)
+          .set({
+            getLateProfileId: getLateProfile._id,
+            isActive: true,
+          })
+          .where(eq(socialProfiles.userId, userId));
       }
 
       // Update user with Social Poster flag
@@ -566,7 +582,7 @@ export async function handleSocialPosterCheckout(session: Stripe.Checkout.Sessio
         .where(eq(users.id, userId));
     });
 
-    console.log(`[Stripe Webhook] ✅ Social Poster activated for user ${userId} with Upload-Post profile: ${result.uploadPostUsername}`);
+    console.log(`[Stripe Webhook] ✅ Social Poster activated for user ${userId} with GetLate profile: ${getLateProfile._id}`);
   } catch (error: any) {
     console.error('[Stripe Webhook] Failed to provision Social Poster:', error.message);
     throw error;
