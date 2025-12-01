@@ -79,7 +79,6 @@ const quickStartLinks = [
 
 export default function GettingStarted() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [showVideo, setShowVideo] = useState(true);
 
   const { data: welcomeContent } = useQuery<{ welcomeVideoUrl: string | null; welcomeSlides: WelcomeSlide[] }>({
     queryKey: ['/api/welcome'],
@@ -91,21 +90,37 @@ export default function GettingStarted() {
   });
 
   const slides = welcomeContent?.welcomeSlides?.length ? welcomeContent.welcomeSlides : defaultSlides;
-  const videoUrl = welcomeContent?.welcomeVideoUrl;
+  const rawVideoUrl = welcomeContent?.welcomeVideoUrl;
 
-  const getVideoEmbedUrl = (url: string) => {
+  // Get video embed URL - returns null if URL is not from a supported provider
+  const getVideoEmbedUrl = (url: string | null | undefined): string | null => {
+    if (!url || url.trim() === '') return null;
+    
+    // YouTube
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       const videoId = url.includes('youtu.be') 
         ? url.split('youtu.be/')[1]?.split('?')[0]
         : url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
     }
+    
+    // Vimeo
     if (url.includes('vimeo.com')) {
       const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
-      return `https://player.vimeo.com/video/${videoId}`;
+      if (videoId) return `https://player.vimeo.com/video/${videoId}`;
     }
-    return url;
+    
+    // Only allow URLs that are already embed URLs (contain 'embed')
+    if (url.includes('/embed/') || url.includes('/embed?')) {
+      return url;
+    }
+    
+    // Return null for unsupported video sources (like broken PeerTube links)
+    return null;
   };
+
+  // Only show video if we have a valid embed URL
+  const videoEmbedUrl = getVideoEmbedUrl(rawVideoUrl);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -130,7 +145,7 @@ export default function GettingStarted() {
           </p>
         </div>
 
-        {videoUrl && (
+        {videoEmbedUrl && (
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -141,7 +156,7 @@ export default function GettingStarted() {
             <CardContent>
               <div className="aspect-video rounded-lg overflow-hidden bg-black/50">
                 <iframe
-                  src={getVideoEmbedUrl(videoUrl)}
+                  src={videoEmbedUrl}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
