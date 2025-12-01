@@ -361,6 +361,40 @@ export default function Admin() {
     },
   });
 
+  const provisionSocialPosterMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/social-poster`, {});
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Social Media Poster access granted" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to provision Social Media Poster",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const revokeSocialPosterMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      return await apiRequest("DELETE", `/api/admin/users/${userId}/social-poster`, undefined);
+    },
+    onSuccess: () => {
+      toast({ title: "Success", description: "Social Media Poster access revoked" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to revoke Social Media Poster",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateSubscriptionMutation = useMutation({
     mutationFn: async ({ userId, planId }: { userId: string; planId: string | null }) => {
       return await apiRequest("PATCH", `/api/admin/users/${userId}/subscription`, { planId });
@@ -802,6 +836,7 @@ export default function Admin() {
                       <TableHead>Credits</TableHead>
                       <TableHead>Plan</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>Social Poster</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -898,6 +933,34 @@ export default function Admin() {
                               data-testid={`button-toggle-admin-${u.id}`}
                             >
                               {u.isAdmin ? (
+                                <ToggleRight className="h-4 w-4" />
+                              ) : (
+                                <ToggleLeft className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={(u as any).hasSocialPoster ? "default" : "secondary"}>
+                              {(u as any).hasSocialPoster ? 'Active' : 'None'}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if ((u as any).hasSocialPoster) {
+                                  if (confirm('Revoke Social Media Poster access?')) {
+                                    revokeSocialPosterMutation.mutate({ userId: u.id });
+                                  }
+                                } else {
+                                  provisionSocialPosterMutation.mutate({ userId: u.id });
+                                }
+                              }}
+                              disabled={provisionSocialPosterMutation.isPending || revokeSocialPosterMutation.isPending}
+                              data-testid={`button-toggle-social-poster-${u.id}`}
+                            >
+                              {(u as any).hasSocialPoster ? (
                                 <ToggleRight className="h-4 w-4" />
                               ) : (
                                 <ToggleLeft className="h-4 w-4" />
