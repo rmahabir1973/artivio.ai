@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 
 interface StockImage {
   id: string;
+  dbId?: string; // Database ID for saved images (used for delete operations)
   source: "pixabay" | "pexels";
   previewUrl: string;
   webformatUrl: string;
@@ -166,7 +167,8 @@ export default function StockPhotos() {
   const checkSavedMutation = useMutation({
     mutationFn: async (images: Array<{ source: string; externalId: string }>) => {
       const response = await apiRequest("POST", "/api/stock-photos/check-saved", { images });
-      return (response as { savedIds: string[] }).savedIds;
+      const data = await response.json();
+      return data.savedIds as string[];
     },
     onSuccess: (ids) => {
       setSavedIds(new Set(ids));

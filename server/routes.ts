@@ -9170,8 +9170,27 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       const saved = await storage.getSavedStockImages(userId, limit, offset);
       const total = await storage.countSavedStockImages(userId);
 
+      // Transform saved images to match StockImage interface expected by frontend
+      // Maps externalId to id so frontend displays correctly
+      const transformedImages = saved.map(img => ({
+        id: img.externalId, // Use externalId as the display ID
+        dbId: img.id, // Keep database ID for delete operations
+        source: img.source as 'pixabay' | 'pexels',
+        previewUrl: img.previewUrl,
+        webformatUrl: img.webformatUrl,
+        largeUrl: img.largeUrl,
+        originalUrl: img.originalUrl,
+        width: img.width,
+        height: img.height,
+        tags: img.tags || '',
+        photographer: img.photographer || '',
+        photographerUrl: img.photographerUrl || '',
+        pageUrl: img.pageUrl || '',
+        createdAt: img.createdAt,
+      }));
+
       res.json({
-        images: saved,
+        images: transformedImages,
         total,
         page,
         limit,
