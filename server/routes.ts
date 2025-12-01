@@ -8049,6 +8049,37 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // Add Social Media Poster subscription (for existing subscribers)
+  app.post('/api/stripe/add-social-poster', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Check if user already has Social Poster
+      if (user.hasSocialPoster) {
+        return res.status(400).json({ error: 'You already have Social Media Poster access' });
+      }
+
+      const baseUrl = getBaseUrl();
+
+      const session = await createSocialPosterCheckoutSession({
+        userId: user.id,
+        userEmail: user.email || '',
+        successUrl: `${baseUrl}/social/connect?success=true`,
+        cancelUrl: `${baseUrl}/social/upgrade?canceled=true`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error('[Billing] Social Poster checkout error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Create Customer Portal Session for managing subscription
   app.post('/api/billing/portal', requireJWT, async (req: any, res) => {
     try {
