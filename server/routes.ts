@@ -3289,7 +3289,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           const elapsedMs = now - createdTime;
           
           // Use extended timeout for InfiniTalk lip sync which takes longer
-          const isLipSync = gen.modelId?.includes('infinitalk') || gen.modelId?.includes('lip-sync');
+          const isLipSync = gen.modelId?.includes('infinite-talk') || gen.modelId?.includes('infinitalk') || gen.modelId?.includes('lip-sync');
           const timeoutMs = isLipSync ? EXTENDED_TIMEOUT_MS : STANDARD_TIMEOUT_MS;
           
           if (elapsedMs > timeoutMs) {
