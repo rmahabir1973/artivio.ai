@@ -577,7 +577,7 @@ export default function StockPhotos() {
         )}
 
         {/* Empty states */}
-        {!searchLoading && !savedLoading && activeTab === "search" && !searchParams && (
+        {!searchLoading && !savedLoading && activeTab === "search" && !searchUrl && (
           <div className="text-center py-20 space-y-4">
             <ImageIcon className="h-16 w-16 mx-auto text-muted-foreground/50" />
             <div>
@@ -589,7 +589,7 @@ export default function StockPhotos() {
           </div>
         )}
 
-        {!searchLoading && !savedLoading && activeTab === "search" && searchParams && displayImages?.length === 0 && (
+        {!searchLoading && !savedLoading && activeTab === "search" && searchUrl && displayImages?.length === 0 && (
           <div className="text-center py-20 space-y-4">
             <Search className="h-16 w-16 mx-auto text-muted-foreground/50" />
             <div>
