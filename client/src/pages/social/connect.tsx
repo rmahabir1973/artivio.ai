@@ -175,7 +175,7 @@ export default function SocialConnect() {
       } else {
         toast({
           title: "No New Accounts",
-          description: "Complete the authorization in the popup to connect your account.",
+          description: "Complete the authorization in the new tab first, then refresh again.",
         });
       }
     },
@@ -253,10 +253,11 @@ export default function SocialConnect() {
     onSuccess: (data: any) => {
       setConnectingPlatform(null);
       if (data.inviteUrl) {
-        window.open(data.inviteUrl, "_blank", "width=700,height=800");
+        window.open(data.inviteUrl, "_blank", "noopener,noreferrer");
         toast({
-          title: "Connect Your Account",
-          description: "Complete the authorization in the popup. Then click 'Refresh' to sync your account.",
+          title: "Authorization Link Opened",
+          description: "Complete the connection in the new tab. Once done, click 'Refresh' to sync your account.",
+          duration: 8000,
         });
       }
     },
@@ -264,7 +265,7 @@ export default function SocialConnect() {
       setConnectingPlatform(null);
       toast({
         title: "Connection Failed",
-        description: error.message || "Could not connect account",
+        description: error.message || "Could not generate connection link",
         variant: "destructive",
       });
     },
@@ -408,7 +409,7 @@ export default function SocialConnect() {
         <Shield className="h-4 w-4" />
         <AlertTitle>Secure Connection</AlertTitle>
         <AlertDescription>
-          Your account credentials are never stored. We use secure OAuth authorization provided by each platform.
+          Your account credentials are never stored. You authorize each platform directly through secure OAuth, and we only receive posting permissions.
         </AlertDescription>
       </Alert>
 
