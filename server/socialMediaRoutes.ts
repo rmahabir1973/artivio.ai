@@ -1,0 +1,1134 @@
+import type { Express } from "express";
+import { z } from "zod";
+import { db } from "./db";
+import { storage } from "./storage";
+import { requireJWT } from "./jwtMiddleware";
+import { uploadPostService, PLATFORM_DAILY_CAPS, type SocialPlatform } from "./uploadPost";
+import {
+  socialProfiles,
+  socialAccounts,
+  socialGoals,
+  socialPosts,
+  socialAnalytics,
+  insertSocialGoalSchema,
+  updateSocialGoalSchema,
+  insertSocialPostSchema,
+  updateSocialPostSchema,
+} from "@shared/schema";
+import { eq, and, desc, gte, lte } from "drizzle-orm";
+
+const ARTIVIO_LOGO_URL = "https://artivio.ai/logo.png";
+
+export function registerSocialMediaRoutes(app: Express) {
+  
+  // =====================================================
+  // SOCIAL PROFILE MANAGEMENT
+  // =====================================================
+
+  // Get current user's social profile
+  app.get('/api/social/profile', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json({ profile: null, hasProfile: false });
+      }
+
+      // Get connected accounts
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(eq(socialAccounts.socialProfileId, profile.id));
+
+      // Get goals
+      const [goals] = await db
+        .select()
+        .from(socialGoals)
+        .where(eq(socialGoals.socialProfileId, profile.id))
+        .limit(1);
+
+      res.json({
+        profile,
+        accounts,
+        goals,
+        hasProfile: true,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error fetching profile:', error);
+      res.status(500).json({ message: 'Failed to fetch social profile', error: error.message });
+    }
+  });
+
+  // Create/initialize social profile for user
+  app.post('/api/social/profile/init', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const userEmail = req.user.email || '';
+
+      // Check if profile already exists
+      const [existingProfile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (existingProfile) {
+        return res.json({ profile: existingProfile, created: false });
+      }
+
+      // Generate unique username for Upload-Post
+      const uploadPostUsername = `artivio_${userId.replace(/-/g, '').substring(0, 16)}`;
+
+      // Create profile in Upload-Post
+      if (uploadPostService.isConfigured()) {
+        try {
+          await uploadPostService.createUserProfile(uploadPostUsername);
+          console.log(`[Social] Created Upload-Post profile: ${uploadPostUsername}`);
+        } catch (error: any) {
+          // Profile might already exist, which is fine
+          if (!error.message?.includes('already exists') && !error.message?.includes('409')) {
+            console.error('[Social] Failed to create Upload-Post profile:', error);
+            throw error;
+          }
+        }
+      }
+
+      // Create profile in our database
+      const [newProfile] = await db
+        .insert(socialProfiles)
+        .values({
+          userId,
+          uploadPostUsername,
+          isActive: true,
+        })
+        .returning();
+
+      res.json({ profile: newProfile, created: true });
+    } catch (error: any) {
+      console.error('[Social] Error creating profile:', error);
+      res.status(500).json({ message: 'Failed to create social profile', error: error.message });
+    }
+  });
+
+  // Get connect URL for linking social accounts
+  app.post('/api/social/connect-url', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { platforms, redirectUrl } = req.body;
+
+      // Get user's social profile
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found. Please initialize first.' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      // Generate JWT URL from Upload-Post
+      const result = await uploadPostService.generateJwtUrl(profile.uploadPostUsername, {
+        redirectUrl: redirectUrl || undefined,
+        logoImage: ARTIVIO_LOGO_URL,
+        connectTitle: 'Connect Your Social Media',
+        connectDescription: 'Connect your social media accounts to start scheduling AI-powered posts with Artivio.',
+        platforms: platforms as SocialPlatform[] || undefined,
+        showCalendar: false,
+      });
+
+      res.json({
+        accessUrl: result.access_url,
+        duration: result.duration,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error generating connect URL:', error);
+      res.status(500).json({ message: 'Failed to generate connect URL', error: error.message });
+    }
+  });
+
+  // Sync connected accounts from Upload-Post
+  app.post('/api/social/sync-accounts', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      // Get user's social profile
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      // Get profile details from Upload-Post
+      const uploadPostProfile = await uploadPostService.getUserProfile(profile.uploadPostUsername);
+
+      if (!uploadPostProfile.success || !uploadPostProfile.profile) {
+        return res.status(404).json({ message: 'Upload-Post profile not found' });
+      }
+
+      const socialAccountsData = uploadPostProfile.profile.social_accounts || {};
+      const syncedAccounts: any[] = [];
+
+      // Process each platform
+      for (const [platform, accountData] of Object.entries(socialAccountsData)) {
+        const isConnected = accountData && typeof accountData === 'object' && Object.keys(accountData).length > 0;
+        
+        if (isConnected && typeof accountData === 'object') {
+          const details = accountData as any;
+          const dailyCap = PLATFORM_DAILY_CAPS[platform as SocialPlatform] || 25;
+
+          // Upsert account
+          const [account] = await db
+            .insert(socialAccounts)
+            .values({
+              socialProfileId: profile.id,
+              platform,
+              platformUsername: details.username || null,
+              platformDisplayName: details.display_name || null,
+              platformImageUrl: details.social_images || null,
+              isConnected: true,
+              dailyCap,
+              metadata: details,
+            })
+            .onConflictDoUpdate({
+              target: [socialAccounts.socialProfileId, socialAccounts.platform],
+              set: {
+                platformUsername: details.username || null,
+                platformDisplayName: details.display_name || null,
+                platformImageUrl: details.social_images || null,
+                isConnected: true,
+                metadata: details,
+                updatedAt: new Date(),
+              },
+            })
+            .returning();
+
+          syncedAccounts.push(account);
+        }
+      }
+
+      // Update connected accounts count
+      await db
+        .update(socialProfiles)
+        .set({
+          connectedAccountsCount: syncedAccounts.length,
+          lastSyncAt: new Date(),
+        })
+        .where(eq(socialProfiles.id, profile.id));
+
+      res.json({
+        synced: true,
+        accounts: syncedAccounts,
+        accountCount: syncedAccounts.length,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error syncing accounts:', error);
+      res.status(500).json({ message: 'Failed to sync accounts', error: error.message });
+    }
+  });
+
+  // Get connected accounts
+  app.get('/api/social/accounts', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json([]);
+      }
+
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.socialProfileId, profile.id),
+          eq(socialAccounts.isConnected, true)
+        ));
+
+      // Map to frontend expected format
+      const mappedAccounts = accounts.map(acc => ({
+        id: acc.id,
+        platform: acc.platform,
+        platformAccountId: acc.platformUsername || '',
+        accountUsername: acc.platformUsername || acc.platformDisplayName || '',
+        connected: acc.isConnected,
+        postsToday: acc.postsToday || 0,
+        dailyLimit: acc.dailyCap || 3,
+      }));
+
+      res.json(mappedAccounts);
+    } catch (error: any) {
+      console.error('[Social] Error fetching accounts:', error);
+      res.status(500).json({ message: 'Failed to fetch accounts', error: error.message });
+    }
+  });
+
+  // Connect a social account (generates auth URL)
+  app.post('/api/social/accounts/connect', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { platform } = req.body;
+
+      if (!platform) {
+        return res.status(400).json({ message: 'Platform is required' });
+      }
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found. Please initialize first.' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      // Generate JWT URL for connecting this specific platform
+      const result = await uploadPostService.generateJwtUrl(profile.uploadPostUsername, {
+        logoImage: ARTIVIO_LOGO_URL,
+        connectTitle: `Connect ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+        connectDescription: `Link your ${platform} account to start posting with Artivio.`,
+        platforms: [platform as SocialPlatform],
+        showCalendar: false,
+      });
+
+      res.json({
+        authUrl: result.access_url,
+        duration: result.duration,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error generating connect URL:', error);
+      res.status(500).json({ message: 'Failed to generate connect URL', error: error.message });
+    }
+  });
+
+  // Disconnect a social account
+  app.delete('/api/social/accounts/:accountId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { accountId } = req.params;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      // Verify account belongs to user's profile
+      const [account] = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.id, parseInt(accountId)),
+          eq(socialAccounts.socialProfileId, profile.id)
+        ))
+        .limit(1);
+
+      if (!account) {
+        return res.status(404).json({ message: 'Account not found' });
+      }
+
+      // Mark as disconnected (we keep the record for history)
+      await db
+        .update(socialAccounts)
+        .set({
+          isConnected: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(socialAccounts.id, parseInt(accountId)));
+
+      // Update connected count
+      await db
+        .update(socialProfiles)
+        .set({
+          connectedAccountsCount: Math.max(0, profile.connectedAccountsCount - 1),
+        })
+        .where(eq(socialProfiles.id, profile.id));
+
+      res.json({ disconnected: true });
+    } catch (error: any) {
+      console.error('[Social] Error disconnecting account:', error);
+      res.status(500).json({ message: 'Failed to disconnect account', error: error.message });
+    }
+  });
+
+  // =====================================================
+  // GOALS / AI STRATEGY
+  // =====================================================
+
+  // Get or create goals
+  app.get('/api/social/goals', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json([]);
+      }
+
+      const goals = await db
+        .select()
+        .from(socialGoals)
+        .where(eq(socialGoals.socialProfileId, profile.id))
+        .orderBy(desc(socialGoals.createdAt));
+
+      // Map to frontend expected format
+      const mappedGoals = goals.map(goal => ({
+        id: goal.id,
+        goal: goal.primaryGoal,
+        platforms: goal.preferredPlatforms || [],
+        duration: '1week',
+        businessDescription: goal.targetAudience || '',
+        targetAudience: goal.targetAudience || '',
+        aiGeneratedPlan: null,
+        status: goal.isActive ? 'active' : 'paused',
+        createdAt: goal.createdAt?.toISOString() || new Date().toISOString(),
+      }));
+
+      res.json(mappedGoals);
+    } catch (error: any) {
+      console.error('[Social] Error fetching goals:', error);
+      res.status(500).json({ message: 'Failed to fetch goals', error: error.message });
+    }
+  });
+
+  // Create or update goals
+  app.post('/api/social/goals', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const goalData = {
+        socialProfileId: profile.id,
+        primaryGoal: req.body.primaryGoal,
+        postingFrequency: req.body.postingFrequency || 'daily',
+        brandTopics: req.body.brandTopics || [],
+        targetAudience: req.body.targetAudience || null,
+        brandVoice: req.body.brandVoice || 'professional',
+        preferredPlatforms: req.body.preferredPlatforms || [],
+        websiteUrl: req.body.websiteUrl || null,
+        isActive: true,
+      };
+
+      // Check if goals exist
+      const [existingGoals] = await db
+        .select()
+        .from(socialGoals)
+        .where(eq(socialGoals.socialProfileId, profile.id))
+        .limit(1);
+
+      let goals;
+      if (existingGoals) {
+        [goals] = await db
+          .update(socialGoals)
+          .set({
+            ...goalData,
+            updatedAt: new Date(),
+          })
+          .where(eq(socialGoals.id, existingGoals.id))
+          .returning();
+      } else {
+        [goals] = await db
+          .insert(socialGoals)
+          .values(goalData)
+          .returning();
+      }
+
+      res.json({ goals, created: !existingGoals });
+    } catch (error: any) {
+      console.error('[Social] Error saving goals:', error);
+      res.status(500).json({ message: 'Failed to save goals', error: error.message });
+    }
+  });
+
+  // =====================================================
+  // POSTS / SCHEDULING
+  // =====================================================
+
+  // Get all posts (with optional filters)
+  app.get('/api/social/posts', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { status, startDate, endDate, limit = 50 } = req.query;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json([]);
+      }
+
+      let query = db
+        .select()
+        .from(socialPosts)
+        .where(eq(socialPosts.socialProfileId, profile.id))
+        .orderBy(desc(socialPosts.scheduledAt))
+        .limit(Number(limit));
+
+      const posts = await query;
+
+      // Filter in memory for now (can optimize with proper query builder later)
+      let filteredPosts = posts;
+      if (status) {
+        filteredPosts = filteredPosts.filter(p => p.status === status);
+      }
+      if (startDate) {
+        const start = new Date(startDate as string);
+        filteredPosts = filteredPosts.filter(p => p.scheduledAt && p.scheduledAt >= start);
+      }
+      if (endDate) {
+        const end = new Date(endDate as string);
+        filteredPosts = filteredPosts.filter(p => p.scheduledAt && p.scheduledAt <= end);
+      }
+
+      // Map to frontend expected format
+      const mappedPosts = filteredPosts.map(post => ({
+        id: post.id,
+        platform: (post.platforms as string[])?.[0] || 'unknown',
+        caption: post.title || '',
+        hashtags: post.hashtags || [],
+        mediaType: post.mediaType || 'text',
+        mediaUrl: post.mediaUrl || undefined,
+        scheduledFor: post.scheduledAt?.toISOString() || new Date().toISOString(),
+        status: post.status,
+        aiGenerated: post.aiGenerated || false,
+      }));
+
+      res.json(mappedPosts);
+    } catch (error: any) {
+      console.error('[Social] Error fetching posts:', error);
+      res.status(500).json({ message: 'Failed to fetch posts', error: error.message });
+    }
+  });
+
+  // Create a new post
+  app.post('/api/social/posts', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const postData = {
+        socialProfileId: profile.id,
+        postType: req.body.postType || 'text',
+        platforms: req.body.platforms || [],
+        title: req.body.title,
+        description: req.body.description || null,
+        platformTitles: req.body.platformTitles || null,
+        mediaUrl: req.body.mediaUrl || null,
+        mediaType: req.body.mediaType || null,
+        thumbnailUrl: req.body.thumbnailUrl || null,
+        hashtags: req.body.hashtags || [],
+        firstComment: req.body.firstComment || null,
+        scheduledAt: req.body.scheduledAt ? new Date(req.body.scheduledAt) : null,
+        status: req.body.scheduledAt ? 'scheduled' : 'draft',
+        aiGenerated: req.body.aiGenerated || false,
+        aiPromptUsed: req.body.aiPromptUsed || null,
+        generationId: req.body.generationId || null,
+      };
+
+      const [post] = await db
+        .insert(socialPosts)
+        .values(postData)
+        .returning();
+
+      res.json({ post });
+    } catch (error: any) {
+      console.error('[Social] Error creating post:', error);
+      res.status(500).json({ message: 'Failed to create post', error: error.message });
+    }
+  });
+
+  // Update a post
+  app.patch('/api/social/posts/:postId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { postId } = req.params;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      // Verify post belongs to user
+      const [existingPost] = await db
+        .select()
+        .from(socialPosts)
+        .where(and(
+          eq(socialPosts.id, postId),
+          eq(socialPosts.socialProfileId, profile.id)
+        ))
+        .limit(1);
+
+      if (!existingPost) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      const updateData: any = {
+        updatedAt: new Date(),
+      };
+
+      if (req.body.title !== undefined) updateData.title = req.body.title;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+      if (req.body.platformTitles !== undefined) updateData.platformTitles = req.body.platformTitles;
+      if (req.body.hashtags !== undefined) updateData.hashtags = req.body.hashtags;
+      if (req.body.firstComment !== undefined) updateData.firstComment = req.body.firstComment;
+      if (req.body.scheduledAt !== undefined) updateData.scheduledAt = new Date(req.body.scheduledAt);
+      if (req.body.status !== undefined) updateData.status = req.body.status;
+
+      const [updatedPost] = await db
+        .update(socialPosts)
+        .set(updateData)
+        .where(eq(socialPosts.id, postId))
+        .returning();
+
+      res.json({ post: updatedPost });
+    } catch (error: any) {
+      console.error('[Social] Error updating post:', error);
+      res.status(500).json({ message: 'Failed to update post', error: error.message });
+    }
+  });
+
+  // Delete a post
+  app.delete('/api/social/posts/:postId', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { postId } = req.params;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      // Verify post belongs to user
+      const [existingPost] = await db
+        .select()
+        .from(socialPosts)
+        .where(and(
+          eq(socialPosts.id, postId),
+          eq(socialPosts.socialProfileId, profile.id)
+        ))
+        .limit(1);
+
+      if (!existingPost) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      // If post is scheduled in Upload-Post, cancel it
+      if (existingPost.uploadPostJobId && existingPost.status === 'scheduled') {
+        try {
+          await uploadPostService.cancelScheduledPost(existingPost.uploadPostJobId);
+        } catch (error) {
+          console.error('[Social] Failed to cancel Upload-Post job:', error);
+        }
+      }
+
+      await db
+        .delete(socialPosts)
+        .where(eq(socialPosts.id, postId));
+
+      res.json({ deleted: true });
+    } catch (error: any) {
+      console.error('[Social] Error deleting post:', error);
+      res.status(500).json({ message: 'Failed to delete post', error: error.message });
+    }
+  });
+
+  // Schedule a post (sends to Upload-Post)
+  app.post('/api/social/posts/:postId/schedule', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { postId } = req.params;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      // Get post
+      const [post] = await db
+        .select()
+        .from(socialPosts)
+        .where(and(
+          eq(socialPosts.id, postId),
+          eq(socialPosts.socialProfileId, profile.id)
+        ))
+        .limit(1);
+
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      if (!post.scheduledAt) {
+        return res.status(400).json({ message: 'Post must have a scheduled date' });
+      }
+
+      // Schedule based on post type
+      let uploadResult: any;
+      
+      if (post.postType === 'video' && post.mediaUrl) {
+        uploadResult = await uploadPostService.uploadVideo({
+          user: profile.uploadPostUsername,
+          platforms: post.platforms as SocialPlatform[],
+          videoUrl: post.mediaUrl,
+          title: post.title,
+          description: post.description || undefined,
+          scheduledDate: post.scheduledAt.toISOString(),
+          asyncUpload: true,
+          firstComment: post.firstComment || undefined,
+          platformTitles: post.platformTitles as any,
+        });
+      } else if (post.postType === 'photo' && post.mediaUrl) {
+        uploadResult = await uploadPostService.uploadPhoto({
+          user: profile.uploadPostUsername,
+          platforms: post.platforms as SocialPlatform[],
+          photoUrls: [post.mediaUrl],
+          title: post.title,
+          description: post.description || undefined,
+          scheduledDate: post.scheduledAt.toISOString(),
+          asyncUpload: true,
+          firstComment: post.firstComment || undefined,
+          platformTitles: post.platformTitles as any,
+        });
+      } else {
+        uploadResult = await uploadPostService.uploadText({
+          user: profile.uploadPostUsername,
+          platforms: post.platforms as SocialPlatform[],
+          text: post.title,
+          scheduledDate: post.scheduledAt.toISOString(),
+          asyncUpload: true,
+        });
+      }
+
+      // Update post with job ID
+      const [updatedPost] = await db
+        .update(socialPosts)
+        .set({
+          uploadPostJobId: uploadResult.job_id || uploadResult.request_id,
+          status: 'scheduled',
+          updatedAt: new Date(),
+        })
+        .where(eq(socialPosts.id, postId))
+        .returning();
+
+      res.json({ post: updatedPost, uploadResult });
+    } catch (error: any) {
+      console.error('[Social] Error scheduling post:', error);
+      res.status(500).json({ message: 'Failed to schedule post', error: error.message });
+    }
+  });
+
+  // Publish a post immediately
+  app.post('/api/social/posts/:postId/publish', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { postId } = req.params;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      // Get post
+      const [post] = await db
+        .select()
+        .from(socialPosts)
+        .where(and(
+          eq(socialPosts.id, postId),
+          eq(socialPosts.socialProfileId, profile.id)
+        ))
+        .limit(1);
+
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      // Publish immediately (no scheduled date = immediate)
+      let uploadResult: any;
+      
+      if (post.postType === 'video' && post.mediaUrl) {
+        uploadResult = await uploadPostService.uploadVideo({
+          user: profile.uploadPostUsername,
+          platforms: post.platforms as SocialPlatform[],
+          videoUrl: post.mediaUrl,
+          title: post.title,
+          description: post.description || undefined,
+          asyncUpload: true,
+          firstComment: post.firstComment || undefined,
+          platformTitles: post.platformTitles as any,
+        });
+      } else if (post.postType === 'photo' && post.mediaUrl) {
+        uploadResult = await uploadPostService.uploadPhoto({
+          user: profile.uploadPostUsername,
+          platforms: post.platforms as SocialPlatform[],
+          photoUrls: [post.mediaUrl],
+          title: post.title,
+          description: post.description || undefined,
+          asyncUpload: true,
+          firstComment: post.firstComment || undefined,
+          platformTitles: post.platformTitles as any,
+        });
+      } else {
+        uploadResult = await uploadPostService.uploadText({
+          user: profile.uploadPostUsername,
+          platforms: post.platforms as SocialPlatform[],
+          text: post.title,
+          asyncUpload: true,
+        });
+      }
+
+      // Update post status
+      const [updatedPost] = await db
+        .update(socialPosts)
+        .set({
+          uploadPostJobId: uploadResult.job_id || uploadResult.request_id,
+          status: 'publishing',
+          publishedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(socialPosts.id, postId))
+        .returning();
+
+      res.json({ post: updatedPost, uploadResult });
+    } catch (error: any) {
+      console.error('[Social] Error publishing post:', error);
+      res.status(500).json({ message: 'Failed to publish post', error: error.message });
+    }
+  });
+
+  // =====================================================
+  // ANALYTICS
+  // =====================================================
+
+  // Get analytics summary
+  app.get('/api/social/analytics', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { timeRange = '7days' } = req.query;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json(null);
+      }
+
+      // Get connected accounts for platform breakdown
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.socialProfileId, profile.id),
+          eq(socialAccounts.isConnected, true)
+        ));
+
+      // Get posts for this period
+      const posts = await db
+        .select()
+        .from(socialPosts)
+        .where(eq(socialPosts.socialProfileId, profile.id));
+
+      // Calculate overall stats (mock data for now - will be populated from Upload-Post analytics sync)
+      const publishedPosts = posts.filter(p => p.status === 'published');
+      
+      const overall = {
+        totalFollowers: 0, // Will come from Upload-Post analytics
+        totalImpressions: 0,
+        avgEngagement: 0,
+        postsPublished: publishedPosts.length,
+      };
+
+      // Build platform analytics
+      const platforms = accounts.map(acc => {
+        const platformPosts = posts.filter(p => p.platforms?.includes(acc.platform));
+        const platformPublished = platformPosts.filter(p => p.status === 'published');
+        
+        return {
+          platform: acc.platform,
+          followers: 0, // Will come from Upload-Post analytics
+          followersChange: 0,
+          impressions: 0,
+          impressionsChange: 0,
+          engagement: 0,
+          engagementChange: 0,
+          postsThisWeek: platformPublished.length,
+          topPost: platformPublished.length > 0 ? {
+            caption: platformPublished[0].title || '',
+            likes: 0,
+            comments: 0,
+            shares: 0,
+          } : undefined,
+        };
+      });
+
+      res.json({ overall, platforms });
+    } catch (error: any) {
+      console.error('[Social] Error fetching analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch analytics', error: error.message });
+    }
+  });
+
+  // Sync analytics from Upload-Post
+  app.post('/api/social/analytics/sync', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      // Fetch analytics from Upload-Post
+      const analyticsResult = await uploadPostService.getAnalytics(profile.uploadPostUsername);
+
+      if (!analyticsResult.success) {
+        return res.status(500).json({ message: 'Failed to fetch analytics from Upload-Post' });
+      }
+
+      // Store analytics (for now, just return them)
+      res.json({
+        synced: true,
+        analytics: analyticsResult.analytics,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error syncing analytics:', error);
+      res.status(500).json({ message: 'Failed to sync analytics', error: error.message });
+    }
+  });
+
+  // =====================================================
+  // PLATFORM INFO
+  // =====================================================
+
+  // Get platform daily caps
+  app.get('/api/social/platform-caps', requireJWT, async (req: any, res) => {
+    res.json({ caps: PLATFORM_DAILY_CAPS });
+  });
+
+  // Get Facebook pages for user
+  app.get('/api/social/facebook/pages', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      const result = await uploadPostService.getFacebookPages(profile.uploadPostUsername);
+      res.json(result);
+    } catch (error: any) {
+      console.error('[Social] Error fetching Facebook pages:', error);
+      res.status(500).json({ message: 'Failed to fetch Facebook pages', error: error.message });
+    }
+  });
+
+  // Get LinkedIn pages for user
+  app.get('/api/social/linkedin/pages', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      const result = await uploadPostService.getLinkedInPages(profile.uploadPostUsername);
+      res.json(result);
+    } catch (error: any) {
+      console.error('[Social] Error fetching LinkedIn pages:', error);
+      res.status(500).json({ message: 'Failed to fetch LinkedIn pages', error: error.message });
+    }
+  });
+
+  // Get Pinterest boards for user
+  app.get('/api/social/pinterest/boards', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      const result = await uploadPostService.getPinterestBoards(profile.uploadPostUsername);
+      res.json(result);
+    } catch (error: any) {
+      console.error('[Social] Error fetching Pinterest boards:', error);
+      res.status(500).json({ message: 'Failed to fetch Pinterest boards', error: error.message });
+    }
+  });
+
+  // Get scheduled posts from Upload-Post
+  app.get('/api/social/scheduled', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json({ scheduledPosts: [] });
+      }
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      const scheduledPosts = await uploadPostService.getScheduledPosts();
+      res.json({ scheduledPosts });
+    } catch (error: any) {
+      console.error('[Social] Error fetching scheduled posts:', error);
+      res.status(500).json({ message: 'Failed to fetch scheduled posts', error: error.message });
+    }
+  });
+
+  // Get upload history from Upload-Post
+  app.get('/api/social/history', requireJWT, async (req: any, res) => {
+    try {
+      const { page, limit } = req.query;
+
+      if (!uploadPostService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      const history = await uploadPostService.getUploadHistory({
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+      });
+
+      res.json(history);
+    } catch (error: any) {
+      console.error('[Social] Error fetching history:', error);
+      res.status(500).json({ message: 'Failed to fetch history', error: error.message });
+    }
+  });
+
+  console.log('✓ Social Media Hub routes registered');
+}

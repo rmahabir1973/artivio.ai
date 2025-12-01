@@ -49,12 +49,16 @@ import {
   Share2,
   PlayCircle,
   Images,
+  CalendarDays,
+  Link2,
+  Wand2,
+  BarChart3,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
-type CategoryType = 'main' | 'brand' | 'video' | 'image' | 'audio' | 'tools' | 'community' | 'account';
+type CategoryType = 'main' | 'brand' | 'video' | 'image' | 'audio' | 'tools' | 'social' | 'community' | 'account';
 
 interface MenuItem {
   title: string;
@@ -75,6 +79,7 @@ const categoryGradients: Record<CategoryType, string> = {
   image: "from-pink-400 to-rose-500",
   audio: "from-purple-400 to-violet-500",
   tools: "from-emerald-400 to-teal-500",
+  social: "from-sky-400 to-indigo-500",
   community: "from-orange-400 to-amber-500",
   account: "from-slate-400 to-zinc-500",
 };
@@ -86,6 +91,7 @@ const categoryIconColors: Record<CategoryType, string> = {
   image: "text-pink-400",
   audio: "text-purple-400",
   tools: "text-emerald-400",
+  social: "text-sky-400",
   community: "text-orange-400",
   account: "text-slate-400",
 };
@@ -160,6 +166,16 @@ const menuSections: MenuSection[] = [
       { title: "AI Chat", url: "/chat", icon: MessageSquare },
       { title: "Stock Photos", url: "/stock-photos", icon: Images },
       { title: "QR Generator", url: "/qr-generator", icon: QrCode },
+    ],
+  },
+  {
+    label: "Social Media Hub",
+    category: "social",
+    items: [
+      { title: "Connect Accounts", url: "/social/connect", icon: Link2 },
+      { title: "AI Strategist", url: "/social/strategist", icon: Wand2 },
+      { title: "Content Calendar", url: "/social/calendar", icon: CalendarDays },
+      { title: "Analytics", url: "/social/analytics", icon: BarChart3 },
     ],
   },
   {

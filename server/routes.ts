@@ -14,6 +14,7 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { registerAuthRoutes } from "./authRoutes";
 import { registerPublicApiRoutes, requireApiKey } from './publicApi';
+import { registerSocialMediaRoutes } from "./socialMediaRoutes";
 import { requireJWT, requireAdmin } from "./jwtMiddleware";
 import { 
   generateVideo, 
@@ -926,6 +927,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('✓ Public API routes initialized successfully');
   } catch (error) {
     console.warn('Warning: Failed to initialize public API routes:', error);
+  }
+
+  // Register Social Media Hub routes (Upload-Post integration)
+  try {
+    registerSocialMediaRoutes(app);
+  } catch (error) {
+    console.warn('Warning: Failed to initialize social media routes:', error);
   }
   
   // Initialize API keys in database

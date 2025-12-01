@@ -111,6 +111,10 @@ import Unboxing from "@/pages/brand-builder/unboxing";
 import LogoAnimation from "@/pages/brand-builder/logo-animation";
 import InfluencerAd from "@/pages/brand-builder/influencer-ad";
 import StockPhotos from "@/pages/stock-photos";
+import SocialConnect from "@/pages/social/connect";
+import SocialStrategist from "@/pages/social/strategist";
+import SocialCalendar from "@/pages/social/calendar";
+import SocialAnalytics from "@/pages/social/analytics";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -186,6 +190,20 @@ function Router() {
       <Route path="/video-editor" component={VideoEditor} />
       <Route path="/chat" component={Chat} />
       <Route path="/stock-photos" component={StockPhotos} />
+
+      {/* Social Media Hub - require authentication */}
+      <Route path="/social/connect">
+        <ProtectedRoute><SocialConnect /></ProtectedRoute>
+      </Route>
+      <Route path="/social/strategist">
+        <ProtectedRoute><SocialStrategist /></ProtectedRoute>
+      </Route>
+      <Route path="/social/calendar">
+        <ProtectedRoute><SocialCalendar /></ProtectedRoute>
+      </Route>
+      <Route path="/social/analytics">
+        <ProtectedRoute><SocialAnalytics /></ProtectedRoute>
+      </Route>
 
       {/* Account pages - require authentication */}
       <Route path="/history">

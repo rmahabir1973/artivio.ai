@@ -1821,6 +1821,232 @@ export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type UpdateBlogPost = z.infer<typeof updateBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
 
+// =====================================================
+// SOCIAL MEDIA HUB - Upload-Post Integration
+// =====================================================
+
+// Social profiles - links Artivio users to Upload-Post profiles
+export const socialProfiles = pgTable("social_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  uploadPostUsername: varchar("upload_post_username").notNull().unique(), // Username in Upload-Post system
+  isActive: boolean("is_active").notNull().default(true),
+  connectedAccountsCount: integer("connected_accounts_count").notNull().default(0),
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  uniqueIndex("social_profiles_user_idx").on(table.userId),
+  index("social_profiles_upload_post_idx").on(table.uploadPostUsername),
+]);
+
+export const insertSocialProfileSchema = createInsertSchema(socialProfiles).omit({
+  id: true,
+  connectedAccountsCount: true,
+  lastSyncAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSocialProfile = z.infer<typeof insertSocialProfileSchema>;
+export type SocialProfile = typeof socialProfiles.$inferSelect;
+
+// Social accounts - individual connected social media accounts
+export const socialAccounts = pgTable("social_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  socialProfileId: varchar("social_profile_id").notNull().references(() => socialProfiles.id, { onDelete: 'cascade' }),
+  platform: varchar("platform").notNull(), // 'instagram', 'tiktok', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest', 'bluesky'
+  platformUsername: varchar("platform_username"),
+  platformDisplayName: varchar("platform_display_name"),
+  platformImageUrl: text("platform_image_url"),
+  isConnected: boolean("is_connected").notNull().default(true),
+  dailyCap: integer("daily_cap").notNull(), // Platform-specific daily posting limit
+  postsToday: integer("posts_today").notNull().default(0), // Counter resets daily
+  lastPostAt: timestamp("last_post_at"),
+  metadata: jsonb("metadata"), // Platform-specific data (page IDs, etc.)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("social_accounts_profile_idx").on(table.socialProfileId),
+  index("social_accounts_platform_idx").on(table.platform),
+  uniqueIndex("social_accounts_profile_platform_idx").on(table.socialProfileId, table.platform),
+]);
+
+export const insertSocialAccountSchema = createInsertSchema(socialAccounts).omit({
+  id: true,
+  postsToday: true,
+  lastPostAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSocialAccount = z.infer<typeof insertSocialAccountSchema>;
+export type SocialAccount = typeof socialAccounts.$inferSelect;
+
+// Social goals - AI strategy goals for content planning
+export const socialGoals = pgTable("social_goals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  socialProfileId: varchar("social_profile_id").notNull().references(() => socialProfiles.id, { onDelete: 'cascade' }),
+  primaryGoal: varchar("primary_goal").notNull(), // 'drive_traffic', 'brand_awareness', 'generate_leads', 'grow_followers'
+  postingFrequency: varchar("posting_frequency").notNull().default('daily'), // 'daily', '3-5_per_week', 'ai_optimized'
+  brandTopics: text("brand_topics").array().notNull().default(sql`ARRAY[]::text[]`), // Keywords/topics for content
+  targetAudience: text("target_audience"),
+  brandVoice: varchar("brand_voice").default('professional'), // 'professional', 'casual', 'playful', 'authoritative'
+  preferredPlatforms: text("preferred_platforms").array().notNull().default(sql`ARRAY[]::text[]`),
+  websiteUrl: text("website_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("social_goals_profile_idx").on(table.socialProfileId),
+]);
+
+export const insertSocialGoalSchema = createInsertSchema(socialGoals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateSocialGoalSchema = z.object({
+  primaryGoal: z.enum(['drive_traffic', 'brand_awareness', 'generate_leads', 'grow_followers']).optional(),
+  postingFrequency: z.enum(['daily', '3-5_per_week', 'ai_optimized']).optional(),
+  brandTopics: z.array(z.string()).optional(),
+  targetAudience: z.string().optional().nullable(),
+  brandVoice: z.enum(['professional', 'casual', 'playful', 'authoritative']).optional(),
+  preferredPlatforms: z.array(z.string()).optional(),
+  websiteUrl: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+});
+
+export type InsertSocialGoal = z.infer<typeof insertSocialGoalSchema>;
+export type UpdateSocialGoal = z.infer<typeof updateSocialGoalSchema>;
+export type SocialGoal = typeof socialGoals.$inferSelect;
+
+// Social posts - scheduled and published posts
+export const socialPosts = pgTable("social_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  socialProfileId: varchar("social_profile_id").notNull().references(() => socialProfiles.id, { onDelete: 'cascade' }),
+  uploadPostJobId: varchar("upload_post_job_id"), // Job ID from Upload-Post for scheduled posts
+  postType: varchar("post_type").notNull(), // 'video', 'photo', 'text'
+  platforms: text("platforms").array().notNull(), // Target platforms
+  title: text("title").notNull(),
+  description: text("description"),
+  platformTitles: jsonb("platform_titles").$type<Record<string, string>>(), // Platform-specific titles
+  mediaUrl: text("media_url"), // URL to video/image in S3
+  mediaType: varchar("media_type"), // 'video/mp4', 'image/jpeg', etc.
+  thumbnailUrl: text("thumbnail_url"),
+  hashtags: text("hashtags").array().default(sql`ARRAY[]::text[]`),
+  firstComment: text("first_comment"),
+  scheduledAt: timestamp("scheduled_at"), // When post should go live
+  publishedAt: timestamp("published_at"), // When post actually went live
+  status: varchar("status").notNull().default('draft'), // 'draft', 'scheduled', 'publishing', 'published', 'failed', 'cancelled'
+  aiGenerated: boolean("ai_generated").notNull().default(false), // Was this created by AI strategist
+  aiPromptUsed: text("ai_prompt_used"), // The AI prompt that generated this post
+  generationId: varchar("generation_id"), // Link to Artivio generation if applicable
+  errorMessage: text("error_message"),
+  platformResults: jsonb("platform_results").$type<Record<string, { success: boolean; postId?: string; url?: string; error?: string }>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("social_posts_profile_idx").on(table.socialProfileId),
+  index("social_posts_status_idx").on(table.status),
+  index("social_posts_scheduled_idx").on(table.scheduledAt),
+  index("social_posts_job_id_idx").on(table.uploadPostJobId),
+]);
+
+export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
+  id: true,
+  publishedAt: true,
+  errorMessage: true,
+  platformResults: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateSocialPostSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional().nullable(),
+  platformTitles: z.record(z.string()).optional(),
+  hashtags: z.array(z.string()).optional(),
+  firstComment: z.string().optional().nullable(),
+  scheduledAt: z.date().optional(),
+  status: z.enum(['draft', 'scheduled', 'publishing', 'published', 'failed', 'cancelled']).optional(),
+});
+
+export type InsertSocialPost = z.infer<typeof insertSocialPostSchema>;
+export type UpdateSocialPost = z.infer<typeof updateSocialPostSchema>;
+export type SocialPost = typeof socialPosts.$inferSelect;
+
+// Social analytics - stored performance data
+export const socialAnalytics = pgTable("social_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  socialProfileId: varchar("social_profile_id").notNull().references(() => socialProfiles.id, { onDelete: 'cascade' }),
+  platform: varchar("platform").notNull(),
+  date: timestamp("date").notNull(),
+  followers: integer("followers"),
+  followersChange: integer("followers_change"),
+  impressions: integer("impressions"),
+  reach: integer("reach"),
+  engagement: integer("engagement"),
+  profileViews: integer("profile_views"),
+  postsPublished: integer("posts_published").notNull().default(0),
+  rawData: jsonb("raw_data"), // Full analytics response from Upload-Post
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("social_analytics_profile_idx").on(table.socialProfileId),
+  index("social_analytics_platform_idx").on(table.platform),
+  index("social_analytics_date_idx").on(table.date),
+  uniqueIndex("social_analytics_profile_platform_date_idx").on(table.socialProfileId, table.platform, table.date),
+]);
+
+export const insertSocialAnalyticsSchema = createInsertSchema(socialAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSocialAnalytics = z.infer<typeof insertSocialAnalyticsSchema>;
+export type SocialAnalytics = typeof socialAnalytics.$inferSelect;
+
+// Social Media Hub Relations
+export const socialProfilesRelations = relations(socialProfiles, ({ one, many }) => ({
+  user: one(users, {
+    fields: [socialProfiles.userId],
+    references: [users.id],
+  }),
+  accounts: many(socialAccounts),
+  goals: many(socialGoals),
+  posts: many(socialPosts),
+  analytics: many(socialAnalytics),
+}));
+
+export const socialAccountsRelations = relations(socialAccounts, ({ one }) => ({
+  profile: one(socialProfiles, {
+    fields: [socialAccounts.socialProfileId],
+    references: [socialProfiles.id],
+  }),
+}));
+
+export const socialGoalsRelations = relations(socialGoals, ({ one }) => ({
+  profile: one(socialProfiles, {
+    fields: [socialGoals.socialProfileId],
+    references: [socialProfiles.id],
+  }),
+}));
+
+export const socialPostsRelations = relations(socialPosts, ({ one }) => ({
+  profile: one(socialProfiles, {
+    fields: [socialPosts.socialProfileId],
+    references: [socialProfiles.id],
+  }),
+}));
+
+export const socialAnalyticsRelations = relations(socialAnalytics, ({ one }) => ({
+  profile: one(socialProfiles, {
+    fields: [socialAnalytics.socialProfileId],
+    references: [socialProfiles.id],
+  }),
+}));
+
 // Story Projects Relations
 export const storyProjectsRelations = relations(storyProjects, ({ one, many }) => ({
   user: one(users, {
