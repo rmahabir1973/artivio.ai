@@ -1925,6 +1925,53 @@ export type InsertSocialGoal = z.infer<typeof insertSocialGoalSchema>;
 export type UpdateSocialGoal = z.infer<typeof updateSocialGoalSchema>;
 export type SocialGoal = typeof socialGoals.$inferSelect;
 
+// Media item type for carousel/multi-media posts
+export interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  thumbnailUrl?: string;
+  s3Key?: string;
+  mimeType?: string;
+  duration?: number; // For videos, in seconds
+  width?: number;
+  height?: number;
+}
+
+// Platform-specific data structure based on GetLate.dev API
+export interface PlatformSpecificData {
+  // Instagram
+  collaborators?: string[];           // Up to 3 usernames for collaboration
+  contentType?: 'feed' | 'story' | 'reel';
+  
+  // YouTube
+  title?: string;                     // Video title
+  privacyStatus?: 'public' | 'private' | 'unlisted';
+  thumbnail?: string;                 // Custom thumbnail URL
+  
+  // TikTok
+  tiktokSettings?: {
+    privacy_level?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
+    draft?: boolean;                  // Send to Creator Inbox
+  };
+  
+  // Pinterest
+  boardId?: string;                   // Target board ID
+  link?: string;                      // Pin destination URL
+  
+  // Reddit
+  subreddit?: string;                 // Target subreddit
+  url?: string;                       // For link posts
+  
+  // Thread-based platforms (X, Threads, Bluesky)
+  threadItems?: Array<{
+    content: string;
+    mediaUrl?: string;
+  }>;
+  
+  // Universal first comment (Instagram, YouTube, Facebook, LinkedIn)
+  firstComment?: string;
+}
+
 // Social posts - scheduled and published posts
 export const socialPosts = pgTable("social_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1932,15 +1979,18 @@ export const socialPosts = pgTable("social_posts", {
   getLatePostId: varchar("getlate_post_id"), // Post ID from GetLate.dev for scheduled posts
   uploadPostJobId: varchar("upload_post_job_id"), // Legacy: Job ID from Upload-Post (deprecated)
   postType: varchar("post_type").notNull(), // 'video', 'photo', 'text'
+  contentType: varchar("content_type").notNull().default('post'), // 'post', 'reel', 'story', 'carousel', 'video', 'short', 'thread', 'pin', 'link', 'text'
   platforms: text("platforms").array().notNull(), // Target platforms
   title: text("title").notNull(),
   description: text("description"),
   platformTitles: jsonb("platform_titles").$type<Record<string, string>>(), // Platform-specific titles
-  mediaUrl: text("media_url"), // URL to video/image in S3
+  mediaUrl: text("media_url"), // URL to video/image in S3 (primary/single media)
   mediaType: varchar("media_type"), // 'video/mp4', 'image/jpeg', etc.
+  mediaItems: jsonb("media_items").$type<MediaItem[]>(), // Multiple media items for carousels
   thumbnailUrl: text("thumbnail_url"),
   hashtags: text("hashtags").array().default(sql`ARRAY[]::text[]`),
   firstComment: text("first_comment"),
+  platformSpecificData: jsonb("platform_specific_data").$type<Record<string, PlatformSpecificData>>(), // Per-platform specific options
   scheduledAt: timestamp("scheduled_at"), // When post should go live
   publishedAt: timestamp("published_at"), // When post actually went live
   status: varchar("status").notNull().default('draft'), // 'draft', 'scheduled', 'publishing', 'published', 'failed', 'cancelled'
@@ -1956,6 +2006,7 @@ export const socialPosts = pgTable("social_posts", {
   index("social_posts_status_idx").on(table.status),
   index("social_posts_scheduled_idx").on(table.scheduledAt),
   index("social_posts_getlate_id_idx").on(table.getLatePostId),
+  index("social_posts_content_type_idx").on(table.contentType),
 ]);
 
 export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
@@ -1967,12 +2018,49 @@ export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
   updatedAt: true,
 });
 
+// Zod schema for MediaItem
+export const mediaItemSchema = z.object({
+  type: z.enum(['image', 'video']),
+  url: z.string(),
+  thumbnailUrl: z.string().optional(),
+  s3Key: z.string().optional(),
+  mimeType: z.string().optional(),
+  duration: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+});
+
+// Zod schema for PlatformSpecificData
+export const platformSpecificDataSchema = z.object({
+  collaborators: z.array(z.string()).optional(),
+  contentType: z.enum(['feed', 'story', 'reel']).optional(),
+  title: z.string().optional(),
+  privacyStatus: z.enum(['public', 'private', 'unlisted']).optional(),
+  thumbnail: z.string().optional(),
+  tiktokSettings: z.object({
+    privacy_level: z.enum(['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'SELF_ONLY']).optional(),
+    draft: z.boolean().optional(),
+  }).optional(),
+  boardId: z.string().optional(),
+  link: z.string().optional(),
+  subreddit: z.string().optional(),
+  url: z.string().optional(),
+  threadItems: z.array(z.object({
+    content: z.string(),
+    mediaUrl: z.string().optional(),
+  })).optional(),
+  firstComment: z.string().optional(),
+});
+
 export const updateSocialPostSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional().nullable(),
+  contentType: z.enum(['post', 'reel', 'story', 'carousel', 'video', 'short', 'thread', 'pin', 'link', 'text']).optional(),
   platformTitles: z.record(z.string()).optional(),
+  mediaItems: z.array(mediaItemSchema).optional().nullable(),
   hashtags: z.array(z.string()).optional(),
   firstComment: z.string().optional().nullable(),
+  platformSpecificData: z.record(platformSpecificDataSchema).optional().nullable(),
   scheduledAt: z.date().optional(),
   status: z.enum(['draft', 'scheduled', 'publishing', 'published', 'failed', 'cancelled']).optional(),
 });
