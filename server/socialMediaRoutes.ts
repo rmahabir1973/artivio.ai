@@ -1130,5 +1130,296 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
+  // =====================================================
+  // AI CONTENT GENERATION
+  // =====================================================
+
+  // Generate AI caption and hashtags for a post
+  app.post('/api/social/ai/generate-caption', requireJWT, async (req: any, res) => {
+    try {
+      const { platform, contentType, topic, tone, targetAudience, includeEmoji, language } = req.body;
+
+      if (!topic) {
+        return res.status(400).json({ message: 'Topic is required for caption generation' });
+      }
+
+      // Platform-specific character limits and hashtag recommendations (verified official limits)
+      const platformSpecs: Record<string, { charLimit: number; hashtagLimit: number; style: string }> = {
+        instagram: { charLimit: 2200, hashtagLimit: 30, style: 'engaging, visual, story-driven' },
+        tiktok: { charLimit: 2200, hashtagLimit: 5, style: 'trendy, casual, hook-driven' },
+        linkedin: { charLimit: 3000, hashtagLimit: 5, style: 'professional, thought-leadership' },
+        youtube: { charLimit: 5000, hashtagLimit: 15, style: 'searchable, detailed, informative' },
+        facebook: { charLimit: 63206, hashtagLimit: 5, style: 'conversational, community-focused' },
+        x: { charLimit: 280, hashtagLimit: 2, style: 'concise, punchy, trending' },
+        threads: { charLimit: 500, hashtagLimit: 5, style: 'conversational, authentic' },
+        pinterest: { charLimit: 500, hashtagLimit: 20, style: 'inspirational, searchable, descriptive' },
+        bluesky: { charLimit: 300, hashtagLimit: 3, style: 'casual, authentic, community' },
+      };
+
+      const specs = platformSpecs[platform.toLowerCase()] || platformSpecs.instagram;
+
+      const systemPrompt = `You are an expert social media content creator. Generate engaging content for ${platform} with these specifications:
+- Character limit: ${specs.charLimit} characters (STRICTLY ENFORCE)
+- Maximum hashtags: ${specs.hashtagLimit} (without the # symbol in your response)
+- Style: ${specs.style}
+- Tone: ${tone || 'professional'}
+${targetAudience ? `- Target audience: ${targetAudience}` : ''}
+${includeEmoji ? '- Include relevant emojis' : '- Minimal or no emojis'}
+${language ? `- Language: ${language}` : '- Language: English'}
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting, code fences, or extra text.
+Response format:
+{"caption": "caption text", "hashtags": ["tag1", "tag2"], "callToAction": "cta text", "contentTips": ["tip1", "tip2"]}`;
+
+      const userPrompt = `Create a ${contentType || 'text'} post about: ${topic}`;
+
+      const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+      
+      if (!DEEPSEEK_API_KEY) {
+        return res.status(503).json({ message: 'AI content generation is not configured' });
+      }
+
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('[Social AI] Deepseek API error');
+        return res.status(502).json({ message: 'AI service temporarily unavailable' });
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        return res.status(502).json({ message: 'AI service returned empty response' });
+      }
+
+      // Clean markdown fencing and parse JSON
+      let cleanedContent = content.trim();
+      // Remove markdown code fences (```json ... ``` or ``` ... ```)
+      cleanedContent = cleanedContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+      
+      try {
+        const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          
+          // Post-process to enforce platform limits
+          let caption = String(parsed.caption || '').trim();
+          let hashtags = Array.isArray(parsed.hashtags) ? parsed.hashtags : [];
+          
+          // Truncate caption to platform limit
+          if (caption.length > specs.charLimit) {
+            caption = caption.substring(0, specs.charLimit - 3) + '...';
+          }
+          
+          // Limit hashtags and remove # if present
+          hashtags = hashtags
+            .slice(0, specs.hashtagLimit)
+            .map((tag: string) => String(tag).replace(/^#/, '').trim())
+            .filter((tag: string) => tag.length > 0);
+          
+          res.json({
+            caption,
+            hashtags,
+            callToAction: String(parsed.callToAction || '').trim(),
+            contentTips: Array.isArray(parsed.contentTips) ? parsed.contentTips : [],
+            platform,
+            enforced: { charLimit: specs.charLimit, hashtagLimit: specs.hashtagLimit },
+          });
+        } else {
+          // Fallback: return truncated raw content as caption
+          let caption = cleanedContent;
+          if (caption.length > specs.charLimit) {
+            caption = caption.substring(0, specs.charLimit - 3) + '...';
+          }
+          res.json({
+            caption,
+            hashtags: [],
+            callToAction: '',
+            contentTips: [],
+            platform,
+            enforced: { charLimit: specs.charLimit, hashtagLimit: specs.hashtagLimit },
+          });
+        }
+      } catch (parseError) {
+        console.error('[Social AI] JSON parse error');
+        // Fallback with truncation
+        let caption = cleanedContent;
+        if (caption.length > specs.charLimit) {
+          caption = caption.substring(0, specs.charLimit - 3) + '...';
+        }
+        res.json({
+          caption,
+          hashtags: [],
+          callToAction: '',
+          contentTips: [],
+          platform,
+          enforced: { charLimit: specs.charLimit, hashtagLimit: specs.hashtagLimit },
+        });
+      }
+    } catch (error: any) {
+      console.error('[Social AI] Caption generation error');
+      res.status(500).json({ message: 'Failed to generate caption' });
+    }
+  });
+
+  // Generate AI content plan based on goals
+  app.post('/api/social/ai/generate-plan', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { goal, platforms, duration, businessDescription, targetAudience } = req.body;
+
+      // Validate required fields
+      if (!goal || typeof goal !== 'string' || goal.trim().length === 0) {
+        return res.status(400).json({ message: 'Goal is required' });
+      }
+      if (!Array.isArray(platforms) || platforms.length === 0) {
+        return res.status(400).json({ message: 'At least one platform is required' });
+      }
+
+      const validPlatforms = ['instagram', 'tiktok', 'linkedin', 'youtube', 'facebook', 'x', 'threads', 'pinterest', 'bluesky'];
+      const filteredPlatforms = platforms.filter((p: string) => validPlatforms.includes(p.toLowerCase()));
+      if (filteredPlatforms.length === 0) {
+        return res.status(400).json({ message: 'No valid platforms provided' });
+      }
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found. Please initialize your profile first.' });
+      }
+
+      const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+      
+      if (!DEEPSEEK_API_KEY) {
+        return res.status(503).json({ message: 'AI content generation is not configured' });
+      }
+
+      const durationDays = duration === '1week' ? 7 : duration === '2weeks' ? 14 : 30;
+
+      const systemPrompt = `You are an expert social media strategist. Create a detailed content plan for a business.
+
+Business: ${businessDescription || 'Not specified'}
+Goal: ${goal.trim()}
+Target audience: ${targetAudience || 'General audience'}
+Platforms: ${filteredPlatforms.join(', ')}
+Duration: ${durationDays} days
+
+Create a posting schedule with specific post ideas. For each day, suggest:
+- Optimal posting times
+- Content type (image, video, carousel, text)
+- Topic/theme
+- Brief caption idea
+- Relevant hashtags
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting, code fences, or extra text.
+Response format:
+{"strategy": "Brief overall strategy explanation", "weeklyThemes": ["Theme 1", "Theme 2"], "posts": [{"day": 1, "platform": "instagram", "time": "09:00", "contentType": "image", "topic": "Topic", "captionIdea": "Caption", "hashtags": ["tag1"]}], "tips": ["Tip 1", "Tip 2"]}`;
+
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Generate a ${durationDays}-day content plan for the platforms: ${filteredPlatforms.join(', ')}` },
+          ],
+          temperature: 0.8,
+          max_tokens: 4000,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('[Social AI] Deepseek API error');
+        return res.status(502).json({ message: 'AI service temporarily unavailable' });
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        return res.status(502).json({ message: 'AI service returned empty response' });
+      }
+
+      // Clean markdown fencing and parse JSON
+      let cleanedContent = content.trim();
+      cleanedContent = cleanedContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+
+      try {
+        const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          
+          // Validate parsed structure
+          const plan = {
+            strategy: String(parsed.strategy || 'AI-generated content strategy'),
+            weeklyThemes: Array.isArray(parsed.weeklyThemes) ? parsed.weeklyThemes : [],
+            posts: Array.isArray(parsed.posts) ? parsed.posts : [],
+            tips: Array.isArray(parsed.tips) ? parsed.tips : [],
+          };
+          
+          // Save as a goal with the AI-generated plan
+          const goalData = {
+            socialProfileId: profile.id,
+            primaryGoal: goal.trim(),
+            postingFrequency: duration === '1week' ? 'daily' : 'weekly',
+            brandTopics: plan.weeklyThemes.slice(0, 10), // Limit themes
+            targetAudience: targetAudience?.trim() || null,
+            preferredPlatforms: filteredPlatforms,
+            isActive: true,
+          };
+
+          const [newGoal] = await db
+            .insert(socialGoals)
+            .values(goalData)
+            .returning();
+
+          res.json({
+            goal: {
+              id: newGoal.id,
+              goal: newGoal.primaryGoal,
+              platforms: newGoal.preferredPlatforms,
+              duration,
+              status: 'active',
+              createdAt: newGoal.createdAt?.toISOString(),
+            },
+            plan,
+          });
+        } else {
+          return res.status(502).json({ message: 'AI response could not be parsed' });
+        }
+      } catch (parseError) {
+        console.error('[Social AI] Plan JSON parse error');
+        return res.status(502).json({ message: 'AI response format error' });
+      }
+    } catch (error: any) {
+      console.error('[Social AI] Plan generation error');
+      res.status(500).json({ message: 'Failed to generate plan' });
+    }
+  });
+
   console.log('✓ Social Media Hub routes registered');
 }
