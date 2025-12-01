@@ -305,6 +305,10 @@ export function registerSocialMediaRoutes(app: Express) {
       // Process each account from GetLate
       for (const account of getLateAccounts) {
         const dailyCap = PLATFORM_DAILY_CAPS[account.platform] || 25;
+        
+        // Default isActive to true if undefined (newly connected accounts may not have this flag set)
+        const isConnected = account.isActive === undefined ? true : account.isActive;
+        console.log(`[Social] Processing account: ${account.platform}, isActive: ${account.isActive}, isConnected: ${isConnected}`);
 
         // Upsert account
         const [syncedAccount] = await db
@@ -315,7 +319,7 @@ export function registerSocialMediaRoutes(app: Express) {
             platformUsername: account.username || null,
             platformDisplayName: account.displayName || null,
             platformImageUrl: account.profileImageUrl || null,
-            isConnected: account.isActive !== false,
+            isConnected,
             dailyCap,
             metadata: { getLateAccountId: account._id },
           })
@@ -325,7 +329,7 @@ export function registerSocialMediaRoutes(app: Express) {
               platformUsername: account.username || null,
               platformDisplayName: account.displayName || null,
               platformImageUrl: account.profileImageUrl || null,
-              isConnected: account.isActive !== false,
+              isConnected,
               metadata: { getLateAccountId: account._id },
               updatedAt: new Date(),
             },
@@ -463,11 +467,19 @@ export function registerSocialMediaRoutes(app: Express) {
 
       // Generate a secure nonce for this invite
       const nonce = generateNonce();
+      
+      // Build base URL for callbacks and redirects
+      const artivioBaseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
+      
+      // Modify the invite URL to use headless mode for white-label experience
+      // Headless mode redirects OAuth callbacks to our domain instead of GetLate's success page
+      const callbackUrl = `${artivioBaseUrl}/social/oauth-callback?platform=${platform}`;
+      const headlessInviteUrl = `${invite.inviteUrl}${invite.inviteUrl.includes('?') ? '&' : '?'}headless=true&callbackUrl=${encodeURIComponent(callbackUrl)}`;
 
-      // Store invite URL securely in session/cache for later retrieval
+      // Store the headless invite URL securely in session/cache for later retrieval
       // Uses invite ID + nonce for added security
       pendingInvites.set(invite._id, {
-        url: invite.inviteUrl,
+        url: headlessInviteUrl,
         platform,
         userId,
         expiresAt: new Date(invite.expiresAt),
@@ -478,8 +490,7 @@ export function registerSocialMediaRoutes(app: Express) {
 
       // Generate Artivio proxy URL for white-label experience
       // The proxy page will fetch the actual URL server-side using the invite ID + nonce
-      const baseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
-      const proxyUrl = `${baseUrl}/social/oauth-redirect?platform=${platform}&invite=${invite._id}&nonce=${nonce}`;
+      const proxyUrl = `${artivioBaseUrl}/social/oauth-redirect?platform=${platform}&invite=${invite._id}&nonce=${nonce}`;
 
       res.json({
         proxyUrl,

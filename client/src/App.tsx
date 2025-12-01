@@ -117,6 +117,7 @@ import SocialCalendar from "@/pages/social/calendar";
 import SocialAnalytics from "@/pages/social/analytics";
 import SocialUpgrade from "@/pages/social/upgrade";
 import SocialOAuthRedirect from "@/pages/social/oauth-redirect";
+import SocialOAuthCallback from "@/pages/social/oauth-callback";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -196,6 +197,7 @@ function Router() {
       {/* Social Media Hub - require authentication */}
       <Route path="/social/upgrade" component={SocialUpgrade} />
       <Route path="/social/oauth-redirect" component={SocialOAuthRedirect} />
+      <Route path="/social/oauth-callback" component={SocialOAuthCallback} />
       <Route path="/social/connect">
         <ProtectedRoute><SocialConnect /></ProtectedRoute>
       </Route>
