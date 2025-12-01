@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { storage } from "./storage";
 import { requireJWT } from "./jwtMiddleware";
-import { uploadPostService, PLATFORM_DAILY_CAPS, type SocialPlatform, SOCIAL_POSTER_PRICE_ID } from "./uploadPost";
+import { getLateService, PLATFORM_DAILY_CAPS, type SocialPlatform, SOCIAL_POSTER_PRICE_ID } from "./getLate";
 import {
   socialProfiles,
   socialAccounts,
@@ -128,7 +128,8 @@ export function registerSocialMediaRoutes(app: Express) {
   app.post('/api/social/profile/init', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const userEmail = req.user.email || '';
+      const user = await storage.getUser(userId);
+      const userName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : undefined;
 
       // Check if profile already exists
       const [existingProfile] = await db
@@ -138,23 +139,34 @@ export function registerSocialMediaRoutes(app: Express) {
         .limit(1);
 
       if (existingProfile) {
+        // If profile exists but no GetLate profile ID, create one
+        if (!existingProfile.getLateProfileId && getLateService.isConfigured()) {
+          try {
+            const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+            await db
+              .update(socialProfiles)
+              .set({ getLateProfileId: getLateProfile._id })
+              .where(eq(socialProfiles.id, existingProfile.id));
+            
+            const updatedProfile = { ...existingProfile, getLateProfileId: getLateProfile._id };
+            return res.json({ profile: updatedProfile, created: false, getLateCreated: true });
+          } catch (error: any) {
+            console.error('[Social] Failed to create GetLate profile:', error);
+          }
+        }
         return res.json({ profile: existingProfile, created: false });
       }
 
-      // Generate unique username for Upload-Post
-      const uploadPostUsername = `artivio_${userId.replace(/-/g, '').substring(0, 16)}`;
-
-      // Create profile in Upload-Post
-      if (uploadPostService.isConfigured()) {
+      // Create profile in GetLate.dev
+      let getLateProfileId: string | null = null;
+      if (getLateService.isConfigured()) {
         try {
-          await uploadPostService.createUserProfile(uploadPostUsername);
-          console.log(`[Social] Created Upload-Post profile: ${uploadPostUsername}`);
+          const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+          getLateProfileId = getLateProfile._id;
+          console.log(`[Social] Created GetLate profile: ${getLateProfileId}`);
         } catch (error: any) {
-          // Profile might already exist, which is fine
-          if (!error.message?.includes('already exists') && !error.message?.includes('409')) {
-            console.error('[Social] Failed to create Upload-Post profile:', error);
-            throw error;
-          }
+          console.error('[Social] Failed to create GetLate profile:', error);
+          // Continue without GetLate - can be linked later
         }
       }
 
@@ -163,7 +175,7 @@ export function registerSocialMediaRoutes(app: Express) {
         .insert(socialProfiles)
         .values({
           userId,
-          uploadPostUsername,
+          getLateProfileId,
           isActive: true,
         })
         .returning();
@@ -175,11 +187,15 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Get connect URL for linking social accounts
+  // Get connect URL for linking social accounts (creates platform invite)
   app.post('/api/social/connect-url', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { platforms, redirectUrl } = req.body;
+      const { platform } = req.body;
+
+      if (!platform) {
+        return res.status(400).json({ message: 'Platform is required' });
+      }
 
       // Get user's social profile
       const [profile] = await db
@@ -192,23 +208,25 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found. Please initialize first.' });
       }
 
-      if (!uploadPostService.isConfigured()) {
+      if (!getLateService.isConfigured()) {
         return res.status(503).json({ message: 'Social media integration is not configured' });
       }
 
-      // Generate JWT URL from Upload-Post
-      const result = await uploadPostService.generateJwtUrl(profile.uploadPostUsername, {
-        redirectUrl: redirectUrl || undefined,
-        logoImage: ARTIVIO_LOGO_URL,
-        connectTitle: 'Connect Your Social Media',
-        connectDescription: 'Connect your social media accounts to start scheduling AI-powered posts with Artivio.',
-        platforms: platforms as SocialPlatform[] || undefined,
-        showCalendar: false,
-      });
+      if (!profile.getLateProfileId) {
+        return res.status(400).json({ message: 'GetLate profile not linked. Please reinitialize.' });
+      }
+
+      // Create platform invite via GetLate
+      const { invite } = await getLateService.createPlatformInvite(
+        profile.getLateProfileId,
+        platform as SocialPlatform
+      );
 
       res.json({
-        accessUrl: result.access_url,
-        duration: result.duration,
+        accessUrl: invite.inviteUrl,
+        inviteId: invite._id,
+        platform,
+        expiresAt: invite.expiresAt,
       });
     } catch (error: any) {
       console.error('[Social] Error generating connect URL:', error);
@@ -216,7 +234,7 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Sync connected accounts from Upload-Post
+  // Sync connected accounts from GetLate
   app.post('/api/social/sync-accounts', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -232,56 +250,49 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found' });
       }
 
-      if (!uploadPostService.isConfigured()) {
+      if (!getLateService.isConfigured()) {
         return res.status(503).json({ message: 'Social media integration is not configured' });
       }
 
-      // Get profile details from Upload-Post
-      const uploadPostProfile = await uploadPostService.getUserProfile(profile.uploadPostUsername);
-
-      if (!uploadPostProfile.success || !uploadPostProfile.profile) {
-        return res.status(404).json({ message: 'Upload-Post profile not found' });
+      if (!profile.getLateProfileId) {
+        return res.status(400).json({ message: 'GetLate profile not linked' });
       }
 
-      const socialAccountsData = uploadPostProfile.profile.social_accounts || {};
+      // Get accounts from GetLate
+      const { accounts: getLateAccounts } = await getLateService.getAccounts(profile.getLateProfileId);
       const syncedAccounts: any[] = [];
 
-      // Process each platform
-      for (const [platform, accountData] of Object.entries(socialAccountsData)) {
-        const isConnected = accountData && typeof accountData === 'object' && Object.keys(accountData).length > 0;
-        
-        if (isConnected && typeof accountData === 'object') {
-          const details = accountData as any;
-          const dailyCap = PLATFORM_DAILY_CAPS[platform as SocialPlatform] || 25;
+      // Process each account from GetLate
+      for (const account of getLateAccounts) {
+        const dailyCap = PLATFORM_DAILY_CAPS[account.platform] || 25;
 
-          // Upsert account
-          const [account] = await db
-            .insert(socialAccounts)
-            .values({
-              socialProfileId: profile.id,
-              platform,
-              platformUsername: details.username || null,
-              platformDisplayName: details.display_name || null,
-              platformImageUrl: details.social_images || null,
-              isConnected: true,
-              dailyCap,
-              metadata: details,
-            })
-            .onConflictDoUpdate({
-              target: [socialAccounts.socialProfileId, socialAccounts.platform],
-              set: {
-                platformUsername: details.username || null,
-                platformDisplayName: details.display_name || null,
-                platformImageUrl: details.social_images || null,
-                isConnected: true,
-                metadata: details,
-                updatedAt: new Date(),
-              },
-            })
-            .returning();
+        // Upsert account
+        const [syncedAccount] = await db
+          .insert(socialAccounts)
+          .values({
+            socialProfileId: profile.id,
+            platform: account.platform,
+            platformUsername: account.username || null,
+            platformDisplayName: account.displayName || null,
+            platformImageUrl: account.profileImageUrl || null,
+            isConnected: account.isActive !== false,
+            dailyCap,
+            metadata: { getLateAccountId: account._id },
+          })
+          .onConflictDoUpdate({
+            target: [socialAccounts.socialProfileId, socialAccounts.platform],
+            set: {
+              platformUsername: account.username || null,
+              platformDisplayName: account.displayName || null,
+              platformImageUrl: account.profileImageUrl || null,
+              isConnected: account.isActive !== false,
+              metadata: { getLateAccountId: account._id },
+              updatedAt: new Date(),
+            },
+          })
+          .returning();
 
-          syncedAccounts.push(account);
-        }
+        syncedAccounts.push(syncedAccount);
       }
 
       // Update connected accounts count
@@ -345,7 +356,7 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Connect a social account (generates auth URL)
+  // Connect a social account (generates platform invite URL)
   app.post('/api/social/accounts/connect', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -365,40 +376,25 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found. Please initialize first.' });
       }
 
-      if (!uploadPostService.isConfigured()) {
+      if (!getLateService.isConfigured()) {
         return res.status(503).json({ message: 'Social media integration is not configured' });
       }
 
-      // Build redirect URL to bring users back to Artivio after OAuth
-      // Priority: PRODUCTION_URL > request host > Replit env fallback
-      let baseUrl = process.env.PRODUCTION_URL;
-      if (!baseUrl) {
-        const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
-        const host = req.get('host');
-        if (host) {
-          baseUrl = `${protocol}://${host}`;
-        } else if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-          baseUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
-        } else {
-          baseUrl = 'https://artivio.ai';
-        }
+      if (!profile.getLateProfileId) {
+        return res.status(400).json({ message: 'GetLate profile not linked. Please reinitialize.' });
       }
-      const redirectUrl = `${baseUrl}/social/connect?connected=${platform}`;
 
-      // Generate JWT URL for connecting this specific platform
-      const result = await uploadPostService.generateJwtUrl(profile.uploadPostUsername, {
-        redirectUrl,
-        redirectButtonText: 'Return to Artivio',
-        logoImage: ARTIVIO_LOGO_URL,
-        connectTitle: `Connect ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
-        connectDescription: `Link your ${platform} account to start posting with Artivio.`,
-        platforms: [platform as SocialPlatform],
-        showCalendar: false,
-      });
+      // Create platform invite via GetLate
+      const { invite } = await getLateService.createPlatformInvite(
+        profile.getLateProfileId,
+        platform as SocialPlatform
+      );
 
       res.json({
-        authUrl: result.access_url,
-        duration: result.duration,
+        authUrl: invite.inviteUrl,
+        inviteId: invite._id,
+        platform,
+        expiresAt: invite.expiresAt,
       });
     } catch (error: any) {
       console.error('[Social] Error generating connect URL:', error);
@@ -427,7 +423,7 @@ export function registerSocialMediaRoutes(app: Express) {
         .select()
         .from(socialAccounts)
         .where(and(
-          eq(socialAccounts.id, parseInt(accountId)),
+          eq(socialAccounts.id, accountId),
           eq(socialAccounts.socialProfileId, profile.id)
         ))
         .limit(1);
@@ -443,7 +439,7 @@ export function registerSocialMediaRoutes(app: Express) {
           isConnected: false,
           updatedAt: new Date(),
         })
-        .where(eq(socialAccounts.id, parseInt(accountId)));
+        .where(eq(socialAccounts.id, accountId));
 
       // Update connected count
       await db
@@ -757,12 +753,12 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Post not found' });
       }
 
-      // If post is scheduled in Upload-Post, cancel it
-      if (existingPost.uploadPostJobId && existingPost.status === 'scheduled') {
+      // If post is scheduled in GetLate, cancel it
+      if (existingPost.getLatePostId && existingPost.status === 'scheduled') {
         try {
-          await uploadPostService.cancelScheduledPost(existingPost.uploadPostJobId);
+          await getLateService.deletePost(existingPost.getLatePostId);
         } catch (error) {
-          console.error('[Social] Failed to cancel Upload-Post job:', error);
+          console.error('[Social] Failed to cancel GetLate post:', error);
         }
       }
 
@@ -777,7 +773,7 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Schedule a post (sends to Upload-Post)
+  // Schedule a post (sends to GetLate)
   app.post('/api/social/posts/:postId/schedule', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -793,8 +789,12 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found' });
       }
 
-      if (!uploadPostService.isConfigured()) {
+      if (!getLateService.isConfigured()) {
         return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      if (!profile.getLateProfileId) {
+        return res.status(400).json({ message: 'GetLate profile not linked' });
       }
 
       // Get post
@@ -815,55 +815,54 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(400).json({ message: 'Post must have a scheduled date' });
       }
 
-      // Schedule based on post type
-      let uploadResult: any;
-      
-      if (post.postType === 'video' && post.mediaUrl) {
-        uploadResult = await uploadPostService.uploadVideo({
-          user: profile.uploadPostUsername,
-          platforms: post.platforms as SocialPlatform[],
-          videoUrl: post.mediaUrl,
-          title: post.title,
-          description: post.description || undefined,
-          scheduledDate: post.scheduledAt.toISOString(),
-          asyncUpload: true,
-          firstComment: post.firstComment || undefined,
-          platformTitles: post.platformTitles as any,
-        });
-      } else if (post.postType === 'photo' && post.mediaUrl) {
-        uploadResult = await uploadPostService.uploadPhoto({
-          user: profile.uploadPostUsername,
-          platforms: post.platforms as SocialPlatform[],
-          photoUrls: [post.mediaUrl],
-          title: post.title,
-          description: post.description || undefined,
-          scheduledDate: post.scheduledAt.toISOString(),
-          asyncUpload: true,
-          firstComment: post.firstComment || undefined,
-          platformTitles: post.platformTitles as any,
-        });
-      } else {
-        uploadResult = await uploadPostService.uploadText({
-          user: profile.uploadPostUsername,
-          platforms: post.platforms as SocialPlatform[],
-          text: post.title,
-          scheduledDate: post.scheduledAt.toISOString(),
-          asyncUpload: true,
-        });
+      // Get connected accounts to find account IDs for each platform
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.socialProfileId, profile.id),
+          eq(socialAccounts.isConnected, true)
+        ));
+
+      // Build platforms array for GetLate
+      const platformsForPost = (post.platforms as string[]).map(platform => {
+        const account = accounts.find(a => a.platform === platform);
+        const accountMetadata = account?.metadata as { getLateAccountId?: string } | null;
+        return {
+          platform: platform as SocialPlatform,
+          accountId: accountMetadata?.getLateAccountId || '',
+        };
+      }).filter(p => p.accountId);
+
+      if (platformsForPost.length === 0) {
+        return res.status(400).json({ message: 'No connected accounts found for selected platforms' });
       }
 
-      // Update post with job ID
+      // Create post in GetLate
+      const getLatePost = await getLateService.createPost({
+        content: post.title + (post.description ? '\n\n' + post.description : ''),
+        scheduledFor: post.scheduledAt.toISOString(),
+        timezone: 'UTC',
+        platforms: platformsForPost,
+        mediaItems: post.mediaUrl ? [{
+          type: post.postType === 'video' ? 'video' : 'image',
+          url: post.mediaUrl,
+        }] : undefined,
+        queuedFromProfile: profile.getLateProfileId || undefined,
+      });
+
+      // Update post with GetLate ID
       const [updatedPost] = await db
         .update(socialPosts)
         .set({
-          uploadPostJobId: uploadResult.job_id || uploadResult.request_id,
+          getLatePostId: getLatePost._id,
           status: 'scheduled',
           updatedAt: new Date(),
         })
         .where(eq(socialPosts.id, postId))
         .returning();
 
-      res.json({ post: updatedPost, uploadResult });
+      res.json({ post: updatedPost, getLatePost });
     } catch (error: any) {
       console.error('[Social] Error scheduling post:', error);
       res.status(500).json({ message: 'Failed to schedule post', error: error.message });
@@ -886,8 +885,12 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found' });
       }
 
-      if (!uploadPostService.isConfigured()) {
+      if (!getLateService.isConfigured()) {
         return res.status(503).json({ message: 'Social media integration is not configured' });
+      }
+
+      if (!profile.getLateProfileId) {
+        return res.status(400).json({ message: 'GetLate profile not linked' });
       }
 
       // Get post
@@ -904,45 +907,46 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Post not found' });
       }
 
-      // Publish immediately (no scheduled date = immediate)
-      let uploadResult: any;
-      
-      if (post.postType === 'video' && post.mediaUrl) {
-        uploadResult = await uploadPostService.uploadVideo({
-          user: profile.uploadPostUsername,
-          platforms: post.platforms as SocialPlatform[],
-          videoUrl: post.mediaUrl,
-          title: post.title,
-          description: post.description || undefined,
-          asyncUpload: true,
-          firstComment: post.firstComment || undefined,
-          platformTitles: post.platformTitles as any,
-        });
-      } else if (post.postType === 'photo' && post.mediaUrl) {
-        uploadResult = await uploadPostService.uploadPhoto({
-          user: profile.uploadPostUsername,
-          platforms: post.platforms as SocialPlatform[],
-          photoUrls: [post.mediaUrl],
-          title: post.title,
-          description: post.description || undefined,
-          asyncUpload: true,
-          firstComment: post.firstComment || undefined,
-          platformTitles: post.platformTitles as any,
-        });
-      } else {
-        uploadResult = await uploadPostService.uploadText({
-          user: profile.uploadPostUsername,
-          platforms: post.platforms as SocialPlatform[],
-          text: post.title,
-          asyncUpload: true,
-        });
+      // Get connected accounts to find account IDs for each platform
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.socialProfileId, profile.id),
+          eq(socialAccounts.isConnected, true)
+        ));
+
+      // Build platforms array for GetLate
+      const platformsForPost = (post.platforms as string[]).map(platform => {
+        const account = accounts.find(a => a.platform === platform);
+        const accountMetadata = account?.metadata as { getLateAccountId?: string } | null;
+        return {
+          platform: platform as SocialPlatform,
+          accountId: accountMetadata?.getLateAccountId || '',
+        };
+      }).filter(p => p.accountId);
+
+      if (platformsForPost.length === 0) {
+        return res.status(400).json({ message: 'No connected accounts found for selected platforms' });
       }
+
+      // Create post in GetLate with publishNow flag
+      const getLatePost = await getLateService.createPost({
+        content: post.title + (post.description ? '\n\n' + post.description : ''),
+        publishNow: true,
+        platforms: platformsForPost,
+        mediaItems: post.mediaUrl ? [{
+          type: post.postType === 'video' ? 'video' : 'image',
+          url: post.mediaUrl,
+        }] : undefined,
+        queuedFromProfile: profile.getLateProfileId || undefined,
+      });
 
       // Update post status
       const [updatedPost] = await db
         .update(socialPosts)
         .set({
-          uploadPostJobId: uploadResult.job_id || uploadResult.request_id,
+          getLatePostId: getLatePost._id,
           status: 'publishing',
           publishedAt: new Date(),
           updatedAt: new Date(),
@@ -950,7 +954,7 @@ export function registerSocialMediaRoutes(app: Express) {
         .where(eq(socialPosts.id, postId))
         .returning();
 
-      res.json({ post: updatedPost, uploadResult });
+      res.json({ post: updatedPost, getLatePost });
     } catch (error: any) {
       console.error('[Social] Error publishing post:', error);
       res.status(500).json({ message: 'Failed to publish post', error: error.message });
@@ -1032,7 +1036,7 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Sync analytics from Upload-Post
+  // Sync analytics from GetLate (placeholder - GetLate analytics API TBD)
   app.post('/api/social/analytics/sync', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1047,21 +1051,15 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Social profile not found' });
       }
 
-      if (!uploadPostService.isConfigured()) {
+      if (!getLateService.isConfigured()) {
         return res.status(503).json({ message: 'Social media integration is not configured' });
       }
 
-      // Fetch analytics from Upload-Post
-      const analyticsResult = await uploadPostService.getAnalytics(profile.uploadPostUsername);
-
-      if (!analyticsResult.success) {
-        return res.status(500).json({ message: 'Failed to fetch analytics from Upload-Post' });
-      }
-
-      // Store analytics (for now, just return them)
+      // GetLate analytics API is not yet available - return empty for now
       res.json({
         synced: true,
-        analytics: analyticsResult.analytics,
+        analytics: {},
+        message: 'Analytics sync coming soon',
       });
     } catch (error: any) {
       console.error('[Social] Error syncing analytics:', error);
@@ -1078,9 +1076,11 @@ export function registerSocialMediaRoutes(app: Express) {
     res.json({ caps: PLATFORM_DAILY_CAPS });
   });
 
-  // Get Facebook pages for user
+  // Get Facebook pages for user (placeholder - handled by GetLate connect flow)
   app.get('/api/social/facebook/pages', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
+      // GetLate handles Facebook page selection during the OAuth connect flow
+      // Return connected Facebook account info from our database
       const userId = req.user.id;
 
       const [profile] = await db
@@ -1090,22 +1090,32 @@ export function registerSocialMediaRoutes(app: Express) {
         .limit(1);
 
       if (!profile) {
-        return res.status(404).json({ message: 'Social profile not found' });
+        return res.json({ pages: [] });
       }
 
-      if (!uploadPostService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
-      }
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.socialProfileId, profile.id),
+          eq(socialAccounts.platform, 'facebook'),
+          eq(socialAccounts.isConnected, true)
+        ));
 
-      const result = await uploadPostService.getFacebookPages(profile.uploadPostUsername);
-      res.json(result);
+      res.json({ 
+        pages: accounts.map(a => ({
+          id: a.id,
+          name: a.platformDisplayName || a.platformUsername,
+          connected: a.isConnected,
+        }))
+      });
     } catch (error: any) {
       console.error('[Social] Error fetching Facebook pages:', error);
       res.status(500).json({ message: 'Failed to fetch Facebook pages', error: error.message });
     }
   });
 
-  // Get LinkedIn pages for user
+  // Get LinkedIn pages for user (placeholder - handled by GetLate connect flow)
   app.get('/api/social/linkedin/pages', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1117,22 +1127,32 @@ export function registerSocialMediaRoutes(app: Express) {
         .limit(1);
 
       if (!profile) {
-        return res.status(404).json({ message: 'Social profile not found' });
+        return res.json({ pages: [] });
       }
 
-      if (!uploadPostService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
-      }
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.socialProfileId, profile.id),
+          eq(socialAccounts.platform, 'linkedin'),
+          eq(socialAccounts.isConnected, true)
+        ));
 
-      const result = await uploadPostService.getLinkedInPages(profile.uploadPostUsername);
-      res.json(result);
+      res.json({ 
+        pages: accounts.map(a => ({
+          id: a.id,
+          name: a.platformDisplayName || a.platformUsername,
+          connected: a.isConnected,
+        }))
+      });
     } catch (error: any) {
       console.error('[Social] Error fetching LinkedIn pages:', error);
       res.status(500).json({ message: 'Failed to fetch LinkedIn pages', error: error.message });
     }
   });
 
-  // Get Pinterest boards for user
+  // Get Pinterest boards for user (placeholder - handled by GetLate connect flow)
   app.get('/api/social/pinterest/boards', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1144,22 +1164,32 @@ export function registerSocialMediaRoutes(app: Express) {
         .limit(1);
 
       if (!profile) {
-        return res.status(404).json({ message: 'Social profile not found' });
+        return res.json({ boards: [] });
       }
 
-      if (!uploadPostService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
-      }
+      const accounts = await db
+        .select()
+        .from(socialAccounts)
+        .where(and(
+          eq(socialAccounts.socialProfileId, profile.id),
+          eq(socialAccounts.platform, 'pinterest'),
+          eq(socialAccounts.isConnected, true)
+        ));
 
-      const result = await uploadPostService.getPinterestBoards(profile.uploadPostUsername);
-      res.json(result);
+      res.json({ 
+        boards: accounts.map(a => ({
+          id: a.id,
+          name: a.platformDisplayName || a.platformUsername,
+          connected: a.isConnected,
+        }))
+      });
     } catch (error: any) {
       console.error('[Social] Error fetching Pinterest boards:', error);
       res.status(500).json({ message: 'Failed to fetch Pinterest boards', error: error.message });
     }
   });
 
-  // Get scheduled posts from Upload-Post
+  // Get scheduled posts from GetLate
   app.get('/api/social/scheduled', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1174,30 +1204,65 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.json({ scheduledPosts: [] });
       }
 
-      if (!uploadPostService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
+      if (!getLateService.isConfigured() || !profile.getLateProfileId) {
+        // Fall back to database posts
+        const posts = await db
+          .select()
+          .from(socialPosts)
+          .where(and(
+            eq(socialPosts.socialProfileId, profile.id),
+            eq(socialPosts.status, 'scheduled')
+          ))
+          .orderBy(desc(socialPosts.scheduledAt));
+
+        return res.json({ scheduledPosts: posts });
       }
 
-      const scheduledPosts = await uploadPostService.getScheduledPosts();
-      res.json({ scheduledPosts });
+      // Get scheduled posts from GetLate
+      const { posts } = await getLateService.getPosts({
+        status: 'scheduled',
+        profileId: profile.getLateProfileId,
+      });
+
+      res.json({ scheduledPosts: posts });
     } catch (error: any) {
       console.error('[Social] Error fetching scheduled posts:', error);
       res.status(500).json({ message: 'Failed to fetch scheduled posts', error: error.message });
     }
   });
 
-  // Get upload history from Upload-Post
+  // Get post history from GetLate
   app.get('/api/social/history', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const { page, limit } = req.query;
 
-      if (!uploadPostService.isConfigured()) {
-        return res.status(503).json({ message: 'Social media integration is not configured' });
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json({ posts: [], total: 0 });
       }
 
-      const history = await uploadPostService.getUploadHistory({
-        page: page ? Number(page) : undefined,
-        limit: limit ? Number(limit) : undefined,
+      if (!getLateService.isConfigured() || !profile.getLateProfileId) {
+        // Fall back to database posts
+        const posts = await db
+          .select()
+          .from(socialPosts)
+          .where(eq(socialPosts.socialProfileId, profile.id))
+          .orderBy(desc(socialPosts.createdAt))
+          .limit(Number(limit) || 50);
+
+        return res.json({ posts, total: posts.length });
+      }
+
+      const history = await getLateService.getPosts({
+        page: page ? Number(page) : 1,
+        limit: limit ? Number(limit) : 50,
+        profileId: profile.getLateProfileId,
       });
 
       res.json(history);
