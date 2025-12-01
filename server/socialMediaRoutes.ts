@@ -482,7 +482,7 @@ export function registerSocialMediaRoutes(app: Express) {
       const proxyUrl = `${baseUrl}/social/oauth-redirect?platform=${platform}&invite=${invite._id}&nonce=${nonce}`;
 
       res.json({
-        authUrl: proxyUrl,
+        proxyUrl,
         inviteId: invite._id,
         platform,
         expiresAt: invite.expiresAt,

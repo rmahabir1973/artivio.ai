@@ -1,0 +1,148 @@
+2025-12-01 14:57:57.49
+1b991754
+User
+7:57:57 PM [express] GET /api/favorites 304 in 47ms :: []
+2025-12-01 14:57:57.49
+1b991754
+User
+7:57:57 PM [express] GET /api/subscriptions/current 304 in 47ms :: {"id":"b7aaa6ce-5fe9-4a56-a48e-78…
+2025-12-01 14:57:57.51
+1b991754
+User
+7:57:57 PM [express] GET /api/pricing 304 in 49ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-12-01 14:57:57.52
+1b991754
+User
+[/api/generations] Array query completed in 60ms, found 15 generations
+2025-12-01 14:57:57.52
+1b991754
+User
+7:57:57 PM [express] GET /api/generations 200 in 84ms :: [{"id":"a6b0ac1a-89fd-453b-946f-7276da753e2…
+2025-12-01 14:57:57.65
+1b991754
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '82d47e1d' }
+2025-12-01 14:57:57.70
+1b991754
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '82d47e1d-4d4b-4903-baf5-a0794fe8ab65' }
+2025-12-01 14:57:57.72
+1b991754
+User
+tokenId: '82d47e1d',
+2025-12-01 14:57:57.72
+1b991754
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-01 14:57:57.72
+1b991754
+User
+}
+2025-12-01 14:57:57.72
+1b991754
+User
+isAdmin: true
+2025-12-01 14:57:57.72
+1b991754
+User
+userId: '49729939',
+2025-12-01 14:57:57.72
+1b991754
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-01 14:57:57.89
+1b991754
+User
+7:57:57 PM [express] GET /api/welcome 304 in 25ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-01 14:57:57.91
+1b991754
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:57:57.91
+1b991754
+User
+7:57:57 PM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-12-01 14:57:57.92
+1b991754
+User
+}
+2025-12-01 14:57:57.92
+1b991754
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:57:57.92
+1b991754
+User
+cursor: undefined
+2025-12-01 14:57:57.92
+1b991754
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-01 14:57:57.94
+1b991754
+User
+[/api/generations] Array query completed in 25ms, found 15 generations
+2025-12-01 14:57:57.95
+1b991754
+User
+7:57:57 PM [express] GET /api/pricing 304 in 62ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-12-01 14:57:58.03
+1b991754
+User
+7:57:58 PM [express] GET /api/subscriptions/current 304 in 127ms :: {"id":"b7aaa6ce-5fe9-4a56-a48e-7…
+2025-12-01 14:58:13.00
+389eb5c9
+System
+system: received signal terminated
+2025-12-01 14:58:14.00
+1b991754
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:58:14.02
+1b991754
+User
+7:58:14 PM [express] GET /api/social/subscription-status 304 in 45ms :: {"hasSocialPoster":true,"soc…
+2025-12-01 14:58:14.12
+1b991754
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:58:14.21
+1b991754
+User
+7:58:14 PM [express] GET /api/social/profile 304 in 109ms :: {"profile":{"id":"bbea3e34-e582-43f0-80…
+2025-12-01 14:58:14.35
+1b991754
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:58:14.45
+1b991754
+User
+7:58:14 PM [express] GET /api/social/accounts 304 in 119ms :: []
+2025-12-01 14:58:16.48
+1b991754
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-01 14:58:16.53
+1b991754
+User
+[GetLate] Creating platform invite for tiktok on profile 692de851363442076b252193
+2025-12-01 14:58:17.35
+1b991754
+User
+7:58:17 PM [express] POST /api/social/accounts/connect 200 in 890ms :: {"authUrl":"https://artivio.a…
+2025-12-01 14:58:17.35
+1b991754
+User
+7:58:17 PM [express] POST /api/social/accounts/connect 200 in 890ms :: {"authUrl":"https://artivio.a…
+2025-12-01 14:58:58.45
+1b991754
+User
+7:58:58 PM [express] GET /api/announcements/active 304 in 114ms :: []
+2025-12-01 14:58:58.45
+1b991754
+User
+7:58:58 PM [express] GET /api/announcements/active 304 in 114ms :: []
+2025-12-01 14:58:58.45
+1b991754
+User
+7:58:58 PM [express] GET /api/announcements/active 304 in 114ms :: []
