@@ -51,6 +51,8 @@ interface Platform {
   color: string;
   description: string;
   dailyLimit: number;
+  requiresBusinessAccount?: boolean;
+  businessAccountNote?: string;
 }
 
 const SUPPORTED_PLATFORMS: Platform[] = [
@@ -60,7 +62,9 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiInstagram, 
     color: "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400",
     description: "Share reels, stories, and posts",
-    dailyLimit: 50
+    dailyLimit: 50,
+    requiresBusinessAccount: true,
+    businessAccountNote: "Requires a Business account. Personal and Creator accounts are not supported by the Instagram API."
   },
   { 
     id: "tiktok", 
@@ -562,6 +566,12 @@ export default function SocialConnect() {
                         Connected
                       </Badge>
                     )}
+                    {platform.requiresBusinessAccount && !connected && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Business Only
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {connected && account 
@@ -569,6 +579,12 @@ export default function SocialConnect() {
                       : platform.description
                     }
                   </p>
+                  {!connected && platform.requiresBusinessAccount && platform.businessAccountNote && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-start gap-1">
+                      <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                      <span>{platform.businessAccountNote}</span>
+                    </p>
+                  )}
                   {connected && account && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Daily limit: {account.postsToday}/{platform.dailyLimit} posts
@@ -641,6 +657,33 @@ export default function SocialConnect() {
               );
             })}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Instagram Business Account Instructions */}
+      <Card className="mt-4 border-amber-500/30 bg-amber-500/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <SiInstagram className="w-5 h-5 text-pink-500" />
+            Instagram Business Account Required
+          </CardTitle>
+          <CardDescription>
+            Instagram requires a Business account to post via API. Here's how to convert in 30 seconds:
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+            <li>Open Instagram app and go to your <span className="font-medium text-foreground">Profile</span></li>
+            <li>Tap the <span className="font-medium text-foreground">hamburger menu (☰)</span> at the top right</li>
+            <li>Go to <span className="font-medium text-foreground">Settings and privacy → Account type and tools</span></li>
+            <li>Tap <span className="font-medium text-foreground">Switch to professional account</span></li>
+            <li>Select <span className="font-medium text-foreground">Business</span> (not Creator)</li>
+            <li>Choose a category and optionally connect to a Facebook Page</li>
+          </ol>
+          <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-green-500" />
+            It's free and takes about 30 seconds. You can switch back to Personal anytime.
+          </p>
         </CardContent>
       </Card>
 
