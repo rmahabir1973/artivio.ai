@@ -777,6 +777,7 @@ export function registerAuthRoutes(app: Express) {
           lastName: user.lastName,
           credits: user.credits,
           isAdmin,
+          hasSeenWelcome: user.hasSeenWelcome,
         },
       });
     } catch (error: any) {
