@@ -1,0 +1,87 @@
+Now let’s dive into the overlay templates and the specific safe zones that you need to be aware of when creating content.
+
+1. Instagram Reel Overlay Template
+Reels are one of the fastest ways to extend your reach. You don’t want your first impression to potential new followers to look sloppy.
+
+Unfortunately there are A LOT of UI text & buttons that can cover up your carefully created content. You should especially be mindful when adding your caption text. It can almost look too high in the frame until you test it against the “safe zone” box.
+
+Size of Instagram Reel & Thumbnail: 1080x1920
+
+Text safe area: 900x1500
+110 pixels from the top. To clear the “Reels” headline and liked by friends bubbles.
+320 pixels from the bottom. This is where profile photo, description, comments, follow, and music are displayed.
+60 pixels from the left. This gives a buffer for smaller phone sizes that slightly crop the left hand side of your video.
+120 pixels from the right. To clear the like, comment, share buttons.
+
+Grid crop: 1080x1350
+When you choose to add the reel to your Instagram grid, it gets cropped to the portrait size. In order to keep your feed looking perfect, make sure your thumbnail design looks good when it gets cropped to this center area.
+
+
+2. Instagram Story Overlay Template
+Stories are a little simpler. As long as you avoid the very top & bottom of the frame, your content will clear Instagram’s UI.
+
+Size of Instagram Story: 1080x1920
+
+Text safe area: 1080x1420
+Avoid the top & bottom 250px.
+It’s not necessary, but on smaller devices the 60px on the left/right of the frame can get cropped. So it’s best not to butt your text up on the edge of the frame.
+
+Grid crop: 1080x1350
+It hasn’t happened yet, but it’s anticipated that Story highlights will soon be removed from their bubbles and added to a tab on your grid instead. To get ahead of this, it’s best practice to make sure your story looks good center cropped to the portrait size.
+
+
+3. TikTok Video Overlay Template
+The UI overlay on Tiktok has SO MANY elements that can threaten to cover your content. It has the smallest safe area to work within. It also can be super tricky to get the video framing & captioning just right, so make sure to use the guides.
+
+Size of Tiktok Video: 1080x1920
+
+Text safe area: 720x1030
+Even though this is the official text safe area… it’s a little odd in practice. The safe zone is off center and high up (often covering your face in videos). Many people end up moving their captioning a little lower in frame.
+
+220 pixels from the top.
+640 pixels from the bottom.
+120 pixels from the left.
+240 pixels from the right.
+
+Grid Crop: 1080x1440
+This portrait size for the grid thumbnails is slightly taller than Instagram’s. Just to keep you on your toes. 🙃
+
+
+4. YouTube Shorts Overlay Template
+It’s important to stay within the boundaries of the app’s overlay elements, including the like and comment buttons that appear during playback.
+
+Size of Youtube Shorts Video: 1080x1920
+
+Text safe area: 820x1510
+140 pixels from the top.
+270 pixels from the bottom.
+70 pixels from the left.
+190 pixels from the right.
+
+Grid Crop: 1080x1800
+Even though you upload a 1080x1920 thumbnail, it gets slightly cropped on the top and bottom on your grid.
+
+
+5. YouTube Video Overlay Template
+Just like with Instagram, YouTube has various UI elements like the video title, playback controls, and subtitles that can overlap with your video content. Keep this in mind when designing to ensure your graphics are fully visible.
+
+Size of YouTube Video & Thumbnail: 1920x1080
+
+Text Safe Area: 1540x870
+120 pixels from the top: This avoids the video title and channel name.
+120 pixels from the bottom: Prevents overlapping with the playback controls, captions, and suggested video thumbnails that appear at the bottom of the player.
+150 pixels from the left: Gives enough room to avoid cropping on the smaller screen sizes, especially mobile devices.
+150 pixels from the right: Ensures the video’s like, share, and more options buttons don’t interfere with your content.
+
+Thumbnail Crop: 1280x720
+Same proportions as your video, but smaller. Keep the central content of your thumbnail within the safe area to avoid key elements being cut off when displayed in smaller screens or cropped for YouTube’s preview image.
+
+Using Your Canva Overlay Templates
+Choose Your Platform: Add the template specific to Instagram Reels, Stories, TikTok, YouTube Shorts, or YouTube Videos.
+Customize: Upload your video to Canva & use the drag-and-drop tool to update the video frame.
+Visualize: See exactly how your content will look once uploaded. Check that everything is within the safe areas provided on pages 2 & 3.
+Export and Share: Once you’re happy with the design, export your original video, and post it to your social media accounts.
+Final Thoughts
+Don’t let in-app overlays ruin your hard work! By using these 5 FREE Canva overlay templates, you can design your social media content with confidence, ensuring you showcase your videos how they were meant to be experienced.
+
+Ready to get started? Download your FREE overlay templates now and take your social media content to the next level! 👇
