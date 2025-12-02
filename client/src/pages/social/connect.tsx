@@ -242,12 +242,15 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     dailyLimit: 50,
     setupGuide: {
       title: "Connect Bluesky Account",
-      warningTitle: "Important note",
+      warningTitle: "How to connect Bluesky",
       warnings: [
-        "Bluesky uses app passwords for authentication.",
-        "You may need to create an app password in your Bluesky settings."
+        "Bluesky requires an App Password (not your regular login password).",
+        "1. Create an App Password at: bsky.app/settings/app-passwords",
+        "2. Enter your Bluesky handle as the username (e.g., yourname.bsky.social)",
+        "3. Enter the App Password you created as the password"
       ],
-      buttonText: "Go to Connect Bluesky"
+      buttonText: "Create App Password",
+      buttonUrl: "https://bsky.app/settings/app-passwords"
     }
   },
 ];
@@ -1056,19 +1059,33 @@ export default function SocialConnect() {
             >
               Back
             </Button>
-            <Button 
-              onClick={proceedWithConnection}
-              disabled={connectAccountMutation.isPending}
-              className="gap-2"
-              data-testid="button-proceed-connect"
-            >
-              {connectAccountMutation.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <ExternalLink className="w-4 h-4" />
+            <div className="flex gap-2">
+              {/* Show separate link button for platforms with buttonUrl (like Bluesky app password page) */}
+              {setupGuidePlatform?.setupGuide?.buttonUrl && (
+                <Button 
+                  variant="outline"
+                  onClick={() => window.open(setupGuidePlatform.setupGuide?.buttonUrl, '_blank')}
+                  className="gap-2"
+                  data-testid="button-external-link"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {setupGuidePlatform?.setupGuide?.buttonText || "Open Link"}
+                </Button>
               )}
-              {setupGuidePlatform?.setupGuide?.buttonText || "Connect"}
-            </Button>
+              <Button 
+                onClick={proceedWithConnection}
+                disabled={connectAccountMutation.isPending}
+                className="gap-2"
+                data-testid="button-proceed-connect"
+              >
+                {connectAccountMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ExternalLink className="w-4 h-4" />
+                )}
+                {setupGuidePlatform?.setupGuide?.buttonUrl ? "Go to Connect" : (setupGuidePlatform?.setupGuide?.buttonText || "Connect")}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
