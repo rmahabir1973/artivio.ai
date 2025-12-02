@@ -676,7 +676,19 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.status(404).json({ message: 'Account not found' });
       }
 
-      // Mark as disconnected (we keep the record for history)
+      // First, disconnect from GetLate API if we have the GetLate account ID
+      const getLateAccountId = (account.metadata as any)?.getLateAccountId;
+      if (getLateAccountId && getLateService.isConfigured()) {
+        try {
+          await getLateService.disconnectAccount(getLateAccountId);
+          console.log(`[Social] Successfully disconnected account from GetLate: ${getLateAccountId}`);
+        } catch (getLateError: any) {
+          // Log but don't fail - the account might already be disconnected on GetLate's side
+          console.warn(`[Social] GetLate disconnect warning: ${getLateError.message}`);
+        }
+      }
+
+      // Mark as disconnected in local DB (we keep the record for history)
       await db
         .update(socialAccounts)
         .set({

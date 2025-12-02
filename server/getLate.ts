@@ -231,6 +231,23 @@ class GetLateService {
     return result;
   }
 
+  async disconnectAccount(accountId: string): Promise<void> {
+    console.log(`[GetLate] Disconnecting account: ${accountId}`);
+    
+    const response = await fetch(`${this.baseUrl}/accounts/${accountId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`[GetLate] Failed to disconnect account. Status: ${response.status}, Body: ${errorText}`);
+      throw new Error(`GetLate API error (${response.status}): ${errorText}`);
+    }
+    
+    console.log(`[GetLate] Successfully disconnected account: ${accountId}`);
+  }
+
   async getConnectUrl(profileId: string, platform: SocialPlatform, redirectUrl: string): Promise<string> {
     console.log(`[GetLate] Getting connect URL for ${platform} on profile ${profileId} with redirect to ${redirectUrl}`);
     
