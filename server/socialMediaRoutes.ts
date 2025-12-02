@@ -1170,7 +1170,10 @@ export function registerSocialMediaRoutes(app: Express) {
   app.get('/api/social/analytics', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { timeRange = '7days' } = req.query;
+      const { timeRange = '7days', platform } = req.query;
+      
+      const validTimeRanges = ['7days', '30days', '90days'];
+      const normalizedTimeRange = validTimeRanges.includes(timeRange) ? timeRange as '7days' | '30days' | '90days' : '7days';
 
       const [profile] = await db
         .select()
@@ -1182,8 +1185,14 @@ export function registerSocialMediaRoutes(app: Express) {
         return res.json(null);
       }
 
-      // Get connected accounts for platform breakdown
-      const accounts = await db
+      const { socialAnalyticsService } = await import('./services/socialAnalyticsService');
+      const analytics = await socialAnalyticsService.getAnalytics(
+        profile.id,
+        normalizedTimeRange,
+        platform as string | undefined
+      );
+
+      const connectedAccounts = await db
         .select()
         .from(socialAccounts)
         .where(and(
@@ -1191,46 +1200,78 @@ export function registerSocialMediaRoutes(app: Express) {
           eq(socialAccounts.isConnected, true)
         ));
 
-      // Get posts for this period
-      const posts = await db
-        .select()
-        .from(socialPosts)
-        .where(eq(socialPosts.socialProfileId, profile.id));
+      const connectedPlatforms = connectedAccounts.map(a => a.platform?.toLowerCase()).filter(Boolean);
 
-      // Calculate overall stats (mock data for now - will be populated from Upload-Post analytics sync)
-      const publishedPosts = posts.filter(p => p.status === 'published');
-      
       const overall = {
-        totalFollowers: 0, // Will come from Upload-Post analytics
+        totalFollowers: 0,
         totalImpressions: 0,
-        avgEngagement: 0,
-        postsPublished: publishedPosts.length,
+        avgEngagement: analytics.overall.successRate,
+        postsPublished: analytics.overall.publishedPosts,
+        totalPosts: analytics.overall.totalPosts,
+        scheduledPosts: analytics.overall.scheduledPosts,
+        failedPosts: analytics.overall.failedPosts,
+        successRate: analytics.overall.successRate,
+        aiGeneratedRatio: analytics.overall.aiGeneratedRatio,
+        platformCount: analytics.overall.platformCount,
+        avgPostsPerDay: analytics.overall.avgPostsPerDay,
       };
 
-      // Build platform analytics
-      const platforms = accounts.map(acc => {
-        const platformPosts = posts.filter(p => p.platforms?.includes(acc.platform));
-        const platformPublished = platformPosts.filter(p => p.status === 'published');
-        
-        return {
-          platform: acc.platform,
-          followers: 0, // Will come from Upload-Post analytics
+      const platforms = analytics.platforms
+        .filter(p => connectedPlatforms.includes(p.platform))
+        .map(p => ({
+          platform: p.platform,
+          followers: 0,
           followersChange: 0,
           impressions: 0,
           impressionsChange: 0,
-          engagement: 0,
+          engagement: p.successRate,
           engagementChange: 0,
-          postsThisWeek: platformPublished.length,
-          topPost: platformPublished.length > 0 ? {
-            caption: platformPublished[0].title || '',
-            likes: 0,
-            comments: 0,
-            shares: 0,
-          } : undefined,
-        };
-      });
+          postsThisWeek: p.postsPublished,
+          postsTotal: p.postsTotal,
+          postsScheduled: p.postsScheduled,
+          postsFailed: p.postsFailed,
+          successRate: p.successRate,
+          aiGeneratedCount: p.aiGeneratedCount,
+          manualCount: p.manualCount,
+          avgPostsPerDay: p.avgPostsPerDay,
+          contentTypes: p.contentTypes,
+          lastPostDate: p.lastPostDate,
+        }));
 
-      res.json({ overall, platforms });
+      const allPlatformsWithData = [...platforms];
+      for (const platform of connectedPlatforms) {
+        if (!allPlatformsWithData.find(p => p.platform === platform)) {
+          allPlatformsWithData.push({
+            platform: platform as string,
+            followers: 0,
+            followersChange: 0,
+            impressions: 0,
+            impressionsChange: 0,
+            engagement: 0,
+            engagementChange: 0,
+            postsThisWeek: 0,
+            postsTotal: 0,
+            postsScheduled: 0,
+            postsFailed: 0,
+            successRate: 0,
+            aiGeneratedCount: 0,
+            manualCount: 0,
+            avgPostsPerDay: 0,
+            contentTypes: {},
+            lastPostDate: null,
+          });
+        }
+      }
+
+      res.json({
+        overall,
+        platforms: allPlatformsWithData,
+        timeline: analytics.timeline,
+        topContentTypes: analytics.topContentTypes,
+        bestPostingTimes: analytics.bestPostingTimes,
+        connectedPlatforms,
+        timeRange: normalizedTimeRange,
+      });
     } catch (error: any) {
       console.error('[Social] Error fetching analytics:', error);
       res.status(500).json({ message: 'Failed to fetch analytics', error: error.message });
