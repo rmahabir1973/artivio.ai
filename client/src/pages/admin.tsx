@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,10 @@ export default function Admin() {
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
   const [deletingPricingId, setDeletingPricingId] = useState<string | null>(null);
   const [resettingPlans, setResettingPlans] = useState(false);
+  
+  // Pricing sorting state
+  const [pricingSortField, setPricingSortField] = useState<'feature' | 'model' | 'category' | 'creditCost'>('feature');
+  const [pricingSortDirection, setPricingSortDirection] = useState<'asc' | 'desc'>('asc');
   
   // Home page content state
   const [editingHomePage, setEditingHomePage] = useState(false);
@@ -220,6 +224,36 @@ export default function Admin() {
     queryKey: ["/api/admin/pricing"],
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
+
+  // Sorted pricing list
+  const sortedPricingList = useMemo(() => {
+    return [...pricingList].sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+      
+      if (pricingSortField === 'creditCost') {
+        aVal = a.creditCost;
+        bVal = b.creditCost;
+      } else {
+        aVal = (a[pricingSortField] || '').toLowerCase();
+        bVal = (b[pricingSortField] || '').toLowerCase();
+      }
+      
+      if (aVal < bVal) return pricingSortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return pricingSortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [pricingList, pricingSortField, pricingSortDirection]);
+
+  // Toggle pricing sort
+  const togglePricingSort = (field: 'feature' | 'model' | 'category' | 'creditCost') => {
+    if (pricingSortField === field) {
+      setPricingSortDirection(pricingSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setPricingSortField(field);
+      setPricingSortDirection('asc');
+    }
+  };
 
   const { data: homePageContent, isLoading: homePageLoading } = useQuery<HomePageContent>({
     queryKey: ["/api/admin/homepage"],
@@ -1376,15 +1410,59 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead data-testid="text-pricing-header-feature">Feature</TableHead>
-                      <TableHead data-testid="text-pricing-header-model">Model</TableHead>
-                      <TableHead data-testid="text-pricing-header-category">Category</TableHead>
-                      <TableHead className="text-right" data-testid="text-pricing-header-cost">Credit Cost</TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover-elevate select-none" 
+                        onClick={() => togglePricingSort('feature')}
+                        data-testid="button-sort-pricing-feature"
+                      >
+                        <div className="flex items-center gap-1">
+                          Feature
+                          {pricingSortField === 'feature' && (
+                            pricingSortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover-elevate select-none" 
+                        onClick={() => togglePricingSort('model')}
+                        data-testid="button-sort-pricing-model"
+                      >
+                        <div className="flex items-center gap-1">
+                          Model
+                          {pricingSortField === 'model' && (
+                            pricingSortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover-elevate select-none" 
+                        onClick={() => togglePricingSort('category')}
+                        data-testid="button-sort-pricing-category"
+                      >
+                        <div className="flex items-center gap-1">
+                          Category
+                          {pricingSortField === 'category' && (
+                            pricingSortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="text-right cursor-pointer hover-elevate select-none" 
+                        onClick={() => togglePricingSort('creditCost')}
+                        data-testid="button-sort-pricing-cost"
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Credit Cost
+                          {pricingSortField === 'creditCost' && (
+                            pricingSortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
+                      </TableHead>
                       <TableHead className="text-right" data-testid="text-pricing-header-actions">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pricingList.map((pricing) => (
+                    {sortedPricingList.map((pricing) => (
                       <TableRow key={pricing.id} data-testid={`pricing-row-${pricing.id}`}>
                         <TableCell className="font-medium capitalize" data-testid={`text-pricing-feature-${pricing.id}`}>
                           {pricing.feature.replace(/-/g, ' ')}

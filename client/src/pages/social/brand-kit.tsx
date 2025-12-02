@@ -60,6 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/authBridge";
 import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
+import { usePricing } from "@/hooks/use-pricing";
 import type { SocialBrandKit, SocialBrandMaterial, SocialBrandAsset } from "@shared/schema";
 
 interface SubscriptionStatus {
@@ -1604,29 +1605,29 @@ function StylesVoiceTab({ brandKit, updateBrandKitMutation, editingSection, setE
   );
 }
 
-// AI Model options for the content generation
+// AI Model options for content generation - IDs must match database pricing entries
 const VIDEO_MODELS = [
-  { id: 'veo_3_1_fast', label: 'Veo 3.1 Fast', credits: 50, description: 'Fastest, most affordable' },
-  { id: 'veo_3_1', label: 'Veo 3.1', credits: 100, description: 'High quality' },
-  { id: 'seedance_lite', label: 'Seedance Lite', credits: 40, description: 'Budget-friendly' },
-  { id: 'seedance_pro', label: 'Seedance Pro', credits: 80, description: 'Premium quality' },
-  { id: 'kling_2_5', label: 'Kling 2.5 Turbo', credits: 60, description: 'Fast turnaround' },
-  { id: 'wan_2_5', label: 'Wan 2.5', credits: 70, description: 'Good balance' },
-  { id: 'runway_gen3', label: 'Runway Gen-3', credits: 120, description: 'Professional grade' },
-  { id: 'sora_2_pro', label: 'Sora 2 Pro', credits: 150, description: 'Highest quality' },
+  { id: 'veo-3.1-fast', label: 'Veo 3.1 Fast', defaultCredits: 125, description: 'Fastest, most affordable' },
+  { id: 'veo-3.1', label: 'Veo 3.1', defaultCredits: 525, description: 'High quality' },
+  { id: 'seedance-1-lite-720p', label: 'Seedance Lite', defaultCredits: 25, description: 'Budget-friendly' },
+  { id: 'seedance-1-pro-5s-720p', label: 'Seedance Pro', defaultCredits: 75, description: 'Premium quality' },
+  { id: 'kling-2.5-turbo-1080p-5s', label: 'Kling 2.5 Turbo', defaultCredits: 60, description: 'Fast turnaround' },
+  { id: 'wan-2.5-1080p', label: 'Wan 2.5', defaultCredits: 95, description: 'Good balance' },
+  { id: 'runway-gen3-alpha-turbo-5s', label: 'Runway Gen-3', defaultCredits: 30, description: 'Professional grade' },
+  { id: 'sora-2-pro-480p-5s', label: 'Sora 2 Pro', defaultCredits: 100, description: 'Highest quality' },
 ];
 
 const IMAGE_MODELS = [
-  { id: 'seedream_4', label: 'Seedream 4.0', credits: 5, description: 'Fast & affordable' },
-  { id: 'flux_kontext', label: 'Flux Kontext', credits: 10, description: 'High quality' },
-  { id: '4o_image', label: '4o Image API', credits: 15, description: 'Versatile' },
-  { id: 'nano_banana', label: 'Nano Banana', credits: 3, description: 'Quick generations' },
+  { id: 'seedream-4-1', label: 'Seedream 4.0', defaultCredits: 10, description: 'Fast & affordable' },
+  { id: 'flux-kontext-pro', label: 'Flux Kontext', defaultCredits: 3, description: 'High quality' },
+  { id: '4o-image-1', label: '4o Image API', defaultCredits: 20, description: 'Versatile' },
+  { id: 'nano-banana', label: 'Nano Banana', defaultCredits: 50, description: 'Quick generations' },
 ];
 
 const MUSIC_MODELS = [
-  { id: 'suno_v4', label: 'Suno V4', credits: 20, description: 'Good quality' },
-  { id: 'suno_v4_5', label: 'Suno V4.5', credits: 30, description: 'Enhanced audio' },
-  { id: 'suno_v5', label: 'Suno V5', credits: 40, description: 'Best quality' },
+  { id: 'suno-v4', label: 'Suno V4', defaultCredits: 30, description: 'Good quality' },
+  { id: 'suno-v4.5', label: 'Suno V4.5', defaultCredits: 30, description: 'Enhanced audio' },
+  { id: 'suno-v5', label: 'Suno V5', defaultCredits: 30, description: 'Best quality' },
 ];
 
 const AUTOMATION_LEVELS = [
@@ -1637,6 +1638,9 @@ const AUTOMATION_LEVELS = [
 ];
 
 function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
+  // Use dynamic pricing from database
+  const { getModelCost, isLoading: pricingLoading } = usePricing();
+  
   const [formData, setFormData] = useState({
     featuredMediaTypes: brandKit?.contentPreferences?.featuredMediaTypes || [],
     mediaKitPriority: brandKit?.contentPreferences?.mediaKitPriority || "brand_kit_first",
@@ -1645,11 +1649,11 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
     topicsToAvoid: brandKit?.contentPreferences?.topicsToAvoid?.join("\n") || "",
     alwaysIncludeMusic: brandKit?.contentPreferences?.alwaysIncludeMusic || false,
     alwaysIncludeImages: brandKit?.contentPreferences?.alwaysIncludeImages || false,
-    // AI Settings
+    // AI Settings - using database model IDs
     aiSettings: {
-      preferredVideoModel: brandKit?.contentPreferences?.aiSettings?.preferredVideoModel || 'veo_3_1_fast',
-      preferredImageModel: brandKit?.contentPreferences?.aiSettings?.preferredImageModel || 'seedream_4',
-      preferredMusicModel: brandKit?.contentPreferences?.aiSettings?.preferredMusicModel || 'suno_v4',
+      preferredVideoModel: brandKit?.contentPreferences?.aiSettings?.preferredVideoModel || 'veo-3.1-fast',
+      preferredImageModel: brandKit?.contentPreferences?.aiSettings?.preferredImageModel || 'seedream-4-1',
+      preferredMusicModel: brandKit?.contentPreferences?.aiSettings?.preferredMusicModel || 'suno-v4',
       dailyCreditBudget: brandKit?.contentPreferences?.aiSettings?.dailyCreditBudget ?? 500,
       automationLevel: brandKit?.contentPreferences?.aiSettings?.automationLevel || 'ai_suggests',
       autoGenerationPercent: brandKit?.contentPreferences?.aiSettings?.autoGenerationPercent ?? 50,
@@ -1996,7 +2000,7 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
                       <div className="flex items-center justify-between gap-4 w-full">
                         <span>{model.label}</span>
                         <span className="text-xs text-muted-foreground">
-                          ~{model.credits} credits • {model.description}
+                          ~{getModelCost(model.id, model.defaultCredits)} credits • {model.description}
                         </span>
                       </div>
                     </SelectItem>
@@ -2021,7 +2025,7 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
                       <div className="flex items-center justify-between gap-4 w-full">
                         <span>{model.label}</span>
                         <span className="text-xs text-muted-foreground">
-                          ~{model.credits} credits • {model.description}
+                          ~{getModelCost(model.id, model.defaultCredits)} credits • {model.description}
                         </span>
                       </div>
                     </SelectItem>
@@ -2046,7 +2050,7 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
                       <div className="flex items-center justify-between gap-4 w-full">
                         <span>{model.label}</span>
                         <span className="text-xs text-muted-foreground">
-                          ~{model.credits} credits • {model.description}
+                          ~{getModelCost(model.id, model.defaultCredits)} credits • {model.description}
                         </span>
                       </div>
                     </SelectItem>
