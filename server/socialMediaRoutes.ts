@@ -2484,5 +2484,87 @@ Response format:
     }
   });
 
+  app.get("/api/social/execution-agent/status", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { getAgentStatus } = await import('./services/contentExecutionAgent');
+      const status = getAgentStatus();
+      res.json(status);
+    } catch (error: any) {
+      console.error('[Execution Agent] Status error:', error);
+      res.status(500).json({ message: 'Failed to get agent status' });
+    }
+  });
+
+  app.post("/api/social/execution-agent/start", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { startContentExecutionAgent } = await import('./services/contentExecutionAgent');
+      await startContentExecutionAgent();
+      res.json({ success: true, message: 'Execution agent started' });
+    } catch (error: any) {
+      console.error('[Execution Agent] Start error:', error);
+      res.status(500).json({ message: 'Failed to start execution agent' });
+    }
+  });
+
+  app.post("/api/social/execution-agent/stop", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { stopContentExecutionAgent } = await import('./services/contentExecutionAgent');
+      await stopContentExecutionAgent();
+      res.json({ success: true, message: 'Execution agent stopped' });
+    } catch (error: any) {
+      console.error('[Execution Agent] Stop error:', error);
+      res.status(500).json({ message: 'Failed to stop execution agent' });
+    }
+  });
+
+  app.post("/api/social/execution-agent/execute-now", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { triggerManualExecution, getAgentStatus } = await import('./services/contentExecutionAgent');
+      const statusBefore = getAgentStatus();
+      
+      if (statusBefore.isExecuting) {
+        return res.json({ 
+          success: false, 
+          skipped: true,
+          message: 'Execution already in progress',
+          results: [],
+          postsAttemptedThisRun: statusBefore.postsAttemptedThisRun,
+          postsSucceededThisRun: statusBefore.postsSucceededThisRun,
+          postsFailedThisRun: statusBefore.postsFailedThisRun,
+        });
+      }
+      
+      const results = await triggerManualExecution();
+      const statusAfter = getAgentStatus();
+      const attemptedCount = statusAfter.postsAttemptedThisRun;
+      const successCount = statusAfter.postsSucceededThisRun;
+      const failedCount = statusAfter.postsFailedThisRun;
+      
+      let message = 'No posts to process';
+      if (attemptedCount > 0) {
+        if (failedCount === 0) {
+          message = `Successfully published ${successCount} post${successCount > 1 ? 's' : ''}`;
+        } else if (successCount === 0) {
+          message = `Failed to publish ${failedCount} post${failedCount > 1 ? 's' : ''}`;
+        } else {
+          message = `Published ${successCount}, failed ${failedCount}`;
+        }
+      }
+      
+      res.json({ 
+        success: failedCount === 0,
+        skipped: false,
+        message,
+        results,
+        postsAttemptedThisRun: attemptedCount,
+        postsSucceededThisRun: successCount,
+        postsFailedThisRun: failedCount,
+      });
+    } catch (error: any) {
+      console.error('[Execution Agent] Manual execution error:', error);
+      res.status(500).json({ message: 'Failed to execute posts' });
+    }
+  });
+
   console.log('✓ Social Media Hub routes registered');
 }

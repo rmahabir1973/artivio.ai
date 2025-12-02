@@ -278,6 +278,124 @@ export default function ContentPlanPage() {
     },
   });
 
+  const { data: agentStatus, refetch: refetchAgentStatus } = useQuery<{
+    isRunning: boolean;
+    isExecuting: boolean;
+    lastRunAt: string | null;
+    nextRunAt: string | null;
+    postsAttemptedThisRun: number;
+    postsSucceededThisRun: number;
+    postsFailedThisRun: number;
+    postsSucceededTotal: number;
+    postsFailedTotal: number;
+    errors: string[];
+  }>({
+    queryKey: ["/api/social/execution-agent/status"],
+    queryFn: async () => {
+      const response = await fetchWithAuth("/api/social/execution-agent/status");
+      if (!response.ok) {
+        throw new Error("Failed to get agent status");
+      }
+      return response.json();
+    },
+    enabled: !!user && subscriptionStatus?.hasSocialPoster,
+    refetchInterval: 30000,
+  });
+
+  const startAgentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetchWithAuth("/api/social/execution-agent/start", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to start agent");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchAgentStatus();
+      toast({ title: "Execution agent started!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to start agent", variant: "destructive" });
+    },
+  });
+
+  const stopAgentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetchWithAuth("/api/social/execution-agent/stop", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to stop agent");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchAgentStatus();
+      toast({ title: "Execution agent stopped" });
+    },
+    onError: () => {
+      toast({ title: "Failed to stop agent", variant: "destructive" });
+    },
+  });
+
+  const executeNowMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetchWithAuth("/api/social/execution-agent/execute-now", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to execute");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      refetchAgentStatus();
+      queryClient.invalidateQueries({ queryKey: ["/api/social/content-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/content-plans", selectedPlanId] });
+      
+      if (data.skipped) {
+        toast({ 
+          title: "Execution in progress", 
+          description: "Another execution is already running. Please wait.",
+          variant: "default"
+        });
+      } else {
+        const attemptedCount = data.postsAttemptedThisRun || 0;
+        const successCount = data.postsSucceededThisRun || 0;
+        const failedCount = data.postsFailedThisRun || 0;
+        
+        if (attemptedCount === 0) {
+          toast({ 
+            title: "No posts to process",
+            description: "No approved posts are due for posting right now"
+          });
+        } else if (failedCount === 0) {
+          toast({ 
+            title: "Execution complete",
+            description: `${successCount} post${successCount > 1 ? 's' : ''} published successfully`
+          });
+        } else if (successCount === 0) {
+          toast({ 
+            title: "Execution failed",
+            description: `${failedCount} post${failedCount > 1 ? 's' : ''} failed to publish`,
+            variant: "destructive"
+          });
+        } else {
+          toast({ 
+            title: "Execution complete with issues",
+            description: `${successCount} posted, ${failedCount} failed`,
+            variant: "destructive"
+          });
+        }
+      }
+    },
+    onError: () => {
+      toast({ title: "Failed to execute", variant: "destructive" });
+    },
+  });
+
   if (statusLoading) {
     return (
       <div className="container mx-auto p-6 max-w-6xl">
@@ -347,6 +465,95 @@ export default function ContentPlanPage() {
           Generate Plan
         </Button>
       </div>
+
+      <Card className="mb-6">
+        <CardContent className="py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${agentStatus?.isRunning ? 'bg-green-500 animate-pulse' : 'bg-muted'}`} />
+                <span className="font-medium">
+                  {agentStatus?.isRunning ? 'Agent Running' : 'Agent Stopped'}
+                </span>
+              </div>
+              {agentStatus?.lastRunAt && (
+                <span className="text-sm text-muted-foreground">
+                  Last run: {format(new Date(agentStatus.lastRunAt), 'MMM d, h:mm a')}
+                </span>
+              )}
+              {agentStatus?.lastRunAt && agentStatus.postsSucceededThisRun > 0 && (
+                <Badge variant="default" className="gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  {agentStatus.postsSucceededThisRun} posted this run
+                </Badge>
+              )}
+              {agentStatus?.lastRunAt && agentStatus.postsFailedThisRun > 0 && (
+                <Badge variant="destructive" className="gap-1">
+                  <XCircle className="w-3 h-3" />
+                  {agentStatus.postsFailedThisRun} failed
+                </Badge>
+              )}
+              {agentStatus?.postsSucceededTotal !== undefined && agentStatus.postsSucceededTotal > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  Total: {agentStatus.postsSucceededTotal} published
+                </span>
+              )}
+              {agentStatus?.errors && agentStatus.errors.length > 0 && (
+                <Badge variant="outline" className="gap-1 text-destructive border-destructive">
+                  <AlertCircle className="w-3 h-3" />
+                  {agentStatus.errors.length} recent error{agentStatus.errors.length > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {agentStatus?.isRunning ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => stopAgentMutation.mutate()}
+                  disabled={stopAgentMutation.isPending}
+                  data-testid="button-stop-agent"
+                >
+                  {stopAgentMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  ) : (
+                    <Pause className="w-4 h-4 mr-1" />
+                  )}
+                  Stop Agent
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => startAgentMutation.mutate()}
+                  disabled={startAgentMutation.isPending}
+                  data-testid="button-start-agent"
+                >
+                  {startAgentMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  ) : (
+                    <Play className="w-4 h-4 mr-1" />
+                  )}
+                  Start Agent
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={() => executeNowMutation.mutate()}
+                disabled={executeNowMutation.isPending}
+                data-testid="button-execute-now"
+              >
+                {executeNowMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-1" />
+                )}
+                Post Now
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {plansLoading ? (
         <div className="space-y-4">
