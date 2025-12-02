@@ -231,58 +231,45 @@ class GetLateService {
     return result;
   }
 
-  async getConnectUrl(profileId: string, platform: SocialPlatform, redirectUrl?: string): Promise<string> {
-    console.log(`[GetLate] Getting connect URL for ${platform} on profile ${profileId}${redirectUrl ? ` with redirect to ${redirectUrl}` : ''}`);
+  async getConnectUrl(profileId: string, platform: SocialPlatform, redirectUrl: string): Promise<string> {
+    console.log(`[GetLate] Getting connect URL for ${platform} on profile ${profileId} with redirect to ${redirectUrl}`);
     
-    const params = new URLSearchParams({ profileId });
-    if (redirectUrl) {
-      params.append('redirect_url', redirectUrl);
-    }
+    // Build the request URL with profileId and redirect_url
+    const params = new URLSearchParams({ 
+      profileId,
+      redirect_url: redirectUrl 
+    });
     
     const url = `${this.baseUrl}/connect/${platform}?${params.toString()}`;
+    console.log(`[GetLate] Calling: ${url}`);
     
     const response = await fetch(url, {
       method: 'GET',
       headers: this.getAuthHeaders(),
-      redirect: 'manual',
     });
 
     console.log(`[GetLate] Connect response status: ${response.status}`);
 
-    // Handle redirect response - GetLate sends us to the OAuth provider
-    if (response.status === 302 || response.status === 301) {
-      const location = response.headers.get('location');
-      console.log(`[GetLate] Redirect location: ${location}`);
-      if (location) {
-        return location;
-      }
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`[GetLate] Failed to get connect URL. Status: ${response.status}, Body: ${errorText}`);
+      throw new Error(`Failed to get OAuth URL from GetLate: ${response.status} - ${errorText}`);
     }
 
-    // Handle JSON response - GetLate may return the URL in the body
-    if (response.ok) {
-      try {
-        const data = await response.json();
-        console.log(`[GetLate] Connect response body:`, JSON.stringify(data));
-        if (data.url) {
-          return data.url;
-        }
-        if (data.redirectUrl) {
-          return data.redirectUrl;
-        }
-        if (data.oauthUrl) {
-          return data.oauthUrl;
-        }
-      } catch (e) {
-        // Not JSON, try text
-        const text = await response.text();
-        console.log(`[GetLate] Connect response text: ${text}`);
-      }
+    // GetLate returns JSON with authUrl field
+    const data = await response.json();
+    console.log(`[GetLate] Connect response:`, JSON.stringify(data));
+    
+    // Check for authUrl (primary) or other possible field names
+    const authUrl = data.authUrl || data.url || data.redirectUrl || data.oauthUrl;
+    
+    if (!authUrl) {
+      console.error(`[GetLate] No authUrl in response:`, data);
+      throw new Error('GetLate response missing authUrl');
     }
-
-    // If we can't get a proper OAuth URL, throw an error
-    const errorText = await response.text().catch(() => 'Unknown error');
-    console.error(`[GetLate] Failed to get connect URL. Status: ${response.status}, Body: ${errorText}`);
-    throw new Error(`Failed to get OAuth URL from GetLate: ${response.status}`);
+    
+    console.log(`[GetLate] Got authUrl: ${authUrl}`);
+    return authUrl;
   }
 
   // =====================================================

@@ -493,17 +493,18 @@ export default function SocialConnect() {
     },
     onSuccess: (data: any) => {
       setConnectingPlatform(null);
-      const proxyUrl = data.proxyUrl;
+      // GetLate returns authUrl - the OAuth URL to redirect the user to
+      const authUrl = data.authUrl || data.proxyUrl;
       const platform = data.platformObj as Platform;
       
-      if (proxyUrl) {
-        // Open OAuth in new tab
-        window.open(proxyUrl, "_blank", "noopener,noreferrer");
+      if (authUrl) {
+        // Open OAuth in new tab - user completes auth and gets redirected back to our callback
+        window.open(authUrl, "_blank", "noopener,noreferrer");
         
         // Show the connection modal with polling
         startPolling(platform, connectedAccounts.length);
       } else {
-        console.error('[Social] No proxy URL in response:', data);
+        console.error('[Social] No authUrl in response:', data);
         toast({
           title: "Connection Error",
           description: "Could not generate secure authorization link. Please try again.",
