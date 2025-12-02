@@ -247,11 +247,42 @@ class GetLateService {
       redirect: 'manual',
     });
 
+    console.log(`[GetLate] Connect response status: ${response.status}`);
+
+    // Handle redirect response - GetLate sends us to the OAuth provider
     if (response.status === 302 || response.status === 301) {
-      return response.headers.get('location') || url;
+      const location = response.headers.get('location');
+      console.log(`[GetLate] Redirect location: ${location}`);
+      if (location) {
+        return location;
+      }
     }
 
-    return url;
+    // Handle JSON response - GetLate may return the URL in the body
+    if (response.ok) {
+      try {
+        const data = await response.json();
+        console.log(`[GetLate] Connect response body:`, JSON.stringify(data));
+        if (data.url) {
+          return data.url;
+        }
+        if (data.redirectUrl) {
+          return data.redirectUrl;
+        }
+        if (data.oauthUrl) {
+          return data.oauthUrl;
+        }
+      } catch (e) {
+        // Not JSON, try text
+        const text = await response.text();
+        console.log(`[GetLate] Connect response text: ${text}`);
+      }
+    }
+
+    // If we can't get a proper OAuth URL, throw an error
+    const errorText = await response.text().catch(() => 'Unknown error');
+    console.error(`[GetLate] Failed to get connect URL. Status: ${response.status}, Body: ${errorText}`);
+    throw new Error(`Failed to get OAuth URL from GetLate: ${response.status}`);
   }
 
   // =====================================================

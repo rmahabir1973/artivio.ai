@@ -1,0 +1,148 @@
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+],
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"description": "Ryan Mahabir's Artivio Social Hub",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"instagram_business_manage_insights",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"platform": "linkedin",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+},
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"_id": "692de851363442076b252193",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"byokCredentials": {
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+[GetLate] Accounts API returned 4 accounts
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"updatedAt": "2025-12-01T19:11:13.296Z",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"createdAt": "2025-12-01T19:11:13.296Z",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"platformUserId": "ePV37IiZgD",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+},
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"createdAt": "2025-12-01T19:27:26.140Z",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"createdAt": "2025-12-01T20:13:55.142Z",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"name": "artivio_49729939",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"_id": "692de851363442076b252193",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"__v": 0,
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"instagram_business_basic",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"tokenExpiresAt": "2026-01-30T19:27:26.105Z",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"profileId": {
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"profileId": {
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"createdAt": "2025-12-01T19:11:13.296Z",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"metadata": {},
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"isDefault": false,
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+{
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"_id": "692df703f43160a0bc999ba6",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"accessToken": "IGAATtmljoKQRBZAFM2WDd6YlduakY2dTdYNlV0ZAUhEUklSYlR4emYxRGU2UGlhd240eHU3QnVjeEhXQThjRmdkbVNhSUprVnVFRVYzU0lXYk52OE9rRkp3MjJkcUZAFTFlmNy1GNkpOekZAEQTJfZAUxIdjV3",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"isActive": false
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"isDefault": false,
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"name": "artivio_49729939",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"color": "#6366f1",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"description": "Ryan Mahabir's Artivio Social Hub",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"refreshToken": "IGAATtmljoKQRBZAFM2WDd6YlduakY2dTdYNlV0ZAUhEUklSYlR4emYxRGU2UGlhd240eHU3QnVjeEhXQThjRmdkbVNhSUprVnVFRVYzU0lXYk52OE9rRkp3MjJkcUZAFTFlmNy1GNkpOekZAEQTJfZAUxIdjV3",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+"platformUserId": "24971744082510867",
+2025-12-02 09:42:34.79
+cf6b96c7
+User
+[Social] GetLate returned 4 accounts: [
