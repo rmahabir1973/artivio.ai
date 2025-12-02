@@ -996,7 +996,11 @@ export default function SocialCalendar() {
         if (!open) resetCreateForm();
         setShowCreateModal(open);
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent 
+          className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
@@ -1007,8 +1011,8 @@ export default function SocialCalendar() {
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-4">
-            <div className="space-y-6 py-4">
+          <ScrollArea className="flex-1 min-h-0 pr-4">
+            <div className="space-y-6 py-4 pb-6">
               {/* Platform Selection */}
               <div className="space-y-2">
                 <Label>Select Platforms</Label>
