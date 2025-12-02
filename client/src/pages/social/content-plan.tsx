@@ -70,6 +70,7 @@ import { fetchWithAuth } from "@/lib/authBridge";
 import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
 import { format, parseISO, startOfWeek, addDays, isSameDay, isAfter, isBefore } from "date-fns";
 import type { AiContentPlan } from "@shared/schema";
+import { getSafeZoneForContentType, type SocialPlatform, type ContentType, type ContentSafeZone } from "@shared/socialPlatformConfig";
 
 interface SubscriptionStatus {
   hasSocialPoster: boolean;
@@ -135,7 +136,63 @@ const CONTENT_TYPE_ICONS: Record<string, any> = {
   carousel: LayoutGrid,
   story: Play,
   reel: Video,
+  short: Video,
 };
+
+function SafeZoneInfo({ platforms, contentType }: { platforms: string[]; contentType: string }) {
+  const safeZones: { platform: string; zone: ContentSafeZone }[] = [];
+  const platformsWithoutZones: string[] = [];
+  
+  for (const platform of platforms) {
+    const zone = getSafeZoneForContentType(platform as SocialPlatform, contentType as ContentType);
+    if (zone) {
+      safeZones.push({ platform, zone });
+    } else {
+      platformsWithoutZones.push(platform);
+    }
+  }
+  
+  if (safeZones.length === 0 && platformsWithoutZones.length === 0) return null;
+  
+  return (
+    <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+      <p className="text-sm font-medium mb-2 flex items-center gap-1 text-primary">
+        <LayoutGrid className="w-4 h-4" />
+        Safe Zone Guide
+      </p>
+      {safeZones.length > 0 ? (
+        <ScrollArea className={safeZones.length > 2 ? "h-[180px]" : ""}>
+          <div className="space-y-3 text-xs text-muted-foreground pr-2">
+            {safeZones.map(({ platform, zone }) => (
+              <div key={platform} className="flex flex-col gap-1 pb-2 border-b border-border/30 last:border-0 last:pb-0">
+                <span className="font-medium capitalize text-foreground">{platform}:</span>
+                <div className="pl-2 space-y-0.5">
+                  <p>Media: {zone.videoSize.width}x{zone.videoSize.height}px</p>
+                  <p>Text-safe: {zone.textSafeArea.width}x{zone.textSafeArea.height}px</p>
+                  <p className="text-primary/80">
+                    Avoid: Top {zone.margins.top}px, Bottom {zone.margins.bottom}px, 
+                    Left {zone.margins.left}px, Right {zone.margins.right}px
+                  </p>
+                  {zone.notes && (
+                    <p className="mt-1 text-xs italic text-muted-foreground/70">{zone.notes}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      ) : null}
+      {platformsWithoutZones.length > 0 && (
+        <div className="text-xs text-muted-foreground/70 mt-2 pt-2 border-t border-border/30">
+          <p className="flex items-center gap-1">
+            <AlertCircle className="w-3 h-3" />
+            No specific safe zone data for: {platformsWithoutZones.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ContentPlanPage() {
   const { user } = useAuth();
@@ -935,6 +992,11 @@ export default function ContentPlanPage() {
                     {selectedPost.post.contentType}
                   </Badge>
                 </div>
+
+                <SafeZoneInfo 
+                  platforms={selectedPost.post.platforms} 
+                  contentType={selectedPost.post.contentType} 
+                />
 
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Status:</span>

@@ -1034,3 +1034,374 @@ export const CONTENT_MIX_RECOMMENDATIONS: Record<SocialPlatform, Record<ContentT
     pin: 0
   }
 };
+
+/**
+ * Platform Safe Zones Configuration
+ * 
+ * These define the video/image dimensions and text-safe areas for each platform's
+ * content types. Use these to ensure text overlays and important visual elements
+ * aren't covered by platform UI elements.
+ */
+
+export interface SafeZoneArea {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+export interface ContentSafeZone {
+  contentType: ContentType | 'video';
+  videoSize: { width: number; height: number };
+  textSafeArea: { width: number; height: number };
+  margins: SafeZoneArea;
+  gridCrop?: { width: number; height: number };
+  notes?: string;
+}
+
+export interface PlatformSafeZones {
+  platform: SocialPlatform;
+  displayName: string;
+  safeZones: ContentSafeZone[];
+}
+
+export const PLATFORM_SAFE_ZONES: PlatformSafeZones[] = [
+  {
+    platform: 'instagram',
+    displayName: 'Instagram',
+    safeZones: [
+      {
+        contentType: 'reel',
+        videoSize: { width: 1080, height: 1920 },
+        textSafeArea: { width: 900, height: 1500 },
+        margins: {
+          top: 110,
+          bottom: 320,
+          left: 60,
+          right: 120
+        },
+        gridCrop: { width: 1080, height: 1350 },
+        notes: 'Top margin clears "Reels" headline and liked by friends bubbles. Bottom margin clears profile photo, description, comments, follow, and music. Right margin clears like, comment, share buttons.'
+      },
+      {
+        contentType: 'story',
+        videoSize: { width: 1080, height: 1920 },
+        textSafeArea: { width: 1080, height: 1420 },
+        margins: {
+          top: 250,
+          bottom: 250,
+          left: 60,
+          right: 60
+        },
+        gridCrop: { width: 1080, height: 1350 },
+        notes: 'Avoid top and bottom 250px. Left/right 60px can be cropped on smaller devices.'
+      },
+      {
+        contentType: 'post',
+        videoSize: { width: 1080, height: 1350 },
+        textSafeArea: { width: 980, height: 1250 },
+        margins: {
+          top: 50,
+          bottom: 50,
+          left: 50,
+          right: 50
+        },
+        notes: 'Standard portrait post with minimal UI overlay.'
+      }
+    ]
+  },
+  {
+    platform: 'tiktok',
+    displayName: 'TikTok',
+    safeZones: [
+      {
+        contentType: 'video',
+        videoSize: { width: 1080, height: 1920 },
+        textSafeArea: { width: 960, height: 1440 },
+        margins: {
+          top: 180,
+          bottom: 300,
+          left: 60,
+          right: 60
+        },
+        gridCrop: { width: 1080, height: 1440 },
+        notes: 'TikTok safe zone is center-weighted. Avoid bottom caption shelf (300px) and top for-you-page header (180px). Left/right 60px for like/share/comment buttons.'
+      }
+    ]
+  },
+  {
+    platform: 'youtube',
+    displayName: 'YouTube',
+    safeZones: [
+      {
+        contentType: 'short',
+        videoSize: { width: 1080, height: 1920 },
+        textSafeArea: { width: 820, height: 1510 },
+        margins: {
+          top: 140,
+          bottom: 270,
+          left: 70,
+          right: 190
+        },
+        gridCrop: { width: 1080, height: 1800 },
+        notes: 'Stay within boundaries of like and comment buttons that appear during playback.'
+      },
+      {
+        contentType: 'video',
+        videoSize: { width: 1920, height: 1080 },
+        textSafeArea: { width: 1540, height: 870 },
+        margins: {
+          top: 120,
+          bottom: 120,
+          left: 150,
+          right: 150
+        },
+        gridCrop: { width: 1280, height: 720 },
+        notes: 'Top margin avoids video title and channel name. Bottom margin avoids playback controls, captions, and suggested video thumbnails.'
+      }
+    ]
+  },
+  {
+    platform: 'facebook',
+    displayName: 'Facebook',
+    safeZones: [
+      {
+        contentType: 'reel',
+        videoSize: { width: 1080, height: 1920 },
+        textSafeArea: { width: 900, height: 1500 },
+        margins: {
+          top: 110,
+          bottom: 320,
+          left: 60,
+          right: 120
+        },
+        notes: 'Facebook Reels have similar safe zones to Instagram Reels.'
+      },
+      {
+        contentType: 'post',
+        videoSize: { width: 1200, height: 630 },
+        textSafeArea: { width: 1100, height: 530 },
+        margins: {
+          top: 50,
+          bottom: 50,
+          left: 50,
+          right: 50
+        },
+        notes: 'Standard Facebook post/link preview size.'
+      }
+    ]
+  },
+  {
+    platform: 'linkedin',
+    displayName: 'LinkedIn',
+    safeZones: [
+      {
+        contentType: 'post',
+        videoSize: { width: 1200, height: 628 },
+        textSafeArea: { width: 1100, height: 528 },
+        margins: {
+          top: 50,
+          bottom: 50,
+          left: 50,
+          right: 50
+        },
+        notes: 'LinkedIn post preview size. Keep text clear of edges.'
+      },
+      {
+        contentType: 'video',
+        videoSize: { width: 1920, height: 1080 },
+        textSafeArea: { width: 1720, height: 880 },
+        margins: {
+          top: 100,
+          bottom: 100,
+          left: 100,
+          right: 100
+        },
+        notes: 'Standard 16:9 video with safe margins for playback controls.'
+      }
+    ]
+  },
+  {
+    platform: 'pinterest',
+    displayName: 'Pinterest',
+    safeZones: [
+      {
+        contentType: 'pin',
+        videoSize: { width: 1000, height: 1500 },
+        textSafeArea: { width: 900, height: 1350 },
+        margins: {
+          top: 75,
+          bottom: 75,
+          left: 50,
+          right: 50
+        },
+        notes: 'Optimal 2:3 aspect ratio for pins. Keep important elements in the center.'
+      }
+    ]
+  },
+  {
+    platform: 'x',
+    displayName: 'X (Twitter)',
+    safeZones: [
+      {
+        contentType: 'post',
+        videoSize: { width: 1600, height: 900 },
+        textSafeArea: { width: 1500, height: 800 },
+        margins: {
+          top: 50,
+          bottom: 50,
+          left: 50,
+          right: 50
+        },
+        notes: 'Standard Twitter/X image post size. 16:9 recommended.'
+      }
+    ]
+  },
+  {
+    platform: 'threads',
+    displayName: 'Threads',
+    safeZones: [
+      {
+        contentType: 'post',
+        videoSize: { width: 1080, height: 1350 },
+        textSafeArea: { width: 980, height: 1250 },
+        margins: {
+          top: 50,
+          bottom: 50,
+          left: 50,
+          right: 50
+        },
+        notes: 'Similar to Instagram feed post safe zones.'
+      }
+    ]
+  },
+  {
+    platform: 'bluesky',
+    displayName: 'Bluesky',
+    safeZones: [
+      {
+        contentType: 'post',
+        videoSize: { width: 1600, height: 900 },
+        textSafeArea: { width: 1500, height: 800 },
+        margins: {
+          top: 50,
+          bottom: 50,
+          left: 50,
+          right: 50
+        },
+        notes: 'Standard 16:9 image size works well on Bluesky.'
+      }
+    ]
+  },
+  {
+    platform: 'reddit',
+    displayName: 'Reddit',
+    safeZones: [
+      {
+        contentType: 'post',
+        videoSize: { width: 1920, height: 1080 },
+        textSafeArea: { width: 1720, height: 880 },
+        margins: {
+          top: 100,
+          bottom: 100,
+          left: 100,
+          right: 100
+        },
+        notes: 'Standard 16:9 aspect ratio. Reddit supports various sizes but 16:9 is optimal for most subreddits.'
+      }
+    ]
+  }
+];
+
+export function getSafeZonesForPlatform(platform: SocialPlatform): ContentSafeZone[] {
+  const config = PLATFORM_SAFE_ZONES.find(p => p.platform === platform);
+  return config?.safeZones || [];
+}
+
+const CONTENT_TYPE_ALIASES: Record<SocialPlatform, Record<string, ContentType | 'video'>> = {
+  instagram: {
+    video: 'reel',
+    image: 'post',
+    carousel: 'post',
+  },
+  facebook: {
+    video: 'reel',
+    image: 'post',
+    carousel: 'post',
+  },
+  tiktok: {
+    reel: 'video',
+    short: 'video',
+    image: 'video',
+  },
+  youtube: {
+    reel: 'short',
+    image: 'video',
+  },
+  linkedin: {
+    image: 'post',
+    carousel: 'post',
+    reel: 'video',
+    short: 'video',
+  },
+  pinterest: {
+    post: 'pin',
+    image: 'pin',
+    video: 'pin',
+  },
+  x: {},
+  threads: {},
+  bluesky: {},
+  reddit: {},
+};
+
+export function getSafeZoneForContentType(platform: SocialPlatform, contentType: ContentType | 'video'): ContentSafeZone | undefined {
+  const platformZones = getSafeZonesForPlatform(platform);
+  
+  let exactMatch = platformZones.find(sz => sz.contentType === contentType);
+  if (exactMatch) return exactMatch;
+  
+  const aliasMap = CONTENT_TYPE_ALIASES[platform] || {};
+  const aliasedType = aliasMap[contentType];
+  if (aliasedType) {
+    exactMatch = platformZones.find(sz => sz.contentType === aliasedType);
+    if (exactMatch) return exactMatch;
+  }
+  
+  return platformZones[0];
+}
+
+export function isWithinSafeZone(
+  platform: SocialPlatform,
+  contentType: ContentType | 'video',
+  position: { x: number; y: number },
+  elementSize: { width: number; height: number }
+): boolean {
+  const safeZone = getSafeZoneForContentType(platform, contentType);
+  if (!safeZone) return true;
+
+  const { margins, videoSize } = safeZone;
+  const safeLeft = margins.left;
+  const safeTop = margins.top;
+  const safeRight = videoSize.width - margins.right;
+  const safeBottom = videoSize.height - margins.bottom;
+
+  return (
+    position.x >= safeLeft &&
+    position.y >= safeTop &&
+    position.x + elementSize.width <= safeRight &&
+    position.y + elementSize.height <= safeBottom
+  );
+}
+
+export function getSafeZoneGuidance(platform: SocialPlatform, contentType: ContentType | 'video'): string {
+  const safeZone = getSafeZoneForContentType(platform, contentType);
+  if (!safeZone) return '';
+
+  const { videoSize, textSafeArea, margins, notes } = safeZone;
+  
+  return `Video size: ${videoSize.width}x${videoSize.height}px. ` +
+    `Text-safe area: ${textSafeArea.width}x${textSafeArea.height}px. ` +
+    `Margins - Top: ${margins.top}px, Bottom: ${margins.bottom}px, Left: ${margins.left}px, Right: ${margins.right}px. ` +
+    (notes ? `Note: ${notes}` : '');
+}

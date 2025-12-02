@@ -2,6 +2,7 @@ import { db } from '../db';
 import { socialBrandKits, aiContentPlans, socialAccounts, socialProfiles } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { chatService } from '../chatService';
+import { getSafeZoneGuidance, PLATFORM_SAFE_ZONES, type SocialPlatform } from '@shared/socialPlatformConfig';
 
 interface ContentPlanPost {
   id: string;
@@ -33,7 +34,42 @@ For each post, consider:
 2. Target audience interests and pain points
 3. Optimal posting times for engagement
 4. Content variety (text, images, videos, carousels)
-5. Platform-specific best practices
+5. Platform-specific best practices and SAFE ZONES for visual content
+
+PLATFORM SAFE ZONES - When creating mediaPrompt for visual content, be aware of these requirements:
+
+INSTAGRAM REELS (1080x1920px):
+- Text-safe area: 900x1500px (center area only)
+- Avoid: Top 110px (Reels headline), Bottom 320px (profile/buttons), Right 120px (like/share buttons)
+- Grid crop: Center 1080x1350px shows on profile grid
+
+INSTAGRAM STORIES (1080x1920px):
+- Text-safe area: 1080x1420px
+- Avoid: Top and bottom 250px
+
+TIKTOK (1080x1920px):
+- Text-safe area: 960x1440px (center-weighted)
+- Avoid: Top 180px (FYP header), Bottom 300px (caption shelf), Left/Right 60px (buttons)
+- Safe zone is center-weighted - keep important text in the middle of the frame
+
+YOUTUBE SHORTS (1080x1920px):
+- Text-safe area: 820x1510px
+- Avoid: Top 140px, Bottom 270px, Left 70px, Right 190px
+
+YOUTUBE VIDEOS (1920x1080px):
+- Text-safe area: 1540x870px
+- Avoid: Top 120px (title), Bottom 120px (controls), Left/Right 150px
+
+When writing mediaPrompt for videos/images with text overlays, specify:
+- Keep all text and important elements within the safe zone
+- Position text toward the center of the frame
+- Leave margins clear for platform UI elements
+
+MULTI-PLATFORM POSTS: When creating content for multiple platforms:
+- Use the SMALLEST safe zone among all target platforms
+- For TikTok + other platforms: Always center-weight your text layout (TikTok UI is heavy on sides and bottom)
+- For carousel/multi-image posts: Apply safe zone rules to each individual image/slide
+- If combining vertical and horizontal platforms: Create separate media assets optimized for each aspect ratio
 
 Generate a comprehensive content plan with the following structure:
 
@@ -45,9 +81,9 @@ POSTS: A list of posts with:
 - date: YYYY-MM-DD format
 - time: HH:MM format (24-hour, optimal posting time)
 - platforms: array of platforms (instagram, facebook, linkedin, twitter, tiktok, youtube, etc.)
-- contentType: type of content (text, image, video, carousel, story, reel)
+- contentType: type of content (text, image, video, carousel, story, reel, short)
 - caption: The actual post caption (engaging, brand-aligned, include CTAs where appropriate)
-- mediaPrompt: AI image/video generation prompt if visual content is needed
+- mediaPrompt: AI image/video generation prompt if visual content is needed (include safe zone considerations for text overlays)
 - hashtags: relevant hashtags (5-15 per post)
 
 Respond ONLY with valid JSON in this exact format:
@@ -434,10 +470,11 @@ Create a fresh, engaging post. Respond with JSON:
     }
 
     const newContent = JSON.parse(jsonStr);
+    const existingId = (existingPost as ContentPlanPost).id;
     
     const updatedPost: ContentPlanPost = {
       ...existingPost,
-      id: existingPost.id || generatePostId(),
+      id: existingId || generatePostId(),
       caption: newContent.caption,
       mediaPrompt: newContent.mediaPrompt,
       hashtags: newContent.hashtags,
