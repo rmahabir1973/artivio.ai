@@ -342,6 +342,16 @@ export default function SocialAnalytics() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="py-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <Activity className="w-4 h-4" />
+                <span>
+                  Analytics shows your posting activity. External engagement metrics (followers, impressions, likes) 
+                  will be available when platform APIs support it.
+                </span>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-6">
