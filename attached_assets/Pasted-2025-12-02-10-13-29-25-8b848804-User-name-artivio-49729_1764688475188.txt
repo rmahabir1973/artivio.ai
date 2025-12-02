@@ -1,0 +1,151 @@
+2025-12-02 10:13:29.25
+8b848804
+User
+"name": "artivio_49729939",
+2025-12-02 10:13:29.25
+8b848804
+User
+"isActive": false
+2025-12-02 10:13:29.25
+8b848804
+User
+"platform": "facebook",
+2025-12-02 10:13:29.25
+8b848804
+User
+"isActive": true,
+2025-12-02 10:13:29.25
+8b848804
+User
+{
+2025-12-02 10:13:29.25
+8b848804
+User
+"_id": "692efd84f43160a0bc999ca3",
+2025-12-02 10:13:29.25
+8b848804
+User
+"createdAt": "2025-12-01T19:11:13.296Z",
+2025-12-02 10:13:29.25
+8b848804
+User
+"displayName": "Artivio AI",
+2025-12-02 10:13:29.25
+8b848804
+User
+"description": "Ryan Mahabir's Artivio Social Hub",
+2025-12-02 10:13:29.25
+8b848804
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-02 10:13:29.25
+8b848804
+User
+"isActive": false
+2025-12-02 10:13:29.25
+8b848804
+User
+"byokCredentials": {
+2025-12-02 10:13:29.25
+8b848804
+User
+"profileId": {
+2025-12-02 10:13:29.25
+8b848804
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-02 10:13:29.25
+8b848804
+User
+"updatedAt": "2025-12-02T14:53:56.179Z",
+2025-12-02 10:13:29.25
+8b848804
+User
+"_id": "692dec1ef43160a0bc999b83",
+2025-12-02 10:13:29.25
+8b848804
+User
+"permissions": [],
+2025-12-02 10:13:29.25
+8b848804
+User
+"byokCredentials": {
+2025-12-02 10:13:29.25
+8b848804
+User
+"__v": 0
+2025-12-02 10:13:29.25
+8b848804
+User
+"createdAt": "2025-12-02T14:53:56.179Z",
+2025-12-02 10:13:29.25
+8b848804
+User
+"updatedAt": "2025-12-01T19:11:13.296Z",
+2025-12-02 10:13:29.25
+8b848804
+User
+},
+2025-12-02 10:13:29.25
+8b848804
+User
+"color": "#6366f1",
+2025-12-02 10:13:29.25
+8b848804
+User
+"color": "#6366f1",
+2025-12-02 10:13:29.49
+8b848804
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-02 10:13:29.56
+8b848804
+User
+3:13:29 PM [express] GET /api/social/accounts 200 in 90ms :: [{"id":"a8e24275-7527-4f4f-b784-d3a06dd…
+2025-12-02 10:13:33.21
+8b848804
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-02 10:13:33.26
+8b848804
+User
+[GetLate] Calling: https://getlate.dev/api/v1/connect/x?profileId=692de851363442076b252193&redirect_url=https%3A%2F%2Fartivio.ai%2Fsocial%2Foauth-callback%3Fplatform%3Dx%26success%3Dtrue
+2025-12-02 10:13:33.26
+8b848804
+User
+[GetLate] Getting connect URL for x on profile 692de851363442076b252193 with redirect to https://artivio.ai/social/oauth-callback?platform=x&success=true
+2025-12-02 10:13:33.88
+8b848804
+User
+[GetLate] Connect response status: 400
+2025-12-02 10:13:33.88
+8b848804
+User
+[GetLate] Failed to get connect URL. Status: 400, Body: {"error":"Platform not supported"}
+2025-12-02 10:13:33.88
+8b848804
+User
+[Social] Error generating connect URL: Error: Failed to get OAuth URL from GetLate: 400 - {"error":"Platform not supported"}
+2025-12-02 10:13:33.88
+8b848804
+User
+3:13:33 PM [express] POST /api/social/accounts/connect 500 in 693ms :: {"message":"Failed to generat…
+2025-12-02 10:13:33.88
+8b848804
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-02 10:13:33.88
+8b848804
+User
+at async file:///home/runner/workspace/dist/index.js:11103:23
+2025-12-02 10:13:33.88
+8b848804
+User
+at GetLateService.getConnectUrl (file:///home/runner/workspace/dist/index.js:5194:17)
+
+Collapse
+
+Wrap
+
+Colors
+

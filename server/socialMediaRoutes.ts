@@ -68,6 +68,30 @@ const ALLOWED_OAUTH_HOSTS = [
   'auth.getlate.dev',
 ];
 
+// Map frontend platform IDs to GetLate API platform IDs
+// Frontend uses "x" for Twitter/X, but GetLate API expects "twitter"
+const PLATFORM_ID_MAP: Record<string, SocialPlatform> = {
+  'x': 'twitter',
+  'twitter': 'twitter',
+  'instagram': 'instagram',
+  'linkedin': 'linkedin',
+  'youtube': 'youtube',
+  'facebook': 'facebook',
+  'threads': 'threads',
+  'tiktok': 'tiktok',
+  'pinterest': 'pinterest',
+  'reddit': 'reddit',
+  'bluesky': 'bluesky',
+};
+
+function mapToGetLatePlatform(frontendPlatform: string): SocialPlatform {
+  const mapped = PLATFORM_ID_MAP[frontendPlatform.toLowerCase()];
+  if (!mapped) {
+    throw new Error(`Unknown platform: ${frontendPlatform}`);
+  }
+  return mapped;
+}
+
 function isAllowedOAuthDomain(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -469,6 +493,10 @@ export function registerSocialMediaRoutes(app: Express) {
         console.log(`[Social] Auto-linked GetLate profile: ${getLateProfile._id}`);
       }
 
+      // Map frontend platform ID to GetLate API platform ID (e.g., "x" -> "twitter")
+      const getLatePlatform = mapToGetLatePlatform(platform);
+      console.log(`[Social] Mapping platform: ${platform} -> ${getLatePlatform}`);
+      
       // Build the callback URL that GetLate will redirect to after OAuth
       const artivioBaseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
       const callbackUrl = `${artivioBaseUrl}/social/oauth-callback?platform=${platform}&success=true`;
@@ -477,11 +505,11 @@ export function registerSocialMediaRoutes(app: Express) {
       // This returns an authUrl that we redirect the user to
       const authUrl = await getLateService.getConnectUrl(
         profile.getLateProfileId!,
-        platform as SocialPlatform,
+        getLatePlatform,
         callbackUrl
       );
 
-      console.log(`[Social] Got authUrl for ${platform}, will redirect to ${callbackUrl} after OAuth`);
+      console.log(`[Social] Got authUrl for ${getLatePlatform}, will redirect to ${callbackUrl} after OAuth`);
 
       // Validate the authUrl is from an allowed OAuth domain
       if (!isAllowedOAuthDomain(authUrl)) {
