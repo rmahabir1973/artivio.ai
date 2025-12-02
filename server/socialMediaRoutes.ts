@@ -81,6 +81,10 @@ const ALLOWED_OAUTH_HOSTS = [
   'instagram.com',
   'www.instagram.com',
   'api.instagram.com',
+  // Threads OAuth (Threads has its own API domain)
+  'threads.net',
+  'www.threads.net',
+  'graph.threads.net',
   // Google OAuth (used by YouTube)
   'accounts.google.com',
   'google.com',
