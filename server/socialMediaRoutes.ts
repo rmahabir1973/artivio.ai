@@ -10,10 +10,18 @@ import {
   socialGoals,
   socialPosts,
   socialAnalytics,
+  socialBrandKits,
+  socialBrandMaterials,
+  socialBrandAssets,
+  socialBrandScanJobs,
+  aiContentPlans,
   insertSocialGoalSchema,
   updateSocialGoalSchema,
   insertSocialPostSchema,
   updateSocialPostSchema,
+  insertSocialBrandKitSchema,
+  insertSocialBrandMaterialSchema,
+  insertSocialBrandAssetSchema,
 } from "@shared/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { 
@@ -1911,6 +1919,345 @@ Response format:
     } catch (error: any) {
       console.error('[Social AI] Plan generation error');
       res.status(500).json({ message: 'Failed to generate plan' });
+    }
+  });
+
+  // ================================
+  // Brand Kit Routes
+  // ================================
+
+  // Get or create brand kit for user
+  app.get("/api/social/brand-kit", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user's social profile
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      // Get brand kit for this profile
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      res.json(brandKit);
+    } catch (error: any) {
+      console.error('[Brand Kit] Get error:', error);
+      res.status(500).json({ message: 'Failed to get brand kit' });
+    }
+  });
+
+  // Create brand kit
+  app.post("/api/social/brand-kit", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get or create social profile
+      let profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        const [newProfile] = await db
+          .insert(socialProfiles)
+          .values({ userId, isActive: true })
+          .returning();
+        profile = newProfile;
+      }
+
+      // Check if brand kit already exists
+      const existingKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (existingKit) {
+        return res.json(existingKit);
+      }
+
+      // Create new brand kit
+      const [brandKit] = await db
+        .insert(socialBrandKits)
+        .values({
+          socialProfileId: profile.id,
+          name: req.body.name || 'My Brand',
+        })
+        .returning();
+
+      res.json(brandKit);
+    } catch (error: any) {
+      console.error('[Brand Kit] Create error:', error);
+      res.status(500).json({ message: 'Failed to create brand kit' });
+    }
+  });
+
+  // Update brand kit
+  app.patch("/api/social/brand-kit", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user's social profile
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      // Get brand kit
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      // Update brand kit
+      const updateData: any = {};
+      
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.businessOverview !== undefined) updateData.businessOverview = req.body.businessOverview;
+      if (req.body.competitors !== undefined) updateData.competitors = req.body.competitors;
+      if (req.body.customerDemographics !== undefined) updateData.customerDemographics = req.body.customerDemographics;
+      if (req.body.visualIdentityDescription !== undefined) updateData.visualIdentityDescription = req.body.visualIdentityDescription;
+      if (req.body.logos !== undefined) updateData.logos = req.body.logos;
+      if (req.body.colors !== undefined) updateData.colors = req.body.colors;
+      if (req.body.fonts !== undefined) updateData.fonts = req.body.fonts;
+      if (req.body.brandVoice !== undefined) updateData.brandVoice = req.body.brandVoice;
+      if (req.body.contentPreferences !== undefined) updateData.contentPreferences = req.body.contentPreferences;
+
+      const [updatedKit] = await db
+        .update(socialBrandKits)
+        .set(updateData)
+        .where(eq(socialBrandKits.id, brandKit.id))
+        .returning();
+
+      res.json(updatedKit);
+    } catch (error: any) {
+      console.error('[Brand Kit] Update error:', error);
+      res.status(500).json({ message: 'Failed to update brand kit' });
+    }
+  });
+
+  // Get brand kit materials (website URLs)
+  app.get("/api/social/brand-kit/materials", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.json([]);
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.json([]);
+      }
+
+      const materials = await db.query.socialBrandMaterials.findMany({
+        where: eq(socialBrandMaterials.brandKitId, brandKit.id),
+        orderBy: desc(socialBrandMaterials.createdAt),
+      });
+
+      res.json(materials);
+    } catch (error: any) {
+      console.error('[Brand Kit] Get materials error:', error);
+      res.status(500).json({ message: 'Failed to get materials' });
+    }
+  });
+
+  // Add brand kit material
+  app.post("/api/social/brand-kit/materials", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      const { name, url, type = 'website', fileType = 'website' } = req.body;
+
+      if (!name || !url) {
+        return res.status(400).json({ message: 'Name and URL are required' });
+      }
+
+      const [material] = await db
+        .insert(socialBrandMaterials)
+        .values({
+          brandKitId: brandKit.id,
+          name,
+          url,
+          type,
+          fileType,
+        })
+        .returning();
+
+      res.json(material);
+    } catch (error: any) {
+      console.error('[Brand Kit] Add material error:', error);
+      res.status(500).json({ message: 'Failed to add material' });
+    }
+  });
+
+  // Delete brand kit material
+  app.delete("/api/social/brand-kit/materials/:id", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const materialId = req.params.id;
+      
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      // Verify material belongs to this brand kit
+      const material = await db.query.socialBrandMaterials.findFirst({
+        where: and(
+          eq(socialBrandMaterials.id, materialId),
+          eq(socialBrandMaterials.brandKitId, brandKit.id),
+        ),
+      });
+
+      if (!material) {
+        return res.status(404).json({ message: 'Material not found' });
+      }
+
+      await db
+        .delete(socialBrandMaterials)
+        .where(eq(socialBrandMaterials.id, materialId));
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[Brand Kit] Delete material error:', error);
+      res.status(500).json({ message: 'Failed to delete material' });
+    }
+  });
+
+  // Get brand kit assets
+  app.get("/api/social/brand-kit/assets", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.json([]);
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.json([]);
+      }
+
+      const assets = await db.query.socialBrandAssets.findMany({
+        where: eq(socialBrandAssets.brandKitId, brandKit.id),
+        orderBy: desc(socialBrandAssets.createdAt),
+      });
+
+      res.json(assets);
+    } catch (error: any) {
+      console.error('[Brand Kit] Get assets error:', error);
+      res.status(500).json({ message: 'Failed to get assets' });
+    }
+  });
+
+  // Website scan endpoint (placeholder for future implementation)
+  app.post("/api/social/brand-kit/scan", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ message: 'URL is required' });
+      }
+
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      // Create scan job
+      const [scanJob] = await db
+        .insert(socialBrandScanJobs)
+        .values({
+          brandKitId: brandKit.id,
+          targetUrl: url,
+          status: 'pending',
+        })
+        .returning();
+
+      // Update brand kit scan status
+      await db
+        .update(socialBrandKits)
+        .set({ scanStatus: 'scanning' })
+        .where(eq(socialBrandKits.id, brandKit.id));
+
+      // TODO: Trigger actual website scanning (async background job)
+      // For now, we'll return the scan job and process it asynchronously
+
+      res.json({
+        jobId: scanJob.id,
+        status: 'pending',
+        message: 'Website scan started',
+      });
+    } catch (error: any) {
+      console.error('[Brand Kit] Scan error:', error);
+      res.status(500).json({ message: 'Failed to start website scan' });
     }
   });
 

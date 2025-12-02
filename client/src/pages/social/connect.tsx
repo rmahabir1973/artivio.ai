@@ -25,6 +25,7 @@ import {
   Shield,
   RefreshCw,
   X,
+  Send,
 } from "lucide-react";
 import { 
   SiInstagram, 
@@ -44,6 +45,24 @@ import { useLocation, useSearch } from "wouter";
 import { fetchWithAuth } from "@/lib/authBridge";
 import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
 
+interface PlatformSetupStep {
+  step: number;
+  instruction: string;
+}
+
+interface PlatformSetupGuide {
+  title: string;
+  warningTitle?: string;
+  warnings: string[];
+  steps?: PlatformSetupStep[];
+  buttonText: string;
+  buttonUrl?: string;
+  showTable?: {
+    headers: string[];
+    rows: { feature: string; personal: string; company: string }[];
+  };
+}
+
 interface Platform {
   id: string;
   name: string;
@@ -53,6 +72,7 @@ interface Platform {
   dailyLimit: number;
   requiresBusinessAccount?: boolean;
   businessAccountNote?: string;
+  setupGuide?: PlatformSetupGuide;
 }
 
 const SUPPORTED_PLATFORMS: Platform[] = [
@@ -64,7 +84,21 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     description: "Share reels, stories, and posts",
     dailyLimit: 50,
     requiresBusinessAccount: true,
-    businessAccountNote: "Requires a Business account. Personal and Creator accounts are not supported by the Instagram API."
+    businessAccountNote: "Requires a Business account. Personal and Creator accounts are not supported by the Instagram API.",
+    setupGuide: {
+      title: "Connect Instagram Business Account",
+      warningTitle: "Instructions",
+      warnings: [
+        "Setup your Instagram Business Account and Facebook Business Page. Meta only allows Instagram Business Accounts that are connected to a Facebook Business page.",
+        "Note: We cannot autopost to Creator or Personal accounts."
+      ],
+      steps: [
+        { step: 1, instruction: "Setup your Instagram Business Account and Facebook Business Page. Meta only allows Instagram Business Accounts that are connected to a Facebook Business page. Check your account settings to confirm." },
+        { step: 2, instruction: "Click connect below to authenticate through Facebook. We will redirect you to Facebook (Meta) to sign in and connect your account." }
+      ],
+      buttonText: "Go to Facebook Business",
+      buttonUrl: "https://business.facebook.com"
+    }
   },
   { 
     id: "tiktok", 
@@ -72,7 +106,16 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiTiktok, 
     color: "bg-black dark:bg-zinc-900",
     description: "Post videos and engage with trends",
-    dailyLimit: 15
+    dailyLimit: 15,
+    setupGuide: {
+      title: "Connect TikTok Account",
+      warningTitle: "Important note",
+      warnings: [
+        "TikTok requires a personal or business account to connect.",
+        "Videos posted via API will be set as private by default until you manually publish them on TikTok."
+      ],
+      buttonText: "Go to Connect TikTok"
+    }
   },
   { 
     id: "linkedin", 
@@ -80,7 +123,23 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiLinkedin, 
     color: "bg-[#0A66C2]",
     description: "Professional content and networking",
-    dailyLimit: 150
+    dailyLimit: 150,
+    setupGuide: {
+      title: "Connect to LinkedIn",
+      warningTitle: "Important note",
+      warnings: [
+        "LinkedIn functionality varies between personal accounts and page accounts."
+      ],
+      showTable: {
+        headers: ["Feature", "Personal Account", "Company Page"],
+        rows: [
+          { feature: "Auto Schedule", personal: "Yes", company: "Yes" },
+          { feature: "Auto-Post", personal: "Yes", company: "Yes" },
+          { feature: "Analytics", personal: "Not supported", company: "Yes" }
+        ]
+      },
+      buttonText: "Go to Connect LinkedIn"
+    }
   },
   { 
     id: "youtube", 
@@ -88,7 +147,16 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiYoutube, 
     color: "bg-[#FF0000]",
     description: "Long-form videos and Shorts",
-    dailyLimit: 10
+    dailyLimit: 10,
+    setupGuide: {
+      title: "Connect YouTube Account",
+      warningTitle: "Important note",
+      warnings: [
+        "YouTube requires a Google account to authenticate and that Google account must be the owner of the YouTube channel you want to connect or the admin of the YouTube Brand Account."
+      ],
+      buttonText: "Go to YouTube",
+      buttonUrl: "https://youtube.com"
+    }
   },
   { 
     id: "facebook", 
@@ -96,7 +164,21 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiFacebook, 
     color: "bg-[#1877F2]",
     description: "Posts, reels, and page content",
-    dailyLimit: 25
+    dailyLimit: 25,
+    requiresBusinessAccount: true,
+    businessAccountNote: "Requires a Facebook Business Page connected to a Business Portfolio.",
+    setupGuide: {
+      title: "Connect Facebook Business Account",
+      warningTitle: "Important note",
+      warnings: [
+        "To setup Meta to Enable Facebook Business Scheduling, make sure:",
+        "You are the admin of a Facebook Business Page.",
+        "Your Facebook Page is part of a Business Portfolio.",
+        "Your personal Facebook account has admin rights to the Business Portfolio that the Page is a part of."
+      ],
+      buttonText: "Go to Facebook Business",
+      buttonUrl: "https://business.facebook.com"
+    }
   },
   { 
     id: "x", 
@@ -104,7 +186,18 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiX, 
     color: "bg-black dark:bg-zinc-900",
     description: "Tweets and media posts",
-    dailyLimit: 50
+    dailyLimit: 50,
+    setupGuide: {
+      title: "Connect X (Twitter) Account",
+      warningTitle: "Authorization",
+      warnings: [
+        "This app will be able to:",
+        "See Posts from your timeline (including protected Posts) as well as your Lists and collections.",
+        "See your X profile information and account settings.",
+        "Create and delete Posts for you, and engage with Posts created by others."
+      ],
+      buttonText: "Go to Connect X"
+    }
   },
   { 
     id: "threads", 
@@ -112,7 +205,16 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiThreads, 
     color: "bg-black dark:bg-zinc-900",
     description: "Text and media updates",
-    dailyLimit: 50
+    dailyLimit: 50,
+    setupGuide: {
+      title: "Connect Threads Account",
+      warningTitle: "Important note",
+      warnings: [
+        "Threads uses Instagram authentication. Make sure your Threads account is linked to your Instagram account.",
+        "You'll be redirected to Instagram/Meta to authorize the connection."
+      ],
+      buttonText: "Go to Connect Threads"
+    }
   },
   { 
     id: "pinterest", 
@@ -120,7 +222,16 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiPinterest, 
     color: "bg-[#E60023]",
     description: "Pins and visual content",
-    dailyLimit: 20
+    dailyLimit: 20,
+    setupGuide: {
+      title: "Connect Pinterest Account",
+      warningTitle: "Important note",
+      warnings: [
+        "Pinterest requires a personal or business account.",
+        "You'll need to select which board to post to after connecting."
+      ],
+      buttonText: "Go to Connect Pinterest"
+    }
   },
   { 
     id: "bluesky", 
@@ -128,7 +239,16 @@ const SUPPORTED_PLATFORMS: Platform[] = [
     icon: SiBluesky, 
     color: "bg-[#0085FF]",
     description: "Decentralized social posts",
-    dailyLimit: 50
+    dailyLimit: 50,
+    setupGuide: {
+      title: "Connect Bluesky Account",
+      warningTitle: "Important note",
+      warnings: [
+        "Bluesky uses app passwords for authentication.",
+        "You may need to create an app password in your Bluesky settings."
+      ],
+      buttonText: "Go to Connect Bluesky"
+    }
   },
 ];
 
@@ -153,6 +273,10 @@ export default function SocialConnect() {
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
   const searchString = useSearch();
   const [, setLocation] = useLocation();
+  
+  // Setup guide modal state (shown before OAuth)
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const [setupGuidePlatform, setSetupGuidePlatform] = useState<Platform | null>(null);
   
   // Connection modal state
   const [showConnectionModal, setShowConnectionModal] = useState(false);
@@ -417,6 +541,24 @@ export default function SocialConnect() {
     },
   });
 
+  // Show setup guide before connecting
+  const handleConnectClick = (platform: Platform) => {
+    if (platform.setupGuide) {
+      setSetupGuidePlatform(platform);
+      setShowSetupGuide(true);
+    } else {
+      connectAccountMutation.mutate(platform);
+    }
+  };
+
+  // Proceed with connection after viewing setup guide
+  const proceedWithConnection = () => {
+    if (setupGuidePlatform) {
+      setShowSetupGuide(false);
+      connectAccountMutation.mutate(setupGuidePlatform);
+    }
+  };
+
   const isConnected = (platformId: string) => {
     return connectedAccounts.some(acc => acc.platform === platformId && acc.connected);
   };
@@ -612,8 +754,8 @@ export default function SocialConnect() {
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => connectAccountMutation.mutate(platform)}
-                      disabled={isConnecting || connectAccountMutation.isPending || showConnectionModal}
+                      onClick={() => handleConnectClick(platform)}
+                      disabled={isConnecting || connectAccountMutation.isPending || showConnectionModal || showSetupGuide}
                       className="gap-1"
                       data-testid={`button-connect-${platform.id}`}
                     >
@@ -796,6 +938,137 @@ export default function SocialConnect() {
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Platform Setup Guide Dialog */}
+      <Dialog open={showSetupGuide} onOpenChange={(open) => !open && setShowSetupGuide(false)}>
+        <DialogContent 
+          className="sm:max-w-lg"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          data-testid="dialog-setup-guide"
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {setupGuidePlatform && (
+                <>
+                  <div className={`w-10 h-10 rounded-lg ${setupGuidePlatform.color} flex items-center justify-center`}>
+                    <setupGuidePlatform.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span>{setupGuidePlatform.setupGuide?.title}</span>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {setupGuidePlatform?.setupGuide && (
+            <div className="space-y-4 py-2">
+              {/* Warning/Important Note Box */}
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="space-y-2">
+                    <p className="font-medium text-amber-800 dark:text-amber-200">
+                      {setupGuidePlatform.setupGuide.warningTitle || "Important note"}
+                    </p>
+                    <ul className="text-sm text-amber-700 dark:text-amber-300 space-y-1.5">
+                      {setupGuidePlatform.setupGuide.warnings.map((warning, i) => (
+                        <li key={i} className={i > 0 && setupGuidePlatform.setupGuide?.warnings[0].includes("make sure") ? "ml-4 list-disc" : ""}>
+                          {warning}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Steps (if any) */}
+              {setupGuidePlatform.setupGuide.steps && (
+                <div className="space-y-3">
+                  {setupGuidePlatform.setupGuide.steps.map((step) => (
+                    <div key={step.step} className="flex gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium flex-shrink-0">
+                        {step.step}
+                      </div>
+                      <p className="text-sm text-muted-foreground pt-0.5">{step.instruction}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Table (for LinkedIn) */}
+              {setupGuidePlatform.setupGuide.showTable && (
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        {setupGuidePlatform.setupGuide.showTable.headers.map((header, i) => (
+                          <th key={i} className="px-4 py-2 text-left font-medium">{header}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {setupGuidePlatform.setupGuide.showTable.rows.map((row, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="px-4 py-2 flex items-center gap-2">
+                            {row.feature === "Auto Schedule" && <RefreshCw className="w-4 h-4 text-muted-foreground" />}
+                            {row.feature === "Auto-Post" && <Send className="w-4 h-4 text-muted-foreground" />}
+                            {row.feature === "Analytics" && <Info className="w-4 h-4 text-muted-foreground" />}
+                            {row.feature}
+                          </td>
+                          <td className="px-4 py-2">
+                            {row.personal === "Yes" ? (
+                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <span className="text-muted-foreground">{row.personal}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            {row.company === "Yes" ? (
+                              <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <span className="text-muted-foreground">{row.company}</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* See Connection Guide link */}
+              {(setupGuidePlatform.id === "instagram" || setupGuidePlatform.id === "facebook" || setupGuidePlatform.id === "linkedin") && (
+                <p className="text-sm text-muted-foreground">
+                  If you are not sure if you have the right setup, review our guide:
+                </p>
+              )}
+            </div>
+          )}
+          
+          <div className="flex justify-between pt-2">
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowSetupGuide(false)}
+              data-testid="button-setup-back"
+            >
+              Back
+            </Button>
+            <Button 
+              onClick={proceedWithConnection}
+              disabled={connectAccountMutation.isPending}
+              className="gap-2"
+              data-testid="button-proceed-connect"
+            >
+              {connectAccountMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ExternalLink className="w-4 h-4" />
+              )}
+              {setupGuidePlatform?.setupGuide?.buttonText || "Connect"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

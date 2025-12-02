@@ -2099,6 +2099,233 @@ export const insertSocialAnalyticsSchema = createInsertSchema(socialAnalytics).o
 export type InsertSocialAnalytics = z.infer<typeof insertSocialAnalyticsSchema>;
 export type SocialAnalytics = typeof socialAnalytics.$inferSelect;
 
+// ================================
+// Social Brand Kit Tables (for Social Media Poster)
+// ================================
+
+// Social Brand Kits - Main brand configuration and identity for social media
+export const socialBrandKits = pgTable("social_brand_kits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  socialProfileId: varchar("social_profile_id").notNull().references(() => socialProfiles.id, { onDelete: 'cascade' }),
+  name: varchar("name").notNull().default('My Brand'),
+  
+  // Business Overview & Positioning
+  businessOverview: jsonb("business_overview").$type<{
+    coreIdentity?: string;
+    primaryPositioning?: string;
+    secondaryPositioning?: string;
+    tertiaryPositioning?: string;
+    competitiveAdvantages?: string[];
+  }>(),
+  
+  // Competitors
+  competitors: jsonb("competitors").$type<{
+    local?: string[];
+    national?: string[];
+  }>(),
+  
+  // Customer Demographics & Psychographics
+  customerDemographics: jsonb("customer_demographics").$type<{
+    primarySegments?: string[];
+    ageRange?: string;
+    location?: string;
+    interests?: string[];
+    painPoints?: string[];
+    goals?: string[];
+  }>(),
+  
+  // Visual Identity
+  visualIdentityDescription: text("visual_identity_description"),
+  logos: jsonb("logos").$type<{
+    original?: string;
+    dark?: string;
+    light?: string;
+  }>(),
+  colors: jsonb("colors").$type<string[]>(), // Array of hex colors
+  fonts: jsonb("fonts").$type<string[]>(), // Array of font names
+  
+  // Brand Voice
+  brandVoice: jsonb("brand_voice").$type<{
+    purpose?: string;
+    audience?: string;
+    tone?: string[];
+    emotions?: string[];
+    character?: string[];
+    syntax?: string[];
+    language?: string[];
+  }>(),
+  
+  // Content Preferences
+  contentPreferences: jsonb("content_preferences").$type<{
+    featuredMediaTypes?: ('text' | 'image' | 'video')[];
+    mediaKitPriority?: 'only_brand_kit' | 'brand_kit_first' | 'only_stock';
+    reuseAfterWeeks?: number | null; // null = never reuse
+    contentLanguage?: string;
+    topicsToAvoid?: string[];
+    alwaysIncludeMusic?: boolean;
+    alwaysIncludeImages?: boolean;
+  }>(),
+  
+  // Scan Status
+  scanStatus: varchar("scan_status").default('pending'), // 'pending', 'scanning', 'completed', 'failed'
+  lastScanAt: timestamp("last_scan_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  uniqueIndex("social_brand_kits_profile_idx").on(table.socialProfileId),
+]);
+
+export const insertSocialBrandKitSchema = createInsertSchema(socialBrandKits).omit({
+  id: true,
+  scanStatus: true,
+  lastScanAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSocialBrandKit = z.infer<typeof insertSocialBrandKitSchema>;
+export type SocialBrandKit = typeof socialBrandKits.$inferSelect;
+
+// Social Brand Materials - Website URLs and other source materials
+export const socialBrandMaterials = pgTable("social_brand_materials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  brandKitId: varchar("brand_kit_id").notNull().references(() => socialBrandKits.id, { onDelete: 'cascade' }),
+  type: varchar("type").notNull().default('website'), // 'website', 'document', 'file'
+  name: varchar("name").notNull(),
+  url: text("url").notNull(),
+  fileType: varchar("file_type"), // 'website', 'pdf', 'doc', etc.
+  lastUpdated: timestamp("last_updated"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("social_brand_materials_kit_idx").on(table.brandKitId),
+]);
+
+export const insertSocialBrandMaterialSchema = createInsertSchema(socialBrandMaterials).omit({
+  id: true,
+  lastUpdated: true,
+  createdAt: true,
+});
+
+export type InsertSocialBrandMaterial = z.infer<typeof insertSocialBrandMaterialSchema>;
+export type SocialBrandMaterial = typeof socialBrandMaterials.$inferSelect;
+
+// Social Brand Assets - Images and videos for the brand kit
+export const socialBrandAssets = pgTable("social_brand_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  brandKitId: varchar("brand_kit_id").notNull().references(() => socialBrandKits.id, { onDelete: 'cascade' }),
+  type: varchar("type").notNull(), // 'image', 'video'
+  filename: varchar("filename").notNull(),
+  url: text("url").notNull(), // S3 URL
+  thumbnailUrl: text("thumbnail_url"),
+  mimeType: varchar("mime_type"),
+  fileSize: integer("file_size"),
+  usageStatus: varchar("usage_status").default('unused'), // 'used', 'unused'
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("social_brand_assets_kit_idx").on(table.brandKitId),
+  index("social_brand_assets_type_idx").on(table.type),
+]);
+
+export const insertSocialBrandAssetSchema = createInsertSchema(socialBrandAssets).omit({
+  id: true,
+  usageStatus: true,
+  lastUsedAt: true,
+  createdAt: true,
+});
+
+export type InsertSocialBrandAsset = z.infer<typeof insertSocialBrandAssetSchema>;
+export type SocialBrandAsset = typeof socialBrandAssets.$inferSelect;
+
+// Social Brand Scan Jobs - Track website scanning jobs
+export const socialBrandScanJobs = pgTable("social_brand_scan_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  brandKitId: varchar("brand_kit_id").notNull().references(() => socialBrandKits.id, { onDelete: 'cascade' }),
+  targetUrl: text("target_url").notNull(),
+  status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
+  scanResult: jsonb("scan_result").$type<{
+    colors?: string[];
+    logos?: string[];
+    images?: string[];
+    textContent?: {
+      title?: string;
+      description?: string;
+      aboutContent?: string;
+      products?: string[];
+      services?: string[];
+    };
+    error?: string;
+  }>(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  error: text("error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("social_brand_scan_jobs_kit_idx").on(table.brandKitId),
+  index("social_brand_scan_jobs_status_idx").on(table.status),
+]);
+
+export const insertSocialBrandScanJobSchema = createInsertSchema(socialBrandScanJobs).omit({
+  id: true,
+  status: true,
+  scanResult: true,
+  startedAt: true,
+  completedAt: true,
+  error: true,
+  createdAt: true,
+});
+
+export type InsertSocialBrandScanJob = z.infer<typeof insertSocialBrandScanJobSchema>;
+export type SocialBrandScanJob = typeof socialBrandScanJobs.$inferSelect;
+
+// AI Content Plans - Generated social media content plans
+export const aiContentPlans = pgTable("ai_content_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  brandKitId: varchar("brand_kit_id").notNull().references(() => socialBrandKits.id, { onDelete: 'cascade' }),
+  scope: varchar("scope").notNull(), // 'week', 'month'
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: varchar("status").notNull().default('draft'), // 'draft', 'approved', 'executing', 'completed', 'cancelled'
+  plan: jsonb("plan").$type<{
+    posts: {
+      date: string;
+      time: string;
+      platforms: string[];
+      contentType: string;
+      caption: string;
+      mediaPrompt?: string;
+      hashtags?: string[];
+      status: 'pending' | 'approved' | 'rejected' | 'scheduled' | 'posted';
+    }[];
+    strategy?: string;
+    contentPillars?: string[];
+  }>(),
+  executionProgress: jsonb("execution_progress").$type<{
+    totalPosts: number;
+    postsScheduled: number;
+    postsPosted: number;
+    postsFailed: number;
+    lastUpdated: string;
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("ai_content_plans_kit_idx").on(table.brandKitId),
+  index("ai_content_plans_status_idx").on(table.status),
+]);
+
+export const insertAiContentPlanSchema = createInsertSchema(aiContentPlans).omit({
+  id: true,
+  status: true,
+  executionProgress: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertAiContentPlan = z.infer<typeof insertAiContentPlanSchema>;
+export type AiContentPlan = typeof aiContentPlans.$inferSelect;
+
 // Social Media Hub Relations
 export const socialProfilesRelations = relations(socialProfiles, ({ one, many }) => ({
   user: one(users, {
@@ -2109,6 +2336,47 @@ export const socialProfilesRelations = relations(socialProfiles, ({ one, many })
   goals: many(socialGoals),
   posts: many(socialPosts),
   analytics: many(socialAnalytics),
+  socialBrandKit: one(socialBrandKits),
+}));
+
+// Social Brand Kit Relations
+export const socialBrandKitsRelations = relations(socialBrandKits, ({ one, many }) => ({
+  socialProfile: one(socialProfiles, {
+    fields: [socialBrandKits.socialProfileId],
+    references: [socialProfiles.id],
+  }),
+  materials: many(socialBrandMaterials),
+  assets: many(socialBrandAssets),
+  scanJobs: many(socialBrandScanJobs),
+  contentPlans: many(aiContentPlans),
+}));
+
+export const socialBrandMaterialsRelations = relations(socialBrandMaterials, ({ one }) => ({
+  brandKit: one(socialBrandKits, {
+    fields: [socialBrandMaterials.brandKitId],
+    references: [socialBrandKits.id],
+  }),
+}));
+
+export const socialBrandAssetsRelations = relations(socialBrandAssets, ({ one }) => ({
+  brandKit: one(socialBrandKits, {
+    fields: [socialBrandAssets.brandKitId],
+    references: [socialBrandKits.id],
+  }),
+}));
+
+export const socialBrandScanJobsRelations = relations(socialBrandScanJobs, ({ one }) => ({
+  brandKit: one(socialBrandKits, {
+    fields: [socialBrandScanJobs.brandKitId],
+    references: [socialBrandKits.id],
+  }),
+}));
+
+export const aiContentPlansRelations = relations(aiContentPlans, ({ one }) => ({
+  brandKit: one(socialBrandKits, {
+    fields: [aiContentPlans.brandKitId],
+    references: [socialBrandKits.id],
+  }),
 }));
 
 export const socialAccountsRelations = relations(socialAccounts, ({ one }) => ({
