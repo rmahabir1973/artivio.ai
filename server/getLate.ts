@@ -307,15 +307,16 @@ class GetLateService {
     const cleanIdentifier = identifier.startsWith('@') ? identifier.slice(1) : identifier;
     console.log(`[GetLate] Cleaned identifier: ${cleanIdentifier}`);
     
-    // Generate a state parameter for security
+    // Generate a state parameter for security (include profileId for our own tracking)
     const state = `bluesky_${profileId}_${Date.now()}`;
     
+    // GetLate expects only these 4 fields in the body
+    // profileId should be passed as a query parameter like other connect endpoints
     const requestBody = {
       identifier: cleanIdentifier,
       appPassword: appPassword,
       state: state,
       redirectUri: redirectUri,
-      profileId: profileId,
     };
     
     console.log(`[GetLate] Request body (password hidden):`, { 
@@ -323,7 +324,11 @@ class GetLateService {
       appPassword: '***hidden***' 
     });
     
-    const response = await fetch(`${this.baseUrl}/connect/bluesky/credentials`, {
+    // Add profileId as query parameter (consistent with other connect endpoints)
+    const url = `${this.baseUrl}/connect/bluesky/credentials?profileId=${encodeURIComponent(profileId)}`;
+    console.log(`[GetLate] Calling URL: ${url}`);
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(requestBody),

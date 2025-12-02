@@ -1,0 +1,148 @@
+2025-12-02 14:28:01.47
+dfde6564
+User
+"permissions": [
+2025-12-02 14:28:01.47
+dfde6564
+User
+],
+2025-12-02 14:28:01.47
+dfde6564
+User
+"createdAt": "2025-12-02T18:52:47.567Z",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"byokCredentials": {
+2025-12-02 14:28:01.47
+dfde6564
+User
+},
+2025-12-02 14:28:01.47
+dfde6564
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"platformUserId": "10166334753237738:page:950972651425099",
+2025-12-02 14:28:01.47
+dfde6564
+User
+{
+2025-12-02 14:28:01.47
+dfde6564
+User
+"metadata": {},
+2025-12-02 14:28:01.47
+dfde6564
+User
+"profileId": {
+2025-12-02 14:28:01.47
+dfde6564
+User
+"isDefault": false,
+2025-12-02 14:28:01.47
+dfde6564
+User
+"name": "artivio_49729939",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"displayName": "Ryan Mahabir",
+2025-12-02 14:28:01.47
+dfde6564
+User
+[GetLate] Accounts API returned 8 accounts
+2025-12-02 14:28:01.47
+dfde6564
+User
+"updatedAt": "2025-12-01T19:11:13.296Z",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"platform": "instagram",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"isActive": false
+2025-12-02 14:28:01.47
+dfde6564
+User
+"pages_read_engagement",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"isDefault": false,
+2025-12-02 14:28:01.47
+dfde6564
+User
+"_id": "692f0dbff43160a0bc999cdd",
+2025-12-02 14:28:01.47
+dfde6564
+User
+},
+2025-12-02 14:28:01.47
+dfde6564
+User
+"__v": 0
+2025-12-02 14:28:01.47
+dfde6564
+User
+},
+2025-12-02 14:28:01.47
+dfde6564
+User
+"permissions": [
+2025-12-02 14:28:01.47
+dfde6564
+User
+"createdAt": "2025-12-02T16:03:10.984Z",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"instagram_business_manage_insights",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"_id": "692f357ff43160a0bc999d24",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"accessToken": "IGAATtmljoKQRBZAFJTN0JuYXZAZASEpQWU5qcmx6Skw5TkE5SkF0WTljZAmN2a2xiYUx0Q0F4dENUZAnQ5eDFDeGtHSEp2d2g4eTJwVFlzeG9rYlF4V1ZAWSmxJcWJyVjF2LWZARb2laeVh1VFRZASUt4eDVQbGFn",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"color": "#6366f1",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"__v": 0
+2025-12-02 14:28:01.47
+dfde6564
+User
+"profileId": {
+2025-12-02 14:28:01.47
+dfde6564
+User
+{
+2025-12-02 14:28:01.47
+dfde6564
+User
+"_id": "692de851363442076b252193",
+2025-12-02 14:28:01.47
+dfde6564
+User
+"pages_show_list"
+2025-12-02 14:28:01.47
+dfde6564
+User
+},
+2025-12-02 14:28:01.47
+dfde6564
+User
+},
+2025-12-02 14:28:01.47
+dfde6564
+User
+"updatedAt": "2025-12-02T18:52:47.567Z",
