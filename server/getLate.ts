@@ -289,6 +289,64 @@ class GetLateService {
     return authUrl;
   }
 
+  /**
+   * Connect Bluesky using identifier (handle or email) and app password
+   * Bluesky doesn't use OAuth - it uses a special credentials endpoint
+   * POST /v1/connect/bluesky/credentials
+   */
+  async connectBlueskyWithCredentials(
+    profileId: string,
+    identifier: string,
+    appPassword: string,
+    redirectUri: string
+  ): Promise<{ success: boolean; account?: GetLateAccount; message?: string }> {
+    console.log(`[GetLate] Connecting Bluesky with credentials for profile ${profileId}`);
+    console.log(`[GetLate] Identifier: ${identifier}, redirectUri: ${redirectUri}`);
+    
+    // Clean the identifier - remove @ symbol if present
+    const cleanIdentifier = identifier.startsWith('@') ? identifier.slice(1) : identifier;
+    console.log(`[GetLate] Cleaned identifier: ${cleanIdentifier}`);
+    
+    // Generate a state parameter for security
+    const state = `bluesky_${profileId}_${Date.now()}`;
+    
+    const requestBody = {
+      identifier: cleanIdentifier,
+      appPassword: appPassword,
+      state: state,
+      redirectUri: redirectUri,
+      profileId: profileId,
+    };
+    
+    console.log(`[GetLate] Request body (password hidden):`, { 
+      ...requestBody, 
+      appPassword: '***hidden***' 
+    });
+    
+    const response = await fetch(`${this.baseUrl}/connect/bluesky/credentials`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log(`[GetLate] Bluesky credentials response status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`[GetLate] Bluesky credentials failed. Status: ${response.status}, Body: ${errorText}`);
+      throw new Error(`Failed to connect Bluesky: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log(`[GetLate] Bluesky credentials response:`, JSON.stringify(data));
+    
+    return {
+      success: true,
+      account: data.account,
+      message: data.message || 'Bluesky connected successfully',
+    };
+  }
+
   // =====================================================
   // PLATFORM INVITES (For client OAuth onboarding)
   // =====================================================

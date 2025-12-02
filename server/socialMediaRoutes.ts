@@ -674,6 +674,138 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
+  // Connect Bluesky with credentials (handle/email + app password)
+  // Bluesky uses a special credentials endpoint instead of OAuth
+  app.post('/api/social/accounts/connect-bluesky', requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { identifier, appPassword } = req.body;
+
+      console.log(`[Social] Bluesky connection request for user ${userId}`);
+      console.log(`[Social] Identifier: ${identifier}`);
+
+      if (!identifier || !appPassword) {
+        return res.status(400).json({ message: 'Handle/email and app password are required' });
+      }
+
+      if (!getLateService.isConfigured()) {
+        return res.status(503).json({ message: 'Social media posting service not configured' });
+      }
+
+      // Get or create social profile
+      let [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        // Create profile - will get GetLate profile linked below
+        const [newProfile] = await db
+          .insert(socialProfiles)
+          .values({ userId, isActive: true })
+          .returning();
+        profile = newProfile;
+      }
+
+      // Ensure GetLate profile exists
+      if (!profile.getLateProfileId) {
+        const user = await storage.getUser(userId);
+        const userName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : undefined;
+        const getLateProfile = await getLateService.ensureUserProfile(userId, userName);
+        
+        await db
+          .update(socialProfiles)
+          .set({ getLateProfileId: getLateProfile._id })
+          .where(eq(socialProfiles.id, profile.id));
+        
+        profile = { ...profile, getLateProfileId: getLateProfile._id };
+        console.log(`[Social] Auto-linked GetLate profile for Bluesky: ${getLateProfile._id}`);
+      }
+
+      // Build redirect URI
+      const artivioBaseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
+      const redirectUri = `${artivioBaseUrl}/social/oauth-callback?platform=bluesky&success=true`;
+
+      // Call GetLate's special Bluesky credentials endpoint
+      const result = await getLateService.connectBlueskyWithCredentials(
+        profile.getLateProfileId!,
+        identifier,
+        appPassword,
+        redirectUri
+      );
+
+      console.log(`[Social] Bluesky connection result:`, result);
+
+      // Trigger a sync to update local database with the new account
+      try {
+        const { accounts: getLateAccounts } = await getLateService.getAccounts(profile.getLateProfileId || undefined);
+        const blueskyAccount = getLateAccounts.find(a => a.platform === 'bluesky');
+        
+        if (blueskyAccount) {
+          const dailyCap = PLATFORM_DAILY_CAPS['bluesky'] || 50;
+          const frontendPlatform = mapToFrontendPlatform('bluesky');
+          
+          // Upsert the Bluesky account
+          await db
+            .insert(socialAccounts)
+            .values({
+              socialProfileId: profile.id,
+              platform: frontendPlatform,
+              platformUsername: blueskyAccount.username || null,
+              platformDisplayName: blueskyAccount.displayName || null,
+              platformImageUrl: blueskyAccount.profileImageUrl || null,
+              isConnected: true,
+              dailyCap,
+              metadata: { getLateAccountId: blueskyAccount._id, getLatePlatform: 'bluesky' },
+            })
+            .onConflictDoUpdate({
+              target: [socialAccounts.socialProfileId, socialAccounts.platform],
+              set: {
+                platformUsername: blueskyAccount.username || null,
+                platformDisplayName: blueskyAccount.displayName || null,
+                platformImageUrl: blueskyAccount.profileImageUrl || null,
+                isConnected: true,
+                metadata: { getLateAccountId: blueskyAccount._id, getLatePlatform: 'bluesky' },
+                updatedAt: new Date(),
+              },
+            });
+          
+          // Update connected count
+          const connectedCount = await db
+            .select()
+            .from(socialAccounts)
+            .where(and(
+              eq(socialAccounts.socialProfileId, profile.id),
+              eq(socialAccounts.isConnected, true)
+            ));
+          
+          await db
+            .update(socialProfiles)
+            .set({
+              connectedAccountsCount: connectedCount.length,
+              lastSyncAt: new Date(),
+            })
+            .where(eq(socialProfiles.id, profile.id));
+        }
+      } catch (syncError: any) {
+        console.warn(`[Social] Bluesky sync warning: ${syncError.message}`);
+        // Don't fail the connection if sync fails
+      }
+
+      res.json({
+        success: true,
+        message: result.message || 'Bluesky connected successfully',
+      });
+    } catch (error: any) {
+      console.error('[Social] Error connecting Bluesky:', error);
+      res.status(500).json({ 
+        message: 'Failed to connect Bluesky', 
+        error: error.message 
+      });
+    }
+  });
+
   // Disconnect a social account
   app.delete('/api/social/accounts/:accountId', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {

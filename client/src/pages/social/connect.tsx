@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
@@ -281,6 +282,12 @@ export default function SocialConnect() {
   const [showSetupGuide, setShowSetupGuide] = useState(false);
   const [setupGuidePlatform, setSetupGuidePlatform] = useState<Platform | null>(null);
   
+  // Bluesky-specific connection state
+  const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
+  const [blueskyIdentifier, setBlueskyIdentifier] = useState("");
+  const [blueskyAppPassword, setBlueskyAppPassword] = useState("");
+  const [blueskyError, setBlueskyError] = useState<string | null>(null);
+  
   // Connection modal state
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'waiting' | 'polling' | 'success' | 'timeout'>('waiting');
@@ -545,8 +552,55 @@ export default function SocialConnect() {
     },
   });
 
+  // Bluesky connection mutation (uses special credentials endpoint)
+  const connectBlueskyMutation = useMutation({
+    mutationFn: async ({ identifier, appPassword }: { identifier: string; appPassword: string }) => {
+      const response = await apiRequest("POST", "/api/social/accounts/connect-bluesky", { 
+        identifier, 
+        appPassword 
+      });
+      return await response.json();
+    },
+    onSuccess: () => {
+      setShowBlueskyDialog(false);
+      setBlueskyIdentifier("");
+      setBlueskyAppPassword("");
+      setBlueskyError(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+      toast({
+        title: "Bluesky Connected!",
+        description: "Your Bluesky account has been successfully connected.",
+      });
+    },
+    onError: (error: Error) => {
+      setBlueskyError(error.message || "Failed to connect Bluesky. Please check your credentials.");
+    },
+  });
+
+  // Handle Bluesky connection form submit
+  const handleBlueskySubmit = () => {
+    setBlueskyError(null);
+    if (!blueskyIdentifier.trim() || !blueskyAppPassword.trim()) {
+      setBlueskyError("Please enter both your handle/email and app password.");
+      return;
+    }
+    connectBlueskyMutation.mutate({ 
+      identifier: blueskyIdentifier.trim(), 
+      appPassword: blueskyAppPassword.trim() 
+    });
+  };
+
   // Show setup guide before connecting
   const handleConnectClick = (platform: Platform) => {
+    // Bluesky uses a special credentials flow, not OAuth
+    if (platform.id === "bluesky") {
+      setBlueskyError(null);
+      setBlueskyIdentifier("");
+      setBlueskyAppPassword("");
+      setShowBlueskyDialog(true);
+      return;
+    }
+    
     if (platform.setupGuide) {
       setSetupGuidePlatform(platform);
       setShowSetupGuide(true);
@@ -1086,6 +1140,97 @@ export default function SocialConnect() {
                 {setupGuidePlatform?.setupGuide?.buttonUrl ? "Go to Connect" : (setupGuidePlatform?.setupGuide?.buttonText || "Connect")}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bluesky Connection Dialog - uses credentials instead of OAuth */}
+      <Dialog open={showBlueskyDialog} onOpenChange={setShowBlueskyDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SiBluesky className="w-5 h-5 text-[#0085FF]" />
+              Connect Bluesky
+            </DialogTitle>
+            <DialogDescription>
+              Enter your Bluesky handle (or email) and App Password to connect your account.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {blueskyError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{blueskyError}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Handle or Email</label>
+              <Input
+                type="text"
+                placeholder="yourname.bsky.social or email@example.com"
+                value={blueskyIdentifier}
+                onChange={(e) => setBlueskyIdentifier(e.target.value)}
+                disabled={connectBlueskyMutation.isPending}
+                data-testid="input-bluesky-identifier"
+              />
+              <p className="text-xs text-muted-foreground">
+                If you have a custom domain handle (e.g., artivio.ai), use that instead of your .bsky.social handle.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">App Password</label>
+              <Input
+                type="password"
+                placeholder="xxxx-xxxx-xxxx-xxxx"
+                value={blueskyAppPassword}
+                onChange={(e) => setBlueskyAppPassword(e.target.value)}
+                disabled={connectBlueskyMutation.isPending}
+                data-testid="input-bluesky-password"
+              />
+              <p className="text-xs text-muted-foreground">
+                Create an App Password in Bluesky Settings (not your login password).
+              </p>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open("https://bsky.app/settings/app-passwords", "_blank")}
+              className="gap-2"
+              data-testid="button-bluesky-create-password"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Create App Password on Bluesky
+            </Button>
+          </div>
+          
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowBlueskyDialog(false)}
+              disabled={connectBlueskyMutation.isPending}
+              data-testid="button-bluesky-cancel"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleBlueskySubmit}
+              disabled={connectBlueskyMutation.isPending || !blueskyIdentifier.trim() || !blueskyAppPassword.trim()}
+              className="gap-2"
+              data-testid="button-bluesky-connect"
+            >
+              {connectBlueskyMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Connect Bluesky"
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
