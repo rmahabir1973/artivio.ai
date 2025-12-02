@@ -53,6 +53,9 @@ import {
   Link2,
   Wand2,
   BarChart3,
+  Palette,
+  FileText,
+  Bot,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -173,7 +176,9 @@ const menuSections: MenuSection[] = [
     category: "social",
     items: [
       { title: "Connect Accounts", url: "/social/connect", icon: Link2 },
+      { title: "Brand Kit", url: "/social/brand-kit", icon: Palette },
       { title: "AI Strategist", url: "/social/strategist", icon: Wand2 },
+      { title: "Content Plan", url: "/social/content-plan", icon: Bot },
       { title: "Content Calendar", url: "/social/calendar", icon: CalendarDays },
       { title: "Analytics", url: "/social/analytics", icon: BarChart3 },
     ],

@@ -2429,13 +2429,122 @@ Response format:
     try {
       const { id } = req.params;
       const { status } = req.body;
+      const userId = req.user.id;
 
       if (!['draft', 'approved', 'executing', 'completed', 'cancelled'].includes(status)) {
         return res.status(400).json({ message: 'Invalid status' });
       }
 
-      const { updatePlanStatus } = await import('./services/aiSocialStrategist');
-      const [updated] = await updatePlanStatus(id, status);
+      const { getContentPlan } = await import('./services/aiSocialStrategist');
+      
+      // If approving, persist posts to socialPosts table using atomic transaction
+      if (status === 'approved') {
+        const plan = await getContentPlan(id);
+        if (!plan || !plan.plan?.posts) {
+          return res.status(404).json({ message: 'Content plan not found' });
+        }
+
+        // Get user's social profile first (outside transaction)
+        const [profile] = await db
+          .select()
+          .from(socialProfiles)
+          .where(eq(socialProfiles.userId, userId))
+          .limit(1);
+
+        if (!profile) {
+          return res.status(404).json({ message: 'Social profile not found' });
+        }
+
+        // Helper to derive postType from contentType (normalized)
+        const getPostType = (contentType: string, hasMedia: boolean): string => {
+          const normalized = (contentType || '').toString().trim().toLowerCase();
+          const videoTypes = ['video', 'reel', 'short', 'story'];
+          const imageTypes = ['image', 'photo', 'carousel', 'pin'];
+          
+          if (videoTypes.includes(normalized)) return 'video';
+          if (imageTypes.includes(normalized)) return 'photo';
+          if (hasMedia) return 'photo';
+          return 'text';
+        };
+
+        // Use atomic update - only transition from draft status to prevent duplicates
+        const [statusUpdated] = await db
+          .update(aiContentPlans)
+          .set({ status: 'approved' })
+          .where(and(
+            eq(aiContentPlans.id, id),
+            eq(aiContentPlans.status, 'draft')
+          ))
+          .returning();
+
+        if (!statusUpdated) {
+          // Already approved or in different state - fetch current and return
+          const [current] = await db
+            .select()
+            .from(aiContentPlans)
+            .where(eq(aiContentPlans.id, id))
+            .limit(1);
+          console.log(`[Content Plans] Plan ${id} not in draft status, current: ${current?.status}`);
+          return res.json({ ...current, message: 'Plan already processed' });
+        }
+
+        // Status atomically updated - now safe to insert posts
+        const postsToCreate = plan.plan.posts.filter(
+          (post: any) => post.status === 'pending' || post.status === 'approved'
+        );
+
+        console.log(`[Content Plans] Creating ${postsToCreate.length} posts in socialPosts table`);
+        let postsCreated = 0;
+        let postsSkipped = 0;
+
+        for (const planPost of postsToCreate) {
+          // Handle time fallback - default to 12:00 if missing
+          const time = planPost.time && planPost.time.match(/^\d{2}:\d{2}$/) ? planPost.time : '12:00';
+          const dateStr = `${planPost.date}T${time}:00`;
+          const scheduledDate = new Date(dateStr);
+          
+          // Validate date
+          if (isNaN(scheduledDate.getTime())) {
+            console.error(`[Content Plans] Invalid date for post: ${dateStr}, skipping`);
+            postsSkipped++;
+            continue;
+          }
+          
+          try {
+            const rawContentType = planPost.contentType || 'post';
+            const contentType = rawContentType.toString().trim().toLowerCase();
+            const postType = getPostType(contentType, !!planPost.mediaPrompt);
+            
+            await db.insert(socialPosts).values({
+              socialProfileId: profile.id,
+              postType,
+              contentType,
+              platforms: planPost.platforms || [],
+              title: planPost.caption,
+              description: planPost.mediaPrompt || null,
+              hashtags: planPost.hashtags || [],
+              scheduledAt: scheduledDate,
+              status: 'scheduled',
+              aiGenerated: true,
+              aiPromptUsed: planPost.mediaPrompt || null,
+            });
+            postsCreated++;
+          } catch (postError: any) {
+            console.error(`[Content Plans] Error creating post:`, postError);
+            postsSkipped++;
+          }
+        }
+
+        console.log(`[Content Plans] Plan ${id}: ${postsCreated} posts created, ${postsSkipped} skipped`);
+        return res.json({ ...statusUpdated, postsCreated, postsSkipped });
+      }
+
+      // For non-approval status updates, just update the status
+      const [updated] = await db
+        .update(aiContentPlans)
+        .set({ status })
+        .where(eq(aiContentPlans.id, id))
+        .returning();
 
       res.json(updated);
     } catch (error: any) {

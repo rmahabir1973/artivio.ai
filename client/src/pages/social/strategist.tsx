@@ -144,7 +144,9 @@ export default function SocialStrategist() {
       const postsCount = data.postsCreated || 0;
       toast({
         title: "Strategy Created!",
-        description: `Your AI strategy is ready with ${postsCount} scheduled posts. Check your content calendar.`,
+        description: postsCount > 0 
+          ? `${postsCount} posts scheduled! View them in your Content Calendar.`
+          : "Strategy created but no posts were scheduled. Try again or create posts manually.",
       });
       setStep(4);
     },
