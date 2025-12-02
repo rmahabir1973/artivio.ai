@@ -231,10 +231,15 @@ class GetLateService {
     return result;
   }
 
-  async getConnectUrl(profileId: string, platform: SocialPlatform): Promise<string> {
-    console.log(`[GetLate] Getting connect URL for ${platform} on profile ${profileId}`);
+  async getConnectUrl(profileId: string, platform: SocialPlatform, redirectUrl?: string): Promise<string> {
+    console.log(`[GetLate] Getting connect URL for ${platform} on profile ${profileId}${redirectUrl ? ` with redirect to ${redirectUrl}` : ''}`);
     
-    const url = `${this.baseUrl}/connect/${platform}?profileId=${profileId}`;
+    const params = new URLSearchParams({ profileId });
+    if (redirectUrl) {
+      params.append('redirect_url', redirectUrl);
+    }
+    
+    const url = `${this.baseUrl}/connect/${platform}?${params.toString()}`;
     
     const response = await fetch(url, {
       method: 'GET',

@@ -416,7 +416,7 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Connect a social account (generates platform invite URL)
+  // Connect a social account (generates OAuth URL with redirect back to our app)
   app.post('/api/social/accounts/connect', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -469,49 +469,46 @@ export function registerSocialMediaRoutes(app: Express) {
         console.log(`[Social] Auto-linked GetLate profile: ${getLateProfile._id}`);
       }
 
-      // Create platform invite via GetLate
-      const { invite } = await getLateService.createPlatformInvite(
+      // Build the callback URL that GetLate will redirect to after OAuth
+      const artivioBaseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
+      const callbackUrl = `${artivioBaseUrl}/social/oauth-callback?platform=${platform}&success=true`;
+      
+      // Get direct connect URL with redirect_url parameter
+      // GetLate will redirect user back to our callback after OAuth completion
+      const connectUrl = await getLateService.getConnectUrl(
         profile.getLateProfileId!,
-        platform as SocialPlatform
+        platform as SocialPlatform,
+        callbackUrl
       );
 
+      console.log(`[Social] Generated connect URL for ${platform} with redirect to ${callbackUrl}`);
+
       // Validate the URL is from allowed domain
-      if (!isAllowedOAuthDomain(invite.inviteUrl)) {
-        console.error(`[Social] Invalid OAuth URL domain: ${invite.inviteUrl}`);
+      if (!isAllowedOAuthDomain(connectUrl)) {
+        console.error(`[Social] Invalid OAuth URL domain: ${connectUrl}`);
         return res.status(500).json({ message: 'Invalid OAuth URL received' });
       }
 
-      // Generate a secure nonce for this invite
+      // Generate a secure nonce for this connection attempt
       const nonce = generateNonce();
+      const connectionId = `conn_${Date.now()}_${nonce.substring(0, 8)}`;
       
-      // Build base URL for redirects
-      const artivioBaseUrl = process.env.PRODUCTION_URL || 'https://artivio.replit.app';
-      
-      // Note: GetLate's platform invite API doesn't support headless mode
-      // The user will see GetLate's success page after OAuth, then return to Artivio
-      // We handle this by auto-syncing accounts when users visit the connect page
-
-      // Store the invite URL securely in session/cache for later retrieval
-      // Uses invite ID + nonce for added security
-      pendingInvites.set(invite._id, {
-        url: invite.inviteUrl,
+      // Store connection attempt for verification (optional, for extra security)
+      pendingInvites.set(connectionId, {
+        url: connectUrl,
         platform,
         userId,
-        expiresAt: new Date(invite.expiresAt),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
         createdAt: new Date(),
         consumed: false,
         nonce,
       });
 
-      // Generate Artivio proxy URL for white-label experience
-      // The proxy page will fetch the actual URL server-side using the invite ID + nonce
-      const proxyUrl = `${artivioBaseUrl}/social/oauth-redirect?platform=${platform}&invite=${invite._id}&nonce=${nonce}`;
-
       res.json({
-        proxyUrl,
-        inviteId: invite._id,
+        proxyUrl: connectUrl, // Direct URL to GetLate OAuth
+        connectionId,
         platform,
-        expiresAt: invite.expiresAt,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       });
     } catch (error: any) {
       console.error('[Social] Error generating connect URL:', error);
