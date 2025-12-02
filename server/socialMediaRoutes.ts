@@ -123,12 +123,31 @@ const PLATFORM_ID_MAP: Record<string, SocialPlatform> = {
   'bluesky': 'bluesky',
 };
 
+// Reverse map: GetLate API platform IDs to frontend platform IDs
+// GetLate returns "twitter" but frontend uses "x"
+const GETLATE_TO_FRONTEND_MAP: Record<SocialPlatform, string> = {
+  'twitter': 'x',  // GetLate's "twitter" maps to frontend's "x"
+  'instagram': 'instagram',
+  'linkedin': 'linkedin',
+  'youtube': 'youtube',
+  'facebook': 'facebook',
+  'threads': 'threads',
+  'tiktok': 'tiktok',
+  'pinterest': 'pinterest',
+  'reddit': 'reddit',
+  'bluesky': 'bluesky',
+};
+
 function mapToGetLatePlatform(frontendPlatform: string): SocialPlatform {
   const mapped = PLATFORM_ID_MAP[frontendPlatform.toLowerCase()];
   if (!mapped) {
     throw new Error(`Unknown platform: ${frontendPlatform}`);
   }
   return mapped;
+}
+
+function mapToFrontendPlatform(getLatePlatform: SocialPlatform): string {
+  return GETLATE_TO_FRONTEND_MAP[getLatePlatform] || getLatePlatform;
 }
 
 function isAllowedOAuthDomain(url: string): boolean {
@@ -385,24 +404,27 @@ export function registerSocialMediaRoutes(app: Express) {
       for (const account of getLateAccounts) {
         const dailyCap = PLATFORM_DAILY_CAPS[account.platform] || 25;
         
+        // Map GetLate platform name to frontend platform name (e.g., "twitter" -> "x")
+        const frontendPlatform = mapToFrontendPlatform(account.platform);
+        
         // Always treat accounts from GetLate as connected - if they weren't connected,
         // GetLate wouldn't return them in the accounts list. The isActive field from GetLate
         // might indicate other states (like rate limiting) but not connection status.
         const isConnected = true;
-        console.log(`[Social] Processing account: ${account.platform}, getLateIsActive: ${account.isActive}, marking as connected`);
+        console.log(`[Social] Processing account: GetLate platform=${account.platform} -> frontend platform=${frontendPlatform}, getLateIsActive: ${account.isActive}, marking as connected`);
 
-        // Upsert account
+        // Upsert account - use frontend platform name for storage
         const [syncedAccount] = await db
           .insert(socialAccounts)
           .values({
             socialProfileId: profile.id,
-            platform: account.platform,
+            platform: frontendPlatform,  // Use frontend platform name (e.g., "x" not "twitter")
             platformUsername: account.username || null,
             platformDisplayName: account.displayName || null,
             platformImageUrl: account.profileImageUrl || null,
             isConnected,
             dailyCap,
-            metadata: { getLateAccountId: account._id },
+            metadata: { getLateAccountId: account._id, getLatePlatform: account.platform },
           })
           .onConflictDoUpdate({
             target: [socialAccounts.socialProfileId, socialAccounts.platform],
@@ -411,7 +433,7 @@ export function registerSocialMediaRoutes(app: Express) {
               platformDisplayName: account.displayName || null,
               platformImageUrl: account.profileImageUrl || null,
               isConnected,
-              metadata: { getLateAccountId: account._id },
+              metadata: { getLateAccountId: account._id, getLatePlatform: account.platform },
               updatedAt: new Date(),
             },
           })
