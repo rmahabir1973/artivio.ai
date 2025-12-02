@@ -1606,29 +1606,55 @@ function StylesVoiceTab({ brandKit, updateBrandKitMutation, editingSection, setE
 }
 
 // AI Model options for content generation - IDs must match database pricing entries
+// Labels are display names, all other data (costs, descriptions) comes from the pricing database
 const VIDEO_MODELS = [
-  { id: 'veo-3.1-fast', label: 'Veo 3.1 Fast', defaultCredits: 125, description: 'Fastest, most affordable' },
-  { id: 'veo-3.1', label: 'Veo 3.1', defaultCredits: 525, description: 'High quality' },
-  { id: 'seedance-1-lite-720p', label: 'Seedance Lite', defaultCredits: 25, description: 'Budget-friendly' },
-  { id: 'seedance-1-pro-5s-720p', label: 'Seedance Pro', defaultCredits: 75, description: 'Premium quality' },
-  { id: 'kling-2.5-turbo-1080p-5s', label: 'Kling 2.5 Turbo', defaultCredits: 60, description: 'Fast turnaround' },
-  { id: 'wan-2.5-1080p', label: 'Wan 2.5', defaultCredits: 95, description: 'Good balance' },
-  { id: 'runway-gen3-alpha-turbo-5s', label: 'Runway Gen-3', defaultCredits: 30, description: 'Professional grade' },
-  { id: 'sora-2-pro-480p-5s', label: 'Sora 2 Pro', defaultCredits: 100, description: 'Highest quality' },
+  { id: 'veo-3.1-fast', label: 'Veo 3.1 Fast' },
+  { id: 'veo-3.1', label: 'Veo 3.1' },
+  { id: 'seedance-1-lite-720p', label: 'Seedance Lite' },
+  { id: 'seedance-1-pro-5s-720p', label: 'Seedance Pro' },
+  { id: 'kling-2.5-turbo-1080p-5s', label: 'Kling 2.5 Turbo' },
+  { id: 'wan-2.5-1080p', label: 'Wan 2.5' },
+  { id: 'runway-gen3-alpha-turbo-5s', label: 'Runway Gen-3' },
+  { id: 'sora-2-pro-480p-5s', label: 'Sora 2 Pro' },
 ];
 
 const IMAGE_MODELS = [
-  { id: 'seedream-4-1', label: 'Seedream 4.0', defaultCredits: 10, description: 'Fast & affordable' },
-  { id: 'flux-kontext-pro', label: 'Flux Kontext', defaultCredits: 3, description: 'High quality' },
-  { id: '4o-image-1', label: '4o Image API', defaultCredits: 20, description: 'Versatile' },
-  { id: 'nano-banana', label: 'Nano Banana', defaultCredits: 50, description: 'Quick generations' },
+  { id: 'seedream-4-1', label: 'Seedream 4.0' },
+  { id: 'flux-kontext-pro', label: 'Flux Kontext' },
+  { id: '4o-image-1', label: '4o Image API' },
+  { id: 'nano-banana', label: 'Nano Banana' },
 ];
 
 const MUSIC_MODELS = [
-  { id: 'suno-v4', label: 'Suno V4', defaultCredits: 30, description: 'Good quality' },
-  { id: 'suno-v4.5', label: 'Suno V4.5', defaultCredits: 30, description: 'Enhanced audio' },
-  { id: 'suno-v5', label: 'Suno V5', defaultCredits: 30, description: 'Best quality' },
+  { id: 'suno-v4', label: 'Suno V4' },
+  { id: 'suno-v4.5', label: 'Suno V4.5' },
+  { id: 'suno-v5', label: 'Suno V5' },
 ];
+
+// Legacy ID mapping for backwards compatibility with previously saved brand kits
+const LEGACY_MODEL_ID_MAP: Record<string, string> = {
+  'veo_3_1_fast': 'veo-3.1-fast',
+  'veo_3_1': 'veo-3.1',
+  'seedance_lite': 'seedance-1-lite-720p',
+  'seedance_pro': 'seedance-1-pro-5s-720p',
+  'kling_2_5': 'kling-2.5-turbo-1080p-5s',
+  'wan_2_5': 'wan-2.5-1080p',
+  'runway_gen3': 'runway-gen3-alpha-turbo-5s',
+  'sora_2_pro': 'sora-2-pro-480p-5s',
+  'seedream_4': 'seedream-4-1',
+  'flux_kontext': 'flux-kontext-pro',
+  '4o_image': '4o-image-1',
+  'nano_banana': 'nano-banana',
+  'suno_v4': 'suno-v4',
+  'suno_v4_5': 'suno-v4.5',
+  'suno_v5': 'suno-v5',
+};
+
+// Helper to migrate legacy model IDs to new database IDs
+const migrateModelId = (id: string | undefined, defaultId: string): string => {
+  if (!id) return defaultId;
+  return LEGACY_MODEL_ID_MAP[id] || id;
+};
 
 const AUTOMATION_LEVELS = [
   { id: 'manual', label: 'Manual Only', description: 'I create all content myself' },
@@ -1638,8 +1664,26 @@ const AUTOMATION_LEVELS = [
 ];
 
 function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
-  // Use dynamic pricing from database
-  const { getModelCost, isLoading: pricingLoading } = usePricing();
+  // Use dynamic pricing from database - pricingMap for both costs and descriptions
+  const { pricingMap, isLoading: pricingLoading } = usePricing();
+  const { toast } = useToast();
+  
+  // Helper to get pricing info from database - returns null if not found
+  const getPricingInfo = (modelId: string) => {
+    if (pricingLoading) return null; // Still loading
+    const entry = pricingMap.get(modelId);
+    if (!entry) return null; // Model not found in pricing table
+    return {
+      cost: entry.creditCost,
+      description: entry.description || 'No description available',
+      exists: true,
+    };
+  };
+  
+  // Check if a model has valid pricing
+  const hasValidPricing = (modelId: string) => {
+    return !pricingLoading && pricingMap.has(modelId);
+  };
   
   const [formData, setFormData] = useState({
     featuredMediaTypes: brandKit?.contentPreferences?.featuredMediaTypes || [],
@@ -1649,11 +1693,11 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
     topicsToAvoid: brandKit?.contentPreferences?.topicsToAvoid?.join("\n") || "",
     alwaysIncludeMusic: brandKit?.contentPreferences?.alwaysIncludeMusic || false,
     alwaysIncludeImages: brandKit?.contentPreferences?.alwaysIncludeImages || false,
-    // AI Settings - using database model IDs
+    // AI Settings - migrate legacy IDs to new database IDs
     aiSettings: {
-      preferredVideoModel: brandKit?.contentPreferences?.aiSettings?.preferredVideoModel || 'veo-3.1-fast',
-      preferredImageModel: brandKit?.contentPreferences?.aiSettings?.preferredImageModel || 'seedream-4-1',
-      preferredMusicModel: brandKit?.contentPreferences?.aiSettings?.preferredMusicModel || 'suno-v4',
+      preferredVideoModel: migrateModelId(brandKit?.contentPreferences?.aiSettings?.preferredVideoModel, 'veo-3.1-fast'),
+      preferredImageModel: migrateModelId(brandKit?.contentPreferences?.aiSettings?.preferredImageModel, 'seedream-4-1'),
+      preferredMusicModel: migrateModelId(brandKit?.contentPreferences?.aiSettings?.preferredMusicModel, 'suno-v4'),
       dailyCreditBudget: brandKit?.contentPreferences?.aiSettings?.dailyCreditBudget ?? 500,
       automationLevel: brandKit?.contentPreferences?.aiSettings?.automationLevel || 'ai_suggests',
       autoGenerationPercent: brandKit?.contentPreferences?.aiSettings?.autoGenerationPercent ?? 50,
@@ -1675,6 +1719,27 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
   };
 
   const handleSave = () => {
+    // Validate that all selected models have valid pricing in the database
+    const invalidModels: string[] = [];
+    if (!hasValidPricing(formData.aiSettings.preferredVideoModel)) {
+      invalidModels.push('Video Model');
+    }
+    if (!hasValidPricing(formData.aiSettings.preferredImageModel)) {
+      invalidModels.push('Image Model');
+    }
+    if (!hasValidPricing(formData.aiSettings.preferredMusicModel)) {
+      invalidModels.push('Music Model');
+    }
+    
+    if (invalidModels.length > 0) {
+      toast({
+        title: "Invalid Model Selection",
+        description: `The following models are not in the pricing database: ${invalidModels.join(', ')}. Please select models with valid pricing.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     updateBrandKitMutation.mutate({
       contentPreferences: {
         ...formData,
@@ -1990,23 +2055,38 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
               <Select
                 value={formData.aiSettings.preferredVideoModel}
                 onValueChange={(value) => updateAiSetting('preferredVideoModel', value)}
+                disabled={pricingLoading}
               >
                 <SelectTrigger data-testid="select-video-model">
-                  <SelectValue placeholder="Select video model" />
+                  <SelectValue placeholder={pricingLoading ? "Loading pricing..." : "Select video model"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {VIDEO_MODELS.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      <div className="flex items-center justify-between gap-4 w-full">
-                        <span>{model.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ~{getModelCost(model.id, model.defaultCredits)} credits • {model.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {VIDEO_MODELS.map((model) => {
+                    const pricing = getPricingInfo(model.id);
+                    return (
+                      <SelectItem 
+                        key={model.id} 
+                        value={model.id}
+                        disabled={!pricingLoading && !pricing}
+                      >
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <span>{model.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {pricingLoading 
+                              ? 'Loading pricing...' 
+                              : pricing 
+                                ? `${pricing.cost} credits • ${pricing.description}`
+                                : 'Pricing unavailable'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              {!pricingLoading && !hasValidPricing(formData.aiSettings.preferredVideoModel) && (
+                <p className="text-xs text-destructive">Selected model pricing not found in database</p>
+              )}
             </div>
 
             {/* Image Model */}
@@ -2015,23 +2095,38 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
               <Select
                 value={formData.aiSettings.preferredImageModel}
                 onValueChange={(value) => updateAiSetting('preferredImageModel', value)}
+                disabled={pricingLoading}
               >
                 <SelectTrigger data-testid="select-image-model">
-                  <SelectValue placeholder="Select image model" />
+                  <SelectValue placeholder={pricingLoading ? "Loading pricing..." : "Select image model"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {IMAGE_MODELS.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      <div className="flex items-center justify-between gap-4 w-full">
-                        <span>{model.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ~{getModelCost(model.id, model.defaultCredits)} credits • {model.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {IMAGE_MODELS.map((model) => {
+                    const pricing = getPricingInfo(model.id);
+                    return (
+                      <SelectItem 
+                        key={model.id} 
+                        value={model.id}
+                        disabled={!pricingLoading && !pricing}
+                      >
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <span>{model.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {pricingLoading 
+                              ? 'Loading pricing...' 
+                              : pricing 
+                                ? `${pricing.cost} credits • ${pricing.description}`
+                                : 'Pricing unavailable'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              {!pricingLoading && !hasValidPricing(formData.aiSettings.preferredImageModel) && (
+                <p className="text-xs text-destructive">Selected model pricing not found in database</p>
+              )}
             </div>
 
             {/* Music Model */}
@@ -2040,23 +2135,38 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
               <Select
                 value={formData.aiSettings.preferredMusicModel}
                 onValueChange={(value) => updateAiSetting('preferredMusicModel', value)}
+                disabled={pricingLoading}
               >
                 <SelectTrigger data-testid="select-music-model">
-                  <SelectValue placeholder="Select music model" />
+                  <SelectValue placeholder={pricingLoading ? "Loading pricing..." : "Select music model"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {MUSIC_MODELS.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      <div className="flex items-center justify-between gap-4 w-full">
-                        <span>{model.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ~{getModelCost(model.id, model.defaultCredits)} credits • {model.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {MUSIC_MODELS.map((model) => {
+                    const pricing = getPricingInfo(model.id);
+                    return (
+                      <SelectItem 
+                        key={model.id} 
+                        value={model.id}
+                        disabled={!pricingLoading && !pricing}
+                      >
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <span>{model.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {pricingLoading 
+                              ? 'Loading pricing...' 
+                              : pricing 
+                                ? `${pricing.cost} credits • ${pricing.description}`
+                                : 'Pricing unavailable'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+              {!pricingLoading && !hasValidPricing(formData.aiSettings.preferredMusicModel) && (
+                <p className="text-xs text-destructive">Selected model pricing not found in database</p>
+              )}
             </div>
           </div>
 
