@@ -1,0 +1,44 @@
+2025-12-02 11:00:10.62
+06b9de6e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-02 11:00:10.67
+06b9de6e
+User
+[GetLate] Calling: https://getlate.dev/api/v1/connect/instagram?profileId=692de851363442076b252193&redirect_url=https%3A%2F%2Fartivio.ai%2Fsocial%2Foauth-callback%3Fplatform%3Dinstagram%26success%3Dtrue
+2025-12-02 11:00:10.67
+06b9de6e
+User
+[GetLate] Getting connect URL for instagram on profile 692de851363442076b252193 with redirect to https://artivio.ai/social/oauth-callback?platform=instagram&success=true
+2025-12-02 11:00:10.67
+06b9de6e
+User
+[Social] Mapping platform: instagram -> instagram
+2025-12-02 11:00:11.40
+06b9de6e
+User
+[GetLate] Connect response status: 200
+2025-12-02 11:00:11.40
+06b9de6e
+User
+[GetLate] Connect response: {"authUrl":"https://www.instagram.com/oauth/authorize?client_id=1387147079198980&redirect_uri=https%3A%2F%2Fgetlate.dev%2Fapi%2Fv1%2Fconnect%2Finstagram%2Fcallback&scope=instagram_business_basic%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights%2Cinstagram_business_manage_comments&response_type=code&auth_type=rerequest&state=692dd31d955508c697d01c5a-692de851363442076b252193-1764691211244-https%253A%252F%252Fartivio.ai%252Fsocial%252Foauth-callback%253Fplatform%253Dinstagram%2526success%253Dtrue-ct_2bd433dab6bdbf1983206302ce8a28a51ededde8e2702160","state":"692dd31d955508c697d01c5a-692de851363442076b252193-1764691211244-https%3A%2F%2Fartivio.ai%2Fsocial%2Foauth-callback%3Fplatform%3Dinstagram%26success%3Dtrue-ct_2bd433dab6bdbf1983206302ce8a28a51ededde8e2702160"}
+2025-12-02 11:00:11.40
+06b9de6e
+User
+[Social] OAuth URL rejected: unknown host www.instagram.com
+2025-12-02 11:00:11.40
+06b9de6e
+User
+[Social] Invalid OAuth URL domain: https://www.instagram.com/oauth/authorize?client_id=1387147079198980&redirect_uri=https%3A%2F%2Fgetlate.dev%2Fapi%2Fv1%2Fconnect%2Finstagram%2Fcallback&scope=instagram_business_basic%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights%2Cinstagram_business_manage_comments&response_type=code&auth_type=rerequest&state=692dd31d955508c697d01c5a-692de851363442076b252193-1764691211244-https%253A%252F%252Fartivio.ai%252Fsocial%252Foauth-callback%253Fplatform%253Dinstagram%2526success%253Dtrue-ct_2bd433dab6bdbf1983206302ce8a28a51ededde8e2702160
+2025-12-02 11:00:11.40
+06b9de6e
+User
+4:00:11 PM [express] POST /api/social/accounts/connect 500 in 932ms :: {"message":"Invalid OAuth URL…
+2025-12-02 11:00:11.40
+06b9de6e
+User
+[GetLate] Got authUrl: https://www.instagram.com/oauth/authorize?client_id=1387147079198980&redirect_uri=https%3A%2F%2Fgetlate.dev%2Fapi%2Fv1%2Fconnect%2Finstagram%2Fcallback&scope=instagram_business_basic%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights%2Cinstagram_business_manage_comments&response_type=code&auth_type=rerequest&state=692dd31d955508c697d01c5a-692de851363442076b252193-1764691211244-https%253A%252F%252Fartivio.ai%252Fsocial%252Foauth-callback%253Fplatform%253Dinstagram%2526success%253Dtrue-ct_2bd433dab6bdbf1983206302ce8a28a51ededde8e2702160
+2025-12-02 11:00:11.40
+06b9de6e
+User
+[Social] Got authUrl for instagram, will redirect to https://artivio.ai/social/oauth-callback?platform=instagram&success=true after OAuth

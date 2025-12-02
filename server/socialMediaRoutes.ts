@@ -77,6 +77,10 @@ const ALLOWED_OAUTH_HOSTS = [
   'www.facebook.com',
   'api.facebook.com',
   'm.facebook.com',
+  // Instagram OAuth (Instagram uses its own OAuth endpoint, not Facebook's)
+  'instagram.com',
+  'www.instagram.com',
+  'api.instagram.com',
   // Google OAuth (used by YouTube)
   'accounts.google.com',
   'google.com',
@@ -381,9 +385,11 @@ export function registerSocialMediaRoutes(app: Express) {
       for (const account of getLateAccounts) {
         const dailyCap = PLATFORM_DAILY_CAPS[account.platform] || 25;
         
-        // Default isActive to true if undefined (newly connected accounts may not have this flag set)
-        const isConnected = account.isActive === undefined ? true : account.isActive;
-        console.log(`[Social] Processing account: ${account.platform}, isActive: ${account.isActive}, isConnected: ${isConnected}`);
+        // Always treat accounts from GetLate as connected - if they weren't connected,
+        // GetLate wouldn't return them in the accounts list. The isActive field from GetLate
+        // might indicate other states (like rate limiting) but not connection status.
+        const isConnected = true;
+        console.log(`[Social] Processing account: ${account.platform}, getLateIsActive: ${account.isActive}, marking as connected`);
 
         // Upsert account
         const [syncedAccount] = await db
