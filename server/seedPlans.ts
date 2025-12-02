@@ -40,14 +40,14 @@ export const defaultPlans = [
     annualPrice: null,
     billingPeriod: "monthly",
     creditsPerMonth: 4000,
-    creditRolloverLimit: 2000,
+    creditRolloverLimit: 0,
     savingsPercentage: 0,
     features: [
       "4,000 credits per month",
       "Access to all AI models (Veo, Runway, Suno, etc.)",
       "Generate unlimited videos, images & music",
       "Priority support via email",
-      "Rollover up to 2,000 unused credits"
+      "Credits reset monthly"
     ],
     stripeProductId: null, // Set via Admin Panel
     stripePriceId: null,   // Set via Admin Panel
@@ -63,14 +63,14 @@ export const defaultPlans = [
     annualPrice: 14800,
     billingPeriod: "annual",
     creditsPerMonth: 4000,
-    creditRolloverLimit: 2000,
+    creditRolloverLimit: 0,
     savingsPercentage: 35,
     features: [
       "4,000 credits per month",
       "Access to all AI models (Veo, Runway, Suno, etc.)",
       "Generate unlimited videos, images & music",
       "Priority support via email",
-      "Rollover up to 2,000 unused credits",
+      "Credits reset monthly",
       "Save 35% with annual billing"
     ],
     stripeProductId: null, // Set via Admin Panel
@@ -87,14 +87,14 @@ export const defaultPlans = [
     annualPrice: null,
     billingPeriod: "monthly",
     creditsPerMonth: 10000,
-    creditRolloverLimit: 5000,
+    creditRolloverLimit: 0,
     savingsPercentage: 0,
     features: [
       "10,000 credits per month",
       "Access to all premium AI models",
       "Highest priority processing queue",
       "Priority support (email & chat)",
-      "Rollover up to 5,000 unused credits",
+      "Credits reset monthly",
       "Early access to new features & models"
     ],
     stripeProductId: null, // Set via Admin Panel
@@ -111,14 +111,14 @@ export const defaultPlans = [
     annualPrice: 38400,
     billingPeriod: "annual",
     creditsPerMonth: 10000,
-    creditRolloverLimit: 5000,
+    creditRolloverLimit: 0,
     savingsPercentage: 35,
     features: [
       "10,000 credits per month",
       "Access to all premium AI models",
       "Highest priority processing queue",
       "Priority support (email & chat)",
-      "Rollover up to 5,000 unused credits",
+      "Credits reset monthly",
       "Early access to new features & models",
       "Save 35% with annual billing"
     ],
@@ -136,14 +136,14 @@ export const defaultPlans = [
     annualPrice: null,
     billingPeriod: "monthly",
     creditsPerMonth: 20000,
-    creditRolloverLimit: 10000,
+    creditRolloverLimit: 0,
     savingsPercentage: 0,
     features: [
       "20,000 credits per month",
       "Access to all premium AI models",
       "Highest priority processing queue",
       "Priority support (email & chat)",
-      "Rollover up to 10,000 unused credits",
+      "Credits reset monthly",
       "Early access to new features & models",
       "Dedicated account manager"
     ],
@@ -161,14 +161,14 @@ export const defaultPlans = [
     annualPrice: 76800,
     billingPeriod: "annual",
     creditsPerMonth: 20000,
-    creditRolloverLimit: 10000,
+    creditRolloverLimit: 0,
     savingsPercentage: 35,
     features: [
       "20,000 credits per month",
       "Access to all premium AI models",
       "Highest priority processing queue",
       "Priority support (email & chat)",
-      "Rollover up to 10,000 unused credits",
+      "Credits reset monthly",
       "Early access to new features & models",
       "Dedicated account manager",
       "Save 35% with annual billing"
