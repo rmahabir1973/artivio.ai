@@ -2205,7 +2205,6 @@ Response format:
     }
   });
 
-  // Website scan endpoint (placeholder for future implementation)
   app.post("/api/social/brand-kit/scan", requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -2213,6 +2212,12 @@ Response format:
       
       if (!url) {
         return res.status(400).json({ message: 'URL is required' });
+      }
+
+      try {
+        new URL(url);
+      } catch {
+        return res.status(400).json({ message: 'Invalid URL format' });
       }
 
       const profile = await db.query.socialProfiles.findFirst({
@@ -2231,7 +2236,6 @@ Response format:
         return res.status(404).json({ message: 'Brand kit not found' });
       }
 
-      // Create scan job
       const [scanJob] = await db
         .insert(socialBrandScanJobs)
         .values({
@@ -2241,14 +2245,15 @@ Response format:
         })
         .returning();
 
-      // Update brand kit scan status
       await db
         .update(socialBrandKits)
         .set({ scanStatus: 'scanning' })
         .where(eq(socialBrandKits.id, brandKit.id));
 
-      // TODO: Trigger actual website scanning (async background job)
-      // For now, we'll return the scan job and process it asynchronously
+      const { processScanJob } = await import('./services/websiteScanner');
+      processScanJob(scanJob.id).catch(err => {
+        console.error('[Brand Kit] Background scan failed:', err);
+      });
 
       res.json({
         jobId: scanJob.id,
@@ -2258,6 +2263,224 @@ Response format:
     } catch (error: any) {
       console.error('[Brand Kit] Scan error:', error);
       res.status(500).json({ message: 'Failed to start website scan' });
+    }
+  });
+
+  app.get("/api/social/brand-kit/scan/:jobId", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+      const { getScanJobStatus } = await import('./services/websiteScanner');
+      const job = await getScanJobStatus(jobId);
+      
+      if (!job) {
+        return res.status(404).json({ message: 'Scan job not found' });
+      }
+
+      res.json({
+        jobId: job.id,
+        status: job.status,
+        scanResult: job.scanResult,
+        error: job.error,
+        completedAt: job.completedAt,
+      });
+    } catch (error: any) {
+      console.error('[Brand Kit] Get scan status error:', error);
+      res.status(500).json({ message: 'Failed to get scan status' });
+    }
+  });
+
+  app.post("/api/social/brand-kit/analyze", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      const { analyzeAndApplyBrand } = await import('./services/aiBrandAnalyzer');
+      const analysis = await analyzeAndApplyBrand(brandKit.id);
+
+      if (analysis.error) {
+        return res.status(500).json({ 
+          message: 'AI analysis failed', 
+          error: analysis.error 
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Brand analyzed and updated successfully',
+        analysis,
+      });
+    } catch (error: any) {
+      console.error('[Brand Kit] AI analysis error:', error);
+      res.status(500).json({ message: 'Failed to analyze brand' });
+    }
+  });
+
+  app.post("/api/social/content-plans", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { scope } = req.body;
+
+      if (!scope || !['week', 'month'].includes(scope)) {
+        return res.status(400).json({ message: 'Invalid scope. Use "week" or "month"' });
+      }
+
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found. Please create a brand kit first.' });
+      }
+
+      const { createAndSaveContentPlan } = await import('./services/aiSocialStrategist');
+      const result = await createAndSaveContentPlan(brandKit.id, scope as 'week' | 'month');
+
+      if (result.plan.error) {
+        return res.status(500).json({
+          message: 'Failed to generate content plan',
+          error: result.plan.error,
+        });
+      }
+
+      res.json({
+        success: true,
+        planId: result.planId,
+        message: `${scope === 'week' ? '1-Week' : '30-Day'} content plan generated successfully`,
+        plan: result.plan,
+      });
+    } catch (error: any) {
+      console.error('[Content Plans] Generation error:', error);
+      res.status(500).json({ message: 'Failed to generate content plan' });
+    }
+  });
+
+  app.get("/api/social/content-plans", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.json([]);
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.json([]);
+      }
+
+      const { getContentPlansForBrandKit } = await import('./services/aiSocialStrategist');
+      const plans = await getContentPlansForBrandKit(brandKit.id);
+
+      res.json(plans);
+    } catch (error: any) {
+      console.error('[Content Plans] List error:', error);
+      res.status(500).json({ message: 'Failed to get content plans' });
+    }
+  });
+
+  app.get("/api/social/content-plans/:id", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const { getContentPlan } = await import('./services/aiSocialStrategist');
+      const plan = await getContentPlan(id);
+
+      if (!plan) {
+        return res.status(404).json({ message: 'Content plan not found' });
+      }
+
+      res.json(plan);
+    } catch (error: any) {
+      console.error('[Content Plans] Get error:', error);
+      res.status(500).json({ message: 'Failed to get content plan' });
+    }
+  });
+
+  app.patch("/api/social/content-plans/:id/status", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!['draft', 'approved', 'executing', 'completed', 'cancelled'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+
+      const { updatePlanStatus } = await import('./services/aiSocialStrategist');
+      const [updated] = await updatePlanStatus(id, status);
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error('[Content Plans] Status update error:', error);
+      res.status(500).json({ message: 'Failed to update plan status' });
+    }
+  });
+
+  app.patch("/api/social/content-plans/:id/posts/:index/status", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { id, index } = req.params;
+      const { status } = req.body;
+
+      if (!['pending', 'approved', 'rejected', 'scheduled', 'posted'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid post status' });
+      }
+
+      const { updatePostStatus } = await import('./services/aiSocialStrategist');
+      const [updated] = await updatePostStatus(id, parseInt(index), status);
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error('[Content Plans] Post status update error:', error);
+      res.status(500).json({ message: 'Failed to update post status' });
+    }
+  });
+
+  app.post("/api/social/content-plans/:id/posts/:index/regenerate", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { id, index } = req.params;
+
+      const { regeneratePlanPost } = await import('./services/aiSocialStrategist');
+      const newPost = await regeneratePlanPost(id, parseInt(index));
+
+      if (!newPost) {
+        return res.status(500).json({ message: 'Failed to regenerate post' });
+      }
+
+      res.json({
+        success: true,
+        post: newPost,
+      });
+    } catch (error: any) {
+      console.error('[Content Plans] Post regeneration error:', error);
+      res.status(500).json({ message: 'Failed to regenerate post' });
     }
   });
 

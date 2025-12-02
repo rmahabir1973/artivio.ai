@@ -116,6 +116,7 @@ import SocialStrategist from "@/pages/social/strategist";
 import SocialCalendar from "@/pages/social/calendar";
 import SocialAnalytics from "@/pages/social/analytics";
 import SocialBrandKit from "@/pages/social/brand-kit";
+import SocialContentPlan from "@/pages/social/content-plan";
 import SocialUpgrade from "@/pages/social/upgrade";
 import SocialOAuthRedirect from "@/pages/social/oauth-redirect";
 import SocialOAuthCallback from "@/pages/social/oauth-callback";
@@ -213,6 +214,9 @@ function Router() {
       </Route>
       <Route path="/social/brand-kit">
         <ProtectedRoute><SocialBrandKit /></ProtectedRoute>
+      </Route>
+      <Route path="/social/content-plan">
+        <ProtectedRoute><SocialContentPlan /></ProtectedRoute>
       </Route>
 
       {/* Account pages - require authentication */}

@@ -261,6 +261,24 @@ export default function SocialBrandKit() {
     },
   });
 
+  const analyzeWithAIMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetchWithAuth("/api/social/brand-kit/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to analyze brand");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit"] });
+      toast({ title: "AI analysis complete! Your brand profile has been updated." });
+    },
+    onError: () => {
+      toast({ title: "AI analysis failed. Please try again.", variant: "destructive" });
+    },
+  });
+
   if (statusLoading || brandKitLoading) {
     return (
       <div className="container mx-auto p-6 max-w-6xl">
@@ -329,12 +347,27 @@ export default function SocialBrandKit() {
             Define your brand identity for consistent AI-generated content
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Profile Completion</p>
-            <p className="font-semibold">{completionScore}%</p>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => analyzeWithAIMutation.mutate()}
+            disabled={analyzeWithAIMutation.isPending}
+            variant="outline"
+            data-testid="button-ai-analyze"
+          >
+            {analyzeWithAIMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Wand2 className="w-4 h-4 mr-2" />
+            )}
+            AI Analyze
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Profile Completion</p>
+              <p className="font-semibold">{completionScore}%</p>
+            </div>
+            <Progress value={completionScore} className="w-24" />
           </div>
-          <Progress value={completionScore} className="w-24" />
         </div>
       </div>
 
