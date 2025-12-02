@@ -109,3 +109,5 @@ AWS_S3_BUCKET = "artivio-video-exports"
 AWS_LAMBDA_API_URL = "https://4yauflrwnoeli3mcimb3mod62a0pzxhb.lambda-url.us-east-1.on.aws"
 AWS_REGION = "us-east-1"
 USE_S3 = "true"
+
+[userenv.development]

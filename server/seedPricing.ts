@@ -128,17 +128,22 @@ const COMPREHENSIVE_PRICING = [
   // Per 1,000 characters
   { feature: 'tts', model: 'eleven_multilingual_v2', creditCost: 30, kieCreditCost: 12, category: 'voice', description: 'ElevenLabs Multilingual V2 - Per 1,000 characters' },
   { feature: 'tts', model: 'eleven_turbo_v2.5', creditCost: 30, kieCreditCost: 12, category: 'voice', description: 'ElevenLabs Turbo V2.5 - Per 1,000 characters' },
+  // Fish Audio TTS
+  { feature: 'tts', model: 'fish-audio-tts', creditCost: 20, kieCreditCost: null, category: 'voice', description: 'Fish Audio TTS - High-quality text-to-speech' },
   
   // ========================================
   // SPEECH-TO-TEXT MODELS
   // ========================================
   // Per minute
   { feature: 'stt', model: 'scribe-v1', creditCost: 10, kieCreditCost: 3.5, category: 'voice', description: 'ElevenLabs Scribe V1 - Per minute' },
+  // Fish Audio STT
+  { feature: 'stt', model: 'fish-audio-stt', creditCost: 10, kieCreditCost: null, category: 'voice', description: 'Fish Audio STT - Speech to text transcription' },
   
   // ========================================
   // VOICE CLONING
   // ========================================
   { feature: 'voice-cloning', model: 'elevenlabs-clone', creditCost: 100, kieCreditCost: 30, category: 'voice', description: 'ElevenLabs Voice Cloning - Verified' },
+  { feature: 'voice-cloning', model: 'fish-audio-voice-clone', creditCost: 500, kieCreditCost: null, category: 'voice', description: 'Fish Audio Voice Cloning - Create custom voice models' },
   
   // ========================================
   // TALKING AVATARS & LIP SYNC
@@ -158,6 +163,8 @@ const COMPREHENSIVE_PRICING = [
   { feature: 'chat', model: 'deepseek-reasoner', creditCost: 10, kieCreditCost: null, category: 'chat', description: 'Deepseek Reasoner - Advanced reasoning capabilities' },
   { feature: 'chat', model: 'gpt-4o', creditCost: 20, kieCreditCost: null, category: 'chat', description: 'GPT-4o - OpenAI flagship model' },
   { feature: 'chat', model: 'gpt-4o-mini', creditCost: 10, kieCreditCost: null, category: 'chat', description: 'GPT-4o Mini - Fast, cost-effective' },
+  { feature: 'chat', model: 'gpt-4-turbo', creditCost: 15, kieCreditCost: null, category: 'chat', description: 'GPT-4 Turbo - High capability with faster responses' },
+  { feature: 'chat', model: 'gpt-3.5-turbo', creditCost: 5, kieCreditCost: null, category: 'chat', description: 'GPT-3.5 Turbo - Fast and economical' },
   { feature: 'chat', model: 'o1', creditCost: 30, kieCreditCost: null, category: 'chat', description: 'OpenAI o1 - Advanced reasoning model' },
   { feature: 'chat', model: 'o1-mini', creditCost: 15, kieCreditCost: null, category: 'chat', description: 'OpenAI o1 Mini - Efficient reasoning' },
   
