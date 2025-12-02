@@ -450,7 +450,7 @@ function PricingSection() {
                           </li>
                           <li className="flex items-center gap-2 text-sm text-gray-300">
                             <Check className="h-4 w-4 text-purple-400 shrink-0" />
-                            {plan.creditRolloverLimit ? `${plan.creditRolloverLimit.toLocaleString()} rollover limit` : 'Credit rollover'}
+                            Credits reset monthly
                           </li>
                           <li className="flex items-center gap-2 text-sm text-gray-300">
                             <Check className="h-4 w-4 text-purple-400 shrink-0" />

@@ -77,7 +77,8 @@ export default function Terms() {
                 <h3 className="text-lg font-semibold mb-2">Monthly Allocations</h3>
                 <p>
                   Subscription plans include monthly credit allocations that reset at the beginning of each billing
-                  period. Credits do not roll over to the next month unless specifically stated.
+                  period. Unused credits do not roll over to the next month - your balance resets to your plan's
+                  monthly allocation each billing cycle.
                 </p>
               </div>
               <div>

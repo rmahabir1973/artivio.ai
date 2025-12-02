@@ -551,7 +551,7 @@ export default function Pricing() {
                           </li>
                           <li className="flex items-center gap-2 text-sm text-gray-300">
                             <Check className="h-4 w-4 text-purple-400 shrink-0" />
-                            {plan.creditRolloverLimit ? `${plan.creditRolloverLimit.toLocaleString()} rollover limit` : 'Credit rollover'}
+                            Credits reset monthly
                           </li>
                           <li className="flex items-center gap-2 text-sm text-gray-300">
                             <Check className="h-4 w-4 text-purple-400 shrink-0" />
@@ -658,27 +658,20 @@ export default function Pricing() {
                   })}
                 </div>
 
-                {/* Credit Rollover Row */}
+                {/* Credits Reset Row */}
                 <div 
                   className="grid gap-4 p-4 border-b border-[#1a1a1a] min-w-[700px]" 
                   style={{ gridTemplateColumns: `180px repeat(${getCompareTiers.length + 1}, 1fr)` }}
                 >
-                  <div className="text-gray-300 text-sm">Credit Rollover Limit</div>
+                  <div className="text-gray-300 text-sm">Credits Reset</div>
                   <div className="text-center">
-                    <X className="h-4 w-4 text-gray-600 mx-auto" />
+                    <span className="text-gray-400 text-sm">Monthly</span>
                   </div>
-                  {getCompareTiers.map((tier) => {
-                    const plan = tier.activePlan || tier.monthly || tier.annual;
-                    return (
-                      <div key={tier.name} className="text-center">
-                        {plan?.creditRolloverLimit ? (
-                          <span className="text-gray-300 text-sm">{plan.creditRolloverLimit.toLocaleString()}</span>
-                        ) : (
-                          <Check className="h-4 w-4 text-purple-400 mx-auto" />
-                        )}
-                      </div>
-                    );
-                  })}
+                  {getCompareTiers.map((tier) => (
+                    <div key={tier.name} className="text-center">
+                      <span className="text-gray-300 text-sm">Monthly</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Trial Duration Row */}

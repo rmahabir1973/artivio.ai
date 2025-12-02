@@ -70,7 +70,7 @@ export default function Support() {
     {
       category: "billing",
       question: "Do credits roll over to the next month?",
-      answer: "No, credits reset at the beginning of each billing period. However, any credits you purchase as add-ons (beyond your plan's monthly allocation) will remain available until used. We recommend choosing a plan that matches your typical monthly usage."
+      answer: "No, credits do not roll over. Your credit balance resets to your plan's monthly allocation at the start of each billing cycle. We recommend choosing a plan that matches your typical monthly usage to get the most value."
     },
     {
       category: "technical",
