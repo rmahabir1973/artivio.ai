@@ -59,13 +59,48 @@ function generateNonce(): string {
   return result;
 }
 
-// Validate URL is from allowed domain (GetLate only - strict validation)
+// Validate URL is from allowed OAuth domains
+// GetLate returns the actual platform OAuth URLs, so we need to allow all major platform domains
 const ALLOWED_OAUTH_HOSTS = [
+  // GetLate domains
   'getlate.dev',
   'www.getlate.dev',
   'app.getlate.dev',
   'api.getlate.dev',
   'auth.getlate.dev',
+  // LinkedIn OAuth
+  'linkedin.com',
+  'www.linkedin.com',
+  'api.linkedin.com',
+  // Facebook/Meta OAuth (used by Facebook, Instagram, Threads)
+  'facebook.com',
+  'www.facebook.com',
+  'api.facebook.com',
+  'm.facebook.com',
+  // Google OAuth (used by YouTube)
+  'accounts.google.com',
+  'google.com',
+  'www.google.com',
+  // Twitter/X OAuth
+  'twitter.com',
+  'api.twitter.com',
+  'x.com',
+  'api.x.com',
+  // TikTok OAuth
+  'tiktok.com',
+  'www.tiktok.com',
+  'open.tiktokapis.com',
+  // Pinterest OAuth
+  'pinterest.com',
+  'www.pinterest.com',
+  'api.pinterest.com',
+  // Reddit OAuth
+  'reddit.com',
+  'www.reddit.com',
+  'oauth.reddit.com',
+  // Bluesky OAuth
+  'bsky.social',
+  'bsky.app',
 ];
 
 // Map frontend platform IDs to GetLate API platform IDs
