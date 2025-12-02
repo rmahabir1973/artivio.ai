@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -1603,6 +1604,38 @@ function StylesVoiceTab({ brandKit, updateBrandKitMutation, editingSection, setE
   );
 }
 
+// AI Model options for the content generation
+const VIDEO_MODELS = [
+  { id: 'veo_3_1_fast', label: 'Veo 3.1 Fast', credits: 50, description: 'Fastest, most affordable' },
+  { id: 'veo_3_1', label: 'Veo 3.1', credits: 100, description: 'High quality' },
+  { id: 'seedance_lite', label: 'Seedance Lite', credits: 40, description: 'Budget-friendly' },
+  { id: 'seedance_pro', label: 'Seedance Pro', credits: 80, description: 'Premium quality' },
+  { id: 'kling_2_5', label: 'Kling 2.5 Turbo', credits: 60, description: 'Fast turnaround' },
+  { id: 'wan_2_5', label: 'Wan 2.5', credits: 70, description: 'Good balance' },
+  { id: 'runway_gen3', label: 'Runway Gen-3', credits: 120, description: 'Professional grade' },
+  { id: 'sora_2_pro', label: 'Sora 2 Pro', credits: 150, description: 'Highest quality' },
+];
+
+const IMAGE_MODELS = [
+  { id: 'seedream_4', label: 'Seedream 4.0', credits: 5, description: 'Fast & affordable' },
+  { id: 'flux_kontext', label: 'Flux Kontext', credits: 10, description: 'High quality' },
+  { id: '4o_image', label: '4o Image API', credits: 15, description: 'Versatile' },
+  { id: 'nano_banana', label: 'Nano Banana', credits: 3, description: 'Quick generations' },
+];
+
+const MUSIC_MODELS = [
+  { id: 'suno_v4', label: 'Suno V4', credits: 20, description: 'Good quality' },
+  { id: 'suno_v4_5', label: 'Suno V4.5', credits: 30, description: 'Enhanced audio' },
+  { id: 'suno_v5', label: 'Suno V5', credits: 40, description: 'Best quality' },
+];
+
+const AUTOMATION_LEVELS = [
+  { id: 'manual', label: 'Manual Only', description: 'I create all content myself' },
+  { id: 'ai_suggests', label: 'AI Suggests', description: 'AI proposes content, I approve everything' },
+  { id: 'semi_auto', label: 'Semi-Automatic', description: 'AI creates some content automatically' },
+  { id: 'full_auto', label: 'Full Automation', description: 'AI handles content creation' },
+];
+
 function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
   const [formData, setFormData] = useState({
     featuredMediaTypes: brandKit?.contentPreferences?.featuredMediaTypes || [],
@@ -1612,6 +1645,15 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
     topicsToAvoid: brandKit?.contentPreferences?.topicsToAvoid?.join("\n") || "",
     alwaysIncludeMusic: brandKit?.contentPreferences?.alwaysIncludeMusic || false,
     alwaysIncludeImages: brandKit?.contentPreferences?.alwaysIncludeImages || false,
+    // AI Settings
+    aiSettings: {
+      preferredVideoModel: brandKit?.contentPreferences?.aiSettings?.preferredVideoModel || 'veo_3_1_fast',
+      preferredImageModel: brandKit?.contentPreferences?.aiSettings?.preferredImageModel || 'seedream_4',
+      preferredMusicModel: brandKit?.contentPreferences?.aiSettings?.preferredMusicModel || 'suno_v4',
+      dailyCreditBudget: brandKit?.contentPreferences?.aiSettings?.dailyCreditBudget ?? 500,
+      automationLevel: brandKit?.contentPreferences?.aiSettings?.automationLevel || 'ai_suggests',
+      autoGenerationPercent: brandKit?.contentPreferences?.aiSettings?.autoGenerationPercent ?? 50,
+    },
   });
 
   const toggleMediaType = (type: string) => {
@@ -1633,6 +1675,30 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
       contentPreferences: {
         ...formData,
         topicsToAvoid: formData.topicsToAvoid.split("\n").filter(Boolean),
+        aiSettings: formData.aiSettings,
+      },
+    });
+  };
+
+  const updateAiSetting = (key: string, value: any) => {
+    // Apply validation for numeric fields
+    let validatedValue = value;
+    
+    if (key === 'dailyCreditBudget') {
+      const numValue = typeof value === 'string' ? parseInt(value) : value;
+      validatedValue = isNaN(numValue) ? 0 : Math.max(0, Math.min(10000, numValue));
+    }
+    
+    if (key === 'autoGenerationPercent') {
+      const numValue = typeof value === 'string' ? parseInt(value) : value;
+      validatedValue = isNaN(numValue) ? 0 : Math.max(0, Math.min(100, numValue));
+    }
+    
+    setFormData({
+      ...formData,
+      aiSettings: {
+        ...formData.aiSettings,
+        [key]: validatedValue,
       },
     });
   };
@@ -1789,6 +1855,244 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             )}
             Save Preferences
+          </Button>
+        </CardFooter>
+      </Card>
+
+      {/* AI Generation Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5" />
+            AI Generation Settings
+          </CardTitle>
+          <CardDescription>
+            Configure how the AI Agent generates content and manages your credit budget
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Automation Level */}
+          <div className="space-y-3">
+            <Label>Automation Level</Label>
+            <p className="text-sm text-muted-foreground">
+              Control how much the AI Agent handles automatically
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {AUTOMATION_LEVELS.map((level) => (
+                <div
+                  key={level.id}
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    formData.aiSettings.automationLevel === level.id
+                      ? "bg-primary/10 border-primary"
+                      : "hover:border-primary/50"
+                  }`}
+                  onClick={() => updateAiSetting('automationLevel', level.id)}
+                  data-testid={`automation-level-${level.id}`}
+                >
+                  <div className="font-medium">{level.label}</div>
+                  <div className="text-sm text-muted-foreground">{level.description}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Daily Credit Budget */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Daily Credit Budget</Label>
+              <Badge variant="secondary" data-testid="badge-credit-budget">
+                {formData.aiSettings.dailyCreditBudget === 0 
+                  ? 'Unlimited' 
+                  : `${formData.aiSettings.dailyCreditBudget} credits/day`}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Maximum credits the AI Agent can spend per day on content generation
+            </p>
+            
+            {/* Unlimited Toggle */}
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Unlimited Credits</Label>
+                <p className="text-xs text-muted-foreground">
+                  No daily limit on AI-generated content
+                </p>
+              </div>
+              <Switch
+                checked={formData.aiSettings.dailyCreditBudget === 0}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    updateAiSetting('dailyCreditBudget', 0);
+                  } else {
+                    updateAiSetting('dailyCreditBudget', 500); // Default value when disabled
+                  }
+                }}
+                data-testid="switch-unlimited-credits"
+              />
+            </div>
+            
+            {/* Budget slider - only shown when not unlimited */}
+            {formData.aiSettings.dailyCreditBudget !== 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-4">
+                  <Slider
+                    value={[formData.aiSettings.dailyCreditBudget]}
+                    onValueChange={([value]) => updateAiSetting('dailyCreditBudget', value)}
+                    min={50}
+                    max={2000}
+                    step={50}
+                    className="flex-1"
+                    data-testid="slider-credit-budget"
+                  />
+                  <Input
+                    type="number"
+                    value={formData.aiSettings.dailyCreditBudget}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value > 0) {
+                        updateAiSetting('dailyCreditBudget', value);
+                      }
+                    }}
+                    className="w-24"
+                    min={50}
+                    max={10000}
+                    data-testid="input-credit-budget"
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>50 credits</span>
+                  <span>2,000 credits</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* AI Model Preferences */}
+          <div className="space-y-4">
+            <div>
+              <Label className="text-base">AI Model Preferences</Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Choose which models the AI Agent uses. Cheaper models save credits but may have lower quality.
+              </p>
+            </div>
+
+            {/* Video Model */}
+            <div className="space-y-2">
+              <Label>Preferred Video Model</Label>
+              <Select
+                value={formData.aiSettings.preferredVideoModel}
+                onValueChange={(value) => updateAiSetting('preferredVideoModel', value)}
+              >
+                <SelectTrigger data-testid="select-video-model">
+                  <SelectValue placeholder="Select video model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {VIDEO_MODELS.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex items-center justify-between gap-4 w-full">
+                        <span>{model.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ~{model.credits} credits • {model.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Image Model */}
+            <div className="space-y-2">
+              <Label>Preferred Image Model</Label>
+              <Select
+                value={formData.aiSettings.preferredImageModel}
+                onValueChange={(value) => updateAiSetting('preferredImageModel', value)}
+              >
+                <SelectTrigger data-testid="select-image-model">
+                  <SelectValue placeholder="Select image model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {IMAGE_MODELS.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex items-center justify-between gap-4 w-full">
+                        <span>{model.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ~{model.credits} credits • {model.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Music Model */}
+            <div className="space-y-2">
+              <Label>Preferred Music Model</Label>
+              <Select
+                value={formData.aiSettings.preferredMusicModel}
+                onValueChange={(value) => updateAiSetting('preferredMusicModel', value)}
+              >
+                <SelectTrigger data-testid="select-music-model">
+                  <SelectValue placeholder="Select music model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MUSIC_MODELS.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      <div className="flex items-center justify-between gap-4 w-full">
+                        <span>{model.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ~{model.credits} credits • {model.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Auto-Generation Percentage */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Auto-Generation Target</Label>
+              <Badge variant="secondary">{formData.aiSettings.autoGenerationPercent}%</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Percentage of your content calendar the AI Agent should auto-fill
+            </p>
+            <Slider
+              value={[formData.aiSettings.autoGenerationPercent]}
+              onValueChange={([value]) => updateAiSetting('autoGenerationPercent', value)}
+              min={0}
+              max={100}
+              step={10}
+              className="w-full"
+              data-testid="slider-auto-generation"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0% - All manual</span>
+              <span>50% - Balanced</span>
+              <span>100% - Full auto</span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-end gap-2 border-t pt-6">
+          <Button
+            onClick={handleSave}
+            disabled={updateBrandKitMutation.isPending}
+            data-testid="button-save-ai-settings"
+          >
+            {updateBrandKitMutation.isPending && (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            )}
+            Save AI Settings
           </Button>
         </CardFooter>
       </Card>
