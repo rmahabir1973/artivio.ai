@@ -2164,6 +2164,15 @@ export const socialBrandKits = pgTable("social_brand_kits", {
     topicsToAvoid?: string[];
     alwaysIncludeMusic?: boolean;
     alwaysIncludeImages?: boolean;
+    // AI Generation Settings
+    aiSettings?: {
+      preferredVideoModel?: 'veo_3_1_fast' | 'veo_3_1' | 'runway_gen3' | 'kling_2_5' | 'seedance_pro' | 'seedance_lite' | 'wan_2_5' | 'sora_2_pro';
+      preferredImageModel?: 'seedream_4' | 'flux_kontext' | '4o_image' | 'nano_banana';
+      preferredMusicModel?: 'suno_v4' | 'suno_v4_5' | 'suno_v5';
+      dailyCreditBudget?: number; // Max credits per day for AI agent (0 = unlimited)
+      automationLevel?: 'manual' | 'ai_suggests' | 'semi_auto' | 'full_auto';
+      autoGenerationPercent?: number; // 0-100% of content that can be auto-generated
+    };
   }>(),
   
   // Scan Status
