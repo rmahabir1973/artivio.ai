@@ -54,7 +54,14 @@ import {
   ExternalLink,
   Calendar,
   Wand2,
+  Check,
+  FolderOpen,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -657,17 +664,258 @@ function SourceMaterialsTab({
 }
 
 function AssetsTab({ assets, isLoading }: { assets: SocialBrandAsset[]; isLoading: boolean }) {
+  const { toast } = useToast();
+
+  const suggestedAssets = assets.filter((a) => a.isSuggested === true);
+  const libraryAssets = assets.filter((a) => a.isSuggested !== true);
+
+  const groupByFolder = (assetList: SocialBrandAsset[]) => {
+    const grouped: Record<string, SocialBrandAsset[]> = {};
+    assetList.forEach((asset) => {
+      const folder = asset.folder || "Uncategorized";
+      if (!grouped[folder]) grouped[folder] = [];
+      grouped[folder].push(asset);
+    });
+    return grouped;
+  };
+
+  const suggestedByFolder = groupByFolder(suggestedAssets);
+  const libraryByFolder = groupByFolder(libraryAssets);
+
+  const acceptAssetMutation = useMutation({
+    mutationFn: async (assetId: string) => {
+      const response = await fetchWithAuth(`/api/social/brand-kit/assets/${assetId}/accept`, {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("Failed to accept asset");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit/assets"] });
+      toast({ title: "Asset added to your library!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to accept asset", variant: "destructive" });
+    },
+  });
+
+  const dismissAssetMutation = useMutation({
+    mutationFn: async (assetId: string) => {
+      const response = await fetchWithAuth(`/api/social/brand-kit/assets/${assetId}/dismiss`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to dismiss asset");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit/assets"] });
+      toast({ title: "Asset dismissed" });
+    },
+    onError: () => {
+      toast({ title: "Failed to dismiss asset", variant: "destructive" });
+    },
+  });
+
+  const deleteAssetMutation = useMutation({
+    mutationFn: async (assetId: string) => {
+      const response = await fetchWithAuth(`/api/social/brand-kit/assets/${assetId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete asset");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit/assets"] });
+      toast({ title: "Asset deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete asset", variant: "destructive" });
+    },
+  });
+
+  const renderAssetGrid = (
+    assetList: SocialBrandAsset[],
+    isSuggested: boolean
+  ) => (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {assetList.map((asset) => (
+        <div
+          key={asset.id}
+          className="relative group aspect-square rounded-lg overflow-hidden border"
+          data-testid={`asset-item-${asset.id}`}
+        >
+          {isSuggested && asset.sourceUrl ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <img
+                  src={asset.thumbnailUrl || asset.url}
+                  alt={asset.filename}
+                  className="w-full h-full object-cover cursor-help"
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-xs break-all">Found at: {asset.sourceUrl}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <img
+              src={asset.thumbnailUrl || asset.url}
+              alt={asset.filename}
+              className="w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            {isSuggested ? (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => acceptAssetMutation.mutate(asset.id)}
+                      disabled={acceptAssetMutation.isPending}
+                      data-testid={`button-accept-asset-${asset.id}`}
+                    >
+                      {acceptAssetMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Accept to library</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => dismissAssetMutation.mutate(asset.id)}
+                      disabled={dismissAssetMutation.isPending}
+                      data-testid={`button-dismiss-asset-${asset.id}`}
+                    >
+                      {dismissAssetMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Dismiss</TooltipContent>
+                </Tooltip>
+              </>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() => deleteAssetMutation.mutate(asset.id)}
+                    disabled={deleteAssetMutation.isPending}
+                    data-testid={`button-delete-asset-${asset.id}`}
+                  >
+                    {deleteAssetMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          {asset.folder && (
+            <Badge
+              className="absolute top-2 left-2"
+              variant="outline"
+            >
+              <FolderOpen className="w-3 h-3 mr-1" />
+              <span className="truncate max-w-[80px]">{asset.folder}</span>
+            </Badge>
+          )}
+          {!isSuggested && (
+            <Badge
+              className="absolute bottom-2 left-2"
+              variant={asset.usageStatus === 'used' ? 'default' : 'secondary'}
+            >
+              {asset.usageStatus === 'used' ? 'Used' : 'Unused'}
+            </Badge>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderFolderGroup = (
+    groupedAssets: Record<string, SocialBrandAsset[]>,
+    isSuggested: boolean
+  ) => {
+    const folderNames = Object.keys(groupedAssets);
+    if (folderNames.length === 1) {
+      return renderAssetGrid(groupedAssets[folderNames[0]], isSuggested);
+    }
+    return (
+      <div className="space-y-6">
+        {folderNames.map((folder) => (
+          <div key={folder}>
+            <div className="flex items-center gap-2 mb-3">
+              <FolderOpen className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">{folder}</span>
+              <Badge variant="secondary" className="text-xs">
+                {groupedAssets[folder].length}
+              </Badge>
+            </div>
+            {renderAssetGrid(groupedAssets[folder], isSuggested)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <Card>
+      {suggestedAssets.length > 0 && (
+        <Card data-testid="section-suggested-assets">
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                Suggested Assets
+                <Badge variant="secondary">{suggestedAssets.length}</Badge>
+              </CardTitle>
+              <CardDescription>
+                Assets discovered from your website scans. Accept to add to your library or dismiss.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="aspect-square rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              renderFolderGroup(suggestedByFolder, true)
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card data-testid="section-library-assets">
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Image className="w-5 h-5" />
-              Brand Assets
+              Your Library
+              {libraryAssets.length > 0 && (
+                <Badge variant="secondary">{libraryAssets.length}</Badge>
+              )}
             </CardTitle>
             <CardDescription>
-              Upload images and videos for your brand content
+              Your approved brand assets for content creation
             </CardDescription>
           </div>
           <Button data-testid="button-upload-asset">
@@ -682,46 +930,22 @@ function AssetsTab({ assets, isLoading }: { assets: SocialBrandAsset[]; isLoadin
                 <Skeleton key={i} className="aspect-square rounded-lg" />
               ))}
             </div>
-          ) : assets.length === 0 ? (
+          ) : libraryAssets.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
               <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No assets uploaded yet</p>
-              <p className="text-sm">Upload images and videos for your brand content</p>
+              <p>No assets in your library yet</p>
+              <p className="text-sm">
+                {suggestedAssets.length > 0
+                  ? "Accept suggested assets above or upload your own"
+                  : "Scan your website to discover assets or upload your own"}
+              </p>
               <Button variant="outline" className="mt-4" data-testid="button-upload-first-asset">
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Your First Asset
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {assets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className="relative group aspect-square rounded-lg overflow-hidden border"
-                  data-testid={`asset-item-${asset.id}`}
-                >
-                  <img
-                    src={asset.thumbnailUrl || asset.url}
-                    alt={asset.filename}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button size="icon" variant="secondary">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" variant="destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <Badge
-                    className="absolute bottom-2 left-2"
-                    variant={asset.usageStatus === 'used' ? 'default' : 'secondary'}
-                  >
-                    {asset.usageStatus === 'used' ? 'Used' : 'Unused'}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+            renderFolderGroup(libraryByFolder, false)
           )}
         </CardContent>
       </Card>
