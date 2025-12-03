@@ -27,6 +27,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Generation Queue**: Real-time dashboard widget for tracking AI generations with cursor-based pagination.
 -   **Social Media Integration**: Backend services for social media platform connections, content planning, and analytics.
 -   **Audio Processing**: All voice services (cloning, TTS, ASR) exclusively use Fish Audio. Microphone recording handles `audio/webm;codecs=opus` MIME type.
+-   **Google Analytics Integration**: GA4 Data API integration for admin site traffic analytics. Uses service account authentication with 5-minute report caching and 1-minute realtime caching. Displays live visitors, total users, page views, sessions, avg duration, traffic sources, top pages, geographic data, and device breakdown. Located at `server/services/googleAnalytics.ts` with admin endpoint at `/api/admin/site-analytics`.
 
 ### Feature Specifications
 -   **AI Video Generation**: Supports Veo 3.1, Runway Gen-3, Seedance Pro/Lite, Wan 2.5, Kling 2.5 Turbo, Grok Imagine, Sora 2 Pro with image-to-video capabilities, model-specific aspect ratios, and advanced features.
