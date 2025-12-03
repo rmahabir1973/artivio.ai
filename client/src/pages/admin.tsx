@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift, Globe, Clock, MousePointer, Timer, MapPin, Laptop, Smartphone, Monitor, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -818,6 +818,10 @@ export default function Admin() {
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
           </TabsTrigger>
+          <TabsTrigger value="traffic" data-testid="tab-traffic">
+            <Globe className="h-4 w-4 mr-2" />
+            Website Traffic
+          </TabsTrigger>
           <TabsTrigger value="pricing" data-testid="tab-pricing">
             <DollarSign className="h-4 w-4 mr-2" />
             Pricing
@@ -1383,6 +1387,338 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="traffic">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Globe className="h-6 w-6 text-primary" />
+                  Website Traffic & Visitors
+                </h2>
+                <p className="text-muted-foreground">Real-time and historical website analytics powered by Google Analytics</p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/intelligenthome', '_blank')}
+                data-testid="button-open-ga"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Google Analytics
+              </Button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Live Visitors</CardTitle>
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-green-500 blur-md opacity-50 rounded-full animate-pulse" />
+                    <div className="relative w-3 h-3 bg-green-500 rounded-full" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-500">Real-time</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    View in Google Analytics for live data
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Page Views</CardTitle>
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">View in GA</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total page views today
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Sessions</CardTitle>
+                  <MousePointer className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">View in GA</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Active sessions today
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg. Session Duration</CardTitle>
+                  <Timer className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">View in GA</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Average time on site
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    Top Countries
+                  </CardTitle>
+                  <CardDescription>Where your visitors are coming from</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="font-medium">Geographic Data</span>
+                      <Badge variant="secondary">Google Analytics</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      View detailed geographic breakdown including countries, cities, and regions in Google Analytics.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..seldim%3D%5B%22country%22%5D&r=user-demographics-detail&ruid=user-demographics-detail,life-cycle,engagement&collectionId=life-cycle', '_blank')}
+                      data-testid="button-view-geo"
+                    >
+                      <Globe className="h-4 w-4 mr-2" />
+                      View Geographic Report
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Monitor className="h-5 w-5 text-primary" />
+                    Device Breakdown
+                  </CardTitle>
+                  <CardDescription>Desktop vs Mobile vs Tablet visitors</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center p-3 bg-muted/30 rounded-lg">
+                        <Monitor className="h-6 w-6 mx-auto mb-1 text-blue-500" />
+                        <p className="text-xs text-muted-foreground">Desktop</p>
+                      </div>
+                      <div className="text-center p-3 bg-muted/30 rounded-lg">
+                        <Smartphone className="h-6 w-6 mx-auto mb-1 text-green-500" />
+                        <p className="text-xs text-muted-foreground">Mobile</p>
+                      </div>
+                      <div className="text-center p-3 bg-muted/30 rounded-lg">
+                        <Laptop className="h-6 w-6 mx-auto mb-1 text-purple-500" />
+                        <p className="text-xs text-muted-foreground">Tablet</p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..seldim%3D%5B%22deviceCategory%22%5D&r=tech-detail&ruid=tech-detail,life-cycle,engagement&collectionId=life-cycle', '_blank')}
+                      data-testid="button-view-devices"
+                    >
+                      <Monitor className="h-4 w-4 mr-2" />
+                      View Device Report
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Traffic Sources
+                  </CardTitle>
+                  <CardDescription>How visitors find your website</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-blue-500" />
+                        <span className="text-sm font-medium">Direct</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Direct URL visits</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                        <span className="text-sm font-medium">Organic Search</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Google, Bing, etc.</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-purple-500" />
+                        <span className="text-sm font-medium">Social</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Facebook, Twitter, etc.</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-orange-500" />
+                        <span className="text-sm font-medium">Referral</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Other websites</span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-2"
+                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=acquisition-overview&ruid=acquisition-overview,life-cycle,acquisition&collectionId=life-cycle', '_blank')}
+                      data-testid="button-view-sources"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      View Acquisition Report
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Top Pages
+                  </CardTitle>
+                  <CardDescription>Most visited pages on your website</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <span className="text-sm font-medium truncate">/</span>
+                      <Badge variant="secondary">Homepage</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <span className="text-sm font-medium truncate">/generate-video</span>
+                      <Badge variant="secondary">Video Gen</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <span className="text-sm font-medium truncate">/generate-image</span>
+                      <Badge variant="secondary">Image Gen</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                      <span className="text-sm font-medium truncate">/pricing</span>
+                      <Badge variant="secondary">Pricing</Badge>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-2"
+                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..seldim%3D%5B%22pagePath%22%5D&r=pages-and-screens&ruid=pages-and-screens,life-cycle,engagement&collectionId=life-cycle', '_blank')}
+                      data-testid="button-view-pages"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Pages Report
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Real-time Analytics Dashboard
+                </CardTitle>
+                <CardDescription>
+                  View live visitor activity, current active users, and real-time events
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-3 mb-4">
+                  <div className="text-center p-4 bg-background/50 rounded-lg border">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-sm font-medium">Active Now</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Users currently on your site</p>
+                  </div>
+                  <div className="text-center p-4 bg-background/50 rounded-lg border">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Last 30 Minutes</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Recent visitor activity</p>
+                  </div>
+                  <div className="text-center p-4 bg-background/50 rounded-lg border">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <RefreshCw className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Live Events</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Real-time user interactions</p>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full"
+                  onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/realtime/overview', '_blank')}
+                  data-testid="button-realtime-dashboard"
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Open Real-time Dashboard
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Links to Google Analytics Reports</CardTitle>
+                <CardDescription>Access detailed reports directly in Google Analytics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex-col gap-2"
+                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=reporting-hub&ruid=reporting-hub', '_blank')}
+                    data-testid="button-ga-overview"
+                  >
+                    <BarChart3 className="h-6 w-6 text-primary" />
+                    <span>Overview</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex-col gap-2"
+                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=user-demographics-overview&ruid=user-demographics-overview,life-cycle,engagement&collectionId=life-cycle', '_blank')}
+                    data-testid="button-ga-demographics"
+                  >
+                    <Users className="h-6 w-6 text-primary" />
+                    <span>Demographics</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex-col gap-2"
+                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=engagement-overview&ruid=engagement-overview,life-cycle,engagement&collectionId=life-cycle', '_blank')}
+                    data-testid="button-ga-engagement"
+                  >
+                    <Activity className="h-6 w-6 text-primary" />
+                    <span>Engagement</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex-col gap-2"
+                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=monetization-overview&ruid=monetization-overview,life-cycle,monetization&collectionId=life-cycle', '_blank')}
+                    data-testid="button-ga-monetization"
+                  >
+                    <DollarSign className="h-6 w-6 text-primary" />
+                    <span>Monetization</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="pricing">
