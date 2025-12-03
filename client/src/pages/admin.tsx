@@ -60,7 +60,7 @@ interface ErrorStats {
 
 interface RateLimitStats {
   totalTracked: number;
-  topConsumers: Array<{ key: string; count: number; endpoint: string }>;
+  topConsumers: Array<{ key: string; count: number; limitType: string }>;
 }
 
 function ErrorMonitorSection() {

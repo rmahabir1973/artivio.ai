@@ -40,14 +40,68 @@ export interface ErrorLog {
 // In-memory error log (recent errors for quick access)
 const recentErrors: ErrorLog[] = [];
 const MAX_RECENT_ERRORS = 500;
+const ERROR_RETENTION_DAYS = 7;
+const ERROR_RETENTION_MS = ERROR_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
-// Error counts for throttling alerts
-const errorCounts = new Map<string, { count: number; firstSeen: number; lastAlerted: number }>();
-const ALERT_THROTTLE_MINUTES = 15; // Don't send same error type more than once per 15 min
+// Error counts for throttling alerts (with bounded size)
+interface ThrottleRecord {
+  count: number;
+  firstSeen: number;
+  lastAlerted: number;
+}
+const errorCounts = new Map<string, ThrottleRecord>();
+const MAX_THROTTLE_ENTRIES = 1000;
+const ALERT_THROTTLE_MINUTES = 15;
+const THROTTLE_CLEANUP_HOURS = 1;
+
+// Periodic cleanup for old errors (runs every hour)
+setInterval(() => {
+  const now = Date.now();
+  const cutoffTime = now - ERROR_RETENTION_MS;
+  
+  // Remove errors older than retention period
+  let removedCount = 0;
+  while (recentErrors.length > 0) {
+    const oldest = recentErrors[recentErrors.length - 1];
+    if (oldest.timestamp.getTime() < cutoffTime) {
+      recentErrors.pop();
+      removedCount++;
+    } else {
+      break;
+    }
+  }
+  
+  // Cleanup throttle records older than 1 hour
+  const throttleCutoff = now - THROTTLE_CLEANUP_HOURS * 60 * 60 * 1000;
+  const keysToDelete: string[] = [];
+  errorCounts.forEach((record, key) => {
+    if (record.lastAlerted < throttleCutoff) {
+      keysToDelete.push(key);
+    }
+  });
+  keysToDelete.forEach(key => errorCounts.delete(key));
+  
+  if (removedCount > 0 || keysToDelete.length > 0) {
+    console.log(`[ERROR MONITOR] Cleanup: removed ${removedCount} old errors, ${keysToDelete.length} throttle records`);
+  }
+}, 60 * 60 * 1000); // Every hour
 
 // Generate unique error ID
 function generateErrorId(): string {
   return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Normalize error key for consistent throttling
+function normalizeErrorKey(category: ErrorCategory, message: string): string {
+  // Normalize message: lowercase, trim, remove dynamic parts like IDs/timestamps
+  const normalized = message
+    .toLowerCase()
+    .trim()
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'UUID')
+    .replace(/\b\d{13,}\b/g, 'TIMESTAMP')
+    .replace(/\b\d+\b/g, 'N')
+    .substring(0, 100);
+  return `${category}:${normalized}`;
 }
 
 // Log an error to the monitoring system
@@ -78,7 +132,11 @@ export async function logError(params: {
   
   // Add to recent errors (in memory)
   recentErrors.unshift(errorLog);
-  if (recentErrors.length > MAX_RECENT_ERRORS) {
+  
+  // Enforce max size AND retention at insert time
+  const retentionCutoff = Date.now() - ERROR_RETENTION_MS;
+  while (recentErrors.length > MAX_RECENT_ERRORS || 
+         (recentErrors.length > 0 && recentErrors[recentErrors.length - 1].timestamp.getTime() < retentionCutoff)) {
     recentErrors.pop();
   }
   
@@ -93,15 +151,16 @@ export async function logError(params: {
   
   // Send email alert for critical and error severity
   if ((severity === 'critical' || severity === 'error') && postmarkClient) {
-    await sendErrorAlert(errorLog);
+    const emailSent = await sendErrorAlert(errorLog);
+    errorLog.emailSent = emailSent;
   }
   
   return errorLog;
 }
 
-// Send email alert
-async function sendErrorAlert(errorLog: ErrorLog): Promise<void> {
-  const errorKey = `${errorLog.category}:${errorLog.message.substring(0, 50)}`;
+// Send email alert - returns true if email was sent
+async function sendErrorAlert(errorLog: ErrorLog): Promise<boolean> {
+  const errorKey = normalizeErrorKey(errorLog.category, errorLog.message);
   const now = Date.now();
   const existing = errorCounts.get(errorKey);
   
@@ -112,11 +171,26 @@ async function sendErrorAlert(errorLog: ErrorLog): Promise<void> {
     // Don't send another email if we recently alerted for this error type
     if (now - existing.lastAlerted < ALERT_THROTTLE_MINUTES * 60 * 1000) {
       console.log(`[ERROR MONITOR] Throttling alert for ${errorKey} (count: ${existing.count})`);
-      return;
+      return false;
     }
     
     existing.lastAlerted = now;
   } else {
+    // Bound the throttle map size
+    if (errorCounts.size >= MAX_THROTTLE_ENTRIES) {
+      // Remove oldest entry
+      let oldestKey: string | null = null;
+      let oldestTime = Infinity;
+      errorCounts.forEach((record, key) => {
+        if (record.lastAlerted < oldestTime) {
+          oldestTime = record.lastAlerted;
+          oldestKey = key;
+        }
+      });
+      if (oldestKey) {
+        errorCounts.delete(oldestKey);
+      }
+    }
     errorCounts.set(errorKey, { count: 1, firstSeen: now, lastAlerted: now });
   }
   
@@ -233,10 +307,11 @@ View more details in the Admin Panel > Error Monitor
       `,
     });
     
-    errorLog.emailSent = true;
     console.log(`[ERROR MONITOR] Email alert sent for error ${errorLog.id}`);
+    return true;
   } catch (emailError) {
     console.error('[ERROR MONITOR] Failed to send email alert:', emailError);
+    return false;
   }
 }
 
