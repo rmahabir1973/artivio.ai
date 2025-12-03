@@ -408,25 +408,120 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
   console.log('[Stripe Webhook] Processing customer.subscription.updated', subscription.id);
 
   const userId = subscription.metadata?.userId;
-  const planId = subscription.metadata?.planId;
+  const oldPlanId = subscription.metadata?.planId;
 
   if (!userId) {
     console.error('[Stripe Webhook] Missing userId in subscription metadata');
     return;
   }
 
+  // Get the current price from Stripe subscription
+  const currentPriceId = subscription.items?.data?.[0]?.price?.id;
+  console.log('[Stripe Webhook] Subscription update details:', {
+    userId,
+    oldPlanId,
+    currentPriceId,
+    status: subscription.status,
+  });
+
   const existingSubscription = await storage.getUserSubscription(userId);
+  
+  // Check if the plan has changed by comparing price IDs
+  let newPlan: SubscriptionPlan | null = null;
+  let planChanged = false;
+  
+  if (currentPriceId) {
+    // Find the plan that matches the current Stripe price
+    const allPlans = await storage.getAllPlans();
+    newPlan = allPlans.find((p: SubscriptionPlan) => p.stripePriceId === currentPriceId) || null;
+    
+    if (!newPlan) {
+      console.warn('[Stripe Webhook] ⚠️ No matching plan found for Stripe price:', {
+        currentPriceId,
+        availablePrices: allPlans.map(p => ({ id: p.id, name: p.displayName, priceId: p.stripePriceId })),
+      });
+    }
+    
+    if (newPlan && existingSubscription && newPlan.id !== existingSubscription.planId) {
+      planChanged = true;
+      console.log('[Stripe Webhook] 🔄 Plan change detected:', {
+        oldPlan: existingSubscription.plan?.displayName,
+        newPlan: newPlan.displayName,
+        oldPlanId: existingSubscription.planId,
+        newPlanId: newPlan.id,
+      });
+    }
+  }
+
   if (existingSubscription) {
+    // Calculate credit difference for upgrades
+    let creditsToAdd = 0;
+    if (planChanged && newPlan) {
+      // Get old plan credits - if plan relation not hydrated, fetch it directly
+      let oldCredits = existingSubscription.plan?.creditsPerMonth;
+      if (oldCredits === undefined && existingSubscription.planId) {
+        const oldPlan = await storage.getPlanById(existingSubscription.planId);
+        oldCredits = oldPlan?.creditsPerMonth || 0;
+        console.log('[Stripe Webhook] Fetched old plan credits directly:', { oldPlanId: existingSubscription.planId, oldCredits });
+      }
+      oldCredits = oldCredits || 0;
+      
+      const newCredits = newPlan.creditsPerMonth;
+      
+      // Only add credits if upgrading (new plan has more credits)
+      if (newCredits > oldCredits) {
+        creditsToAdd = newCredits - oldCredits;
+        console.log('[Stripe Webhook] 📈 Upgrade detected, adding credits:', {
+          oldCredits,
+          newCredits,
+          creditsToAdd,
+        });
+      } else if (newCredits < oldCredits) {
+        console.log('[Stripe Webhook] 📉 Downgrade detected, no credits removed:', {
+          oldCredits,
+          newCredits,
+        });
+      }
+    }
+
+    // Update subscription with new plan if changed
     await storage.upsertUserSubscription({
       ...existingSubscription,
+      planId: newPlan?.id || existingSubscription.planId,
       status: subscription.status as any,
       currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
       currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
       cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
       canceledAt: (subscription as any).canceled_at ? new Date((subscription as any).canceled_at * 1000) : null,
+      creditsGrantedThisPeriod: newPlan?.creditsPerMonth || existingSubscription.creditsGrantedThisPeriod,
     });
 
-    console.log(`[Stripe Webhook] Updated subscription status to ${subscription.status} for user ${userId}`);
+    // Grant additional credits for upgrades
+    if (creditsToAdd > 0) {
+      const user = await storage.getUser(userId);
+      if (user) {
+        const newTotalCredits = (user.credits || 0) + creditsToAdd;
+        await storage.updateUser(userId, { credits: newTotalCredits });
+        console.log(`[Stripe Webhook] ✅ Granted ${creditsToAdd} upgrade credits to user ${userId} (Total: ${newTotalCredits})`);
+      }
+    }
+
+    // Update Stripe subscription metadata with new planId
+    if (planChanged && newPlan) {
+      try {
+        await stripe.subscriptions.update(subscription.id, {
+          metadata: {
+            ...subscription.metadata,
+            planId: newPlan.id,
+          },
+        });
+        console.log('[Stripe Webhook] Updated Stripe subscription metadata with new planId:', newPlan.id);
+      } catch (error: any) {
+        console.error('[Stripe Webhook] Failed to update Stripe metadata:', error.message);
+      }
+    }
+
+    console.log(`[Stripe Webhook] Updated subscription status to ${subscription.status} for user ${userId}${planChanged ? ` (plan changed to ${newPlan?.displayName})` : ''}`);
   }
 }
 
