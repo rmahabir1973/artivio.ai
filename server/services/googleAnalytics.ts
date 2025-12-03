@@ -301,6 +301,13 @@ export async function getSiteAnalyticsSummary(days: number = 30) {
 
 export function isGoogleAnalyticsConfigured(): boolean {
   const configured = !!(GA_CLIENT_EMAIL && GA_PRIVATE_KEY && GA_PROPERTY_ID);
+  
+  // Check key format for debugging
+  const hasBeginHeader = GA_PRIVATE_KEY?.includes('-----BEGIN') || false;
+  const hasEndHeader = GA_PRIVATE_KEY?.includes('-----END') || false;
+  const newlineCount = (GA_PRIVATE_KEY?.match(/\n/g) || []).length;
+  const hasLiteralBackslashN = GA_PRIVATE_KEY?.includes('\\n') || false;
+  
   console.log('[Google Analytics] isConfigured check:', {
     configured,
     hasPropertyId: !!GA_PROPERTY_ID,
@@ -308,6 +315,14 @@ export function isGoogleAnalyticsConfigured(): boolean {
     hasPrivateKey: !!GA_PRIVATE_KEY,
     propertyIdPreview: GA_PROPERTY_ID ? `${GA_PROPERTY_ID.substring(0, 10)}...` : 'NOT SET',
     clientEmailPreview: GA_CLIENT_EMAIL ? `${GA_CLIENT_EMAIL.substring(0, 15)}...` : 'NOT SET',
+    keyFormat: {
+      hasBeginHeader,
+      hasEndHeader,
+      newlineCount,
+      hasLiteralBackslashN,
+      keyLength: GA_PRIVATE_KEY?.length || 0,
+      first30: GA_PRIVATE_KEY?.substring(0, 30) || 'N/A',
+    }
   });
   return configured;
 }

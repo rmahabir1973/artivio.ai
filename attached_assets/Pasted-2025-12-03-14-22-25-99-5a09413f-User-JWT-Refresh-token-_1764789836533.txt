@@ -1,0 +1,164 @@
+2025-12-03 14:22:25.99
+5a09413f
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '399ba5f8-2e5b-4d56-8dc0-4050943f2cee' }
+2025-12-03 14:22:26.02
+5a09413f
+User
+userId: '49729939',
+2025-12-03 14:22:26.02
+5a09413f
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-03 14:22:26.02
+5a09413f
+User
+tokenId: '399ba5f8',
+2025-12-03 14:22:26.02
+5a09413f
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-03 14:22:26.02
+5a09413f
+User
+}
+2025-12-03 14:22:26.02
+5a09413f
+User
+isAdmin: true
+2025-12-03 14:22:26.03
+5a09413f
+User
+7:22:26 PM [express] GET /api/auth/bootstrap 200 in 78ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-12-03 14:22:26.45
+5a09413f
+User
+7:22:26 PM [express] GET /api/announcements/active 200 in 24ms :: []
+2025-12-03 14:22:26.46
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.48
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.51
+5a09413f
+User
+7:22:26 PM [express] GET /api/admin/api-keys 200 in 69ms :: [{"id":"f003daff-3831-4042-86c6-96f4e257…
+2025-12-03 14:22:26.53
+5a09413f
+User
+7:22:26 PM [express] GET /api/admin/announcements 200 in 72ms :: [{"id":"140c909d-e6e0-41f3-942d-20e…
+2025-12-03 14:22:26.53
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.53
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.57
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.57
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.57
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.60
+5a09413f
+User
+7:22:26 PM [express] GET /api/admin/blog/posts 200 in 118ms :: []
+2025-12-03 14:22:26.60
+5a09413f
+User
+7:22:26 PM [express] GET /api/admin/plans 200 in 159ms :: [{"id":"ec642013-8aa6-4dfc-8f1d-5a6d21840c…
+2025-12-03 14:22:26.61
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.62
+5a09413f
+User
+7:22:26 PM [express] GET /api/admin/homepage 200 in 145ms :: {"id":"homepage","heroTitle":"Make Any …
+2025-12-03 14:22:26.64
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:26.64
+5a09413f
+User
+7:22:26 PM [express] GET /api/welcome 200 in 123ms :: {"welcomeVideoUrl":"https://artivio-peertube-j…
+2025-12-03 14:22:26.65
+5a09413f
+User
+7:22:26 PM [express] GET /api/admin/pricing 200 in 159ms :: [{"id":"edffea3f-8044-4426-9477-c183153b…
+2025-12-03 14:22:26.68
+5a09413f
+User
+7:22:26 PM [express] GET /api/admin/users 200 in 166ms :: [{"id":"eb05b474-0713-44ea-a5d3-201049adfc…
+2025-12-03 14:22:34.13
+5a09413f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:22:35.17
+5a09413f
+User
+configured: true,
+2025-12-03 14:22:35.17
+5a09413f
+User
+[Site Analytics] Fetching data for 30 days
+2025-12-03 14:22:35.17
+5a09413f
+User
+[Site Analytics] Checking configuration...
+2025-12-03 14:22:35.17
+5a09413f
+User
+hasPrivateKey: true,
+2025-12-03 14:22:35.17
+5a09413f
+User
+hasPropertyId: true,
+2025-12-03 14:22:35.17
+5a09413f
+User
+[Google Analytics] isConfigured check: {
+2025-12-03 14:22:35.17
+5a09413f
+User
+clientEmailPreview: 'artivio-analyti...'
+2025-12-03 14:22:35.17
+5a09413f
+User
+}
+2025-12-03 14:22:35.17
+5a09413f
+User
+propertyIdPreview: '512134820...',
+2025-12-03 14:22:35.17
+5a09413f
+User
+hasClientEmail: true,
+2025-12-03 14:22:35.18
+5a09413f
+User
+[Site Analytics] Error: 2 UNKNOWN: Getting metadata from plugin failed with error: error:1E08010C:DECODER routines::unsupported
+2025-12-03 14:22:35.18
+5a09413f
+User
+[Google Analytics] Error fetching summary: 2 UNKNOWN: Getting metadata from plugin failed with error: error:1E08010C:DECODER routines::unsupported
+2025-12-03 14:22:35.18
+5a09413f
+User
+7:22:35 PM [express] GET /api/admin/site-analytics/30 500 in 1103ms :: {"message":"Failed to fetch s…
+2025-12-03 14:22:40.68
+5a09413f
+User
+7:22:40 PM [express] GET /api/admin/analytics 200 in 14165ms :: {"totalUsers":8,"totalCreditsSpent":…
