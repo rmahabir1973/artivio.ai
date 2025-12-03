@@ -1,0 +1,96 @@
+2025-12-02 22:29:39.97
+97522a5c
+User
+{
+2025-12-02 22:29:39.97
+97522a5c
+User
+"isActive": false
+2025-12-02 22:29:40.33
+97522a5c
+User
+3:29:40 AM [express] GET /api/social/accounts 200 in 84ms :: [{"id":"313ec4b1-7c9b-4f6f-8149-6612623…
+2025-12-02 22:30:39.20
+97522a5c
+User
+3:30:39 AM [express] GET /api/announcements/active 304 in 109ms :: []
+2025-12-02 22:30:41.01
+97522a5c
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-02 22:30:41.03
+97522a5c
+User
+[Social] Bluesky connection request for user 49729939
+2025-12-02 22:30:41.03
+97522a5c
+User
+[Social] Identifier: artivio.ai
+2025-12-02 22:30:41.06
+97522a5c
+User
+identifier: 'artivio.ai',
+2025-12-02 22:30:41.06
+97522a5c
+User
+[GetLate] Connecting Bluesky with credentials for profile 692de851363442076b252193
+2025-12-02 22:30:41.06
+97522a5c
+User
+state: 'bluesky_692de851363442076b252193_1764732641061',
+2025-12-02 22:30:41.06
+97522a5c
+User
+}
+2025-12-02 22:30:41.06
+97522a5c
+User
+[GetLate] Identifier: artivio.ai, redirectUri: https://artivio.ai/social/oauth-callback?platform=bluesky&success=true
+2025-12-02 22:30:41.06
+97522a5c
+User
+redirectUri: 'https://artivio.ai/social/oauth-callback?platform=bluesky&success=true'
+2025-12-02 22:30:41.06
+97522a5c
+User
+[GetLate] Cleaned identifier: artivio.ai
+2025-12-02 22:30:41.06
+97522a5c
+User
+appPassword: '***hidden***',
+2025-12-02 22:30:41.06
+97522a5c
+User
+[GetLate] Calling URL: https://getlate.dev/api/v1/connect/bluesky/credentials?profileId=692de851363442076b252193
+2025-12-02 22:30:41.06
+97522a5c
+User
+[GetLate] Request body (password hidden): {
+2025-12-02 22:30:41.44
+97522a5c
+User
+[GetLate] Bluesky credentials response status: 400
+2025-12-02 22:30:41.44
+97522a5c
+User
+[GetLate] Bluesky credentials failed. Status: 400, Body: {"error":"Invalid state parameter"}
+2025-12-02 22:30:41.45
+97522a5c
+User
+[Social] Error connecting Bluesky: Error: Failed to connect Bluesky: 400 - {"error":"Invalid state parameter"}
+2025-12-02 22:30:41.45
+97522a5c
+User
+at GetLateService.connectBlueskyWithCredentials (file:///home/runner/workspace/dist/index.js:5262:17)
+2025-12-02 22:30:41.45
+97522a5c
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-02 22:30:41.45
+97522a5c
+User
+at async file:///home/runner/workspace/dist/index.js:11801:22
+2025-12-02 22:30:41.45
+97522a5c
+User
+3:30:41 AM [express] POST /api/social/accounts/connect-bluesky 500 in 461ms :: {"message":"Failed to…
