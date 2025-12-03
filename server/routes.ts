@@ -6484,8 +6484,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
-  // Admin: Get Google Analytics site traffic data
-  app.get('/api/admin/site-analytics', requireJWT, async (req: any, res) => {
+  // Admin: Get Google Analytics site traffic data (shared handler)
+  async function handleSiteAnalytics(req: any, res: any, days: number) {
     try {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
@@ -6496,14 +6496,16 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
 
       const { isGoogleAnalyticsConfigured, getSiteAnalyticsSummary } = await import('./services/googleAnalytics');
       
+      console.log('[Site Analytics] Checking configuration...');
       if (!isGoogleAnalyticsConfigured()) {
+        console.log('[Site Analytics] Not configured, returning false');
         return res.json({ 
           configured: false,
           message: "Google Analytics not configured. Please set GA_DATA_CLIENT_EMAIL, GA_DATA_PRIVATE_KEY, and GA_PROPERTY_ID."
         });
       }
 
-      const days = parseInt(req.query.days as string) || 30;
+      console.log('[Site Analytics] Fetching data for', days, 'days');
       const summary = await getSiteAnalyticsSummary(days);
       
       res.json({
@@ -6517,6 +6519,18 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         error: error.message 
       });
     }
+  }
+
+  // Route with path parameter (frontend uses queryKey.join("/"))
+  app.get('/api/admin/site-analytics/:days', requireJWT, async (req: any, res) => {
+    const days = parseInt(req.params.days) || 30;
+    return handleSiteAnalytics(req, res, days);
+  });
+
+  // Route with query parameter (legacy support)
+  app.get('/api/admin/site-analytics', requireJWT, async (req: any, res) => {
+    const days = parseInt(req.query.days as string) || 30;
+    return handleSiteAnalytics(req, res, days);
   });
 
   // Admin: Get error monitor stats
