@@ -1,0 +1,104 @@
+2025-12-03 13:24:34.36
+e5edc33f
+User
+}
+2025-12-03 13:24:34.36
+e5edc33f
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-03 13:24:34.36
+e5edc33f
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-03 13:24:34.36
+e5edc33f
+User
+isAdmin: true
+2025-12-03 13:24:34.36
+e5edc33f
+User
+6:24:34 PM [express] GET /api/auth/user 200 in 54ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-12-03 13:24:47.41
+e5edc33f
+User
+6:24:47 PM [express] GET /api/homepage 304 in 24ms :: {"id":"homepage","heroTitle":"Make Any Video Y…
+2025-12-03 13:24:57.82
+e5edc33f
+User
+6:24:57 PM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-12-03 13:24:58.46
+e5edc33f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 13:24:58.51
+e5edc33f
+User
+6:24:58 PM [express] GET /api/chat/conversations 200 in 69ms :: [{"id":"d8859b7b-5a6d-46d0-b48d-31e0…
+2025-12-03 13:25:00.25
+e5edc33f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 13:25:00.28
+e5edc33f
+User
+6:25:00 PM [express] GET /api/social/subscription-status 200 in 48ms :: {"hasSocialPoster":true,"soc…
+2025-12-03 13:25:00.38
+e5edc33f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 13:25:00.50
+e5edc33f
+User
+6:25:00 PM [express] GET /api/social/profile 200 in 145ms :: {"profile":{"id":"bbea3e34-e582-43f0-80…
+2025-12-03 13:25:00.60
+e5edc33f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 13:25:00.63
+e5edc33f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 13:25:00.67
+e5edc33f
+User
+6:25:00 PM [express] GET /api/social/accounts 200 in 94ms :: [{"id":"313ec4b1-7c9b-4f6f-8149-6612623…
+2025-12-03 13:25:00.67
+e5edc33f
+User
+[GetLate] Fetching accounts for profile: 692de851363442076b252193
+2025-12-03 13:25:01.75
+e5edc33f
+User
+"updatedAt": "2025-12-03T16:42:07.926Z",
+2025-12-03 13:25:01.75
+e5edc33f
+User
+[GetLate] Accounts API returned 9 accounts
+2025-12-03 13:25:01.75
+e5edc33f
+User
+"isDefault": false,
+2025-12-03 13:25:01.75
+e5edc33f
+User
+"_id": "692de851363442076b252193",
+2025-12-03 13:25:01.75
+e5edc33f
+User
+"username": "artivio.ai"
+2025-12-03 13:25:01.75
+e5edc33f
+User
+{
+2025-12-03 13:25:01.75
+e5edc33f
+User
+"name": "artivio_49729939",
+2025-12-03 13:25:01.75
+e5edc33f
+User
+"profileId": {
+2025-12-03 13:25:01.75
+e5edc33f
+User
+"platform": "bluesky",
