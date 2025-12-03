@@ -1,0 +1,36 @@
+Connecting to '<URL>' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL>". The action has been blocked.
+js?id=G-CZTBEZMW26:220 
+ Connecting to 'https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…20AI%20-%20AI%20Content%20Generation%20Platform&en=page_view&_ee=1&tfd=407' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev". The action has been blocked.
+js?id=G-CZTBEZMW26:220 
+ Connecting to 'https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…t%20Generation%20Platform&en=scroll&epn.percent_scrolled=90&_et=6&tfd=5414' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev". The action has been blocked.
+js?id=G-CZTBEZMW26:220 
+ Connecting to 'https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…20-%20AI%20Content%20Generation%20Platform&en=page_view&_et=2889&tfd=16819' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev". The action has been blocked.
+js?id=G-CZTBEZMW26:220 
+ Connecting to 'https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…d_name=&ep.first_field_type=&epn.first_field_position=1&_et=8658&tfd=25478' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev". The action has been blocked.
+js?id=G-CZTBEZMW26:220 
+ Connecting to 'https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…20-%20AI%20Content%20Generation%20Platform&en=page_view&_et=6802&tfd=32282' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev". The action has been blocked.
+js?id=G-CZTBEZMW26:220 
+ Connecting to 'https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…-%20AI%20Content%20Generation%20Platform&en=page_view&_et=28564&tfd=476905' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev". The action has been blocked.
+js?id=G-CZTBEZMW26:220 
+ Fetch API cannot load https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…20AI%20-%20AI%20Content%20Generation%20Platform&en=page_view&_ee=1&tfd=407. Refused to connect because it violates the document's Content Security Policy.
+index-DZYZh_ug.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-DZYZh_ug.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-DZYZh_ug.js:878 [AUTH] Initializing auth
+index-DZYZh_ug.js:878 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-DZYZh_ug.js:878 [AUTH] ✓ Bootstrap successful - auth state hydrated 
+Object
+index-DZYZh_ug.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+js?id=G-CZTBEZMW26:220 
+ Fetch API cannot load https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…t%20Generation%20Platform&en=scroll&epn.percent_scrolled=90&_et=6&tfd=5414. Refused to connect because it violates the document's Content Security Policy.
+js?id=G-CZTBEZMW26:220 
+ Fetch API cannot load https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…20-%20AI%20Content%20Generation%20Platform&en=page_view&_et=2889&tfd=16819. Refused to connect because it violates the document's Content Security Policy.
+js?id=G-CZTBEZMW26:220 
+ Fetch API cannot load https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…d_name=&ep.first_field_type=&epn.first_field_position=1&_et=8658&tfd=25478. Refused to connect because it violates the document's Content Security Policy.
+index-DZYZh_ug.js:1190 [HISTORY] Fetching generations with cursor: first page
+index-DZYZh_ug.js:1190 [HISTORY] Fetched generations: 15 items, hasMore: true
+js?id=G-CZTBEZMW26:220 
+ Fetch API cannot load https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…20-%20AI%20Content%20Generation%20Platform&en=page_view&_et=6802&tfd=32282. Refused to connect because it violates the document's Content Security Policy.
+js?id=G-CZTBEZMW26:220 
+ Fetch API cannot load https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je5bj…-%20AI%20Content%20Generation%20Platform&en=page_view&_et=28564&tfd=476905. Refused to connect because it violates the document's Content Security Policy.
+index-DZYZh_ug.js:882 
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.

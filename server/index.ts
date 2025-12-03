@@ -115,6 +115,9 @@ app.use(helmet({
         "https://api.kie.ai",
         "https://klingai.com",
         "https://api.getlate.dev",
+        "https://www.google-analytics.com",
+        "https://www.googletagmanager.com",
+        "https://region1.google-analytics.com",
         ...(isDevelopment ? ["http://localhost:*", "ws://localhost:*"] : []),
       ],
       frameSrc: [
