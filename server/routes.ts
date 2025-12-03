@@ -9500,15 +9500,82 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
-  // Save a stock image to user's library
+  // Save a stock image to user's library (downloads and uploads to S3)
   app.post('/api/stock-photos/save', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const { source, externalId, largeUrl, webformatUrl, previewUrl, width, height, tags, photographer, photographerUrl, pageUrl, originalUrl } = req.body;
       
-      // Validate request body with schema
+      // Download the image from the source and upload to our storage
+      const imageUrlToSave = largeUrl || webformatUrl;
+      if (!imageUrlToSave) {
+        return res.status(400).json({ message: 'No image URL provided' });
+      }
+
+      console.log(`[Stock Photos] Downloading image from ${source}: ${externalId}`);
+      
+      // Fetch the image from the external URL
+      const imageResponse = await fetch(imageUrlToSave, {
+        headers: {
+          'User-Agent': 'Artivio-AI/1.0',
+        },
+      });
+      
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to download image: ${imageResponse.status}`);
+      }
+      
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      
+      // Determine content type from response or URL
+      const contentType = imageResponse.headers.get('content-type') || 
+        (imageUrlToSave.includes('.png') ? 'image/png' : 
+         imageUrlToSave.includes('.webp') ? 'image/webp' : 'image/jpeg');
+      
+      // Convert to base64 for our upload service
+      const base64Data = `data:${contentType};base64,${buffer.toString('base64')}`;
+      
+      // Upload to S3/local storage using existing service
+      const { saveImage } = await import('./services/uploadService');
+      const uploadResult = await saveImage(base64Data);
+      
+      console.log(`[Stock Photos] Uploaded to ${uploadResult.storageType}: ${uploadResult.url}`);
+      
+      // Also upload preview if different
+      let savedPreviewUrl = uploadResult.url; // Default to same as large
+      if (previewUrl && previewUrl !== imageUrlToSave) {
+        try {
+          const previewResponse = await fetch(previewUrl, {
+            headers: { 'User-Agent': 'Artivio-AI/1.0' },
+          });
+          if (previewResponse.ok) {
+            const previewBuffer = Buffer.from(await previewResponse.arrayBuffer());
+            const previewContentType = previewResponse.headers.get('content-type') || 'image/jpeg';
+            const previewBase64 = `data:${previewContentType};base64,${previewBuffer.toString('base64')}`;
+            const previewResult = await saveImage(previewBase64);
+            savedPreviewUrl = previewResult.url;
+          }
+        } catch (e) {
+          console.log('[Stock Photos] Preview download failed, using main image URL');
+        }
+      }
+      
+      // Validate and save to database with our hosted URLs
       const validationResult = insertSavedStockImageSchema.safeParse({
-        ...req.body,
-        userId, // Add userId from authenticated user
+        userId,
+        source,
+        externalId,
+        previewUrl: savedPreviewUrl,
+        webformatUrl: uploadResult.url,
+        largeUrl: uploadResult.url,
+        originalUrl: uploadResult.url,
+        width,
+        height,
+        tags,
+        photographer,
+        photographerUrl,
+        pageUrl,
       });
       
       if (!validationResult.success) {
