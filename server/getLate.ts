@@ -293,7 +293,10 @@ class GetLateService {
    * Connect Bluesky using identifier (handle or email) and app password
    * Bluesky uses a special credentials endpoint (not OAuth redirect flow)
    * POST /v1/connect/bluesky/credentials
-   * Note: GetLate still requires state and redirectUri in the request body
+   * 
+   * Per GetLate support: state parameter needs proper validation.
+   * Since this is credentials-based (not OAuth), we try without state first.
+   * If that fails, we try with minimal state/redirectUri.
    */
   async connectBlueskyWithCredentials(
     profileId: string,
@@ -308,49 +311,92 @@ class GetLateService {
     const cleanIdentifier = identifier.startsWith('@') ? identifier.slice(1) : identifier;
     console.log(`[GetLate] Cleaned identifier: ${cleanIdentifier}`);
     
-    // Generate a simple alphanumeric state token (no underscores/special chars)
-    // GetLate may have strict validation on state format
-    const stateToken = Math.random().toString(36).substring(2, 18);
+    // Try multiple approaches based on GetLate support recommendations
+    // Approach 1: Without state/redirectUri (credentials shouldn't need them)
+    // Approach 2: With minimal state (no query params in redirectUri)
+    // Approach 3: With full parameters
     
-    // GetLate requires state and redirectUri in the request body for Bluesky
-    const requestBody = {
-      identifier: cleanIdentifier,
-      appPassword: appPassword,
-      state: stateToken,
-      redirectUri: redirectUri,
-    };
+    const approaches = [
+      {
+        name: 'minimal',
+        body: {
+          identifier: cleanIdentifier,
+          appPassword: appPassword,
+        }
+      },
+      {
+        name: 'clean-redirect',
+        body: {
+          identifier: cleanIdentifier,
+          appPassword: appPassword,
+          redirectUri: redirectUri.split('?')[0], // Remove query params
+        }
+      },
+      {
+        name: 'full',
+        body: {
+          identifier: cleanIdentifier,
+          appPassword: appPassword,
+          state: `bsky_${Date.now()}`, // Predictable format
+          redirectUri: redirectUri,
+        }
+      }
+    ];
     
-    console.log(`[GetLate] Request body (password hidden):`, { 
-      ...requestBody, 
-      appPassword: '***hidden***' 
-    });
-    
-    // Add profileId as query parameter (consistent with other connect endpoints)
     const url = `${this.baseUrl}/connect/bluesky/credentials?profileId=${encodeURIComponent(profileId)}`;
     console.log(`[GetLate] Calling URL: ${url}`);
     
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(requestBody),
-    });
-
-    console.log(`[GetLate] Bluesky credentials response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      console.error(`[GetLate] Bluesky credentials failed. Status: ${response.status}, Body: ${errorText}`);
-      throw new Error(`Failed to connect Bluesky: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log(`[GetLate] Bluesky credentials response:`, JSON.stringify(data));
+    let lastError: Error | null = null;
     
-    return {
-      success: true,
-      account: data.account,
-      message: data.message || 'Bluesky connected successfully',
-    };
+    for (const approach of approaches) {
+      console.log(`[GetLate] Trying approach: ${approach.name}`);
+      console.log(`[GetLate] Request body (password hidden):`, { 
+        ...approach.body, 
+        appPassword: '***hidden***' 
+      });
+      
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(approach.body),
+        });
+
+        console.log(`[GetLate] Bluesky credentials response status: ${response.status}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[GetLate] Bluesky credentials SUCCESS with approach "${approach.name}":`, JSON.stringify(data));
+          
+          return {
+            success: true,
+            account: data.account,
+            message: data.message || 'Bluesky connected successfully',
+          };
+        }
+        
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.warn(`[GetLate] Approach "${approach.name}" failed. Status: ${response.status}, Body: ${errorText}`);
+        
+        // If it's not a state-related error, don't try other approaches
+        if (!errorText.toLowerCase().includes('state')) {
+          throw new Error(`Failed to connect Bluesky: ${response.status} - ${errorText}`);
+        }
+        
+        lastError = new Error(`Failed to connect Bluesky: ${response.status} - ${errorText}`);
+      } catch (error: any) {
+        console.warn(`[GetLate] Approach "${approach.name}" threw error:`, error.message);
+        lastError = error;
+        
+        // If it's a network error or non-state error, don't try other approaches
+        if (!error.message?.toLowerCase().includes('state')) {
+          throw error;
+        }
+      }
+    }
+    
+    // All approaches failed
+    throw lastError || new Error('Failed to connect Bluesky after trying all approaches');
   }
 
   // =====================================================
