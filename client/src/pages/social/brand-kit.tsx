@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -106,6 +106,22 @@ const MEDIA_TYPES = [
   { id: "video", label: "Videos" },
 ];
 
+interface ScanJobStatus {
+  jobId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  scanResult?: {
+    progress?: number;
+    status?: string;
+    message?: string;
+    colors?: string[];
+    fonts?: string[];
+    images?: { url: string; type: string; alt?: string }[];
+    error?: string;
+  };
+  error?: string;
+  completedAt?: string;
+}
+
 export default function SocialBrandKit() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -113,8 +129,8 @@ export default function SocialBrandKit() {
   const [isAddUrlDialogOpen, setIsAddUrlDialogOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");
   const [newUrlName, setNewUrlName] = useState("");
-  const [isScanning, setIsScanning] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [activeScanJobId, setActiveScanJobId] = useState<string | null>(null);
 
   const { data: subscriptionStatus, isLoading: statusLoading } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/social/subscription-status"],
@@ -172,6 +188,54 @@ export default function SocialBrandKit() {
     },
     enabled: !!user && subscriptionStatus?.hasSocialPoster && !!brandKit,
   });
+
+  const { data: scanJobStatus, isError: scanJobError } = useQuery<ScanJobStatus>({
+    queryKey: ["/api/social/brand-kit/scan", activeScanJobId],
+    queryFn: async () => {
+      if (!activeScanJobId) return null;
+      const response = await fetchWithAuth(`/api/social/brand-kit/scan/${activeScanJobId}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Scan job not found");
+        }
+        throw new Error("Failed to fetch scan status");
+      }
+      return response.json();
+    },
+    enabled: !!activeScanJobId,
+    refetchInterval: activeScanJobId ? 2000 : false,
+    retry: 2,
+  });
+
+  useEffect(() => {
+    if (scanJobError && activeScanJobId) {
+      setActiveScanJobId(null);
+      toast({ 
+        title: "Lost connection to scan job", 
+        description: "Please try scanning again.",
+        variant: "destructive" 
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit"] });
+    }
+  }, [scanJobError, activeScanJobId, toast]);
+
+  useEffect(() => {
+    if (scanJobStatus) {
+      if (scanJobStatus.status === 'completed') {
+        setActiveScanJobId(null);
+        queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit/assets"] });
+        toast({ title: "Website scan completed! Check your assets tab." });
+      } else if (scanJobStatus.status === 'failed') {
+        setActiveScanJobId(null);
+        toast({ 
+          title: "Website scan failed", 
+          description: scanJobStatus.error || "Please try again.",
+          variant: "destructive" 
+        });
+      }
+    }
+  }, [scanJobStatus, toast]);
 
   const createBrandKitMutation = useMutation({
     mutationFn: async () => {
@@ -261,9 +325,10 @@ export default function SocialBrandKit() {
       if (!response.ok) throw new Error("Failed to scan website");
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { jobId: string; status: string }) => {
+      setActiveScanJobId(data.jobId);
       queryClient.invalidateQueries({ queryKey: ["/api/social/brand-kit"] });
-      toast({ title: "Website scan started! Results will appear shortly." });
+      toast({ title: "Website scan started! Tracking progress..." });
     },
     onError: () => {
       toast({ title: "Failed to scan website", variant: "destructive" });
@@ -418,6 +483,8 @@ export default function SocialBrandKit() {
             deleteMaterialMutation={deleteMaterialMutation}
             scanWebsiteMutation={scanWebsiteMutation}
             brandKit={brandKit}
+            scanJobStatus={scanJobStatus}
+            isScanning={!!activeScanJobId}
           />
         </TabsContent>
 
@@ -487,7 +554,24 @@ function SourceMaterialsTab({
   deleteMaterialMutation,
   scanWebsiteMutation,
   brandKit,
-}: any) {
+  scanJobStatus,
+  isScanning,
+}: {
+  materials: SocialBrandMaterial[];
+  isLoading: boolean;
+  isAddUrlDialogOpen: boolean;
+  setIsAddUrlDialogOpen: (open: boolean) => void;
+  newUrl: string;
+  setNewUrl: (url: string) => void;
+  newUrlName: string;
+  setNewUrlName: (name: string) => void;
+  addMaterialMutation: any;
+  deleteMaterialMutation: any;
+  scanWebsiteMutation: any;
+  brandKit: SocialBrandKit | null;
+  scanJobStatus?: ScanJobStatus | null;
+  isScanning: boolean;
+}) {
   return (
     <div className="space-y-6">
       <Card>
@@ -628,7 +712,34 @@ function SourceMaterialsTab({
         </CardContent>
       </Card>
 
-      {brandKit?.scanStatus === 'scanning' && (
+      {isScanning && scanJobStatus && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="py-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <div className="flex-1">
+                <p className="font-medium">Scanning website...</p>
+                <p className="text-sm text-muted-foreground">
+                  {scanJobStatus.scanResult?.message || 'Analyzing your website for brand assets'}
+                </p>
+              </div>
+              <Badge variant="outline" className="text-primary">
+                {scanJobStatus.status === 'pending' ? 'Starting...' : 'In Progress'}
+              </Badge>
+            </div>
+            {typeof scanJobStatus.scanResult?.progress === 'number' && (
+              <div className="space-y-1">
+                <Progress value={scanJobStatus.scanResult.progress} className="h-2" />
+                <p className="text-xs text-muted-foreground text-right">
+                  {scanJobStatus.scanResult.progress}% complete
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!isScanning && brandKit?.scanStatus === 'scanning' && (
         <Card className="border-primary/50 bg-primary/5">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
@@ -644,7 +755,7 @@ function SourceMaterialsTab({
         </Card>
       )}
 
-      {brandKit?.scanStatus === 'completed' && brandKit?.lastScanAt && (
+      {!isScanning && brandKit?.scanStatus === 'completed' && brandKit?.lastScanAt && (
         <Card className="border-green-500/50 bg-green-500/5">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
