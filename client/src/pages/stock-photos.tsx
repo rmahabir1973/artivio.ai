@@ -178,7 +178,8 @@ export default function StockPhotos() {
   // Save image mutation
   const saveMutation = useMutation({
     mutationFn: async (image: StockImage) => {
-      return apiRequest("POST", "/api/stock-photos/save", {
+      console.log("[Stock Photos] Save mutation called for image:", image.id, image.source);
+      const payload = {
         source: image.source,
         externalId: image.id,
         previewUrl: image.previewUrl,
@@ -191,14 +192,25 @@ export default function StockPhotos() {
         photographer: image.photographer,
         photographerUrl: image.photographerUrl,
         pageUrl: image.pageUrl,
-      });
+      };
+      console.log("[Stock Photos] Save payload:", payload);
+      try {
+        const result = await apiRequest("POST", "/api/stock-photos/save", payload);
+        console.log("[Stock Photos] Save API response received");
+        return result;
+      } catch (err) {
+        console.error("[Stock Photos] Save API error:", err);
+        throw err;
+      }
     },
     onSuccess: (_, image) => {
+      console.log("[Stock Photos] Save mutation success for:", image.id);
       setSavedIds((prev) => new Set(Array.from(prev).concat([`${image.source}-${image.id}`])));
       queryClient.invalidateQueries({ queryKey: ["/api/stock-photos/saved?limit=100"] });
       toast({ title: "Image saved to library" });
     },
     onError: (error: any) => {
+      console.error("[Stock Photos] Save mutation error:", error);
       if (error.message?.includes("already saved")) {
         toast({ title: "Image already in library", variant: "default" });
       } else {
