@@ -1,0 +1,120 @@
+2025-12-02 22:09:21.71
+a0570dec
+User
+{
+2025-12-02 22:09:21.71
+a0570dec
+User
+"updatedAt": "2025-12-01T19:11:13.296Z",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"_id": "692de851363442076b252193",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"accessToken": "EAAKH3un67AcBQGn2YgN3bkQudVgXebZAJguP7cjf0GJPrZAV1MfurFLvszg2qxxrLbSkNjZCT1znC422ML9sXVadAdnQj2BGteaVf6EoezhKmiBfDpaTQmmpJZAuDjXi1qWZAZBZCfc13zPZAF6OgI9NGHatS4u6sEqfKyj92GwlxwxRdhmwvLdmxOB165pYlCOPUIAABQqHqr1ZASZCXFK8KXTCdiyncTBacegZBFuauEvrySfevqN45NbGfHvciaWUKRk7cQ2P1yQreN2wJGmjTxjJ3liYvCt337nP2CTnZB98MLBUvsoZD",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"isActive": false
+2025-12-02 22:09:21.71
+a0570dec
+User
+"instagram_business_content_publish",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"description": "Ryan Mahabir's Artivio Social Hub",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"_id": "692f0dbff43160a0bc999cdd",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"profilePicture": "https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=10166334753237738&height=50&width=50&ext=1767283380&hash=AT8RJrKvDVG45q_pOq4hubv1",
+2025-12-02 22:09:21.71
+a0570dec
+User
+[Social] GetLate returned 8 accounts: [
+2025-12-02 22:09:21.71
+a0570dec
+User
+"platform": "instagram",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"updatedAt": "2025-12-02T16:03:10.984Z",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"pages_manage_posts",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"createdAt": "2025-12-02T16:03:10.984Z",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"color": "#6366f1",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"permissions": [
+2025-12-02 22:09:21.71
+a0570dec
+User
+"_id": "692f357ff43160a0bc999d24",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"name": "artivio_49729939",
+2025-12-02 22:09:21.71
+a0570dec
+User
+[GetLate] Accounts API returned 8 accounts
+2025-12-02 22:09:21.71
+a0570dec
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"platformUserId": "10166334753237738:page:950972651425099",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"platform": "facebook",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"displayName": "Artivio AI",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"instagram_business_manage_insights",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"color": "#6366f1",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"pages_read_engagement",
+2025-12-02 22:09:21.71
+a0570dec
+User
+"metadata": {},
+2025-12-02 22:09:21.71
+a0570dec
+User
+"__v": 0,
+2025-12-02 22:09:21.71
+a0570dec
+User
+"isDefault": false,
+2025-12-02 22:09:21.71
+a0570dec
+User
+"pages_show_list"
