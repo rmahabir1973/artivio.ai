@@ -4,6 +4,16 @@ const GA_PROPERTY_ID = process.env.GA_PROPERTY_ID;
 const GA_CLIENT_EMAIL = process.env.GA_DATA_CLIENT_EMAIL;
 const GA_PRIVATE_KEY = process.env.GA_DATA_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
+// Debug logging at startup
+console.log('[Google Analytics] Configuration check:', {
+  hasPropertyId: !!GA_PROPERTY_ID,
+  hasClientEmail: !!GA_CLIENT_EMAIL,
+  hasPrivateKey: !!GA_PRIVATE_KEY,
+  propertyIdLength: GA_PROPERTY_ID?.length || 0,
+  clientEmailLength: GA_CLIENT_EMAIL?.length || 0,
+  privateKeyLength: GA_PRIVATE_KEY?.length || 0,
+});
+
 let analyticsClient: BetaAnalyticsDataClient | null = null;
 
 function getClient(): BetaAnalyticsDataClient {
@@ -255,5 +265,14 @@ export async function getSiteAnalyticsSummary(days: number = 30) {
 }
 
 export function isGoogleAnalyticsConfigured(): boolean {
-  return !!(GA_CLIENT_EMAIL && GA_PRIVATE_KEY && GA_PROPERTY_ID);
+  const configured = !!(GA_CLIENT_EMAIL && GA_PRIVATE_KEY && GA_PROPERTY_ID);
+  console.log('[Google Analytics] isConfigured check:', {
+    configured,
+    hasPropertyId: !!GA_PROPERTY_ID,
+    hasClientEmail: !!GA_CLIENT_EMAIL,
+    hasPrivateKey: !!GA_PRIVATE_KEY,
+    propertyIdPreview: GA_PROPERTY_ID ? `${GA_PROPERTY_ID.substring(0, 10)}...` : 'NOT SET',
+    clientEmailPreview: GA_CLIENT_EMAIL ? `${GA_CLIENT_EMAIL.substring(0, 15)}...` : 'NOT SET',
+  });
+  return configured;
 }
