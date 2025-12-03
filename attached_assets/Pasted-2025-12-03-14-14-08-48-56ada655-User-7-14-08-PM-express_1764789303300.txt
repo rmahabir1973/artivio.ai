@@ -1,0 +1,92 @@
+2025-12-03 14:14:08.48
+56ada655
+User
+7:14:08 PM [express] GET /api/admin/blog/posts 304 in 42ms :: []
+2025-12-03 14:14:08.50
+56ada655
+User
+7:14:08 PM [express] GET /api/admin/api-keys 304 in 70ms :: [{"id":"f003daff-3831-4042-86c6-96f4e257…
+2025-12-03 14:14:08.51
+56ada655
+User
+7:14:08 PM [express] GET /api/admin/users 304 in 70ms :: [{"id":"eb05b474-0713-44ea-a5d3-201049adfcf…
+2025-12-03 14:14:08.51
+56ada655
+User
+7:14:08 PM [express] GET /api/admin/homepage 304 in 77ms :: {"id":"homepage","heroTitle":"Make Any V…
+2025-12-03 14:14:08.51
+56ada655
+User
+7:14:08 PM [express] GET /api/admin/announcements 304 in 70ms :: [{"id":"140c909d-e6e0-41f3-942d-20e…
+2025-12-03 14:14:08.53
+56ada655
+User
+7:14:08 PM [express] GET /api/admin/plans 304 in 93ms :: [{"id":"ec642013-8aa6-4dfc-8f1d-5a6d21840c6…
+2025-12-03 14:14:08.53
+56ada655
+User
+7:14:08 PM [express] GET /api/admin/pricing 304 in 90ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb…
+2025-12-03 14:14:11.11
+56ada655
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 14:14:12.14
+56ada655
+User
+hasPropertyId: true,
+2025-12-03 14:14:12.14
+56ada655
+User
+configured: true,
+2025-12-03 14:14:12.14
+56ada655
+User
+hasPrivateKey: true,
+2025-12-03 14:14:12.14
+56ada655
+User
+propertyIdPreview: '512134820...',
+2025-12-03 14:14:12.14
+56ada655
+User
+}
+2025-12-03 14:14:12.14
+56ada655
+User
+hasClientEmail: true,
+2025-12-03 14:14:12.14
+56ada655
+User
+[Site Analytics] Fetching data for 30 days
+2025-12-03 14:14:12.14
+56ada655
+User
+[Site Analytics] Checking configuration...
+2025-12-03 14:14:12.14
+56ada655
+User
+[Google Analytics] isConfigured check: {
+2025-12-03 14:14:12.14
+56ada655
+User
+clientEmailPreview: 'artivio-analyti...'
+2025-12-03 14:14:12.16
+56ada655
+User
+[Google Analytics] Error fetching summary: 2 UNKNOWN: Getting metadata from plugin failed with error: error:1E08010C:DECODER routines::unsupported
+2025-12-03 14:14:12.16
+56ada655
+User
+[Site Analytics] Error: 2 UNKNOWN: Getting metadata from plugin failed with error: error:1E08010C:DECODER routines::unsupported
+2025-12-03 14:14:12.16
+56ada655
+User
+7:14:12 PM [express] GET /api/admin/site-analytics/30 500 in 1506ms :: {"message":"Failed to fetch s…
+2025-12-03 14:14:22.93
+56ada655
+User
+7:14:22 PM [express] GET /api/admin/analytics 304 in 14505ms :: {"totalUsers":8,"totalCreditsSpent":…
+2025-12-03 14:14:30.43
+56ada655
+User
+7:14:30 PM [express] GET /api/admin/generations 200 in 15107ms :: [{"id":"890ac690-4dec-4e82-9ca5-87…

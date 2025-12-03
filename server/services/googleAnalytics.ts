@@ -1,5 +1,34 @@
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 
+// Helper to properly format the private key
+function formatPrivateKey(key: string | undefined): string | undefined {
+  if (!key) return undefined;
+  
+  // Handle various newline formats that might be in the secret
+  let formattedKey = key
+    .replace(/\\n/g, '\n')           // Handle literal \n
+    .replace(/\\\\n/g, '\n')         // Handle double-escaped \\n
+    .replace(/\r\n/g, '\n')          // Handle Windows line endings
+    .replace(/\r/g, '\n')            // Handle old Mac line endings
+    .trim();
+  
+  // Check if key has proper PEM headers
+  const hasBegin = formattedKey.includes('-----BEGIN');
+  const hasEnd = formattedKey.includes('-----END');
+  
+  console.log('[Google Analytics] Private key format check:', {
+    hasBeginHeader: hasBegin,
+    hasEndHeader: hasEnd,
+    startsWithDash: formattedKey.startsWith('-----'),
+    keyLength: formattedKey.length,
+    firstChars: formattedKey.substring(0, 30),
+    lastChars: formattedKey.substring(formattedKey.length - 30),
+    newlineCount: (formattedKey.match(/\n/g) || []).length,
+  });
+  
+  return formattedKey;
+}
+
 // Read environment variables - log immediately at module load
 console.log('[Google Analytics] Reading environment variables at module load...');
 console.log('[Google Analytics] GA_PROPERTY_ID exists:', !!process.env.GA_PROPERTY_ID);
@@ -8,7 +37,7 @@ console.log('[Google Analytics] GA_DATA_PRIVATE_KEY exists:', !!process.env.GA_D
 
 const GA_PROPERTY_ID = process.env.GA_PROPERTY_ID;
 const GA_CLIENT_EMAIL = process.env.GA_DATA_CLIENT_EMAIL;
-const GA_PRIVATE_KEY = process.env.GA_DATA_PRIVATE_KEY?.replace(/\\n/g, '\n');
+const GA_PRIVATE_KEY = formatPrivateKey(process.env.GA_DATA_PRIVATE_KEY);
 
 // Debug logging at startup
 console.log('[Google Analytics] After assignment:', {
