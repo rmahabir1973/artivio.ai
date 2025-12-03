@@ -1998,6 +1998,13 @@ const AUTOMATION_LEVELS = [
   { id: 'full_auto', label: 'Full Automation', description: 'AI handles content creation' },
 ];
 
+const LINKEDIN_PERSONAS = [
+  { id: 'founder', label: 'Founder / Owner', description: 'First-person ownership ("I built...", "My company...")' },
+  { id: 'power_user', label: 'Power User', description: 'Personal experience focus ("I\'ve been using...", "This tool helped me...")' },
+  { id: 'affiliate', label: 'Affiliate Marketer', description: 'Promotional style ("Check out...", referral-friendly)' },
+  { id: 'professional', label: 'Industry Professional', description: 'Third-person discovery ("Came across this...", keeps distance)' },
+];
+
 function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
   // Use dynamic pricing from database - pricingMap for both costs and descriptions
   const { pricingMap, isLoading: pricingLoading } = usePricing();
@@ -2028,6 +2035,7 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
     topicsToAvoid: brandKit?.contentPreferences?.topicsToAvoid?.join("\n") || "",
     alwaysIncludeMusic: brandKit?.contentPreferences?.alwaysIncludeMusic || false,
     alwaysIncludeImages: brandKit?.contentPreferences?.alwaysIncludeImages || false,
+    linkedinPersona: brandKit?.linkedinPersona || 'power_user',
     // AI Settings - migrate legacy IDs to new database IDs
     aiSettings: {
       preferredVideoModel: migrateModelId(brandKit?.contentPreferences?.aiSettings?.preferredVideoModel, 'veo-3.1-fast'),
@@ -2076,6 +2084,7 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
     }
     
     updateBrandKitMutation.mutate({
+      linkedinPersona: formData.linkedinPersona,
       contentPreferences: {
         ...formData,
         topicsToAvoid: formData.topicsToAvoid.split("\n").filter(Boolean),
@@ -2215,6 +2224,36 @@ function ContentPreferencesTab({ brandKit, updateBrandKitMutation }: any) {
             <p className="text-sm text-muted-foreground">
               AI will avoid mentioning these topics in generated content
             </p>
+          </div>
+
+          <Separator />
+
+          {/* LinkedIn Posting Persona */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Label className="text-base">LinkedIn Posting Persona</Label>
+              <Badge variant="outline" className="text-xs">Platform Setting</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Choose how you want to appear when posting about your brand on LinkedIn. This affects the voice and perspective of AI-generated LinkedIn content.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {LINKEDIN_PERSONAS.map((persona) => (
+                <div
+                  key={persona.id}
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    formData.linkedinPersona === persona.id
+                      ? "bg-primary/10 border-primary"
+                      : "hover:border-primary/50"
+                  }`}
+                  onClick={() => setFormData({ ...formData, linkedinPersona: persona.id })}
+                  data-testid={`linkedin-persona-${persona.id}`}
+                >
+                  <div className="font-medium">{persona.label}</div>
+                  <div className="text-sm text-muted-foreground">{persona.description}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <Separator />

@@ -2175,6 +2175,13 @@ export const socialBrandKits = pgTable("social_brand_kits", {
     };
   }>(),
   
+  // LinkedIn Posting Persona - determines voice/perspective for LinkedIn content
+  // 'founder' = First-person ownership ("I built...", "My company...")
+  // 'power_user' = Personal experience focus ("I've been using...", "This tool helped me...")
+  // 'affiliate' = Promotional style ("Check out...", referral-friendly)
+  // 'professional' = Third-person discovery ("Came across this...", keeps distance)
+  linkedinPersona: varchar("linkedin_persona").default('power_user'),
+  
   // Scan Status
   scanStatus: varchar("scan_status").default('pending'), // 'pending', 'scanning', 'completed', 'failed'
   lastScanAt: timestamp("last_scan_at"),
