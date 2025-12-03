@@ -156,6 +156,14 @@ app.use((_req, res, next) => {
   next();
 });
 
+// Global rate limiting - protects against API abuse
+import { globalRateLimit, rateLimitGeneration, rateLimitAuth } from './services/rateLimiter';
+app.use('/api', globalRateLimit);
+
+// Apply stricter rate limits to specific sensitive endpoints
+app.use('/api/generate', rateLimitGeneration);
+app.use('/api/auth', rateLimitAuth);
+
 // Serve uploaded images statically from public/uploads
 app.use('/uploads', express.static('public/uploads'));
 
@@ -218,12 +226,24 @@ app.use((req, res, next) => {
   // Register all routes immediately - this makes endpoints available for health checks
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  // Error monitoring integration
+  const { logError, errorMonitorMiddleware } = await import('./services/errorMonitor');
+  
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    // Log error to monitoring system (non-blocking)
+    logError({
+      severity: status >= 500 ? 'error' : 'warning',
+      category: 'general',
+      message: message,
+      error: err,
+      userId: (req as any).user?.id,
+      endpoint: req.path,
+    }).catch(console.error);
+
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after

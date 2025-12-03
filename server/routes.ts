@@ -6484,6 +6484,97 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // Admin: Get error monitor stats
+  app.get('/api/admin/errors/stats', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { getErrorStats } = await import('./services/errorMonitor');
+      const stats = getErrorStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching error stats:', error);
+      res.status(500).json({ message: "Failed to fetch error stats" });
+    }
+  });
+
+  // Admin: Get recent errors
+  app.get('/api/admin/errors', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { getRecentErrors } = await import('./services/errorMonitor');
+      const severity = req.query.severity as string | undefined;
+      const category = req.query.category as string | undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      
+      const errors = getRecentErrors({ 
+        severity: severity as any, 
+        category: category as any,
+        limit,
+        includeResolved: req.query.includeResolved === 'true'
+      });
+      res.json(errors);
+    } catch (error) {
+      console.error('Error fetching errors:', error);
+      res.status(500).json({ message: "Failed to fetch errors" });
+    }
+  });
+
+  // Admin: Resolve an error
+  app.patch('/api/admin/errors/:errorId/resolve', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { resolveError } = await import('./services/errorMonitor');
+      const { errorId } = req.params;
+      const resolved = resolveError(errorId);
+      
+      if (resolved) {
+        res.json({ success: true, message: 'Error marked as resolved' });
+      } else {
+        res.status(404).json({ success: false, message: 'Error not found' });
+      }
+    } catch (error) {
+      console.error('Error resolving error:', error);
+      res.status(500).json({ message: "Failed to resolve error" });
+    }
+  });
+
+  // Admin: Get rate limit stats
+  app.get('/api/admin/rate-limits', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { getRateLimitStats } = await import('./services/rateLimiter');
+      const stats = getRateLimitStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching rate limit stats:', error);
+      res.status(500).json({ message: "Failed to fetch rate limit stats" });
+    }
+  });
+
   // Admin: Get all generations for showcase management
   app.get('/api/admin/generations', requireJWT, async (req: any, res) => {
     try {
@@ -9284,11 +9375,13 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
   // Cleanup expired cache entries periodically
   setInterval(() => {
     const now = Date.now();
-    for (const [key, value] of stockPhotoCache.entries()) {
+    const keysToDelete: string[] = [];
+    stockPhotoCache.forEach((value, key) => {
       if (now - value.timestamp > STOCK_PHOTO_CACHE_TTL) {
-        stockPhotoCache.delete(key);
+        keysToDelete.push(key);
       }
-    }
+    });
+    keysToDelete.forEach(key => stockPhotoCache.delete(key));
   }, 60 * 60 * 1000); // Cleanup every hour
   
   // Search stock photos from Pixabay and/or Pexels

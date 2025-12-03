@@ -36,6 +36,331 @@ interface AnalyticsData {
   popularFeatures: Array<{ feature: string; count: number; credits: number }>;
 }
 
+interface ErrorLog {
+  id: string;
+  timestamp: string;
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  category: string;
+  message: string;
+  details?: string;
+  userId?: string;
+  endpoint?: string;
+  resolved: boolean;
+  emailSent: boolean;
+}
+
+interface ErrorStats {
+  total: number;
+  bySeverity: { info: number; warning: number; error: number; critical: number };
+  byCategory: Record<string, number>;
+  last24Hours: number;
+  lastHour: number;
+  criticalUnresolved: number;
+}
+
+interface RateLimitStats {
+  totalTracked: number;
+  topConsumers: Array<{ key: string; count: number; endpoint: string }>;
+}
+
+function ErrorMonitorSection() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const { data: errorStats, isLoading: statsLoading } = useQuery<ErrorStats>({
+    queryKey: ['/api/admin/errors/stats'],
+    refetchInterval: 30000,
+  });
+  
+  const { data: errors, isLoading: errorsLoading } = useQuery<ErrorLog[]>({
+    queryKey: ['/api/admin/errors'],
+    refetchInterval: 30000,
+  });
+  
+  const { data: rateLimitStats } = useQuery<RateLimitStats>({
+    queryKey: ['/api/admin/rate-limits'],
+    refetchInterval: 30000,
+  });
+  
+  const resolveMutation = useMutation({
+    mutationFn: async (errorId: string) => {
+      await apiRequest('PATCH', `/api/admin/errors/${errorId}/resolve`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/errors'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/errors/stats'] });
+      toast({ title: "Error marked as resolved" });
+    },
+    onError: () => {
+      toast({ title: "Failed to resolve error", variant: "destructive" });
+    }
+  });
+  
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-500 text-white';
+      case 'error': return 'bg-orange-500 text-white';
+      case 'warning': return 'bg-yellow-500 text-black';
+      case 'info': return 'bg-blue-500 text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Shield className="h-6 w-6 text-primary" />
+            Error Monitoring & Rate Limits
+          </h2>
+          <p className="text-muted-foreground">Real-time error tracking with email alerts for critical issues</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/admin/errors'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/admin/errors/stats'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/admin/rate-limits'] });
+          }}
+          data-testid="button-refresh-errors"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className={errorStats?.criticalUnresolved ? "border-red-500/50 bg-red-500/5" : ""}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Critical Unresolved</CardTitle>
+            <Shield className={`h-4 w-4 ${errorStats?.criticalUnresolved ? 'text-red-500' : 'text-muted-foreground'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${errorStats?.criticalUnresolved ? 'text-red-500' : ''}`}>
+              {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : errorStats?.criticalUnresolved || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Needs immediate attention</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Last Hour</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : errorStats?.lastHour || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Errors in past 60 minutes</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Last 24 Hours</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {statsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : errorStats?.last24Hours || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Total errors today</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rate Limit Tracking</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{rateLimitStats?.totalTracked || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Active rate limit records</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Errors by Severity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {statsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <span className="text-sm">Critical</span>
+                  </div>
+                  <Badge variant="secondary">{errorStats?.bySeverity?.critical || 0}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-orange-500" />
+                    <span className="text-sm">Error</span>
+                  </div>
+                  <Badge variant="secondary">{errorStats?.bySeverity?.error || 0}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <span className="text-sm">Warning</span>
+                  </div>
+                  <Badge variant="secondary">{errorStats?.bySeverity?.warning || 0}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                    <span className="text-sm">Info</span>
+                  </div>
+                  <Badge variant="secondary">{errorStats?.bySeverity?.info || 0}</Badge>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Top API Consumers
+            </CardTitle>
+            <CardDescription>Users/IPs making the most requests</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!rateLimitStats?.topConsumers?.length ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No rate limit data yet</p>
+            ) : (
+              <div className="space-y-2">
+                {rateLimitStats.topConsumers.slice(0, 5).map((consumer, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                    <div className="truncate flex-1 mr-2">
+                      <span className="text-xs font-mono">{consumer.key.split(':').slice(0, 2).join(':')}</span>
+                    </div>
+                    <Badge variant="outline">{consumer.count} req</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Recent Errors
+          </CardTitle>
+          <CardDescription>Last 50 errors logged (auto-refreshes every 30 seconds)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {errorsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : !errors?.length ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Shield className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>No errors logged yet - that's a good thing!</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {errors.map((error) => (
+                <div 
+                  key={error.id} 
+                  className={`p-4 rounded-lg border ${error.resolved ? 'opacity-50 bg-muted/20' : 'bg-card'}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Badge className={getSeverityColor(error.severity)}>
+                          {error.severity.toUpperCase()}
+                        </Badge>
+                        <Badge variant="outline">{error.category}</Badge>
+                        {error.emailSent && (
+                          <Badge variant="secondary" className="text-xs">Email sent</Badge>
+                        )}
+                        {error.resolved && (
+                          <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-700">Resolved</Badge>
+                        )}
+                      </div>
+                      <p className="font-medium text-sm">{error.message}</p>
+                      {error.details && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate">{error.details}</p>
+                      )}
+                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <span>{new Date(error.timestamp).toLocaleString()}</span>
+                        {error.endpoint && <span>Endpoint: {error.endpoint}</span>}
+                        {error.userId && <span>User: {error.userId.slice(0, 8)}...</span>}
+                      </div>
+                    </div>
+                    {!error.resolved && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => resolveMutation.mutate(error.id)}
+                        disabled={resolveMutation.isPending}
+                        data-testid={`button-resolve-error-${error.id}`}
+                      >
+                        {resolveMutation.isPending ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          "Resolve"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="h-5 w-5 text-primary" />
+            Email Alerts Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Critical and error-level issues automatically send email alerts to <strong>support@artivio.ai</strong>
+            </p>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="p-3 bg-background/50 rounded-lg border">
+                <p className="font-medium">Alert Throttling</p>
+                <p className="text-xs text-muted-foreground">Same error type: max 1 email per 15 minutes</p>
+              </div>
+              <div className="p-3 bg-background/50 rounded-lg border">
+                <p className="font-medium">Severity Threshold</p>
+                <p className="text-xs text-muted-foreground">Alerts sent for: Critical, Error</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              To change the alert email, set the <code>ADMIN_ALERT_EMAIL</code> environment variable.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function Admin() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -821,6 +1146,10 @@ export default function Admin() {
           <TabsTrigger value="traffic" data-testid="tab-traffic">
             <Globe className="h-4 w-4 mr-2" />
             Website Traffic
+          </TabsTrigger>
+          <TabsTrigger value="errors" data-testid="tab-errors">
+            <Shield className="h-4 w-4 mr-2" />
+            Error Monitor
           </TabsTrigger>
           <TabsTrigger value="pricing" data-testid="tab-pricing">
             <DollarSign className="h-4 w-4 mr-2" />
@@ -1719,6 +2048,10 @@ export default function Admin() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="errors">
+          <ErrorMonitorSection />
         </TabsContent>
 
         <TabsContent value="pricing">
