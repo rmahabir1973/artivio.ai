@@ -6484,6 +6484,41 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // Admin: Get Google Analytics site traffic data
+  app.get('/api/admin/site-analytics', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { isGoogleAnalyticsConfigured, getSiteAnalyticsSummary } = await import('./services/googleAnalytics');
+      
+      if (!isGoogleAnalyticsConfigured()) {
+        return res.json({ 
+          configured: false,
+          message: "Google Analytics not configured. Please set GA_DATA_CLIENT_EMAIL, GA_DATA_PRIVATE_KEY, and GA_PROPERTY_ID."
+        });
+      }
+
+      const days = parseInt(req.query.days as string) || 30;
+      const summary = await getSiteAnalyticsSummary(days);
+      
+      res.json({
+        configured: true,
+        ...summary,
+      });
+    } catch (error: any) {
+      console.error('[Site Analytics] Error:', error.message);
+      res.status(500).json({ 
+        message: "Failed to fetch site analytics",
+        error: error.message 
+      });
+    }
+  });
+
   // Admin: Get error monitor stats
   app.get('/api/admin/errors/stats', requireJWT, async (req: any, res) => {
     try {

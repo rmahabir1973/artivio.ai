@@ -63,6 +63,331 @@ interface RateLimitStats {
   topConsumers: Array<{ key: string; count: number; limitType: string }>;
 }
 
+interface SiteAnalyticsData {
+  configured: boolean;
+  traffic: {
+    daily: Array<{ date: string; users: number; sessions: number; pageViews: number; avgSessionDuration: number; bounceRate: number }>;
+    totals: { users: number; sessions: number; pageViews: number; avgSessionDuration: number };
+  };
+  channels: Array<{ channel: string; users: number; sessions: number; newUsers: number }>;
+  pages: Array<{ page: string; sessions: number; users: number; bounceRate: number }>;
+  geo: Array<{ country: string; users: number; sessions: number }>;
+  devices: Array<{ device: string; users: number; sessions: number }>;
+  realtime: { activeUsers: number };
+  fetchedAt: string;
+}
+
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}m ${secs}s`;
+}
+
+function SiteAnalyticsSection() {
+  const queryClient = useQueryClient();
+  const [days, setDays] = useState(30);
+  
+  const { data: analytics, isLoading, error, refetch } = useQuery<SiteAnalyticsData>({
+    queryKey: ['/api/admin/site-analytics', days],
+    refetchInterval: 60000,
+  });
+
+  if (error || (analytics && !analytics.configured)) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Globe className="h-6 w-6 text-primary" />
+              Website Traffic & Visitors
+            </h2>
+            <p className="text-muted-foreground">Real-time website analytics powered by Google Analytics</p>
+          </div>
+        </div>
+        <Card className="border-amber-500/50">
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <Shield className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Google Analytics Not Configured</h3>
+              <p className="text-muted-foreground mb-4">
+                Please configure GA_DATA_CLIENT_EMAIL, GA_DATA_PRIVATE_KEY, and GA_PROPERTY_ID in your secrets.
+              </p>
+              <Button variant="outline" onClick={() => window.open('https://analytics.google.com/', '_blank')}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Google Analytics
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Globe className="h-6 w-6 text-primary" />
+            Website Traffic & Visitors
+          </h2>
+          <p className="text-muted-foreground">Real-time website analytics powered by Google Analytics</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={days.toString()} onValueChange={(v) => setDays(parseInt(v))}>
+            <SelectTrigger className="w-32" data-testid="select-date-range">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="14">Last 14 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            variant="outline" 
+            onClick={() => refetch()}
+            disabled={isLoading}
+            data-testid="button-refresh-analytics"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Live Visitors</CardTitle>
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500 blur-md opacity-50 rounded-full animate-pulse" />
+              <div className="relative w-3 h-3 bg-green-500 rounded-full" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-500" data-testid="text-realtime-users">
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : analytics?.realtime?.activeUsers || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Active right now</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="text-total-users">
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : analytics?.traffic?.totals?.users?.toLocaleString() || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Last {days} days</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Page Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="text-page-views">
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : analytics?.traffic?.totals?.pageViews?.toLocaleString() || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Last {days} days</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sessions</CardTitle>
+            <MousePointer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="text-sessions">
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : analytics?.traffic?.totals?.sessions?.toLocaleString() || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Last {days} days</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Duration</CardTitle>
+            <Timer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="text-avg-duration">
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatDuration(analytics?.traffic?.totals?.avgSessionDuration || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Per session</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Traffic Sources
+            </CardTitle>
+            <CardDescription>How visitors find your website</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {analytics?.channels?.slice(0, 6).map((channel, idx) => {
+                  const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-cyan-500'];
+                  const totalSessions = analytics.channels.reduce((sum, c) => sum + c.sessions, 0);
+                  const percentage = totalSessions > 0 ? ((channel.sessions / totalSessions) * 100).toFixed(1) : 0;
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${colors[idx % colors.length]}`} />
+                          <span className="text-sm font-medium">{channel.channel}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">{channel.sessions.toLocaleString()} sessions</span>
+                          <Badge variant="secondary">{percentage}%</Badge>
+                        </div>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${colors[idx % colors.length]} transition-all`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              Top Countries
+            </CardTitle>
+            <CardDescription>Where your visitors are coming from</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {analytics?.geo?.slice(0, 8).map((country, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                    <span className="text-sm font-medium">{country.country}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{country.users.toLocaleString()} users</span>
+                      <Badge variant="secondary">{country.sessions.toLocaleString()}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-primary" />
+              Device Breakdown
+            </CardTitle>
+            <CardDescription>Desktop vs Mobile vs Tablet visitors</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {analytics?.devices?.map((device, idx) => {
+                  const icons: Record<string, any> = {
+                    desktop: Monitor,
+                    mobile: Smartphone,
+                    tablet: Laptop,
+                  };
+                  const colors: Record<string, string> = {
+                    desktop: 'text-blue-500',
+                    mobile: 'text-green-500',
+                    tablet: 'text-purple-500',
+                  };
+                  const Icon = icons[device.device.toLowerCase()] || Monitor;
+                  const totalUsers = analytics.devices.reduce((sum, d) => sum + d.users, 0);
+                  const percentage = totalUsers > 0 ? ((device.users / totalUsers) * 100).toFixed(1) : 0;
+                  return (
+                    <div key={idx} className="text-center p-4 bg-muted/30 rounded-lg">
+                      <Icon className={`h-8 w-8 mx-auto mb-2 ${colors[device.device.toLowerCase()] || 'text-muted-foreground'}`} />
+                      <p className="text-sm font-medium capitalize">{device.device}</p>
+                      <p className="text-2xl font-bold">{percentage}%</p>
+                      <p className="text-xs text-muted-foreground">{device.users.toLocaleString()} users</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Top Landing Pages
+            </CardTitle>
+            <CardDescription>Most visited pages on your website</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {analytics?.pages?.slice(0, 6).map((page, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover-elevate">
+                    <span className="text-sm font-medium truncate max-w-[200px]" title={page.page}>
+                      {page.page}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{page.sessions.toLocaleString()}</span>
+                      <Badge variant="secondary">sessions</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {analytics?.fetchedAt && (
+        <p className="text-xs text-muted-foreground text-center">
+          Data last updated: {new Date(analytics.fetchedAt).toLocaleString()}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ErrorMonitorSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1719,335 +2044,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="traffic">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Globe className="h-6 w-6 text-primary" />
-                  Website Traffic & Visitors
-                </h2>
-                <p className="text-muted-foreground">Real-time and historical website analytics powered by Google Analytics</p>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/intelligenthome', '_blank')}
-                data-testid="button-open-ga"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open Google Analytics
-              </Button>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Live Visitors</CardTitle>
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-green-500 blur-md opacity-50 rounded-full animate-pulse" />
-                    <div className="relative w-3 h-3 bg-green-500 rounded-full" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-green-500">Real-time</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    View in Google Analytics for live data
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Page Views</CardTitle>
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">View in GA</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Total page views today
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Sessions</CardTitle>
-                  <MousePointer className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">View in GA</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Active sessions today
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Avg. Session Duration</CardTitle>
-                  <Timer className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">View in GA</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Average time on site
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    Top Countries
-                  </CardTitle>
-                  <CardDescription>Where your visitors are coming from</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <span className="font-medium">Geographic Data</span>
-                      <Badge variant="secondary">Google Analytics</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      View detailed geographic breakdown including countries, cities, and regions in Google Analytics.
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..seldim%3D%5B%22country%22%5D&r=user-demographics-detail&ruid=user-demographics-detail,life-cycle,engagement&collectionId=life-cycle', '_blank')}
-                      data-testid="button-view-geo"
-                    >
-                      <Globe className="h-4 w-4 mr-2" />
-                      View Geographic Report
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Monitor className="h-5 w-5 text-primary" />
-                    Device Breakdown
-                  </CardTitle>
-                  <CardDescription>Desktop vs Mobile vs Tablet visitors</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="text-center p-3 bg-muted/30 rounded-lg">
-                        <Monitor className="h-6 w-6 mx-auto mb-1 text-blue-500" />
-                        <p className="text-xs text-muted-foreground">Desktop</p>
-                      </div>
-                      <div className="text-center p-3 bg-muted/30 rounded-lg">
-                        <Smartphone className="h-6 w-6 mx-auto mb-1 text-green-500" />
-                        <p className="text-xs text-muted-foreground">Mobile</p>
-                      </div>
-                      <div className="text-center p-3 bg-muted/30 rounded-lg">
-                        <Laptop className="h-6 w-6 mx-auto mb-1 text-purple-500" />
-                        <p className="text-xs text-muted-foreground">Tablet</p>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..seldim%3D%5B%22deviceCategory%22%5D&r=tech-detail&ruid=tech-detail,life-cycle,engagement&collectionId=life-cycle', '_blank')}
-                      data-testid="button-view-devices"
-                    >
-                      <Monitor className="h-4 w-4 mr-2" />
-                      View Device Report
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    Traffic Sources
-                  </CardTitle>
-                  <CardDescription>How visitors find your website</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-blue-500" />
-                        <span className="text-sm font-medium">Direct</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">Direct URL visits</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-green-500" />
-                        <span className="text-sm font-medium">Organic Search</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">Google, Bing, etc.</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-purple-500" />
-                        <span className="text-sm font-medium">Social</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">Facebook, Twitter, etc.</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full bg-orange-500" />
-                        <span className="text-sm font-medium">Referral</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">Other websites</span>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full mt-2"
-                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=acquisition-overview&ruid=acquisition-overview,life-cycle,acquisition&collectionId=life-cycle', '_blank')}
-                      data-testid="button-view-sources"
-                    >
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      View Acquisition Report
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Top Pages
-                  </CardTitle>
-                  <CardDescription>Most visited pages on your website</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <span className="text-sm font-medium truncate">/</span>
-                      <Badge variant="secondary">Homepage</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <span className="text-sm font-medium truncate">/generate-video</span>
-                      <Badge variant="secondary">Video Gen</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <span className="text-sm font-medium truncate">/generate-image</span>
-                      <Badge variant="secondary">Image Gen</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg hover-elevate">
-                      <span className="text-sm font-medium truncate">/pricing</span>
-                      <Badge variant="secondary">Pricing</Badge>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full mt-2"
-                      onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..seldim%3D%5B%22pagePath%22%5D&r=pages-and-screens&ruid=pages-and-screens,life-cycle,engagement&collectionId=life-cycle', '_blank')}
-                      data-testid="button-view-pages"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      View Pages Report
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
-                  Real-time Analytics Dashboard
-                </CardTitle>
-                <CardDescription>
-                  View live visitor activity, current active users, and real-time events
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-3 mb-4">
-                  <div className="text-center p-4 bg-background/50 rounded-lg border">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-sm font-medium">Active Now</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Users currently on your site</p>
-                  </div>
-                  <div className="text-center p-4 bg-background/50 rounded-lg border">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Last 30 Minutes</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Recent visitor activity</p>
-                  </div>
-                  <div className="text-center p-4 bg-background/50 rounded-lg border">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <RefreshCw className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Live Events</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Real-time user interactions</p>
-                  </div>
-                </div>
-                <Button 
-                  className="w-full"
-                  onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/realtime/overview', '_blank')}
-                  data-testid="button-realtime-dashboard"
-                >
-                  <Activity className="h-4 w-4 mr-2" />
-                  Open Real-time Dashboard
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Links to Google Analytics Reports</CardTitle>
-                <CardDescription>Access detailed reports directly in Google Analytics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex-col gap-2"
-                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=reporting-hub&ruid=reporting-hub', '_blank')}
-                    data-testid="button-ga-overview"
-                  >
-                    <BarChart3 className="h-6 w-6 text-primary" />
-                    <span>Overview</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex-col gap-2"
-                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=user-demographics-overview&ruid=user-demographics-overview,life-cycle,engagement&collectionId=life-cycle', '_blank')}
-                    data-testid="button-ga-demographics"
-                  >
-                    <Users className="h-6 w-6 text-primary" />
-                    <span>Demographics</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex-col gap-2"
-                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=engagement-overview&ruid=engagement-overview,life-cycle,engagement&collectionId=life-cycle', '_blank')}
-                    data-testid="button-ga-engagement"
-                  >
-                    <Activity className="h-6 w-6 text-primary" />
-                    <span>Engagement</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex-col gap-2"
-                    onClick={() => window.open('https://analytics.google.com/analytics/web/#/p464583799/reports/dashboard?params=_u..nav%3Dmaui&r=monetization-overview&ruid=monetization-overview,life-cycle,monetization&collectionId=life-cycle', '_blank')}
-                    data-testid="button-ga-monetization"
-                  >
-                    <DollarSign className="h-6 w-6 text-primary" />
-                    <span>Monetization</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <SiteAnalyticsSection />
         </TabsContent>
 
         <TabsContent value="errors">
