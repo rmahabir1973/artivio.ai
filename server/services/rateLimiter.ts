@@ -115,8 +115,14 @@ export function rateLimit(config: RateLimitConfig) {
   };
 }
 
+// TEMPORARILY DISABLED FOR TESTING - RE-ENABLE BEFORE PRODUCTION
+const RATE_LIMITS_DISABLED = true;
+
+// Pass-through middleware for when rate limits are disabled
+const noopMiddleware = (_req: Request, _res: Response, next: NextFunction) => next();
+
 // Global rate limit: 100 requests per 15 minutes per IP (aggregate across all endpoints)
-export const globalRateLimit = rateLimit({
+export const globalRateLimit = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
   windowMs: 15 * 60 * 1000,  // 15 minutes
   maxRequests: 100,           // 100 requests per 15 minutes
   keyPrefix: 'global',
@@ -124,7 +130,7 @@ export const globalRateLimit = rateLimit({
 });
 
 // Generation endpoints: 20 per hour per user (aggregate across all generation endpoints)
-export const rateLimitGeneration = rateLimit({
+export const rateLimitGeneration = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
   windowMs: 60 * 60 * 1000,   // 1 hour
   maxRequests: 20,            // 20 generations per hour
   keyPrefix: 'generation',
@@ -132,7 +138,7 @@ export const rateLimitGeneration = rateLimit({
 });
 
 // Auth endpoints: 5 attempts per 15 minutes (strict to prevent brute force)
-export const rateLimitAuth = rateLimit({
+export const rateLimitAuth = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
   windowMs: 15 * 60 * 1000,   // 15 minutes
   maxRequests: 5,             // 5 attempts per 15 minutes
   keyPrefix: 'auth',
@@ -140,7 +146,7 @@ export const rateLimitAuth = rateLimit({
 });
 
 // API endpoints: moderate limit
-export const rateLimitApi = rateLimit({
+export const rateLimitApi = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
   windowMs: 60 * 1000,        // 1 minute
   maxRequests: 60,            // 60 requests per minute
   keyPrefix: 'api',
@@ -148,7 +154,7 @@ export const rateLimitApi = rateLimit({
 });
 
 // Webhook endpoints: relaxed (but still protected)
-export const rateLimitWebhook = rateLimit({
+export const rateLimitWebhook = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
   windowMs: 60 * 1000,        // 1 minute
   maxRequests: 100,           // 100 per minute
   keyPrefix: 'webhook',
@@ -156,7 +162,7 @@ export const rateLimitWebhook = rateLimit({
 });
 
 // Admin endpoints: moderate protection
-export const rateLimitAdmin = rateLimit({
+export const rateLimitAdmin = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
   windowMs: 60 * 1000,        // 1 minute
   maxRequests: 30,            // 30 requests per minute
   keyPrefix: 'admin',
