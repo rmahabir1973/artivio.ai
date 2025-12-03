@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { socialBrandKits, aiContentPlans, socialAccounts, socialProfiles } from '@shared/schema';
+import { socialBrandKits, aiContentPlans, socialAccounts, socialProfiles, socialBrandAssets } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { chatService } from '../chatService';
 import { getSafeZoneGuidance, PLATFORM_SAFE_ZONES, type SocialPlatform } from '@shared/socialPlatformConfig';
@@ -146,6 +146,36 @@ async function getConnectedPlatforms(brandKitId: string): Promise<string[]> {
   }
 }
 
+interface BrandAssetInfo {
+  id: string;
+  filename: string;
+  type: string;
+  folder?: string | null;
+  usageStatus?: string | null;
+}
+
+async function getBrandAssets(brandKitId: string): Promise<BrandAssetInfo[]> {
+  try {
+    const assets = await db.query.socialBrandAssets.findMany({
+      where: and(
+        eq(socialBrandAssets.brandKitId, brandKitId),
+        eq(socialBrandAssets.isSuggested, false)
+      ),
+    });
+    
+    return assets.map(asset => ({
+      id: asset.id,
+      filename: asset.filename,
+      type: asset.type,
+      folder: asset.folder,
+      usageStatus: asset.usageStatus,
+    }));
+  } catch (error) {
+    console.error('[AISocialStrategist] Error getting brand assets:', error);
+    return [];
+  }
+}
+
 export async function generateContentPlan(
   brandKitId: string,
   scope: 'week' | 'month'
@@ -161,9 +191,31 @@ export async function generateContentPlan(
 
     const { startDate, endDate } = getDateRange(scope);
     const connectedPlatforms = await getConnectedPlatforms(brandKitId);
+    const brandAssets = await getBrandAssets(brandKitId);
     const postsPerDay = scope === 'week' ? 2 : 1;
     const totalDays = scope === 'week' ? 7 : 30;
     const targetPosts = totalDays * postsPerDay;
+
+    const assetsByType = brandAssets.reduce((acc, asset) => {
+      const type = asset.type || 'other';
+      if (!acc[type]) acc[type] = [];
+      acc[type].push(asset.filename);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    const assetsContext = brandAssets.length > 0
+      ? `
+AVAILABLE BRAND ASSETS:
+${Object.entries(assetsByType).map(([type, files]) => 
+  `- ${type.charAt(0).toUpperCase() + type.slice(1)}s: ${files.slice(0, 10).join(', ')}${files.length > 10 ? ` and ${files.length - 10} more` : ''}`
+).join('\n')}
+
+When creating posts, consider:
+- Use existing brand images/logos where appropriate instead of generating new ones
+- Reference asset filenames in mediaPrompt when recommending existing assets
+- Prioritize unused assets (usageStatus: 'unused') to maximize library utilization
+`
+      : '';
 
     const brandContext = `
 BRAND INFORMATION:
@@ -210,7 +262,7 @@ Create a comprehensive ${scope === 'week' ? 'weekly' : 'monthly'} content plan t
 4. Includes variety of content types
 5. Uses optimal posting times for each platform
 6. Creates engaging, shareable content
-`;
+${assetsContext}`;
 
     const response = await chatService.chat(
       'deepseek',
@@ -437,6 +489,20 @@ export async function regeneratePlanPost(
     throw new Error('Brand kit not found');
   }
 
+  const brandAssets = await getBrandAssets(plan.brandKitId);
+  const assetsByType = brandAssets.reduce((acc, asset) => {
+    const type = asset.type || 'other';
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(asset.filename);
+    return acc;
+  }, {} as Record<string, string[]>);
+
+  const assetsContext = brandAssets.length > 0
+    ? `\nAVAILABLE BRAND ASSETS:\n${Object.entries(assetsByType).map(([type, files]) => 
+      `- ${type.charAt(0).toUpperCase() + type.slice(1)}s: ${files.slice(0, 5).join(', ')}${files.length > 5 ? ` and ${files.length - 5} more` : ''}`
+    ).join('\n')}\nConsider using existing brand assets when appropriate.`
+    : '';
+
   const regeneratePrompt = `Regenerate a single social media post with the following context:
 
 BRAND: ${brandKit.name}
@@ -445,6 +511,7 @@ DATE: ${existingPost.date}
 TIME: ${existingPost.time}
 PLATFORMS: ${existingPost.platforms.join(', ')}
 CONTENT TYPE: ${existingPost.contentType}
+${assetsContext}
 
 Create a fresh, engaging post. Respond with JSON:
 {
