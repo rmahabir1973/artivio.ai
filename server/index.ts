@@ -123,12 +123,9 @@ app.use(helmet({
         "https://hooks.stripe.com",
         "https://accounts.google.com",
         "https://www.google.com",
-        "https://peertube.stream",
-        "https://*.peertube.stream",
-        "https://framatube.org",
-        "https://*.framatube.org",
         "https://www.youtube.com",
         "https://player.vimeo.com",
+        "https:", // Allow any HTTPS video embeds (PeerTube instances vary widely)
       ],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
