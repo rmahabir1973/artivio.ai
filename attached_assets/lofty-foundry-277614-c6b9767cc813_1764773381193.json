@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "lofty-foundry-277614",
+  "private_key_id": "c6b9767cc81398ead62f9be654aa497d30d70a1d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4vm2zXUMuCnNw\n3OkDvWP8gJnlkbebJzDsruwX6+Tjkb6XAXKjxFlxaFv5iFAOOxGhJNo3DcWxKXH/\n0BIhJVri2B/6OqfqS86xC1WXditNfgeEGJn/zjhp0OOOaYgKvw6MZuOGi4DCgNtN\n8mmhdtJ5v/c/zbFaimOE8qSLaS7Zig3IY0Q4dBP9WN+AnZ2H26QhQEyZNWZwEWuX\n7z59J4hNBs3NnvdK6AGGdozbyIIHJCHOuS8WWFqIPfLRQYqMUc2jPToRL8DFk4TV\nYnL05kxh+AbVwDJKgA189QTV6MhXChJph6STSHto/+Ns9a0lH5+1cNOS8bwE+CNu\n6fL+RPjtAgMBAAECggEALT1QnsIhT9Z2U3Z9RxGrOOuDBDENPZy4wdTJ8sesyr9n\nZRIRMSJFZtyP3UiwlfOICyZ7m0yvkwUbqfGZZu1/VppnJj8T3G+I41jrskXZL8ZD\nb+kYWQh2Tw88kiSskDkeBmqxn8JsmvSz/1/z1vrCatcD5Gdp3UqTOTyz54Gv28wk\nErG9zPBhaU5EENiN5vREZ6R8m6cQqiN5kZKVHdTPPlzKqjY+mnI/BmaJ7+MO659Z\nxe+a0N6zf68h432MQXGLauiCTLmmBNggJkAFRjAe/EtPVqE12HyQMN9LG+6+lLAi\nTS8PZZCi6UIw7iT4jCmQpVMB/4tL2zB3M/Vd5IR8IQKBgQDypN+Bx+nf/UB7kRUK\n4qgZLWJ+pR4Gq5t+ULBTGF9hy/9z4zPvSRDluwavnHsajqjP0O5c0zFA18anTkmK\nXA2IFvM1omSRRpe6alDLnQdtUYYpmhySlYAPp2Qkp7y2Yw/J46P9vtQjGkmBRf1s\ne7MhIXAUngtK15OLC0tAa/tI8QKBgQDC6a1OQL7vBcFaLfFAZgOgVEmyi9xIvOvY\nmq2vSgxNeJ0YzQ9+5lWEkhsRYOFyTpB/bNFTWfacBB9QAAG6MV7beGYKgbJ9DZS8\nNRHmilPLTS8WpuGcwsSHaQXv6b3uiJJh5aIc8R56RSv1wWQniSz+dtlM4rXpKnPl\nBaXMZBoPvQKBgQCYDNEyln/sKNr7k9LH23jTLimGixnhvC/YW9/icmdy9U7C5CFr\nVTINg8GQ0lIiNjt63sY/zOgUZiLKPLjAxyaDnT4S4gx7LO1vl6fBsEkzK98Suswk\n3yI8rPyIK8SJ1lHShaACJk7xIEvngmBoVqvNmxKNGOyinayLeSxS1lfFQQKBgFxc\nPKo7Ff7PfFrOMGaysH810aJQkfbJxvxh93F7pi7Du7V33iLk5JsoXLk0bkArKF+p\nYducYrZ1YZ0YE7l2EZvwBnJuGPUXDWbNwwi6fZB1p52VQI124YfE5XJVEZJJlwva\ns6IBQ87unjEbDemKIA8IpFnBiC/P1REuRu1+dbcFAoGARLyHFe7esJ1JVHh3k7Sw\nV73532Db4fN6cbactPmkObA4/RiLShab7IDGjhU2eYUG2pwVxL6NykUr2+xvJ8sD\np2I3AJIaWbfXNOrh1yMGZZ5W1GilY/jeSGMpHPwk6xp7q1gQ1dzYaeFjnSAOCPnZ\nK3ANAV8+0Pc0g5d/C4RhxcU=\n-----END PRIVATE KEY-----\n",
+  "client_email": "artivio-analytics@lofty-foundry-277614.iam.gserviceaccount.com",
+  "client_id": "112096009932001705954",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/artivio-analytics%40lofty-foundry-277614.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
