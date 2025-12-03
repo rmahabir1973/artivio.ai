@@ -9632,11 +9632,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
   app.post('/api/stock-photos/save', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log(`[Stock Photos] Save request received for user: ${userId}`);
+      console.log(`[Stock Photos] Request body:`, JSON.stringify(req.body, null, 2));
+      
       const { source, externalId, largeUrl, webformatUrl, previewUrl, width, height, tags, photographer, photographerUrl, pageUrl, originalUrl } = req.body;
       
       // Download the image from the source and upload to our storage
       const imageUrlToSave = largeUrl || webformatUrl;
       if (!imageUrlToSave) {
+        console.log('[Stock Photos] No image URL provided');
         return res.status(400).json({ message: 'No image URL provided' });
       }
 
@@ -9707,13 +9711,16 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       });
       
       if (!validationResult.success) {
+        console.log('[Stock Photos] Validation failed:', validationResult.error.errors);
         return res.status(400).json({ 
           message: 'Invalid request data', 
           errors: validationResult.error.errors 
         });
       }
 
+      console.log('[Stock Photos] Saving to database for user:', userId);
       const saved = await storage.saveStockImage(validationResult.data);
+      console.log('[Stock Photos] Successfully saved to database:', saved.id);
 
       res.json({ success: true, image: saved });
     } catch (error: any) {
