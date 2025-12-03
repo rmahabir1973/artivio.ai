@@ -294,34 +294,36 @@ class GetLateService {
    * Bluesky uses a special credentials endpoint (not OAuth redirect flow)
    * POST /v1/connect/bluesky/credentials
    * 
-   * Per GetLate support: state parameter needs proper validation.
-   * Since this is credentials-based (not OAuth), we try without state first.
-   * If that fails, we try with minimal state/redirectUri.
+   * Per GetLate docs: state parameter must be in format "{userId}_{profileId}"
+   * Example: "artivio_49729939-692de851363442076b252193"
    */
   async connectBlueskyWithCredentials(
+    userId: string,
     profileId: string,
     identifier: string,
     appPassword: string,
     redirectUri: string
   ): Promise<{ success: boolean; account?: GetLateAccount; message?: string }> {
-    console.log(`[GetLate] Connecting Bluesky with credentials for profile ${profileId}`);
+    console.log(`[GetLate] Connecting Bluesky with credentials for user ${userId}, profile ${profileId}`);
     console.log(`[GetLate] Identifier: ${identifier}, redirectUri: ${redirectUri}`);
     
     // Clean the identifier - remove @ symbol if present
     const cleanIdentifier = identifier.startsWith('@') ? identifier.slice(1) : identifier;
     console.log(`[GetLate] Cleaned identifier: ${cleanIdentifier}`);
     
-    // Try multiple approaches based on GetLate support recommendations
-    // Approach 1: Without state/redirectUri (credentials shouldn't need them)
-    // Approach 2: With minimal state (no query params in redirectUri)
-    // Approach 3: With full parameters
+    // State must be in format "{userId}_{profileId}" per GetLate docs
+    const state = `${userId}_${profileId}`;
+    console.log(`[GetLate] State: ${state}`);
     
+    // Try multiple approaches - state format is critical
     const approaches = [
       {
-        name: 'minimal',
+        name: 'with-state',
         body: {
           identifier: cleanIdentifier,
           appPassword: appPassword,
+          state: state,
+          redirectUri: redirectUri,
         }
       },
       {
@@ -329,16 +331,15 @@ class GetLateService {
         body: {
           identifier: cleanIdentifier,
           appPassword: appPassword,
+          state: state,
           redirectUri: redirectUri.split('?')[0], // Remove query params
         }
       },
       {
-        name: 'full',
+        name: 'minimal',
         body: {
           identifier: cleanIdentifier,
           appPassword: appPassword,
-          state: `bsky_${Date.now()}`, // Predictable format
-          redirectUri: redirectUri,
         }
       }
     ];

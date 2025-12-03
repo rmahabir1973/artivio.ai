@@ -732,7 +732,9 @@ export function registerSocialMediaRoutes(app: Express) {
       const redirectUri = `${artivioBaseUrl}/social/oauth-callback?platform=bluesky&success=true`;
 
       // Call GetLate's special Bluesky credentials endpoint
+      // State format per GetLate docs: "{userId}_{profileId}"
       const result = await getLateService.connectBlueskyWithCredentials(
+        userId,
         profile.getLateProfileId!,
         identifier,
         appPassword,
