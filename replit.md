@@ -15,7 +15,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI, Wouter, TanStack Query.
 -   **Backend**: Express.js and Node.js with TypeScript.
 -   **Database**: PostgreSQL (Neon) with Drizzle ORM, including JSONB storage for dynamic content.
--   **Authentication**: JWT-based with Google OAuth and local email/password, incorporating Safari/iOS cookie fixes. Admin access uses a hardcoded email whitelist.
+-   **Authentication**: JWT-based with Google OAuth and local email/password, incorporating Safari/iOS cookie fixes. Admin access uses a hardcoded email whitelist. **Important**: The Replit development webview runs in an iframe on a different domain, which blocks cross-origin cookies. Authentication will NOT work in the dev preview - always test auth features on the production site (artivio.ai) or open the app in a new browser tab using the full URL.
 -   **Asynchronous Operations**: Webhook-based callbacks for AI model APIs with 10-minute timeout protection and production-safe URL generation.
 -   **Credit Management**: Automatic refunds for failed generations and smart credit cost previews.
 -   **Storage**: AWS S3 integration for scalable cloud storage with a feature flag (`USE_S3=true`) and local fallback. Signed URLs valid for 7 days.
