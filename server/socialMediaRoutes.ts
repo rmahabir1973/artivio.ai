@@ -2312,6 +2312,7 @@ Response format:
       if (req.body.fonts !== undefined) updateData.fonts = req.body.fonts;
       if (req.body.brandVoice !== undefined) updateData.brandVoice = req.body.brandVoice;
       if (req.body.contentPreferences !== undefined) updateData.contentPreferences = req.body.contentPreferences;
+      if (req.body.linkedinPersona !== undefined) updateData.linkedinPersona = req.body.linkedinPersona;
 
       const [updatedKit] = await db
         .update(socialBrandKits)

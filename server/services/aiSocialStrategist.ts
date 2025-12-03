@@ -20,6 +20,45 @@ function generatePostId(): string {
   return `post_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
+/**
+ * Get LinkedIn-specific content generation guidance based on the user's selected persona
+ */
+function getLinkedInPersonaGuidance(persona: string): string {
+  const personas: Record<string, string> = {
+    founder: `When creating LinkedIn posts, write from the perspective of a FOUNDER/OWNER:
+- Use first-person ownership language ("I built...", "My company...", "We created...")
+- Share behind-the-scenes insights and decision-making processes
+- Position yourself as the visionary behind the brand
+- Discuss challenges overcome and lessons learned as a business owner
+- Highlight the mission and vision that drives the company`,
+    
+    power_user: `When creating LinkedIn posts, write from the perspective of a POWER USER/EARLY ADOPTER:
+- Use personal experience language ("I've been using...", "This tool helped me...", "After testing...")
+- Focus on genuine recommendations and discoveries
+- Share specific use cases and results you've achieved
+- Write as someone who discovered something valuable and wants to share it
+- Avoid any language that suggests ownership or employment with the brand
+- Position yourself as an enthusiastic user, not a promoter`,
+    
+    affiliate: `When creating LinkedIn posts, write from the perspective of an AFFILIATE MARKETER:
+- Use promotional but transparent language ("Check out...", "If you're looking for...")
+- Include clear calls-to-action for referrals
+- Focus on value proposition and benefits for the audience
+- Be upfront about the promotional nature of the content
+- Highlight deals, features, or opportunities worth sharing`,
+    
+    professional: `When creating LinkedIn posts, write from the perspective of an INDUSTRY PROFESSIONAL:
+- Use third-person discovery language ("Came across this interesting tool...", "Found something worth sharing...")
+- Maintain professional distance from the brand
+- Position content as industry insights or resource sharing
+- Write as a peer sharing valuable information with colleagues
+- Avoid any impression of business ownership or direct affiliation
+- Focus on objective observations and professional value`,
+  };
+  
+  return personas[persona] || personas.power_user;
+}
+
 interface GeneratedPlan {
   posts: ContentPlanPost[];
   strategy: string;
@@ -242,6 +281,9 @@ CONTENT PREFERENCES:
 - Featured Media Types: ${((brandKit.contentPreferences as any)?.featuredMediaTypes || ['text', 'image']).join(', ')}
 - Topics to Avoid: ${((brandKit.contentPreferences as any)?.topicsToAvoid || []).join(', ') || 'None specified'}
 - Content Language: ${(brandKit.contentPreferences as any)?.contentLanguage || 'English'}
+
+LINKEDIN POSTING PERSONA:
+${getLinkedInPersonaGuidance(brandKit.linkedinPersona || 'power_user')}
 
 COMPETITORS:
 - Local: ${((brandKit.competitors as any)?.local || []).join(', ') || 'Not specified'}
@@ -503,6 +545,14 @@ export async function regeneratePlanPost(
     ).join('\n')}\nConsider using existing brand assets when appropriate.`
     : '';
 
+  // Add LinkedIn persona guidance if LinkedIn is a target platform
+  const isLinkedInPost = existingPost.platforms.some((p: string) => 
+    p.toLowerCase() === 'linkedin'
+  );
+  const linkedinGuidance = isLinkedInPost 
+    ? `\nLINKEDIN PERSONA:\n${getLinkedInPersonaGuidance(brandKit.linkedinPersona || 'power_user')}\n`
+    : '';
+
   const regeneratePrompt = `Regenerate a single social media post with the following context:
 
 BRAND: ${brandKit.name}
@@ -511,7 +561,7 @@ DATE: ${existingPost.date}
 TIME: ${existingPost.time}
 PLATFORMS: ${existingPost.platforms.join(', ')}
 CONTENT TYPE: ${existingPost.contentType}
-${assetsContext}
+${linkedinGuidance}${assetsContext}
 
 Create a fresh, engaging post. Respond with JSON:
 {
