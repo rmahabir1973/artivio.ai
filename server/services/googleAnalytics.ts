@@ -1,11 +1,17 @@
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 
+// Read environment variables - log immediately at module load
+console.log('[Google Analytics] Reading environment variables at module load...');
+console.log('[Google Analytics] GA_PROPERTY_ID exists:', !!process.env.GA_PROPERTY_ID);
+console.log('[Google Analytics] GA_DATA_CLIENT_EMAIL exists:', !!process.env.GA_DATA_CLIENT_EMAIL);
+console.log('[Google Analytics] GA_DATA_PRIVATE_KEY exists:', !!process.env.GA_DATA_PRIVATE_KEY);
+
 const GA_PROPERTY_ID = process.env.GA_PROPERTY_ID;
 const GA_CLIENT_EMAIL = process.env.GA_DATA_CLIENT_EMAIL;
 const GA_PRIVATE_KEY = process.env.GA_DATA_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 // Debug logging at startup
-console.log('[Google Analytics] Configuration check:', {
+console.log('[Google Analytics] After assignment:', {
   hasPropertyId: !!GA_PROPERTY_ID,
   hasClientEmail: !!GA_CLIENT_EMAIL,
   hasPrivateKey: !!GA_PRIVATE_KEY,

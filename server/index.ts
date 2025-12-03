@@ -269,6 +269,13 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Debug: Check Google Analytics secrets at startup
+    console.log('[Startup] Google Analytics secrets check:', {
+      GA_PROPERTY_ID: !!process.env.GA_PROPERTY_ID,
+      GA_DATA_CLIENT_EMAIL: !!process.env.GA_DATA_CLIENT_EMAIL,
+      GA_DATA_PRIVATE_KEY: !!process.env.GA_DATA_PRIVATE_KEY,
+    });
   });
 
   // === BACKGROUND INITIALIZATION (non-blocking) ===
