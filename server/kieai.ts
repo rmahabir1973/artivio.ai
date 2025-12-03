@@ -144,9 +144,10 @@ export function parseSunoResponse(response: any): {
 }
 
 // Get available API keys from environment
+// Supports up to 200 API keys for large-scale operations
 function getAvailableApiKeys(): string[] {
   const keys: string[] = [];
-  for (let i = 1; i <= 20; i++) {
+  for (let i = 1; i <= 200; i++) {
     const keyName = `KIE_API_KEY_${i}`;
     const keyValue = process.env[keyName];
     if (keyValue) {

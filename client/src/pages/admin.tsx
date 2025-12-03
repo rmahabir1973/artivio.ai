@@ -4695,14 +4695,14 @@ export default function Admin() {
                   title: blogPostForm.title.trim(),
                   slug: blogPostForm.slug.trim(),
                   content: blogPostForm.content,
-                  excerpt: blogPostForm.excerpt || null,
-                  author: blogPostForm.author || null,
+                  excerpt: blogPostForm.excerpt || undefined,
+                  author: blogPostForm.author || undefined,
                   category: blogPostForm.category,
                   tags: tagsArray,
-                  featuredImageUrl: blogPostForm.featuredImageUrl || null,
-                  metaDescription: blogPostForm.metaDescription || null,
+                  featuredImageUrl: blogPostForm.featuredImageUrl || undefined,
+                  metaDescription: blogPostForm.metaDescription || undefined,
                   status: blogPostForm.status,
-                  publishedDate: blogPostForm.status === 'published' ? new Date().toISOString() : null,
+                  publishedDate: blogPostForm.status === 'published' ? new Date().toISOString() : undefined,
                 };
 
                 if (editingBlogPostId) {
