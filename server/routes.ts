@@ -7953,6 +7953,35 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   );
 
+  // Get user's subscription info (for checking if they have a paid plan)
+  app.get('/api/billing/subscription-info', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const subscription = await storage.getUserSubscription(userId);
+      
+      if (!subscription) {
+        return res.json({
+          hasSubscription: false,
+          isPaidPlan: false,
+          planName: null,
+          billingPeriod: null,
+        });
+      }
+
+      const isPaidPlan = subscription.plan.billingPeriod !== 'trial';
+      
+      res.json({
+        hasSubscription: true,
+        isPaidPlan,
+        planName: subscription.plan.name,
+        billingPeriod: subscription.plan.billingPeriod,
+      });
+    } catch (error: any) {
+      console.error('[Billing] Error fetching subscription info:', error);
+      res.status(500).json({ error: 'Failed to fetch subscription info' });
+    }
+  });
+
   // Start Free Trial for authenticated users
   app.post('/api/billing/start-free-trial', requireJWT, async (req: any, res) => {
     try {
@@ -8069,6 +8098,24 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       // Check if user already has Social Poster
       if (user.hasSocialPoster) {
         return res.status(400).json({ error: 'You already have Social Media Poster access' });
+      }
+
+      // Check if user has an active paid subscription (not free trial)
+      const subscription = await storage.getUserSubscription(userId);
+      if (!subscription) {
+        return res.status(403).json({ 
+          error: 'Paid subscription required',
+          code: 'NO_SUBSCRIPTION',
+          message: 'Social Media Poster requires an active paid subscription. Please upgrade to a paid plan first.'
+        });
+      }
+      
+      if (subscription.plan.billingPeriod === 'trial') {
+        return res.status(403).json({ 
+          error: 'Paid subscription required',
+          code: 'FREE_TRIAL',
+          message: 'Social Media Poster is not available during the free trial. Please upgrade to a paid plan to access this feature.'
+        });
       }
 
       const baseUrl = getBaseUrl();

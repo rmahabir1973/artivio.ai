@@ -41,6 +41,13 @@ interface SubscriptionStatus {
   status?: string;
 }
 
+interface UserSubscriptionInfo {
+  hasSubscription: boolean;
+  isPaidPlan: boolean;
+  planName?: string;
+  billingPeriod?: string;
+}
+
 const PLATFORMS = [
   { name: "Instagram", icon: SiInstagram, color: "from-purple-600 via-pink-500 to-orange-400" },
   { name: "TikTok", icon: SiTiktok, color: "from-zinc-900 to-zinc-700" },
@@ -106,6 +113,25 @@ export default function SocialUpgrade() {
     refetchOnWindowFocus: false,
   });
 
+  // Fetch user's main subscription to check if they have a paid plan
+  const { data: userSubscription, isLoading: isLoadingSubscription } = useQuery<UserSubscriptionInfo>({
+    queryKey: ["/api/billing/subscription-info"],
+    queryFn: async () => {
+      const response = await fetchWithAuth("/api/billing/subscription-info");
+      if (!response.ok) {
+        // If no subscription, return default values
+        if (response.status === 404) {
+          return { hasSubscription: false, isPaidPlan: false };
+        }
+        throw new Error("Failed to fetch subscription info");
+      }
+      return response.json();
+    },
+    enabled: !!user,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
   useEffect(() => {
     if (subscriptionStatus?.hasSocialPoster) {
       setLocation("/social/connect");
@@ -135,6 +161,16 @@ export default function SocialUpgrade() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle specific error codes for subscription requirements
+        if (data.code === 'NO_SUBSCRIPTION' || data.code === 'FREE_TRIAL') {
+          toast({
+            title: "Paid Subscription Required",
+            description: data.message || "Please upgrade to a paid plan to access Social Media Poster.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
         throw new Error(data.error || "Failed to create checkout session");
       }
 
@@ -154,6 +190,11 @@ export default function SocialUpgrade() {
     }
   };
 
+  // Determine if user can purchase Social Media Poster
+  const canPurchase = userSubscription?.isPaidPlan === true;
+  const isOnFreeTrial = userSubscription?.hasSubscription && !userSubscription?.isPaidPlan;
+  const hasNoSubscription = !userSubscription?.hasSubscription;
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -168,7 +209,7 @@ export default function SocialUpgrade() {
     );
   }
 
-  if (isLoadingStatus) {
+  if (isLoadingStatus || isLoadingSubscription) {
     return (
       <div className="container mx-auto max-w-4xl py-16 px-4">
         <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -192,6 +233,10 @@ export default function SocialUpgrade() {
           isSubmitting={isSubmitting}
           onGetStarted={handleGetStarted}
           isAuthenticated={true}
+          canPurchase={canPurchase}
+          isOnFreeTrial={isOnFreeTrial}
+          hasNoSubscription={hasNoSubscription}
+          planName={userSubscription?.planName}
         />
       </div>
     </div>
@@ -202,9 +247,16 @@ interface UpgradeContentProps {
   isSubmitting: boolean;
   onGetStarted: () => void;
   isAuthenticated: boolean;
+  canPurchase?: boolean;
+  isOnFreeTrial?: boolean;
+  hasNoSubscription?: boolean;
+  planName?: string;
 }
 
-function UpgradeContent({ isSubmitting, onGetStarted, isAuthenticated }: UpgradeContentProps) {
+function UpgradeContent({ isSubmitting, onGetStarted, isAuthenticated, canPurchase, isOnFreeTrial, hasNoSubscription, planName }: UpgradeContentProps) {
+  // Determine if user needs to upgrade first (authenticated but not on a paid plan)
+  const needsUpgrade = isAuthenticated && (isOnFreeTrial || hasNoSubscription);
+  
   return (
     <>
       <div className="text-center mb-12">
@@ -260,34 +312,67 @@ function UpgradeContent({ isSubmitting, onGetStarted, isAuthenticated }: Upgrade
               <div className="flex items-center gap-2 mt-3 justify-center md:justify-start">
                 <Zap className="w-4 h-4 text-yellow-500" />
                 <span className="text-sm text-muted-foreground">
-                  Works with any plan
+                  Requires a paid plan
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 w-full md:w-auto">
-              <Button 
-                size="lg"
-                onClick={onGetStarted}
-                disabled={isSubmitting}
-                className="gap-2 bg-purple-600 hover:bg-purple-700 text-white px-8 h-12"
-                data-testid="button-get-started"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    {isAuthenticated ? "Get Started" : "Sign Up to Get Started"}
+              {needsUpgrade ? (
+                <>
+                  <Card className="bg-amber-500/10 border-amber-500/30 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-amber-500" data-testid="text-upgrade-required">
+                          Paid Subscription Required
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {isOnFreeTrial 
+                            ? `Your ${planName || 'Free Trial'} doesn't include add-ons. Upgrade to a paid plan to access Social Media Poster.`
+                            : 'You need an active paid subscription to add Social Media Poster.'}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                  <Button 
+                    size="lg"
+                    onClick={() => window.location.href = '/pricing'}
+                    className="gap-2 bg-purple-600 hover:bg-purple-700 text-white px-8 h-12"
+                    data-testid="button-upgrade-plan"
+                  >
+                    View Plans
                     <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                Cancel anytime. Billed monthly.
-              </p>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    size="lg"
+                    onClick={onGetStarted}
+                    disabled={isSubmitting}
+                    className="gap-2 bg-purple-600 hover:bg-purple-700 text-white px-8 h-12"
+                    data-testid="button-get-started"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        {isAuthenticated ? "Get Started" : "Sign Up to Get Started"}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Cancel anytime. Billed monthly.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
@@ -366,25 +451,37 @@ function UpgradeContent({ isSubmitting, onGetStarted, isAuthenticated }: Upgrade
             Join thousands of creators using AI-powered social media management to 
             save time and increase engagement.
           </p>
-          <Button 
-            size="lg"
-            onClick={onGetStarted}
-            disabled={isSubmitting}
-            className="gap-2"
-            data-testid="button-get-started-bottom"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                Start Posting Today
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </Button>
+          {needsUpgrade ? (
+            <Button 
+              size="lg"
+              onClick={() => window.location.href = '/pricing'}
+              className="gap-2"
+              data-testid="button-upgrade-plan-bottom"
+            >
+              View Plans to Get Started
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button 
+              size="lg"
+              onClick={onGetStarted}
+              disabled={isSubmitting}
+              className="gap-2"
+              data-testid="button-get-started-bottom"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Start Posting Today
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          )}
         </CardContent>
       </Card>
     </>
