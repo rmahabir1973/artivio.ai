@@ -307,16 +307,11 @@ class GetLateService {
     const cleanIdentifier = identifier.startsWith('@') ? identifier.slice(1) : identifier;
     console.log(`[GetLate] Cleaned identifier: ${cleanIdentifier}`);
     
-    // Generate a state parameter for security (include profileId for our own tracking)
-    const state = `bluesky_${profileId}_${Date.now()}`;
-    
-    // GetLate expects only these 4 fields in the body
-    // profileId should be passed as a query parameter like other connect endpoints
+    // For Bluesky credentials endpoint, we only send identifier and appPassword
+    // No state or redirectUri needed - this is a direct credential connection, not OAuth
     const requestBody = {
       identifier: cleanIdentifier,
       appPassword: appPassword,
-      state: state,
-      redirectUri: redirectUri,
     };
     
     console.log(`[GetLate] Request body (password hidden):`, { 

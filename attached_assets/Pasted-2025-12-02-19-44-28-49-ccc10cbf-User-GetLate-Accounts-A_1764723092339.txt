@@ -1,0 +1,104 @@
+2025-12-02 19:44:28.49
+ccc10cbf
+User
+[GetLate] Accounts API returned 8 accounts
+2025-12-02 19:44:28.49
+ccc10cbf
+User
+},
+2025-12-02 19:44:28.49
+ccc10cbf
+User
+"updatedAt": "2025-12-02T16:03:10.984Z",
+2025-12-02 19:44:28.49
+ccc10cbf
+User
+"platformUserId": "24971744082510867",
+2025-12-02 19:44:28.49
+ccc10cbf
+User
+"_id": "692f357ff43160a0bc999d24",
+2025-12-02 19:44:28.49
+ccc10cbf
+User
+"description": "Ryan Mahabir's Artivio Social Hub",
+2025-12-02 19:44:43.52
+ccc10cbf
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-02 19:44:43.55
+ccc10cbf
+User
+[Social] Bluesky connection request for user 49729939
+2025-12-02 19:44:43.55
+ccc10cbf
+User
+[Social] Identifier: artivio.ai
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+[GetLate] Request body (password hidden): {
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+[GetLate] Connecting Bluesky with credentials for profile 692de851363442076b252193
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+[GetLate] Cleaned identifier: artivio.ai
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+identifier: 'artivio.ai',
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+appPassword: '***hidden***',
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+}
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+redirectUri: 'https://artivio.ai/social/oauth-callback?platform=bluesky&success=true'
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+[GetLate] Calling URL: https://getlate.dev/api/v1/connect/bluesky/credentials?profileId=692de851363442076b252193
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+state: 'bluesky_692de851363442076b252193_1764722683573',
+2025-12-02 19:44:43.57
+ccc10cbf
+User
+[GetLate] Identifier: artivio.ai, redirectUri: https://artivio.ai/social/oauth-callback?platform=bluesky&success=true
+2025-12-02 19:44:43.96
+ccc10cbf
+User
+[GetLate] Bluesky credentials failed. Status: 400, Body: {"error":"Invalid state parameter"}
+2025-12-02 19:44:43.96
+ccc10cbf
+User
+[GetLate] Bluesky credentials response status: 400
+2025-12-02 19:44:43.96
+ccc10cbf
+User
+[Social] Error connecting Bluesky: Error: Failed to connect Bluesky: 400 - {"error":"Invalid state parameter"}
+2025-12-02 19:44:43.96
+ccc10cbf
+User
+at GetLateService.connectBlueskyWithCredentials (file:///home/runner/workspace/dist/index.js:5251:17)
+2025-12-02 19:44:43.96
+ccc10cbf
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-02 19:44:43.96
+ccc10cbf
+User
+at async file:///home/runner/workspace/dist/index.js:11348:22
+2025-12-02 19:44:43.96
+ccc10cbf
+User
+12:44:43 AM [express] POST /api/social/accounts/connect-bluesky 500 in 465ms :: {"message":"Failed to…
