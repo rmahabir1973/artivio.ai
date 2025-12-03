@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializePassportStrategies } from "./customAuth";
@@ -31,6 +32,132 @@ if (missingEnvVars.length > 0) {
 }
 
 const app = express();
+
+// ===== SECURITY HEADERS =====
+// Disable x-powered-by header to hide server info
+app.disable('x-powered-by');
+
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Configure helmet with comprehensive security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: false,
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://js.stripe.com",
+        "https://www.googletagmanager.com",
+        "https://accounts.google.com",
+        "https://www.google.com",
+        ...(isDevelopment ? ["http://localhost:*", "ws://localhost:*"] : []),
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://fonts.googleapis.com",
+        ...(isDevelopment ? ["http://localhost:*"] : []),
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        "https://*.amazonaws.com",
+        "https://images.unsplash.com",
+        "https://images.pexels.com",
+        "https://picsum.photos",
+        "https://cdn.pixabay.com",
+        "https://pixabay.com",
+        "https://*.googleusercontent.com",
+        "https://lh3.googleusercontent.com",
+        "https://www.gravatar.com",
+        "https://*.stripe.com",
+        "https://peertube.stream",
+        "https://*.peertube.stream",
+        "https://framatube.org",
+        "https://*.framatube.org",
+        "*", // Allow external image URLs for user-uploaded content and AI-generated images
+      ],
+      fontSrc: [
+        "'self'",
+        "data:",
+        "https://fonts.gstatic.com",
+      ],
+      mediaSrc: [
+        "'self'",
+        "blob:",
+        "data:",
+        "https://*.amazonaws.com",
+        "https://peertube.stream",
+        "https://*.peertube.stream",
+        "https://framatube.org",
+        "https://*.framatube.org",
+        "*", // Allow external media URLs for user content
+      ],
+      connectSrc: [
+        "'self'",
+        "wss:",
+        "ws:",
+        "https://api.stripe.com",
+        "https://www.googleapis.com",
+        "https://accounts.google.com",
+        "https://*.amazonaws.com",
+        "https://api.openai.com",
+        "https://api.deepseek.com",
+        "https://api.fish.audio",
+        "https://api.elevenlabs.io",
+        "https://api.pexels.com",
+        "https://pixabay.com",
+        "https://api.loops.so",
+        "https://api.kie.ai",
+        "https://klingai.com",
+        "https://api.getlate.dev",
+        ...(isDevelopment ? ["http://localhost:*", "ws://localhost:*"] : []),
+      ],
+      frameSrc: [
+        "'self'",
+        "https://js.stripe.com",
+        "https://hooks.stripe.com",
+        "https://accounts.google.com",
+        "https://www.google.com",
+        "https://peertube.stream",
+        "https://*.peertube.stream",
+        "https://framatube.org",
+        "https://*.framatube.org",
+        "https://www.youtube.com",
+        "https://player.vimeo.com",
+      ],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: [
+        "'self'",
+        "https://hooks.stripe.com",
+        "https://accounts.google.com",
+      ],
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["'self'", "blob:"],
+      upgradeInsecureRequests: isDevelopment ? null : [],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Disable to allow loading external resources
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Allow OAuth popups
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resource loading
+  frameguard: { action: "sameorigin" }, // X-Frame-Options: SAMEORIGIN
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" }, // Referrer-Policy
+  xContentTypeOptions: true, // X-Content-Type-Options: nosniff
+  hsts: false, // HSTS is handled by the hosting platform (Replit)
+}));
+
+// Permissions-Policy header (not included in helmet by default)
+app.use((_req, res, next) => {
+  res.setHeader('Permissions-Policy', 
+    'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(self), usb=(), interest-cohort=()'
+  );
+  next();
+});
 
 // Serve uploaded images statically from public/uploads
 app.use('/uploads', express.static('public/uploads'));
