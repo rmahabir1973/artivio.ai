@@ -2482,6 +2482,144 @@ Response format:
     }
   });
 
+  // Accept a suggested asset (add to library)
+  app.post("/api/social/brand-kit/assets/:assetId/accept", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { assetId } = req.params;
+      
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      // Verify asset belongs to this brand kit
+      const asset = await db.query.socialBrandAssets.findFirst({
+        where: and(
+          eq(socialBrandAssets.id, assetId),
+          eq(socialBrandAssets.brandKitId, brandKit.id),
+        ),
+      });
+
+      if (!asset) {
+        return res.status(404).json({ message: 'Asset not found' });
+      }
+
+      await db
+        .update(socialBrandAssets)
+        .set({ 
+          isSuggested: false,
+          approvedAt: new Date(),
+        })
+        .where(eq(socialBrandAssets.id, assetId));
+
+      res.json({ success: true, message: 'Asset added to library' });
+    } catch (error: any) {
+      console.error('[Brand Kit] Accept asset error:', error);
+      res.status(500).json({ message: 'Failed to accept asset' });
+    }
+  });
+
+  // Dismiss a suggested asset
+  app.delete("/api/social/brand-kit/assets/:assetId/dismiss", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { assetId } = req.params;
+      
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      // Verify asset belongs to this brand kit and is suggested
+      const asset = await db.query.socialBrandAssets.findFirst({
+        where: and(
+          eq(socialBrandAssets.id, assetId),
+          eq(socialBrandAssets.brandKitId, brandKit.id),
+        ),
+      });
+
+      if (!asset) {
+        return res.status(404).json({ message: 'Asset not found' });
+      }
+
+      await db
+        .delete(socialBrandAssets)
+        .where(eq(socialBrandAssets.id, assetId));
+
+      res.json({ success: true, message: 'Asset dismissed' });
+    } catch (error: any) {
+      console.error('[Brand Kit] Dismiss asset error:', error);
+      res.status(500).json({ message: 'Failed to dismiss asset' });
+    }
+  });
+
+  // Delete an asset from library
+  app.delete("/api/social/brand-kit/assets/:assetId", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { assetId } = req.params;
+      
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.userId, userId),
+      });
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      const asset = await db.query.socialBrandAssets.findFirst({
+        where: and(
+          eq(socialBrandAssets.id, assetId),
+          eq(socialBrandAssets.brandKitId, brandKit.id),
+        ),
+      });
+
+      if (!asset) {
+        return res.status(404).json({ message: 'Asset not found' });
+      }
+
+      await db
+        .delete(socialBrandAssets)
+        .where(eq(socialBrandAssets.id, assetId));
+
+      res.json({ success: true, message: 'Asset deleted' });
+    } catch (error: any) {
+      console.error('[Brand Kit] Delete asset error:', error);
+      res.status(500).json({ message: 'Failed to delete asset' });
+    }
+  });
+
   app.post("/api/social/brand-kit/scan", requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;

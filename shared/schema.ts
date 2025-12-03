@@ -2225,22 +2225,28 @@ export const socialBrandAssets = pgTable("social_brand_assets", {
   brandKitId: varchar("brand_kit_id").notNull().references(() => socialBrandKits.id, { onDelete: 'cascade' }),
   type: varchar("type").notNull(), // 'image', 'video'
   filename: varchar("filename").notNull(),
-  url: text("url").notNull(), // S3 URL
+  url: text("url").notNull(), // S3 URL or external URL
   thumbnailUrl: text("thumbnail_url"),
   mimeType: varchar("mime_type"),
   fileSize: integer("file_size"),
+  folder: varchar("folder"), // Domain-based folder for organization (e.g., 'scan-example.com')
+  sourceUrl: text("source_url"), // Original URL where asset was found
+  isSuggested: boolean("is_suggested").default(false), // True for scan-discovered assets pending approval
+  approvedAt: timestamp("approved_at"), // When user approved a suggested asset
   usageStatus: varchar("usage_status").default('unused'), // 'used', 'unused'
   lastUsedAt: timestamp("last_used_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("social_brand_assets_kit_idx").on(table.brandKitId),
   index("social_brand_assets_type_idx").on(table.type),
+  index("social_brand_assets_folder_idx").on(table.folder),
 ]);
 
 export const insertSocialBrandAssetSchema = createInsertSchema(socialBrandAssets).omit({
   id: true,
   usageStatus: true,
   lastUsedAt: true,
+  approvedAt: true,
   createdAt: true,
 });
 
@@ -2254,13 +2260,21 @@ export const socialBrandScanJobs = pgTable("social_brand_scan_jobs", {
   targetUrl: text("target_url").notNull(),
   status: varchar("status").notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
   scanResult: jsonb("scan_result").$type<{
+    progress?: number;
+    status?: string;
+    message?: string;
     colors?: string[];
+    fonts?: string[];
     logos?: string[];
-    images?: string[];
+    domain?: string;
+    usedHeadless?: boolean;
+    images?: { url: string; type: string; alt?: string }[];
     textContent?: {
       title?: string;
       description?: string;
+      tagline?: string;
       aboutContent?: string;
+      socialLinks?: { platform: string; url: string }[];
       products?: string[];
       services?: string[];
     };
