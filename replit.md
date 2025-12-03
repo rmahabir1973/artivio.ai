@@ -23,6 +23,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Video Processing**: Server-side FFmpeg-based video editor/combiner, with processing handled by AWS Lambda for scalability. Videos are normalized to 30fps, 720p max resolution, 44100Hz audio.
 -   **API Key Management**: Round-robin rotation for external AI service API keys.
 -   **Payment**: Stripe integration for subscription management and webhooks with transaction-based idempotency.
+-   **Security Headers**: Helmet-based security hardening with CSP, X-Frame-Options (SAMEORIGIN), X-Content-Type-Options (nosniff), Referrer-Policy, Permissions-Policy. x-powered-by disabled to hide server info. Environment-aware CSP relaxation for Vite HMR in development.
 -   **Generation Queue**: Real-time dashboard widget for tracking AI generations with cursor-based pagination.
 -   **Social Media Integration**: Backend services for social media platform connections, content planning, and analytics.
 -   **Audio Processing**: All voice services (cloning, TTS, ASR) exclusively use Fish Audio. Microphone recording handles `audio/webm;codecs=opus` MIME type.
