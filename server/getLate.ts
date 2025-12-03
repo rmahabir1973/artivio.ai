@@ -308,8 +308,9 @@ class GetLateService {
     const cleanIdentifier = identifier.startsWith('@') ? identifier.slice(1) : identifier;
     console.log(`[GetLate] Cleaned identifier: ${cleanIdentifier}`);
     
-    // Generate a state token for GetLate's callback verification
-    const stateToken = `bluesky_${profileId}_${Date.now()}`;
+    // Generate a simple alphanumeric state token (no underscores/special chars)
+    // GetLate may have strict validation on state format
+    const stateToken = Math.random().toString(36).substring(2, 18);
     
     // GetLate requires state and redirectUri in the request body for Bluesky
     const requestBody = {
