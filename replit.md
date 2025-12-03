@@ -44,7 +44,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **Admin Panel**: Comprehensive user, API key, Stripe, and home page content management.
 -   **Subscription Plans**: Stripe-powered automated and manual admin assignments (Free Trial, Starter, Professional, Business).
 -   **Topaz Video Upscaler**: Standalone page for AI-powered video upscaling.
--   **Social Media Hub**: AI Strategist, Content Calendar, and Analytics Dashboard for 9 social platforms.
+-   **Social Media Hub**: AI Strategist (powered by GPT-4o-mini), Content Calendar, and Analytics Dashboard for 9 social platforms.
 -   **Social Media Poster Add-on**: $25/month subscription (Stripe Product: prod_TWdKgoLE1kfn4o, Price: price_1SZa3PKvkQlROMzf7X2POgZX) powered by GetLate.dev API for social posting. Supports 10 platforms (Instagram, TikTok, LinkedIn, YouTube, Facebook, X, Threads, Pinterest, Bluesky, Reddit). Uses platform invite flow for OAuth connections. All social endpoints gated behind `requireSocialPoster` middleware.
 -   **Multi-Platform Posting**: Content Calendar supports scheduling posts to multiple platforms simultaneously with per-platform content type selection (post, story, reel, short, carousel, thread), platform-specific options (privacy settings, first comment, draft mode), and namespaced `platformSpecificData` storage to avoid field collisions. UI shows all target platforms in calendar cards with icon stacking.
 -   **Social Brand Kit**: Comprehensive brand identity management for social media (tables prefixed with `social_` to avoid conflicts with video editor brand kits). Includes: business overview, competitors, customer demographics, visual identity (logos, colors, fonts), brand voice, and content preferences. Supports website URL tracking, automated brand asset scanning, and AI-generated content plans (1-week/30-day). Database tables: `social_brand_kits`, `social_brand_materials`, `social_brand_assets`, `social_brand_scan_jobs`, `ai_content_plans`.
@@ -57,8 +57,8 @@ The project features a modular structure with a database schema supporting users
 ## External Dependencies
 
 -   **Kie.ai API**: Core AI service for video, image, music generation, and InfiniteTalk Lip Sync.
--   **Deepseek API**: AI chat models.
--   **OpenAI API**: AI chat models and GPT-4o Vision for image analysis.
+-   **Deepseek API**: AI chat models (general chat feature).
+-   **OpenAI API**: AI chat models, GPT-4o Vision for image analysis, and GPT-4o-mini for Social Media Hub AI Strategist.
 -   **Neon (PostgreSQL)**: Managed PostgreSQL database service.
 -   **Replit Auth**: User authentication.
 -   **ElevenLabs**: AI Sound Effect V2.

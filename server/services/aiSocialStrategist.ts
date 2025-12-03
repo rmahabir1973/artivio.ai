@@ -265,8 +265,8 @@ Create a comprehensive ${scope === 'week' ? 'weekly' : 'monthly'} content plan t
 ${assetsContext}`;
 
     const response = await chatService.chat(
-      'deepseek',
-      'deepseek-chat',
+      'openai',
+      'gpt-4o-mini',
       [
         { role: 'system', content: CONTENT_PLAN_PROMPT },
         { role: 'user', content: brandContext }
@@ -522,8 +522,8 @@ Create a fresh, engaging post. Respond with JSON:
 
   try {
     const response = await chatService.chat(
-      'deepseek',
-      'deepseek-chat',
+      'openai',
+      'gpt-4o-mini',
       [
         { role: 'system', content: 'You are a social media content creator. Generate engaging posts.' },
         { role: 'user', content: regeneratePrompt }
