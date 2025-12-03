@@ -1,0 +1,168 @@
+2025-12-03 17:04:52.24
+7591d536
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 17:04:52.27
+7591d536
+User
+clientEmailPreview: 'artivio-analyti...',
+2025-12-03 17:04:52.27
+7591d536
+User
+}
+2025-12-03 17:04:52.27
+7591d536
+User
+[Google Analytics] isConfigured check: {
+2025-12-03 17:04:52.27
+7591d536
+User
+hasPrivateKey: true,
+2025-12-03 17:04:52.27
+7591d536
+User
+hasClientEmail: true,
+2025-12-03 17:04:52.27
+7591d536
+User
+keyFormat: {
+2025-12-03 17:04:52.27
+7591d536
+User
+hasEndHeader: true,
+2025-12-03 17:04:52.27
+7591d536
+User
+configured: true,
+2025-12-03 17:04:52.27
+7591d536
+User
+[Site Analytics] Checking configuration...
+2025-12-03 17:04:52.27
+7591d536
+User
+propertyIdPreview: '512134820...',
+2025-12-03 17:04:52.27
+7591d536
+User
+hasBeginHeader: true,
+2025-12-03 17:04:52.27
+7591d536
+User
+first30: '-----BEGIN PRIVATE KEY-----\nMI'
+2025-12-03 17:04:52.27
+7591d536
+User
+[Site Analytics] Fetching data for 30 days
+2025-12-03 17:04:52.27
+7591d536
+User
+hasPropertyId: true,
+2025-12-03 17:04:52.27
+7591d536
+User
+keyLength: 1703,
+2025-12-03 17:04:52.27
+7591d536
+User
+}
+2025-12-03 17:04:52.27
+7591d536
+User
+newlineCount: 27,
+2025-12-03 17:04:52.27
+7591d536
+User
+hasLiteralBackslashN: false,
+2025-12-03 17:04:52.43
+7591d536
+User
+10:04:52 PM [express] GET /api/admin/site-analytics/30 200 in 333ms :: {"configured":true,"traffic":{…
+2025-12-03 17:05:11.28
+7591d536
+User
+10:05:11 PM [express] GET /api/announcements/active 304 in 27ms :: []
+2025-12-03 17:05:16.90
+7591d536
+User
+10:05:16 PM [express] GET /api/announcements/active 304 in 27ms :: []
+2025-12-03 17:05:52.69
+7591d536
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-03 17:05:52.72
+7591d536
+User
+hasEndHeader: true,
+2025-12-03 17:05:52.72
+7591d536
+User
+}
+2025-12-03 17:05:52.72
+7591d536
+User
+keyLength: 1703,
+2025-12-03 17:05:52.72
+7591d536
+User
+clientEmailPreview: 'artivio-analyti...',
+2025-12-03 17:05:52.72
+7591d536
+User
+hasPrivateKey: true,
+2025-12-03 17:05:52.72
+7591d536
+User
+hasLiteralBackslashN: false,
+2025-12-03 17:05:52.72
+7591d536
+User
+[Google Analytics] isConfigured check: {
+2025-12-03 17:05:52.72
+7591d536
+User
+configured: true,
+2025-12-03 17:05:52.72
+7591d536
+User
+[Site Analytics] Fetching data for 30 days
+2025-12-03 17:05:52.72
+7591d536
+User
+newlineCount: 27,
+2025-12-03 17:05:52.72
+7591d536
+User
+}
+2025-12-03 17:05:52.72
+7591d536
+User
+hasPropertyId: true,
+2025-12-03 17:05:52.72
+7591d536
+User
+first30: '-----BEGIN PRIVATE KEY-----\nMI'
+2025-12-03 17:05:52.72
+7591d536
+User
+propertyIdPreview: '512134820...',
+2025-12-03 17:05:52.72
+7591d536
+User
+hasBeginHeader: true,
+2025-12-03 17:05:52.72
+7591d536
+User
+keyFormat: {
+2025-12-03 17:05:52.72
+7591d536
+User
+[Site Analytics] Checking configuration...
+2025-12-03 17:05:52.72
+7591d536
+User
+hasClientEmail: true,
+2025-12-03 17:05:52.87
+7591d536
+User
+10:05:52 PM [express] GET /api/admin/site-analytics/30 200 in 289ms :: {"configured":true,"traffic":{…
