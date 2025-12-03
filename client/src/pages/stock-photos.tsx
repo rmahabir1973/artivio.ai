@@ -292,13 +292,20 @@ export default function StockPhotos() {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-violet-500 bg-clip-text text-transparent">
             Stock Photos
           </h1>
           <p className="text-muted-foreground">
             Search millions of free stock photos from Pixabay and Pexels. Save your favorites for future generations.
           </p>
+          <div className="bg-muted/50 border border-border rounded-lg p-4 text-sm">
+            <p className="text-muted-foreground">
+              <span className="font-medium text-foreground">How to use with AI Generation:</span> Save stock images to{" "}
+              <span className="font-medium text-foreground">My Saved</span>, then copy the image link to use in AI video or image generations.
+              The main Library is reserved for your AI-generated content.
+            </p>
+          </div>
         </div>
 
         {/* Tabs */}
