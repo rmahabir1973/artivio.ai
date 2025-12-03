@@ -39,9 +39,11 @@ app.disable('x-powered-by');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
+// TEMPORARILY DISABLED CSP FOR DEBUGGING - RE-ENABLE AFTER TESTING
 // Configure helmet with comprehensive security headers
 app.use(helmet({
-  contentSecurityPolicy: {
+  contentSecurityPolicy: false, // DISABLED FOR TESTING
+  /*contentSecurityPolicy: {
     useDefaults: false,
     directives: {
       defaultSrc: ["'self'"],
@@ -97,7 +99,7 @@ app.use(helmet({
         "https://*.framatube.org",
         "*", // Allow external media URLs for user content
       ],
-      connectSrc: [
+      connectSrc_DISABLED: [
         "'self'",
         "wss:",
         "ws:",
@@ -141,7 +143,7 @@ app.use(helmet({
       childSrc: ["'self'", "blob:"],
       upgradeInsecureRequests: isDevelopment ? null : [],
     },
-  },
+  },*/
   crossOriginEmbedderPolicy: false, // Disable to allow loading external resources
   crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Allow OAuth popups
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resource loading
