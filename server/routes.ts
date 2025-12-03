@@ -69,6 +69,7 @@ import {
   handleSubscriptionUpdated,
   handleSubscriptionDeleted,
   createSocialPosterCheckoutSession,
+  createSocialPosterEmbeddedCheckout,
   handleSocialPosterCheckout,
   handleSocialPosterSubscriptionDeleted,
   isSocialPosterSubscription,
@@ -8130,6 +8131,54 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       res.json({ url: session.url });
     } catch (error: any) {
       console.error('[Billing] Social Poster checkout error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Embedded checkout for Social Media Poster (in-app purchase)
+  app.post('/api/stripe/social-poster-embedded-checkout', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Check if user already has Social Poster
+      if (user.hasSocialPoster) {
+        return res.status(400).json({ error: 'You already have Social Media Poster access' });
+      }
+
+      // Check if user has an active paid subscription (not free trial)
+      const subscription = await storage.getUserSubscription(userId);
+      if (!subscription) {
+        return res.status(403).json({ 
+          error: 'Paid subscription required',
+          code: 'NO_SUBSCRIPTION',
+          message: 'Social Media Poster requires an active paid subscription. Please upgrade to a paid plan first.'
+        });
+      }
+      
+      if (subscription.plan.billingPeriod === 'trial') {
+        return res.status(403).json({ 
+          error: 'Paid subscription required',
+          code: 'FREE_TRIAL',
+          message: 'Social Media Poster is not available during the free trial. Please upgrade to a paid plan to access this feature.'
+        });
+      }
+
+      const baseUrl = getBaseUrl();
+
+      const { clientSecret, sessionId } = await createSocialPosterEmbeddedCheckout({
+        userId: user.id,
+        userEmail: user.email || '',
+        returnUrl: `${baseUrl}/social/connect?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      });
+
+      res.json({ clientSecret, sessionId });
+    } catch (error: any) {
+      console.error('[Billing] Social Poster embedded checkout error:', error);
       res.status(500).json({ error: error.message });
     }
   });

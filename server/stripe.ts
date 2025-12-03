@@ -519,6 +519,64 @@ export async function createSocialPosterCheckoutSession(params: {
   return session;
 }
 
+// Embedded checkout for Social Media Poster (in-app purchase)
+export async function createSocialPosterEmbeddedCheckout(params: {
+  userId: string;
+  userEmail: string;
+  returnUrl: string;
+}): Promise<{ clientSecret: string; sessionId: string }> {
+  const { userId, userEmail, returnUrl } = params;
+
+  const user = await storage.getUser(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  let customerId = user.stripeCustomerId || undefined;
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: userEmail,
+      metadata: { userId },
+    });
+    customerId = customer.id;
+    await storage.updateUser(userId, { stripeCustomerId: customerId });
+  }
+
+  console.log('[Stripe Embedded Checkout] Creating Social Poster session for user:', userId);
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    ui_mode: 'embedded',
+    line_items: [{
+      price: SOCIAL_POSTER_PRICE_ID,
+      quantity: 1,
+    }],
+    return_url: returnUrl,
+    redirect_on_completion: 'if_required',
+    metadata: {
+      userId,
+      productType: 'social_poster_addon',
+    },
+    subscription_data: {
+      metadata: {
+        userId,
+        productType: 'social_poster_addon',
+      },
+    },
+  });
+
+  if (!session.client_secret) {
+    throw new Error('Failed to create embedded checkout session');
+  }
+
+  return {
+    clientSecret: session.client_secret,
+    sessionId: session.id,
+  };
+}
+
 export async function handleSocialPosterCheckout(session: Stripe.Checkout.Session, eventId: string) {
   console.log('[Stripe Webhook] Processing Social Poster checkout', session.id);
 

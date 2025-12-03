@@ -33,8 +33,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/authBridge";
-
-const SOCIAL_POSTER_PRICE_ID = "price_1SZa3PKvkQlROMzf7X2POgZX";
+import { SocialPosterCheckoutModal } from "@/components/embedded-checkout-modal";
+import { queryClient } from "@/lib/queryClient";
 
 interface SubscriptionStatus {
   hasSocialPoster: boolean;
@@ -98,6 +98,7 @@ export default function SocialUpgrade() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
 
   const { data: subscriptionStatus, isLoading: isLoadingStatus } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/social/subscription-status"],
@@ -138,56 +139,42 @@ export default function SocialUpgrade() {
     }
   }, [subscriptionStatus, setLocation]);
 
-  const handleGetStarted = async () => {
+  const handleGetStarted = () => {
     if (!user) {
       window.location.href = "/login?redirect=/social/upgrade";
       return;
     }
-
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetchWithAuth("/api/stripe/add-social-poster", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          priceId: SOCIAL_POSTER_PRICE_ID,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle specific error codes for subscription requirements
-        if (data.code === 'NO_SUBSCRIPTION' || data.code === 'FREE_TRIAL') {
-          toast({
-            title: "Paid Subscription Required",
-            description: data.message || "Please upgrade to a paid plan to access Social Media Poster.",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
-        }
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (error: any) {
-      console.error("Error initiating checkout:", error);
+    
+    // Block checkout for users without a paid plan
+    if (!canPurchase) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to start checkout. Please try again.",
+        title: "Paid Subscription Required",
+        description: isOnFreeTrial 
+          ? "Social Media Poster is not available during the free trial. Please upgrade to a paid plan first."
+          : "You need an active paid subscription to add Social Media Poster.",
         variant: "destructive",
       });
-      setIsSubmitting(false);
+      return;
     }
+    
+    // Open the embedded checkout modal
+    setCheckoutModalOpen(true);
+  };
+
+  const handleCheckoutComplete = () => {
+    // Invalidate queries to refresh subscription status
+    queryClient.invalidateQueries({ queryKey: ["/api/social/subscription-status"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/billing/subscription-info"] });
+    
+    toast({
+      title: "Purchase Complete!",
+      description: "Welcome to Social Media Poster. Redirecting you to connect your accounts...",
+    });
+
+    // Redirect to connect page after a short delay
+    setTimeout(() => {
+      setLocation("/social/connect");
+    }, 1500);
   };
 
   // Determine if user can purchase Social Media Poster
@@ -227,19 +214,27 @@ export default function SocialUpgrade() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto max-w-5xl py-12 px-4">
-        <UpgradeContent 
-          isSubmitting={isSubmitting}
-          onGetStarted={handleGetStarted}
-          isAuthenticated={true}
-          canPurchase={canPurchase}
-          isOnFreeTrial={isOnFreeTrial}
-          hasNoSubscription={hasNoSubscription}
-          planName={userSubscription?.planName}
-        />
+    <>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto max-w-5xl py-12 px-4">
+          <UpgradeContent 
+            isSubmitting={isSubmitting}
+            onGetStarted={handleGetStarted}
+            isAuthenticated={true}
+            canPurchase={canPurchase}
+            isOnFreeTrial={isOnFreeTrial}
+            hasNoSubscription={hasNoSubscription}
+            planName={userSubscription?.planName}
+          />
+        </div>
       </div>
-    </div>
+
+      <SocialPosterCheckoutModal
+        open={checkoutModalOpen}
+        onOpenChange={setCheckoutModalOpen}
+        onComplete={handleCheckoutComplete}
+      />
+    </>
   );
 }
 
