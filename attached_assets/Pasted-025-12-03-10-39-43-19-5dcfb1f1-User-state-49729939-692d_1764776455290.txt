@@ -1,0 +1,124 @@
+025-12-03 10:39:43.19
+5dcfb1f1
+User
+state: '49729939_692de851363442076b252193',
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+[GetLate] Cleaned identifier: artivio.ai
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+[GetLate] Connecting Bluesky with credentials for user 49729939, profile 692de851363442076b252193
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+[GetLate] Calling URL: https://getlate.dev/api/v1/connect/bluesky/credentials?profileId=692de851363442076b252193
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+[GetLate] Identifier: artivio.ai, redirectUri: https://artivio.ai/social/oauth-callback?platform=bluesky&success=true
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+}
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+[GetLate] Request body (password hidden): {
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+identifier: 'artivio.ai',
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+[GetLate] State: 49729939_692de851363442076b252193
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+[GetLate] Trying approach: with-state
+2025-12-03 10:39:43.19
+5dcfb1f1
+User
+redirectUri: 'https://artivio.ai/social/oauth-callback?platform=bluesky&success=true'
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+[GetLate] Approach "with-state" failed. Status: 400, Body: {"error":"Invalid state parameter"}
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+[GetLate] Bluesky credentials response status: 400
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+[GetLate] Trying approach: clean-redirect
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+redirectUri: 'https://artivio.ai/social/oauth-callback'
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+[GetLate] Request body (password hidden): {
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+state: '49729939_692de851363442076b252193',
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+}
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+appPassword: '***hidden***',
+2025-12-03 10:39:43.60
+5dcfb1f1
+User
+identifier: 'artivio.ai',
+2025-12-03 10:39:44.00
+5dcfb1f1
+User
+[GetLate] Bluesky credentials response status: 400
+2025-12-03 10:39:44.00
+5dcfb1f1
+User
+[GetLate] Approach "clean-redirect" failed. Status: 400, Body: {"error":"Invalid state parameter"}
+2025-12-03 10:39:44.00
+5dcfb1f1
+User
+[GetLate] Request body (password hidden): { identifier: 'artivio.ai', appPassword: '***hidden***' }
+2025-12-03 10:39:44.00
+5dcfb1f1
+User
+[GetLate] Trying approach: minimal
+2025-12-03 10:39:44.33
+5dcfb1f1
+User
+[GetLate] Bluesky credentials response status: 400
+2025-12-03 10:39:44.33
+5dcfb1f1
+User
+[GetLate] Approach "minimal" failed. Status: 400, Body: {"error":"Missing state"}
+2025-12-03 10:39:44.33
+5dcfb1f1
+User
+at async file:///home/runner/workspace/dist/index.js:12595:22
+2025-12-03 10:39:44.33
+5dcfb1f1
+User
+at GetLateService.connectBlueskyWithCredentials (file:///home/runner/workspace/dist/index.js:5308:25)
+2025-12-03 10:39:44.33
+5dcfb1f1
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-03 10:39:44.33
+5dcfb1f1
+User
+[Social] Error connecting Bluesky: Error: Failed to connect Bluesky: 400 - {"error":"Missing state"}
+2025-12-03 10:39:44.33
+5dcfb1f1
+User
+3:39:44 PM [express] POST /api/social/accounts/connect-bluesky 500 in 1211ms :: {"message":"Failed t…

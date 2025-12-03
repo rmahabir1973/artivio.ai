@@ -311,8 +311,9 @@ class GetLateService {
     const cleanIdentifier = identifier.startsWith('@') ? identifier.slice(1) : identifier;
     console.log(`[GetLate] Cleaned identifier: ${cleanIdentifier}`);
     
-    // State must be in format "{userId}_{profileId}" per GetLate docs
-    const state = `${userId}_${profileId}`;
+    // State must be in format "artivio_{userId}-{profileId}" per GetLate docs
+    // Example: "artivio_49729939-692de851363442076b252193"
+    const state = `artivio_${userId}-${profileId}`;
     console.log(`[GetLate] State: ${state}`);
     
     // Try multiple approaches - state format is critical
