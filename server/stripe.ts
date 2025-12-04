@@ -160,11 +160,12 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
   // Fetch subscription BEFORE transaction (external API call)
   console.log('[Stripe Webhook] Fetching subscription from Stripe:', subscriptionId);
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subData = subscription as any;
   console.log('[Stripe Webhook] Stripe subscription retrieved:', {
     id: subscription.id,
     status: subscription.status,
-    currentPeriodStart: subscription.current_period_start,
-    currentPeriodEnd: subscription.current_period_end,
+    currentPeriodStart: subData.current_period_start,
+    currentPeriodEnd: subData.current_period_end,
   });
 
   // Execute ALL mutations in a single transaction for idempotency
@@ -177,9 +178,7 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
         eventId,
         eventType: 'checkout.session.completed',
         objectId: subscriptionId,
-        customerId,
-        metadata: JSON.stringify(session.metadata),
-        createdAt: new Date(),
+        metadata: JSON.stringify({ ...session.metadata, customerId }),
       })
       .onConflictDoNothing()
       .returning();
@@ -208,8 +207,8 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
         stripeSubscriptionId: subscriptionId,
         stripeCustomerId: customerId,
         status: 'active',
-        currentPeriodStart: new Date((subscription.current_period_start as any) * 1000),
-        currentPeriodEnd: new Date((subscription.current_period_end as any) * 1000),
+        currentPeriodStart: new Date(subData.current_period_start * 1000),
+        currentPeriodEnd: new Date(subData.current_period_end * 1000),
         cancelAtPeriodEnd: false,
         creditsGrantedThisPeriod: plan.creditsPerMonth,
       })
@@ -220,8 +219,8 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
           stripeSubscriptionId: subscriptionId,
           stripeCustomerId: customerId,
           status: 'active',
-          currentPeriodStart: new Date((subscription.current_period_start as any) * 1000),
-          currentPeriodEnd: new Date((subscription.current_period_end as any) * 1000),
+          currentPeriodStart: new Date(subData.current_period_start * 1000),
+          currentPeriodEnd: new Date(subData.current_period_end * 1000),
           cancelAtPeriodEnd: false,
           creditsGrantedThisPeriod: plan.creditsPerMonth,
           updatedAt: new Date(),
@@ -290,9 +289,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
         eventId,
         eventType: 'invoice.paid',
         objectId: subscriptionId,
-        customerId: subscription.customer as string,
-        metadata: JSON.stringify({ billing_reason: invoice.billing_reason }),
-        createdAt: new Date(),
+        metadata: JSON.stringify({ billing_reason: invoice.billing_reason, customerId: subscription.customer }),
       })
       .onConflictDoNothing()
       .returning();
