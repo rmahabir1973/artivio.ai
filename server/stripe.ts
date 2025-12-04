@@ -161,11 +161,34 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
   console.log('[Stripe Webhook] Fetching subscription from Stripe:', subscriptionId);
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const subData = subscription as any;
+  
+  // Log ALL subscription fields to debug
+  console.log('[Stripe Webhook] Raw subscription object keys:', Object.keys(subData));
   console.log('[Stripe Webhook] Stripe subscription retrieved:', {
     id: subscription.id,
     status: subscription.status,
     currentPeriodStart: subData.current_period_start,
     currentPeriodEnd: subData.current_period_end,
+    // Also check snake_case alternatives
+    current_period_start_type: typeof subData.current_period_start,
+    current_period_end_type: typeof subData.current_period_end,
+  });
+  
+  // Validate period timestamps before using them
+  const periodStart = subData.current_period_start;
+  const periodEnd = subData.current_period_end;
+  
+  if (typeof periodStart !== 'number' || typeof periodEnd !== 'number') {
+    console.error('[Stripe Webhook] ❌ Invalid period timestamps:', { periodStart, periodEnd });
+    throw new Error(`Invalid subscription period timestamps: start=${periodStart}, end=${periodEnd}`);
+  }
+  
+  const currentPeriodStartDate = new Date(periodStart * 1000);
+  const currentPeriodEndDate = new Date(periodEnd * 1000);
+  
+  console.log('[Stripe Webhook] Converted dates:', {
+    currentPeriodStartDate: currentPeriodStartDate.toISOString(),
+    currentPeriodEndDate: currentPeriodEndDate.toISOString(),
   });
 
   // Execute ALL mutations in a single transaction for idempotency
@@ -207,8 +230,8 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
         stripeSubscriptionId: subscriptionId,
         stripeCustomerId: customerId,
         status: 'active',
-        currentPeriodStart: new Date(subData.current_period_start * 1000),
-        currentPeriodEnd: new Date(subData.current_period_end * 1000),
+        currentPeriodStart: currentPeriodStartDate,
+        currentPeriodEnd: currentPeriodEndDate,
         cancelAtPeriodEnd: false,
         creditsGrantedThisPeriod: plan.creditsPerMonth,
       })
@@ -219,8 +242,8 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
           stripeSubscriptionId: subscriptionId,
           stripeCustomerId: customerId,
           status: 'active',
-          currentPeriodStart: new Date(subData.current_period_start * 1000),
-          currentPeriodEnd: new Date(subData.current_period_end * 1000),
+          currentPeriodStart: currentPeriodStartDate,
+          currentPeriodEnd: currentPeriodEndDate,
           cancelAtPeriodEnd: false,
           creditsGrantedThisPeriod: plan.creditsPerMonth,
           updatedAt: new Date(),
@@ -270,6 +293,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
 
   // Fetch subscription BEFORE transaction (external API call)
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subData = subscription as any;
   const userId = subscription.metadata?.userId;
   const planId = subscription.metadata?.planId;
 
@@ -277,6 +301,18 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
     console.error('[Stripe Webhook] Missing userId or planId in subscription metadata');
     return;
   }
+
+  // Validate period timestamps
+  const periodStart = subData.current_period_start;
+  const periodEnd = subData.current_period_end;
+  
+  if (typeof periodStart !== 'number' || typeof periodEnd !== 'number') {
+    console.error('[Stripe Webhook] ❌ Invalid period timestamps in invoice.paid:', { periodStart, periodEnd });
+    throw new Error(`Invalid subscription period timestamps: start=${periodStart}, end=${periodEnd}`);
+  }
+  
+  const currentPeriodStartDate = new Date(periodStart * 1000);
+  const currentPeriodEndDate = new Date(periodEnd * 1000);
 
   const isRenewal = invoice.billing_reason === 'subscription_cycle';
 
@@ -314,10 +350,9 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
 
     if (isRenewal) {
       // Check if billing period has changed (new subscription period)
-      const newPeriodStart = new Date((subscription as any).current_period_start * 1000);
       const periodHasChanged = !existingSub || 
         !existingSub.currentPeriodStart ||
-        existingSub.currentPeriodStart.getTime() !== newPeriodStart.getTime();
+        existingSub.currentPeriodStart.getTime() !== currentPeriodStartDate.getTime();
 
       // Reset creditsGrantedThisPeriod if we're in a new billing period
       const creditsGrantedThisPeriod = periodHasChanged ? 0 : (existingSub?.creditsGrantedThisPeriod || 0);
@@ -335,9 +370,9 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
             stripeSubscriptionId: subscriptionId,
             stripeCustomerId: subscription.customer as string,
             status: 'active',
-            currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-            currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-            cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+            currentPeriodStart: currentPeriodStartDate,
+            currentPeriodEnd: currentPeriodEndDate,
+            cancelAtPeriodEnd: subData.cancel_at_period_end,
             creditsGrantedThisPeriod: plan.creditsPerMonth,
           })
           .onConflictDoUpdate({
@@ -346,9 +381,9 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
               planId,
               stripeSubscriptionId: subscriptionId,
               status: 'active',
-              currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-              currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-              cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+              currentPeriodStart: currentPeriodStartDate,
+              currentPeriodEnd: currentPeriodEndDate,
+              cancelAtPeriodEnd: subData.cancel_at_period_end,
               creditsGrantedThisPeriod: plan.creditsPerMonth,
               updatedAt: new Date(),
             },
@@ -377,9 +412,9 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
           stripeSubscriptionId: subscriptionId,
           stripeCustomerId: subscription.customer as string,
           status: 'active',
-          currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-          currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+          currentPeriodStart: currentPeriodStartDate,
+          currentPeriodEnd: currentPeriodEndDate,
+          cancelAtPeriodEnd: subData.cancel_at_period_end,
           creditsGrantedThisPeriod: existingSub?.creditsGrantedThisPeriod || 0,
         })
         .onConflictDoUpdate({
@@ -388,9 +423,9 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
             planId,
             stripeSubscriptionId: subscriptionId,
             status: 'active',
-            currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-            currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-            cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+            currentPeriodStart: currentPeriodStartDate,
+            currentPeriodEnd: currentPeriodEndDate,
+            cancelAtPeriodEnd: subData.cancel_at_period_end,
             updatedAt: new Date(),
           },
         });
@@ -430,6 +465,7 @@ export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 export async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log('[Stripe Webhook] Processing customer.subscription.updated', subscription.id);
 
+  const subData = subscription as any;
   const userId = subscription.metadata?.userId;
   const oldPlanId = subscription.metadata?.planId;
 
@@ -437,6 +473,18 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
     console.error('[Stripe Webhook] Missing userId in subscription metadata');
     return;
   }
+
+  // Validate period timestamps
+  const periodStart = subData.current_period_start;
+  const periodEnd = subData.current_period_end;
+  
+  if (typeof periodStart !== 'number' || typeof periodEnd !== 'number') {
+    console.error('[Stripe Webhook] ❌ Invalid period timestamps in subscription.updated:', { periodStart, periodEnd });
+    throw new Error(`Invalid subscription period timestamps: start=${periodStart}, end=${periodEnd}`);
+  }
+  
+  const currentPeriodStartDate = new Date(periodStart * 1000);
+  const currentPeriodEndDate = new Date(periodEnd * 1000);
 
   // Get the current price from Stripe subscription
   const currentPriceId = subscription.items?.data?.[0]?.price?.id;
@@ -512,10 +560,10 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
       ...existingSubscription,
       planId: newPlan?.id || existingSubscription.planId,
       status: subscription.status as any,
-      currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-      currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-      cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
-      canceledAt: (subscription as any).canceled_at ? new Date((subscription as any).canceled_at * 1000) : null,
+      currentPeriodStart: currentPeriodStartDate,
+      currentPeriodEnd: currentPeriodEndDate,
+      cancelAtPeriodEnd: subData.cancel_at_period_end,
+      canceledAt: subData.canceled_at ? new Date(subData.canceled_at * 1000) : null,
       creditsGrantedThisPeriod: newPlan?.creditsPerMonth || existingSubscription.creditsGrantedThisPeriod,
     });
 

@@ -1,0 +1,124 @@
+2025-12-03 22:40:59.96
+86e40b93
+User
+}
+2025-12-03 22:40:59.96
+86e40b93
+User
+[Stripe Checkout] Creating session for plan: {
+2025-12-03 22:40:59.96
+86e40b93
+User
+stripePriceId: 'price_1SXC65KvkQlROMzfKMV2iETR'
+2025-12-03 22:40:59.96
+86e40b93
+User
+planId: '0c21618f-8cd7-433a-ab88-9dfa62e52341',
+2025-12-03 22:41:00.34
+86e40b93
+User
+[Stripe Checkout] Successfully retrieved price from Stripe: price_1SXC65KvkQlROMzfKMV2iETR
+2025-12-03 22:41:00.73
+86e40b93
+User
+3:41:00 AM [express] POST /api/billing/checkout 200 in 867ms :: {"url":"https://checkout.stripe.com/…
+2025-12-03 22:41:33.51
+86e40b93
+User
+[Stripe Webhook] Received request - body is Buffer: true, length: 5909 bytes
+2025-12-03 22:41:33.51
+86e40b93
+User
+[Stripe Webhook] Unhandled event type: customer.subscription.created
+2025-12-03 22:41:33.51
+86e40b93
+User
+[Stripe Webhook] ✓ Signature verified! Event: customer.subscription.created
+2025-12-03 22:41:36.84
+dfac696f
+System
+system: received signal terminated
+2025-12-03 22:41:39.04
+86e40b93
+User
+[Stripe Webhook] Received request - body is Buffer: true, length: 6427 bytes
+2025-12-03 22:41:39.04
+86e40b93
+User
+[Stripe Webhook] ✓ Signature verified! Event: invoice.payment_succeeded
+2025-12-03 22:41:39.04
+86e40b93
+User
+[Stripe Webhook] Unhandled event type: invoice.payment_succeeded
+2025-12-03 22:41:42.32
+86e40b93
+User
+[Stripe Webhook] Received request - body is Buffer: true, length: 2149 bytes
+2025-12-03 22:41:42.32
+86e40b93
+User
+[Stripe Webhook] Unhandled event type: payment_intent.succeeded
+2025-12-03 22:41:42.32
+86e40b93
+User
+[Stripe Webhook] ✓ Signature verified! Event: payment_intent.succeeded
+2025-12-03 22:41:42.59
+86e40b93
+User
+[Stripe Webhook] ✓ Signature verified! Event: customer.subscription.created
+2025-12-03 22:41:42.59
+86e40b93
+User
+[Stripe Webhook] Received request - body is Buffer: true, length: 5864 bytes
+2025-12-03 22:41:42.59
+86e40b93
+User
+[Stripe Webhook] Unhandled event type: customer.subscription.created
+2025-12-03 22:41:42.89
+86e40b93
+User
+[Stripe Webhook] Received request - body is Buffer: true, length: 5831 bytes
+2025-12-03 22:41:42.89
+86e40b93
+User
+[Stripe Webhook] ✓ Signature verified! Event: invoice.paid
+2025-12-03 22:41:42.90
+86e40b93
+User
+[Stripe Webhook] Invoice not for subscription, recording event only
+2025-12-03 22:41:42.90
+86e40b93
+User
+[Stripe Webhook] Processing invoice.paid in_1SaTQEKvkQlROMzfG5Q75bnF
+2025-12-03 22:41:42.99
+86e40b93
+User
+[Stripe Webhook] Received request - body is Buffer: true, length: 3937 bytes
+2025-12-03 22:41:42.99
+86e40b93
+User
+planId: '0c21618f-8cd7-433a-ab88-9dfa62e52341'
+2025-12-03 22:41:42.99
+86e40b93
+User
+[Stripe Webhook] Fetching subscription from Stripe: sub_1SaTQGKvkQlROMzfwdcdTM0V
+2025-12-03 22:41:42.99
+86e40b93
+User
+[Stripe Webhook] → Routing to main subscription handler
+2025-12-03 22:41:42.99
+86e40b93
+User
+planId: '0c21618f-8cd7-433a-ab88-9dfa62e52341',
+2025-12-03 22:41:42.99
+86e40b93
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 22:41:42.99
+86e40b93
+User
+stripePriceId: 'price_1SXC65KvkQlROMzfKMV2iETR',
+2025-12-03 22:41:42.99
+86e40b93
+User
+}
