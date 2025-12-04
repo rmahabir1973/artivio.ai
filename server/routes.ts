@@ -73,6 +73,9 @@ import {
   handleSocialPosterCheckout,
   handleSocialPosterSubscriptionDeleted,
   isSocialPosterSubscription,
+  createBoostEmbeddedCheckout,
+  handleBoostCheckout,
+  isBoostProduct,
   stripe,
 } from "./stripe";
 import { getLateService } from "./getLate";
@@ -8131,6 +8134,9 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
             // Check if this is a Social Poster add-on checkout
             if (session.metadata?.productType === 'social_poster_addon') {
               await handleSocialPosterCheckout(session, event.id);
+            } else if (isBoostProduct(session)) {
+              // Handle Credit Boost one-time purchase
+              await handleBoostCheckout(session, event.id);
             } else {
               await handleCheckoutCompleted(session, event.id);
             }
@@ -8392,6 +8398,51 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       res.json({ clientSecret, sessionId });
     } catch (error: any) {
       console.error('[Billing] Social Poster embedded checkout error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Embedded checkout for Credit Boost (one-time purchase)
+  app.post('/api/stripe/boost-embedded-checkout', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const baseUrl = getBaseUrl();
+
+      const { clientSecret, sessionId } = await createBoostEmbeddedCheckout({
+        userId: user.id,
+        userEmail: user.email || '',
+        returnUrl: `${baseUrl}/dashboard?boost=success&session_id={CHECKOUT_SESSION_ID}`,
+      });
+
+      res.json({ clientSecret, sessionId });
+    } catch (error: any) {
+      console.error('[Billing] Credit Boost embedded checkout error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get boost settings (public, for displaying in UI)
+  app.get('/api/boost-settings', requireJWT, async (req: any, res) => {
+    try {
+      const economics = await storage.getPlanEconomics();
+      
+      if (!economics?.boostEnabled) {
+        return res.json({ enabled: false });
+      }
+
+      res.json({
+        enabled: true,
+        credits: economics.boostCredits || 300,
+        priceUsd: economics.boostPriceUsd || 1500,
+      });
+    } catch (error: any) {
+      console.error('[Boost] Error fetching boost settings:', error);
       res.status(500).json({ error: error.message });
     }
   });

@@ -784,3 +784,107 @@ export function isSocialPosterSubscription(subscription: Stripe.Subscription): b
     item.price?.id === SOCIAL_POSTER_PRICE_ID
   );
 }
+
+// =====================================================
+// CREDIT BOOST (One-time purchase)
+// =====================================================
+
+export async function createBoostEmbeddedCheckout(params: {
+  userId: string;
+  userEmail: string;
+  returnUrl: string;
+}): Promise<{ clientSecret: string; sessionId: string }> {
+  const { userId, userEmail, returnUrl } = params;
+
+  // Get boost settings from plan economics
+  const economics = await storage.getPlanEconomics();
+  if (!economics?.boostEnabled) {
+    throw new Error('Credit boost is not currently available');
+  }
+
+  if (!economics.boostStripePriceId) {
+    throw new Error('Credit boost is not configured in Stripe');
+  }
+
+  const user = await storage.getUser(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  let customerId = user.stripeCustomerId || undefined;
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: userEmail,
+      metadata: { userId },
+    });
+    customerId = customer.id;
+    await storage.updateUser(userId, { stripeCustomerId: customerId });
+  }
+
+  console.log('[Stripe Embedded Checkout] Creating Credit Boost session for user:', userId);
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'payment',
+    ui_mode: 'embedded',
+    line_items: [{
+      price: economics.boostStripePriceId,
+      quantity: 1,
+    }],
+    return_url: returnUrl,
+    redirect_on_completion: 'if_required',
+    metadata: {
+      userId,
+      productType: 'credit_boost',
+      boostCredits: String(economics.boostCredits || 300),
+    },
+  });
+
+  if (!session.client_secret) {
+    throw new Error('Failed to create embedded checkout session');
+  }
+
+  return {
+    clientSecret: session.client_secret,
+    sessionId: session.id,
+  };
+}
+
+export async function handleBoostCheckout(session: Stripe.Checkout.Session, eventId: string) {
+  console.log('[Stripe Webhook] Processing Credit Boost checkout', session.id);
+
+  const userId = session.metadata?.userId;
+  const boostCredits = parseInt(session.metadata?.boostCredits || '0', 10);
+
+  if (!userId) {
+    console.error('[Stripe Webhook] Missing userId in Credit Boost checkout metadata');
+    return;
+  }
+
+  if (boostCredits <= 0) {
+    console.error('[Stripe Webhook] Invalid boostCredits in metadata:', boostCredits);
+    return;
+  }
+
+  const user = await storage.getUser(userId);
+  if (!user) {
+    console.error('[Stripe Webhook] User not found for Credit Boost checkout:', userId);
+    return;
+  }
+
+  // Grant credits to user
+  const currentCredits = user.credits || 0;
+  const newCredits = currentCredits + boostCredits;
+
+  await db
+    .update(users)
+    .set({ credits: newCredits })
+    .where(eq(users.id, userId));
+
+  console.log(`[Stripe Webhook] ✅ Credit Boost completed for user ${userId}: +${boostCredits} credits (${currentCredits} → ${newCredits})`);
+}
+
+export function isBoostProduct(session: Stripe.Checkout.Session): boolean {
+  return session.metadata?.productType === 'credit_boost';
+}
