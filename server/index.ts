@@ -183,13 +183,34 @@ declare module 'http' {
     rawBody: unknown
   }
 }
-app.use(express.json({
+
+// Stripe webhook requires raw body for signature verification
+// Skip JSON/urlencoded parsing for webhook route - let the route's express.raw() handle it
+const jsonParser = express.json({
   limit: '50mb', // Allow large base64 payloads for image editing (10 images max, properly validated)
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
-}));
-app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+});
+
+const urlencodedParser = express.urlencoded({ extended: false, limit: '50mb' });
+
+// Conditionally apply body parsers - skip for Stripe webhook
+app.use((req, res, next) => {
+  // Skip body parsing for Stripe webhook - it needs the raw body for signature verification
+  if (req.originalUrl === '/api/webhooks/stripe') {
+    return next();
+  }
+  jsonParser(req, res, next);
+});
+
+app.use((req, res, next) => {
+  // Skip body parsing for Stripe webhook
+  if (req.originalUrl === '/api/webhooks/stripe') {
+    return next();
+  }
+  urlencodedParser(req, res, next);
+});
 
 // Configure cookie-parser with signing secret for secure plan selection
 app.use(cookieParser(process.env.SESSION_SECRET));

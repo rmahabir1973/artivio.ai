@@ -1,0 +1,132 @@
+2025-12-03 21:11:53.72
+0876c84e
+User
+2:11:53 AM [express] GET /api/announcements/active 304 in 508ms :: []
+2025-12-03 21:11:56.34
+0876c84e
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '2d208b4c' }
+2025-12-03 21:11:56.43
+0876c84e
+User
+tokenId: '2d208b4c-48b1-4d50-98ec-4e97934f6716'
+2025-12-03 21:11:56.43
+0876c84e
+User
+[JWT] Refresh token validated successfully {
+2025-12-03 21:11:56.43
+0876c84e
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 21:11:56.43
+0876c84e
+User
+}
+2025-12-03 21:11:56.45
+0876c84e
+User
+}
+2025-12-03 21:11:56.45
+0876c84e
+User
+isAdmin: false
+2025-12-03 21:11:56.45
+0876c84e
+User
+email: 'ryan@mahabir.pro',
+2025-12-03 21:11:56.45
+0876c84e
+User
+tokenId: '2d208b4c',
+2025-12-03 21:11:56.45
+0876c84e
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-03 21:11:56.45
+0876c84e
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 21:11:56.45
+0876c84e
+User
+2:11:56 AM [express] GET /api/auth/bootstrap 200 in 111ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR…
+2025-12-03 21:11:56.59
+0876c84e
+User
+2:11:56 AM [express] GET /api/welcome 200 in 35ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-03 21:11:56.61
+0876c84e
+User
+2:11:56 AM [express] GET /api/subscription 200 in 4ms
+2025-12-03 21:11:56.63
+0876c84e
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 21:11:56.63
+0876c84e
+User
+}
+2025-12-03 21:11:56.63
+0876c84e
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 21:11:56.63
+0876c84e
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 21:11:56.66
+0876c84e
+User
+}
+2025-12-03 21:11:56.66
+0876c84e
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 21:11:56.66
+0876c84e
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 21:11:56.66
+0876c84e
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 21:11:56.66
+0876c84e
+User
+2:11:56 AM [express] GET /api/announcements/active 200 in 105ms :: []
+2025-12-03 21:11:56.67
+0876c84e
+User
+2:11:56 AM [express] GET /api/subscriptions/current 200 in 58ms :: {"id":"9a38ed3c-0396-4ba4-8559-e7…
+2025-12-03 21:11:56.67
+0876c84e
+User
+"displayName": "7 Day Free Trial",
+2025-12-03 21:11:56.67
+0876c84e
+User
+"annualPrice": 0,
+2025-12-03 21:11:56.67
+0876c84e
+User
+"No credit card required"
+2025-12-03 21:11:56.67
+0876c84e
+User
+"stripeProductId": null,
+2025-12-03 21:11:56.67
+0876c84e
+User
+],
+2025-12-03 21:11:56.67
+0876c84e
+User
+"name": "free",
+2025-12-03 21:11:56.67
+0876c84e
+User
+"Generate videos, images, and music",
+2025-12-03 21:11:56.67
+0876c84e
+User
+"Access to all AI models and features",
