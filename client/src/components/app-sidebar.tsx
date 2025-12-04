@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -14,6 +15,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { EmbeddedCheckoutModal } from "@/components/embedded-checkout-modal";
 import {
   Home,
   Video,
@@ -201,12 +203,42 @@ const menuSections: MenuSection[] = [
   },
 ];
 
+interface BoostSettings {
+  enabled: boolean;
+  credits?: number;
+  priceUsd?: number;
+}
+
+interface SubscriptionData {
+  plan?: {
+    creditsPerMonth?: number;
+  };
+}
+
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const isAdmin = (user as any)?.isAdmin;
+  const userCredits = (user as any)?.credits ?? 0;
   
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [showBoostCheckout, setShowBoostCheckout] = useState(false);
+  
+  const { data: boostSettings } = useQuery<BoostSettings>({
+    queryKey: ["/api/boost-settings"],
+    enabled: !!user,
+    staleTime: 60000,
+  });
+  
+  const { data: subscription } = useQuery<SubscriptionData>({
+    queryKey: ["/api/subscription"],
+    enabled: !!user,
+    staleTime: 60000,
+  });
+  
+  const planCredits = subscription?.plan?.creditsPerMonth ?? 0;
+  const creditThreshold = planCredits * 0.2;
+  const showBoostLink = boostSettings?.enabled && planCredits > 0 && userCredits <= creditThreshold;
   
   const toggleSection = (label: string) => {
     setCollapsedSections(prev => {
@@ -263,8 +295,30 @@ export function AppSidebar() {
               Upgrade Plan
             </Button>
           </Link>
+          {showBoostLink && (
+            <Button 
+              size="sm"
+              variant="outline"
+              className="w-full text-sm font-medium border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-500/50"
+              onClick={() => setShowBoostCheckout(true)}
+              data-testid="sidebar-boost"
+            >
+              <Zap className="h-4 w-4 mr-1.5" />
+              Need a Boost? +{boostSettings?.credits} credits
+            </Button>
+          )}
         </div>
       </SidebarHeader>
+      
+      <EmbeddedCheckoutModal
+        open={showBoostCheckout}
+        onOpenChange={setShowBoostCheckout}
+        title="Credit Boost"
+        checkoutEndpoint="/api/stripe/boost-embedded-checkout"
+        onComplete={() => {
+          window.location.reload();
+        }}
+      />
 
       <SidebarContent className="px-2">
         {menuSections.map((section) => {
