@@ -519,12 +519,12 @@ function AppContent() {
 
                   <Link href="/pricing">
                     <Button 
-                      variant={location === "/pricing" ? "secondary" : "ghost"} 
                       size="sm" 
-                      className="text-sm font-medium"
-                      data-testid="nav-pricing"
+                      className="text-sm font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 animate-pulse hover:animate-none"
+                      data-testid="nav-upgrade"
                     >
-                      Pricing
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      Upgrade
                     </Button>
                   </Link>
                   

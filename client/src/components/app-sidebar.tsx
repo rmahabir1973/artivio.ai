@@ -13,6 +13,7 @@ import {
   SidebarFooter,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import {
   Home,
   Video,
@@ -250,8 +251,18 @@ export function AppSidebar() {
             </span>
           </div>
         </Link>
-        <div className="px-3 pb-3">
+        <div className="px-3 pb-3 space-y-2">
           <CreditDisplay />
+          <Link href="/pricing">
+            <Button 
+              size="sm" 
+              className="w-full text-sm font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300"
+              data-testid="sidebar-upgrade"
+            >
+              <Sparkles className="h-4 w-4 mr-1.5" />
+              Upgrade Plan
+            </Button>
+          </Link>
         </div>
       </SidebarHeader>
 
