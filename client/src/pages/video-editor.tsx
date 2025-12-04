@@ -21,6 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { usePricing } from "@/hooks/use-pricing";
 import { fetchWithAuth, apiRequest, queryClient } from "@/lib/queryClient";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -42,6 +43,7 @@ import {
   Video,
   Clock,
   Sparkles,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -231,7 +233,10 @@ function VideoCardSkeleton() {
 export default function VideoEditor() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { getModelCost } = usePricing();
   const isMobile = useIsMobile();
+  
+  const baseCreditCost = getModelCost('video-combiner', 150);
 
   const [step, setStep] = useState<WizardStep>(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -550,6 +555,11 @@ export default function VideoEditor() {
                 </p>
               </div>
             </div>
+            
+            <Badge variant="secondary" className="flex items-center gap-1.5" data-testid="badge-credit-cost">
+              <Coins className="h-3.5 w-3.5" />
+              <span>{baseCreditCost} credits</span>
+            </Badge>
 
             <div className="flex items-center gap-2">
               {step > 1 && (
@@ -831,6 +841,11 @@ export default function VideoEditor() {
                           <p className="text-muted-foreground">
                             Your video will combine {orderedClips.length} clips in the order you arranged them.
                           </p>
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-muted/50 rounded-lg" data-testid="export-credit-cost">
+                          <Coins className="h-5 w-5 text-primary" />
+                          <span className="font-medium">Cost: {baseCreditCost} credits</span>
                         </div>
 
                         <ScrollArea className="max-h-48 w-full border rounded-lg">
