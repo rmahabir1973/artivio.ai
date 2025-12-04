@@ -10,11 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift, Globe, Clock, MousePointer, Timer, MapPin, Laptop, Smartphone, Monitor, RefreshCw } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift, Globe, Clock, MousePointer, Timer, MapPin, Laptop, Smartphone, Monitor, RefreshCw, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -925,6 +926,65 @@ export default function Admin() {
     enabled: isAuthenticated && (user as any)?.isAdmin,
   });
 
+  interface BoostSettings {
+    boostEnabled: boolean;
+    boostCredits: number;
+    boostPriceUsd: number;
+    boostStripeProductId: string | null;
+    boostStripePriceId: string | null;
+  }
+
+  const { data: boostSettings, isLoading: boostSettingsLoading } = useQuery<BoostSettings>({
+    queryKey: ["/api/admin/boost-settings"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const [boostFormData, setBoostFormData] = useState<BoostSettings>({
+    boostEnabled: false,
+    boostCredits: 300,
+    boostPriceUsd: 1500,
+    boostStripeProductId: null,
+    boostStripePriceId: null,
+  });
+
+  useEffect(() => {
+    if (boostSettings) {
+      setBoostFormData({
+        boostEnabled: boostSettings.boostEnabled ?? false,
+        boostCredits: boostSettings.boostCredits ?? 300,
+        boostPriceUsd: boostSettings.boostPriceUsd ?? 1500,
+        boostStripeProductId: boostSettings.boostStripeProductId ?? null,
+        boostStripePriceId: boostSettings.boostStripePriceId ?? null,
+      });
+    }
+  }, [boostSettings]);
+
+  const saveBoostSettingsMutation = useMutation({
+    mutationFn: async (data: Partial<BoostSettings>) => {
+      return apiRequest("/api/admin/boost-settings", {
+        method: "PATCH",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/boost-settings"] });
+      toast({
+        title: "Success",
+        description: "Boost settings saved successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save boost settings",
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (homePageContent && !editingHomePage) {
       setHomePageFormData({
@@ -1483,6 +1543,10 @@ export default function Admin() {
           <TabsTrigger value="plans" data-testid="tab-plans">
             <TrendingUp className="h-4 w-4 mr-2" />
             Subscription Plans
+          </TabsTrigger>
+          <TabsTrigger value="boost" data-testid="tab-boost">
+            <Zap className="h-4 w-4 mr-2" />
+            Credit Boost
           </TabsTrigger>
           <TabsTrigger value="content" data-testid="tab-content">
             <FileText className="h-4 w-4 mr-2" />
@@ -2322,6 +2386,132 @@ export default function Admin() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="boost">
+          <Card>
+            <CardHeader>
+              <CardTitle>Credit Boost Settings</CardTitle>
+              <CardDescription>
+                Configure one-time credit boost purchases. Boost packs are designed for users who need a quick credit top-up at premium pricing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {boostSettingsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="boostEnabled" className="text-base">Enable Credit Boost</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Allow users to purchase one-time credit boost packs
+                      </p>
+                    </div>
+                    <Switch
+                      id="boostEnabled"
+                      checked={boostFormData.boostEnabled}
+                      onCheckedChange={(checked) => setBoostFormData({ ...boostFormData, boostEnabled: checked })}
+                      data-testid="switch-boost-enabled"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="boostCredits">Credits per Boost Pack</Label>
+                      <Input
+                        id="boostCredits"
+                        type="number"
+                        min={1}
+                        value={boostFormData.boostCredits}
+                        onChange={(e) => setBoostFormData({ ...boostFormData, boostCredits: parseInt(e.target.value) || 0 })}
+                        placeholder="300"
+                        data-testid="input-boost-credits"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Number of credits included in each boost pack
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="boostPrice">Price (USD)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input
+                          id="boostPrice"
+                          type="number"
+                          min={1}
+                          step={0.01}
+                          value={(boostFormData.boostPriceUsd / 100).toFixed(2)}
+                          onChange={(e) => setBoostFormData({ ...boostFormData, boostPriceUsd: Math.round(parseFloat(e.target.value) * 100) || 0 })}
+                          className="pl-7"
+                          placeholder="15.00"
+                          data-testid="input-boost-price"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Price displayed to users: ${(boostFormData.boostPriceUsd / 100).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="boostStripeProductId">Stripe Product ID</Label>
+                      <Input
+                        id="boostStripeProductId"
+                        type="text"
+                        value={boostFormData.boostStripeProductId || ""}
+                        onChange={(e) => setBoostFormData({ ...boostFormData, boostStripeProductId: e.target.value || null })}
+                        placeholder="prod_..."
+                        data-testid="input-boost-stripe-product-id"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Stripe product identifier for the boost pack
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="boostStripePriceId">Stripe Price ID</Label>
+                      <Input
+                        id="boostStripePriceId"
+                        type="text"
+                        value={boostFormData.boostStripePriceId || ""}
+                        onChange={(e) => setBoostFormData({ ...boostFormData, boostStripePriceId: e.target.value || null })}
+                        placeholder="price_..."
+                        data-testid="input-boost-stripe-price-id"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Stripe price identifier for checkout
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => saveBoostSettingsMutation.mutate(boostFormData)}
+                      disabled={saveBoostSettingsMutation.isPending}
+                      data-testid="button-save-boost-settings"
+                    >
+                      {saveBoostSettingsMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Settings
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>

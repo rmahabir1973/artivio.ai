@@ -687,6 +687,11 @@ export class DatabaseStorage implements IStorage {
           kieCreditAmount: economics.kieCreditAmount ?? 10000,
           userCreditAmount: economics.userCreditAmount ?? 15000,
           profitMargin: economics.profitMargin ?? 50,
+          boostEnabled: economics.boostEnabled ?? false,
+          boostCredits: economics.boostCredits ?? 300,
+          boostPriceUsd: economics.boostPriceUsd ?? 1500,
+          boostStripeProductId: economics.boostStripeProductId ?? null,
+          boostStripePriceId: economics.boostStripePriceId ?? null,
         })
         .returning();
       return created;

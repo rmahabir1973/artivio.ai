@@ -6863,6 +6863,79 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // ========== CREDIT BOOST SETTINGS ROUTES ==========
+  
+  // Admin: Get boost settings (subset of plan economics)
+  app.get('/api/admin/boost-settings', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const economics = await storage.getPlanEconomics();
+      // Return boost-specific settings with defaults
+      if (!economics) {
+        return res.json({
+          boostEnabled: false,
+          boostCredits: 300,
+          boostPriceUsd: 1500,
+          boostStripeProductId: null,
+          boostStripePriceId: null,
+        });
+      }
+      
+      res.json({
+        boostEnabled: economics.boostEnabled ?? false,
+        boostCredits: economics.boostCredits ?? 300,
+        boostPriceUsd: economics.boostPriceUsd ?? 1500,
+        boostStripeProductId: economics.boostStripeProductId ?? null,
+        boostStripePriceId: economics.boostStripePriceId ?? null,
+      });
+    } catch (error) {
+      console.error('Error fetching boost settings:', error);
+      res.status(500).json({ message: "Failed to fetch boost settings" });
+    }
+  });
+
+  // Admin: Update boost settings (updates plan economics singleton)
+  app.patch('/api/admin/boost-settings', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Validate boost-specific fields
+      const boostSettingsSchema = z.object({
+        boostEnabled: z.boolean().optional(),
+        boostCredits: z.number().int().min(1).optional(),
+        boostPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
+        boostStripeProductId: z.string().optional().nullable(),
+        boostStripePriceId: z.string().optional().nullable(),
+      });
+      
+      const validatedData = boostSettingsSchema.parse(req.body);
+
+      const updated = await storage.upsertPlanEconomics(validatedData);
+      
+      res.json({
+        boostEnabled: updated.boostEnabled ?? false,
+        boostCredits: updated.boostCredits ?? 300,
+        boostPriceUsd: updated.boostPriceUsd ?? 1500,
+        boostStripeProductId: updated.boostStripeProductId ?? null,
+        boostStripePriceId: updated.boostStripePriceId ?? null,
+      });
+    } catch (error: any) {
+      console.error('Error updating boost settings:', error);
+      res.status(400).json({ message: 'Failed to update boost settings', error: error.message });
+    }
+  });
+
   // ========== SUBSCRIPTION PLAN ROUTES ==========
 
   // Admin: Get all subscription plans
