@@ -5,6 +5,9 @@
  * https://getlate.dev/docs
  */
 
+import { db } from './db';
+import { planEconomics } from '@shared/schema';
+
 const GETLATE_API_URL = 'https://getlate.dev/api/v1';
 const GETLATE_API_KEY = process.env.GETLATE_API_KEY;
 
@@ -594,6 +597,54 @@ class GetLateService {
 
 export const getLateService = new GetLateService();
 
-// Social Media Poster constants
+// Legacy Social Media Poster constants (fallbacks)
 export const SOCIAL_POSTER_PRODUCT_ID = 'prod_TWdKgoLE1kfn4o';
 export const SOCIAL_POSTER_PRICE_ID = 'price_1SZa3PKvkQlROMzf7X2POgZX';
+
+// Social Poster Config interface
+export interface SocialPosterConfig {
+  enabled: boolean;
+  monthlyPriceUsd: number;
+  annualPriceUsd: number;
+  monthlyStripeProductId: string | null;
+  monthlyStripePriceId: string | null;
+  annualStripeProductId: string | null;
+  annualStripePriceId: string | null;
+}
+
+// Default config (used as fallback)
+export const DEFAULT_SOCIAL_POSTER_CONFIG: SocialPosterConfig = {
+  enabled: true,
+  monthlyPriceUsd: 4000, // $40/month
+  annualPriceUsd: 24000, // $240/year ($20/month)
+  monthlyStripeProductId: SOCIAL_POSTER_PRODUCT_ID,
+  monthlyStripePriceId: SOCIAL_POSTER_PRICE_ID,
+  annualStripeProductId: null,
+  annualStripePriceId: null,
+};
+
+// Function to get Social Poster config from database
+export async function getSocialPosterConfig(): Promise<SocialPosterConfig> {
+  try {
+    const [economics] = await db.select().from(planEconomics).limit(1);
+    
+    if (!economics) {
+      console.log('[Social Poster] No plan_economics found, using defaults');
+      return DEFAULT_SOCIAL_POSTER_CONFIG;
+    }
+
+    return {
+      enabled: economics.socialPosterEnabled ?? true,
+      monthlyPriceUsd: economics.socialPosterMonthlyPriceUsd ?? 4000,
+      annualPriceUsd: economics.socialPosterAnnualPriceUsd ?? 24000,
+      monthlyStripeProductId: economics.socialPosterMonthlyStripePriceId ? 
+        (economics.socialPosterMonthlyStripeProductId || SOCIAL_POSTER_PRODUCT_ID) : SOCIAL_POSTER_PRODUCT_ID,
+      monthlyStripePriceId: economics.socialPosterMonthlyStripePriceId || SOCIAL_POSTER_PRICE_ID,
+      annualStripeProductId: economics.socialPosterAnnualStripeProductId || null,
+      annualStripePriceId: economics.socialPosterAnnualStripePriceId || null,
+    };
+  } catch (error) {
+    console.error('[Social Poster] Error fetching config:', error);
+    return DEFAULT_SOCIAL_POSTER_CONFIG;
+  }
+}
