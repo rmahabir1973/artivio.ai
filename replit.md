@@ -44,6 +44,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **InfiniteTalk Lip Sync**: Lip-synced videos from images and audio using Kie.ai.
 -   **Admin Panel**: Comprehensive user, API key, Stripe, and home page content management.
 -   **Subscription Plans**: Stripe-powered automated and manual admin assignments (Free Trial, Starter, Professional, Business).
+-   **Credit Boost**: One-time credit purchase for users running low on credits. Shows "Need a Boost?" button in sidebar when credits ≤ 20% of monthly plan credits. Configurable via Admin Panel → Credit Boost tab (enable/disable, credits amount, price in cents, Stripe product/price IDs). Uses embedded Stripe checkout with `mode: 'payment'`. Webhook grants credits on successful payment. Stored in `plan_economics` table (singleton).
 -   **Topaz Video Upscaler**: Standalone page for AI-powered video upscaling.
 -   **Social Media Hub**: AI Strategist (powered by GPT-4o-mini), Content Calendar, and Analytics Dashboard for 9 social platforms.
 -   **Social Media Poster Add-on**: $25/month subscription (Stripe Product: prod_TWdKgoLE1kfn4o, Price: price_1SZa3PKvkQlROMzf7X2POgZX) powered by GetLate.dev API for social posting. Supports 10 platforms (Instagram, TikTok, LinkedIn, YouTube, Facebook, X, Threads, Pinterest, Bluesky, Reddit). Uses platform invite flow for OAuth connections. All social endpoints gated behind `requireSocialPoster` middleware.
