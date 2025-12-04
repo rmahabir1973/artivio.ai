@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift, Globe, Clock, MousePointer, Timer, MapPin, Laptop, Smartphone, Monitor, RefreshCw, Zap } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift, Globe, Clock, MousePointer, Timer, MapPin, Laptop, Smartphone, Monitor, RefreshCw, Zap, Share } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -961,13 +961,7 @@ export default function Admin() {
 
   const saveBoostSettingsMutation = useMutation({
     mutationFn: async (data: Partial<BoostSettings>) => {
-      return apiRequest("/api/admin/boost-settings", {
-        method: "PATCH",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return apiRequest("PATCH", "/api/admin/boost-settings", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/boost-settings"] });
@@ -980,6 +974,69 @@ export default function Admin() {
       toast({
         title: "Error",
         description: error.message || "Failed to save boost settings",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Social Poster Settings
+  interface SocialPosterSettings {
+    socialPosterEnabled: boolean;
+    socialPosterHasAnnualPlan: boolean;
+    socialPosterMonthlyPriceUsd: number;
+    socialPosterAnnualPriceUsd: number;
+    socialPosterMonthlyStripeProductId: string | null;
+    socialPosterMonthlyStripePriceId: string | null;
+    socialPosterAnnualStripeProductId: string | null;
+    socialPosterAnnualStripePriceId: string | null;
+  }
+
+  const { data: socialPosterSettings, isLoading: socialPosterSettingsLoading } = useQuery<SocialPosterSettings>({
+    queryKey: ["/api/admin/social-poster-settings"],
+    enabled: isAuthenticated && (user as any)?.isAdmin,
+  });
+
+  const [socialPosterFormData, setSocialPosterFormData] = useState<SocialPosterSettings>({
+    socialPosterEnabled: true,
+    socialPosterHasAnnualPlan: false,
+    socialPosterMonthlyPriceUsd: 4000,
+    socialPosterAnnualPriceUsd: 24000,
+    socialPosterMonthlyStripeProductId: null,
+    socialPosterMonthlyStripePriceId: null,
+    socialPosterAnnualStripeProductId: null,
+    socialPosterAnnualStripePriceId: null,
+  });
+
+  useEffect(() => {
+    if (socialPosterSettings) {
+      setSocialPosterFormData({
+        socialPosterEnabled: socialPosterSettings.socialPosterEnabled ?? true,
+        socialPosterHasAnnualPlan: socialPosterSettings.socialPosterHasAnnualPlan ?? false,
+        socialPosterMonthlyPriceUsd: socialPosterSettings.socialPosterMonthlyPriceUsd ?? 4000,
+        socialPosterAnnualPriceUsd: socialPosterSettings.socialPosterAnnualPriceUsd ?? 24000,
+        socialPosterMonthlyStripeProductId: socialPosterSettings.socialPosterMonthlyStripeProductId ?? null,
+        socialPosterMonthlyStripePriceId: socialPosterSettings.socialPosterMonthlyStripePriceId ?? null,
+        socialPosterAnnualStripeProductId: socialPosterSettings.socialPosterAnnualStripeProductId ?? null,
+        socialPosterAnnualStripePriceId: socialPosterSettings.socialPosterAnnualStripePriceId ?? null,
+      });
+    }
+  }, [socialPosterSettings]);
+
+  const saveSocialPosterSettingsMutation = useMutation({
+    mutationFn: async (data: Partial<SocialPosterSettings>) => {
+      return apiRequest("PATCH", "/api/admin/social-poster-settings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/social-poster-settings"] });
+      toast({
+        title: "Success",
+        description: "Social Poster settings saved successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save Social Poster settings",
         variant: "destructive",
       });
     },
@@ -1547,6 +1604,10 @@ export default function Admin() {
           <TabsTrigger value="boost" data-testid="tab-boost">
             <Zap className="h-4 w-4 mr-2" />
             Credit Boost
+          </TabsTrigger>
+          <TabsTrigger value="social-poster" data-testid="tab-social-poster">
+            <Share className="h-4 w-4 mr-2" />
+            Social Poster
           </TabsTrigger>
           <TabsTrigger value="content" data-testid="tab-content">
             <FileText className="h-4 w-4 mr-2" />
@@ -2499,6 +2560,179 @@ export default function Admin() {
                       data-testid="button-save-boost-settings"
                     >
                       {saveBoostSettingsMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Settings
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="social-poster">
+          <Card>
+            <CardHeader>
+              <CardTitle>Social Media Poster Settings</CardTitle>
+              <CardDescription>
+                Configure the Social Media Poster add-on subscription. Users can subscribe monthly ($40/mo) or annually ($20/mo - 50% discount).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {socialPosterSettingsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="socialPosterEnabled" className="text-base">Enable Social Poster Add-on</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Allow users to purchase the Social Media Poster add-on
+                      </p>
+                    </div>
+                    <Switch
+                      id="socialPosterEnabled"
+                      checked={socialPosterFormData.socialPosterEnabled}
+                      onCheckedChange={(checked) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterEnabled: checked })}
+                      data-testid="switch-social-poster-enabled"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="socialPosterHasAnnualPlan" className="text-base">Enable Annual Plan Option</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Show annual billing option on the upgrade page (with discount)
+                      </p>
+                    </div>
+                    <Switch
+                      id="socialPosterHasAnnualPlan"
+                      checked={socialPosterFormData.socialPosterHasAnnualPlan}
+                      onCheckedChange={(checked) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterHasAnnualPlan: checked })}
+                      data-testid="switch-social-poster-has-annual-plan"
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Monthly Subscription</h4>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="socialPosterMonthlyPrice">Monthly Price (USD)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                          <Input
+                            id="socialPosterMonthlyPrice"
+                            type="number"
+                            min={1}
+                            step={0.01}
+                            value={(socialPosterFormData.socialPosterMonthlyPriceUsd / 100).toFixed(2)}
+                            onChange={(e) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterMonthlyPriceUsd: Math.round(parseFloat(e.target.value) * 100) || 0 })}
+                            className="pl-7"
+                            placeholder="40.00"
+                            data-testid="input-social-poster-monthly-price"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Displayed as ${(socialPosterFormData.socialPosterMonthlyPriceUsd / 100).toFixed(2)}/month
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="socialPosterMonthlyStripeProductId">Stripe Product ID (Monthly)</Label>
+                        <Input
+                          id="socialPosterMonthlyStripeProductId"
+                          type="text"
+                          value={socialPosterFormData.socialPosterMonthlyStripeProductId || ""}
+                          onChange={(e) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterMonthlyStripeProductId: e.target.value || null })}
+                          placeholder="prod_..."
+                          data-testid="input-social-poster-monthly-product-id"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="socialPosterMonthlyStripePriceId">Stripe Price ID (Monthly)</Label>
+                      <Input
+                        id="socialPosterMonthlyStripePriceId"
+                        type="text"
+                        value={socialPosterFormData.socialPosterMonthlyStripePriceId || ""}
+                        onChange={(e) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterMonthlyStripePriceId: e.target.value || null })}
+                        placeholder="price_..."
+                        data-testid="input-social-poster-monthly-price-id"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-medium">Annual Subscription</h4>
+                      <Badge variant="secondary" className="text-xs">50% OFF</Badge>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="socialPosterAnnualPrice">Annual Price (USD)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                          <Input
+                            id="socialPosterAnnualPrice"
+                            type="number"
+                            min={1}
+                            step={0.01}
+                            value={(socialPosterFormData.socialPosterAnnualPriceUsd / 100).toFixed(2)}
+                            onChange={(e) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterAnnualPriceUsd: Math.round(parseFloat(e.target.value) * 100) || 0 })}
+                            className="pl-7"
+                            placeholder="240.00"
+                            data-testid="input-social-poster-annual-price"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Displayed as ${((socialPosterFormData.socialPosterAnnualPriceUsd / 100) / 12).toFixed(2)}/month (billed annually at ${(socialPosterFormData.socialPosterAnnualPriceUsd / 100).toFixed(2)})
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="socialPosterAnnualStripeProductId">Stripe Product ID (Annual)</Label>
+                        <Input
+                          id="socialPosterAnnualStripeProductId"
+                          type="text"
+                          value={socialPosterFormData.socialPosterAnnualStripeProductId || ""}
+                          onChange={(e) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterAnnualStripeProductId: e.target.value || null })}
+                          placeholder="prod_..."
+                          data-testid="input-social-poster-annual-product-id"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="socialPosterAnnualStripePriceId">Stripe Price ID (Annual)</Label>
+                      <Input
+                        id="socialPosterAnnualStripePriceId"
+                        type="text"
+                        value={socialPosterFormData.socialPosterAnnualStripePriceId || ""}
+                        onChange={(e) => setSocialPosterFormData({ ...socialPosterFormData, socialPosterAnnualStripePriceId: e.target.value || null })}
+                        placeholder="price_..."
+                        data-testid="input-social-poster-annual-price-id"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => saveSocialPosterSettingsMutation.mutate(socialPosterFormData)}
+                      disabled={saveSocialPosterSettingsMutation.isPending}
+                      data-testid="button-save-social-poster-settings"
+                    >
+                      {saveSocialPosterSettingsMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Saving...

@@ -215,6 +215,7 @@ export const planEconomics = pgTable("plan_economics", {
   boostStripePriceId: varchar("boost_stripe_price_id"), // Stripe price ID
   // Social Media Poster add-on configuration
   socialPosterEnabled: boolean("social_poster_enabled").notNull().default(true), // Whether add-on is available
+  socialPosterHasAnnualPlan: boolean("social_poster_has_annual_plan").notNull().default(false), // Whether annual billing is available
   socialPosterMonthlyPriceUsd: integer("social_poster_monthly_price_usd").default(4000), // $40/month in cents
   socialPosterAnnualPriceUsd: integer("social_poster_annual_price_usd").default(24000), // $240/year in cents ($20/mo)
   socialPosterMonthlyStripeProductId: varchar("social_poster_monthly_stripe_product_id"),
@@ -244,6 +245,7 @@ export const updatePlanEconomicsSchema = z.object({
   boostStripePriceId: z.string().optional(),
   // Social Media Poster add-on fields
   socialPosterEnabled: z.boolean().optional(),
+  socialPosterHasAnnualPlan: z.boolean().optional(),
   socialPosterMonthlyPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
   socialPosterAnnualPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
   socialPosterMonthlyStripeProductId: z.string().optional(),

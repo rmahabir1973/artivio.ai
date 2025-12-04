@@ -690,22 +690,36 @@ export function verifyWebhookSignature(rawBody: Buffer, signature: string): Stri
 }
 
 // =====================================================
-// SOCIAL MEDIA POSTER ADD-ON ($25/month)
+// SOCIAL MEDIA POSTER ADD-ON (Monthly/Annual billing)
 // =====================================================
-import { getLateService, SOCIAL_POSTER_PRODUCT_ID, SOCIAL_POSTER_PRICE_ID } from './getLate';
+import { getLateService, getSocialPosterConfig, SOCIAL_POSTER_PRODUCT_ID, SOCIAL_POSTER_PRICE_ID } from './getLate';
 import { socialProfiles } from '@shared/schema';
+
+export type SocialPosterBillingPeriod = 'monthly' | 'annual';
 
 export async function createSocialPosterCheckoutSession(params: {
   userId: string;
   userEmail: string;
   successUrl: string;
   cancelUrl: string;
+  billingPeriod?: SocialPosterBillingPeriod;
 }): Promise<Stripe.Checkout.Session> {
-  const { userId, userEmail, successUrl, cancelUrl } = params;
+  const { userId, userEmail, successUrl, cancelUrl, billingPeriod = 'monthly' } = params;
 
   const user = await storage.getUser(userId);
   if (!user) {
     throw new Error('User not found');
+  }
+
+  // Get Social Poster config from database
+  const config = await getSocialPosterConfig();
+  
+  // Determine the correct Stripe price ID based on billing period
+  let stripePriceId: string;
+  if (billingPeriod === 'annual' && config.annualStripePriceId) {
+    stripePriceId = config.annualStripePriceId;
+  } else {
+    stripePriceId = config.monthlyStripePriceId || SOCIAL_POSTER_PRICE_ID;
   }
 
   let customerId = user.stripeCustomerId || undefined;
@@ -719,13 +733,13 @@ export async function createSocialPosterCheckoutSession(params: {
     await storage.updateUser(userId, { stripeCustomerId: customerId });
   }
 
-  console.log('[Stripe Checkout] Creating Social Poster add-on session for user:', userId);
+  console.log(`[Stripe Checkout] Creating Social Poster add-on session for user: ${userId}, billing: ${billingPeriod}, priceId: ${stripePriceId}`);
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{
-      price: SOCIAL_POSTER_PRICE_ID,
+      price: stripePriceId,
       quantity: 1,
     }],
     success_url: successUrl,
@@ -733,11 +747,13 @@ export async function createSocialPosterCheckoutSession(params: {
     metadata: {
       userId,
       productType: 'social_poster_addon',
+      billingPeriod,
     },
     subscription_data: {
       metadata: {
         userId,
         productType: 'social_poster_addon',
+        billingPeriod,
       },
     },
   });
@@ -750,12 +766,24 @@ export async function createSocialPosterEmbeddedCheckout(params: {
   userId: string;
   userEmail: string;
   returnUrl: string;
+  billingPeriod?: SocialPosterBillingPeriod;
 }): Promise<{ clientSecret: string; sessionId: string }> {
-  const { userId, userEmail, returnUrl } = params;
+  const { userId, userEmail, returnUrl, billingPeriod = 'monthly' } = params;
 
   const user = await storage.getUser(userId);
   if (!user) {
     throw new Error('User not found');
+  }
+
+  // Get Social Poster config from database
+  const config = await getSocialPosterConfig();
+  
+  // Determine the correct Stripe price ID based on billing period
+  let stripePriceId: string;
+  if (billingPeriod === 'annual' && config.annualStripePriceId) {
+    stripePriceId = config.annualStripePriceId;
+  } else {
+    stripePriceId = config.monthlyStripePriceId || SOCIAL_POSTER_PRICE_ID;
   }
 
   let customerId = user.stripeCustomerId || undefined;
@@ -769,14 +797,14 @@ export async function createSocialPosterEmbeddedCheckout(params: {
     await storage.updateUser(userId, { stripeCustomerId: customerId });
   }
 
-  console.log('[Stripe Embedded Checkout] Creating Social Poster session for user:', userId);
+  console.log(`[Stripe Embedded Checkout] Creating Social Poster session for user: ${userId}, billing: ${billingPeriod}, priceId: ${stripePriceId}`);
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     ui_mode: 'embedded',
     line_items: [{
-      price: SOCIAL_POSTER_PRICE_ID,
+      price: stripePriceId,
       quantity: 1,
     }],
     return_url: returnUrl,
@@ -784,11 +812,13 @@ export async function createSocialPosterEmbeddedCheckout(params: {
     metadata: {
       userId,
       productType: 'social_poster_addon',
+      billingPeriod,
     },
     subscription_data: {
       metadata: {
         userId,
         productType: 'social_poster_addon',
+        billingPeriod,
       },
     },
   });

@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { 
   Loader2, 
   Check, 
@@ -35,6 +37,14 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/authBridge";
 import { SocialPosterCheckoutModal } from "@/components/embedded-checkout-modal";
 import { queryClient } from "@/lib/queryClient";
+
+interface SocialPosterSettings {
+  enabled: boolean;
+  monthlyPriceUsd: number;
+  annualPriceUsd: number;
+  hasMonthlyPlan: boolean;
+  hasAnnualPlan: boolean;
+}
 
 interface SubscriptionStatus {
   hasSocialPoster: boolean;
@@ -99,6 +109,28 @@ export default function SocialUpgrade() {
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+
+  // Fetch Social Poster pricing settings
+  const { data: socialPosterSettings } = useQuery<SocialPosterSettings>({
+    queryKey: ["/api/social-poster-settings"],
+    queryFn: async () => {
+      const response = await fetchWithAuth("/api/social-poster-settings");
+      if (!response.ok) {
+        return { 
+          enabled: true, 
+          monthlyPriceUsd: 4000, 
+          annualPriceUsd: 24000,
+          hasMonthlyPlan: true,
+          hasAnnualPlan: false 
+        };
+      }
+      return response.json();
+    },
+    enabled: true,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
 
   const { data: subscriptionStatus, isLoading: isLoadingStatus } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/social/subscription-status"],
@@ -190,6 +222,11 @@ export default function SocialUpgrade() {
             isSubmitting={isSubmitting}
             onGetStarted={handleGetStarted}
             isAuthenticated={false}
+            billingPeriod={billingPeriod}
+            onBillingPeriodChange={setBillingPeriod}
+            monthlyPriceUsd={socialPosterSettings?.monthlyPriceUsd || 4000}
+            annualPriceUsd={socialPosterSettings?.annualPriceUsd || 24000}
+            hasAnnualPlan={socialPosterSettings?.hasAnnualPlan || false}
           />
         </div>
       </div>
@@ -225,6 +262,11 @@ export default function SocialUpgrade() {
             isOnFreeTrial={isOnFreeTrial}
             hasNoSubscription={hasNoSubscription}
             planName={userSubscription?.planName}
+            billingPeriod={billingPeriod}
+            onBillingPeriodChange={setBillingPeriod}
+            monthlyPriceUsd={socialPosterSettings?.monthlyPriceUsd || 4000}
+            annualPriceUsd={socialPosterSettings?.annualPriceUsd || 24000}
+            hasAnnualPlan={socialPosterSettings?.hasAnnualPlan || false}
           />
         </div>
       </div>
@@ -233,6 +275,7 @@ export default function SocialUpgrade() {
         open={checkoutModalOpen}
         onOpenChange={setCheckoutModalOpen}
         onComplete={handleCheckoutComplete}
+        billingPeriod={billingPeriod}
       />
     </>
   );
@@ -246,11 +289,39 @@ interface UpgradeContentProps {
   isOnFreeTrial?: boolean;
   hasNoSubscription?: boolean;
   planName?: string;
+  billingPeriod: 'monthly' | 'annual';
+  onBillingPeriodChange: (period: 'monthly' | 'annual') => void;
+  monthlyPriceUsd: number;
+  annualPriceUsd: number;
+  hasAnnualPlan: boolean;
 }
 
-function UpgradeContent({ isSubmitting, onGetStarted, isAuthenticated, canPurchase, isOnFreeTrial, hasNoSubscription, planName }: UpgradeContentProps) {
+function UpgradeContent({ 
+  isSubmitting, 
+  onGetStarted, 
+  isAuthenticated, 
+  canPurchase, 
+  isOnFreeTrial, 
+  hasNoSubscription, 
+  planName,
+  billingPeriod,
+  onBillingPeriodChange,
+  monthlyPriceUsd,
+  annualPriceUsd,
+  hasAnnualPlan,
+}: UpgradeContentProps) {
   // Determine if user needs to upgrade first (authenticated but not on a paid plan)
   const needsUpgrade = isAuthenticated && (isOnFreeTrial || hasNoSubscription);
+  
+  // Calculate display prices
+  const monthlyPrice = monthlyPriceUsd / 100;
+  const annualPrice = annualPriceUsd / 100;
+  const annualMonthlyEquivalent = annualPrice / 12;
+  const savings = Math.round((1 - annualMonthlyEquivalent / monthlyPrice) * 100);
+  
+  // Current display price based on billing period
+  const displayPrice = billingPeriod === 'annual' ? annualMonthlyEquivalent : monthlyPrice;
+  const isAnnual = billingPeriod === 'annual';
   
   return (
     <>
@@ -295,12 +366,45 @@ function UpgradeContent({ isSubmitting, onGetStarted, isAuthenticated, canPurcha
 
       <Card className="mb-12 border-purple-500/30 bg-gradient-to-b from-purple-500/5 to-transparent">
         <CardContent className="p-8">
+          {hasAnnualPlan && (
+            <div className="flex items-center justify-center gap-3 mb-6 p-3 bg-muted/50 rounded-lg">
+              <Label 
+                htmlFor="billing-toggle" 
+                className={`text-sm font-medium cursor-pointer ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}
+              >
+                Monthly
+              </Label>
+              <Switch
+                id="billing-toggle"
+                checked={isAnnual}
+                onCheckedChange={(checked) => onBillingPeriodChange(checked ? 'annual' : 'monthly')}
+                data-testid="switch-billing-period"
+              />
+              <div className="flex items-center gap-2">
+                <Label 
+                  htmlFor="billing-toggle" 
+                  className={`text-sm font-medium cursor-pointer ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}
+                >
+                  Annual
+                </Label>
+                <Badge variant="secondary" className="bg-green-500/20 text-green-500 border-green-500/30" data-testid="badge-savings">
+                  Save {savings}%
+                </Badge>
+              </div>
+            </div>
+          )}
+          
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
               <div className="flex items-baseline gap-2 justify-center md:justify-start">
-                <span className="text-5xl font-bold" data-testid="text-price">$25</span>
+                <span className="text-5xl font-bold" data-testid="text-price">${displayPrice.toFixed(0)}</span>
                 <span className="text-xl text-muted-foreground">/month</span>
               </div>
+              {isAnnual && (
+                <p className="text-sm text-green-500 mt-1" data-testid="text-billed-annually">
+                  Billed annually at ${annualPrice.toFixed(0)}/year
+                </p>
+              )}
               <p className="text-muted-foreground mt-2">
                 Add to your existing subscription
               </p>
@@ -364,7 +468,7 @@ function UpgradeContent({ isSubmitting, onGetStarted, isAuthenticated, canPurcha
                     )}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    Cancel anytime. Billed monthly.
+                    Cancel anytime. {isAnnual ? 'Billed annually.' : 'Billed monthly.'}
                   </p>
                 </>
               )}

@@ -25,6 +25,7 @@ interface EmbeddedCheckoutModalProps {
   onOpenChange: (open: boolean) => void;
   title?: string;
   checkoutEndpoint: string;
+  requestBody?: Record<string, unknown>;
   onComplete?: () => void;
 }
 
@@ -33,6 +34,7 @@ export function EmbeddedCheckoutModal({
   onOpenChange,
   title = "Complete Your Purchase",
   checkoutEndpoint,
+  requestBody,
   onComplete,
 }: EmbeddedCheckoutModalProps) {
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,7 @@ export function EmbeddedCheckoutModal({
           "Content-Type": "application/json",
         },
         credentials: "include",
+        body: requestBody ? JSON.stringify(requestBody) : undefined,
       });
 
       const data = await response.json();
@@ -66,7 +69,7 @@ export function EmbeddedCheckoutModal({
       setError(err.message || "Failed to initialize payment");
       throw err;
     }
-  }, [checkoutEndpoint]);
+  }, [checkoutEndpoint, requestBody]);
 
   // Determine if error is related to subscription requirements
   const isPaidPlanError = errorCode === 'NO_SUBSCRIPTION' || errorCode === 'FREE_TRIAL';
@@ -157,19 +160,22 @@ interface SocialPosterCheckoutModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete?: () => void;
+  billingPeriod?: 'monthly' | 'annual';
 }
 
 export function SocialPosterCheckoutModal({
   open,
   onOpenChange,
   onComplete,
+  billingPeriod = 'monthly',
 }: SocialPosterCheckoutModalProps) {
   return (
     <EmbeddedCheckoutModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Add Social Media Poster"
+      title={`Add Social Media Poster (${billingPeriod === 'annual' ? 'Annual' : 'Monthly'})`}
       checkoutEndpoint="/api/stripe/social-poster-embedded-checkout"
+      requestBody={{ billingPeriod }}
       onComplete={onComplete}
     />
   );

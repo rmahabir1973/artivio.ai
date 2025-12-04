@@ -6923,8 +6923,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       });
       
       const validatedData = boostSettingsSchema.parse(req.body);
+      
+      // Convert null to undefined for storage compatibility
+      const storageData = {
+        ...validatedData,
+        boostStripeProductId: validatedData.boostStripeProductId ?? undefined,
+        boostStripePriceId: validatedData.boostStripePriceId ?? undefined,
+      };
 
-      const updated = await storage.upsertPlanEconomics(validatedData);
+      const updated = await storage.upsertPlanEconomics(storageData);
       
       res.json({
         boostEnabled: updated.boostEnabled ?? false,
@@ -6936,6 +6943,98 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     } catch (error: any) {
       console.error('Error updating boost settings:', error);
       res.status(400).json({ message: 'Failed to update boost settings', error: error.message });
+    }
+  });
+
+  // Admin: Get Social Poster settings
+  app.get('/api/admin/social-poster-settings', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const economics = await storage.getPlanEconomics();
+      // Return Social Poster-specific settings with defaults
+      if (!economics) {
+        return res.json({
+          socialPosterEnabled: true,
+          socialPosterHasAnnualPlan: false,
+          socialPosterMonthlyPriceUsd: 4000, // $40/month
+          socialPosterAnnualPriceUsd: 24000, // $240/year ($20/month)
+          socialPosterMonthlyStripeProductId: null,
+          socialPosterMonthlyStripePriceId: null,
+          socialPosterAnnualStripeProductId: null,
+          socialPosterAnnualStripePriceId: null,
+        });
+      }
+      
+      res.json({
+        socialPosterEnabled: economics.socialPosterEnabled ?? true,
+        socialPosterHasAnnualPlan: economics.socialPosterHasAnnualPlan ?? false,
+        socialPosterMonthlyPriceUsd: economics.socialPosterMonthlyPriceUsd ?? 4000,
+        socialPosterAnnualPriceUsd: economics.socialPosterAnnualPriceUsd ?? 24000,
+        socialPosterMonthlyStripeProductId: economics.socialPosterMonthlyStripeProductId ?? null,
+        socialPosterMonthlyStripePriceId: economics.socialPosterMonthlyStripePriceId ?? null,
+        socialPosterAnnualStripeProductId: economics.socialPosterAnnualStripeProductId ?? null,
+        socialPosterAnnualStripePriceId: economics.socialPosterAnnualStripePriceId ?? null,
+      });
+    } catch (error) {
+      console.error('Error fetching Social Poster settings:', error);
+      res.status(500).json({ message: "Failed to fetch Social Poster settings" });
+    }
+  });
+
+  // Admin: Update Social Poster settings (updates plan economics singleton)
+  app.patch('/api/admin/social-poster-settings', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Validate Social Poster-specific fields
+      const socialPosterSettingsSchema = z.object({
+        socialPosterEnabled: z.boolean().optional(),
+        socialPosterHasAnnualPlan: z.boolean().optional(),
+        socialPosterMonthlyPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
+        socialPosterAnnualPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
+        socialPosterMonthlyStripeProductId: z.string().optional().nullable(),
+        socialPosterMonthlyStripePriceId: z.string().optional().nullable(),
+        socialPosterAnnualStripeProductId: z.string().optional().nullable(),
+        socialPosterAnnualStripePriceId: z.string().optional().nullable(),
+      });
+      
+      const validatedData = socialPosterSettingsSchema.parse(req.body);
+      
+      // Convert null to undefined for storage compatibility
+      const storageData = {
+        ...validatedData,
+        socialPosterMonthlyStripeProductId: validatedData.socialPosterMonthlyStripeProductId ?? undefined,
+        socialPosterMonthlyStripePriceId: validatedData.socialPosterMonthlyStripePriceId ?? undefined,
+        socialPosterAnnualStripeProductId: validatedData.socialPosterAnnualStripeProductId ?? undefined,
+        socialPosterAnnualStripePriceId: validatedData.socialPosterAnnualStripePriceId ?? undefined,
+      };
+
+      const updated = await storage.upsertPlanEconomics(storageData);
+      
+      res.json({
+        socialPosterEnabled: updated.socialPosterEnabled ?? true,
+        socialPosterHasAnnualPlan: updated.socialPosterHasAnnualPlan ?? false,
+        socialPosterMonthlyPriceUsd: updated.socialPosterMonthlyPriceUsd ?? 4000,
+        socialPosterAnnualPriceUsd: updated.socialPosterAnnualPriceUsd ?? 24000,
+        socialPosterMonthlyStripeProductId: updated.socialPosterMonthlyStripeProductId ?? null,
+        socialPosterMonthlyStripePriceId: updated.socialPosterMonthlyStripePriceId ?? null,
+        socialPosterAnnualStripeProductId: updated.socialPosterAnnualStripeProductId ?? null,
+        socialPosterAnnualStripePriceId: updated.socialPosterAnnualStripePriceId ?? null,
+      });
+    } catch (error: any) {
+      console.error('Error updating Social Poster settings:', error);
+      res.status(400).json({ message: 'Failed to update Social Poster settings', error: error.message });
     }
   });
 
@@ -8280,6 +8379,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         });
       }
 
+      // Get billing period from request body (defaults to monthly)
+      const billingPeriod = req.body?.billingPeriod === 'annual' ? 'annual' : 'monthly';
       const baseUrl = getBaseUrl();
 
       const session = await createSocialPosterCheckoutSession({
@@ -8287,6 +8388,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         userEmail: user.email || '',
         successUrl: `${baseUrl}/social/connect?success=true`,
         cancelUrl: `${baseUrl}/social/upgrade?canceled=true`,
+        billingPeriod,
       });
 
       res.json({ url: session.url });
@@ -8329,12 +8431,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         });
       }
 
+      // Get billing period from request body (defaults to monthly)
+      const billingPeriod = req.body?.billingPeriod === 'annual' ? 'annual' : 'monthly';
       const baseUrl = getBaseUrl();
 
       const { clientSecret, sessionId } = await createSocialPosterEmbeddedCheckout({
         userId: user.id,
         userEmail: user.email || '',
         returnUrl: `${baseUrl}/social/connect?success=true&session_id={CHECKOUT_SESSION_ID}`,
+        billingPeriod,
       });
 
       res.json({ clientSecret, sessionId });
@@ -8385,6 +8490,30 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       });
     } catch (error: any) {
       console.error('[Boost] Error fetching boost settings:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get Social Poster settings (public, for displaying pricing in UI)
+  app.get('/api/social-poster-settings', requireJWT, async (req: any, res) => {
+    try {
+      const economics = await storage.getPlanEconomics();
+      
+      if (!economics?.socialPosterEnabled) {
+        return res.json({ enabled: false });
+      }
+
+      res.json({
+        enabled: true,
+        monthlyPriceUsd: economics.socialPosterMonthlyPriceUsd || 4000,
+        annualPriceUsd: economics.socialPosterAnnualPriceUsd || 24000,
+        // Note: Stripe IDs are not exposed to client for security
+        hasMonthlyPlan: !!economics.socialPosterMonthlyStripePriceId,
+        // Use the database flag for annual plan availability (admin-controlled)
+        hasAnnualPlan: (economics.socialPosterHasAnnualPlan ?? false) && !!economics.socialPosterAnnualStripePriceId,
+      });
+    } catch (error: any) {
+      console.error('[Social Poster] Error fetching settings:', error);
       res.status(500).json({ error: error.message });
     }
   });
