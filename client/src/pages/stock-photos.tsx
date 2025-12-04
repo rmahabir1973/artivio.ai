@@ -45,6 +45,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SidebarInset } from "@/components/ui/sidebar";
 
 interface StockImage {
   id: string;
@@ -289,8 +290,9 @@ export default function StockPhotos() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <SidebarInset>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="space-y-3">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-violet-500 bg-clip-text text-transparent">
@@ -748,6 +750,7 @@ export default function StockPhotos() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </SidebarInset>
   );
 }
