@@ -2386,6 +2386,147 @@ export const insertAiContentPlanSchema = createInsertSchema(aiContentPlans).omit
 export type InsertAiContentPlan = z.infer<typeof insertAiContentPlanSchema>;
 export type AiContentPlan = typeof aiContentPlans.$inferSelect;
 
+// Support Tickets - AI-powered customer support system
+export const supportTickets = pgTable("support_tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // User info (nullable for email-only contacts)
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  email: varchar("email").notNull(),
+  name: varchar("name"),
+  
+  // Ticket details
+  subject: varchar("subject").notNull(),
+  status: varchar("status").notNull().default('open'), // 'open', 'pending', 'resolved', 'escalated', 'closed'
+  priority: varchar("priority").notNull().default('medium'), // 'low', 'medium', 'high', 'urgent'
+  category: varchar("category"), // 'billing', 'technical', 'account', 'feature', 'general', etc.
+  
+  // AI analysis
+  sentiment: varchar("sentiment"), // 'positive', 'neutral', 'negative', 'frustrated'
+  aiConfidence: numeric("ai_confidence"), // 0-1 confidence in AI's ability to handle
+  aiSummary: text("ai_summary"), // AI-generated summary of the issue
+  suggestedResponse: text("suggested_response"), // AI-suggested response (for admin review)
+  
+  // Source tracking
+  source: varchar("source").notNull().default('app'), // 'app', 'email'
+  postmarkMessageId: varchar("postmark_message_id"), // For email-originated tickets
+  threadId: varchar("thread_id"), // For grouping email threads
+  
+  // Escalation tracking
+  escalatedAt: timestamp("escalated_at"),
+  escalatedTo: varchar("escalated_to"), // Email address escalated to
+  escalationReason: text("escalation_reason"),
+  
+  // User context (for personalized AI responses)
+  userContext: jsonb("user_context").$type<{
+    subscriptionPlan?: string;
+    credits?: number;
+    memberSince?: string;
+    previousTickets?: number;
+    isVip?: boolean;
+  }>(),
+  
+  // Metadata
+  lastMessageAt: timestamp("last_message_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
+}, (table) => [
+  index("support_tickets_user_idx").on(table.userId),
+  index("support_tickets_email_idx").on(table.email),
+  index("support_tickets_status_idx").on(table.status),
+  index("support_tickets_priority_idx").on(table.priority),
+  index("support_tickets_created_idx").on(table.createdAt),
+  index("support_tickets_thread_idx").on(table.threadId),
+]);
+
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
+  id: true,
+  aiConfidence: true,
+  aiSummary: true,
+  suggestedResponse: true,
+  escalatedAt: true,
+  escalatedTo: true,
+  escalationReason: true,
+  lastMessageAt: true,
+  resolvedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+export type SupportTicket = typeof supportTickets.$inferSelect;
+
+// Support Messages - Individual messages in a support ticket thread
+export const supportMessages = pgTable("support_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ticketId: varchar("ticket_id").notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
+  
+  // Message details
+  senderType: varchar("sender_type").notNull(), // 'user', 'ai', 'admin', 'system'
+  senderName: varchar("sender_name"),
+  senderEmail: varchar("sender_email"),
+  
+  // Content
+  bodyText: text("body_text").notNull(),
+  bodyHtml: text("body_html"),
+  
+  // For email messages
+  postmarkMessageId: varchar("postmark_message_id"),
+  inReplyTo: varchar("in_reply_to"), // Message ID this is replying to
+  
+  // AI metadata (for AI-generated messages)
+  aiGenerated: boolean("ai_generated").notNull().default(false),
+  aiModel: varchar("ai_model"),
+  aiPromptTokens: integer("ai_prompt_tokens"),
+  aiCompletionTokens: integer("ai_completion_tokens"),
+  
+  // Attachments (if any)
+  attachments: jsonb("attachments").$type<{
+    name: string;
+    contentType: string;
+    size: number;
+    url?: string;
+  }[]>(),
+  
+  // Delivery status (for outbound messages)
+  deliveryStatus: varchar("delivery_status"), // 'pending', 'sent', 'delivered', 'failed'
+  deliveredAt: timestamp("delivered_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("support_messages_ticket_idx").on(table.ticketId),
+  index("support_messages_sender_idx").on(table.senderType),
+  index("support_messages_created_idx").on(table.createdAt),
+  index("support_messages_postmark_idx").on(table.postmarkMessageId),
+]);
+
+export const insertSupportMessageSchema = createInsertSchema(supportMessages).omit({
+  id: true,
+  deliveryStatus: true,
+  deliveredAt: true,
+  createdAt: true,
+});
+
+export type InsertSupportMessage = z.infer<typeof insertSupportMessageSchema>;
+export type SupportMessage = typeof supportMessages.$inferSelect;
+
+// Support Tickets Relations
+export const supportTicketsRelations = relations(supportTickets, ({ one, many }) => ({
+  user: one(users, {
+    fields: [supportTickets.userId],
+    references: [users.id],
+  }),
+  messages: many(supportMessages),
+}));
+
+export const supportMessagesRelations = relations(supportMessages, ({ one }) => ({
+  ticket: one(supportTickets, {
+    fields: [supportMessages.ticketId],
+    references: [supportTickets.id],
+  }),
+}));
+
 // Social Media Hub Relations
 export const socialProfilesRelations = relations(socialProfiles, ({ one, many }) => ({
   user: one(users, {
