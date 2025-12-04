@@ -213,6 +213,14 @@ export const planEconomics = pgTable("plan_economics", {
   boostPriceUsd: integer("boost_price_usd").default(1500), // Price in cents (e.g., 1500 = $15.00)
   boostStripeProductId: varchar("boost_stripe_product_id"), // Stripe product ID
   boostStripePriceId: varchar("boost_stripe_price_id"), // Stripe price ID
+  // Social Media Poster add-on configuration
+  socialPosterEnabled: boolean("social_poster_enabled").notNull().default(true), // Whether add-on is available
+  socialPosterMonthlyPriceUsd: integer("social_poster_monthly_price_usd").default(4000), // $40/month in cents
+  socialPosterAnnualPriceUsd: integer("social_poster_annual_price_usd").default(24000), // $240/year in cents ($20/mo)
+  socialPosterMonthlyStripeProductId: varchar("social_poster_monthly_stripe_product_id"),
+  socialPosterMonthlyStripePriceId: varchar("social_poster_monthly_stripe_price_id"),
+  socialPosterAnnualStripeProductId: varchar("social_poster_annual_stripe_product_id"),
+  socialPosterAnnualStripePriceId: varchar("social_poster_annual_stripe_price_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -234,6 +242,14 @@ export const updatePlanEconomicsSchema = z.object({
   boostPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
   boostStripeProductId: z.string().optional(),
   boostStripePriceId: z.string().optional(),
+  // Social Media Poster add-on fields
+  socialPosterEnabled: z.boolean().optional(),
+  socialPosterMonthlyPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
+  socialPosterAnnualPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
+  socialPosterMonthlyStripeProductId: z.string().optional(),
+  socialPosterMonthlyStripePriceId: z.string().optional(),
+  socialPosterAnnualStripeProductId: z.string().optional(),
+  socialPosterAnnualStripePriceId: z.string().optional(),
 });
 
 export type InsertPlanEconomics = z.infer<typeof insertPlanEconomicsSchema>;
