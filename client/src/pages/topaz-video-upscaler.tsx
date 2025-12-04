@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { usePricing } from "@/hooks/use-pricing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, Upload, Download, Zap, Copy, Check } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
@@ -14,22 +15,8 @@ import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { PeerTubePreview } from "@/components/peertube-preview";
 
-// Duration-based tiered pricing (Kie.ai charges 12 credits/second)
-// 0-10s tier: 120 Kie credits → 180 user credits (50% markup)
-// 11-15s tier: 180 Kie credits → 270 user credits (50% markup)
-// 16-20s tier: 240 Kie credits → 360 user credits (50% markup)
-const TIER_COSTS = {
-  '10s': 180,  // 0-10 seconds
-  '15s': 270,  // 11-15 seconds
-  '20s': 360,  // 16-20 seconds
-};
-
-function getVideoCostByDuration(duration: number): number {
-  if (duration <= 10) return TIER_COSTS['10s'];
-  if (duration <= 15) return TIER_COSTS['15s'];
-  return TIER_COSTS['20s'];
-}
-
+// Duration tier helper - pricing comes from database via usePricing hook
+// Database model names: topaz-video-{factor}x-{tier}s
 function getDurationTier(duration: number): '10s' | '15s' | '20s' {
   if (duration <= 10) return '10s';
   if (duration <= 15) return '15s';
@@ -46,6 +33,7 @@ interface UpscaleResult {
 export default function TopazVideoUpscaler() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { getModelCost } = usePricing();
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [base64Video, setBase64Video] = useState<string | null>(null);
   const [selectedFactor, setSelectedFactor] = useState<"1" | "2" | "4">("2");
@@ -57,8 +45,9 @@ export default function TopazVideoUpscaler() {
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [showGuestModal, setShowGuestModal] = useState(false);
 
-  const currentCost = videoDuration > 0 ? getVideoCostByDuration(videoDuration) : TIER_COSTS['10s'];
+  // Get pricing from database based on selected factor and duration tier
   const currentTier = videoDuration > 0 ? getDurationTier(videoDuration) : '10s';
+  const currentCost = getModelCost(`topaz-video-${selectedFactor}x-${currentTier}`, 160);
   const currentCredits = (user as any)?.credits || 0;
   const creditsAfter = currentCredits - currentCost;
 
@@ -122,21 +111,14 @@ export default function TopazVideoUpscaler() {
         return;
       }
 
-      // Store duration for cost calculation
+      // Store duration for cost calculation (pricing comes from database via usePricing hook)
       setVideoDuration(duration);
-      
-      // Calculate cost tier
       const tier = getDurationTier(duration);
-      const cost = getVideoCostByDuration(duration);
       
       // Show tier information to user
-      const tierInfo = tier === '10s' ? '0-10s (180 credits)' : 
-                       tier === '15s' ? '11-15s (270 credits)' : 
-                       '16-20s (360 credits)';
-      
       toast({
         title: "Video Loaded",
-        description: `Duration: ${duration.toFixed(1)}s - Pricing Tier: ${tierInfo}`,
+        description: `Duration: ${duration.toFixed(1)}s - Tier: ${tier === '10s' ? '0-10s' : tier === '15s' ? '11-15s' : '16-20s'}`,
       });
 
       // Duration is valid, proceed with upload
@@ -337,7 +319,7 @@ export default function TopazVideoUpscaler() {
           </label>
         </div>
 
-        {/* Pricing Tiers Information */}
+        {/* Pricing Tiers Information - prices from database */}
         <div className="space-y-3">
           <Label>Pricing Based on Video Duration</Label>
           <div className="grid gap-3">
@@ -346,21 +328,21 @@ export default function TopazVideoUpscaler() {
                 <span className="text-sm font-medium">0-10 seconds</span>
                 <span className="text-xs text-muted-foreground">Short clips</span>
               </div>
-              <Badge variant="outline">180 credits</Badge>
+              <Badge variant="outline">{getModelCost(`topaz-video-${selectedFactor}x-10s`, 160)} credits</Badge>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
               <div className="flex flex-col">
                 <span className="text-sm font-medium">11-15 seconds</span>
                 <span className="text-xs text-muted-foreground">Medium length</span>
               </div>
-              <Badge variant="outline">270 credits</Badge>
+              <Badge variant="outline">{getModelCost(`topaz-video-${selectedFactor}x-15s`, 270)} credits</Badge>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
               <div className="flex flex-col">
                 <span className="text-sm font-medium">16-20 seconds</span>
                 <span className="text-xs text-muted-foreground">Longer videos</span>
               </div>
-              <Badge variant="outline">360 credits</Badge>
+              <Badge variant="outline">{getModelCost(`topaz-video-${selectedFactor}x-20s`, 380)} credits</Badge>
             </div>
           </div>
           {videoDuration > 0 && (

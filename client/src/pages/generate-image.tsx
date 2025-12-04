@@ -148,15 +148,18 @@ const MIDJOURNEY_SPEED_OPTIONS = [
   { value: "turbo", label: "Turbo" },
 ];
 
+// Note: Credit costs are fetched dynamically from database via usePricing hook
+// Database model names: 4o-image-1, 4o-image-2, 4o-image-4
 const GENERATE_QUANTITIES = [
-  { value: "1", label: "1 Image (6 credits)" },
-  { value: "2", label: "2 Images (7 credits)" },
-  { value: "4", label: "4 Images (8 credits)" },
+  { value: "1", label: "1 Image", dbModel: "4o-image-1" },
+  { value: "2", label: "2 Images", dbModel: "4o-image-2" },
+  { value: "4", label: "4 Images", dbModel: "4o-image-4" },
 ];
 
+// Database model names: flux-kontext-pro, flux-kontext-max
 const FLUX_MODELS = [
-  { value: "pro", label: "Pro (5 credits)" },
-  { value: "max", label: "Max (10 credits)" },
+  { value: "pro", label: "Pro", dbModel: "flux-kontext-pro" },
+  { value: "max", label: "Max", dbModel: "flux-kontext-max" },
 ];
 
 const OUTPUT_FORMATS = [
@@ -231,37 +234,40 @@ export default function GenerateImage() {
     }
   };
 
-  // Merge model info with dynamic pricing
+  // Merge model info with dynamic pricing from database
+  // All pricing comes from the admin panel via /api/pricing endpoint
   const IMAGE_MODELS = useMemo(() => IMAGE_MODEL_INFO.map(m => {
-    let cost = getModelCost(m.value, 100);
+    let cost = 0;
     
-    // For 4o-image, adjust cost based on generate quantity
+    // For 4o-image, lookup the specific quantity variant from database
     if (m.value === '4o-image') {
-      const quantityMapping: { [key: string]: number } = {
-        '1': 6,
-        '2': 7,
-        '4': 8,
-      };
-      cost = quantityMapping[generateQuantity] || 6;
+      const dbModel = GENERATE_QUANTITIES.find(q => q.value === generateQuantity)?.dbModel || '4o-image-1';
+      cost = getModelCost(dbModel, 20); // fallback 20 only if database unavailable
     }
-    
-    // For flux-kontext, adjust cost based on model selection
-    if (m.value === 'flux-kontext') {
-      cost = fluxModel === 'pro' ? 5 : 10;
+    // For flux-kontext, lookup the specific model variant from database
+    else if (m.value === 'flux-kontext') {
+      const dbModel = FLUX_MODELS.find(f => f.value === fluxModel)?.dbModel || 'flux-kontext-pro';
+      cost = getModelCost(dbModel, 10); // fallback 10 only if database unavailable
     }
-    
-    // For seedream-4, adjust cost based on maxImages (8 credits per image)
-    if (m.value === 'seedream-4') {
-      cost = 8 * maxImages;
+    // For seedream-4, lookup per-image cost and multiply by quantity
+    else if (m.value === 'seedream-4') {
+      const perImageCost = getModelCost('seedream-4-1', 10); // base cost per image
+      cost = perImageCost * maxImages;
     }
-    
-    // For midjourney-v7, adjust cost based on mode
-    if (m.value === 'midjourney-v7') {
+    // For midjourney-v7, lookup the appropriate variant from database based on mode
+    else if (m.value === 'midjourney-v7') {
       if (mjMode === 'image-to-video') {
-        cost = 60;
+        cost = getModelCost('midjourney-v7-video', 125);
+      } else if (mjMode === 'image-to-image') {
+        cost = getModelCost('midjourney-v7-img2img', 20);
       } else {
-        cost = 8; // text-to-image or image-to-image
+        // text-to-image mode
+        cost = getModelCost('midjourney-v7-text2img', 20);
       }
+    }
+    // For all other models, direct database lookup
+    else {
+      cost = getModelCost(m.value, 50); // fallback 50 only if database unavailable
     }
     
     return {
@@ -975,7 +981,7 @@ export default function GenerateImage() {
                       data-testid="input-max-images"
                     />
                     <span className="text-sm text-muted-foreground">
-                      {maxImages} image{maxImages !== 1 ? 's' : ''} ({8 * maxImages} credits)
+                      {maxImages} image{maxImages !== 1 ? 's' : ''} ({getModelCost('seedream-4-1', 10) * maxImages} credits)
                     </span>
                   </div>
                   <input
@@ -1058,7 +1064,7 @@ export default function GenerateImage() {
                     <SelectContent>
                       {FLUX_MODELS.map((m) => (
                         <SelectItem key={m.value} value={m.value}>
-                          {m.label}
+                          {m.label} ({getModelCost(m.dbModel, 10)} credits)
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1093,7 +1099,7 @@ export default function GenerateImage() {
                     <SelectContent>
                       {GENERATE_QUANTITIES.map((q) => (
                         <SelectItem key={q.value} value={q.value}>
-                          {q.label}
+                          {q.label} ({getModelCost(q.dbModel, 20)} credits)
                         </SelectItem>
                       ))}
                     </SelectContent>

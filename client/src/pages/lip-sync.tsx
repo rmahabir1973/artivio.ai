@@ -453,8 +453,8 @@ export default function LipSync() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="480p">480p (15 credits)</SelectItem>
-              <SelectItem value="720p">720p (60 credits)</SelectItem>
+              <SelectItem value="480p">480p ({getModelCost('infinitalk-lip-sync-480p', 40)} credits)</SelectItem>
+              <SelectItem value="720p">720p ({getModelCost('infinitalk-lip-sync-720p', 125)} credits)</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -128,6 +128,7 @@ function safeStringify(obj: any): string {
 }
 
 // Helper to get pricing from database by model name
+// All pricing MUST be in the database - hardcoded fallbacks removed
 async function getModelCost(model: string): Promise<number> {
   const pricing = await storage.getPricingByModel(model);
   
@@ -135,34 +136,12 @@ async function getModelCost(model: string): Promise<number> {
     return pricing.creditCost;
   }
   
-  // Default fallback costs if not found in database
-  const defaultCosts: Record<string, number> = {
-    'veo-3': 450,
-    'veo-3.1': 500,
-    'veo-3.1-fast': 300,
-    'runway-gen3-alpha-turbo': 350,
-    'runway-aleph': 400,
-    '4o-image': 100,
-    'flux-kontext': 150,
-    'nano-banana': 50,
-    'suno-v3.5': 200,
-    'suno-v4': 250,
-    'suno-v4.5': 300,
-    'eleven_multilingual_v2': 20,
-    'eleven_turbo_v2.5': 15,
-    'scribe-v1': 25,
-    'elevenlabs-stt': 25,
-    'fish-audio-stt': 25,  // Fish Audio ASR
-    'fish-audio-tts': 20,  // Fish Audio TTS
-    'kling-ai': 350,
-    'infinite-talk': 300,
-    'wav-conversion': 15,
-    'vocal-removal': 25,
-    'stem-separation': 30,
-    'gpt-4o': 20, // Image analysis with GPT-4o Vision
-  };
+  // CRITICAL: Log when a model is missing from database pricing
+  // Admin should add this model to the pricing table immediately
+  console.warn(`[PRICING WARNING] Model "${model}" not found in database pricing table. Using safe default of 100 credits. Add this model to Admin Panel → Settings → AI Generation Settings.`);
   
-  return defaultCosts[model] || 100;
+  // Return safe default - admin should configure actual cost in database
+  return 100;
 }
 
 // Helper to get upscale cost based on type and factor

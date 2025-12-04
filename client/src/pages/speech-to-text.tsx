@@ -308,7 +308,7 @@ export default function SpeechToText() {
           ) : (
             <>
               <FileAudio className="mr-2 h-4 w-4" />
-              Transcribe Audio (25 credits)
+              Transcribe Audio ({getModelCost('fish-audio-stt', 10)} credits)
             </>
           )}
         </Button>

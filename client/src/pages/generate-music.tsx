@@ -1357,7 +1357,7 @@ export default function GenerateMusic() {
           <Card>
             <CardHeader>
               <CardTitle>AI Lyrics Generation</CardTitle>
-              <CardDescription>Generate creative lyrics with AI (5 credits)</CardDescription>
+              <CardDescription>Generate creative lyrics with AI ({getModelCost('suno-lyrics-generation', 10)} credits)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -1385,7 +1385,7 @@ export default function GenerateMusic() {
                     Generating...
                   </>
                 ) : (
-                  "Generate Lyrics (5 credits)"
+                  `Generate Lyrics (${getModelCost('suno-lyrics-generation', 10)} credits)`
                 )}
               </Button>
 
