@@ -896,10 +896,105 @@ async function uploadExtendInBackground(generationId: string, prompt: string, au
   }
 }
 
+// Track CSP violations for monitoring (in-memory, last 100 violations)
+const cspViolations: Array<{ timestamp: Date; violation: any }> = [];
+const MAX_CSP_VIOLATIONS = 100;
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add lightweight health check endpoint - responds immediately for deployment health checks
   app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
+  });
+
+  // CSP Violation Report Endpoint - receives reports from Content-Security-Policy-Report-Only
+  app.post('/api/csp-report', express.json({ type: ['application/json', 'application/csp-report'] }), (req, res) => {
+    try {
+      const report = req.body?.['csp-report'] || req.body;
+      
+      if (report) {
+        // Store violation for monitoring
+        cspViolations.push({
+          timestamp: new Date(),
+          violation: {
+            documentUri: report['document-uri'],
+            blockedUri: report['blocked-uri'],
+            violatedDirective: report['violated-directive'],
+            effectiveDirective: report['effective-directive'],
+            originalPolicy: report['original-policy']?.substring(0, 200), // Truncate for storage
+            disposition: report.disposition,
+            statusCode: report['status-code'],
+          }
+        });
+        
+        // Keep only last 100 violations
+        if (cspViolations.length > MAX_CSP_VIOLATIONS) {
+          cspViolations.shift();
+        }
+        
+        // Log violation for monitoring (not every request to avoid log spam)
+        console.log(`🛡️ CSP Violation Report: ${report['violated-directive']} blocked ${report['blocked-uri'] || 'inline/eval'}`);
+      }
+      
+      // Always respond with 204 No Content (as per CSP spec)
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error processing CSP report:', error);
+      res.status(204).send(); // Still respond successfully to avoid browser retries
+    }
+  });
+
+  // Admin endpoint to view recent CSP violations
+  app.get('/api/admin/csp-violations', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      // Check admin access
+      const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai', 'joe@joecodeswell.com', 'jordanlambrecht@gmail.com', 'admin@example.com'];
+      const isAdmin = user?.isAdmin === true || (user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+      
+      if (!isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      res.json({
+        totalViolations: cspViolations.length,
+        violations: cspViolations.slice(-50).reverse(), // Return last 50, newest first
+        monitoringEnabled: true,
+        mode: 'report-only',
+      });
+    } catch (error) {
+      console.error('Error fetching CSP violations:', error);
+      res.status(500).json({ message: "Failed to fetch CSP violations" });
+    }
+  });
+
+  // Admin endpoint to view rate limit violations (monitoring mode)
+  app.get('/api/admin/rate-limit-violations', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      // Check admin access
+      const ADMIN_EMAILS = ['ryan.mahabir@outlook.com', 'admin@artivio.ai', 'joe@joecodeswell.com', 'jordanlambrecht@gmail.com', 'admin@example.com'];
+      const isAdmin = user?.isAdmin === true || (user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+      
+      if (!isAdmin) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Import the violations getter
+      const { getRateLimitViolations, getRateLimitStats } = await import('./services/rateLimiter');
+      
+      res.json({
+        violations: getRateLimitViolations(),
+        stats: getRateLimitStats(),
+        mode: 'monitor', // Currently in monitoring mode
+      });
+    } catch (error) {
+      console.error('Error fetching rate limit violations:', error);
+      res.status(500).json({ message: "Failed to fetch rate limit violations" });
+    }
   });
 
   // IMG.LY CreativeEditor SDK license endpoint (protected but accessible to authenticated users)

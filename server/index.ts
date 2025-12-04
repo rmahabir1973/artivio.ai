@@ -52,111 +52,9 @@ app.disable('x-powered-by');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// TEMPORARILY DISABLED CSP FOR DEBUGGING - RE-ENABLE AFTER TESTING
-// Configure helmet with comprehensive security headers
+// Configure helmet with security headers (CSP handled separately in report-only mode)
 app.use(helmet({
-  contentSecurityPolicy: false, // DISABLED FOR TESTING
-  /*contentSecurityPolicy: {
-    useDefaults: false,
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        "'unsafe-inline'",
-        "'unsafe-eval'",
-        "https://js.stripe.com",
-        "https://www.googletagmanager.com",
-        "https://accounts.google.com",
-        "https://www.google.com",
-        ...(isDevelopment ? ["http://localhost:*", "ws://localhost:*"] : []),
-      ],
-      styleSrc: [
-        "'self'",
-        "'unsafe-inline'",
-        "https://fonts.googleapis.com",
-        ...(isDevelopment ? ["http://localhost:*"] : []),
-      ],
-      imgSrc: [
-        "'self'",
-        "data:",
-        "blob:",
-        "https://*.amazonaws.com",
-        "https://images.unsplash.com",
-        "https://images.pexels.com",
-        "https://picsum.photos",
-        "https://cdn.pixabay.com",
-        "https://pixabay.com",
-        "https://*.googleusercontent.com",
-        "https://lh3.googleusercontent.com",
-        "https://www.gravatar.com",
-        "https://*.stripe.com",
-        "https://peertube.stream",
-        "https://*.peertube.stream",
-        "https://framatube.org",
-        "https://*.framatube.org",
-        "*", // Allow external image URLs for user-uploaded content and AI-generated images
-      ],
-      fontSrc: [
-        "'self'",
-        "data:",
-        "https://fonts.gstatic.com",
-      ],
-      mediaSrc: [
-        "'self'",
-        "blob:",
-        "data:",
-        "https://*.amazonaws.com",
-        "https://peertube.stream",
-        "https://*.peertube.stream",
-        "https://framatube.org",
-        "https://*.framatube.org",
-        "*", // Allow external media URLs for user content
-      ],
-      connectSrc_DISABLED: [
-        "'self'",
-        "wss:",
-        "ws:",
-        "https://api.stripe.com",
-        "https://www.googleapis.com",
-        "https://accounts.google.com",
-        "https://*.amazonaws.com",
-        "https://api.openai.com",
-        "https://api.deepseek.com",
-        "https://api.fish.audio",
-        "https://api.elevenlabs.io",
-        "https://api.pexels.com",
-        "https://pixabay.com",
-        "https://api.loops.so",
-        "https://api.kie.ai",
-        "https://klingai.com",
-        "https://api.getlate.dev",
-        "https://www.google-analytics.com",
-        "https://www.googletagmanager.com",
-        "https://region1.google-analytics.com",
-        ...(isDevelopment ? ["http://localhost:*", "ws://localhost:*"] : []),
-      ],
-      frameSrc: [
-        "'self'",
-        "https://js.stripe.com",
-        "https://hooks.stripe.com",
-        "https://accounts.google.com",
-        "https://www.google.com",
-        "https://www.youtube.com",
-        "https://player.vimeo.com",
-        "https:", // Allow any HTTPS video embeds (PeerTube instances vary widely)
-      ],
-      objectSrc: ["'none'"],
-      baseUri: ["'self'"],
-      formAction: [
-        "'self'",
-        "https://hooks.stripe.com",
-        "https://accounts.google.com",
-      ],
-      workerSrc: ["'self'", "blob:"],
-      childSrc: ["'self'", "blob:"],
-      upgradeInsecureRequests: isDevelopment ? null : [],
-    },
-  },*/
+  contentSecurityPolicy: false, // Handled separately below in report-only mode
   crossOriginEmbedderPolicy: false, // Disable to allow loading external resources
   crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Allow OAuth popups
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resource loading
@@ -165,6 +63,49 @@ app.use(helmet({
   xContentTypeOptions: true, // X-Content-Type-Options: nosniff
   hsts: false, // HSTS is handled by the hosting platform (Replit)
 }));
+
+// ===== CSP REPORT-ONLY MODE =====
+// This monitors CSP violations without blocking anything
+// Once we verify no legitimate resources are being flagged, we can enable enforcement
+const CSP_REPORT_ONLY_ENABLED = true; // Set to false to disable CSP monitoring
+
+const cspDirectives = [
+  "default-src 'self'",
+  // Scripts - includes Stripe, Google, and development servers
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://accounts.google.com https://www.google.com https://challenges.cloudflare.com${isDevelopment ? " http://localhost:* ws://localhost:*" : ""}`,
+  // Styles - includes Google Fonts
+  `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com${isDevelopment ? " http://localhost:*" : ""}`,
+  // Images - very permissive to allow AI-generated content from various sources
+  "img-src 'self' data: blob: https: http:",
+  // Fonts - Google Fonts and data URIs
+  "font-src 'self' data: https://fonts.gstatic.com",
+  // Media - permissive for AI-generated videos and PeerTube
+  "media-src 'self' blob: data: https: http:",
+  // API connections - all the services we use
+  `connect-src 'self' wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com${isDevelopment ? " http://localhost:* ws://localhost:*" : ""}`,
+  // Frames - Stripe, Google, video embeds
+  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://www.google.com https://www.youtube.com https://player.vimeo.com https://challenges.cloudflare.com https:",
+  // No plugins
+  "object-src 'none'",
+  // Base URI and form actions
+  "base-uri 'self'",
+  "form-action 'self' https://hooks.stripe.com https://accounts.google.com",
+  // Workers and child frames
+  "worker-src 'self' blob:",
+  "child-src 'self' blob:",
+  // Report violations to our endpoint
+  "report-uri /api/csp-report",
+].join("; ");
+
+// CSP Report-Only middleware - monitors without blocking
+if (CSP_REPORT_ONLY_ENABLED) {
+  app.use((req, res, next) => {
+    // Use Content-Security-Policy-Report-Only header (doesn't block, just reports)
+    res.setHeader('Content-Security-Policy-Report-Only', cspDirectives);
+    next();
+  });
+  console.log('📋 CSP Report-Only mode enabled - monitoring violations without blocking');
+}
 
 // Permissions-Policy header (not included in helmet by default)
 app.use((_req, res, next) => {

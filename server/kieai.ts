@@ -179,11 +179,55 @@ export async function initializeApiKeys() {
   }
 }
 
-// Get the next API key using round-robin rotation
-async function getApiKey(): Promise<{ keyValue: string; keyName: string }> {
+// Maximum number of different keys to try before giving up on rate limit errors
+const MAX_KEY_RETRIES = 5;
+
+// Track temporarily exhausted keys (hit Safe-Spend limit) with cooldown
+const exhaustedKeys = new Map<string, number>(); // keyName -> timestamp when exhausted
+const KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown for exhausted keys
+
+// Get the next API key using round-robin rotation, optionally excluding certain keys
+async function getApiKey(excludeKeys: string[] = []): Promise<{ keyValue: string; keyName: string }> {
+  // Clean up expired cooldowns
+  const now = Date.now();
+  const expiredKeys: string[] = [];
+  exhaustedKeys.forEach((timestamp, keyName) => {
+    if (now - timestamp > KEY_COOLDOWN_MS) {
+      expiredKeys.push(keyName);
+    }
+  });
+  expiredKeys.forEach(keyName => {
+    exhaustedKeys.delete(keyName);
+    console.log(`🔄 Key ${keyName} cooldown expired, returning to rotation`);
+  });
+  
+  // Get all active keys and filter out excluded ones and exhausted ones
+  const allKeys = await storage.getAllApiKeys();
+  const availableKeys = allKeys.filter(k => 
+    k.isActive && 
+    !excludeKeys.includes(k.keyName) && 
+    !exhaustedKeys.has(k.keyName)
+  );
+  
+  if (availableKeys.length === 0) {
+    // If all keys are exhausted/excluded, check if we have any keys at all
+    const activeKeys = allKeys.filter(k => k.isActive);
+    if (activeKeys.length === 0) {
+      throw new Error("No active API keys available. Please configure at least one API key in the admin panel.");
+    }
+    // All keys are temporarily exhausted
+    throw new Error("All API keys have temporarily hit their rate limits. Please try again in a few minutes.");
+  }
+  
+  // Get the next key (round-robin from available keys)
   const key = await storage.getNextApiKey();
-  if (!key) {
-    throw new Error("No active API keys available. Please configure at least one API key in the admin panel.");
+  
+  // If the selected key is excluded or exhausted, find an alternative
+  if (!key || excludeKeys.includes(key.keyName) || exhaustedKeys.has(key.keyName)) {
+    // Just pick the first available key
+    const fallbackKey = availableKeys[0];
+    await storage.updateApiKeyUsage(fallbackKey.id);
+    return { keyValue: fallbackKey.keyValue!, keyName: fallbackKey.keyName };
   }
 
   // Update usage count
@@ -198,100 +242,164 @@ async function getApiKey(): Promise<{ keyValue: string; keyName: string }> {
   return { keyValue, keyName: key.keyName };
 }
 
-// Generic API call to Kie.ai
+// Mark a key as temporarily exhausted (hit Safe-Spend limit)
+function markKeyExhausted(keyName: string): void {
+  exhaustedKeys.set(keyName, Date.now());
+  console.log(`⚠️ Key ${keyName} marked as exhausted (Safe-Spend limit hit), cooling down for ${KEY_COOLDOWN_MS / 1000}s`);
+}
+
+// Check if an error is a rate limit / Safe-Spend limit error that should trigger key rotation
+function isRateLimitError(error: any): boolean {
+  // HTTP 429 Too Many Requests
+  if (error.response?.status === 429) return true;
+  
+  // Check for rate limit indicators in response body
+  const data = error.response?.data;
+  if (data) {
+    const message = (data.message || data.msg || data.error || '').toLowerCase();
+    if (message.includes('rate limit') || 
+        message.includes('quota') || 
+        message.includes('limit exceeded') ||
+        message.includes('too many requests') ||
+        message.includes('spend limit')) {
+      return true;
+    }
+  }
+  
+  // Check Kie-specific error codes for rate limiting
+  if (data?.code === 429 || data?.code === 'RATE_LIMIT_EXCEEDED') return true;
+  
+  return false;
+}
+
+// Single attempt to call Kie API with a specific key
+async function attemptKieApiCall(
+  endpoint: string, 
+  data: any, 
+  keyValue: string, 
+  keyName: string
+): Promise<{ result: any; keyName: string }> {
+  const response = await axios.post(
+    `${KIE_API_BASE}${endpoint}`,
+    data,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${keyValue}`,
+      },
+      timeout: 120000, // 2 minutes timeout
+    }
+  );
+  
+  console.log(`✅ Kie.ai API Response from ${endpoint}:`, safeStringify(response.data));
+  
+  // Check if Kie.ai returned an error in the response body (they use 200 OK with error codes)
+  if (response.data?.code && response.data.code !== 200) {
+    const errorMsg = response.data.msg || response.data.message || 'Unknown error from AI service';
+    console.error(`❌ Kie.ai returned error code ${response.data.code}:`, errorMsg);
+    
+    // Throw an error so it gets caught and handled properly
+    const error: any = new Error(errorMsg);
+    error.response = { status: response.data.code, data: response.data };
+    error.kieaiDetails = {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data,
+      endpoint,
+    };
+    throw error;
+  }
+  
+  return { result: response.data, keyName };
+}
+
+// Generic API call to Kie.ai with automatic key rotation on rate limit errors
 async function callKieApi(endpoint: string, data: any): Promise<{ result: any; keyName: string }> {
-  const { keyValue, keyName } = await getApiKey();
+  const triedKeys: string[] = [];
+  let lastError: any = null;
   
   console.log(`🔵 Kie.ai API Request to ${endpoint}:`, safeStringify({
     ...data,
     callBackUrl: data.callBackUrl || 'NOT PROVIDED'
   }));
   
-  try {
-    const response = await axios.post(
-      `${KIE_API_BASE}${endpoint}`,
-      data,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${keyValue}`,
-        },
-        timeout: 120000, // 2 minutes timeout
-      }
-    );
-    
-        console.log(`✅ Kie.ai API Response from ${endpoint}:`, safeStringify(response.data));
-    
-    // Check if Kie.ai returned an error in the response body (they use 200 OK with error codes)
-    if (response.data?.code && response.data.code !== 200) {
-      const errorMsg = response.data.msg || response.data.message || 'Unknown error from AI service';
-      console.error(`❌ Kie.ai returned error code ${response.data.code}:`, errorMsg);
+  // Try up to MAX_KEY_RETRIES different keys
+  for (let attempt = 1; attempt <= MAX_KEY_RETRIES; attempt++) {
+    try {
+      const { keyValue, keyName } = await getApiKey(triedKeys);
+      triedKeys.push(keyName);
       
-      // Throw an error so it gets caught and handled properly
-      const error: any = new Error(errorMsg);
-      error.kieaiDetails = {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data,
-        endpoint,
-      };
-      throw error;
-    }
-    
-    return { result: response.data, keyName };
-  } catch (error: any) {
-    console.error(`❌ Kie.ai API Error for ${endpoint}:`, error.response?.data || error.message);
-        console.error("Full error details:", safeStringify({
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message
-    }));
-    
-    // Extract error message with better fallbacks
-    let errorMessage = 'Failed to communicate with AI service';
-    
-    if (error.response) {
-      const status = error.response.status;
-      const data = error.response.data;
+      console.log(`🔑 Attempt ${attempt}/${MAX_KEY_RETRIES} using key ${keyName}`);
       
-      // Check status codes FIRST before trying to extract messages
-      // This ensures we provide helpful messages even if API returns unhelpful ones
-      if (status === 404) {
-        errorMessage = `AI service endpoint not found (${endpoint}). This feature may not be available yet.`;
-      } else if (status === 401 || status === 403) {
-        errorMessage = 'AI service authentication failed. Please check API key configuration.';
-      } else if (status === 429) {
-        errorMessage = 'AI service rate limit exceeded. Please try again later.';
-      } else if (status >= 500) {
-        errorMessage = 'AI service is temporarily unavailable. Please try again later.';
-      } else if (data?.message && data.message !== 'No message available') {
-        // Use provider message if it's actually helpful
-        errorMessage = data.message;
-      } else if (data?.error) {
-        errorMessage = data.error;
-      } else if (data?.detail) {
-        errorMessage = data.detail;
-      } else if (typeof data === 'string') {
-        errorMessage = data;
-      } else {
-        errorMessage = error.response.statusText || `AI service error (${status})`;
+      return await attemptKieApiCall(endpoint, data, keyValue, keyName);
+      
+    } catch (error: any) {
+      lastError = error;
+      const currentKeyName = triedKeys[triedKeys.length - 1];
+      
+      console.error(`❌ Kie.ai API Error for ${endpoint} (key: ${currentKeyName}):`, error.response?.data || error.message);
+      console.error("Full error details:", safeStringify({
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      }));
+      
+      // If it's a rate limit error, mark the key as exhausted and try another
+      if (isRateLimitError(error)) {
+        markKeyExhausted(currentKeyName);
+        console.log(`🔄 Rate limit hit on ${currentKeyName}, trying next key... (${attempt}/${MAX_KEY_RETRIES})`);
+        continue; // Try next key
       }
-    } else if (error.message) {
-      errorMessage = error.message;
+      
+      // For non-rate-limit errors, don't retry with different keys
+      break;
     }
-    
-    // Create enhanced error with full details for debugging
-    const enhancedError: any = new Error(errorMessage);
-    enhancedError.kieaiDetails = {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      endpoint,
-    };
-    
-    throw enhancedError;
   }
+  
+  // All retries exhausted or non-retryable error
+  // Extract error message with better fallbacks
+  let errorMessage = 'Failed to communicate with AI service';
+  
+  if (lastError?.response) {
+    const status = lastError.response.status;
+    const responseData = lastError.response.data;
+    
+    // Check status codes FIRST before trying to extract messages
+    if (status === 404) {
+      errorMessage = `AI service endpoint not found (${endpoint}). This feature may not be available yet.`;
+    } else if (status === 401 || status === 403) {
+      errorMessage = 'AI service authentication failed. Please check API key configuration.';
+    } else if (status === 429 || isRateLimitError(lastError)) {
+      errorMessage = `All ${triedKeys.length} API keys have hit their rate limits. Please try again in a few minutes.`;
+    } else if (status >= 500) {
+      errorMessage = 'AI service is temporarily unavailable. Please try again later.';
+    } else if (responseData?.message && responseData.message !== 'No message available') {
+      errorMessage = responseData.message;
+    } else if (responseData?.error) {
+      errorMessage = responseData.error;
+    } else if (responseData?.detail) {
+      errorMessage = responseData.detail;
+    } else if (typeof responseData === 'string') {
+      errorMessage = responseData;
+    } else {
+      errorMessage = lastError.response.statusText || `AI service error (${status})`;
+    }
+  } else if (lastError?.message) {
+    errorMessage = lastError.message;
+  }
+  
+  // Create enhanced error with full details for debugging
+  const enhancedError: any = new Error(errorMessage);
+  enhancedError.kieaiDetails = {
+    status: lastError?.response?.status,
+    statusText: lastError?.response?.statusText,
+    data: lastError?.response?.data,
+    endpoint,
+    triedKeys,
+  };
+  
+  throw enhancedError;
 }
 
 // Video Generation - Supports all AI models and image-to-video

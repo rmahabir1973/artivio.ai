@@ -115,14 +115,106 @@ export function rateLimit(config: RateLimitConfig) {
   };
 }
 
-// TEMPORARILY DISABLED FOR TESTING - RE-ENABLE BEFORE PRODUCTION
-const RATE_LIMITS_DISABLED = true;
+// Rate limit modes:
+// - 'disabled': No rate limiting (noop)
+// - 'monitor': Log violations but don't block (for testing)
+// - 'enforce': Block requests that exceed limits (production)
+type RateLimitMode = 'disabled' | 'monitor' | 'enforce';
+
+const RATE_LIMIT_MODE: RateLimitMode = 'monitor'; // Set to 'enforce' for production
+
+console.log(`📊 Rate limiting mode: ${RATE_LIMIT_MODE}`);
+
+// Track rate limit violations for monitoring
+interface RateLimitViolation {
+  timestamp: Date;
+  identifier: string;
+  limitType: string;
+  count: number;
+  maxRequests: number;
+  path: string;
+  wouldBlock: boolean;
+}
+
+const rateLimitViolations: RateLimitViolation[] = [];
+const MAX_VIOLATIONS = 100;
+
+// Get violations for admin monitoring
+export function getRateLimitViolations(): RateLimitViolation[] {
+  return rateLimitViolations.slice(-50).reverse();
+}
 
 // Pass-through middleware for when rate limits are disabled
 const noopMiddleware = (_req: Request, _res: Response, next: NextFunction) => next();
 
+// Monitoring middleware - logs violations but doesn't block
+function createMonitoringMiddleware(config: RateLimitConfig) {
+  const { windowMs, maxRequests, keyPrefix, keyGenerator, perEndpoint = false } = config;
+  
+  return (req: Request, res: Response, next: NextFunction) => {
+    const identifier = keyGenerator ? keyGenerator(req) : getIdentifier(req);
+    const key = perEndpoint 
+      ? `${keyPrefix}:${identifier}:${req.path}`
+      : `${keyPrefix}:${identifier}`;
+    
+    const now = Date.now();
+    let record = rateLimitStore.get(key);
+    
+    if (!record || now > record.resetTime) {
+      rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
+      record = rateLimitStore.get(key)!;
+    } else {
+      record.count++;
+    }
+    
+    // Set informational headers (even in monitor mode)
+    const remaining = Math.max(0, maxRequests - record.count);
+    res.setHeader('X-RateLimit-Limit', maxRequests);
+    res.setHeader('X-RateLimit-Remaining', remaining);
+    res.setHeader('X-RateLimit-Reset', Math.ceil(record.resetTime / 1000));
+    res.setHeader('X-RateLimit-Mode', 'monitor');
+    
+    // Would this have been blocked in enforce mode?
+    if (record.count > maxRequests) {
+      const violation: RateLimitViolation = {
+        timestamp: new Date(),
+        identifier,
+        limitType: keyPrefix,
+        count: record.count,
+        maxRequests,
+        path: req.path,
+        wouldBlock: true,
+      };
+      
+      rateLimitViolations.push(violation);
+      if (rateLimitViolations.length > MAX_VIOLATIONS) {
+        rateLimitViolations.shift();
+      }
+      
+      console.warn(`📊 [RATE LIMIT MONITOR] Would block ${identifier} (${record.count}/${maxRequests}) - ${keyPrefix} - ${req.path}`);
+    }
+    
+    // Always continue (don't block in monitor mode)
+    next();
+  };
+}
+
+// Factory to create rate limit middleware based on mode
+function createRateLimitMiddleware(config: RateLimitConfig) {
+  switch (RATE_LIMIT_MODE) {
+    case 'disabled':
+      return noopMiddleware;
+    case 'monitor':
+      return createMonitoringMiddleware(config);
+    case 'enforce':
+      return rateLimit(config);
+    default:
+      return noopMiddleware;
+  }
+}
+
 // Global rate limit: 100 requests per 15 minutes per IP (aggregate across all endpoints)
-export const globalRateLimit = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
+export const globalRateLimit = createRateLimitMiddleware({
   windowMs: 15 * 60 * 1000,  // 15 minutes
   maxRequests: 100,           // 100 requests per 15 minutes
   keyPrefix: 'global',
@@ -130,23 +222,24 @@ export const globalRateLimit = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit
 });
 
 // Generation endpoints: 20 per hour per user (aggregate across all generation endpoints)
-export const rateLimitGeneration = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
+export const rateLimitGeneration = createRateLimitMiddleware({
   windowMs: 60 * 60 * 1000,   // 1 hour
   maxRequests: 20,            // 20 generations per hour
   keyPrefix: 'generation',
   message: 'Generation limit reached. You can make 20 AI generations per hour. Please wait before trying again.',
 });
 
-// Auth endpoints: 5 attempts per 15 minutes (strict to prevent brute force)
-export const rateLimitAuth = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
+// Auth endpoints: INCREASED to 15 attempts per 15 minutes (was 5 - too strict)
+// This accommodates legitimate retries while still preventing brute force
+export const rateLimitAuth = createRateLimitMiddleware({
   windowMs: 15 * 60 * 1000,   // 15 minutes
-  maxRequests: 5,             // 5 attempts per 15 minutes
+  maxRequests: 15,            // 15 attempts per 15 minutes (increased from 5)
   keyPrefix: 'auth',
   message: 'Too many authentication attempts. Please try again in 15 minutes.',
 });
 
 // API endpoints: moderate limit
-export const rateLimitApi = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
+export const rateLimitApi = createRateLimitMiddleware({
   windowMs: 60 * 1000,        // 1 minute
   maxRequests: 60,            // 60 requests per minute
   keyPrefix: 'api',
@@ -154,7 +247,7 @@ export const rateLimitApi = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
 });
 
 // Webhook endpoints: relaxed (but still protected)
-export const rateLimitWebhook = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
+export const rateLimitWebhook = createRateLimitMiddleware({
   windowMs: 60 * 1000,        // 1 minute
   maxRequests: 100,           // 100 per minute
   keyPrefix: 'webhook',
@@ -162,7 +255,7 @@ export const rateLimitWebhook = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimi
 });
 
 // Admin endpoints: moderate protection
-export const rateLimitAdmin = RATE_LIMITS_DISABLED ? noopMiddleware : rateLimit({
+export const rateLimitAdmin = createRateLimitMiddleware({
   windowMs: 60 * 1000,        // 1 minute
   maxRequests: 30,            // 30 requests per minute
   keyPrefix: 'admin',
