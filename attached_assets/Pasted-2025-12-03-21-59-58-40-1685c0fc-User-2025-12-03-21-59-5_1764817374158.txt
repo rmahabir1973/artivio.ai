@@ -1,0 +1,136 @@
+2025-12-03 21:59:58.40
+1685c0fc
+User
+}
+2025-12-03 21:59:58.40
+1685c0fc
+User
+2:59:58 AM [express] GET /api/auth/bootstrap 200 in 163ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR…
+2025-12-03 21:59:58.58
+1685c0fc
+User
+2:59:58 AM [express] GET /api/subscription 304 in 1ms
+2025-12-03 21:59:58.60
+1685c0fc
+User
+2:59:58 AM [express] GET /api/welcome 304 in 24ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-03 21:59:58.69
+1685c0fc
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 21:59:58.69
+1685c0fc
+User
+}
+2025-12-03 21:59:58.69
+1685c0fc
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 21:59:58.69
+1685c0fc
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 21:59:58.69
+1685c0fc
+User
+2:59:58 AM [express] GET /api/announcements/active 304 in 95ms :: []
+2025-12-03 21:59:58.71
+1685c0fc
+User
+2:59:58 AM [express] GET /api/boost-settings 304 in 119ms :: {"enabled":false}
+2025-12-03 22:00:24.07
+1685c0fc
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 22:00:24.07
+1685c0fc
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 22:00:24.07
+1685c0fc
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 22:00:24.07
+1685c0fc
+User
+}
+2025-12-03 22:00:24.07
+1685c0fc
+User
+}
+2025-12-03 22:00:24.07
+1685c0fc
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 22:00:24.07
+1685c0fc
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 22:00:24.07
+1685c0fc
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"name": "free",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"trialDays": 7,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"creditsPerMonth": 1000,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"7-day trial period",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"creditRolloverLimit": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"id": "ec642013-8aa6-4dfc-8f1d-5a6d21840c68",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+}
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"Generate videos, images, and music",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"isActive": true,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"sortOrder": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"price": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"updatedAt": "2025-11-29T12:43:48.781Z"
+2025-12-03 22:00:24.08
+1685c0fc
+User
+[API] /api/plans - First plan: {
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"1,000 credits to start creating",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"billingPeriod": "trial",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"savingsPercentage": 0,
