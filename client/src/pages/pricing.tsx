@@ -279,8 +279,12 @@ export default function Pricing() {
       answer: "No worries. If a generation doesn't work out, we'll refund your credits or provide a new one at no cost. We stand behind our quality and customer satisfaction."
     },
     {
-      question: "Can I switch plans or cancel at any time?",
-      answer: "Yes, absolutely. You have full control. Change your plan, upgrade, downgrade, or cancel whenever you want. Continue using your remaining credits even after canceling."
+      question: "What happens when I upgrade mid-cycle?",
+      answer: "Upgrade now and immediately receive your new plan's full credit allocation. For example, upgrading to Pro gives you 10,000 credits right away. Your billing will be prorated for the remaining time in your current billing period."
+    },
+    {
+      question: "Can I cancel at any time?",
+      answer: "Yes, absolutely. You have full control. Cancel whenever you want and continue using your credits until the end of your billing period. No questions asked."
     },
     {
       question: "How are credits calculated for different generations?",
@@ -587,6 +591,16 @@ export default function Pricing() {
                 );
               })}
             </div>
+
+            {/* Upgrade Info Note */}
+            {user && (
+              <div className="text-center mb-10 max-w-2xl mx-auto">
+                <p className="text-sm text-gray-500">
+                  Upgrade anytime and immediately receive your new plan's full credit allocation. 
+                  Billing is prorated for the remaining time in your current period.
+                </p>
+              </div>
+            )}
 
             {/* Enterprise CTA */}
             <div className="max-w-4xl mx-auto mb-16">
