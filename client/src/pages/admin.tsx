@@ -15,13 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift, Globe, Clock, MousePointer, Timer, MapPin, Laptop, Smartphone, Monitor, RefreshCw, Zap, Share } from "lucide-react";
+import { Loader2, Shield, Users, Key, Trash2, Edit, Plus, ToggleLeft, ToggleRight, BarChart3, TrendingUp, Activity, DollarSign, Save, X, FileText, ArrowUp, ArrowDown, Info, Eye, BookOpen, ExternalLink, Video, Sparkles, Gift, Globe, Clock, MousePointer, Timer, MapPin, Laptop, Smartphone, Monitor, RefreshCw, Zap, Share, Headphones, MessageSquare, Bot, User, AlertTriangle, CheckCircle2, Send, XCircle, ChevronDown, ChevronUp, ArrowUpRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { User, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, Generation, BlogPost } from "@shared/schema";
+import type { User as UserType, ApiKey, Pricing, SubscriptionPlan, HomePageContent, Announcement, Generation, BlogPost } from "@shared/schema";
 
-interface UserWithSubscription extends User {
+interface UserWithSubscription extends UserType {
   subscription: {
     id: string;
     planId: string;
@@ -76,6 +76,44 @@ interface SiteAnalyticsData {
   devices: Array<{ device: string; users: number; sessions: number }>;
   realtime: { activeUsers: number };
   fetchedAt: string;
+}
+
+interface SupportTicket {
+  id: string;
+  userId: string | null;
+  userEmail: string;
+  subject: string;
+  status: string;
+  priority: string;
+  category: string | null;
+  sentiment: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string;
+  escalatedAt: string | null;
+  resolvedAt: string | null;
+  aiSummary: string | null;
+  aiConfidence: number | null;
+}
+
+interface SupportMessage {
+  id: string;
+  ticketId: string;
+  senderType: string;
+  senderName: string | null;
+  bodyText: string;
+  createdAt: string;
+  aiGenerated: boolean;
+}
+
+interface SupportStats {
+  total: number;
+  open: number;
+  pending: number;
+  resolved: number;
+  escalated: number;
+  avgResponseTime: number;
+  aiResolutionRate: number;
 }
 
 function formatDuration(seconds: number): string {
@@ -683,6 +721,445 @@ function ErrorMonitorSection() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function AdminSupportDashboard() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [replyMessage, setReplyMessage] = useState("");
+  const [expandedTickets, setExpandedTickets] = useState<Set<string>>(new Set());
+
+  const { data: tickets, isLoading: ticketsLoading, refetch: refetchTickets } = useQuery<SupportTicket[]>({
+    queryKey: ['/api/admin/support/tickets'],
+    refetchInterval: 30000,
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery<SupportStats>({
+    queryKey: ['/api/admin/support/stats'],
+    refetchInterval: 60000,
+  });
+
+  const { data: ticketDetails, isLoading: detailsLoading } = useQuery<{
+    ticket: SupportTicket;
+    messages: SupportMessage[];
+  }>({
+    queryKey: ['/api/admin/support/tickets', selectedTicket],
+    enabled: !!selectedTicket,
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ ticketId, status }: { ticketId: string; status: string }) => {
+      return apiRequest('PATCH', `/api/admin/support/tickets/${ticketId}`, { status });
+    },
+    onSuccess: () => {
+      toast({ title: "Status Updated" });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/support/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/support/stats'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const escalateMutation = useMutation({
+    mutationFn: async ({ ticketId, reason }: { ticketId: string; reason: string }) => {
+      return apiRequest('POST', `/api/admin/support/tickets/${ticketId}/escalate`, { reason });
+    },
+    onSuccess: () => {
+      toast({ title: "Ticket Escalated", description: "Email sent to escalations@artivio.ai" });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/support/tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/support/stats'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: async ({ ticketId, message }: { ticketId: string; message: string }) => {
+      return apiRequest('POST', `/api/admin/support/tickets/${ticketId}/reply`, { message, sendEmail: true });
+    },
+    onSuccess: () => {
+      toast({ title: "Reply Sent" });
+      setReplyMessage("");
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/support/tickets', selectedTicket] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const filteredTickets = tickets?.filter(t => {
+    if (statusFilter === "all") return true;
+    return t.status === statusFilter;
+  }) || [];
+
+  const toggleExpanded = (ticketId: string) => {
+    setExpandedTickets(prev => {
+      const next = new Set(prev);
+      if (next.has(ticketId)) {
+        next.delete(ticketId);
+      } else {
+        next.add(ticketId);
+      }
+      return next;
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'open': return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Open</Badge>;
+      case 'pending': return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pending</Badge>;
+      case 'resolved': return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Resolved</Badge>;
+      case 'escalated': return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Escalated</Badge>;
+      default: return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return <Badge variant="destructive">Urgent</Badge>;
+      case 'high': return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">High</Badge>;
+      case 'medium': return <Badge variant="outline">Medium</Badge>;
+      case 'low': return <Badge variant="secondary">Low</Badge>;
+      default: return null;
+    }
+  };
+
+  const getSenderIcon = (senderType: string) => {
+    switch (senderType) {
+      case 'user': return <User className="h-4 w-4" />;
+      case 'ai': return <Bot className="h-4 w-4" />;
+      case 'admin': return <Shield className="h-4 w-4" />;
+      default: return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Headphones className="h-6 w-6 text-primary" />
+            AI Support Dashboard
+          </h2>
+          <p className="text-muted-foreground">Manage support tickets and AI responses</p>
+        </div>
+        <Button variant="outline" onClick={() => refetchTickets()} data-testid="button-refresh-tickets">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      {statsLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : stats ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-blue-500/5 border-blue-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Open</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-500">{stats.open}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-yellow-500/5 border-yellow-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-500">{stats.pending}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-green-500/5 border-green-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Resolved</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-500">{stats.resolved}</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-purple-500/5 border-purple-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Escalated</CardTitle>
+              <ArrowUpRight className="h-4 w-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-500">{stats.escalated}</div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      {/* AI Performance */}
+      {stats && (
+        <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-primary" />
+              AI Support Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="p-3 bg-background/50 rounded-lg border">
+                <p className="font-medium">AI Resolution Rate</p>
+                <p className="text-2xl font-bold text-primary">{(stats.aiResolutionRate * 100).toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground">Tickets resolved by AI without escalation</p>
+              </div>
+              <div className="p-3 bg-background/50 rounded-lg border">
+                <p className="font-medium">Avg Response Time</p>
+                <p className="text-2xl font-bold">{stats.avgResponseTime < 60 ? `${stats.avgResponseTime}s` : `${Math.round(stats.avgResponseTime / 60)}m`}</p>
+                <p className="text-xs text-muted-foreground">AI response time</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tickets List */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <div>
+            <CardTitle>Support Tickets</CardTitle>
+            <CardDescription>View and manage all support requests</CardDescription>
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40" data-testid="select-status-filter">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tickets</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="escalated">Escalated</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent>
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredTickets.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <CheckCircle2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">No tickets found</p>
+              <p className="text-sm mt-1">All support requests will appear here</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredTickets.map((ticket) => (
+                <div key={ticket.id} className="border rounded-lg overflow-hidden">
+                  <div 
+                    className="p-4 cursor-pointer hover-elevate"
+                    onClick={() => toggleExpanded(ticket.id)}
+                    data-testid={`ticket-row-${ticket.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {expandedTickets.has(ticket.id) ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <h4 className="font-medium truncate">{ticket.subject}</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {ticket.userEmail} • {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                          {ticket.category && ` • ${ticket.category}`}
+                        </p>
+                        {ticket.aiSummary && (
+                          <p className="text-sm text-muted-foreground mt-2 italic">
+                            AI Summary: {ticket.aiSummary}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {getPriorityBadge(ticket.priority)}
+                        {getStatusBadge(ticket.status)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {expandedTickets.has(ticket.id) && (
+                    <div className="border-t p-4 bg-muted/30 space-y-4">
+                      {/* Ticket Details */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Category</p>
+                          <p className="font-medium capitalize">{ticket.category || 'Uncategorized'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Sentiment</p>
+                          <p className="font-medium capitalize">{ticket.sentiment || 'Unknown'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">AI Confidence</p>
+                          <p className="font-medium">{ticket.aiConfidence ? `${(ticket.aiConfidence * 100).toFixed(0)}%` : 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Last Activity</p>
+                          <p className="font-medium">{formatDistanceToNow(new Date(ticket.lastMessageAt), { addSuffix: true })}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Select 
+                          value={ticket.status} 
+                          onValueChange={(status) => updateStatusMutation.mutate({ ticketId: ticket.id, status })}
+                        >
+                          <SelectTrigger className="w-32" data-testid={`select-status-${ticket.id}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedTicket(ticket.id)}
+                          data-testid={`button-view-details-${ticket.id}`}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Messages
+                        </Button>
+                        {ticket.status !== 'escalated' && ticket.status !== 'resolved' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => escalateMutation.mutate({ ticketId: ticket.id, reason: 'Manual escalation by admin' })}
+                            disabled={escalateMutation.isPending}
+                            data-testid={`button-escalate-${ticket.id}`}
+                          >
+                            <ArrowUpRight className="h-4 w-4 mr-2" />
+                            Escalate
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Ticket Detail Dialog */}
+      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{ticketDetails?.ticket.subject}</DialogTitle>
+            <DialogDescription>
+              {ticketDetails?.ticket.userEmail} • {ticketDetails && formatDistanceToNow(new Date(ticketDetails.ticket.createdAt), { addSuffix: true })}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {detailsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : ticketDetails ? (
+            <>
+              <div className="flex-1 overflow-y-auto space-y-4 max-h-[400px] pr-2">
+                {ticketDetails.messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex gap-3 ${message.senderType === 'user' ? 'justify-end' : ''}`}
+                  >
+                    {message.senderType !== 'user' && (
+                      <div className={`p-2 rounded-full ${
+                        message.senderType === 'ai' ? 'bg-purple-500/20' : 'bg-primary/20'
+                      }`}>
+                        {getSenderIcon(message.senderType)}
+                      </div>
+                    )}
+                    <div className={`max-w-[80%] ${
+                      message.senderType === 'user' 
+                        ? 'bg-primary/10 rounded-lg rounded-tr-sm' 
+                        : 'bg-muted rounded-lg rounded-tl-sm'
+                    } p-3`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium">
+                          {message.senderType === 'user' ? 'Customer' : 
+                           message.senderType === 'ai' ? 'AI Support' : 
+                           message.senderName || 'Support Team'}
+                        </span>
+                        {message.aiGenerated && (
+                          <Badge variant="secondary" className="text-xs py-0">AI</Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{message.bodyText}</p>
+                    </div>
+                    {message.senderType === 'user' && (
+                      <div className="p-2 rounded-full bg-blue-500/20">
+                        {getSenderIcon(message.senderType)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="border-t pt-4 mt-4">
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Type your reply as admin..."
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    rows={2}
+                    className="flex-1"
+                    data-testid="input-admin-reply"
+                  />
+                  <Button
+                    onClick={() => {
+                      if (selectedTicket) {
+                        replyMutation.mutate({ ticketId: selectedTicket, message: replyMessage });
+                      }
+                    }}
+                    disabled={!replyMessage.trim() || replyMutation.isPending}
+                    data-testid="button-send-admin-reply"
+                  >
+                    {replyMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1624,6 +2101,10 @@ export default function Admin() {
           <TabsTrigger value="blog" data-testid="tab-blog">
             <BookOpen className="h-4 w-4 mr-2" />
             Blog
+          </TabsTrigger>
+          <TabsTrigger value="support" data-testid="tab-support">
+            <Headphones className="h-4 w-4 mr-2" />
+            Support
           </TabsTrigger>
         </TabsList>
 
@@ -4066,6 +4547,10 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="support">
+          <AdminSupportDashboard />
         </TabsContent>
       </Tabs>
 

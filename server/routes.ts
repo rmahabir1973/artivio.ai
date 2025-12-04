@@ -12,6 +12,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { db } from "./db";
+import { eq, desc, and, count, sql } from "drizzle-orm";
 import { registerAuthRoutes } from "./authRoutes";
 import { registerPublicApiRoutes, requireApiKey } from './publicApi';
 import { registerSocialMediaRoutes } from "./socialMediaRoutes";
@@ -107,6 +108,9 @@ import {
   promptRefineRequestSchema,
   assistantChatRequestSchema,
   insertSavedStockImageSchema,
+  supportTickets,
+  supportMessages,
+  users,
   type InsertSubscriptionPlan,
   type BlogPost
 } from "@shared/schema";
@@ -10050,6 +10054,513 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     } catch (error: any) {
       console.error('Check saved stock images error:', error);
       res.status(500).json({ message: error.message || 'Failed to check saved images' });
+    }
+  });
+
+  // ========== AI SUPPORT SYSTEM ROUTES ==========
+
+  const { aiSupportAgent } = await import('./services/aiSupportAgent');
+
+  // Postmark Inbound Webhook - receives emails from support@artivio.ai
+  app.post('/api/support/inbound-email', express.json(), async (req, res) => {
+    try {
+      console.log('[SUPPORT WEBHOOK] Received inbound email webhook');
+      
+      // Validate this is from Postmark (basic check)
+      const payload = req.body;
+      if (!payload.From || !payload.MessageID) {
+        console.error('[SUPPORT WEBHOOK] Invalid payload - missing required fields');
+        return res.status(400).json({ message: 'Invalid payload' });
+      }
+      
+      console.log('[SUPPORT WEBHOOK] Processing email from:', payload.From);
+      console.log('[SUPPORT WEBHOOK] Subject:', payload.Subject);
+      
+      const result = await aiSupportAgent.processInboundEmail(payload);
+      
+      console.log('[SUPPORT WEBHOOK] Processed:', result);
+      
+      // Always return 200 to Postmark to acknowledge receipt
+      res.status(200).json({ 
+        success: true, 
+        ticketId: result.ticketId,
+        action: result.action 
+      });
+    } catch (error: any) {
+      console.error('[SUPPORT WEBHOOK] Error processing inbound email:', error);
+      // Still return 200 to prevent Postmark from retrying
+      res.status(200).json({ success: false, error: error.message });
+    }
+  });
+
+  // User: Submit a support ticket from the app
+  app.post('/api/support/tickets', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.email) {
+        return res.status(400).json({ message: 'User email not found' });
+      }
+      
+      const { subject, message } = req.body;
+      
+      if (!subject || !message) {
+        return res.status(400).json({ message: 'Subject and message are required' });
+      }
+      
+      const result = await aiSupportAgent.createTicketFromApp(
+        userId,
+        user.email,
+        user.firstName || undefined,
+        subject,
+        message
+      );
+      
+      res.json({
+        success: true,
+        ticketId: result.ticketId,
+        action: result.action,
+        message: result.action === 'auto_replied' 
+          ? 'Your request has been received and we\'ve sent you a response via email.' 
+          : result.action === 'escalated'
+          ? 'Your request has been received and escalated to our support team. We\'ll get back to you soon.'
+          : 'Your request has been received. We\'ll get back to you soon.'
+      });
+    } catch (error: any) {
+      console.error('[SUPPORT] Error creating ticket:', error);
+      res.status(500).json({ message: error.message || 'Failed to create support ticket' });
+    }
+  });
+
+  // User: Get their support tickets
+  app.get('/api/support/tickets', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const tickets = await db.select()
+        .from(supportTickets)
+        .where(eq(supportTickets.userId, userId))
+        .orderBy(desc(supportTickets.createdAt));
+      
+      res.json(tickets);
+    } catch (error: any) {
+      console.error('[SUPPORT] Error fetching tickets:', error);
+      res.status(500).json({ message: 'Failed to fetch support tickets' });
+    }
+  });
+
+  // User: Get a specific ticket with messages
+  app.get('/api/support/tickets/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const [ticket] = await db.select()
+        .from(supportTickets)
+        .where(and(
+          eq(supportTickets.id, id),
+          eq(supportTickets.userId, userId)
+        ));
+      
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+      
+      const messages = await db.select()
+        .from(supportMessages)
+        .where(eq(supportMessages.ticketId, id))
+        .orderBy(supportMessages.createdAt);
+      
+      res.json({ ticket, messages });
+    } catch (error: any) {
+      console.error('[SUPPORT] Error fetching ticket:', error);
+      res.status(500).json({ message: 'Failed to fetch support ticket' });
+    }
+  });
+
+  // User: Reply to their own ticket
+  app.post('/api/support/tickets/:id/reply', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: 'Message is required' });
+      }
+      
+      const [ticket] = await db.select()
+        .from(supportTickets)
+        .where(and(
+          eq(supportTickets.id, id),
+          eq(supportTickets.userId, userId)
+        ));
+      
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      // Add the user's reply
+      await db.insert(supportMessages).values({
+        ticketId: id,
+        senderType: 'user',
+        senderName: user?.firstName || undefined,
+        senderEmail: user?.email || undefined,
+        bodyText: message,
+      });
+      
+      // Update ticket status and last message time
+      await db.update(supportTickets)
+        .set({
+          status: 'open',
+          lastMessageAt: new Date(),
+        })
+        .where(eq(supportTickets.id, id));
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[SUPPORT] Error replying to ticket:', error);
+      res.status(500).json({ message: 'Failed to send reply' });
+    }
+  });
+
+  // Admin: Get all support tickets
+  app.get('/api/admin/support/tickets', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      
+      const { status, priority, category, limit = 50, offset = 0 } = req.query;
+      
+      let query = db.select({
+        ticket: supportTickets,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        }
+      })
+        .from(supportTickets)
+        .leftJoin(users, eq(supportTickets.userId, users.id))
+        .orderBy(desc(supportTickets.createdAt))
+        .limit(Number(limit))
+        .offset(Number(offset));
+      
+      const tickets = await query;
+      
+      // Get total count
+      const countResult = await db.select({ count: count() })
+        .from(supportTickets);
+      
+      res.json({
+        tickets: tickets.map(t => ({ ...t.ticket, user: t.user })),
+        total: countResult[0]?.count || 0,
+      });
+    } catch (error: any) {
+      console.error('[SUPPORT ADMIN] Error fetching tickets:', error);
+      res.status(500).json({ message: 'Failed to fetch support tickets' });
+    }
+  });
+
+  // Admin: Get a specific ticket with all details
+  app.get('/api/admin/support/tickets/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      
+      const { id } = req.params;
+      
+      const [ticketResult] = await db.select({
+        ticket: supportTickets,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          credits: users.credits,
+          createdAt: users.createdAt,
+        }
+      })
+        .from(supportTickets)
+        .leftJoin(users, eq(supportTickets.userId, users.id))
+        .where(eq(supportTickets.id, id));
+      
+      if (!ticketResult) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+      
+      const messages = await db.select()
+        .from(supportMessages)
+        .where(eq(supportMessages.ticketId, id))
+        .orderBy(supportMessages.createdAt);
+      
+      res.json({ 
+        ticket: { ...ticketResult.ticket, user: ticketResult.user },
+        messages 
+      });
+    } catch (error: any) {
+      console.error('[SUPPORT ADMIN] Error fetching ticket:', error);
+      res.status(500).json({ message: 'Failed to fetch support ticket' });
+    }
+  });
+
+  // Admin: Update ticket status/priority
+  app.patch('/api/admin/support/tickets/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      
+      const { id } = req.params;
+      const { status, priority, category } = req.body;
+      
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (priority) updates.priority = priority;
+      if (category) updates.category = category;
+      if (status === 'resolved') updates.resolvedAt = new Date();
+      
+      await db.update(supportTickets)
+        .set(updates)
+        .where(eq(supportTickets.id, id));
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[SUPPORT ADMIN] Error updating ticket:', error);
+      res.status(500).json({ message: 'Failed to update ticket' });
+    }
+  });
+
+  // Admin: Reply to a ticket
+  app.post('/api/admin/support/tickets/:id/reply', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      
+      const { id } = req.params;
+      const { message, sendEmail = true } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: 'Message is required' });
+      }
+      
+      const [ticket] = await db.select()
+        .from(supportTickets)
+        .where(eq(supportTickets.id, id));
+      
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+      
+      // Add the admin's reply
+      const [newMessage] = await db.insert(supportMessages).values({
+        ticketId: id,
+        senderType: 'admin',
+        senderName: user?.firstName || 'Support Team',
+        senderEmail: 'support@artivio.ai',
+        bodyText: message,
+      }).returning();
+      
+      // Send email to user if requested
+      if (sendEmail && process.env.POSTMARK_SERVER_TOKEN) {
+        const { ServerClient } = await import('postmark');
+        const postmarkClient = new ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+        
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0f; color: #ffffff;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0f;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a24; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%); padding: 24px; text-align: center;">
+              <h1 style="margin: 0; font-size: 20px; color: #ffffff;">Artivio AI Support</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px;">
+              ${ticket.name ? `<p style="color: #ffffff; font-size: 16px; margin: 0 0 16px 0;">Hi ${ticket.name},</p>` : ''}
+              <p style="color: #d1d5db; font-size: 14px; margin: 0 0 16px 0;">We've responded to your support request:</p>
+              <p style="color: #71717a; font-size: 13px; margin: 0 0 8px 0;"><strong>Subject:</strong> ${ticket.subject}</p>
+              <div style="background-color: #0a0a0f; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                <p style="color: #ffffff; font-size: 14px; margin: 0; white-space: pre-wrap;">${message}</p>
+              </div>
+              <p style="color: #d1d5db; font-size: 14px; margin: 16px 0 0 0;">
+                Reply to this email if you have any follow-up questions.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px 24px; background-color: #0a0a0f; text-align: center;">
+              <p style="color: #71717a; font-size: 12px; margin: 0;">
+                Ticket ID: ${id}<br>
+                <a href="https://artivio.ai" style="color: #9333ea;">artivio.ai</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        try {
+          const result = await postmarkClient.sendEmail({
+            From: 'support@artivio.ai',
+            To: ticket.email,
+            Subject: `Re: ${ticket.subject}`,
+            HtmlBody: htmlBody,
+            TextBody: `${ticket.name ? `Hi ${ticket.name},\n\n` : ''}We've responded to your support request:\n\nSubject: ${ticket.subject}\n\n${message}\n\nReply to this email if you have any follow-up questions.\n\nTicket ID: ${id}\nartivio.ai`,
+            ReplyTo: 'support@artivio.ai',
+            MessageStream: 'outbound',
+            Headers: [{ Name: 'X-Ticket-ID', Value: id }]
+          });
+          
+          // Update message delivery status
+          await db.update(supportMessages)
+            .set({ 
+              deliveryStatus: 'sent',
+              deliveredAt: new Date(),
+              postmarkMessageId: result.MessageID
+            })
+            .where(eq(supportMessages.id, newMessage.id));
+            
+        } catch (emailError) {
+          console.error('[SUPPORT ADMIN] Failed to send email:', emailError);
+        }
+      }
+      
+      // Update ticket
+      await db.update(supportTickets)
+        .set({
+          status: 'pending',
+          lastMessageAt: new Date(),
+        })
+        .where(eq(supportTickets.id, id));
+      
+      res.json({ success: true, messageId: newMessage.id });
+    } catch (error: any) {
+      console.error('[SUPPORT ADMIN] Error replying to ticket:', error);
+      res.status(500).json({ message: 'Failed to send reply' });
+    }
+  });
+
+  // Admin: Manually escalate a ticket
+  app.post('/api/admin/support/tickets/:id/escalate', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const [ticket] = await db.select()
+        .from(supportTickets)
+        .where(eq(supportTickets.id, id));
+      
+      if (!ticket) {
+        return res.status(404).json({ message: 'Ticket not found' });
+      }
+      
+      // Get full message history
+      const messages = await db.select()
+        .from(supportMessages)
+        .where(eq(supportMessages.ticketId, id))
+        .orderBy(supportMessages.createdAt);
+      
+      const fullMessage = messages.map(m => `[${m.senderType}] ${m.bodyText}`).join('\n\n---\n\n');
+      
+      const success = await aiSupportAgent.escalateTicket(
+        id,
+        reason || 'Manually escalated by admin',
+        ticket.email,
+        ticket.name || undefined,
+        ticket.subject,
+        fullMessage,
+        ticket.userContext as any || {}
+      );
+      
+      res.json({ success });
+    } catch (error: any) {
+      console.error('[SUPPORT ADMIN] Error escalating ticket:', error);
+      res.status(500).json({ message: 'Failed to escalate ticket' });
+    }
+  });
+
+  // Admin: Get support stats
+  app.get('/api/admin/support/stats', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      
+      const [openCount] = await db.select({ count: count() })
+        .from(supportTickets)
+        .where(eq(supportTickets.status, 'open'));
+      
+      const [pendingCount] = await db.select({ count: count() })
+        .from(supportTickets)
+        .where(eq(supportTickets.status, 'pending'));
+      
+      const [escalatedCount] = await db.select({ count: count() })
+        .from(supportTickets)
+        .where(eq(supportTickets.status, 'escalated'));
+      
+      const [resolvedCount] = await db.select({ count: count() })
+        .from(supportTickets)
+        .where(eq(supportTickets.status, 'resolved'));
+      
+      const [totalCount] = await db.select({ count: count() })
+        .from(supportTickets);
+      
+      // Get today's tickets
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const [todayCount] = await db.select({ count: count() })
+        .from(supportTickets)
+        .where(sql`${supportTickets.createdAt} >= ${today}`);
+      
+      res.json({
+        open: openCount?.count || 0,
+        pending: pendingCount?.count || 0,
+        escalated: escalatedCount?.count || 0,
+        resolved: resolvedCount?.count || 0,
+        total: totalCount?.count || 0,
+        today: todayCount?.count || 0,
+      });
+    } catch (error: any) {
+      console.error('[SUPPORT ADMIN] Error fetching stats:', error);
+      res.status(500).json({ message: 'Failed to fetch support stats' });
     }
   });
 
