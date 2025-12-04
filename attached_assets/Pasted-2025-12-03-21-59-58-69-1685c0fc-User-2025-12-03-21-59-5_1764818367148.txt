@@ -1,0 +1,164 @@
+2025-12-03 21:59:58.69
+1685c0fc
+User
+}
+2025-12-03 21:59:58.69
+1685c0fc
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 21:59:58.69
+1685c0fc
+User
+2:59:58 AM [express] GET /api/announcements/active 304 in 95ms :: []
+2025-12-03 21:59:58.71
+1685c0fc
+User
+2:59:58 AM [express] GET /api/boost-settings 304 in 119ms :: {"enabled":false}
+2025-12-03 22:00:24.07
+1685c0fc
+User
+}
+2025-12-03 22:00:24.07
+1685c0fc
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 22:00:24.07
+1685c0fc
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 22:00:24.07
+1685c0fc
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 22:00:24.07
+1685c0fc
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 22:00:24.07
+1685c0fc
+User
+}
+2025-12-03 22:00:24.07
+1685c0fc
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 22:00:24.07
+1685c0fc
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"features": [
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"monthlyPrice": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+],
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"stripeProductId": null,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"name": "free",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"Access to all AI models and features",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+[API] /api/plans - Retrieved plans: 7 plans
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"savingsPercentage": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"billingPeriod": "trial",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"1,000 credits to start creating",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+[API] /api/plans - First plan: {
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"annualPrice": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"price": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"sortOrder": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"isActive": true,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"Generate videos, images, and music",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+}
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"id": "ec642013-8aa6-4dfc-8f1d-5a6d21840c68",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"creditRolloverLimit": 0,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"7-day trial period",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"creditsPerMonth": 1000,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"trialDays": 7,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"No credit card required"
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"displayName": "7 Day Free Trial",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"updatedAt": "2025-11-29T12:43:48.781Z"
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"stripePriceId": null,
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"createdAt": "2025-11-25T04:47:37.042Z",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+"description": "Experience the full power of AI creation with no commitment. Perfect for exploring all our features risk-free.",
+2025-12-03 22:00:24.08
+1685c0fc
+User
+3:00:24 AM [express] GET /api/plans 304 in 42ms :: [{"id":"ec642013-8aa6-4dfc-8f1d-5a6d21840c68","na…

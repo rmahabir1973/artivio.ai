@@ -227,13 +227,25 @@ app.post('/api/webhooks/stripe',
       switch (event.type) {
         case 'checkout.session.completed': {
           const session = event.data.object as any;
+          console.log('[Stripe Webhook] checkout.session.completed details:', {
+            sessionId: session.id,
+            metadata: session.metadata,
+            customerId: session.customer,
+            subscriptionId: session.subscription,
+            mode: session.mode,
+            paymentStatus: session.payment_status,
+          });
+          
           // Check if this is a Social Poster add-on checkout
           if (session.metadata?.productType === 'social_poster_addon') {
+            console.log('[Stripe Webhook] → Routing to Social Poster handler');
             await handleSocialPosterCheckout(session, event.id);
           } else if (isBoostProduct(session)) {
+            console.log('[Stripe Webhook] → Routing to Credit Boost handler');
             // Handle Credit Boost one-time purchase
             await handleBoostCheckout(session, event.id);
           } else {
+            console.log('[Stripe Webhook] → Routing to main subscription handler');
             await handleCheckoutCompleted(session, event.id);
           }
           break;

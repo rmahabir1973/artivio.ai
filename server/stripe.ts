@@ -139,15 +139,36 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
   const subscriptionId = session.subscription as string;
   const customerId = session.customer as string;
 
+  console.log('[Stripe Webhook] handleCheckoutCompleted extracted values:', {
+    userId,
+    planId,
+    subscriptionId,
+    customerId,
+    eventId,
+    allMetadata: session.metadata,
+  });
+
   if (!userId || !planId) {
-    console.error('[Stripe Webhook] Missing userId or planId in metadata');
+    console.error('[Stripe Webhook] ❌ Missing userId or planId in metadata - ABORTING', {
+      userId,
+      planId,
+      metadata: session.metadata,
+    });
     return;
   }
 
   // Fetch subscription BEFORE transaction (external API call)
+  console.log('[Stripe Webhook] Fetching subscription from Stripe:', subscriptionId);
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  console.log('[Stripe Webhook] Stripe subscription retrieved:', {
+    id: subscription.id,
+    status: subscription.status,
+    currentPeriodStart: subscription.current_period_start,
+    currentPeriodEnd: subscription.current_period_end,
+  });
 
   // Execute ALL mutations in a single transaction for idempotency
+  console.log('[Stripe Webhook] Starting database transaction...');
   await db.transaction(async (tx) => {
     // 1. INSERT event record FIRST - if duplicate, this returns empty array
     const [eventRecord] = await tx
@@ -170,10 +191,13 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
     }
 
     // 2. Get plan (read operation within transaction)
+    console.log('[Stripe Webhook] Looking up plan:', planId);
     const [plan] = await tx.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, planId));
     if (!plan) {
+      console.error('[Stripe Webhook] ❌ Plan not found in database:', planId);
       throw new Error(`Plan not found: ${planId}`);
     }
+    console.log('[Stripe Webhook] Plan found:', { id: plan.id, name: plan.displayName, credits: plan.creditsPerMonth });
 
     // 3. Upsert subscription
     await tx
@@ -220,6 +244,8 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
 
     console.log(`[Stripe Webhook] ✅ Checkout completed for user ${userId}: +${plan.creditsPerMonth} credits (Total: ${newCredits})`);
   });
+  
+  console.log('[Stripe Webhook] ✅ handleCheckoutCompleted finished successfully');
 }
 
 export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string) {
