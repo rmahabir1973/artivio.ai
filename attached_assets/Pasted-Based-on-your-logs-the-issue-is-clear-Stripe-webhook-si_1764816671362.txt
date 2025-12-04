@@ -1,0 +1,62 @@
+Based on your logs, the issue is clear: Stripe webhook signature verification is failing. This is a common issue when integrating Stripe webhooks, especially on platforms like Replit.
+The Problem
+The error message tells us:
+No signatures found matching the expected signature for payload. 
+Are you passing the raw request body you received from Stripe?
+This means your Express app is likely parsing the request body before Stripe can verify the signature, corrupting the raw payload.
+Root Causes (likely one or more apply):
+
+Body parser middleware is processing the webhook route - Express's express.json() or body-parser is converting the raw body to JSON before Stripe's signature verification
+The raw body isn't being preserved - Stripe requires the exact raw request body (as a Buffer) to verify signatures
+Incorrect webhook endpoint configuration - The endpoint may need special handling
+
+Solution to Send to Replit Support
+Here's what you should communicate:
+
+Issue: Stripe webhook signature verification failing with error: "No signatures found matching the expected signature for payload"
+Root Cause: The webhook endpoint is not receiving the raw request body needed for Stripe signature verification. Express middleware is parsing the body before Stripe can verify it.
+Required Fix: The Stripe webhook endpoint needs to:
+
+Receive the raw request body as a Buffer (not parsed JSON)
+Use express.raw({ type: 'application/json' }) specifically for the webhook route
+Ensure the webhook route is registered BEFORE general express.json() middleware
+
+Example Code Structure Needed:
+javascript// Webhook route MUST come before express.json()
+app.post('/api/webhooks/stripe', 
+  express.raw({ type: 'application/json' }), // Get raw body
+  async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.body, // This must be the raw Buffer
+        sig,
+        webhookSecret
+      );
+      // Handle event...
+    } catch (err) {
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  }
+);
+
+// General JSON parsing for other routes
+app.use(express.json());
+Questions for Replit:
+
+Does Replit's deployment environment modify request bodies before they reach my Express handlers?
+Are there any proxies or middleware injected by Replit that could alter the raw request body?
+Is there special configuration needed for webhook endpoints to preserve raw bodies in Replit's environment?
+Should I be using a different approach for handling webhooks on Replit?
+
+
+Additional Debugging Steps You Can Try
+
+Verify your webhook secret is correctly set in environment variables
+Check route order - ensure webhook route is registered before express.json()
+Test with Stripe CLI locally to isolate whether it's a Replit-specific issue
+Log the request body type: Add console.log('Body type:', typeof req.body, Buffer.isBuffer(req.body)) to see what you're actually receiving
+
+The core issue is that Stripe needs the exact raw bytes that were sent, and something in your middleware chain is modifying them before verification.

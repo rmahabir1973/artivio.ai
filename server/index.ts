@@ -5,6 +5,19 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializePassportStrategies } from "./customAuth";
 import { pool } from "./db";
+import {
+  verifyWebhookSignature,
+  handleCheckoutCompleted,
+  handleInvoicePaid,
+  handleInvoicePaymentFailed,
+  handleSubscriptionUpdated,
+  handleSubscriptionDeleted,
+  handleSocialPosterCheckout,
+  handleSocialPosterSubscriptionDeleted,
+  isSocialPosterSubscription,
+  handleBoostCheckout,
+  isBoostProduct,
+} from "./stripe";
 
 // ===== GLOBAL ERROR HANDLERS =====
 // Prevent server crashes from unhandled promise rejections
@@ -184,33 +197,83 @@ declare module 'http' {
   }
 }
 
-// Stripe webhook requires raw body for signature verification
-// Skip JSON/urlencoded parsing for webhook route - let the route's express.raw() handle it
-const jsonParser = express.json({
-  limit: '50mb', // Allow large base64 payloads for image editing (10 images max, properly validated)
-  verify: (req, _res, buf) => {
-    req.rawBody = buf;
-  }
-});
+// ===== STRIPE WEBHOOK HANDLER - MUST BE BEFORE ANY BODY PARSING =====
+// This route must be registered BEFORE express.json() to receive raw body for signature verification
+app.post('/api/webhooks/stripe', 
+  express.raw({ type: '*/*' }), // Use */* to avoid content-type edge cases
+  async (req: any, res) => {
+    try {
+      const signature = req.headers['stripe-signature'];
+      if (!signature) {
+        console.error('[Stripe Webhook] Missing stripe-signature header');
+        return res.status(400).send('Missing signature');
+      }
 
-const urlencodedParser = express.urlencoded({ extended: false, limit: '50mb' });
+      // req.body is a Buffer from express.raw() - untouched by JSON parsing
+      const rawBody = req.body as Buffer;
+      
+      console.log(`[Stripe Webhook] Received request - body is Buffer: ${Buffer.isBuffer(rawBody)}, length: ${rawBody?.length || 0} bytes`);
+      
+      if (!rawBody || rawBody.length === 0) {
+        console.error('[Stripe Webhook] Empty or missing request body');
+        return res.status(400).send('Missing request body');
+      }
 
-// Conditionally apply body parsers - skip for Stripe webhook
-app.use((req, res, next) => {
-  // Skip body parsing for Stripe webhook - it needs the raw body for signature verification
-  if (req.originalUrl === '/api/webhooks/stripe') {
-    return next();
-  }
-  jsonParser(req, res, next);
-});
+      const event = verifyWebhookSignature(rawBody, signature);
+      
+      console.log(`[Stripe Webhook] ✓ Signature verified! Event: ${event.type}`);
 
-app.use((req, res, next) => {
-  // Skip body parsing for Stripe webhook
-  if (req.originalUrl === '/api/webhooks/stripe') {
-    return next();
+      // Handle the event
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object as any;
+          // Check if this is a Social Poster add-on checkout
+          if (session.metadata?.productType === 'social_poster_addon') {
+            await handleSocialPosterCheckout(session, event.id);
+          } else if (isBoostProduct(session)) {
+            // Handle Credit Boost one-time purchase
+            await handleBoostCheckout(session, event.id);
+          } else {
+            await handleCheckoutCompleted(session, event.id);
+          }
+          break;
+        }
+        case 'invoice.paid':
+          await handleInvoicePaid(event.data.object as any, event.id);
+          break;
+        case 'invoice.payment_failed':
+          await handleInvoicePaymentFailed(event.data.object as any);
+          break;
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdated(event.data.object as any);
+          break;
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object as any;
+          // Check if this is a Social Poster subscription
+          if (isSocialPosterSubscription(subscription) || subscription.metadata?.productType === 'social_poster_addon') {
+            await handleSocialPosterSubscriptionDeleted(subscription);
+          } else {
+            await handleSubscriptionDeleted(subscription);
+          }
+          break;
+        }
+        default:
+          console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error('[Stripe Webhook] Error:', error.message);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+    }
   }
-  urlencodedParser(req, res, next);
-});
+);
+
+// Body parsers for all other routes (after webhook route is registered)
+app.use(express.json({
+  limit: '50mb', // Allow large base64 payloads for image editing
+}));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 // Configure cookie-parser with signing secret for secure plan selection
 app.use(cookieParser(process.env.SESSION_SECRET));

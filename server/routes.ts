@@ -8112,76 +8112,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
   
-  // Stripe Webhook Handler - MUST use express.raw() for signature verification
-  // Note: Global express.json() in index.ts SKIPS this route, so express.raw() works correctly
-  app.post('/api/webhooks/stripe', 
-    express.raw({ type: 'application/json' }),
-    async (req: any, res) => {
-      try {
-        const signature = req.headers['stripe-signature'];
-        if (!signature) {
-          console.error('[Stripe Webhook] Missing stripe-signature header');
-          return res.status(400).send('Missing signature');
-        }
-
-        // req.body is a Buffer from express.raw() since global JSON parsing is skipped for this route
-        const rawBody = req.body as Buffer;
-        if (!rawBody || rawBody.length === 0) {
-          console.error('[Stripe Webhook] Empty or missing request body');
-          return res.status(400).send('Missing request body');
-        }
-
-        console.log(`[Stripe Webhook] Received request with body length: ${rawBody.length} bytes`);
-        
-        const event = verifyWebhookSignature(rawBody, signature);
-        
-        console.log(`[Stripe Webhook] Received event: ${event.type}`);
-
-        // Handle the event
-        switch (event.type) {
-          case 'checkout.session.completed': {
-            const session = event.data.object as any;
-            // Check if this is a Social Poster add-on checkout
-            if (session.metadata?.productType === 'social_poster_addon') {
-              await handleSocialPosterCheckout(session, event.id);
-            } else if (isBoostProduct(session)) {
-              // Handle Credit Boost one-time purchase
-              await handleBoostCheckout(session, event.id);
-            } else {
-              await handleCheckoutCompleted(session, event.id);
-            }
-            break;
-          }
-          case 'invoice.paid':
-            await handleInvoicePaid(event.data.object as any, event.id);
-            break;
-          case 'invoice.payment_failed':
-            await handleInvoicePaymentFailed(event.data.object as any);
-            break;
-          case 'customer.subscription.updated':
-            await handleSubscriptionUpdated(event.data.object as any);
-            break;
-          case 'customer.subscription.deleted': {
-            const subscription = event.data.object as any;
-            // Check if this is a Social Poster subscription
-            if (isSocialPosterSubscription(subscription) || subscription.metadata?.productType === 'social_poster_addon') {
-              await handleSocialPosterSubscriptionDeleted(subscription);
-            } else {
-              await handleSubscriptionDeleted(subscription);
-            }
-            break;
-          }
-          default:
-            console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
-        }
-
-        res.json({ received: true });
-      } catch (error: any) {
-        console.error('[Stripe Webhook] Error:', error);
-        res.status(400).send(`Webhook Error: ${error.message}`);
-      }
-    }
-  );
+  // NOTE: Stripe Webhook Handler is now in server/index.ts (BEFORE body parsing middleware)
+  // This ensures the raw body is available for signature verification
 
   // Get user's subscription info (for checking if they have a paid plan)
   app.get('/api/billing/subscription-info', requireJWT, async (req: any, res) => {
