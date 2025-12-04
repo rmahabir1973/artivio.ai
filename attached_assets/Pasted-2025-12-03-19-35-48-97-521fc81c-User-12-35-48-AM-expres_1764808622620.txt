@@ -1,0 +1,164 @@
+2025-12-03 19:35:48.97
+521fc81c
+User
+12:35:48 AM [express] GET /api/welcome 304 in 29ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-03 19:35:49.05
+521fc81c
+User
+12:35:49 AM [express] GET /api/announcements/active 304 in 104ms :: []
+2025-12-03 19:35:59.47
+521fc81c
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 19:35:59.47
+521fc81c
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 19:35:59.47
+521fc81c
+User
+}
+2025-12-03 19:35:59.47
+521fc81c
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 19:35:59.49
+521fc81c
+User
+"savingsPercentage": 0,
+2025-12-03 19:35:59.49
+521fc81c
+User
+[API] /api/plans - First plan: {
+2025-12-03 19:35:59.49
+521fc81c
+User
+"annualPrice": 0,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"stripeProductId": null,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"billingPeriod": "trial",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"No credit card required"
+2025-12-03 19:35:59.49
+521fc81c
+User
+"isActive": true,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"1,000 credits to start creating",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"createdAt": "2025-11-25T04:47:37.042Z",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"monthlyPrice": 0,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"creditRolloverLimit": 0,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"sortOrder": 0,
+2025-12-03 19:35:59.49
+521fc81c
+User
+}
+2025-12-03 19:35:59.49
+521fc81c
+User
+"price": 0,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"updatedAt": "2025-11-29T12:43:48.781Z"
+2025-12-03 19:35:59.49
+521fc81c
+User
+"creditsPerMonth": 1000,
+2025-12-03 19:35:59.49
+521fc81c
+User
+[API] /api/plans - Retrieved plans: 7 plans
+2025-12-03 19:35:59.49
+521fc81c
+User
+"trialDays": 7,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"Generate videos, images, and music",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"stripePriceId": null,
+2025-12-03 19:35:59.49
+521fc81c
+User
+"displayName": "7 Day Free Trial",
+2025-12-03 19:35:59.49
+521fc81c
+User
+],
+2025-12-03 19:35:59.49
+521fc81c
+User
+12:35:59 AM [express] GET /api/plans 304 in 52ms :: [{"id":"ec642013-8aa6-4dfc-8f1d-5a6d21840c68","na…
+2025-12-03 19:35:59.49
+521fc81c
+User
+"7-day trial period",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"description": "Experience the full power of AI creation with no commitment. Perfect for exploring all our features risk-free.",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"features": [
+2025-12-03 19:35:59.49
+521fc81c
+User
+"id": "ec642013-8aa6-4dfc-8f1d-5a6d21840c68",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"name": "free",
+2025-12-03 19:35:59.49
+521fc81c
+User
+"Access to all AI models and features",
+2025-12-03 19:35:59.50
+521fc81c
+User
+12:35:59 AM [express] GET /api/subscriptions/current 304 in 58ms :: {"id":"9a38ed3c-0396-4ba4-8559-e7…
+2025-12-03 19:36:01.56
+521fc81c
+User
+}
+2025-12-03 19:36:01.56
+521fc81c
+User
+userId: 'c2079b85-8366-4c01-8da2-fe3153facd63',
+2025-12-03 19:36:01.56
+521fc81c
+User
+email: 'ryan@mahabir.pro'
+2025-12-03 19:36:01.56
+521fc81c
+User
+[JWT MIDDLEWARE] ✓ Token verified {
+2025-12-03 19:36:01.58
+521fc81c
+User
+12:36:01 AM [express] GET /api/social/subscription-status 200 in 2132ms :: {"hasSocialPoster":false,"…

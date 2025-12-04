@@ -207,6 +207,12 @@ export const planEconomics = pgTable("plan_economics", {
   kieCreditAmount: integer("kie_credit_amount").notNull().default(10000), // Credits received from Kie.ai (e.g., 10,000)
   userCreditAmount: integer("user_credit_amount").notNull().default(15000), // Credits sold to users (e.g., 15,000)
   profitMargin: integer("profit_margin").notNull().default(50), // Desired profit margin percentage (e.g., 50%)
+  // Credit Boost configuration (one-time purchase)
+  boostEnabled: boolean("boost_enabled").notNull().default(false), // Whether boost is available for purchase
+  boostCredits: integer("boost_credits").default(300), // Number of credits in boost pack
+  boostPriceUsd: integer("boost_price_usd").default(1500), // Price in cents (e.g., 1500 = $15.00)
+  boostStripeProductId: varchar("boost_stripe_product_id"), // Stripe product ID
+  boostStripePriceId: varchar("boost_stripe_price_id"), // Stripe price ID
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -222,6 +228,12 @@ export const updatePlanEconomicsSchema = z.object({
   kieCreditAmount: z.number().int().min(1).optional(),
   userCreditAmount: z.number().int().min(1).optional(),
   profitMargin: z.number().int().min(0).max(100).optional(),
+  // Credit Boost fields
+  boostEnabled: z.boolean().optional(),
+  boostCredits: z.number().int().min(1).optional(),
+  boostPriceUsd: z.number().int().min(100).optional(), // Min $1.00 (100 cents)
+  boostStripeProductId: z.string().optional(),
+  boostStripePriceId: z.string().optional(),
 });
 
 export type InsertPlanEconomics = z.infer<typeof insertPlanEconomicsSchema>;
