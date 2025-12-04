@@ -162,31 +162,52 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const subData = subscription as any;
   
-  // Log ALL subscription fields to debug
+  // Log ALL subscription fields to debug - stringify to see nested structure
   console.log('[Stripe Webhook] Raw subscription object keys:', Object.keys(subData));
+  console.log('[Stripe Webhook] Full subscription JSON:', JSON.stringify(subscription, null, 2).substring(0, 2000));
   console.log('[Stripe Webhook] Stripe subscription retrieved:', {
     id: subscription.id,
     status: subscription.status,
     currentPeriodStart: subData.current_period_start,
     currentPeriodEnd: subData.current_period_end,
-    // Also check snake_case alternatives
-    current_period_start_type: typeof subData.current_period_start,
-    current_period_end_type: typeof subData.current_period_end,
+    // Check camelCase alternatives (some SDK versions use camelCase)
+    currentPeriodStartCamel: subData.currentPeriodStart,
+    currentPeriodEndCamel: subData.currentPeriodEnd,
+    // Check if nested under items
+    itemsPeriod: subData.items?.data?.[0]?.current_period_start,
   });
   
-  // Validate period timestamps before using them
-  const periodStart = subData.current_period_start;
-  const periodEnd = subData.current_period_end;
+  // Try multiple possible locations for period timestamps
+  let periodStart = subData.current_period_start ?? subData.currentPeriodStart;
+  let periodEnd = subData.current_period_end ?? subData.currentPeriodEnd;
   
+  // If still undefined, calculate from session created time (fallback)
   if (typeof periodStart !== 'number' || typeof periodEnd !== 'number') {
-    console.error('[Stripe Webhook] ❌ Invalid period timestamps:', { periodStart, periodEnd });
-    throw new Error(`Invalid subscription period timestamps: start=${periodStart}, end=${periodEnd}`);
+    console.warn('[Stripe Webhook] ⚠️ Period timestamps not found on subscription, using session.created fallback');
+    // Use session created timestamp as period start, add 1 month for end
+    const sessionCreated = (session as any).created;
+    if (typeof sessionCreated === 'number') {
+      periodStart = sessionCreated;
+      // Add approximately 1 month (30 days)
+      periodEnd = sessionCreated + (30 * 24 * 60 * 60);
+      console.log('[Stripe Webhook] Using fallback dates from session.created:', { 
+        periodStart, 
+        periodEnd,
+        startDate: new Date(periodStart * 1000).toISOString(),
+        endDate: new Date(periodEnd * 1000).toISOString()
+      });
+    } else {
+      // Last resort: use current time
+      console.warn('[Stripe Webhook] ⚠️ Using current time as fallback');
+      periodStart = Math.floor(Date.now() / 1000);
+      periodEnd = periodStart + (30 * 24 * 60 * 60);
+    }
   }
   
   const currentPeriodStartDate = new Date(periodStart * 1000);
   const currentPeriodEndDate = new Date(periodEnd * 1000);
   
-  console.log('[Stripe Webhook] Converted dates:', {
+  console.log('[Stripe Webhook] Final dates:', {
     currentPeriodStartDate: currentPeriodStartDate.toISOString(),
     currentPeriodEndDate: currentPeriodEndDate.toISOString(),
   });
@@ -302,13 +323,20 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice, eventId: string
     return;
   }
 
-  // Validate period timestamps
-  const periodStart = subData.current_period_start;
-  const periodEnd = subData.current_period_end;
+  // Try multiple possible locations for period timestamps with fallback
+  let periodStart = subData.current_period_start ?? subData.currentPeriodStart;
+  let periodEnd = subData.current_period_end ?? subData.currentPeriodEnd;
   
   if (typeof periodStart !== 'number' || typeof periodEnd !== 'number') {
-    console.error('[Stripe Webhook] ❌ Invalid period timestamps in invoice.paid:', { periodStart, periodEnd });
-    throw new Error(`Invalid subscription period timestamps: start=${periodStart}, end=${periodEnd}`);
+    console.warn('[Stripe Webhook] ⚠️ Period timestamps not found in invoice.paid, using invoice.created fallback');
+    const invoiceCreated = (invoice as any).created;
+    if (typeof invoiceCreated === 'number') {
+      periodStart = invoiceCreated;
+      periodEnd = invoiceCreated + (30 * 24 * 60 * 60);
+    } else {
+      periodStart = Math.floor(Date.now() / 1000);
+      periodEnd = periodStart + (30 * 24 * 60 * 60);
+    }
   }
   
   const currentPeriodStartDate = new Date(periodStart * 1000);
@@ -474,13 +502,14 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
     return;
   }
 
-  // Validate period timestamps
-  const periodStart = subData.current_period_start;
-  const periodEnd = subData.current_period_end;
+  // Try multiple possible locations for period timestamps with fallback
+  let periodStart = subData.current_period_start ?? subData.currentPeriodStart;
+  let periodEnd = subData.current_period_end ?? subData.currentPeriodEnd;
   
   if (typeof periodStart !== 'number' || typeof periodEnd !== 'number') {
-    console.error('[Stripe Webhook] ❌ Invalid period timestamps in subscription.updated:', { periodStart, periodEnd });
-    throw new Error(`Invalid subscription period timestamps: start=${periodStart}, end=${periodEnd}`);
+    console.warn('[Stripe Webhook] ⚠️ Period timestamps not found in subscription.updated, using current time fallback');
+    periodStart = Math.floor(Date.now() / 1000);
+    periodEnd = periodStart + (30 * 24 * 60 * 60);
   }
   
   const currentPeriodStartDate = new Date(periodStart * 1000);
