@@ -520,7 +520,7 @@ function AppContent() {
                   <Link href="/pricing">
                     <Button 
                       size="sm" 
-                      className="text-sm font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300 animate-pulse hover:animate-none"
+                      className="text-sm font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transition-all duration-300"
                       data-testid="nav-upgrade"
                     >
                       <Sparkles className="h-4 w-4 mr-1" />
