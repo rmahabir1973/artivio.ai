@@ -13,6 +13,17 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-10-29.clover',
 });
 
+// Helper function to get plan tier from name
+function getPlanTierFromName(name: string): number {
+  const lower = name.toLowerCase();
+  if (lower.includes('trial') || lower.includes('free')) return 0;
+  if (lower.includes('starter')) return 1;
+  if (lower.includes('professional') || (lower.includes('pro') && !lower.includes('business'))) return 2;
+  if (lower.includes('business')) return 3;
+  if (lower.includes('agency') || lower.includes('enterprise')) return 4;
+  return 1;
+}
+
 export async function createCheckoutSession(params: {
   userId: string;
   userEmail: string;
@@ -40,6 +51,36 @@ export async function createCheckoutSession(params: {
   const user = await storage.getUser(userId);
   if (!user) {
     throw new Error('User not found');
+  }
+
+  // Check if user has an existing subscription and validate upgrade
+  const currentSubscription = await storage.getUserSubscription(userId);
+  if (currentSubscription && currentSubscription.stripeSubscriptionId) {
+    const currentPlan = await storage.getPlanById(currentSubscription.planId);
+    if (currentPlan) {
+      const currentTier = getPlanTierFromName(currentPlan.displayName || currentPlan.name);
+      const newTier = getPlanTierFromName(plan.displayName || plan.name);
+      
+      // Allow only upgrades (higher tier) or billing period switches (same tier)
+      const isSameTier = currentTier === newTier;
+      const isBillingPeriodSwitch = isSameTier && currentPlan.billingPeriod !== plan.billingPeriod;
+      
+      if (newTier < currentTier) {
+        throw new Error('Downgrades are not allowed. Please contact support if you need to change your plan.');
+      }
+      
+      if (newTier === currentTier && !isBillingPeriodSwitch) {
+        throw new Error('You are already on this plan tier.');
+      }
+      
+      console.log('[Stripe Checkout] Upgrade validated:', {
+        currentTier,
+        newTier,
+        isBillingPeriodSwitch,
+        oldPlan: currentPlan.displayName,
+        newPlan: plan.displayName,
+      });
+    }
   }
 
   let customerId = user.stripeCustomerId || undefined;
@@ -157,6 +198,20 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
     return;
   }
 
+  // Cancel any existing Stripe subscriptions for this user (prevents multiple active subscriptions)
+  const existingSubscription = await storage.getUserSubscription(userId);
+  if (existingSubscription && existingSubscription.stripeSubscriptionId && 
+      existingSubscription.stripeSubscriptionId !== subscriptionId) {
+    console.log('[Stripe Webhook] Cancelling old subscription:', existingSubscription.stripeSubscriptionId);
+    try {
+      await stripe.subscriptions.cancel(existingSubscription.stripeSubscriptionId);
+      console.log('[Stripe Webhook] ✅ Old subscription cancelled successfully');
+    } catch (cancelError: any) {
+      // Log but don't fail - the old subscription might already be cancelled
+      console.warn('[Stripe Webhook] ⚠️ Could not cancel old subscription:', cancelError.message);
+    }
+  }
+
   // Fetch subscription BEFORE transaction (external API call)
   console.log('[Stripe Webhook] Fetching subscription from Stripe:', subscriptionId);
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -271,13 +326,15 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
         },
       });
 
-    // 4. Grant credits atomically
+    // 4. REPLACE credits (not add) - Set to plan credits, not add
     const [user] = await tx.select().from(users).where(eq(users.id, userId));
     if (!user) {
       throw new Error(`User not found: ${userId}`);
     }
 
-    const newCredits = (user.credits || 0) + plan.creditsPerMonth;
+    // When switching plans, REPLACE credits with the new plan's credits
+    // This prevents credit accumulation from rapid plan changes
+    const newCredits = plan.creditsPerMonth;
     await tx.update(users).set({ credits: newCredits }).where(eq(users.id, userId));
 
     // 5. Update user's Stripe customer ID if not set
@@ -285,7 +342,7 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session, 
       await tx.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId));
     }
 
-    console.log(`[Stripe Webhook] ✅ Checkout completed for user ${userId}: +${plan.creditsPerMonth} credits (Total: ${newCredits})`);
+    console.log(`[Stripe Webhook] ✅ Checkout completed for user ${userId}: Credits set to ${newCredits} (was ${user.credits || 0})`);
   });
   
   console.log('[Stripe Webhook] ✅ handleCheckoutCompleted finished successfully');
@@ -554,36 +611,6 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
   }
 
   if (existingSubscription) {
-    // Calculate credit difference for upgrades
-    let creditsToAdd = 0;
-    if (planChanged && newPlan) {
-      // Get old plan credits - if plan relation not hydrated, fetch it directly
-      let oldCredits = existingSubscription.plan?.creditsPerMonth;
-      if (oldCredits === undefined && existingSubscription.planId) {
-        const oldPlan = await storage.getPlanById(existingSubscription.planId);
-        oldCredits = oldPlan?.creditsPerMonth || 0;
-        console.log('[Stripe Webhook] Fetched old plan credits directly:', { oldPlanId: existingSubscription.planId, oldCredits });
-      }
-      oldCredits = oldCredits || 0;
-      
-      const newCredits = newPlan.creditsPerMonth;
-      
-      // Only add credits if upgrading (new plan has more credits)
-      if (newCredits > oldCredits) {
-        creditsToAdd = newCredits - oldCredits;
-        console.log('[Stripe Webhook] 📈 Upgrade detected, adding credits:', {
-          oldCredits,
-          newCredits,
-          creditsToAdd,
-        });
-      } else if (newCredits < oldCredits) {
-        console.log('[Stripe Webhook] 📉 Downgrade detected, no credits removed:', {
-          oldCredits,
-          newCredits,
-        });
-      }
-    }
-
     // Update subscription with new plan if changed
     await storage.upsertUserSubscription({
       ...existingSubscription,
@@ -596,18 +623,22 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
       creditsGrantedThisPeriod: newPlan?.creditsPerMonth || existingSubscription.creditsGrantedThisPeriod,
     });
 
-    // Grant additional credits for upgrades
-    if (creditsToAdd > 0) {
+    // On plan change, REPLACE credits (not add delta) to prevent accumulation
+    // Note: checkout.session.completed already handles initial credit grant
+    // This is a safety net for edge cases where subscription.updated fires after checkout
+    if (planChanged && newPlan) {
       const user = await storage.getUser(userId);
       if (user) {
-        const newTotalCredits = (user.credits || 0) + creditsToAdd;
-        await storage.updateUser(userId, { credits: newTotalCredits });
-        console.log(`[Stripe Webhook] ✅ Granted ${creditsToAdd} upgrade credits to user ${userId} (Total: ${newTotalCredits})`);
+        // Only update if user has fewer credits than new plan (prevents double-grant from checkout)
+        if ((user.credits || 0) < newPlan.creditsPerMonth) {
+          await storage.updateUser(userId, { credits: newPlan.creditsPerMonth });
+          console.log(`[Stripe Webhook] ✅ Plan changed - set credits to ${newPlan.creditsPerMonth} for user ${userId} (was ${user.credits || 0})`);
+        } else {
+          console.log(`[Stripe Webhook] ℹ️ User ${userId} already has ${user.credits} credits, skipping credit update (plan credits: ${newPlan.creditsPerMonth})`);
+        }
       }
-    }
 
-    // Update Stripe subscription metadata with new planId
-    if (planChanged && newPlan) {
+      // Update Stripe subscription metadata with new planId
       try {
         await stripe.subscriptions.update(subscription.id, {
           metadata: {

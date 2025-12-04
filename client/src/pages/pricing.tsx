@@ -516,13 +516,13 @@ export default function Pricing() {
 
                     <Button
                       onClick={() => handleSelectPlan(plan)}
-                      disabled={isSubmitting || isCurrent}
+                      disabled={isSubmitting || isCurrent || (user && !canUpgradeToPlan && !isBillingSwitch(plan))}
                       variant={isProPlan ? "default" : "outline"}
                       className={`w-full mb-6 ${
                         isProPlan 
                           ? 'bg-purple-500 hover:bg-purple-600 text-white border-0' 
                           : 'bg-transparent border-[#333] text-white hover:bg-white hover:text-black'
-                      } ${isCurrent ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      } ${(isCurrent || (user && !canUpgradeToPlan && !isBillingSwitch(plan))) ? 'opacity-50 cursor-not-allowed' : ''}`}
                       data-testid={`button-select-${plan.id}`}
                     >
                       {isCurrent ? (
@@ -534,8 +534,10 @@ export default function Pricing() {
                         </>
                       ) : user && canUpgradeToPlan ? (
                         "Upgrade"
+                      ) : user && isBillingSwitch(plan) ? (
+                        "Switch to " + (plan.billingPeriod === 'annual' ? 'Annual' : 'Monthly')
                       ) : user && !canUpgradeToPlan ? (
-                        "Switch Plan"
+                        "Not Available"
                       ) : (
                         "Get Started"
                       )}
