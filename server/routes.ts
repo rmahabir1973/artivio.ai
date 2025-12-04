@@ -8112,9 +8112,9 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
   
-  // Stripe Webhook Handler - MUST use express.raw() for signature verification
+  // Stripe Webhook Handler - Uses req.rawBody saved by express.json() verify callback
+  // Note: Global express.json() parses body before routes, so we use rawBody for signature verification
   app.post('/api/webhooks/stripe', 
-    express.raw({ type: 'application/json' }),
     async (req: any, res) => {
       try {
         const signature = req.headers['stripe-signature'];
@@ -8123,7 +8123,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           return res.status(400).send('Missing signature');
         }
 
-        const event = verifyWebhookSignature(req.body, signature);
+        // Use rawBody saved by express.json() verify callback in index.ts
+        // This contains the unmodified request body needed for signature verification
+        const rawBody = req.rawBody as Buffer;
+        if (!rawBody) {
+          console.error('[Stripe Webhook] Missing raw body - signature verification will fail');
+          return res.status(400).send('Missing raw body');
+        }
+
+        const event = verifyWebhookSignature(rawBody, signature);
         
         console.log(`[Stripe Webhook] Received event: ${event.type}`);
 
