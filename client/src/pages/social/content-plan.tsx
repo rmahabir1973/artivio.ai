@@ -52,6 +52,15 @@ import {
   CalendarDays,
   LayoutGrid,
   Trash2,
+  Heart,
+  MessageSquare,
+  Send,
+  Bookmark,
+  Repeat2,
+  BarChart2,
+  ThumbsUp,
+  Share2,
+  Smartphone,
 } from "lucide-react";
 import { 
   SiInstagram, 
@@ -86,6 +95,9 @@ interface PlanPost {
   contentType: string;
   caption: string;
   mediaPrompt?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  thumbnailUrl?: string;
   hashtags?: string[];
   status: 'pending' | 'approved' | 'rejected' | 'scheduled' | 'posted';
 }
@@ -195,6 +207,285 @@ function SafeZoneInfo({ platforms, contentType }: { platforms: string[]; content
   );
 }
 
+// Media Preview Component
+function MediaPreview({ mediaUrl, mediaType, thumbnailUrl, caption }: { 
+  mediaUrl?: string; 
+  mediaType?: string;
+  thumbnailUrl?: string; 
+  caption: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (!mediaUrl) return null;
+
+  const isVideo = mediaType?.startsWith('video') || mediaUrl.match(/\.(mp4|webm|mov)$/i);
+  const isImage = mediaType?.startsWith('image') || mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+
+  if (hasError) {
+    return (
+      <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-xs">Media unavailable</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+      {isVideo ? (
+        <video
+          src={mediaUrl}
+          poster={thumbnailUrl}
+          className="w-full h-full object-cover"
+          controls
+          preload="metadata"
+          playsInline
+          onLoadedData={() => setIsLoading(false)}
+          onError={() => { setHasError(true); setIsLoading(false); }}
+          data-testid="video-preview"
+        />
+      ) : isImage ? (
+        <img
+          src={mediaUrl}
+          alt={caption}
+          className="w-full h-full object-cover"
+          onLoad={() => setIsLoading(false)}
+          onError={() => { setHasError(true); setIsLoading(false); }}
+          data-testid="image-preview"
+        />
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <ImageIcon className="w-8 h-8 text-muted-foreground opacity-50" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Platform Preview Mockup Component
+function PlatformPreview({ 
+  platform, 
+  post, 
+  username = "yourprofile",
+  profileImage
+}: { 
+  platform: string; 
+  post: PlanPost; 
+  username?: string;
+  profileImage?: string;
+}) {
+  const defaultAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${username}&backgroundColor=6366f1`;
+  const avatarUrl = profileImage || defaultAvatar;
+  
+  // Instagram Preview
+  if (platform === 'instagram') {
+    return (
+      <div className="border rounded-lg overflow-hidden bg-white dark:bg-zinc-900" data-testid="preview-instagram">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-3 border-b">
+          <img src={avatarUrl} alt={username} className="w-8 h-8 rounded-full object-cover" />
+          <span className="font-semibold text-sm">{username}</span>
+        </div>
+        {/* Media */}
+        <div className="aspect-square bg-muted">
+          {post.mediaUrl ? (
+            post.mediaType?.startsWith('video') ? (
+              <video src={post.mediaUrl} className="w-full h-full object-cover" controls playsInline />
+            ) : (
+              <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+            )
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <ImageIcon className="w-12 h-12 opacity-30" />
+            </div>
+          )}
+        </div>
+        {/* Actions */}
+        <div className="p-3">
+          <div className="flex items-center gap-4 mb-2">
+            <Heart className="w-6 h-6" />
+            <MessageSquare className="w-6 h-6" />
+            <Send className="w-6 h-6" />
+            <Bookmark className="w-6 h-6 ml-auto" />
+          </div>
+          <p className="text-sm">
+            <span className="font-semibold">{username}</span>{' '}
+            <span className="whitespace-pre-wrap">{post.caption.substring(0, 100)}{post.caption.length > 100 ? '...' : ''}</span>
+          </p>
+          {post.hashtags && post.hashtags.length > 0 && (
+            <p className="text-sm text-primary mt-1">
+              {post.hashtags.slice(0, 5).map(tag => `#${tag.replace(/^#/, '')}`).join(' ')}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Twitter/X Preview
+  if (platform === 'x') {
+    return (
+      <div className="border rounded-lg overflow-hidden bg-white dark:bg-zinc-900 p-4" data-testid="preview-x">
+        <div className="flex gap-3">
+          <img src={avatarUrl} alt={username} className="w-10 h-10 rounded-full object-cover shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-sm">{username}</span>
+              <span className="text-muted-foreground text-sm">@{username}</span>
+              <span className="text-muted-foreground text-sm">· 1m</span>
+            </div>
+            <p className="text-sm whitespace-pre-wrap mt-1">{post.caption.substring(0, 280)}</p>
+            {post.mediaUrl && (
+              <div className="mt-3 rounded-xl overflow-hidden border">
+                {post.mediaType?.startsWith('video') ? (
+                  <video src={post.mediaUrl} className="w-full max-h-64 object-cover" controls playsInline />
+                ) : (
+                  <img src={post.mediaUrl} alt="" className="w-full max-h-64 object-cover" />
+                )}
+              </div>
+            )}
+            <div className="flex items-center justify-between mt-3 text-muted-foreground">
+              <div className="flex items-center gap-1"><MessageSquare className="w-4 h-4" /><span className="text-xs">0</span></div>
+              <div className="flex items-center gap-1"><Repeat2 className="w-4 h-4" /><span className="text-xs">0</span></div>
+              <div className="flex items-center gap-1"><Heart className="w-4 h-4" /><span className="text-xs">0</span></div>
+              <div className="flex items-center gap-1"><BarChart2 className="w-4 h-4" /><span className="text-xs">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Facebook Preview
+  if (platform === 'facebook') {
+    return (
+      <div className="border rounded-lg overflow-hidden bg-white dark:bg-zinc-900" data-testid="preview-facebook">
+        <div className="p-3 flex items-center gap-3">
+          <img src={avatarUrl} alt={username} className="w-10 h-10 rounded-full object-cover" />
+          <div>
+            <p className="font-semibold text-sm">{username}</p>
+            <p className="text-xs text-muted-foreground">Just now · Public</p>
+          </div>
+        </div>
+        <div className="px-3 pb-2">
+          <p className="text-sm whitespace-pre-wrap">{post.caption.substring(0, 200)}{post.caption.length > 200 ? '...' : ''}</p>
+        </div>
+        {post.mediaUrl && (
+          <div className="bg-muted">
+            {post.mediaType?.startsWith('video') ? (
+              <video src={post.mediaUrl} className="w-full max-h-80 object-cover" controls playsInline />
+            ) : (
+              <img src={post.mediaUrl} alt="" className="w-full max-h-80 object-cover" />
+            )}
+          </div>
+        )}
+        <div className="flex items-center justify-around p-2 border-t text-muted-foreground">
+          <Button variant="ghost" size="sm" className="flex-1 gap-2"><ThumbsUp className="w-4 h-4" />Like</Button>
+          <Button variant="ghost" size="sm" className="flex-1 gap-2"><MessageSquare className="w-4 h-4" />Comment</Button>
+          <Button variant="ghost" size="sm" className="flex-1 gap-2"><Share2 className="w-4 h-4" />Share</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // LinkedIn Preview
+  if (platform === 'linkedin') {
+    return (
+      <div className="border rounded-lg overflow-hidden bg-white dark:bg-zinc-900" data-testid="preview-linkedin">
+        <div className="p-3 flex items-center gap-3">
+          <img src={avatarUrl} alt={username} className="w-12 h-12 rounded-full object-cover" />
+          <div>
+            <p className="font-semibold text-sm">{username}</p>
+            <p className="text-xs text-muted-foreground">Your Headline</p>
+            <p className="text-xs text-muted-foreground">Just now · Public</p>
+          </div>
+        </div>
+        <div className="px-3 pb-3">
+          <p className="text-sm whitespace-pre-wrap">{post.caption.substring(0, 200)}{post.caption.length > 200 ? '... see more' : ''}</p>
+        </div>
+        {post.mediaUrl && (
+          <div className="bg-muted">
+            {post.mediaType?.startsWith('video') ? (
+              <video src={post.mediaUrl} className="w-full max-h-80 object-cover" controls playsInline />
+            ) : (
+              <img src={post.mediaUrl} alt="" className="w-full max-h-80 object-cover" />
+            )}
+          </div>
+        )}
+        <div className="flex items-center justify-around p-2 border-t text-muted-foreground">
+          <Button variant="ghost" size="sm" className="flex-1 gap-1"><ThumbsUp className="w-4 h-4" />Like</Button>
+          <Button variant="ghost" size="sm" className="flex-1 gap-1"><MessageSquare className="w-4 h-4" />Comment</Button>
+          <Button variant="ghost" size="sm" className="flex-1 gap-1"><Repeat2 className="w-4 h-4" />Repost</Button>
+          <Button variant="ghost" size="sm" className="flex-1 gap-1"><Send className="w-4 h-4" />Send</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // TikTok Preview
+  if (platform === 'tiktok') {
+    return (
+      <div className="border rounded-lg overflow-hidden bg-black text-white aspect-[9/16] max-h-[400px] relative" data-testid="preview-tiktok">
+        {post.mediaUrl && (
+          post.mediaType?.startsWith('video') ? (
+            <video src={post.mediaUrl} className="w-full h-full object-cover" controls playsInline />
+          ) : (
+            <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+          )
+        )}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+          <div className="flex items-center gap-2 mb-2">
+            <img src={avatarUrl} alt={username} className="w-8 h-8 rounded-full object-cover" />
+            <span className="font-semibold text-sm">@{username}</span>
+          </div>
+          <p className="text-sm line-clamp-3">{post.caption}</p>
+        </div>
+        <div className="absolute right-3 bottom-20 flex flex-col items-center gap-4">
+          <div className="text-center"><Heart className="w-7 h-7" /><span className="text-xs">0</span></div>
+          <div className="text-center"><MessageSquare className="w-7 h-7" /><span className="text-xs">0</span></div>
+          <div className="text-center"><Share2 className="w-7 h-7" /><span className="text-xs">0</span></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Generic preview for other platforms
+  return (
+    <div className="border rounded-lg overflow-hidden bg-white dark:bg-zinc-900 p-4" data-testid={`preview-${platform}`}>
+      <div className="flex items-center gap-3 mb-3">
+        <img src={avatarUrl} alt={username} className="w-10 h-10 rounded-full object-cover" />
+        <div>
+          <p className="font-semibold text-sm capitalize">{platform}</p>
+          <p className="text-xs text-muted-foreground">@{username}</p>
+        </div>
+      </div>
+      {post.mediaUrl && (
+        <div className="rounded-lg overflow-hidden mb-3">
+          {post.mediaType?.startsWith('video') ? (
+            <video src={post.mediaUrl} className="w-full max-h-64 object-cover" controls playsInline />
+          ) : (
+            <img src={post.mediaUrl} alt="" className="w-full max-h-64 object-cover" />
+          )}
+        </div>
+      )}
+      <p className="text-sm whitespace-pre-wrap">{post.caption}</p>
+      {post.hashtags && post.hashtags.length > 0 && (
+        <p className="text-sm text-primary mt-2">
+          {post.hashtags.map(tag => `#${tag.replace(/^#/, '')}`).join(' ')}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ContentPlanPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -205,6 +496,7 @@ export default function ContentPlanPage() {
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selectedPostIndices, setSelectedPostIndices] = useState<number[]>([]);
   const [showDeletePlanConfirm, setShowDeletePlanConfirm] = useState(false);
+  const [previewPlatform, setPreviewPlatform] = useState<string | null>(null);
 
   const { data: subscriptionStatus, isLoading: statusLoading } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/social/subscription-status"],
@@ -998,6 +1290,35 @@ export default function ContentPlanPage() {
                                           )}
                                           <span className="ml-auto text-[10px] text-muted-foreground">{post.time}</span>
                                         </div>
+                                        {/* Thumbnail preview */}
+                                        {post.mediaUrl && (
+                                          <div className="relative w-full h-12 rounded overflow-hidden mb-1 bg-muted">
+                                            {post.mediaType?.startsWith('video') ? (
+                                              <div className="relative w-full h-full">
+                                                <img 
+                                                  src={post.thumbnailUrl || post.mediaUrl} 
+                                                  alt="" 
+                                                  className="w-full h-full object-cover"
+                                                  onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                  }}
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                  <Play className="w-4 h-4 text-white fill-white" />
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <img 
+                                                src={post.mediaUrl} 
+                                                alt="" 
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                  (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
+                                              />
+                                            )}
+                                          </div>
+                                        )}
                                         <p className="line-clamp-2 text-[11px]">{post.caption}</p>
                                         <div className="flex items-center justify-between mt-1">
                                           <Badge 
@@ -1092,8 +1413,8 @@ export default function ContentPlanPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={!!selectedPost} onOpenChange={() => { setSelectedPost(null); setPreviewPlatform(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           {selectedPost && (
             <>
               <DialogHeader>
@@ -1105,87 +1426,150 @@ export default function ContentPlanPage() {
                   {format(parseISO(selectedPost.post.date), 'EEEE, MMMM d, yyyy')} at {selectedPost.post.time}
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Platforms:</span>
-                  <div className="flex gap-1">
-                    {selectedPost.post.platforms.map((platform) => {
-                      const Icon = PLATFORM_ICONS[platform];
-                      return Icon ? (
-                        <div
-                          key={platform}
-                          className={`w-6 h-6 ${PLATFORM_COLORS[platform]} rounded flex items-center justify-center`}
-                          title={platform}
-                        >
-                          <Icon className="w-3.5 h-3.5 text-white" />
-                        </div>
-                      ) : (
-                        <Badge key={platform} variant="outline">{platform}</Badge>
-                      );
-                    })}
-                  </div>
-                </div>
+              
+              <Tabs defaultValue="details" className="flex-1 overflow-hidden flex flex-col">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="details" className="gap-2" data-testid="tab-details">
+                    <FileText className="w-4 h-4" />
+                    Details
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="gap-2" data-testid="tab-preview">
+                    <Smartphone className="w-4 h-4" />
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Content Type:</span>
-                  <Badge variant="outline" className="capitalize gap-1">
-                    {CONTENT_TYPE_ICONS[selectedPost.post.contentType] && (
-                      (() => {
-                        const Icon = CONTENT_TYPE_ICONS[selectedPost.post.contentType];
-                        return <Icon className="w-3 h-3" />;
-                      })()
+                <TabsContent value="details" className="flex-1 overflow-y-auto mt-4">
+                  <div className="space-y-4 pr-2">
+                    {/* Media Preview */}
+                    {selectedPost.post.mediaUrl && (
+                      <MediaPreview 
+                        mediaUrl={selectedPost.post.mediaUrl}
+                        mediaType={selectedPost.post.mediaType}
+                        thumbnailUrl={selectedPost.post.thumbnailUrl}
+                        caption={selectedPost.post.caption}
+                      />
                     )}
-                    {selectedPost.post.contentType}
-                  </Badge>
-                </div>
 
-                <SafeZoneInfo 
-                  platforms={selectedPost.post.platforms} 
-                  contentType={selectedPost.post.contentType} 
-                />
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Status:</span>
-                  <Badge variant={STATUS_BADGES[selectedPost.post.status]?.variant || "secondary"}>
-                    {STATUS_BADGES[selectedPost.post.status]?.label || selectedPost.post.status}
-                  </Badge>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <p className="text-sm font-medium mb-2">Caption:</p>
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-sm whitespace-pre-wrap">{selectedPost.post.caption}</p>
-                  </div>
-                </div>
-
-                {selectedPost.post.hashtags && selectedPost.post.hashtags.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2 flex items-center gap-1">
-                      <Hash className="w-4 h-4" />
-                      Hashtags:
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedPost.post.hashtags.map((tag, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          #{tag.replace(/^#/, '')}
-                        </Badge>
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Platforms:</span>
+                      <div className="flex gap-1">
+                        {selectedPost.post.platforms.map((platform) => {
+                          const Icon = PLATFORM_ICONS[platform];
+                          return Icon ? (
+                            <div
+                              key={platform}
+                              className={`w-6 h-6 ${PLATFORM_COLORS[platform]} rounded flex items-center justify-center`}
+                              title={platform}
+                            >
+                              <Icon className="w-3.5 h-3.5 text-white" />
+                            </div>
+                          ) : (
+                            <Badge key={platform} variant="outline">{platform}</Badge>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                {selectedPost.post.mediaPrompt && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Media Prompt:</p>
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground">{selectedPost.post.mediaPrompt}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Content Type:</span>
+                      <Badge variant="outline" className="capitalize gap-1">
+                        {CONTENT_TYPE_ICONS[selectedPost.post.contentType] && (
+                          (() => {
+                            const Icon = CONTENT_TYPE_ICONS[selectedPost.post.contentType];
+                            return <Icon className="w-3 h-3" />;
+                          })()
+                        )}
+                        {selectedPost.post.contentType}
+                      </Badge>
                     </div>
+
+                    <SafeZoneInfo 
+                      platforms={selectedPost.post.platforms} 
+                      contentType={selectedPost.post.contentType} 
+                    />
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Status:</span>
+                      <Badge variant={STATUS_BADGES[selectedPost.post.status]?.variant || "secondary"}>
+                        {STATUS_BADGES[selectedPost.post.status]?.label || selectedPost.post.status}
+                      </Badge>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <p className="text-sm font-medium mb-2">Caption:</p>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-sm whitespace-pre-wrap">{selectedPost.post.caption}</p>
+                      </div>
+                    </div>
+
+                    {selectedPost.post.hashtags && selectedPost.post.hashtags.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium mb-2 flex items-center gap-1">
+                          <Hash className="w-4 h-4" />
+                          Hashtags:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedPost.post.hashtags.map((tag, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              #{tag.replace(/^#/, '')}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedPost.post.mediaPrompt && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Media Prompt:</p>
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm text-muted-foreground">{selectedPost.post.mediaPrompt}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <DialogFooter className="flex-col sm:flex-row gap-2">
+                </TabsContent>
+
+                <TabsContent value="preview" className="flex-1 overflow-y-auto mt-4">
+                  <div className="space-y-4 pr-2">
+                    {/* Platform selector */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">Preview as:</span>
+                      <div className="flex gap-1 flex-wrap">
+                        {selectedPost.post.platforms.map((platform) => {
+                          const Icon = PLATFORM_ICONS[platform];
+                          const isActive = previewPlatform === platform || (!previewPlatform && platform === selectedPost.post.platforms[0]);
+                          return (
+                            <Button
+                              key={platform}
+                              variant={isActive ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setPreviewPlatform(platform)}
+                              className="gap-1"
+                              data-testid={`button-preview-${platform}`}
+                            >
+                              {Icon && <Icon className="w-3 h-3" />}
+                              <span className="capitalize">{platform}</span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Platform Preview */}
+                    <ScrollArea className="h-[400px]">
+                      <PlatformPreview
+                        platform={previewPlatform || selectedPost.post.platforms[0]}
+                        post={selectedPost.post}
+                      />
+                    </ScrollArea>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <DialogFooter className="flex-col sm:flex-row gap-2 mt-4 pt-4 border-t">
                 <Button
                   variant="ghost"
                   size="icon"
