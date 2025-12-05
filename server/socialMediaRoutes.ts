@@ -3067,6 +3067,173 @@ Return ONLY valid JSON:
     }
   });
 
+  // Delete a content plan
+  app.delete("/api/social/content-plans/:id", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      // Verify plan exists and belongs to user
+      const plan = await db.query.aiContentPlans.findFirst({
+        where: eq(aiContentPlans.id, id),
+      });
+
+      if (!plan) {
+        return res.status(404).json({ message: 'Content plan not found' });
+      }
+
+      // Verify user owns this plan via brand kit
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.id, plan.brandKitId),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.id, brandKit.socialProfileId),
+      });
+
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Delete the plan
+      await db.delete(aiContentPlans).where(eq(aiContentPlans.id, id));
+
+      console.log(`[Content Plans] Deleted plan ${id} for user ${userId}`);
+      res.json({ deleted: true, id });
+    } catch (error: any) {
+      console.error('[Content Plans] Delete error:', error);
+      res.status(500).json({ message: 'Failed to delete content plan' });
+    }
+  });
+
+  // Delete a post from a content plan
+  app.delete("/api/social/content-plans/:id/posts/:index", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { id, index } = req.params;
+      const postIndex = parseInt(index);
+      const userId = req.user.id;
+
+      // Get the plan
+      const plan = await db.query.aiContentPlans.findFirst({
+        where: eq(aiContentPlans.id, id),
+      });
+
+      if (!plan) {
+        return res.status(404).json({ message: 'Content plan not found' });
+      }
+
+      // Verify user owns this plan
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.id, plan.brandKitId),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.id, brandKit.socialProfileId),
+      });
+
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const planData = plan.plan as { posts?: any[] } | null;
+      if (!planData?.posts || postIndex < 0 || postIndex >= planData.posts.length) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      // Remove the post from the array
+      const updatedPosts = [...planData.posts];
+      updatedPosts.splice(postIndex, 1);
+
+      // Update the plan
+      const [updated] = await db
+        .update(aiContentPlans)
+        .set({ plan: { ...planData, posts: updatedPosts } })
+        .where(eq(aiContentPlans.id, id))
+        .returning();
+
+      console.log(`[Content Plans] Deleted post ${postIndex} from plan ${id}`);
+      res.json({ deleted: true, plan: updated });
+    } catch (error: any) {
+      console.error('[Content Plans] Post delete error:', error);
+      res.status(500).json({ message: 'Failed to delete post' });
+    }
+  });
+
+  // Bulk delete posts from a content plan
+  app.post("/api/social/content-plans/:id/posts/bulk-delete", requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { indices } = req.body;
+      const userId = req.user.id;
+
+      if (!Array.isArray(indices) || indices.length === 0) {
+        return res.status(400).json({ message: 'No post indices provided' });
+      }
+
+      // Get the plan
+      const plan = await db.query.aiContentPlans.findFirst({
+        where: eq(aiContentPlans.id, id),
+      });
+
+      if (!plan) {
+        return res.status(404).json({ message: 'Content plan not found' });
+      }
+
+      // Verify user owns this plan
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.id, plan.brandKitId),
+      });
+
+      if (!brandKit) {
+        return res.status(404).json({ message: 'Brand kit not found' });
+      }
+
+      const profile = await db.query.socialProfiles.findFirst({
+        where: eq(socialProfiles.id, brandKit.socialProfileId),
+      });
+
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const planData = plan.plan as { posts?: any[] } | null;
+      if (!planData?.posts) {
+        return res.status(404).json({ message: 'No posts in plan' });
+      }
+
+      // Sort indices in descending order to remove from end first (preserves indices)
+      const sortedIndices = [...indices].sort((a, b) => b - a);
+      const updatedPosts = [...planData.posts];
+      
+      for (const idx of sortedIndices) {
+        if (idx >= 0 && idx < updatedPosts.length) {
+          updatedPosts.splice(idx, 1);
+        }
+      }
+
+      // Update the plan
+      const [updated] = await db
+        .update(aiContentPlans)
+        .set({ plan: { ...planData, posts: updatedPosts } })
+        .where(eq(aiContentPlans.id, id))
+        .returning();
+
+      console.log(`[Content Plans] Deleted ${indices.length} posts from plan ${id}`);
+      res.json({ deleted: true, deletedCount: indices.length, plan: updated });
+    } catch (error: any) {
+      console.error('[Content Plans] Bulk delete error:', error);
+      res.status(500).json({ message: 'Failed to bulk delete posts' });
+    }
+  });
+
   app.get("/api/social/execution-agent/status", requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const { getAgentStatus } = await import('./services/contentExecutionAgent');
