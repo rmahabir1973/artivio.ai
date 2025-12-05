@@ -626,26 +626,59 @@ export default function SocialCalendar() {
   });
 
   const getPostsForDay = (date: Date) => {
-    return scheduledPosts.filter(post => {
+    const matchingPosts = scheduledPosts.filter(post => {
+      // Safety check: if scheduledFor is empty or undefined
+      if (!post.scheduledFor) {
+        console.warn('[Calendar] Post missing scheduledFor:', post.id?.slice(0, 8));
+        return false;
+      }
+      
       const postDate = parseISO(post.scheduledFor);
+      
+      // Check if parseISO returned a valid date
+      if (isNaN(postDate.getTime())) {
+        console.warn('[Calendar] Invalid date for post:', post.id?.slice(0, 8), post.scheduledFor);
+        return false;
+      }
+      
       const matchesDay = isSameDay(postDate, date);
       // Support multi-platform posts: check if viewFilter matches any platform in the array
       const postPlatforms = post.platforms || [post.platform];
       const matchesPlatform = viewFilter === "all" || postPlatforms.includes(viewFilter);
       return matchesDay && matchesPlatform;
     });
+    
+    return matchingPosts;
   };
 
   // Debug: log posts data when it changes
   if (scheduledPosts.length > 0 && !isLoading) {
     console.log('[Calendar Debug] Total posts:', scheduledPosts.length);
     console.log('[Calendar Debug] Week range:', format(weekStart, 'yyyy-MM-dd'), 'to', format(addDays(weekStart, 6), 'yyyy-MM-dd'));
-    console.log('[Calendar Debug] First 5 posts:', scheduledPosts.slice(0, 5).map(p => ({
-      id: p.id.slice(0, 8),
-      scheduledFor: p.scheduledFor,
-      status: p.status,
-      aiGenerated: p.aiGenerated
-    })));
+    
+    // Debug the first 5 posts with parsed dates
+    const debugPosts = scheduledPosts.slice(0, 5).map(p => {
+      const parsed = parseISO(p.scheduledFor);
+      return {
+        id: p.id.slice(0, 8),
+        scheduledFor: p.scheduledFor,
+        parsedDate: isNaN(parsed.getTime()) ? 'Invalid Date' : format(parsed, 'yyyy-MM-dd'),
+        status: p.status,
+        aiGenerated: p.aiGenerated
+      };
+    });
+    console.log('[Calendar Debug] First 5 posts with parsed dates:', debugPosts);
+    
+    // Check how many posts would match each day of the current week
+    weekDays.forEach(day => {
+      const postsForDay = scheduledPosts.filter(post => {
+        const postDate = parseISO(post.scheduledFor);
+        return isSameDay(postDate, day);
+      });
+      if (postsForDay.length > 0) {
+        console.log(`[Calendar Debug] ${format(day, 'yyyy-MM-dd')}: ${postsForDay.length} posts`);
+      }
+    });
   }
 
   const getStatusColor = (status: string) => {

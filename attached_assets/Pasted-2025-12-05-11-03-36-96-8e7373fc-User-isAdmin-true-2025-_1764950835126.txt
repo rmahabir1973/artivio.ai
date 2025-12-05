@@ -1,0 +1,174 @@
+2025-12-05 11:03:36.96
+8e7373fc
+User
+isAdmin: true
+2025-12-05 11:03:36.96
+8e7373fc
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-05 11:03:36.96
+8e7373fc
+User
+userId: '49729939',
+2025-12-05 11:03:36.96
+8e7373fc
+User
+4:03:36 PM [express] GET /api/auth/user 200 in 51ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-12-05 11:03:37.06
+8e7373fc
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:03:37.09
+8e7373fc
+User
+4:03:37 PM [express] GET /api/subscriptions/current 200 in 58ms :: {"id":"b7aaa6ce-5fe9-4a56-a48e-78…
+2025-12-05 11:03:37.13
+8e7373fc
+User
+4:03:37 PM [express] GET /api/welcome 200 in 91ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-05 11:03:37.25
+8e7373fc
+User
+4:03:37 PM [express] GET /api/subscription 200 in 9ms
+2025-12-05 11:03:37.25
+8e7373fc
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:03:37.26
+8e7373fc
+User
+4:03:37 PM [express] GET /api/announcements/active 200 in 30ms :: []
+2025-12-05 11:03:37.29
+8e7373fc
+User
+4:03:37 PM [express] GET /api/boost-settings 200 in 55ms :: {"enabled":false}
+2025-12-05 11:03:37.34
+8e7373fc
+User
+userId: '49729939',
+2025-12-05 11:03:37.34
+8e7373fc
+User
+}
+2025-12-05 11:03:37.34
+8e7373fc
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:03:37.34
+8e7373fc
+User
+isPaginated: false,
+2025-12-05 11:03:37.34
+8e7373fc
+User
+cursor: undefined
+2025-12-05 11:03:37.34
+8e7373fc
+User
+hasUser: true,
+2025-12-05 11:03:37.34
+8e7373fc
+User
+[/api/generations] Request received {
+2025-12-05 11:03:37.34
+8e7373fc
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-05 11:03:37.34
+8e7373fc
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:03:37.36
+8e7373fc
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:03:37.37
+8e7373fc
+User
+4:03:37 PM [express] GET /api/subscriptions/current 304 in 117ms :: {"id":"b7aaa6ce-5fe9-4a56-a48e-7…
+2025-12-05 11:03:37.39
+8e7373fc
+User
+4:03:37 PM [express] GET /api/pricing 200 in 145ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-12-05 11:03:37.39
+8e7373fc
+User
+4:03:37 PM [express] GET /api/favorites 200 in 136ms :: []
+2025-12-05 11:03:37.42
+8e7373fc
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '28aff9a0' }
+2025-12-05 11:03:37.47
+8e7373fc
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '28aff9a0-7851-4cab-b0b0-eb00c5f93f41' }
+2025-12-05 11:03:37.49
+8e7373fc
+User
+}
+2025-12-05 11:03:37.49
+8e7373fc
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-05 11:03:37.49
+8e7373fc
+User
+tokenId: '28aff9a0',
+2025-12-05 11:03:37.49
+8e7373fc
+User
+userId: '49729939',
+2025-12-05 11:03:37.49
+8e7373fc
+User
+isAdmin: true
+2025-12-05 11:03:37.49
+8e7373fc
+User
+4:03:37 PM [express] GET /api/auth/bootstrap 200 in 74ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-12-05 11:03:37.63
+8e7373fc
+User
+[/api/generations] Array query completed in 289ms, found 15 generations
+2025-12-05 11:03:37.64
+8e7373fc
+User
+4:03:37 PM [express] GET /api/generations 200 in 398ms :: [{"id":"6d9913aa-d3cc-4823-80f8-e4090fd66a…
+2025-12-05 11:03:37.67
+8e7373fc
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:03:37.67
+8e7373fc
+User
+4:03:37 PM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-12-05 11:03:37.67
+8e7373fc
+User
+4:03:37 PM [express] GET /api/welcome 304 in 26ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-05 11:03:37.70
+8e7373fc
+User
+4:03:37 PM [express] GET /api/subscriptions/current 304 in 48ms :: {"id":"b7aaa6ce-5fe9-4a56-a48e-78…
+2025-12-05 11:03:37.74
+8e7373fc
+User
+userId: '49729939',
+2025-12-05 11:03:37.74
+8e7373fc
+User
+hasUser: true,
+2025-12-05 11:03:37.96
+8e7373fc
+User
+4:03:37 PM [express] GET /api/generations 304 in 242ms :: [{"id":"6d9913aa-d3cc-4823-80f8-e4090fd66a…
+2025-12-05 11:03:40.35
+8e7373fc
+User
+4:03:40 PM [express] GET /api/homepage 304 in 26ms :: {"id":"homepage","heroTitle":"Make Any Video Y…
+
+Collapse
+
+Wrap
+
+Colors
