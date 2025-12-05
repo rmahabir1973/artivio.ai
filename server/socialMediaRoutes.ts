@@ -1,9 +1,11 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { z } from "zod";
+import multer from "multer";
 import { db } from "./db";
 import { storage } from "./storage";
 import { requireJWT } from "./jwtMiddleware";
 import { getLateService, PLATFORM_DAILY_CAPS, type SocialPlatform, SOCIAL_POSTER_PRICE_ID } from "./getLate";
+import { uploadBuffer, isS3Enabled, type S3Prefix } from "./services/awsS3";
 import {
   socialProfiles,
   socialAccounts,
@@ -15,6 +17,8 @@ import {
   socialBrandAssets,
   socialBrandScanJobs,
   aiContentPlans,
+  socialHubAssets,
+  generations,
   insertSocialGoalSchema,
   updateSocialGoalSchema,
   insertSocialPostSchema,
@@ -22,6 +26,7 @@ import {
   insertSocialBrandKitSchema,
   insertSocialBrandMaterialSchema,
   insertSocialBrandAssetSchema,
+  insertSocialHubAssetSchema,
 } from "@shared/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { 
@@ -3323,6 +3328,426 @@ Return ONLY valid JSON:
     } catch (error: any) {
       console.error('[Execution Agent] Manual execution error:', error);
       res.status(500).json({ message: 'Failed to execute posts' });
+    }
+  });
+
+  // ===== SOCIAL HUB ASSETS ROUTES =====
+  // These are the user's curated media library for social media content
+  
+  // Configure multer for file uploads
+  const socialHubUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
+        'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+        'audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/m4a'
+      ];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Allowed: images, videos, and audio files.'));
+      }
+    }
+  });
+
+  // Get user's social hub assets
+  app.get("/api/social/hub-assets", requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, source } = req.query;
+
+      let whereConditions = [
+        eq(socialHubAssets.userId, userId),
+        eq(socialHubAssets.isActive, true),
+      ];
+
+      if (type && ['image', 'video', 'audio'].includes(type)) {
+        whereConditions.push(eq(socialHubAssets.type, type));
+      }
+
+      if (source && ['imported', 'uploaded', 'ai_generated'].includes(source)) {
+        whereConditions.push(eq(socialHubAssets.source, source));
+      }
+
+      const assets = await db.query.socialHubAssets.findMany({
+        where: and(...whereConditions),
+        orderBy: desc(socialHubAssets.createdAt),
+      });
+
+      res.json(assets);
+    } catch (error: any) {
+      console.error('[Social Hub Assets] Get assets error:', error);
+      res.status(500).json({ message: 'Failed to get assets' });
+    }
+  });
+
+  // Upload a new asset to social hub (direct upload to S3)
+  app.post("/api/social/hub-assets/upload", requireJWT, socialHubUpload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ message: 'No file provided' });
+      }
+
+      if (!isS3Enabled()) {
+        return res.status(503).json({ message: 'File storage is not configured. Please contact support.' });
+      }
+
+      // Determine asset type from MIME type
+      let assetType: 'image' | 'video' | 'audio' = 'image';
+      if (file.mimetype.startsWith('video/')) {
+        assetType = 'video';
+      } else if (file.mimetype.startsWith('audio/')) {
+        assetType = 'audio';
+      }
+
+      // Upload to S3
+      const uploadResult = await uploadBuffer(file.buffer, {
+        prefix: 'social-hub-assets' as S3Prefix,
+        contentType: file.mimetype,
+        filename: `${userId}/${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`,
+      });
+
+      // Create database record
+      const [asset] = await db
+        .insert(socialHubAssets)
+        .values({
+          userId,
+          source: 'uploaded',
+          type: assetType,
+          filename: file.originalname,
+          url: uploadResult.signedUrl,
+          mimeType: file.mimetype,
+          fileSize: file.size,
+          title: req.body.title || file.originalname.replace(/\.[^/.]+$/, ''),
+          description: req.body.description || null,
+          tags: req.body.tags ? (Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags]) : [],
+        })
+        .returning();
+
+      console.log(`[Social Hub Assets] Uploaded ${assetType}: ${asset.id} for user ${userId}`);
+
+      res.json({
+        success: true,
+        asset,
+        message: `${assetType.charAt(0).toUpperCase() + assetType.slice(1)} uploaded successfully`,
+      });
+    } catch (error: any) {
+      console.error('[Social Hub Assets] Upload error:', error);
+      if (error.message?.includes('Invalid file type')) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: 'Failed to upload asset' });
+    }
+  });
+
+  // Import asset from main Library to Social Hub
+  app.post("/api/social/hub-assets/import", requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { generationId } = req.body;
+
+      if (!generationId) {
+        return res.status(400).json({ message: 'Generation ID is required' });
+      }
+
+      // Get the generation from main library
+      const generation = await db.query.generations.findFirst({
+        where: and(
+          eq(generations.id, generationId),
+          eq(generations.userId, userId),
+        ),
+      });
+
+      if (!generation) {
+        return res.status(404).json({ message: 'Generation not found or access denied' });
+      }
+
+      if (generation.status !== 'completed' || !generation.resultUrl) {
+        return res.status(400).json({ message: 'Generation must be completed with a result URL' });
+      }
+
+      // Check if already imported
+      const existing = await db.query.socialHubAssets.findFirst({
+        where: and(
+          eq(socialHubAssets.userId, userId),
+          eq(socialHubAssets.generationId, generationId),
+          eq(socialHubAssets.isActive, true),
+        ),
+      });
+
+      if (existing) {
+        return res.status(409).json({ message: 'This asset is already in your Social Hub library', asset: existing });
+      }
+
+      // Determine asset type from generation type
+      let assetType: 'image' | 'video' | 'audio' = 'image';
+      if (['video', 'upscaling'].includes(generation.type) || generation.generationType?.includes('video')) {
+        assetType = 'video';
+      } else if (['music', 'sound-effect', 'tts'].includes(generation.type)) {
+        assetType = 'audio';
+      }
+
+      // Create database record linking to the generation
+      const [asset] = await db
+        .insert(socialHubAssets)
+        .values({
+          userId,
+          source: 'imported',
+          generationId: generation.id,
+          type: assetType,
+          filename: `${generation.model}-${generation.id.slice(0, 8)}`,
+          url: generation.resultUrl,
+          thumbnailUrl: generation.thumbnailUrl,
+          title: generation.prompt?.substring(0, 100) || generation.model,
+          description: generation.prompt,
+        })
+        .returning();
+
+      console.log(`[Social Hub Assets] Imported from Library: ${asset.id} for user ${userId}`);
+
+      res.json({
+        success: true,
+        asset,
+        message: 'Asset imported to Social Hub library',
+      });
+    } catch (error: any) {
+      console.error('[Social Hub Assets] Import error:', error);
+      res.status(500).json({ message: 'Failed to import asset' });
+    }
+  });
+
+  // Bulk import multiple assets from Library
+  app.post("/api/social/hub-assets/import-bulk", requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { generationIds } = req.body;
+
+      if (!generationIds || !Array.isArray(generationIds) || generationIds.length === 0) {
+        return res.status(400).json({ message: 'At least one generation ID is required' });
+      }
+
+      if (generationIds.length > 50) {
+        return res.status(400).json({ message: 'Maximum 50 assets can be imported at once' });
+      }
+
+      const results = {
+        imported: [] as any[],
+        skipped: [] as { id: string; reason: string }[],
+        failed: [] as { id: string; error: string }[],
+      };
+
+      for (const generationId of generationIds) {
+        try {
+          // Get the generation
+          const generation = await db.query.generations.findFirst({
+            where: and(
+              eq(generations.id, generationId),
+              eq(generations.userId, userId),
+            ),
+          });
+
+          if (!generation) {
+            results.skipped.push({ id: generationId, reason: 'Not found or access denied' });
+            continue;
+          }
+
+          if (generation.status !== 'completed' || !generation.resultUrl) {
+            results.skipped.push({ id: generationId, reason: 'Not completed or no result URL' });
+            continue;
+          }
+
+          // Check if already imported
+          const existing = await db.query.socialHubAssets.findFirst({
+            where: and(
+              eq(socialHubAssets.userId, userId),
+              eq(socialHubAssets.generationId, generationId),
+              eq(socialHubAssets.isActive, true),
+            ),
+          });
+
+          if (existing) {
+            results.skipped.push({ id: generationId, reason: 'Already imported' });
+            continue;
+          }
+
+          // Determine asset type
+          let assetType: 'image' | 'video' | 'audio' = 'image';
+          if (['video', 'upscaling'].includes(generation.type) || generation.generationType?.includes('video')) {
+            assetType = 'video';
+          } else if (['music', 'sound-effect', 'tts'].includes(generation.type)) {
+            assetType = 'audio';
+          }
+
+          // Create database record
+          const [asset] = await db
+            .insert(socialHubAssets)
+            .values({
+              userId,
+              source: 'imported',
+              generationId: generation.id,
+              type: assetType,
+              filename: `${generation.model}-${generation.id.slice(0, 8)}`,
+              url: generation.resultUrl,
+              thumbnailUrl: generation.thumbnailUrl,
+              title: generation.prompt?.substring(0, 100) || generation.model,
+              description: generation.prompt,
+            })
+            .returning();
+
+          results.imported.push(asset);
+        } catch (err: any) {
+          results.failed.push({ id: generationId, error: err.message });
+        }
+      }
+
+      console.log(`[Social Hub Assets] Bulk import: ${results.imported.length} imported, ${results.skipped.length} skipped, ${results.failed.length} failed`);
+
+      res.json({
+        success: true,
+        imported: results.imported.length,
+        skipped: results.skipped.length,
+        failed: results.failed.length,
+        details: results,
+      });
+    } catch (error: any) {
+      console.error('[Social Hub Assets] Bulk import error:', error);
+      res.status(500).json({ message: 'Failed to bulk import assets' });
+    }
+  });
+
+  // Update asset metadata
+  app.patch("/api/social/hub-assets/:id", requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { title, description, tags } = req.body;
+
+      const asset = await db.query.socialHubAssets.findFirst({
+        where: and(
+          eq(socialHubAssets.id, id),
+          eq(socialHubAssets.userId, userId),
+        ),
+      });
+
+      if (!asset) {
+        return res.status(404).json({ message: 'Asset not found' });
+      }
+
+      const [updated] = await db
+        .update(socialHubAssets)
+        .set({
+          title: title !== undefined ? title : asset.title,
+          description: description !== undefined ? description : asset.description,
+          tags: tags !== undefined ? (Array.isArray(tags) ? tags : [tags]) : asset.tags,
+        })
+        .where(eq(socialHubAssets.id, id))
+        .returning();
+
+      res.json({ success: true, asset: updated });
+    } catch (error: any) {
+      console.error('[Social Hub Assets] Update error:', error);
+      res.status(500).json({ message: 'Failed to update asset' });
+    }
+  });
+
+  // Delete asset (soft delete)
+  app.delete("/api/social/hub-assets/:id", requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+
+      const asset = await db.query.socialHubAssets.findFirst({
+        where: and(
+          eq(socialHubAssets.id, id),
+          eq(socialHubAssets.userId, userId),
+        ),
+      });
+
+      if (!asset) {
+        return res.status(404).json({ message: 'Asset not found' });
+      }
+
+      await db
+        .update(socialHubAssets)
+        .set({ isActive: false })
+        .where(eq(socialHubAssets.id, id));
+
+      console.log(`[Social Hub Assets] Deleted (soft): ${id} for user ${userId}`);
+
+      res.json({ success: true, message: 'Asset removed from library' });
+    } catch (error: any) {
+      console.error('[Social Hub Assets] Delete error:', error);
+      res.status(500).json({ message: 'Failed to delete asset' });
+    }
+  });
+
+  // Get main library generations for import picker
+  app.get("/api/social/library-generations", requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, limit: limitParam } = req.query;
+      const limitNum = Math.min(parseInt(limitParam as string) || 50, 100);
+
+      let whereConditions = [
+        eq(generations.userId, userId),
+        eq(generations.status, 'completed'),
+      ];
+
+      // Filter by type if specified
+      if (type) {
+        const typeFilters: Record<string, string[]> = {
+          image: ['image'],
+          video: ['video', 'upscaling'],
+          audio: ['music', 'sound-effect', 'tts'],
+        };
+        if (typeFilters[type]) {
+          // For simplicity, we'll filter in-memory after fetch
+        }
+      }
+
+      const gens = await db.query.generations.findMany({
+        where: and(...whereConditions),
+        orderBy: desc(generations.createdAt),
+        limit: limitNum * 2, // Fetch extra to filter
+      });
+
+      // Filter by type and only include those with resultUrl
+      let filtered = gens.filter(g => g.resultUrl);
+      
+      if (type === 'image') {
+        filtered = filtered.filter(g => !['video', 'upscaling', 'music', 'sound-effect', 'tts'].includes(g.type));
+      } else if (type === 'video') {
+        filtered = filtered.filter(g => ['video', 'upscaling'].includes(g.type) || g.generationType?.includes('video'));
+      } else if (type === 'audio') {
+        filtered = filtered.filter(g => ['music', 'sound-effect', 'tts'].includes(g.type));
+      }
+
+      // Get already imported IDs
+      const importedAssets = await db.query.socialHubAssets.findMany({
+        where: and(
+          eq(socialHubAssets.userId, userId),
+          eq(socialHubAssets.isActive, true),
+          eq(socialHubAssets.source, 'imported'),
+        ),
+        columns: { generationId: true },
+      });
+      const importedIds = new Set(importedAssets.map(a => a.generationId).filter(Boolean));
+
+      // Mark which ones are already imported
+      const result = filtered.slice(0, limitNum).map(g => ({
+        ...g,
+        alreadyImported: importedIds.has(g.id),
+      }));
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('[Social Hub Assets] Get library generations error:', error);
+      res.status(500).json({ message: 'Failed to get library generations' });
     }
   });
 

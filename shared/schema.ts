@@ -2339,6 +2339,51 @@ export const insertSocialBrandScanJobSchema = createInsertSchema(socialBrandScan
 export type InsertSocialBrandScanJob = z.infer<typeof insertSocialBrandScanJobSchema>;
 export type SocialBrandScanJob = typeof socialBrandScanJobs.$inferSelect;
 
+// Social Hub Assets - User's curated media library for social media content
+// Separate from main Library - only approved marketing assets
+export const socialHubAssets = pgTable("social_hub_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // Source tracking: where did this asset come from?
+  source: varchar("source").notNull(), // 'imported' (from main Library), 'uploaded' (direct upload), 'ai_generated' (AI created for social)
+  generationId: varchar("generation_id").references(() => generations.id, { onDelete: 'set null' }), // Link to original generation if imported
+  // Asset details
+  type: varchar("type").notNull(), // 'image', 'video', 'audio'
+  filename: varchar("filename").notNull(),
+  url: text("url").notNull(), // S3 URL
+  thumbnailUrl: text("thumbnail_url"),
+  mimeType: varchar("mime_type"),
+  fileSize: integer("file_size"),
+  // Metadata
+  title: varchar("title"),
+  description: text("description"),
+  tags: text("tags").array(), // User-defined tags for organization
+  // Content plan linking
+  contentPlanId: varchar("content_plan_id"), // If AI-generated for a specific content plan
+  postIndex: integer("post_index"), // Which post in the plan this was generated for
+  // Usage tracking
+  usageCount: integer("usage_count").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  isActive: boolean("is_active").default(true), // Soft delete
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("social_hub_assets_user_idx").on(table.userId),
+  index("social_hub_assets_type_idx").on(table.type),
+  index("social_hub_assets_source_idx").on(table.source),
+  index("social_hub_assets_generation_idx").on(table.generationId),
+]);
+
+export const insertSocialHubAssetSchema = createInsertSchema(socialHubAssets).omit({
+  id: true,
+  usageCount: true,
+  lastUsedAt: true,
+  isActive: true,
+  createdAt: true,
+});
+
+export type InsertSocialHubAsset = z.infer<typeof insertSocialHubAssetSchema>;
+export type SocialHubAsset = typeof socialHubAssets.$inferSelect;
+
 // AI Content Plans - Generated social media content plans
 export const aiContentPlans = pgTable("ai_content_plans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2563,6 +2608,17 @@ export const socialBrandAssetsRelations = relations(socialBrandAssets, ({ one })
   brandKit: one(socialBrandKits, {
     fields: [socialBrandAssets.brandKitId],
     references: [socialBrandKits.id],
+  }),
+}));
+
+export const socialHubAssetsRelations = relations(socialHubAssets, ({ one }) => ({
+  user: one(users, {
+    fields: [socialHubAssets.userId],
+    references: [users.id],
+  }),
+  generation: one(generations, {
+    fields: [socialHubAssets.generationId],
+    references: [generations.id],
   }),
 }));
 

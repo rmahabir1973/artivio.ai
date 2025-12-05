@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/authBridge";
 import { SocialUpgradePrompt } from "@/components/social-upgrade-prompt";
 import { usePricing } from "@/hooks/use-pricing";
-import type { SocialBrandKit, SocialBrandMaterial, SocialBrandAsset } from "@shared/schema";
+import type { SocialBrandKit, SocialBrandMaterial, SocialBrandAsset, SocialHubAsset } from "@shared/schema";
 
 interface SubscriptionStatus {
   hasSocialPoster: boolean;
@@ -187,6 +187,18 @@ export default function SocialBrandKit() {
       return response.json();
     },
     enabled: !!user && subscriptionStatus?.hasSocialPoster && !!brandKit,
+  });
+
+  const { data: hubAssets = [], isLoading: hubAssetsLoading } = useQuery<SocialHubAsset[]>({
+    queryKey: ["/api/social/hub-assets"],
+    queryFn: async () => {
+      const response = await fetchWithAuth("/api/social/hub-assets");
+      if (!response.ok) {
+        return [];
+      }
+      return response.json();
+    },
+    enabled: !!user && subscriptionStatus?.hasSocialPoster,
   });
 
   const { data: scanJobStatus, isError: scanJobError } = useQuery<ScanJobStatus>({
@@ -489,7 +501,12 @@ export default function SocialBrandKit() {
         </TabsContent>
 
         <TabsContent value="assets" className="space-y-6">
-          <AssetsTab assets={assets} isLoading={assetsLoading} />
+          <AssetsTab 
+            assets={assets} 
+            isLoading={assetsLoading} 
+            hubAssets={hubAssets}
+            hubAssetsLoading={hubAssetsLoading}
+          />
         </TabsContent>
 
         <TabsContent value="profile" className="space-y-6">
@@ -774,11 +791,95 @@ function SourceMaterialsTab({
   );
 }
 
-function AssetsTab({ assets, isLoading }: { assets: SocialBrandAsset[]; isLoading: boolean }) {
+interface AssetsTabProps {
+  assets: SocialBrandAsset[];
+  isLoading: boolean;
+  hubAssets: SocialHubAsset[];
+  hubAssetsLoading: boolean;
+}
+
+function AssetsTab({ assets, isLoading, hubAssets, hubAssetsLoading }: AssetsTabProps) {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const suggestedAssets = assets.filter((a) => a.isSuggested === true);
-  const libraryAssets = assets.filter((a) => a.isSuggested !== true);
+  const brandLibraryAssets = assets.filter((a) => a.isSuggested !== true);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const file of Array.from(files)) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
+
+        const response = await fetchWithAuth('/api/social/hub-assets/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          const error = await response.json();
+          console.error('Upload failed:', error);
+          failCount++;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        failCount++;
+      }
+    }
+
+    setIsUploading(false);
+    
+    if (successCount > 0) {
+      queryClient.invalidateQueries({ queryKey: ['/api/social/hub-assets'] });
+      toast({ 
+        title: `${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully`,
+        description: failCount > 0 ? `${failCount} file${failCount > 1 ? 's' : ''} failed to upload` : undefined,
+      });
+    } else if (failCount > 0) {
+      toast({ 
+        title: 'Upload failed', 
+        description: 'Could not upload the selected files. Please try again.',
+        variant: 'destructive' 
+      });
+    }
+
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const deleteHubAssetMutation = useMutation({
+    mutationFn: async (assetId: string) => {
+      const response = await fetchWithAuth(`/api/social/hub-assets/${assetId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete asset");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/hub-assets"] });
+      toast({ title: "Asset removed from library" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete asset", variant: "destructive" });
+    },
+  });
 
   const groupByFolder = (assetList: SocialBrandAsset[]) => {
     const grouped: Record<string, SocialBrandAsset[]> = {};
@@ -791,7 +892,7 @@ function AssetsTab({ assets, isLoading }: { assets: SocialBrandAsset[]; isLoadin
   };
 
   const suggestedByFolder = groupByFolder(suggestedAssets);
-  const libraryByFolder = groupByFolder(libraryAssets);
+  const libraryByFolder = groupByFolder(brandLibraryAssets);
 
   const acceptAssetMutation = useMutation({
     mutationFn: async (assetId: string) => {
@@ -1021,27 +1122,35 @@ function AssetsTab({ assets, isLoading }: { assets: SocialBrandAsset[]; isLoadin
             <CardTitle className="flex items-center gap-2">
               <Image className="w-5 h-5" />
               Your Library
-              {libraryAssets.length > 0 && (
-                <Badge variant="secondary">{libraryAssets.length}</Badge>
+              {(brandLibraryAssets.length + hubAssets.length) > 0 && (
+                <Badge variant="secondary">{brandLibraryAssets.length + hubAssets.length}</Badge>
               )}
             </CardTitle>
             <CardDescription>
               Your approved brand assets for content creation
             </CardDescription>
           </div>
-          <Button data-testid="button-upload-asset">
-            <Upload className="w-4 h-4 mr-2" />
-            Upload
+          <Button 
+            onClick={handleUploadClick}
+            disabled={isUploading}
+            data-testid="button-upload-asset"
+          >
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4 mr-2" />
+            )}
+            {isUploading ? 'Uploading...' : 'Upload'}
           </Button>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {(isLoading || hubAssetsLoading) ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="aspect-square rounded-lg" />
               ))}
             </div>
-          ) : libraryAssets.length === 0 ? (
+          ) : (brandLibraryAssets.length === 0 && hubAssets.length === 0) ? (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
               <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No assets in your library yet</p>
@@ -1050,16 +1159,128 @@ function AssetsTab({ assets, isLoading }: { assets: SocialBrandAsset[]; isLoadin
                   ? "Accept suggested assets above or upload your own"
                   : "Scan your website to discover assets or upload your own"}
               </p>
-              <Button variant="outline" className="mt-4" data-testid="button-upload-first-asset">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Your First Asset
+              <Button 
+                variant="outline" 
+                className="mt-4" 
+                onClick={handleUploadClick}
+                disabled={isUploading}
+                data-testid="button-upload-first-asset"
+              >
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                {isUploading ? 'Uploading...' : 'Upload Your First Asset'}
               </Button>
             </div>
           ) : (
-            renderFolderGroup(libraryByFolder, false)
+            <div className="space-y-6">
+              {/* Hub Assets (Uploads & Imports) */}
+              {hubAssets.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">Uploads & Imports</span>
+                    <Badge variant="secondary" className="text-xs">{hubAssets.length}</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {hubAssets.map((asset) => (
+                      <div
+                        key={asset.id}
+                        className="relative group aspect-square rounded-lg overflow-hidden border"
+                        data-testid={`hub-asset-item-${asset.id}`}
+                      >
+                        {asset.type === 'video' ? (
+                          <video
+                            src={asset.url}
+                            poster={asset.thumbnailUrl || undefined}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : asset.type === 'audio' ? (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <div className="text-center p-4">
+                              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+                                <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                </svg>
+                              </div>
+                              <p className="text-xs truncate max-w-full">{asset.title || asset.filename}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <img
+                            src={asset.thumbnailUrl || asset.url}
+                            alt={asset.title || asset.filename}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="destructive"
+                                onClick={() => deleteHubAssetMutation.mutate(asset.id)}
+                                disabled={deleteHubAssetMutation.isPending}
+                                data-testid={`button-delete-hub-asset-${asset.id}`}
+                              >
+                                {deleteHubAssetMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove from library</TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <Badge
+                          className="absolute top-2 left-2"
+                          variant="outline"
+                        >
+                          {asset.source === 'imported' ? 'Imported' : asset.source === 'uploaded' ? 'Uploaded' : 'AI'}
+                        </Badge>
+                        <Badge
+                          className="absolute bottom-2 left-2 capitalize"
+                          variant="secondary"
+                        >
+                          {asset.type}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Brand Assets (from website scans) */}
+              {brandLibraryAssets.length > 0 && (
+                <div>
+                  {hubAssets.length > 0 && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <FolderOpen className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">From Website Scans</span>
+                      <Badge variant="secondary" className="text-xs">{brandLibraryAssets.length}</Badge>
+                    </div>
+                  )}
+                  {renderFolderGroup(libraryByFolder, false)}
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Hidden file input for uploads */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*,video/*,audio/*"
+        multiple
+        className="hidden"
+        data-testid="input-file-upload"
+      />
     </div>
   );
 }
