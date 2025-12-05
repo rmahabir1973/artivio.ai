@@ -1,19 +1,15 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, CreditCard, User, Mail, Calendar, Shield, ExternalLink, RefreshCw, Copy, Key, Plus, Trash2 } from "lucide-react";
+import { Loader2, CreditCard, User, Mail, Calendar, Shield, ExternalLink, RefreshCw, Key } from "lucide-react";
 import { format } from "date-fns";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { UsageAnalytics } from "@/components/usage-analytics";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 
 export default function Profile() {
@@ -26,95 +22,6 @@ export default function Profile() {
     enabled: !!user,
     retry: 1, // Only retry once to avoid long waits
   });
-
-  // API Keys state
-  const [creatingApiKey, setCreatingApiKey] = useState(false);
-  const [newKeyName, setNewKeyName] = useState("");
-  const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
-  const [copiedKey, setCopiedKey] = useState(false);
-
-  // Fetch user's API keys
-  const { data: apiKeys = [], isLoading: keysLoading } = useQuery<any[]>({
-    queryKey: ["/api/user/api-keys"],
-    enabled: !!user,
-  });
-
-  // Create API key mutation
-  const createApiKeyMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const response = await apiRequest("POST", "/api/user/api-keys", { name });
-      return await response.json();
-    },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/api-keys"] });
-      setCreatingApiKey(false);
-      setNewKeyName("");
-      setNewlyCreatedKey(data.key);
-      toast({
-        title: "API Key Created",
-        description: "Make sure to copy your key - it won't be shown again!",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create API key",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Revoke API key mutation
-  const revokeApiKeyMutation = useMutation({
-    mutationFn: async (keyId: string) => {
-      return await apiRequest("POST", `/api/user/api-keys/${keyId}/revoke`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/api-keys"] });
-      toast({
-        title: "API Key Revoked",
-        description: "The API key has been deactivated",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to revoke API key",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete API key mutation
-  const deleteApiKeyMutation = useMutation({
-    mutationFn: async (keyId: string) => {
-      return await apiRequest("DELETE", `/api/user/api-keys/${keyId}`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/api-keys"] });
-      toast({
-        title: "API Key Deleted",
-        description: "The API key has been permanently deleted",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete API key",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleCopyKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
-    toast({
-      title: "Copied!",
-      description: "API key copied to clipboard",
-    });
-  };
 
   const handleRefreshData = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -319,7 +226,7 @@ export default function Profile() {
           <div className="space-y-2">
             <p className="font-semibold">Authentication Provider</p>
             <p className="text-sm text-muted-foreground">
-              Your account uses Replit Auth, which supports multiple login methods including Google, GitHub, X (Twitter), Apple, and Email.
+              Your account uses Artivio's secure authentication system with Google OAuth integration. You can sign in using your Google account or email and password.
             </p>
           </div>
 
@@ -364,211 +271,55 @@ export default function Profile() {
           <CardTitle>Help & Support</CardTitle>
           <CardDescription>Need assistance with your account?</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm">
-            For credit purchases, plan upgrades, or account issues, please contact an administrator.
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            For credit purchases, plan upgrades, billing questions, or any account issues, our support team is here to help.
           </p>
-          {typedUser?.isAdmin && (
-            <Button variant="outline" asChild data-testid="button-go-to-admin">
-              <a href="/admin">
-                <Shield className="h-4 w-4 mr-2" />
-                Go to Admin Panel
-              </a>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="default" asChild data-testid="button-open-support">
+              <Link href="/support">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Support Ticket
+              </Link>
             </Button>
-          )}
+            {typedUser?.isAdmin && (
+              <Button variant="outline" asChild data-testid="button-go-to-admin">
+                <a href="/admin">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Go to Admin Panel
+                </a>
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* API Keys Card */}
+      {/* API Access Card */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              API Keys
-            </CardTitle>
-            <CardDescription>Manage API keys for external integrations like Tasklet AI</CardDescription>
-          </div>
-          <Button onClick={() => setCreatingApiKey(true)} data-testid="button-create-api-key">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Key
-          </Button>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            API Access
+          </CardTitle>
+          <CardDescription>Integrate Artivio AI with your applications</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {keysLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : apiKeys.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No API keys yet</p>
-              <p className="text-sm">Create an API key to integrate with AI agents like Tasklet</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {apiKeys.map((key: any) => (
-                <div key={key.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{key.name}</p>
-                      <Badge variant={key.isActive ? "default" : "secondary"}>
-                        {key.isActive ? "Active" : "Revoked"}
-                      </Badge>
-                    </div>
-                    <p className="font-mono text-sm text-muted-foreground">{key.keyPreview}</p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Used: {key.usageCount?.toLocaleString() || 0} times</span>
-                      {key.lastUsedAt && (
-                        <span>Last used: {format(new Date(key.lastUsedAt), "MMM d, yyyy")}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {key.isActive && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          if (confirm("Revoke this API key? It will no longer work for authentication.")) {
-                            revokeApiKeyMutation.mutate(key.id);
-                          }
-                        }}
-                        disabled={revokeApiKeyMutation.isPending}
-                        data-testid={`button-revoke-key-${key.id}`}
-                      >
-                        Revoke
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => {
-                        if (confirm("Delete this API key permanently? This action cannot be undone.")) {
-                          deleteApiKeyMutation.mutate(key.id);
-                        }
-                      }}
-                      disabled={deleteApiKeyMutation.isPending}
-                      data-testid={`button-delete-key-${key.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <Separator />
-
-          <div className="space-y-2">
-            <p className="font-semibold">API Documentation</p>
+          <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
             <p className="text-sm text-muted-foreground">
-              Use your API keys to integrate Artivio AI with external services. Base URL: <code className="bg-muted px-1 rounded">/api/v1</code>
+              API access is available upon request for enterprise customers and developers who want to integrate Artivio AI's powerful generation capabilities into their own applications.
             </p>
-            <div className="text-sm text-muted-foreground">
-              <p className="font-medium mt-2">Available Endpoints:</p>
-              <ul className="list-disc list-inside mt-1 space-y-1">
-                <li><code className="bg-muted px-1 rounded">POST /api/v1/video/generate</code> - Generate AI videos</li>
-                <li><code className="bg-muted px-1 rounded">POST /api/v1/image/generate</code> - Generate AI images</li>
-                <li><code className="bg-muted px-1 rounded">POST /api/v1/audio/generate</code> - Generate AI music</li>
-                <li><code className="bg-muted px-1 rounded">GET /api/v1/generations/:id</code> - Check generation status</li>
-                <li><code className="bg-muted px-1 rounded">GET /api/v1/credits</code> - Check credit balance</li>
-              </ul>
-            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              With API access, you can programmatically generate videos, images, and audio using your credit balance.
+            </p>
           </div>
+          <Button variant="outline" asChild data-testid="button-request-api-access">
+            <Link href="/support">
+              <Key className="h-4 w-4 mr-2" />
+              Request API Access
+            </Link>
+          </Button>
         </CardContent>
       </Card>
-
-      {/* Create API Key Dialog */}
-      <Dialog open={creatingApiKey} onOpenChange={setCreatingApiKey}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create API Key</DialogTitle>
-            <DialogDescription>
-              Create a new API key for integrating with AI agents like Tasklet
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="key-name">Key Name</Label>
-              <Input
-                id="key-name"
-                value={newKeyName}
-                onChange={(e) => setNewKeyName(e.target.value)}
-                placeholder="e.g., Tasklet Integration"
-                data-testid="input-api-key-name"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreatingApiKey(false)} data-testid="button-cancel-create-key">
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (!newKeyName.trim()) {
-                  toast({
-                    title: "Error",
-                    description: "Please enter a name for your API key",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                createApiKeyMutation.mutate(newKeyName);
-              }}
-              disabled={createApiKeyMutation.isPending}
-              data-testid="button-submit-create-key"
-            >
-              {createApiKeyMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create Key"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Show New Key Dialog */}
-      <Dialog open={!!newlyCreatedKey} onOpenChange={() => setNewlyCreatedKey(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Your New API Key</DialogTitle>
-            <DialogDescription>
-              Copy your API key now. It will not be shown again!
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="flex items-center gap-2">
-              <Input
-                value={newlyCreatedKey || ""}
-                readOnly
-                className="font-mono"
-                data-testid="input-new-api-key-value"
-              />
-              <Button
-                variant="outline"
-                onClick={() => newlyCreatedKey && handleCopyKey(newlyCreatedKey)}
-                data-testid="button-copy-api-key"
-              >
-                {copiedKey ? "Copied!" : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Use this key in your Authorization header: <code className="bg-muted px-1 rounded">Bearer YOUR_API_KEY</code>
-            </p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setNewlyCreatedKey(null)} data-testid="button-close-new-key-dialog">
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Usage Analytics */}
       <UsageAnalytics />

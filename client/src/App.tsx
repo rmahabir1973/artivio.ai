@@ -45,6 +45,7 @@ import {
   QrCode,
   Workflow,
   Megaphone,
+  HelpCircle,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { AIAssistantWidget } from "@/components/ai-assistant-widget";
@@ -577,6 +578,12 @@ function AppContent() {
                         <Link href="/billing" className="cursor-pointer" data-testid="menu-billing">
                           <CreditCard className="h-4 w-4 mr-2" />
                           Billing
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/support" className="cursor-pointer" data-testid="menu-support">
+                          <HelpCircle className="h-4 w-4 mr-2" />
+                          Support
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

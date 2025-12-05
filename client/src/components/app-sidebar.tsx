@@ -59,6 +59,7 @@ import {
   Palette,
   FileText,
   Bot,
+  HelpCircle,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -198,6 +199,7 @@ const menuSections: MenuSection[] = [
     items: [
       { title: "Profile", url: "/profile", icon: Settings },
       { title: "Billing", url: "/billing", icon: CreditCard },
+      { title: "Support", url: "/support", icon: HelpCircle },
     ],
   },
 ];
