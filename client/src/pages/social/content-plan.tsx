@@ -51,6 +51,7 @@ import {
   Sparkles,
   CalendarDays,
   LayoutGrid,
+  Trash2,
 } from "lucide-react";
 import { 
   SiInstagram, 
@@ -202,6 +203,8 @@ export default function ContentPlanPage() {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [generateScope, setGenerateScope] = useState<'week' | 'month'>('week');
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [selectedPostIndices, setSelectedPostIndices] = useState<number[]>([]);
+  const [showDeletePlanConfirm, setShowDeletePlanConfirm] = useState(false);
 
   const { data: subscriptionStatus, isLoading: statusLoading } = useQuery<SubscriptionStatus>({
     queryKey: ["/api/social/subscription-status"],
@@ -332,6 +335,70 @@ export default function ContentPlanPage() {
     },
     onError: () => {
       toast({ title: "Failed to regenerate post", variant: "destructive" });
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: async ({ planId, index }: { planId: string; index: number }) => {
+      const response = await fetchWithAuth(`/api/social/content-plans/${planId}/posts/${index}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete post");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/content-plans", selectedPlanId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/content-plans"] });
+      setSelectedPost(null);
+      toast({ title: "Post deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete post", variant: "destructive" });
+    },
+  });
+
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      const response = await fetchWithAuth(`/api/social/content-plans/${planId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete plan");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/content-plans"] });
+      setSelectedPlanId(null);
+      toast({ title: "Content plan deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete plan", variant: "destructive" });
+    },
+  });
+
+  const bulkDeletePostsMutation = useMutation({
+    mutationFn: async ({ planId, indices }: { planId: string; indices: number[] }) => {
+      const response = await fetchWithAuth(`/api/social/content-plans/${planId}/posts/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ indices }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete posts");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/content-plans", selectedPlanId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/content-plans"] });
+      setSelectedPostIndices([]);
+      toast({ title: `${data.deletedCount} posts deleted` });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete posts", variant: "destructive" });
     },
   });
 
@@ -734,6 +801,15 @@ export default function ContentPlanPage() {
                             Start Execution
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowDeletePlanConfirm(true)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          data-testid="button-delete-plan"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
@@ -784,6 +860,53 @@ export default function ContentPlanPage() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">Calendar View</CardTitle>
                       <div className="flex items-center gap-2">
+                        {selectedPostIndices.length > 0 && (
+                          <>
+                            <span className="text-sm text-muted-foreground">
+                              {selectedPostIndices.length} selected
+                            </span>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                if (selectedPlanId) {
+                                  bulkDeletePostsMutation.mutate({ planId: selectedPlanId, indices: selectedPostIndices });
+                                }
+                              }}
+                              disabled={bulkDeletePostsMutation.isPending}
+                              className="gap-1"
+                              data-testid="button-bulk-delete"
+                            >
+                              {bulkDeletePostsMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                              Delete Selected
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedPostIndices([])}
+                              data-testid="button-clear-selection"
+                            >
+                              Clear
+                            </Button>
+                          </>
+                        )}
+                        {selectedPlan?.plan?.posts && selectedPlan.plan.posts.length > 0 && selectedPostIndices.length === 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const allIndices = selectedPlan?.plan?.posts?.map((_: any, i: number) => i) || [];
+                              setSelectedPostIndices(allIndices);
+                            }}
+                            data-testid="button-select-all"
+                          >
+                            Select All
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="icon"
@@ -828,43 +951,66 @@ export default function ContentPlanPage() {
                             </div>
                             <ScrollArea className="h-[120px]">
                               <div className="space-y-1">
-                                {dayPosts.map(({ post, index }) => (
-                                  <button
-                                    key={index}
-                                    onClick={() => setSelectedPost({ post, index })}
-                                    className="w-full text-left p-2 rounded-md text-xs hover-elevate border bg-background"
-                                    data-testid={`button-view-post-${index}`}
-                                  >
-                                    <div className="flex items-center gap-1 mb-1">
-                                      {post.platforms.slice(0, 2).map((platform) => {
-                                        const Icon = PLATFORM_ICONS[platform];
-                                        return Icon ? (
-                                          <div
-                                            key={platform}
-                                            className={`w-4 h-4 ${PLATFORM_COLORS[platform]} rounded flex items-center justify-center`}
-                                          >
-                                            <Icon className="w-2.5 h-2.5 text-white" />
-                                          </div>
-                                        ) : null;
-                                      })}
-                                      {post.platforms.length > 2 && (
-                                        <span className="text-[10px] text-muted-foreground">
-                                          +{post.platforms.length - 2}
-                                        </span>
-                                      )}
-                                      <span className="ml-auto text-[10px] text-muted-foreground">{post.time}</span>
-                                    </div>
-                                    <p className="line-clamp-2 text-[11px]">{post.caption}</p>
-                                    <div className="flex items-center justify-between mt-1">
-                                      <Badge 
-                                        variant={STATUS_BADGES[post.status]?.variant || "secondary"} 
-                                        className="text-[10px] h-4 px-1"
+                                {dayPosts.map(({ post, index }) => {
+                                  const isSelected = selectedPostIndices.includes(index);
+                                  return (
+                                    <div
+                                      key={index}
+                                      className={`relative w-full text-left p-2 rounded-md text-xs border bg-background ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                                    >
+                                      <div className="absolute top-1 left-1">
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          onChange={(e) => {
+                                            e.stopPropagation();
+                                            if (isSelected) {
+                                              setSelectedPostIndices(prev => prev.filter(i => i !== index));
+                                            } else {
+                                              setSelectedPostIndices(prev => [...prev, index]);
+                                            }
+                                          }}
+                                          className="w-3 h-3 rounded border-muted-foreground cursor-pointer"
+                                          data-testid={`checkbox-post-${index}`}
+                                        />
+                                      </div>
+                                      <button
+                                        onClick={() => setSelectedPost({ post, index })}
+                                        className="w-full text-left hover-elevate pl-4"
+                                        data-testid={`button-view-post-${index}`}
                                       >
-                                        {STATUS_BADGES[post.status]?.label || post.status}
-                                      </Badge>
+                                        <div className="flex items-center gap-1 mb-1">
+                                          {post.platforms.slice(0, 2).map((platform) => {
+                                            const Icon = PLATFORM_ICONS[platform];
+                                            return Icon ? (
+                                              <div
+                                                key={platform}
+                                                className={`w-4 h-4 ${PLATFORM_COLORS[platform]} rounded flex items-center justify-center`}
+                                              >
+                                                <Icon className="w-2.5 h-2.5 text-white" />
+                                              </div>
+                                            ) : null;
+                                          })}
+                                          {post.platforms.length > 2 && (
+                                            <span className="text-[10px] text-muted-foreground">
+                                              +{post.platforms.length - 2}
+                                            </span>
+                                          )}
+                                          <span className="ml-auto text-[10px] text-muted-foreground">{post.time}</span>
+                                        </div>
+                                        <p className="line-clamp-2 text-[11px]">{post.caption}</p>
+                                        <div className="flex items-center justify-between mt-1">
+                                          <Badge 
+                                            variant={STATUS_BADGES[post.status]?.variant || "secondary"} 
+                                            className="text-[10px] h-4 px-1"
+                                          >
+                                            {STATUS_BADGES[post.status]?.label || post.status}
+                                          </Badge>
+                                        </div>
+                                      </button>
                                     </div>
-                                  </button>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </ScrollArea>
                           </div>
@@ -1041,6 +1187,20 @@ export default function ContentPlanPage() {
               </div>
               <DialogFooter className="flex-col sm:flex-row gap-2">
                 <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deletePostMutation.mutate({ planId: selectedPlanId!, index: selectedPost.index })}
+                  disabled={deletePostMutation.isPending}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  data-testid="button-delete-post"
+                >
+                  {deletePostMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </Button>
+                <Button
                   variant="outline"
                   onClick={() => regeneratePostMutation.mutate({ planId: selectedPlanId!, index: selectedPost.index })}
                   disabled={regeneratePostMutation.isPending}
@@ -1086,6 +1246,46 @@ export default function ContentPlanPage() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Plan Confirmation Dialog */}
+      <Dialog open={showDeletePlanConfirm} onOpenChange={setShowDeletePlanConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              Delete Content Plan
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this content plan? This action cannot be undone.
+              All posts in this plan will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowDeletePlanConfirm(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedPlanId) {
+                  deletePlanMutation.mutate(selectedPlanId);
+                  setShowDeletePlanConfirm(false);
+                }
+              }}
+              disabled={deletePlanMutation.isPending}
+              className="gap-1"
+              data-testid="button-confirm-delete-plan"
+            >
+              {deletePlanMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Delete Plan
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
