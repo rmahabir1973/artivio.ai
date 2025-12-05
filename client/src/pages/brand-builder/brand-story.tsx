@@ -46,7 +46,7 @@ export default function BrandStory() {
   
   // Credit cost depends on model: first-and-last-frames for 2+ images, regular veo-3.1 for 1 image
   const modelForCost = brandImages.length >= 2 ? 'veo-3.1-first-and-last-frames' : 'veo-3.1';
-  const creditCost = getModelCost(modelForCost, 500) || 350;
+  const creditCost = getModelCost(modelForCost, 525);
 
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();

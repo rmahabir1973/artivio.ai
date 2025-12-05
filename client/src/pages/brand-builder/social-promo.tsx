@@ -60,7 +60,7 @@ export default function SocialPromo() {
   const [showGuestModal, setShowGuestModal] = useState(false);
   
   // Use Kling 2.5 Turbo for image-to-video (5s duration) - supports all aspect ratios
-  const creditCost = getModelCost('kling-2.5-turbo-i2v-5s', 400) || 90;
+  const creditCost = getModelCost('kling-2.5-turbo-i2v-5s', 90);
 
   const checkImageAspectRatio = (width: number, height: number): { matches: boolean, actual: string, suggestion: string } => {
     const ratio = width / height;

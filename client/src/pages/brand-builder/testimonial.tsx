@@ -39,8 +39,8 @@ export default function Testimonial() {
   const [showGuestModal, setShowGuestModal] = useState(false);
   
   // Testimonial includes both TTS + Lip-sync costs
-  const lipSyncCost = getModelCost(resolution === '480p' ? 'infinitalk-lip-sync-480p' : 'infinitalk-lip-sync-720p', 60) || 250;
-  const ttsCost = getModelCost('fish-audio-tts', 60) || 20;
+  const lipSyncCost = getModelCost(resolution === '480p' ? 'infinitalk-lip-sync-480p' : 'infinitalk-lip-sync-720p', resolution === '480p' ? 40 : 125);
+  const ttsCost = getModelCost('fish-audio-tts', 20);
   const creditCost = lipSyncCost + ttsCost;
 
   const uploadImage = async (file: File): Promise<string> => {

@@ -43,7 +43,7 @@ export default function Unboxing() {
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
-  const creditCost = getModelCost('veo-3.1-fast', 400) || 220;
+  const creditCost = getModelCost('veo-3.1-fast', 125);
 
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();

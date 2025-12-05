@@ -52,7 +52,7 @@ export default function LogoAnimation() {
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
-  const creditCost = getModelCost('veo-3.1-fast', 400) || 100;
+  const creditCost = getModelCost('veo-3.1-fast', 125);
 
   const handleStyleChange = (value: string) => {
     setAnimationStyle(value);

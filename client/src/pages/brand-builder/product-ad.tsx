@@ -45,7 +45,7 @@ export default function ProductAd() {
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
-  const creditCost = getModelCost('veo-3.1-fast-first-and-last-frames', 400) || 150;
+  const creditCost = getModelCost('veo-3.1-fast-first-and-last-frames', 125);
 
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();

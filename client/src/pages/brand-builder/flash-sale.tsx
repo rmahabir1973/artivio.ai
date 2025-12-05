@@ -47,7 +47,7 @@ export default function FlashSale() {
   const [generatedVideo, setGeneratedVideo] = useState<any>(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
   
-  const creditCost = getModelCost('veo-3.1-fast', 400) || 130;
+  const creditCost = getModelCost('veo-3.1-fast', 125);
 
   const checkImageAspectRatio = (width: number, height: number): { matches: boolean, actual: string, suggestion: string } => {
     const ratio = width / height;
