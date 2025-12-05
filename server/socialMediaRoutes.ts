@@ -1066,6 +1066,16 @@ export function registerSocialMediaRoutes(app: Express) {
         platformSpecificData: post.platformSpecificData || null,
       }));
 
+      // Debug: Log first few posts with dates
+      if (mappedPosts.length > 0) {
+        console.log(`[Social Posts] Returning ${mappedPosts.length} posts, first 5:`, mappedPosts.slice(0, 5).map(p => ({
+          id: p.id.slice(0, 8),
+          scheduledFor: p.scheduledFor,
+          status: p.status,
+          aiGenerated: p.aiGenerated
+        })));
+      }
+
       res.json(mappedPosts);
     } catch (error: any) {
       console.error('[Social] Error fetching posts:', error);
@@ -2152,6 +2162,7 @@ Return ONLY valid JSON:
       };
 
       console.log(`[Social AI] Generated ${allPosts.length} total posts from ${platformBatches.length} batches`);
+      console.log(`[Social AI] Post days:`, allPosts.map(p => ({ day: p.day, time: p.time, platform: p.platform })));
 
       // Save as a goal with the AI-generated plan
       const goalData = {
@@ -2243,6 +2254,7 @@ Return ONLY valid JSON:
       }
 
       console.log(`[Social AI] Created ${postsCreated.length} posts from AI plan`);
+      console.log(`[Social AI] Created post dates:`, postsCreated.map(p => ({ id: p.id, scheduledFor: p.scheduledFor })));
 
       res.json({
         goal: {

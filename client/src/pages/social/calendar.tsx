@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -278,7 +278,16 @@ export default function SocialCalendar() {
       return response.json();
     },
     enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
+    staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
+
+  // Force refetch on mount to ensure latest data after navigating from strategist
+  useEffect(() => {
+    if (subscriptionStatus?.hasSocialPoster) {
+      // Invalidate and refetch to ensure we have the latest posts
+      queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
+    }
+  }, [subscriptionStatus?.hasSocialPoster]);
 
   const { data: connectedAccounts = [] } = useQuery<ConnectedAccount[]>({
     queryKey: ["/api/social/accounts"],
@@ -626,6 +635,18 @@ export default function SocialCalendar() {
       return matchesDay && matchesPlatform;
     });
   };
+
+  // Debug: log posts data when it changes
+  if (scheduledPosts.length > 0 && !isLoading) {
+    console.log('[Calendar Debug] Total posts:', scheduledPosts.length);
+    console.log('[Calendar Debug] Week range:', format(weekStart, 'yyyy-MM-dd'), 'to', format(addDays(weekStart, 6), 'yyyy-MM-dd'));
+    console.log('[Calendar Debug] First 5 posts:', scheduledPosts.slice(0, 5).map(p => ({
+      id: p.id.slice(0, 8),
+      scheduledFor: p.scheduledFor,
+      status: p.status,
+      aiGenerated: p.aiGenerated
+    })));
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {

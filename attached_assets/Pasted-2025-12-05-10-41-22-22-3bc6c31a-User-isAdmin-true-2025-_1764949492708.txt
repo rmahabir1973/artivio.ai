@@ -1,0 +1,168 @@
+2025-12-05 10:41:22.22
+3bc6c31a
+User
+isAdmin: true
+2025-12-05 10:41:22.22
+3bc6c31a
+User
+}
+2025-12-05 10:41:22.23
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/auth/bootstrap 200 in 69ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-12-05 10:41:22.32
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/subscription 200 in 2ms
+2025-12-05 10:41:22.32
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/announcements/active 200 in 23ms :: []
+2025-12-05 10:41:22.36
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:22.39
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/boost-settings 200 in 49ms :: {"enabled":false}
+2025-12-05 10:41:22.41
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:22.44
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/social/subscription-status 200 in 116ms :: {"hasSocialPoster":true,"so…
+2025-12-05 10:41:22.44
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/welcome 200 in 104ms :: {"welcomeVideoUrl":"https://artivio-peertube-j…
+2025-12-05 10:41:22.53
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:22.53
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:22.60
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/social/goals 200 in 87ms :: [{"id":"3428e480-9312-4b5a-96fd-2ada900c76…
+2025-12-05 10:41:22.60
+3bc6c31a
+User
+3:41:22 PM [express] GET /api/social/accounts 200 in 94ms :: [{"id":"5e272e83-6f99-4f9d-858f-7d0a8f0…
+2025-12-05 10:41:29.34
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:29.41
+3bc6c31a
+User
+3:41:29 PM [express] GET /api/social/brand-kit 304 in 93ms :: {"id":"b80b5553-b6fb-41e3-b710-de385b2…
+2025-12-05 10:41:29.52
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:29.52
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:29.61
+3bc6c31a
+User
+3:41:29 PM [express] GET /api/social/brand-kit/materials 304 in 108ms :: [{"id":"034c6829-fac1-42c3-…
+2025-12-05 10:41:29.61
+3bc6c31a
+User
+3:41:29 PM [express] GET /api/social/brand-kit/assets 304 in 114ms :: [{"id":"28e2733c-833a-4cea-b5b…
+2025-12-05 10:41:31.39
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:31.40
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:31.42
+3bc6c31a
+User
+3:41:31 PM [express] GET /api/social/execution-agent/status 304 in 44ms :: {"isRunning":false,"isExe…
+2025-12-05 10:41:31.49
+3bc6c31a
+User
+3:41:31 PM [express] GET /api/social/content-plans 304 in 117ms :: []
+2025-12-05 10:41:34.10
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:41:34.22
+3bc6c31a
+User
+3:41:34 PM [express] GET /api/social/posts 304 in 137ms :: [{"id":"d9d1e53b-e5f8-4962-a4ef-cc1424482…
+2025-12-05 10:42:11.58
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:42:11.63
+3bc6c31a
+User
+[Social AI] Processing 1 platforms in 1 batches
+2025-12-05 10:42:11.63
+3bc6c31a
+User
+[Social AI] Processing batch 1/1: instagram
+2025-12-05 10:42:22.46
+3bc6c31a
+User
+3:42:22 PM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-12-05 10:42:28.62
+3bc6c31a
+User
+[Social AI] Generated 4 total posts from 1 batches
+2025-12-05 10:42:28.74
+3bc6c31a
+User
+[Social AI] Created 4 posts from AI plan
+2025-12-05 10:42:28.75
+3bc6c31a
+User
+3:42:28 PM [express] POST /api/social/ai/generate-plan 200 in 17291ms :: {"goal":{"id":"b2983dc1-ac3…
+2025-12-05 10:42:28.87
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:42:28.94
+3bc6c31a
+User
+3:42:28 PM [express] GET /api/social/goals 200 in 89ms :: [{"id":"b2983dc1-ac32-4e3e-b6ca-3ce74b2e12…
+2025-12-05 10:42:46.67
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:42:46.77
+3bc6c31a
+User
+3:42:46 PM [express] GET /api/social/posts 200 in 129ms :: [{"id":"d9d1e53b-e5f8-4962-a4ef-cc1424482…
+2025-12-05 10:43:22.64
+3bc6c31a
+User
+3:43:22 PM [express] GET /api/announcements/active 304 in 110ms :: []
+2025-12-05 10:43:56.19
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:43:56.21
+3bc6c31a
+User
+3:43:56 PM [express] GET /api/social/execution-agent/status 304 in 127ms :: {"isRunning":false,"isEx…
+2025-12-05 10:44:08.75
+3bc6c31a
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 10:44:08.90
+3bc6c31a
+User
+3:44:08 PM [express] GET /api/social/analytics 200 in 167ms :: {"overall":{"totalFollowers":0,"total…
