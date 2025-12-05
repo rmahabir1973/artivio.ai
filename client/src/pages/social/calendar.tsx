@@ -1060,6 +1060,66 @@ export default function SocialCalendar() {
                 )}
               </div>
 
+              {/* When to Post - Moved up for visibility */}
+              {selectedPlatforms.length > 0 && (
+                <>
+                  <div className="space-y-3">
+                    <Label>When to Post</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={postMode === "schedule" ? "default" : "outline"}
+                        className="flex-1"
+                        onClick={() => setPostMode("schedule")}
+                        data-testid="button-mode-schedule"
+                      >
+                        <CalendarIcon className="w-4 h-4 mr-2" />
+                        Schedule
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={postMode === "now" ? "default" : "outline"}
+                        className="flex-1"
+                        onClick={() => setPostMode("now")}
+                        data-testid="button-mode-now"
+                      >
+                        <Send className="w-4 h-4 mr-2" />
+                        Post Now
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Schedule Date/Time - Show immediately when scheduling */}
+                  {postMode === "schedule" && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="date">Date *</Label>
+                        <Input
+                          id="date"
+                          type="date"
+                          value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          min={format(new Date(), "yyyy-MM-dd")}
+                          data-testid="input-schedule-date"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="time">Time</Label>
+                        <Input
+                          id="time"
+                          type="time"
+                          value={scheduleTime}
+                          onChange={(e) => setScheduleTime(e.target.value)}
+                          data-testid="input-schedule-time"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator />
+                </>
+              )}
+
               {/* Content Type Selector */}
               {selectedPlatforms.length > 0 && availableContentTypes.length > 0 && (
                 <div className="space-y-2">
@@ -1395,61 +1455,6 @@ export default function SocialCalendar() {
                 )}
               </div>
 
-              <Separator />
-
-              {/* Post Mode Selection */}
-              <div className="space-y-3">
-                <Label>When to Post</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={postMode === "schedule" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => setPostMode("schedule")}
-                    data-testid="button-mode-schedule"
-                  >
-                    <CalendarIcon className="w-4 h-4 mr-2" />
-                    Schedule
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={postMode === "now" ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => setPostMode("now")}
-                    data-testid="button-mode-now"
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Post Now
-                  </Button>
-                </div>
-              </div>
-
-              {/* Schedule Date/Time */}
-              {postMode === "schedule" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={scheduleDate}
-                      onChange={(e) => setScheduleDate(e.target.value)}
-                      min={format(new Date(), "yyyy-MM-dd")}
-                      data-testid="input-schedule-date"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="time">Time</Label>
-                    <Input
-                      id="time"
-                      type="time"
-                      value={scheduleTime}
-                      onChange={(e) => setScheduleTime(e.target.value)}
-                      data-testid="input-schedule-time"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           </ScrollArea>
 

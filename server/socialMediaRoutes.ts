@@ -490,9 +490,20 @@ export function registerSocialMediaRoutes(app: Express) {
         ));
 
       // Map to frontend expected format
-      const mappedAccounts = accounts.map(acc => ({
+      // Normalize legacy "twitter" platform to "x" (Twitter rebranded to X)
+      // Use a Map to deduplicate - if both twitter and x exist, keep x
+      const accountsMap = new Map<string, typeof accounts[0]>();
+      for (const acc of accounts) {
+        const normalizedPlatform = acc.platform === 'twitter' ? 'x' : acc.platform;
+        // If we already have this platform, prefer the one that's not legacy "twitter"
+        if (!accountsMap.has(normalizedPlatform) || acc.platform === 'x') {
+          accountsMap.set(normalizedPlatform, acc);
+        }
+      }
+
+      const mappedAccounts = Array.from(accountsMap.values()).map(acc => ({
         id: acc.id,
-        platform: acc.platform,
+        platform: acc.platform === 'twitter' ? 'x' : acc.platform, // Normalize to "x"
         platformAccountId: acc.platformUsername || '',
         accountUsername: acc.platformUsername || acc.platformDisplayName || '',
         connected: acc.isConnected,
@@ -2130,9 +2141,9 @@ Return ONLY valid JSON:
 
       const plan = {
         strategy: combinedStrategy || 'AI-generated content strategy',
-        weeklyThemes: [...new Set(combinedThemes)].slice(0, 5),
+        weeklyThemes: Array.from(new Set(combinedThemes)).slice(0, 5),
         posts: allPosts,
-        tips: [...new Set(combinedTips)].slice(0, 5),
+        tips: Array.from(new Set(combinedTips)).slice(0, 5),
       };
 
       console.log(`[Social AI] Generated ${allPosts.length} total posts from ${platformBatches.length} batches`);
