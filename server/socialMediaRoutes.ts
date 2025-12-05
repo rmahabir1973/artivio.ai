@@ -1064,6 +1064,11 @@ export function registerSocialMediaRoutes(app: Express) {
         contentType: post.contentType || post.postType || 'post',
         mediaItems: post.mediaItems || null,
         platformSpecificData: post.platformSpecificData || null,
+        // AI Media Generation fields
+        imagePrompt: post.imagePrompt || null,
+        videoPrompt: post.videoPrompt || null,
+        mediaMode: post.mediaMode || null,
+        mediaGenerationStatus: post.mediaGenerationStatus || null,
       }));
 
       // Debug: Log first few posts with dates
@@ -1934,7 +1939,9 @@ Response format:
     businessDescription: string, 
     targetAudience: string,
     DEEPSEEK_API_KEY: string,
-    brandContext: string = ''
+    brandContext: string = '',
+    automationLevel: 'manual' | 'ai_suggests' | 'semi_auto' | 'full_auto' = 'ai_suggests',
+    featuredMediaTypes: string[] = ['text', 'image']
   ): Promise<{ posts: any[], strategy: string, weeklyThemes: string[], tips: string[] }> {
     // Build platform-specific configuration info for AI prompt
     const platformInfo = platformBatch.map((platform: string) => {
@@ -1985,6 +1992,35 @@ ${p.contentTypeDetails.map((ct: any) => `    * ${ct.id}: ${ct.description}${ct.r
     // Limit posts per platform based on duration (1 post every 2-3 days per platform)
     const postsPerPlatform = Math.min(Math.ceil(durationDays / 2), 7);
 
+    // Determine if we should generate media prompts based on automation level
+    const includeMediaPrompts = automationLevel !== 'manual';
+    const canGenerateImages = featuredMediaTypes.includes('image');
+    const canGenerateVideos = featuredMediaTypes.includes('video');
+    
+    // Build media prompt instructions based on automation level
+    let mediaPromptInstructions = '';
+    if (automationLevel === 'manual') {
+      mediaPromptInstructions = `
+MEDIA MODE: Manual
+- Do NOT include imagePrompt or videoPrompt fields
+- User will create all media content themselves`;
+    } else if (automationLevel === 'ai_suggests') {
+      mediaPromptInstructions = `
+MEDIA MODE: AI Suggests
+- Include detailed "imagePrompt" for posts that need images${canGenerateImages ? ' (user can copy this to generate with AI tools)' : ''}
+- Include detailed "videoPrompt" for posts that need videos${canGenerateVideos ? ' (user can copy this to generate with AI tools)' : ''}
+- Make prompts specific and actionable (describe scene, style, mood, colors, text overlays)
+- Consider platform aspect ratios: Instagram/TikTok (9:16), YouTube (16:9), LinkedIn/Facebook (1:1 or 4:5)`;
+    } else {
+      mediaPromptInstructions = `
+MEDIA MODE: ${automationLevel === 'full_auto' ? 'Full Automation' : 'Semi-Automatic'}
+- Include detailed "imagePrompt" for image generation${canGenerateImages ? ' (AI will generate automatically)' : ''}
+- Include detailed "videoPrompt" for video generation${canGenerateVideos ? (automationLevel === 'full_auto' ? ' (AI will generate automatically)' : ' (user will approve/create)') : ''}
+- Make prompts highly detailed for AI generation (scene, composition, lighting, style, mood, colors)
+- Include text overlay specifications if needed (keep within platform safe zones)
+- Consider platform aspect ratios: Instagram/TikTok (9:16), YouTube (16:9), LinkedIn/Facebook (1:1 or 4:5)`;
+    }
+
     const systemPrompt = `You are an expert social media strategist. Create a focused content plan.
 
 BUSINESS CONTEXT:
@@ -2009,18 +2045,20 @@ CONTENT TYPE REFERENCE:
 - Threads: 'post', 'thread'
 - Pinterest: 'pin'
 - Bluesky: 'post', 'thread'
+${mediaPromptInstructions}
 
 REQUIREMENTS:
 1. Create exactly ${postsPerPlatform} posts per platform (${platformBatch.length * postsPerPlatform} total)
 2. Use ONLY valid contentType values from the reference above
 3. Distribute posts evenly across ${durationDays} days
 4. Keep captions concise (under 100 characters for caption ideas)
+${includeMediaPrompts ? `5. For visual content types (reel, video, short, story, carousel, pin), include imagePrompt or videoPrompt as appropriate` : ''}
 
 Return ONLY valid JSON:
 {
   "strategy": "Brief strategy (1-2 sentences)",
   "weeklyThemes": ["Theme 1", "Theme 2"],
-  "posts": [{"day": 1, "platform": "instagram", "time": "09:00", "contentType": "reel", "topic": "Topic", "captionIdea": "Brief caption", "hashtags": ["tag1"]}],
+  "posts": [{"day": 1, "platform": "instagram", "time": "09:00", "contentType": "reel", "topic": "Topic", "captionIdea": "Brief caption", "hashtags": ["tag1"]${includeMediaPrompts ? ', "imagePrompt": "Detailed prompt for AI image generation or null", "videoPrompt": "Detailed prompt for AI video generation or null"' : ''}}],
   "tips": ["Tip 1"]
 }`;
 
@@ -2114,6 +2152,10 @@ Return ONLY valid JSON:
       let enhancedTargetAudience = targetAudience || '';
       let brandContext = '';
       
+      // Content Prefs - defaults
+      let automationLevel: 'manual' | 'ai_suggests' | 'semi_auto' | 'full_auto' = 'ai_suggests';
+      let featuredMediaTypes: string[] = ['text', 'image'];
+      
       if (brandKit) {
         console.log(`[Social AI] Using Brand Kit: ${brandKit.name}`);
         
@@ -2122,6 +2164,13 @@ Return ONLY valid JSON:
         const demographics = brandKit.customerDemographics as any || {};
         const voice = brandKit.brandVoice as any || {};
         const prefs = brandKit.contentPreferences as any || {};
+        
+        // Extract AI settings from Content Prefs
+        const aiSettings = prefs.aiSettings || {};
+        automationLevel = aiSettings.automationLevel || 'ai_suggests';
+        featuredMediaTypes = prefs.featuredMediaTypes || ['text', 'image'];
+        
+        console.log(`[Social AI] Automation Level: ${automationLevel}, Featured Media: ${featuredMediaTypes.join(', ')}`);
         
         // Enhance business description with brand kit data if not provided
         if (!businessDescription && overview.coreIdentity) {
@@ -2197,7 +2246,9 @@ CONTENT PREFERENCES:
             enhancedBusinessDescription, 
             enhancedTargetAudience,
             DEEPSEEK_API_KEY,
-            brandContext
+            brandContext,
+            automationLevel,
+            featuredMediaTypes
           );
           
           allPosts.push(...result.posts);
@@ -2297,6 +2348,11 @@ CONTENT PREFERENCES:
             status: 'scheduled',
             aiGenerated: true,
             aiPromptUsed: `Goal: ${goal.trim()}`,
+            // AI Media Generation fields
+            imagePrompt: postPlan.imagePrompt || null,
+            videoPrompt: postPlan.videoPrompt || null,
+            mediaMode: automationLevel,
+            mediaGenerationStatus: automationLevel === 'manual' ? null : 'pending',
           };
 
           const [createdPost] = await db

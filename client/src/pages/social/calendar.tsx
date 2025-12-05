@@ -50,6 +50,8 @@ import {
   Globe,
   Lock,
   AlertCircle,
+  Wand2,
+  Copy,
 } from "lucide-react";
 import {
   PLATFORM_CONFIGS,
@@ -131,6 +133,11 @@ interface ScheduledPost {
   scheduledFor: string;
   status: string;
   aiGenerated: boolean;
+  // AI Media Generation fields
+  imagePrompt?: string;
+  videoPrompt?: string;
+  mediaMode?: 'manual' | 'ai_suggests' | 'semi_auto' | 'full_auto';
+  mediaGenerationStatus?: 'pending' | 'generating' | 'ready' | 'failed';
 }
 
 interface SubscriptionStatus {
@@ -1033,6 +1040,92 @@ export default function SocialCalendar() {
                         );
                       })}
                     </div>
+                  </div>
+                )}
+                
+                {/* AI Media Prompts (for AI Suggests mode) */}
+                {(selectedPost.imagePrompt || selectedPost.videoPrompt) && (
+                  <div className="space-y-3">
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <Wand2 className="w-3 h-3" />
+                        AI Media Prompts
+                      </p>
+                      {selectedPost.mediaMode && (
+                        <Badge variant="outline" className="text-xs">
+                          {selectedPost.mediaMode === 'ai_suggests' ? 'AI Suggests' : 
+                           selectedPost.mediaMode === 'semi_auto' ? 'Semi-Auto' : 
+                           selectedPost.mediaMode === 'full_auto' ? 'Full Auto' : 'Manual'}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {selectedPost.imagePrompt && (
+                      <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" />
+                            Image Prompt
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedPost.imagePrompt!);
+                              toast({
+                                title: "Copied!",
+                                description: "Image prompt copied to clipboard. Use it in AI Image Generator to create your visual.",
+                              });
+                            }}
+                            data-testid="button-copy-image-prompt"
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            Copy
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {selectedPost.imagePrompt}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {selectedPost.videoPrompt && (
+                      <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium flex items-center gap-1">
+                            <Video className="w-3 h-3" />
+                            Video Prompt
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedPost.videoPrompt!);
+                              toast({
+                                title: "Copied!",
+                                description: "Video prompt copied to clipboard. Use it in AI Video Generator to create your video.",
+                              });
+                            }}
+                            data-testid="button-copy-video-prompt"
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            Copy
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {selectedPost.videoPrompt}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {selectedPost.mediaGenerationStatus === 'pending' && (
+                      <p className="text-xs text-muted-foreground italic">
+                        Tip: Copy these prompts and use them in the AI tools to generate your media.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
