@@ -3171,12 +3171,22 @@ Return ONLY valid JSON:
   app.post("/api/social/content-plans/:id/posts/bulk-delete", requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const { indices } = req.body;
       const userId = req.user.id;
 
-      if (!Array.isArray(indices) || indices.length === 0) {
-        return res.status(400).json({ message: 'No post indices provided' });
+      // Validate indices with zod
+      const bulkDeleteSchema = z.object({
+        indices: z.array(z.number().int().min(0)).min(1, 'At least one index required'),
+      });
+
+      const parseResult = bulkDeleteSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          message: 'Invalid request', 
+          errors: parseResult.error.flatten().fieldErrors 
+        });
       }
+
+      const { indices } = parseResult.data;
 
       // Get the plan
       const plan = await db.query.aiContentPlans.findFirst({
