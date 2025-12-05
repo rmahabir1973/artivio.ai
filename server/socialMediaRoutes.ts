@@ -1826,20 +1826,20 @@ Response format:
 
       const userPrompt = `Create a ${contentType || 'text'} post about: ${topic}`;
 
-      const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
       
-      if (!DEEPSEEK_API_KEY) {
+      if (!OPENAI_API_KEY) {
         return res.status(503).json({ message: 'AI content generation is not configured' });
       }
 
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
@@ -1850,7 +1850,7 @@ Response format:
       });
 
       if (!response.ok) {
-        console.error('[Social AI] Deepseek API error');
+        console.error('[Social AI] OpenAI API error:', response.status);
         return res.status(502).json({ message: 'AI service temporarily unavailable' });
       }
 
@@ -1938,7 +1938,7 @@ Response format:
     goal: string, 
     businessDescription: string, 
     targetAudience: string,
-    DEEPSEEK_API_KEY: string,
+    OPENAI_API_KEY: string,
     brandContext: string = '',
     automationLevel: 'manual' | 'ai_suggests' | 'semi_auto' | 'full_auto' = 'ai_suggests',
     featuredMediaTypes: string[] = ['text', 'image']
@@ -2066,19 +2066,19 @@ Return ONLY valid JSON:
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
     
-    console.log(`[Social AI] Calling DeepSeek API for platforms: ${platformBatch.join(', ')}`);
+    console.log(`[Social AI] Calling OpenAI API for platforms: ${platformBatch.join(', ')}`);
     const startTime = Date.now();
     
     let response;
     try {
-      response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: `Generate a ${durationDays}-day content plan for: ${platformBatch.join(', ')}` },
@@ -2093,10 +2093,10 @@ Return ONLY valid JSON:
     }
     
     const elapsed = Date.now() - startTime;
-    console.log(`[Social AI] DeepSeek API responded in ${elapsed}ms for platforms: ${platformBatch.join(', ')}`);
+    console.log(`[Social AI] OpenAI API responded in ${elapsed}ms for platforms: ${platformBatch.join(', ')}`);
 
     if (!response.ok) {
-      console.error(`[Social AI] DeepSeek API returned status ${response.status}`);
+      console.error(`[Social AI] OpenAI API returned status ${response.status}`);
       throw new Error('AI service temporarily unavailable');
     }
 
@@ -2232,9 +2232,9 @@ CONTENT PREFERENCES:
 `;
       }
 
-      const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
       
-      if (!DEEPSEEK_API_KEY) {
+      if (!OPENAI_API_KEY) {
         return res.status(503).json({ message: 'AI content generation is not configured' });
       }
 
@@ -2268,7 +2268,7 @@ CONTENT PREFERENCES:
             goal.trim(), 
             enhancedBusinessDescription, 
             enhancedTargetAudience,
-            DEEPSEEK_API_KEY,
+            OPENAI_API_KEY,
             brandContext,
             automationLevel,
             featuredMediaTypes
