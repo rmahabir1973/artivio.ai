@@ -1933,7 +1933,8 @@ Response format:
     goal: string, 
     businessDescription: string, 
     targetAudience: string,
-    DEEPSEEK_API_KEY: string
+    DEEPSEEK_API_KEY: string,
+    brandContext: string = ''
   ): Promise<{ posts: any[], strategy: string, weeklyThemes: string[], tips: string[] }> {
     // Build platform-specific configuration info for AI prompt
     const platformInfo = platformBatch.map((platform: string) => {
@@ -1991,6 +1992,9 @@ Business: ${businessDescription || 'Not specified'}
 Goal: ${goal.trim()}
 Target audience: ${targetAudience || 'General audience'}
 Duration: ${durationDays} days
+${brandContext ? `
+${brandContext}
+Use the brand identity, voice, and preferences above to create highly personalized content that matches the brand's personality.` : ''}
 
 PLATFORM CONFIGURATIONS:
 ${platformConfigText}
@@ -2070,7 +2074,11 @@ Return ONLY valid JSON:
   app.post('/api/social/ai/generate-plan', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { goal, platforms, duration, businessDescription, targetAudience } = req.body;
+      const { goal, platforms, duration, startDate: startDateStr, businessDescription, targetAudience } = req.body;
+      
+      // Parse start date or default to tomorrow
+      const startDate = startDateStr ? new Date(startDateStr) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+      console.log(`[Social AI] Using start date: ${startDate.toISOString()}`);
 
       // Validate required fields
       if (!goal || typeof goal !== 'string' || goal.trim().length === 0) {
@@ -2094,6 +2102,63 @@ Return ONLY valid JSON:
 
       if (!profile) {
         return res.status(404).json({ message: 'Social profile not found. Please initialize your profile first.' });
+      }
+
+      // Load Brand Kit for enhanced personalization
+      const brandKit = await db.query.socialBrandKits.findFirst({
+        where: eq(socialBrandKits.socialProfileId, profile.id),
+      });
+      
+      // Use Brand Kit data to enhance the business context if available
+      let enhancedBusinessDescription = businessDescription || '';
+      let enhancedTargetAudience = targetAudience || '';
+      let brandContext = '';
+      
+      if (brandKit) {
+        console.log(`[Social AI] Using Brand Kit: ${brandKit.name}`);
+        
+        // Extract brand info
+        const overview = brandKit.businessOverview as any || {};
+        const demographics = brandKit.customerDemographics as any || {};
+        const voice = brandKit.brandVoice as any || {};
+        const prefs = brandKit.contentPreferences as any || {};
+        
+        // Enhance business description with brand kit data if not provided
+        if (!businessDescription && overview.coreIdentity) {
+          enhancedBusinessDescription = `${brandKit.name}: ${overview.coreIdentity}`;
+        }
+        
+        // Enhance target audience with demographics if not provided
+        if (!targetAudience && demographics.primarySegments?.length > 0) {
+          enhancedTargetAudience = demographics.primarySegments.join(', ');
+          if (demographics.ageRange) {
+            enhancedTargetAudience += ` (${demographics.ageRange})`;
+          }
+        }
+        
+        // Build rich brand context for AI
+        brandContext = `
+BRAND IDENTITY:
+- Brand Name: ${brandKit.name}
+- Core Identity: ${overview.coreIdentity || 'Not specified'}
+- Primary Positioning: ${overview.primaryPositioning || 'Not specified'}
+- Competitive Advantages: ${(overview.competitiveAdvantages || []).join(', ') || 'Not specified'}
+
+BRAND VOICE:
+- Tone: ${(voice.tone || []).join(', ') || 'Professional, friendly'}
+- Character Traits: ${(voice.character || []).join(', ') || 'Expert, helpful'}
+- Emotions to Evoke: ${(voice.emotions || []).join(', ') || 'Trust, confidence'}
+
+TARGET AUDIENCE:
+- Segments: ${(demographics.primarySegments || []).join(', ') || 'General audience'}
+- Age Range: ${demographics.ageRange || 'All ages'}
+- Interests: ${(demographics.interests || []).join(', ') || 'Not specified'}
+- Pain Points: ${(demographics.painPoints || []).join(', ') || 'Not specified'}
+
+CONTENT PREFERENCES:
+- Featured Media: ${(prefs.featuredMediaTypes || ['text', 'image']).join(', ')}
+- Topics to Avoid: ${(prefs.topicsToAvoid || []).join(', ') || 'None'}
+`;
       }
 
       const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -2129,9 +2194,10 @@ Return ONLY valid JSON:
             batch, 
             durationDays, 
             goal.trim(), 
-            businessDescription || '', 
-            targetAudience || '',
-            DEEPSEEK_API_KEY
+            enhancedBusinessDescription, 
+            enhancedTargetAudience,
+            DEEPSEEK_API_KEY,
+            brandContext
           );
           
           allPosts.push(...result.posts);
@@ -2182,13 +2248,12 @@ Return ONLY valid JSON:
 
       // Create posts from the AI-generated plan
       const postsCreated: any[] = [];
-      const today = new Date();
       
       for (const postPlan of plan.posts) {
         try {
-          // Calculate the scheduled date based on day number
-          const scheduledDate = new Date(today);
-          scheduledDate.setDate(today.getDate() + (postPlan.day - 1));
+          // Calculate the scheduled date based on day number from the start date
+          const scheduledDate = new Date(startDate);
+          scheduledDate.setDate(startDate.getDate() + (postPlan.day - 1));
           
           // Parse time if provided (format: "09:00" or "14:30")
           if (postPlan.time && typeof postPlan.time === 'string') {

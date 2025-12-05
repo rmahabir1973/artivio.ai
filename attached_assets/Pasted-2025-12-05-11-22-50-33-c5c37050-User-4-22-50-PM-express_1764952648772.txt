@@ -1,0 +1,164 @@
+2025-12-05 11:22:50.33
+c5c37050
+User
+4:22:50 PM [express] GET /api/favorites 200 in 126ms :: []
+2025-12-05 11:22:50.34
+c5c37050
+User
+4:22:50 PM [express] GET /api/boost-settings 200 in 143ms :: {"enabled":false}
+2025-12-05 11:22:50.35
+c5c37050
+User
+4:22:50 PM [express] GET /api/subscriptions/current 304 in 144ms :: {"id":"b7aaa6ce-5fe9-4a56-a48e-7…
+2025-12-05 11:22:50.53
+c5c37050
+User
+[/api/generations] Array query completed in 312ms, found 15 generations
+2025-12-05 11:22:50.55
+c5c37050
+User
+4:22:50 PM [express] GET /api/generations 200 in 353ms :: [{"id":"6d9913aa-d3cc-4823-80f8-e4090fd66a…
+2025-12-05 11:22:50.55
+c5c37050
+User
+[AUTH] Bootstrap request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '9f8600f6' }
+2025-12-05 11:22:50.61
+c5c37050
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '9f8600f6-321c-422f-8775-cb2dc890f6cb' }
+2025-12-05 11:22:50.64
+c5c37050
+User
+}
+2025-12-05 11:22:50.64
+c5c37050
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-05 11:22:50.64
+c5c37050
+User
+userId: '49729939',
+2025-12-05 11:22:50.64
+c5c37050
+User
+tokenId: '9f8600f6',
+2025-12-05 11:22:50.64
+c5c37050
+User
+[AUTH] ✓ Bootstrap successful {
+2025-12-05 11:22:50.64
+c5c37050
+User
+isAdmin: true
+2025-12-05 11:22:50.64
+c5c37050
+User
+4:22:50 PM [express] GET /api/auth/bootstrap 200 in 85ms :: {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5…
+2025-12-05 11:22:50.77
+c5c37050
+User
+4:22:50 PM [express] GET /api/welcome 200 in 30ms :: {"welcomeVideoUrl":"https://artivio-peertube-ja…
+2025-12-05 11:22:50.78
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:22:50.80
+c5c37050
+User
+4:22:50 PM [express] GET /api/favorites 200 in 52ms :: []
+2025-12-05 11:22:50.81
+c5c37050
+User
+4:22:50 PM [express] GET /api/pricing 200 in 59ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-12-05 11:22:50.85
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:22:50.87
+c5c37050
+User
+hasUser: true,
+2025-12-05 11:22:50.87
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:22:50.87
+c5c37050
+User
+cursor: undefined
+2025-12-05 11:22:51.13
+c5c37050
+User
+4:22:51 PM [express] GET /api/generations 200 in 362ms :: [{"id":"6d9913aa-d3cc-4823-80f8-e4090fd66a…
+2025-12-05 11:22:52.12
+c5c37050
+User
+4:22:52 PM [express] GET /api/welcome 200 in 2095ms :: {"welcomeVideoUrl":"https://artivio-peertube-…
+2025-12-05 11:22:52.31
+c5c37050
+User
+4:22:52 PM [express] GET /api/announcements/active 200 in 2108ms :: []
+2025-12-05 11:23:51.18
+c5c37050
+User
+4:23:51 PM [express] GET /api/announcements/active 304 in 139ms :: []
+2025-12-05 11:24:51.44
+c5c37050
+User
+4:24:51 PM [express] GET /api/announcements/active 304 in 117ms :: []
+2025-12-05 11:25:51.72
+c5c37050
+User
+4:25:51 PM [express] GET /api/announcements/active 304 in 120ms :: []
+2025-12-05 11:26:03.24
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:26:03.27
+c5c37050
+User
+4:26:03 PM [express] GET /api/social/subscription-status 200 in 50ms :: {"hasSocialPoster":true,"soc…
+2025-12-05 11:26:03.41
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:26:03.51
+c5c37050
+User
+4:26:03 PM [express] GET /api/social/accounts 200 in 118ms :: [{"id":"bb6685c9-973c-46b5-89c4-20bfeb…
+2025-12-05 11:26:03.51
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:26:03.61
+c5c37050
+User
+4:26:03 PM [express] GET /api/social/goals 200 in 187ms :: [{"id":"21965a20-fc8d-47fe-8f8a-c31d36bdd…
+2025-12-05 11:26:41.09
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:26:41.13
+c5c37050
+User
+[Social AI] Processing 2 platforms in 1 batches
+2025-12-05 11:26:41.13
+c5c37050
+User
+[Social AI] Processing batch 1/1: instagram, facebook
+2025-12-05 11:26:51.86
+c5c37050
+User
+4:26:51 PM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-12-05 11:36:57.65
+c5c37050
+User
+[RATE LIMIT] Cleanup: removed 1 expired records
+2025-12-05 11:37:12.24
+c5c37050
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 11:37:12.27
+c5c37050
+User
+4:37:12 PM [express] GET /api/social/execution-agent/status 304 in 47ms :: {"isRunning":false,"isExe…

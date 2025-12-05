@@ -16,12 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { 
   Loader2, 
   Wand2, 
   Target,
   TrendingUp,
   Calendar,
+  CalendarIcon,
   Sparkles,
   ArrowRight,
   CheckCircle2,
@@ -31,6 +38,7 @@ import {
   ShoppingBag,
   Lightbulb,
 } from "lucide-react";
+import { format, addDays, startOfDay, isBefore } from "date-fns";
 import { 
   SiInstagram, 
   SiTiktok, 
@@ -101,6 +109,7 @@ export default function SocialStrategist() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [duration, setDuration] = useState("1week");
+  const [startDate, setStartDate] = useState<Date>(new Date()); // Default: today
   const [businessDescription, setBusinessDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
 
@@ -185,6 +194,7 @@ export default function SocialStrategist() {
       goal: selectedGoal,
       platforms: selectedPlatforms,
       duration,
+      startDate: startDate.toISOString(),
       businessDescription,
       targetAudience,
     });
@@ -356,18 +366,45 @@ export default function SocialStrategist() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="duration">Campaign Duration</Label>
-                <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger data-testid="select-duration">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DURATIONS.map((d) => (
-                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Campaign Duration</Label>
+                  <Select value={duration} onValueChange={setDuration}>
+                    <SelectTrigger data-testid="select-duration">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DURATIONS.map((d) => (
+                        <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                        data-testid="button-start-date"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(startDate, "MMM d, yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={startDate}
+                        onSelect={(date) => date && setStartDate(date)}
+                        disabled={(date) => isBefore(date, startOfDay(new Date()))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
               
               <div className="space-y-2">
