@@ -2155,6 +2155,8 @@ Return ONLY valid JSON:
       // Content Prefs - defaults
       let automationLevel: 'manual' | 'ai_suggests' | 'semi_auto' | 'full_auto' = 'ai_suggests';
       let featuredMediaTypes: string[] = ['text', 'image'];
+      let preferredImageModel = 'flux-kontext';
+      let preferredVideoModel = 'wan-2.5';
       
       if (brandKit) {
         console.log(`[Social AI] Using Brand Kit: ${brandKit.name}`);
@@ -2169,8 +2171,11 @@ Return ONLY valid JSON:
         const aiSettings = prefs.aiSettings || {};
         automationLevel = aiSettings.automationLevel || 'ai_suggests';
         featuredMediaTypes = prefs.featuredMediaTypes || ['text', 'image'];
+        preferredImageModel = aiSettings.preferredImageModel || 'flux-kontext';
+        preferredVideoModel = aiSettings.preferredVideoModel || 'wan-2.5';
         
         console.log(`[Social AI] Automation Level: ${automationLevel}, Featured Media: ${featuredMediaTypes.join(', ')}`);
+        console.log(`[Social AI] Preferred Models - Image: ${preferredImageModel}, Video: ${preferredVideoModel}`);
         
         // Enhance business description with brand kit data if not provided
         if (!businessDescription && overview.coreIdentity) {
@@ -2368,6 +2373,32 @@ CONTENT PREFERENCES:
             scheduledFor: scheduledDate.toISOString(),
             status: 'scheduled',
           });
+          
+          // For semi_auto and full_auto modes, enqueue media generation jobs
+          if ((automationLevel === 'semi_auto' || automationLevel === 'full_auto') && 
+              (postPlan.imagePrompt || postPlan.videoPrompt)) {
+            try {
+              const { enqueueMediaGenerations } = await import('./services/socialMediaGeneration');
+              const result = await enqueueMediaGenerations(
+                createdPost.id,
+                userId,
+                automationLevel,
+                postPlan.imagePrompt || null,
+                postPlan.videoPrompt || null,
+                preferredImageModel,
+                preferredVideoModel,
+                '16:9'
+              );
+              
+              if (result.success) {
+                console.log(`[Social AI] Enqueued ${result.jobCount} media generation jobs for post ${createdPost.id}, total credits: ${result.totalCredits}`);
+              } else {
+                console.warn(`[Social AI] Failed to enqueue media generation for post ${createdPost.id}: ${result.error}`);
+              }
+            } catch (enqueueError) {
+              console.error(`[Social AI] Error enqueueing media generation for post ${createdPost.id}:`, enqueueError);
+            }
+          }
         } catch (postError) {
           console.error('[Social AI] Error creating post:', postError);
           // Continue with other posts

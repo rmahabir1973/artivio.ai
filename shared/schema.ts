@@ -284,11 +284,17 @@ export const generations = pgTable("generations", {
   isFavorite: boolean("is_favorite").notNull().default(false),
   archivedAt: timestamp("archived_at"), // null means not archived
   isShowcase: boolean("is_showcase").notNull().default(false), // User opt-in to display in public showcase
+  // Social Media Auto-Generation fields
+  socialPostId: varchar("social_post_id"), // Link to social post if this is a social media generation job
+  creditsHeld: integer("credits_held").default(0), // Credits pre-authorized for this generation
+  attempts: integer("attempts").default(0), // Retry attempt count
+  source: varchar("source").default('user'), // 'user' | 'social_auto' - where the generation originated
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 }, (table) => [
   index("generations_user_created_idx").on(table.userId, table.createdAt),
   index("generations_collection_idx").on(table.collectionId),
+  index("generations_social_post_idx").on(table.socialPostId),
 ]);
 
 export const insertGenerationSchema = createInsertSchema(generations).omit({

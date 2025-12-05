@@ -287,6 +287,26 @@ export default function SocialCalendar() {
     enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
     staleTime: 0, // Always consider data stale to ensure fresh fetches
   });
+  
+  // Check if any posts have pending/generating media status - poll for updates
+  const hasPendingMedia = useMemo(() => {
+    return scheduledPosts.some(post => 
+      post.mediaGenerationStatus === 'pending' || 
+      post.mediaGenerationStatus === 'generating'
+    );
+  }, [scheduledPosts]);
+  
+  // Poll for updates every 20 seconds when there are pending generations
+  useEffect(() => {
+    if (!hasPendingMedia) return;
+    
+    const interval = setInterval(() => {
+      console.log('[Calendar] Polling for media generation updates...');
+      refetch();
+    }, 20000);
+    
+    return () => clearInterval(interval);
+  }, [hasPendingMedia, refetch]);
 
   // Force refetch on mount to ensure latest data after navigating from strategist
   useEffect(() => {

@@ -1876,6 +1876,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else {
             await storage.finalizeGeneration(generationId, 'success', updates);
             console.log(`✓ Generation ${generationId} completed successfully with URL: ${resultUrl}`);
+            
+            // Handle social media auto-generation completion
+            const fullGen = await storage.getGeneration(generationId);
+            if (fullGen?.socialPostId) {
+              const { handleGenerationComplete } = await import('./services/socialMediaGeneration');
+              await handleGenerationComplete(generationId, resultUrl, parsedResultUrls.length > 0 ? parsedResultUrls : undefined);
+            }
           }
           
           // Generate thumbnails for video and image generations (async, don't block callback)
@@ -2024,6 +2031,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.finalizeGeneration(generationId, 'failure', {
             errorMessage: errorMessageToStore,
           });
+          
+          // Handle social media auto-generation failure
+          const fullGen = await storage.getGeneration(generationId);
+          if (fullGen?.socialPostId) {
+            const { handleGenerationFailed } = await import('./services/socialMediaGeneration');
+            await handleGenerationFailed(generationId, parsedError.message);
+          }
         }
         console.log(`✗ Generation ${generationId} failed: ${parsedError.message}`);
       }
