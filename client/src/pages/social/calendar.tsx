@@ -268,6 +268,15 @@ export default function SocialCalendar() {
 
   const { data: scheduledPosts = [], isLoading, refetch } = useQuery<ScheduledPost[]>({
     queryKey: ["/api/social/posts", format(weekStart, "yyyy-MM-dd")],
+    queryFn: async () => {
+      // Fetch all scheduled posts (backend returns up to 50, ordered by scheduledAt)
+      // Frontend filters by day locally
+      const response = await fetchWithAuth("/api/social/posts");
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      return response.json();
+    },
     enabled: !!user && subscriptionStatus?.hasSocialPoster === true,
   });
 

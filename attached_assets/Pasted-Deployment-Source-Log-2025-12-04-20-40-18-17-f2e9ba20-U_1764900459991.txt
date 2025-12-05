@@ -1,0 +1,175 @@
+Deployment
+Source
+Log
+2025-12-04 20:40:18.17
+f2e9ba20
+User
+"updatedAt": "2025-12-04T18:11:27.244Z",
+2025-12-04 21:04:07.12
+2616c944
+User
+at getSecret (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:97:14)
+2025-12-04 21:04:07.12
+2616c944
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-12-04 21:04:07.12
+2616c944
+User
+at requireJWT (file:///home/runner/workspace/dist/index.js:10586:21)
+2025-12-04 21:04:07.12
+2616c944
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+2025-12-04 21:04:07.12
+2616c944
+User
+[JWT MIDDLEWARE] Invalid or expired access token
+2025-12-04 21:04:07.12
+2616c944
+User
+at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15 {
+2025-12-04 21:04:07.12
+2616c944
+User
+at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+2025-12-04 21:04:07.12
+2616c944
+User
+}
+2025-12-04 21:04:07.12
+2616c944
+User
+[JWT] Access token verification failed: TokenExpiredError: jwt expired
+2025-12-04 21:04:07.12
+2616c944
+User
+at verifyAccessToken (file:///home/runner/workspace/dist/index.js:10482:25)
+2025-12-04 21:04:07.12
+2616c944
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-12-04 21:04:07.12
+2616c944
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2025-12-04 21:04:07.12
+2616c944
+User
+2:04:07 AM [express] POST /api/social/ai/generate-plan 401 in 5ms :: {"message":"Unauthorized - Inva…
+2025-12-04 21:04:07.25
+2616c944
+User
+[AUTH] Refresh token request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '1d39eaed' }
+2025-12-04 21:04:07.33
+2616c944
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '1d39eaed-f1e2-4437-8e84-e7b211d0e7c8' }
+2025-12-04 21:04:07.38
+2616c944
+User
+[JWT] Refresh token revoked { tokenId: '1d39eaed-f1e2-4437-8e84-e7b211d0e7c8' }
+2025-12-04 21:04:07.42
+2616c944
+User
+[JWT] Refresh token stored in database { userId: '49729939', tokenId: '1cd02f8b-bd09-4d1e-af8f-fbd758daca38' }
+2025-12-04 21:04:07.42
+2616c944
+User
+oldTokenId: '1d39eaed-f1e2-4437-8e84-e7b211d0e7c8',
+2025-12-04 21:04:07.42
+2616c944
+User
+userId: '49729939',
+2025-12-04 21:04:07.42
+2616c944
+User
+newTokenId: '1cd02f8b-bd09-4d1e-af8f-fbd758daca38'
+2025-12-04 21:04:07.42
+2616c944
+User
+}
+2025-12-04 21:04:07.42
+2616c944
+User
+[JWT] Refresh token rotated {
+2025-12-04 21:04:07.42
+2616c944
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-04 21:04:07.42
+2616c944
+User
+userId: '49729939',
+2025-12-04 21:04:07.42
+2616c944
+User
+[AUTH] ✓ Token refresh successful {
+2025-12-04 21:04:07.42
+2616c944
+User
+isAdmin: true
+2025-12-04 21:04:07.42
+2616c944
+User
+newTokenId: '1cd02f8b',
+2025-12-04 21:04:07.42
+2616c944
+User
+}
+2025-12-04 21:04:07.42
+2616c944
+User
+2:04:07 AM [express] POST /api/auth/refresh 200 in 172ms :: {"message":"Token refreshed successfully…
+2025-12-04 21:04:07.64
+2616c944
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-04 21:04:49.89
+2616c944
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-04 21:04:49.89
+2616c944
+User
+2:04:49 AM [express] GET /api/announcements/active 304 in 115ms :: []
+2025-12-04 21:06:00.46
+2616c944
+User
+[Social AI] Created 22 posts from AI plan
+2025-12-04 21:06:00.46
+2616c944
+User
+2:06:00 AM [express] POST /api/social/ai/generate-plan 200 in 112848ms :: {"goal":{"id":"13e5c238-90…
+2025-12-04 21:06:00.72
+2616c944
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-04 21:06:00.79
+2616c944
+User
+2:06:00 AM [express] GET /api/social/goals 200 in 106ms :: [{"id":"13e5c238-90a0-4d5e-85f5-20b01bfc3…
+2025-12-04 21:06:16.98
+2616c944
+User
+[Social AI] Created 19 posts from AI plan
+2025-12-04 21:06:16.98
+2616c944
+User
+2:06:16 AM [express] POST /api/social/ai/generate-plan 200 in 87207ms :: {"goal":{"id":"599b9636-808…
+2025-12-04 21:06:17.22
+2616c944
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-04 21:06:17.33
+2616c944
+User
+2:06:17 AM [express] GET /api/social/goals 200 in 144ms :: [{"id":"599b9636-808f-482e-8219-bf66d62ab…
+2025-12-04 21:06:50.15
+2616c944
+User
+2:06:50 AM [express] GET /api/announcements/active 304 in 97ms :: []
+2025-12-04 21:06:50.32
+2616c944
+User
+2:06:50 AM [express] GET /api/social/posts/2025-11-30 304 in 2ms

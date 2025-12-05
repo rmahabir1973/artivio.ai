@@ -1900,6 +1900,146 @@ Response format:
     }
   });
 
+  // Helper function to generate content plan for a batch of platforms
+  async function generatePlanForPlatforms(
+    platformBatch: string[], 
+    durationDays: number, 
+    goal: string, 
+    businessDescription: string, 
+    targetAudience: string,
+    DEEPSEEK_API_KEY: string
+  ): Promise<{ posts: any[], strategy: string, weeklyThemes: string[], tips: string[] }> {
+    // Build platform-specific configuration info for AI prompt
+    const platformInfo = platformBatch.map((platform: string) => {
+      const config = PLATFORM_CONFIGS[platform as PlatformType];
+      const contentTypes = getContentTypes(platform as PlatformType);
+      const optimalTimes = OPTIMAL_POSTING_TIMES[platform as PlatformType];
+      const contentMix = CONTENT_MIX_RECOMMENDATIONS[platform as PlatformType];
+      
+      if (!config) return null;
+      
+      const validContentTypes = contentTypes.map(ct => ({
+        id: ct.id,
+        name: ct.name,
+        description: ct.description,
+        requiresMedia: ct.requiresMedia
+      }));
+      
+      const timesInfo = Object.entries(optimalTimes)
+        .filter(([_, times]) => (times as string[]).length > 0)
+        .map(([type, times]) => `${type}: ${(times as string[]).join(', ')}`);
+      
+      const mixInfo = Object.entries(contentMix)
+        .filter(([_, pct]) => (pct as number) > 0)
+        .map(([type, pct]) => `${type}: ${pct}%`);
+      
+      return {
+        platform,
+        displayName: config.displayName,
+        maxCharacters: config.maxCharacters,
+        dailyLimit: config.dailyLimit,
+        contentTypes: validContentTypes.map(ct => ct.id),
+        contentTypeDetails: validContentTypes,
+        optimalTimes: timesInfo,
+        contentMix: mixInfo
+      };
+    }).filter(Boolean);
+
+    const platformConfigText = platformInfo.map((p: any) => `
+${p.displayName} (${p.platform}):
+  - Content Types: ${p.contentTypes.join(', ')}
+  - Character Limit: ${p.maxCharacters}
+  - Daily Post Limit: ${p.dailyLimit}
+  - Optimal Posting Times: ${p.optimalTimes.join('; ') || 'Flexible'}
+  - Content Type Details:
+${p.contentTypeDetails.map((ct: any) => `    * ${ct.id}: ${ct.description}${ct.requiresMedia ? ' (requires media)' : ''}`).join('\n')}`
+    ).join('\n');
+
+    // Limit posts per platform based on duration (1 post every 2-3 days per platform)
+    const postsPerPlatform = Math.min(Math.ceil(durationDays / 2), 7);
+
+    const systemPrompt = `You are an expert social media strategist. Create a focused content plan.
+
+BUSINESS CONTEXT:
+Business: ${businessDescription || 'Not specified'}
+Goal: ${goal.trim()}
+Target audience: ${targetAudience || 'General audience'}
+Duration: ${durationDays} days
+
+PLATFORM CONFIGURATIONS:
+${platformConfigText}
+
+CONTENT TYPE REFERENCE:
+- Instagram: 'post', 'reel', 'story', 'carousel'
+- YouTube: 'video', 'short'
+- TikTok: 'video'
+- LinkedIn: 'post', 'carousel'
+- Facebook: 'post', 'carousel', 'reel'
+- X/Twitter: 'post', 'thread'
+- Threads: 'post', 'thread'
+- Pinterest: 'pin'
+- Bluesky: 'post', 'thread'
+
+REQUIREMENTS:
+1. Create exactly ${postsPerPlatform} posts per platform (${platformBatch.length * postsPerPlatform} total)
+2. Use ONLY valid contentType values from the reference above
+3. Distribute posts evenly across ${durationDays} days
+4. Keep captions concise (under 100 characters for caption ideas)
+
+Return ONLY valid JSON:
+{
+  "strategy": "Brief strategy (1-2 sentences)",
+  "weeklyThemes": ["Theme 1", "Theme 2"],
+  "posts": [{"day": 1, "platform": "instagram", "time": "09:00", "contentType": "reel", "topic": "Topic", "captionIdea": "Brief caption", "hashtags": ["tag1"]}],
+  "tips": ["Tip 1"]
+}`;
+
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Generate a ${durationDays}-day content plan for: ${platformBatch.join(', ')}` },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000, // Reduced for faster responses
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('AI service temporarily unavailable');
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+
+    if (!content) {
+      throw new Error('AI service returned empty response');
+    }
+
+    // Clean and parse JSON
+    let cleanedContent = content.trim();
+    cleanedContent = cleanedContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+    
+    const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse AI response');
+    }
+    
+    const parsed = JSON.parse(jsonMatch[0]);
+    return {
+      posts: Array.isArray(parsed.posts) ? parsed.posts : [],
+      strategy: String(parsed.strategy || ''),
+      weeklyThemes: Array.isArray(parsed.weeklyThemes) ? parsed.weeklyThemes : [],
+      tips: Array.isArray(parsed.tips) ? parsed.tips : [],
+    };
+  }
+
   // Generate AI content plan based on goals
   app.post('/api/social/ai/generate-plan', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
@@ -1938,263 +2078,168 @@ Response format:
 
       const durationDays = duration === '1week' ? 7 : duration === '2weeks' ? 14 : 30;
 
-      // Build platform-specific configuration info for AI prompt
-      const platformInfo = filteredPlatforms.map((platform: string) => {
-        const config = PLATFORM_CONFIGS[platform as PlatformType];
-        const contentTypes = getContentTypes(platform as PlatformType);
-        const optimalTimes = OPTIMAL_POSTING_TIMES[platform as PlatformType];
-        const contentMix = CONTENT_MIX_RECOMMENDATIONS[platform as PlatformType];
-        
-        if (!config) return null;
-        
-        // Get valid content types and their descriptions
-        const validContentTypes = contentTypes.map(ct => ({
-          id: ct.id,
-          name: ct.name,
-          description: ct.description,
-          requiresMedia: ct.requiresMedia
-        }));
-        
-        // Get optimal times for each content type
-        const timesInfo = Object.entries(optimalTimes)
-          .filter(([_, times]) => (times as string[]).length > 0)
-          .map(([type, times]) => `${type}: ${(times as string[]).join(', ')}`);
-        
-        // Get content mix percentages (non-zero only)
-        const mixInfo = Object.entries(contentMix)
-          .filter(([_, pct]) => (pct as number) > 0)
-          .map(([type, pct]) => `${type}: ${pct}%`);
-        
-        return {
-          platform,
-          displayName: config.displayName,
-          maxCharacters: config.maxCharacters,
-          dailyLimit: config.dailyLimit,
-          contentTypes: validContentTypes.map(ct => ct.id),
-          contentTypeDetails: validContentTypes,
-          optimalTimes: timesInfo,
-          contentMix: mixInfo
-        };
-      }).filter(Boolean);
-
-      const platformConfigText = platformInfo.map((p: any) => `
-${p.displayName} (${p.platform}):
-  - Content Types: ${p.contentTypes.join(', ')}
-  - Character Limit: ${p.maxCharacters}
-  - Daily Post Limit: ${p.dailyLimit}
-  - Optimal Posting Times: ${p.optimalTimes.join('; ') || 'Flexible'}
-  - Recommended Content Mix: ${p.contentMix.join(', ') || 'Equal distribution'}
-  - Content Type Details:
-${p.contentTypeDetails.map((ct: any) => `    * ${ct.id}: ${ct.description}${ct.requiresMedia ? ' (requires media)' : ''}`).join('\n')}`
-      ).join('\n');
-
-      const systemPrompt = `You are an expert social media strategist. Create a detailed, optimized content plan for a business using platform-specific best practices.
-
-BUSINESS CONTEXT:
-Business: ${businessDescription || 'Not specified'}
-Goal: ${goal.trim()}
-Target audience: ${targetAudience || 'General audience'}
-Duration: ${durationDays} days
-
-PLATFORM CONFIGURATIONS:
-${platformConfigText}
-
-CONTENT TYPE REFERENCE (use ONLY these valid values for contentType):
-- Instagram: 'post', 'reel', 'story', 'carousel'
-- YouTube: 'video', 'short'
-- TikTok: 'video'
-- LinkedIn: 'post', 'carousel'
-- Facebook: 'post', 'carousel', 'reel'
-- X/Twitter: 'post', 'thread'
-- Threads: 'post', 'thread'
-- Pinterest: 'pin'
-- Bluesky: 'post', 'thread'
-- Reddit: 'text', 'link', 'post'
-
-REQUIREMENTS:
-1. Use the EXACT contentType values from the reference above for each platform
-2. Follow the recommended content mix percentages for content type distribution
-3. Use the optimal posting times provided for each platform and content type
-4. Ensure captions respect the character limits for each platform
-5. Distribute posts evenly across the ${durationDays} days
-6. Create diverse content that supports the business goal
-
-IMPORTANT: Return ONLY valid JSON without any markdown formatting, code fences, or extra text.
-
-Response format:
-{
-  "strategy": "Brief overall strategy explanation based on the business goal",
-  "weeklyThemes": ["Theme 1", "Theme 2", "Theme 3"],
-  "posts": [
-    {
-      "day": 1,
-      "platform": "instagram",
-      "time": "09:00",
-      "contentType": "reel",
-      "topic": "Topic/Theme for this post",
-      "captionIdea": "Brief caption idea within platform character limits",
-      "hashtags": ["relevant", "hashtags"]
-    }
-  ],
-  "tips": ["Platform-specific tip 1", "Engagement tip 2"]
-}`;
-
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Generate a ${durationDays}-day content plan for the platforms: ${filteredPlatforms.join(', ')}` },
-          ],
-          temperature: 0.8,
-          max_tokens: 4000,
-        }),
-      });
-
-      if (!response.ok) {
-        console.error('[Social AI] Deepseek API error');
-        return res.status(502).json({ message: 'AI service temporarily unavailable' });
+      // OPTIMIZATION: Process platforms in batches to prevent timeout
+      // Batch size of 3 platforms keeps each API call under 30 seconds
+      const BATCH_SIZE = 3;
+      const platformBatches: string[][] = [];
+      for (let i = 0; i < filteredPlatforms.length; i += BATCH_SIZE) {
+        platformBatches.push(filteredPlatforms.slice(i, i + BATCH_SIZE));
       }
 
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
+      console.log(`[Social AI] Processing ${filteredPlatforms.length} platforms in ${platformBatches.length} batches`);
 
-      if (!content) {
-        return res.status(502).json({ message: 'AI service returned empty response' });
+      // Process batches sequentially to avoid rate limits
+      const allPosts: any[] = [];
+      let combinedStrategy = '';
+      let combinedThemes: string[] = [];
+      let combinedTips: string[] = [];
+
+      for (let i = 0; i < platformBatches.length; i++) {
+        const batch = platformBatches[i];
+        console.log(`[Social AI] Processing batch ${i + 1}/${platformBatches.length}: ${batch.join(', ')}`);
+        
+        try {
+          const result = await generatePlanForPlatforms(
+            batch, 
+            durationDays, 
+            goal.trim(), 
+            businessDescription || '', 
+            targetAudience || '',
+            DEEPSEEK_API_KEY
+          );
+          
+          allPosts.push(...result.posts);
+          if (i === 0) {
+            // Use strategy/themes/tips from first batch
+            combinedStrategy = result.strategy;
+            combinedThemes = result.weeklyThemes;
+            combinedTips = result.tips;
+          } else {
+            // Merge additional tips from subsequent batches
+            combinedTips.push(...result.tips.slice(0, 2));
+          }
+        } catch (batchError: any) {
+          console.error(`[Social AI] Batch ${i + 1} failed:`, batchError.message);
+          // Continue with other batches even if one fails
+        }
       }
 
-      // Clean markdown fencing and parse JSON
-      let cleanedContent = content.trim();
-      cleanedContent = cleanedContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+      if (allPosts.length === 0) {
+        return res.status(502).json({ message: 'Failed to generate content plan. Please try again with fewer platforms.' });
+      }
 
-      try {
-        const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
+      const plan = {
+        strategy: combinedStrategy || 'AI-generated content strategy',
+        weeklyThemes: [...new Set(combinedThemes)].slice(0, 5),
+        posts: allPosts,
+        tips: [...new Set(combinedTips)].slice(0, 5),
+      };
+
+      console.log(`[Social AI] Generated ${allPosts.length} total posts from ${platformBatches.length} batches`);
+
+      // Save as a goal with the AI-generated plan
+      const goalData = {
+        socialProfileId: profile.id,
+        primaryGoal: goal.trim(),
+        postingFrequency: duration === '1week' ? 'daily' : 'weekly',
+        brandTopics: plan.weeklyThemes.slice(0, 10),
+        targetAudience: targetAudience?.trim() || null,
+        preferredPlatforms: filteredPlatforms,
+        isActive: true,
+      };
+
+      const [newGoal] = await db
+        .insert(socialGoals)
+        .values(goalData)
+        .returning();
+
+      // Create posts from the AI-generated plan
+      const postsCreated: any[] = [];
+      const today = new Date();
+      
+      for (const postPlan of plan.posts) {
+        try {
+          // Calculate the scheduled date based on day number
+          const scheduledDate = new Date(today);
+          scheduledDate.setDate(today.getDate() + (postPlan.day - 1));
           
-          // Validate parsed structure
-          const plan = {
-            strategy: String(parsed.strategy || 'AI-generated content strategy'),
-            weeklyThemes: Array.isArray(parsed.weeklyThemes) ? parsed.weeklyThemes : [],
-            posts: Array.isArray(parsed.posts) ? parsed.posts : [],
-            tips: Array.isArray(parsed.tips) ? parsed.tips : [],
-          };
-          
-          // Save as a goal with the AI-generated plan
-          const goalData = {
-            socialProfileId: profile.id,
-            primaryGoal: goal.trim(),
-            postingFrequency: duration === '1week' ? 'daily' : 'weekly',
-            brandTopics: plan.weeklyThemes.slice(0, 10), // Limit themes
-            targetAudience: targetAudience?.trim() || null,
-            preferredPlatforms: filteredPlatforms,
-            isActive: true,
-          };
-
-          const [newGoal] = await db
-            .insert(socialGoals)
-            .values(goalData)
-            .returning();
-
-          // Create posts from the AI-generated plan
-          const postsCreated: any[] = [];
-          const today = new Date();
-          
-          for (const postPlan of plan.posts) {
-            try {
-              // Calculate the scheduled date based on day number
-              const scheduledDate = new Date(today);
-              scheduledDate.setDate(today.getDate() + (postPlan.day - 1));
-              
-              // Parse time if provided (format: "09:00" or "14:30")
-              if (postPlan.time && typeof postPlan.time === 'string') {
-                const [hours, minutes] = postPlan.time.split(':').map(Number);
-                if (!isNaN(hours) && !isNaN(minutes)) {
-                  scheduledDate.setHours(hours, minutes, 0, 0);
-                }
-              }
-
-              // Determine the platform and get valid content type
-              const targetPlatform = postPlan.platform?.toLowerCase() || filteredPlatforms[0];
-              const platformConfig = PLATFORM_CONFIGS[targetPlatform as PlatformType];
-              const validContentTypes = platformConfig?.contentTypes.map(ct => ct.id) || ['post'];
-              
-              // Validate and normalize the content type
-              let contentType = postPlan.contentType || 'post';
-              if (!validContentTypes.includes(contentType as ContentType)) {
-                // Fall back to the first valid content type for this platform
-                contentType = validContentTypes[0];
-              }
-              
-              // Determine postType based on content type
-              let postType = 'text';
-              const contentTypeConfig = platformConfig?.contentTypes.find(ct => ct.id === contentType);
-              if (contentTypeConfig) {
-                if (contentTypeConfig.requiresMedia) {
-                  postType = contentTypeConfig.mediaTypes.includes('video') ? 'video' : 'photo';
-                }
-              }
-
-              const postData = {
-                socialProfileId: profile.id,
-                postType,
-                contentType,
-                platforms: [targetPlatform],
-                title: postPlan.captionIdea || postPlan.topic || 'AI-generated post',
-                description: postPlan.topic || null,
-                hashtags: Array.isArray(postPlan.hashtags) ? postPlan.hashtags : [],
-                platformSpecificData: postPlan.platformSpecificData || null,
-                scheduledAt: scheduledDate,
-                status: 'scheduled',
-                aiGenerated: true,
-                aiPromptUsed: `Goal: ${goal.trim()}`,
-              };
-
-              const [createdPost] = await db
-                .insert(socialPosts)
-                .values(postData)
-                .returning();
-              
-              postsCreated.push({
-                id: createdPost.id,
-                platform: postData.platforms[0],
-                contentType: postData.contentType,
-                caption: postData.title,
-                scheduledFor: scheduledDate.toISOString(),
-                status: 'scheduled',
-              });
-            } catch (postError) {
-              console.error('[Social AI] Error creating post:', postError);
-              // Continue with other posts
+          // Parse time if provided (format: "09:00" or "14:30")
+          if (postPlan.time && typeof postPlan.time === 'string') {
+            const [hours, minutes] = postPlan.time.split(':').map(Number);
+            if (!isNaN(hours) && !isNaN(minutes)) {
+              scheduledDate.setHours(hours, minutes, 0, 0);
             }
           }
 
-          console.log(`[Social AI] Created ${postsCreated.length} posts from AI plan`);
+          // Determine the platform and get valid content type
+          const targetPlatform = postPlan.platform?.toLowerCase() || filteredPlatforms[0];
+          const platformConfig = PLATFORM_CONFIGS[targetPlatform as PlatformType];
+          const validContentTypes = platformConfig?.contentTypes.map(ct => ct.id) || ['post'];
+          
+          // Validate and normalize the content type
+          let contentType = postPlan.contentType || 'post';
+          if (!validContentTypes.includes(contentType as ContentType)) {
+            // Fall back to the first valid content type for this platform
+            contentType = validContentTypes[0];
+          }
+          
+          // Determine postType based on content type
+          let postType = 'text';
+          const contentTypeConfig = platformConfig?.contentTypes.find(ct => ct.id === contentType);
+          if (contentTypeConfig) {
+            if (contentTypeConfig.requiresMedia) {
+              postType = contentTypeConfig.mediaTypes.includes('video') ? 'video' : 'photo';
+            }
+          }
 
-          res.json({
-            goal: {
-              id: newGoal.id,
-              goal: newGoal.primaryGoal,
-              platforms: newGoal.preferredPlatforms,
-              duration,
-              status: 'active',
-              createdAt: newGoal.createdAt?.toISOString(),
-            },
-            plan,
-            postsCreated: postsCreated.length,
+          const postData = {
+            socialProfileId: profile.id,
+            postType,
+            contentType,
+            platforms: [targetPlatform],
+            title: postPlan.captionIdea || postPlan.topic || 'AI-generated post',
+            description: postPlan.topic || null,
+            hashtags: Array.isArray(postPlan.hashtags) ? postPlan.hashtags : [],
+            platformSpecificData: postPlan.platformSpecificData || null,
+            scheduledAt: scheduledDate,
+            status: 'scheduled',
+            aiGenerated: true,
+            aiPromptUsed: `Goal: ${goal.trim()}`,
+          };
+
+          const [createdPost] = await db
+            .insert(socialPosts)
+            .values(postData)
+            .returning();
+          
+          postsCreated.push({
+            id: createdPost.id,
+            platform: postData.platforms[0],
+            contentType: postData.contentType,
+            caption: postData.title,
+            scheduledFor: scheduledDate.toISOString(),
+            status: 'scheduled',
           });
-        } else {
-          return res.status(502).json({ message: 'AI response could not be parsed' });
+        } catch (postError) {
+          console.error('[Social AI] Error creating post:', postError);
+          // Continue with other posts
         }
-      } catch (parseError) {
-        console.error('[Social AI] Plan JSON parse error');
-        return res.status(502).json({ message: 'AI response format error' });
       }
+
+      console.log(`[Social AI] Created ${postsCreated.length} posts from AI plan`);
+
+      res.json({
+        goal: {
+          id: newGoal.id,
+          goal: newGoal.primaryGoal,
+          platforms: newGoal.preferredPlatforms,
+          duration,
+          status: 'active',
+          createdAt: newGoal.createdAt?.toISOString(),
+        },
+        plan,
+        postsCreated: postsCreated.length,
+      });
     } catch (error: any) {
       console.error('[Social AI] Plan generation error');
       res.status(500).json({ message: 'Failed to generate plan' });
