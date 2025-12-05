@@ -2027,6 +2027,12 @@ export const socialPosts = pgTable("social_posts", {
   aiGenerated: boolean("ai_generated").notNull().default(false), // Was this created by AI strategist
   aiPromptUsed: text("ai_prompt_used"), // The AI prompt that generated this post
   generationId: varchar("generation_id"), // Link to Artivio generation if applicable
+  // AI Media Generation fields
+  imagePrompt: text("image_prompt"), // AI-generated prompt for creating images
+  videoPrompt: text("video_prompt"), // AI-generated prompt for creating videos
+  mediaMode: varchar("media_mode"), // 'manual' | 'suggest' | 'semi_auto' | 'full_auto'
+  mediaGenerationStatus: varchar("media_generation_status"), // 'pending' | 'generating' | 'ready' | 'failed'
+  hubAssetId: varchar("hub_asset_id"), // Link to approved asset in Social Hub Library
   errorMessage: text("error_message"),
   platformResults: jsonb("platform_results").$type<Record<string, { success: boolean; postId?: string; url?: string; error?: string }>>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
