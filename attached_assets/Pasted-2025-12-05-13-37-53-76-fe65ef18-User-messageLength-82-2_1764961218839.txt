@@ -1,0 +1,172 @@
+2025-12-05 13:37:53.76
+fe65ef18
+User
+messageLength: 82
+2025-12-05 13:37:53.76
+fe65ef18
+User
+[AI SUPPORT] Analyzing ticket: {
+2025-12-05 13:37:53.76
+fe65ef18
+User
+subject: 'Having an issue generating a video with Veo 3.1 Fast',
+2025-12-05 13:37:53.76
+fe65ef18
+User
+}
+2025-12-05 13:37:58.71
+fe65ef18
+User
+shouldAutoReply: false,
+2025-12-05 13:37:58.71
+fe65ef18
+User
+category: 'technical',
+2025-12-05 13:37:58.71
+fe65ef18
+User
+priority: 'urgent',
+2025-12-05 13:37:58.71
+fe65ef18
+User
+confidence: 0.9,
+2025-12-05 13:37:58.71
+fe65ef18
+User
+}
+2025-12-05 13:37:58.71
+fe65ef18
+User
+[AI SUPPORT] Analysis complete: {
+2025-12-05 13:37:58.71
+fe65ef18
+User
+shouldEscalate: true
+2025-12-05 13:37:58.78
+fe65ef18
+User
+[AI SUPPORT] Escalating ticket to: escalations@artivio.ai
+2025-12-05 13:37:58.93
+fe65ef18
+User
+[AI SUPPORT] Escalation sent successfully: fa77183a-1cda-4db2-bf52-74659660d8da
+2025-12-05 13:37:58.98
+fe65ef18
+User
+6:37:58 PM [express] POST /api/support/tickets 200 in 5356ms :: {"success":true,"ticketId":"ff8fb287…
+2025-12-05 13:37:59.18
+fe65ef18
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 13:37:59.18
+fe65ef18
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-05 13:37:59.20
+fe65ef18
+User
+6:37:59 PM [express] GET /api/support/tickets 200 in 56ms :: [{"id":"ff8fb287-fb4d-4934-a098-1be1858…
+2025-12-05 13:37:59.23
+fe65ef18
+User
+6:37:59 PM [express] GET /api/support/tickets/ff8fb287-fb4d-4934-a098-1be185857348 200 in 74ms :: {"…
+2025-12-05 13:38:34.82
+fe65ef18
+User
+6:38:34 PM [express] GET /api/announcements/active 304 in 111ms :: []
+2025-12-05 13:39:32.38
+fe65ef18
+User
+6:39:32 PM [express] GET /api/pricing 304 in 125ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-12-05 13:39:35.02
+fe65ef18
+User
+6:39:35 PM [express] GET /api/announcements/active 304 in 26ms :: []
+2025-12-05 13:40:04.67
+fe65ef18
+User
+[RATE LIMIT] Cleanup: removed 1 expired records
+2025-12-05 13:40:35.25
+fe65ef18
+User
+6:40:35 PM [express] GET /api/announcements/active 304 in 134ms :: []
+2025-12-05 13:41:35.69
+fe65ef18
+User
+6:41:35 PM [express] GET /api/announcements/active 304 in 109ms :: []
+2025-12-05 13:42:36.00
+fe65ef18
+User
+6:42:36 PM [express] GET /api/announcements/active 304 in 115ms :: []
+2025-12-05 13:43:36.27
+fe65ef18
+User
+6:43:36 PM [express] GET /api/announcements/active 304 in 121ms :: []
+2025-12-05 13:44:36.51
+fe65ef18
+User
+6:44:36 PM [express] GET /api/announcements/active 304 in 135ms :: []
+2025-12-05 13:45:36.91
+fe65ef18
+User
+6:45:36 PM [express] GET /api/announcements/active 304 in 134ms :: []
+2025-12-05 13:46:37.28
+fe65ef18
+User
+6:46:37 PM [express] GET /api/announcements/active 304 in 113ms :: []
+2025-12-05 13:47:37.70
+fe65ef18
+User
+6:47:37 PM [express] GET /api/announcements/active 304 in 112ms :: []
+2025-12-05 13:48:38.02
+fe65ef18
+User
+6:48:38 PM [express] GET /api/announcements/active 304 in 109ms :: []
+2025-12-05 13:49:38.51
+fe65ef18
+User
+6:49:38 PM [express] GET /api/announcements/active 304 in 141ms :: []
+2025-12-05 13:50:38.85
+fe65ef18
+User
+6:50:38 PM [express] GET /api/announcements/active 304 in 123ms :: []
+2025-12-05 13:51:39.64
+fe65ef18
+User
+6:51:39 PM [express] GET /api/announcements/active 304 in 113ms :: []
+2025-12-05 13:52:39.99
+fe65ef18
+User
+6:52:39 PM [express] GET /api/announcements/active 304 in 124ms :: []
+2025-12-05 13:53:40.39
+fe65ef18
+User
+6:53:40 PM [express] GET /api/announcements/active 304 in 106ms :: []
+2025-12-05 13:54:40.75
+fe65ef18
+User
+6:54:40 PM [express] GET /api/announcements/active 304 in 106ms :: []
+2025-12-05 13:55:41.12
+fe65ef18
+User
+6:55:41 PM [express] GET /api/announcements/active 304 in 120ms :: []
+2025-12-05 13:56:41.45
+fe65ef18
+User
+6:56:41 PM [express] GET /api/announcements/active 304 in 110ms :: []
+2025-12-05 13:57:41.84
+fe65ef18
+User
+6:57:41 PM [express] GET /api/announcements/active 304 in 110ms :: []
+2025-12-05 13:57:44.29
+fe65ef18
+User
+6:57:44 PM [express] GET /api/announcements/active 304 in 22ms :: []
+2025-12-05 13:58:05.99
+fe65ef18
+User
+6:58:05 PM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-12-05 13:58:05.99
+fe65ef18
+User
+6:58:05 PM [express] GET /api/announcements/active 304 in 23ms :: []

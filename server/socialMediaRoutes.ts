@@ -2062,24 +2062,41 @@ Return ONLY valid JSON:
   "tips": ["Tip 1"]
 }`;
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Generate a ${durationDays}-day content plan for: ${platformBatch.join(', ')}` },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000, // Reduced for faster responses
-      }),
-    });
+    // Add 60-second timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    
+    console.log(`[Social AI] Calling DeepSeek API for platforms: ${platformBatch.join(', ')}`);
+    const startTime = Date.now();
+    
+    let response;
+    try {
+      response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Generate a ${durationDays}-day content plan for: ${platformBatch.join(', ')}` },
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    
+    const elapsed = Date.now() - startTime;
+    console.log(`[Social AI] DeepSeek API responded in ${elapsed}ms for platforms: ${platformBatch.join(', ')}`);
 
     if (!response.ok) {
+      console.error(`[Social AI] DeepSeek API returned status ${response.status}`);
       throw new Error('AI service temporarily unavailable');
     }
 
@@ -2243,6 +2260,7 @@ CONTENT PREFERENCES:
         const batch = platformBatches[i];
         console.log(`[Social AI] Processing batch ${i + 1}/${platformBatches.length}: ${batch.join(', ')}`);
         
+        const batchStartTime = Date.now();
         try {
           const result = await generatePlanForPlatforms(
             batch, 
@@ -2256,18 +2274,21 @@ CONTENT PREFERENCES:
             featuredMediaTypes
           );
           
+          const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(1);
+          console.log(`[Social AI] Batch ${i + 1} completed in ${batchDuration}s with ${result.posts.length} posts`);
+          
           allPosts.push(...result.posts);
           if (i === 0) {
-            // Use strategy/themes/tips from first batch
             combinedStrategy = result.strategy;
             combinedThemes = result.weeklyThemes;
             combinedTips = result.tips;
           } else {
-            // Merge additional tips from subsequent batches
             combinedTips.push(...result.tips.slice(0, 2));
           }
         } catch (batchError: any) {
-          console.error(`[Social AI] Batch ${i + 1} failed:`, batchError.message);
+          const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(1);
+          const errorType = batchError.name === 'AbortError' ? 'TIMEOUT' : 'ERROR';
+          console.error(`[Social AI] Batch ${i + 1} ${errorType} after ${batchDuration}s:`, batchError.message);
           // Continue with other batches even if one fails
         }
       }
