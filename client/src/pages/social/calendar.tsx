@@ -741,6 +741,23 @@ export default function SocialCalendar() {
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
+      ) : scheduledPosts.length === 0 ? (
+        <Card className="p-8 text-center">
+          <CalendarIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No Scheduled Posts</h3>
+          <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+            Your calendar is empty. Create a post manually or generate an AI content plan and approve it to see posts here.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button 
+              onClick={() => setShowCreateModal(true)}
+              data-testid="button-create-first-post"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Post
+            </Button>
+          </div>
+        </Card>
       ) : (
         <div className="grid grid-cols-7 gap-2">
           {weekDays.map((day, index) => {
@@ -1179,35 +1196,7 @@ export default function SocialCalendar() {
                 </div>
               )}
 
-              {/* Caption with Enhanced Character Counter */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="caption">Caption</Label>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs ${caption.length > effectiveMaxCharacters ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                      {caption.length} / {effectiveMaxCharacters}
-                    </span>
-                    {caption.length > effectiveMaxCharacters && (
-                      <AlertCircle className="w-3 h-3 text-destructive" />
-                    )}
-                  </div>
-                </div>
-                <Textarea
-                  id="caption"
-                  placeholder="What's on your mind? Write your post content here..."
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className={`min-h-[100px] resize-none ${caption.length > effectiveMaxCharacters ? 'border-destructive' : ''}`}
-                  data-testid="input-caption"
-                />
-                {selectedPlatforms.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Character limit based on: {selectedPlatforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')}
-                  </p>
-                )}
-              </div>
-
-              {/* Media Upload Section */}
+              {/* Media Upload Section - Moved before Caption for visibility */}
               {selectedPlatforms.length > 0 && currentContentTypeConfig && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -1303,6 +1292,34 @@ export default function SocialCalendar() {
                   )}
                 </div>
               )}
+
+              {/* Caption with Enhanced Character Counter */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="caption">Caption</Label>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs ${caption.length > effectiveMaxCharacters ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                      {caption.length} / {effectiveMaxCharacters}
+                    </span>
+                    {caption.length > effectiveMaxCharacters && (
+                      <AlertCircle className="w-3 h-3 text-destructive" />
+                    )}
+                  </div>
+                </div>
+                <Textarea
+                  id="caption"
+                  placeholder="What's on your mind? Write your post content here..."
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className={`min-h-[100px] resize-none ${caption.length > effectiveMaxCharacters ? 'border-destructive' : ''}`}
+                  data-testid="input-caption"
+                />
+                {selectedPlatforms.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Character limit based on: {selectedPlatforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')}
+                  </p>
+                )}
+              </div>
 
               {/* Platform-Specific Options */}
               {allPlatformSpecificFields.length > 0 && (
