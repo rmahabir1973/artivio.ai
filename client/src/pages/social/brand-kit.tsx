@@ -825,13 +825,59 @@ function AssetsTab({ assets, isLoading, hubAssets, hubAssetsLoading }: AssetsTab
   const suggestedAssets = assets.filter((a) => a.isSuggested === true);
   const brandLibraryAssets = assets.filter((a) => a.isSuggested !== true);
 
-  // Fetch user's generations from main library
-  const { data: generationsData, isLoading: generationsLoading } = useQuery<{ generations: Generation[] }>({
-    queryKey: ['/api/generations', { limit: 100, status: 'completed' }],
-    enabled: isLibraryDialogOpen,
-  });
-
-  const generations = generationsData?.generations || [];
+  // Fetch user's generations from main library with pagination
+  const [allGenerations, setAllGenerations] = useState<Generation[]>([]);
+  const [generationsCursor, setGenerationsCursor] = useState<string | null>(null);
+  const [hasMoreGenerations, setHasMoreGenerations] = useState(true);
+  const [loadingGenerations, setLoadingGenerations] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
+  // Initial load when dialog opens
+  useEffect(() => {
+    if (isLibraryDialogOpen && !initialLoadComplete) {
+      loadGenerations();
+    }
+  }, [isLibraryDialogOpen]);
+  
+  // Reset when dialog closes
+  useEffect(() => {
+    if (!isLibraryDialogOpen) {
+      setAllGenerations([]);
+      setGenerationsCursor(null);
+      setHasMoreGenerations(true);
+      setInitialLoadComplete(false);
+    }
+  }, [isLibraryDialogOpen]);
+  
+  const loadGenerations = async (cursor?: string | null) => {
+    if (loadingGenerations) return;
+    setLoadingGenerations(true);
+    
+    try {
+      const cursorParam = cursor ? `&cursor=${cursor}` : '&cursor=';
+      const response = await fetchWithAuth(`/api/generations?limit=24${cursorParam}`);
+      if (!response.ok) throw new Error('Failed to load generations');
+      
+      const data = await response.json();
+      const items = data.items || [];
+      const nextCursor = data.nextCursor;
+      
+      // Filter to only completed with resultUrl
+      const validItems = items.filter((g: Generation) => g.status === 'completed' && g.resultUrl);
+      
+      setAllGenerations(prev => cursor ? [...prev, ...validItems] : validItems);
+      setGenerationsCursor(nextCursor);
+      setHasMoreGenerations(!!nextCursor);
+      setInitialLoadComplete(true);
+    } catch (error) {
+      console.error('Failed to load generations:', error);
+    } finally {
+      setLoadingGenerations(false);
+    }
+  };
+  
+  const generations = allGenerations;
+  const generationsLoading = loadingGenerations && !initialLoadComplete;
   
   // Filter generations by type
   const filteredGenerations = generations.filter((gen) => {
@@ -1354,88 +1400,111 @@ function AssetsTab({ assets, isLoading, hubAssets, hubAssetsLoading }: AssetsTab
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {filteredGenerations.map((gen) => {
-                    const isImported = importedGenerationIds.has(gen.id);
-                    const isSelected = selectedGenerations.has(gen.id);
-                    const genType = getGenerationType(gen);
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {filteredGenerations.map((gen) => {
+                      const isImported = importedGenerationIds.has(gen.id);
+                      const isSelected = selectedGenerations.has(gen.id);
+                      const genType = getGenerationType(gen);
 
-                    return (
-                      <div
-                        key={gen.id}
-                        className={`relative group aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
-                          isImported 
-                            ? 'opacity-50 cursor-not-allowed border-muted' 
-                            : isSelected 
-                              ? 'border-primary ring-2 ring-primary/20' 
-                              : 'border-border hover:border-primary/50'
-                        }`}
-                        onClick={() => !isImported && handleToggleGeneration(gen.id)}
-                        data-testid={`library-item-${gen.id}`}
-                      >
-                        {/* Content preview */}
-                        {genType === 'video' ? (
-                          <video
-                            src={gen.resultUrl}
-                            poster={gen.thumbnailUrl || undefined}
-                            className="w-full h-full object-cover"
-                            muted
-                          />
-                        ) : genType === 'audio' ? (
-                          <div className="w-full h-full flex items-center justify-center bg-muted">
-                            <div className="text-center p-4">
-                              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Music className="w-6 h-6 text-primary" />
-                              </div>
-                              <p className="text-xs text-muted-foreground truncate max-w-[100px]">
-                                {gen.prompt?.slice(0, 30) || 'Audio'}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <img
-                            src={gen.thumbnailUrl || gen.resultUrl}
-                            alt={gen.prompt || 'Generated image'}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-
-                        {/* Type badge */}
-                        <Badge
-                          className="absolute top-2 left-2"
-                          variant="secondary"
+                      return (
+                        <div
+                          key={gen.id}
+                          className={`relative group aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                            isImported 
+                              ? 'opacity-50 cursor-not-allowed border-muted' 
+                              : isSelected 
+                                ? 'border-primary ring-2 ring-primary/20' 
+                                : 'border-border hover:border-primary/50'
+                          }`}
+                          onClick={() => !isImported && handleToggleGeneration(gen.id)}
+                          data-testid={`library-item-${gen.id}`}
                         >
-                          {genType === 'video' && <Video className="w-3 h-3 mr-1" />}
-                          {genType === 'audio' && <Music className="w-3 h-3 mr-1" />}
-                          {genType === 'image' && <Image className="w-3 h-3 mr-1" />}
-                          {genType}
-                        </Badge>
+                          {/* Content preview */}
+                          {genType === 'video' ? (
+                            <video
+                              src={gen.resultUrl}
+                              poster={gen.thumbnailUrl || undefined}
+                              className="w-full h-full object-cover"
+                              muted
+                            />
+                          ) : genType === 'audio' ? (
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <div className="text-center p-4">
+                                <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <Music className="w-6 h-6 text-primary" />
+                                </div>
+                                <p className="text-xs text-muted-foreground truncate max-w-[100px]">
+                                  {gen.prompt?.slice(0, 30) || 'Audio'}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <img
+                              src={gen.thumbnailUrl || gen.resultUrl}
+                              alt={gen.prompt || 'Generated image'}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
 
-                        {/* Selection indicator or imported badge */}
-                        {isImported ? (
+                          {/* Type badge */}
                           <Badge
-                            className="absolute top-2 right-2"
-                            variant="outline"
+                            className="absolute top-2 left-2"
+                            variant="secondary"
                           >
-                            <Check className="w-3 h-3 mr-1" />
-                            Imported
+                            {genType === 'video' && <Video className="w-3 h-3 mr-1" />}
+                            {genType === 'audio' && <Music className="w-3 h-3 mr-1" />}
+                            {genType === 'image' && <Image className="w-3 h-3 mr-1" />}
+                            {genType}
                           </Badge>
+
+                          {/* Selection indicator or imported badge */}
+                          {isImported ? (
+                            <Badge
+                              className="absolute top-2 right-2"
+                              variant="outline"
+                            >
+                              <Check className="w-3 h-3 mr-1" />
+                              Imported
+                            </Badge>
+                          ) : (
+                            <div className="absolute top-2 right-2">
+                              {isSelected ? (
+                                <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center">
+                                  <CheckSquare className="w-4 h-4" />
+                                </div>
+                              ) : (
+                                <div className="w-6 h-6 rounded border-2 bg-background/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Square className="w-4 h-4" />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Load More Button */}
+                  {hasMoreGenerations && (
+                    <div className="flex justify-center pt-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => loadGenerations(generationsCursor)}
+                        disabled={loadingGenerations}
+                        data-testid="button-load-more-generations"
+                      >
+                        {loadingGenerations ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Loading...
+                          </>
                         ) : (
-                          <div className="absolute top-2 right-2">
-                            {isSelected ? (
-                              <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center">
-                                <CheckSquare className="w-4 h-4" />
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 rounded border-2 bg-background/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Square className="w-4 h-4" />
-                              </div>
-                            )}
-                          </div>
+                          'Load More'
                         )}
-                      </div>
-                    );
-                  })}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
