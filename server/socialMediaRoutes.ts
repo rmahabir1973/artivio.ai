@@ -1386,18 +1386,26 @@ export function registerSocialMediaRoutes(app: Express) {
           eq(socialAccounts.isConnected, true)
         ));
 
-      // Build platforms array for GetLate
+      // Build platforms array for GetLate (case-insensitive platform matching)
       const platformsForPost = (post.platforms as string[]).map(platform => {
-        const account = accounts.find(a => a.platform === platform);
+        const normalizedPlatform = platform.toLowerCase();
+        const account = accounts.find(a => a.platform?.toLowerCase() === normalizedPlatform);
         const accountMetadata = account?.metadata as { getLateAccountId?: string } | null;
         return {
-          platform: platform as SocialPlatform,
+          platform: normalizedPlatform as SocialPlatform,
           accountId: accountMetadata?.getLateAccountId || '',
         };
       }).filter(p => p.accountId);
 
       if (platformsForPost.length === 0) {
-        return res.status(400).json({ message: 'No connected accounts found for selected platforms' });
+        const connectedPlatforms = accounts.map(a => a.platform).join(', ');
+        return res.status(400).json({ 
+          message: 'No connected accounts found for selected platforms',
+          details: {
+            requestedPlatforms: post.platforms,
+            connectedPlatforms: connectedPlatforms || 'none'
+          }
+        });
       }
 
       // Create post in GetLate
@@ -1478,21 +1486,51 @@ export function registerSocialMediaRoutes(app: Express) {
           eq(socialAccounts.isConnected, true)
         ));
 
-      // Build platforms array for GetLate
-      const platformsForPost = (post.platforms as string[]).map(platform => {
-        const account = accounts.find(a => a.platform === platform);
+      // Build platforms array for GetLate (case-insensitive platform matching)
+      const postPlatforms = post.platforms as string[];
+      console.log('[Social] Publish Now - Post ID:', postId);
+      console.log('[Social] Publish Now - Post platforms:', postPlatforms);
+      console.log('[Social] Publish Now - Connected accounts:', accounts.map(a => ({ 
+        platform: a.platform, 
+        isConnected: a.isConnected,
+        getLateAccountId: (a.metadata as any)?.getLateAccountId 
+      })));
+
+      const platformsForPost = postPlatforms.map(platform => {
+        const normalizedPlatform = platform.toLowerCase();
+        const account = accounts.find(a => a.platform?.toLowerCase() === normalizedPlatform);
         const accountMetadata = account?.metadata as { getLateAccountId?: string } | null;
+        
+        if (!account) {
+          console.log(`[Social] Publish Now - No connected account found for platform: ${platform}`);
+        } else if (!accountMetadata?.getLateAccountId) {
+          console.log(`[Social] Publish Now - Account found but no getLateAccountId for platform: ${platform}`);
+        }
+        
         return {
-          platform: platform as SocialPlatform,
+          platform: normalizedPlatform as SocialPlatform,
           accountId: accountMetadata?.getLateAccountId || '',
         };
       }).filter(p => p.accountId);
 
+      console.log('[Social] Publish Now - Platforms to send to GetLate:', platformsForPost);
+
       if (platformsForPost.length === 0) {
-        return res.status(400).json({ message: 'No connected accounts found for selected platforms' });
+        const connectedPlatforms = accounts.map(a => a.platform).join(', ');
+        return res.status(400).json({ 
+          message: 'No connected accounts found for selected platforms',
+          details: {
+            requestedPlatforms: postPlatforms,
+            connectedPlatforms: connectedPlatforms || 'none',
+            hint: 'Please connect the required social media accounts first'
+          }
+        });
       }
 
       // Create post in GetLate with publishNow flag
+      console.log('[Social] Publish Now - Sending to GetLate with content:', post.title?.substring(0, 50) + '...');
+      console.log('[Social] Publish Now - Media:', post.mediaUrl ? { type: post.postType, url: post.mediaUrl } : 'none');
+      
       const getLatePost = await getLateService.createPost({
         content: post.title + (post.description ? '\n\n' + post.description : ''),
         publishNow: true,
@@ -1504,13 +1542,35 @@ export function registerSocialMediaRoutes(app: Express) {
         queuedFromProfile: profile.getLateProfileId || undefined,
       });
 
+      console.log('[Social] Publish Now - GetLate response:', {
+        postId: getLatePost._id,
+        status: getLatePost.status,
+        publishedAt: getLatePost.publishedAt,
+        platforms: getLatePost.platforms
+      });
+
+      // Determine final status based on GetLate response
+      // GetLate status: 'draft' | 'scheduled' | 'published' | 'failed'
+      let finalStatus: 'publishing' | 'published' | 'failed' = 'publishing';
+      let errorMessage: string | null = null;
+      
+      if (getLatePost.status === 'published') {
+        finalStatus = 'published';
+        console.log('[Social] Publish Now - Post published successfully');
+      } else if (getLatePost.status === 'failed') {
+        finalStatus = 'failed';
+        errorMessage = 'GetLate reported publishing failed';
+        console.log('[Social] Publish Now - Post publishing failed');
+      }
+
       // Update post status
       const [updatedPost] = await db
         .update(socialPosts)
         .set({
           getLatePostId: getLatePost._id,
-          status: 'publishing',
-          publishedAt: new Date(),
+          status: finalStatus,
+          publishedAt: finalStatus === 'published' ? new Date() : null,
+          errorMessage: errorMessage,
           updatedAt: new Date(),
         })
         .where(eq(socialPosts.id, postId))

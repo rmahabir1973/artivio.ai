@@ -24,6 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SocialPostPreview } from "@/components/social-post-preview";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -169,6 +171,7 @@ export default function SocialCalendar() {
   
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
+  const [previewPlatform, setPreviewPlatform] = useState<string | null>(null);
   const [viewFilter, setViewFilter] = useState<string>("all");
   
   // Bulk Delete State
@@ -1009,8 +1012,8 @@ export default function SocialCalendar() {
         </div>
       )}
 
-      <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={!!selectedPost} onOpenChange={() => { setSelectedPost(null); setPreviewPlatform(null); }}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
           {selectedPost && (
             <>
               <DialogHeader>
@@ -1058,9 +1061,22 @@ export default function SocialCalendar() {
                 </div>
               </DialogHeader>
               
-              <div className="space-y-4 py-4">
-                {/* Media Items (for carousels/galleries) */}
-                {selectedPost.mediaItems && selectedPost.mediaItems.length > 0 ? (
+              <Tabs defaultValue="details" className="flex-1 min-h-0 flex flex-col">
+                <TabsList className="grid w-full grid-cols-2 mb-2">
+                  <TabsTrigger value="details" data-testid="tab-post-details">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Details
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" data-testid="tab-post-preview">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="details" className="flex-1 overflow-y-auto mt-0">
+                  <div className="space-y-4 py-2">
+                    {/* Media Items (for carousels/galleries) */}
+                    {selectedPost.mediaItems && selectedPost.mediaItems.length > 0 ? (
                   <div className={selectedPost.mediaItems.length === 1 ? "" : "grid grid-cols-2 gap-2"}>
                     {selectedPost.mediaItems.slice(0, 4).map((item, i) => (
                       <div key={i} className="aspect-video bg-muted rounded-lg overflow-hidden relative">
@@ -1248,7 +1264,49 @@ export default function SocialCalendar() {
                     )}
                   </div>
                 )}
-              </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="preview" className="flex-1 overflow-y-auto mt-0">
+                  <div className="space-y-4 py-2">
+                    {/* Platform Preview Selector */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-muted-foreground">Preview as:</span>
+                      {(selectedPost.platforms || [selectedPost.platform]).map((platform) => {
+                        const Icon = PLATFORM_ICONS[platform];
+                        const isActive = previewPlatform === platform || (!previewPlatform && platform === (selectedPost.platforms || [selectedPost.platform])[0]);
+                        return (
+                          <button
+                            key={platform}
+                            onClick={() => setPreviewPlatform(platform)}
+                            className={`w-8 h-8 ${PLATFORM_COLORS[platform]} rounded-lg flex items-center justify-center transition-all ${isActive ? 'ring-2 ring-primary ring-offset-2' : 'opacity-60 hover:opacity-100'}`}
+                            data-testid={`button-preview-${platform}`}
+                          >
+                            {Icon && <Icon className="w-4 h-4 text-white" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Platform Preview */}
+                    <SocialPostPreview
+                      platform={previewPlatform || (selectedPost.platforms || [selectedPost.platform])[0]}
+                      post={{
+                        caption: selectedPost.caption,
+                        mediaUrl: selectedPost.mediaItems?.[0]?.url || selectedPost.mediaUrl,
+                        mediaType: selectedPost.mediaItems?.[0]?.type || selectedPost.mediaType,
+                        hashtags: selectedPost.hashtags,
+                        mediaItems: selectedPost.mediaItems,
+                      }}
+                      username="yourprofile"
+                    />
+                    
+                    <p className="text-xs text-center text-muted-foreground">
+                      This is an approximate preview. Actual appearance may vary.
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
               
               <DialogFooter className="gap-2">
                 <Button

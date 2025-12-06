@@ -1,0 +1,160 @@
+2025-12-06 13:01:38.83
+d651ce0d
+User
+6:01:38 PM [express] GET /api/social/posts 304 in 1273ms :: [{"id":"cda48033-04c1-4a56-855f-c5edab18…
+2025-12-06 13:01:38.94
+d651ce0d
+User
+✓ Re-encoded video uploaded to S3: video-exports/optimized-7e64ea60-1fa4-41d9-b582-b12ba5cf489f.mp4
+2025-12-06 13:01:38.94
+d651ce0d
+User
+[S3] Upload complete: video-exports/optimized-7e64ea60-1fa4-41d9-b582-b12ba5cf489f.mp4
+2025-12-06 13:01:57.38
+d651ce0d
+User
+✓ Video re-encoded and optimized: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-7e64ea60-1fa4-41d9-b582-b12ba5cf489f.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251206%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251206T180138Z&X-Amz-Expires=604800&X-Amz-Signature=faffb95735783aaf99955aadaf32b8f5eda1f8293e5ea5912654ec1e5dd2ce25&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+2025-12-06 13:01:57.45
+d651ce0d
+User
+✓ Video optimized and URL updated for 7e64ea60-1fa4-41d9-b582-b12ba5cf489f: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-7e64ea60-1fa4-41d9-b582-b12ba5cf489f.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251206%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251206T180138Z&X-Amz-Expires=604800&X-Amz-Signature=faffb95735783aaf99955aadaf32b8f5eda1f8293e5ea5912654ec1e5dd2ce25&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+2025-12-06 13:01:58.03
+d651ce0d
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-06 13:01:58.44
+d651ce0d
+User
+aiGenerated: true
+2025-12-06 13:01:58.44
+d651ce0d
+User
+status: 'scheduled',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+id: 'dfbbcfd4',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+status: 'scheduled',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+id: 'cda48033',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+scheduledFor: '2025-12-12T20:00:00.000Z',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+},
+2025-12-06 13:01:58.44
+d651ce0d
+User
+aiGenerated: true
+2025-12-06 13:01:58.44
+d651ce0d
+User
+},
+2025-12-06 13:01:58.44
+d651ce0d
+User
+aiGenerated: true
+2025-12-06 13:01:58.44
+d651ce0d
+User
+id: 'e7226e4a',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+aiGenerated: true
+2025-12-06 13:01:58.44
+d651ce0d
+User
+{
+2025-12-06 13:01:58.44
+d651ce0d
+User
+scheduledFor: '2025-12-12T19:00:00.000Z',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+[Social Posts] Returning 35 posts, first 5: [
+2025-12-06 13:01:58.44
+d651ce0d
+User
+}
+2025-12-06 13:01:58.44
+d651ce0d
+User
+status: 'scheduled',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+status: 'scheduled',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+{
+2025-12-06 13:01:58.44
+d651ce0d
+User
+scheduledFor: '2025-12-12T19:00:00.000Z',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+{
+2025-12-06 13:01:58.44
+d651ce0d
+User
+scheduledFor: '2025-12-12T18:00:00.000Z',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+scheduledFor: '2025-12-12T20:00:00.000Z',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+aiGenerated: true
+2025-12-06 13:01:58.44
+d651ce0d
+User
+]
+2025-12-06 13:01:58.44
+d651ce0d
+User
+},
+2025-12-06 13:01:58.44
+d651ce0d
+User
+{
+2025-12-06 13:01:58.44
+d651ce0d
+User
+id: '91048cbf',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+id: '65eb0883',
+2025-12-06 13:01:58.44
+d651ce0d
+User
+},
+2025-12-06 13:01:58.44
+d651ce0d
+User
+{
+2025-12-06 13:01:58.44
+d651ce0d
+User
+status: 'scheduled',
+2025-12-06 13:01:58.54
+d651ce0d
+User
+6:01:58 PM [express] GET /api/social/posts 304 in 1131ms :: [{"id":"cda48033-04c1-4a56-855f-c5edab18…
+2025-12-06 13:02:21.56
+d651ce0d
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
