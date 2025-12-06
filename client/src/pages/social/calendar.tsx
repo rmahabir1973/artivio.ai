@@ -25,6 +25,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Loader2, 
   Calendar as CalendarIcon,
@@ -52,6 +69,7 @@ import {
   AlertCircle,
   Wand2,
   Copy,
+  CalendarX,
 } from "lucide-react";
 import {
   PLATFORM_CONFIGS,
@@ -152,6 +170,10 @@ export default function SocialCalendar() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
   const [viewFilter, setViewFilter] = useState<string>("all");
+  
+  // Bulk Delete State
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [bulkDeleteMode, setBulkDeleteMode] = useState<'week' | 'all'>('week');
   
   // Create Post Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -630,6 +652,51 @@ export default function SocialCalendar() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async ({ mode, startDate, endDate }: { mode: 'week' | 'all'; startDate?: string; endDate?: string }) => {
+      const params = new URLSearchParams({ mode });
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      const response = await fetchWithAuth(`/api/social/posts/bulk?${params.toString()}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete posts');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
+      setShowBulkDeleteDialog(false);
+      toast({
+        title: "Posts Deleted",
+        description: `${data.deleted} post${data.deleted !== 1 ? 's' : ''} have been removed.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete posts",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBulkDelete = (mode: 'week' | 'all') => {
+    setBulkDeleteMode(mode);
+    setShowBulkDeleteDialog(true);
+  };
+
+  const confirmBulkDelete = () => {
+    if (bulkDeleteMode === 'week') {
+      bulkDeleteMutation.mutate({
+        mode: 'week',
+        startDate: format(weekStart, 'yyyy-MM-dd'),
+        endDate: format(addDays(weekStart, 6), 'yyyy-MM-dd'),
+      });
+    } else {
+      bulkDeleteMutation.mutate({ mode: 'all' });
+    }
+  };
+
   const publishNowMutation = useMutation({
     mutationFn: async (postId: string) => {
       const response = await apiRequest("POST", `/api/social/posts/${postId}/publish`);
@@ -759,14 +826,47 @@ export default function SocialCalendar() {
             View and manage your scheduled social media posts.
           </p>
         </div>
-        <Button 
-          className="gap-2"
-          onClick={() => setShowCreateModal(true)}
-          data-testid="button-create-content"
-        >
-          <Plus className="w-4 h-4" />
-          Create Content
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                data-testid="button-manage-calendar"
+              >
+                <CalendarX className="w-4 h-4" />
+                Manage
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => handleBulkDelete('week')}
+                className="text-destructive focus:text-destructive"
+                data-testid="menu-delete-week"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete This Week
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => handleBulkDelete('all')}
+                className="text-destructive focus:text-destructive"
+                data-testid="menu-delete-all"
+              >
+                <CalendarX className="w-4 h-4 mr-2" />
+                Delete All Posts
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button 
+            className="gap-2"
+            onClick={() => setShowCreateModal(true)}
+            data-testid="button-create-content"
+          >
+            <Plus className="w-4 h-4" />
+            Create Content
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
@@ -1676,6 +1776,51 @@ export default function SocialCalendar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkDeleteMode === 'week' ? 'Delete This Week\'s Posts?' : 'Delete All Posts?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkDeleteMode === 'week' ? (
+                <>
+                  This will permanently delete all posts scheduled for <strong>{format(weekStart, "MMM d")} - {format(addDays(weekStart, 6), "MMM d, yyyy")}</strong>. 
+                  This action cannot be undone.
+                </>
+              ) : (
+                <>
+                  This will permanently delete <strong>all scheduled posts</strong> from your calendar. 
+                  This action cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-bulk-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={bulkDeleteMutation.isPending}
+              data-testid="button-confirm-bulk-delete"
+            >
+              {bulkDeleteMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete {bulkDeleteMode === 'week' ? 'Week' : 'All'}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

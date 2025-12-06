@@ -28,7 +28,7 @@ import {
   insertSocialBrandAssetSchema,
   insertSocialHubAssetSchema,
 } from "@shared/schema";
-import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { eq, and, desc, gte, lte, inArray } from "drizzle-orm";
 import { 
   PLATFORM_CONFIGS, 
   OPTIMAL_POSTING_TIMES, 
@@ -1240,6 +1240,98 @@ export function registerSocialMediaRoutes(app: Express) {
     } catch (error: any) {
       console.error('[Social] Error deleting post:', error);
       res.status(500).json({ message: 'Failed to delete post', error: error.message });
+    }
+  });
+
+  // Bulk delete posts
+  app.delete('/api/social/posts/bulk', requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { mode, startDate, endDate } = req.query;
+
+      // Validate mode
+      if (!mode || !['all', 'week'].includes(mode as string)) {
+        return res.status(400).json({ message: 'Invalid mode. Must be "all" or "week"' });
+      }
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      let postsToDelete: any[] = [];
+
+      if (mode === 'all') {
+        // Delete all posts
+        postsToDelete = await db
+          .select()
+          .from(socialPosts)
+          .where(eq(socialPosts.socialProfileId, profile.id));
+        console.log(`[Social] Bulk delete all: found ${postsToDelete.length} posts for profile ${profile.id}`);
+      } else if (mode === 'week') {
+        // Validate date inputs
+        if (!startDate || !endDate) {
+          return res.status(400).json({ message: 'startDate and endDate required for week mode' });
+        }
+        
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+        
+        // Validate parsed dates
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD' });
+        }
+        
+        // Set start to beginning of day and end to end of day
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+
+        console.log(`[Social] Bulk delete week: searching ${start.toISOString()} to ${end.toISOString()}`);
+
+        postsToDelete = await db
+          .select()
+          .from(socialPosts)
+          .where(and(
+            eq(socialPosts.socialProfileId, profile.id),
+            gte(socialPosts.scheduledAt, start),
+            lte(socialPosts.scheduledAt, end)
+          ));
+        console.log(`[Social] Bulk delete week: found ${postsToDelete.length} posts`);
+      } else {
+        return res.status(400).json({ message: 'Invalid mode or missing date range' });
+      }
+
+      if (postsToDelete.length === 0) {
+        return res.json({ deleted: 0, message: 'No posts to delete' });
+      }
+
+      // Cancel scheduled posts in GetLate
+      for (const post of postsToDelete) {
+        if (post.getLatePostId && post.status === 'scheduled') {
+          try {
+            await getLateService.deletePost(post.getLatePostId);
+          } catch (error) {
+            console.error('[Social] Failed to cancel GetLate post:', post.id, error);
+          }
+        }
+      }
+
+      // Delete all posts
+      const postIds = postsToDelete.map(p => p.id);
+      await db
+        .delete(socialPosts)
+        .where(inArray(socialPosts.id, postIds));
+
+      console.log(`[Social] Bulk deleted ${postIds.length} posts for user ${userId}`);
+      res.json({ deleted: postIds.length });
+    } catch (error: any) {
+      console.error('[Social] Error bulk deleting posts:', error);
+      res.status(500).json({ message: 'Failed to bulk delete posts', error: error.message });
     }
   });
 
