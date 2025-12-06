@@ -56,6 +56,11 @@ import {
   Wand2,
   Check,
   FolderOpen,
+  Library,
+  Video,
+  Music,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import {
   Tooltip,
@@ -798,13 +803,126 @@ interface AssetsTabProps {
   hubAssetsLoading: boolean;
 }
 
+interface Generation {
+  id: string;
+  type: string;
+  generationType?: string;
+  status: string;
+  prompt?: string;
+  resultUrl?: string;
+  thumbnailUrl?: string;
+  createdAt: string;
+}
+
 function AssetsTab({ assets, isLoading, hubAssets, hubAssetsLoading }: AssetsTabProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLibraryDialogOpen, setIsLibraryDialogOpen] = useState(false);
+  const [selectedGenerations, setSelectedGenerations] = useState<Set<string>>(new Set());
+  const [libraryFilter, setLibraryFilter] = useState<'all' | 'image' | 'video' | 'audio'>('all');
 
   const suggestedAssets = assets.filter((a) => a.isSuggested === true);
   const brandLibraryAssets = assets.filter((a) => a.isSuggested !== true);
+
+  // Fetch user's generations from main library
+  const { data: generationsData, isLoading: generationsLoading } = useQuery<{ generations: Generation[] }>({
+    queryKey: ['/api/generations', { limit: 100, status: 'completed' }],
+    enabled: isLibraryDialogOpen,
+  });
+
+  const generations = generationsData?.generations || [];
+  
+  // Filter generations by type
+  const filteredGenerations = generations.filter((gen) => {
+    if (!gen.resultUrl) return false;
+    if (libraryFilter === 'all') return true;
+    
+    const isVideo = ['video', 'upscaling'].includes(gen.type) || gen.generationType?.includes('video');
+    const isAudio = ['music', 'sound-effect', 'tts'].includes(gen.type);
+    const isImage = !isVideo && !isAudio;
+    
+    if (libraryFilter === 'video') return isVideo;
+    if (libraryFilter === 'audio') return isAudio;
+    if (libraryFilter === 'image') return isImage;
+    return true;
+  });
+
+  // Check which generations are already imported
+  const importedGenerationIds = new Set(hubAssets.filter(a => a.generationId).map(a => a.generationId));
+
+  // Import mutation
+  const importFromLibraryMutation = useMutation({
+    mutationFn: async (generationIds: string[]) => {
+      const response = await fetchWithAuth('/api/social/hub-assets/import-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ generationIds }),
+      });
+      if (!response.ok) throw new Error('Failed to import assets');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/social/hub-assets'] });
+      setSelectedGenerations(new Set());
+      setIsLibraryDialogOpen(false);
+      
+      const imported = data.imported?.length || 0;
+      const skipped = data.skipped?.length || 0;
+      
+      if (imported > 0) {
+        toast({
+          title: `${imported} asset${imported > 1 ? 's' : ''} imported`,
+          description: skipped > 0 ? `${skipped} already in library` : undefined,
+        });
+      } else if (skipped > 0) {
+        toast({
+          title: 'Assets already in library',
+          description: 'The selected items have already been imported',
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: 'Import failed',
+        description: 'Could not import the selected assets. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleToggleGeneration = (id: string) => {
+    const newSelected = new Set(selectedGenerations);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedGenerations(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    const availableIds = filteredGenerations
+      .filter(g => !importedGenerationIds.has(g.id))
+      .map(g => g.id);
+    
+    if (selectedGenerations.size === availableIds.length) {
+      setSelectedGenerations(new Set());
+    } else {
+      setSelectedGenerations(new Set(availableIds));
+    }
+  };
+
+  const handleImportSelected = () => {
+    if (selectedGenerations.size === 0) return;
+    importFromLibraryMutation.mutate(Array.from(selectedGenerations));
+  };
+
+  const getGenerationType = (gen: Generation): 'image' | 'video' | 'audio' => {
+    if (['video', 'upscaling'].includes(gen.type) || gen.generationType?.includes('video')) return 'video';
+    if (['music', 'sound-effect', 'tts'].includes(gen.type)) return 'audio';
+    return 'image';
+  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -1130,19 +1248,236 @@ function AssetsTab({ assets, isLoading, hubAssets, hubAssetsLoading }: AssetsTab
               Your approved brand assets for content creation
             </CardDescription>
           </div>
-          <Button 
-            onClick={handleUploadClick}
-            disabled={isUploading}
-            data-testid="button-upload-asset"
-          >
-            {isUploading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4 mr-2" />
-            )}
-            {isUploading ? 'Uploading...' : 'Upload'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setIsLibraryDialogOpen(true)}
+              data-testid="button-add-from-library"
+            >
+              <Library className="w-4 h-4 mr-2" />
+              Add from Library
+            </Button>
+            <Button 
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              data-testid="button-upload-asset"
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              {isUploading ? 'Uploading...' : 'Upload'}
+            </Button>
+          </div>
         </CardHeader>
+
+        {/* Add from Library Dialog */}
+        <Dialog open={isLibraryDialogOpen} onOpenChange={setIsLibraryDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Library className="w-5 h-5" />
+                Add from Your AI Library
+              </DialogTitle>
+              <DialogDescription>
+                Select AI-generated content from your history to add to your Social Hub assets
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center justify-between gap-4 py-2 border-b">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={libraryFilter === 'all' ? 'default' : 'outline'}
+                  onClick={() => setLibraryFilter('all')}
+                  data-testid="filter-all"
+                >
+                  All
+                </Button>
+                <Button
+                  size="sm"
+                  variant={libraryFilter === 'image' ? 'default' : 'outline'}
+                  onClick={() => setLibraryFilter('image')}
+                  data-testid="filter-images"
+                >
+                  <Image className="w-4 h-4 mr-1" />
+                  Images
+                </Button>
+                <Button
+                  size="sm"
+                  variant={libraryFilter === 'video' ? 'default' : 'outline'}
+                  onClick={() => setLibraryFilter('video')}
+                  data-testid="filter-videos"
+                >
+                  <Video className="w-4 h-4 mr-1" />
+                  Videos
+                </Button>
+                <Button
+                  size="sm"
+                  variant={libraryFilter === 'audio' ? 'default' : 'outline'}
+                  onClick={() => setLibraryFilter('audio')}
+                  data-testid="filter-audio"
+                >
+                  <Music className="w-4 h-4 mr-1" />
+                  Audio
+                </Button>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleSelectAll}
+                disabled={filteredGenerations.filter(g => !importedGenerationIds.has(g.id)).length === 0}
+                data-testid="button-select-all"
+              >
+                {selectedGenerations.size === filteredGenerations.filter(g => !importedGenerationIds.has(g.id)).length && selectedGenerations.size > 0
+                  ? 'Deselect All'
+                  : 'Select All'}
+              </Button>
+            </div>
+
+            {/* Content Grid */}
+            <div className="flex-1 overflow-y-auto py-4">
+              {generationsLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <Skeleton key={i} className="aspect-square rounded-lg" />
+                  ))}
+                </div>
+              ) : filteredGenerations.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Library className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No {libraryFilter !== 'all' ? libraryFilter : ''} content found</p>
+                  <p className="text-sm">
+                    Generate some AI content first, then come back to import it here
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {filteredGenerations.map((gen) => {
+                    const isImported = importedGenerationIds.has(gen.id);
+                    const isSelected = selectedGenerations.has(gen.id);
+                    const genType = getGenerationType(gen);
+
+                    return (
+                      <div
+                        key={gen.id}
+                        className={`relative group aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                          isImported 
+                            ? 'opacity-50 cursor-not-allowed border-muted' 
+                            : isSelected 
+                              ? 'border-primary ring-2 ring-primary/20' 
+                              : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => !isImported && handleToggleGeneration(gen.id)}
+                        data-testid={`library-item-${gen.id}`}
+                      >
+                        {/* Content preview */}
+                        {genType === 'video' ? (
+                          <video
+                            src={gen.resultUrl}
+                            poster={gen.thumbnailUrl || undefined}
+                            className="w-full h-full object-cover"
+                            muted
+                          />
+                        ) : genType === 'audio' ? (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <div className="text-center p-4">
+                              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Music className="w-6 h-6 text-primary" />
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate max-w-[100px]">
+                                {gen.prompt?.slice(0, 30) || 'Audio'}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <img
+                            src={gen.thumbnailUrl || gen.resultUrl}
+                            alt={gen.prompt || 'Generated image'}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+
+                        {/* Type badge */}
+                        <Badge
+                          className="absolute top-2 left-2"
+                          variant="secondary"
+                        >
+                          {genType === 'video' && <Video className="w-3 h-3 mr-1" />}
+                          {genType === 'audio' && <Music className="w-3 h-3 mr-1" />}
+                          {genType === 'image' && <Image className="w-3 h-3 mr-1" />}
+                          {genType}
+                        </Badge>
+
+                        {/* Selection indicator or imported badge */}
+                        {isImported ? (
+                          <Badge
+                            className="absolute top-2 right-2"
+                            variant="outline"
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Imported
+                          </Badge>
+                        ) : (
+                          <div className="absolute top-2 right-2">
+                            {isSelected ? (
+                              <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center">
+                                <CheckSquare className="w-4 h-4" />
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded border-2 bg-background/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Square className="w-4 h-4" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="border-t pt-4">
+              <div className="flex items-center justify-between w-full">
+                <p className="text-sm text-muted-foreground">
+                  {selectedGenerations.size} item{selectedGenerations.size !== 1 ? 's' : ''} selected
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsLibraryDialogOpen(false);
+                      setSelectedGenerations(new Set());
+                    }}
+                    data-testid="button-cancel-import"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleImportSelected}
+                    disabled={selectedGenerations.size === 0 || importFromLibraryMutation.isPending}
+                    data-testid="button-import-selected"
+                  >
+                    {importFromLibraryMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Import Selected
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <CardContent>
           {(isLoading || hubAssetsLoading) ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
