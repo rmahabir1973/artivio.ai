@@ -502,6 +502,13 @@ export async function generateVideo(params: {
       payload.waterMark = parameters.watermark;
     }
     
+    // Add fallback parameter - when enabled, uses backup model if Google's content policy rejects
+    // This is especially useful for image-to-video which gets rejected more frequently
+    if (parameters.enableFallback !== undefined) {
+      payload.enableFallback = parameters.enableFallback;
+      console.log(`🔄 Veo fallback mode: ${parameters.enableFallback ? 'ENABLED' : 'DISABLED'}`);
+    }
+    
     return await callKieApi('/api/v1/veo/generate', payload);
   } 
   else if (params.model === 'runway-gen3-alpha-turbo') {

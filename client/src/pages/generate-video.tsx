@@ -176,6 +176,7 @@ export default function GenerateVideo() {
   const [enablePromptExpansion, setEnablePromptExpansion] = useState(true); // For Wan model
   const [cfgScale, setCfgScale] = useState(0.5); // For Kling model (0-1, step 0.1)
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [enableVeoFallback, setEnableVeoFallback] = useState(true); // For Veo models - auto fallback when content rejected
 
   // Merge model info with dynamic pricing
   const [videoModels, setVideoModels] = useState(() => VIDEO_MODEL_INFO.map(m => ({
@@ -670,6 +671,12 @@ export default function GenerateVideo() {
       }
     } else {
       console.log(`🌱 [SEED TRACE] Step 5 - NOT adding seed. modelSupportsSeed=${modelSupportsSeed()}, effectiveSeed=${effectiveSeed}`);
+    }
+    
+    // Add Veo fallback parameter (auto-use backup model if Google's content policy rejects)
+    if (model.startsWith('veo-')) {
+      parameters.enableFallback = enableVeoFallback;
+      console.log(`🔄 Veo fallback enabled: ${enableVeoFallback}`);
     }
     
     console.log(`🌱 [SEED TRACE] Step 6 - Final parameters:`, JSON.stringify(parameters));
@@ -1230,6 +1237,27 @@ export default function GenerateVideo() {
                   />
                 </div>
               </>
+            )}
+
+            {/* Veo Fallback - Only show for Veo models */}
+            {model.startsWith('veo-') && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="veo-fallback" className="flex items-center gap-2">
+                    Auto Fallback
+                    <Badge variant="secondary" className="text-xs">Recommended</Badge>
+                  </Label>
+                  <Switch
+                    id="veo-fallback"
+                    checked={enableVeoFallback}
+                    onCheckedChange={setEnableVeoFallback}
+                    data-testid="switch-veo-fallback"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  If Google's content policy blocks your generation, automatically use a backup model to complete it. Highly recommended for image-to-video.
+                </p>
+              </div>
             )}
 
             {/* Credit Cost Warning */}
