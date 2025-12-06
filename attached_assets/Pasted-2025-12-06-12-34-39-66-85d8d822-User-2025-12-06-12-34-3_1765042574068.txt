@@ -1,0 +1,168 @@
+2025-12-06 12:34:39.66
+85d8d822
+User
+{
+2025-12-06 12:34:39.66
+85d8d822
+User
+5:34:39 PM [express] GET /api/social/posts 304 in 108ms :: [{"id":"d9d1e53b-e5f8-4962-a4ef-cc1424482…
+2025-12-06 12:34:46.10
+85d8d822
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-06 12:34:46.17
+85d8d822
+User
+5:34:46 PM [express] DELETE /api/social/posts/bulk 404 in 100ms :: {"message":"Post not found"}
+2025-12-06 12:34:48.73
+85d8d822
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-06 12:34:48.82
+85d8d822
+User
+scheduledFor: '2025-12-15T19:00:00.000Z',
+2025-12-06 12:34:48.82
+85d8d822
+User
+status: 'scheduled',
+2025-12-06 12:34:48.82
+85d8d822
+User
+scheduledFor: '2025-12-15T21:00:00.000Z',
+2025-12-06 12:34:48.82
+85d8d822
+User
+},
+2025-12-06 12:34:48.82
+85d8d822
+User
+},
+2025-12-06 12:34:48.82
+85d8d822
+User
+[Social Posts] Returning 44 posts, first 5: [
+2025-12-06 12:34:48.82
+85d8d822
+User
+}
+2025-12-06 12:34:48.82
+85d8d822
+User
+{
+2025-12-06 12:34:48.82
+85d8d822
+User
+id: '6b0932b8',
+2025-12-06 12:34:48.82
+85d8d822
+User
+scheduledFor: '2025-12-17T18:00:00.000Z',
+2025-12-06 12:34:48.82
+85d8d822
+User
+scheduledFor: '2025-12-17T22:00:00.000Z',
+2025-12-06 12:34:48.82
+85d8d822
+User
+id: '86f1a885',
+2025-12-06 12:34:48.82
+85d8d822
+User
+]
+2025-12-06 12:34:48.82
+85d8d822
+User
+status: 'scheduled',
+2025-12-06 12:34:48.82
+85d8d822
+User
+status: 'scheduled',
+2025-12-06 12:34:48.82
+85d8d822
+User
+status: 'scheduled',
+2025-12-06 12:34:48.82
+85d8d822
+User
+aiGenerated: true
+2025-12-06 12:34:48.82
+85d8d822
+User
+status: 'scheduled',
+2025-12-06 12:34:48.82
+85d8d822
+User
+{
+2025-12-06 12:34:48.82
+85d8d822
+User
+aiGenerated: true
+2025-12-06 12:34:48.82
+85d8d822
+User
+id: 'd9d1e53b',
+2025-12-06 12:34:48.82
+85d8d822
+User
+id: '6b6c50de',
+2025-12-06 12:34:48.82
+85d8d822
+User
+},
+2025-12-06 12:34:48.82
+85d8d822
+User
+id: 'a5b8c819',
+2025-12-06 12:34:48.82
+85d8d822
+User
+aiGenerated: true
+2025-12-06 12:34:48.82
+85d8d822
+User
+},
+2025-12-06 12:34:48.82
+85d8d822
+User
+{
+2025-12-06 12:34:48.82
+85d8d822
+User
+scheduledFor: '2025-12-13T10:00:00.000Z',
+2025-12-06 12:34:48.82
+85d8d822
+User
+aiGenerated: true
+2025-12-06 12:34:48.82
+85d8d822
+User
+aiGenerated: true
+2025-12-06 12:34:48.82
+85d8d822
+User
+{
+2025-12-06 12:34:48.82
+85d8d822
+User
+{
+2025-12-06 12:34:48.82
+85d8d822
+User
+5:34:48 PM [express] GET /api/social/posts 304 in 108ms :: [{"id":"d9d1e53b-e5f8-4962-a4ef-cc1424482…
+2025-12-06 12:34:53.63
+85d8d822
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-06 12:34:53.69
+85d8d822
+User
+5:34:53 PM [express] DELETE /api/social/posts/bulk 404 in 87ms :: {"message":"Post not found"}
+2025-12-06 12:35:03.74
+85d8d822
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-06 12:35:03.80
+85d8d822
+User
+5:35:03 PM [express] DELETE /api/social/posts/bulk 404 in 85ms :: {"message":"Post not found"}

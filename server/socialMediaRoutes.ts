@@ -1193,57 +1193,7 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
-  // Delete a post
-  app.delete('/api/social/posts/:postId', requireJWT, requireSocialPoster, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { postId } = req.params;
-
-      const [profile] = await db
-        .select()
-        .from(socialProfiles)
-        .where(eq(socialProfiles.userId, userId))
-        .limit(1);
-
-      if (!profile) {
-        return res.status(404).json({ message: 'Social profile not found' });
-      }
-
-      // Verify post belongs to user
-      const [existingPost] = await db
-        .select()
-        .from(socialPosts)
-        .where(and(
-          eq(socialPosts.id, postId),
-          eq(socialPosts.socialProfileId, profile.id)
-        ))
-        .limit(1);
-
-      if (!existingPost) {
-        return res.status(404).json({ message: 'Post not found' });
-      }
-
-      // If post is scheduled in GetLate, cancel it
-      if (existingPost.getLatePostId && existingPost.status === 'scheduled') {
-        try {
-          await getLateService.deletePost(existingPost.getLatePostId);
-        } catch (error) {
-          console.error('[Social] Failed to cancel GetLate post:', error);
-        }
-      }
-
-      await db
-        .delete(socialPosts)
-        .where(eq(socialPosts.id, postId));
-
-      res.json({ deleted: true });
-    } catch (error: any) {
-      console.error('[Social] Error deleting post:', error);
-      res.status(500).json({ message: 'Failed to delete post', error: error.message });
-    }
-  });
-
-  // Bulk delete posts
+  // Bulk delete posts - MUST be before /:postId route to avoid matching "bulk" as a postId
   app.delete('/api/social/posts/bulk', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1332,6 +1282,56 @@ export function registerSocialMediaRoutes(app: Express) {
     } catch (error: any) {
       console.error('[Social] Error bulk deleting posts:', error);
       res.status(500).json({ message: 'Failed to bulk delete posts', error: error.message });
+    }
+  });
+
+  // Delete a post
+  app.delete('/api/social/posts/:postId', requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { postId } = req.params;
+
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      // Verify post belongs to user
+      const [existingPost] = await db
+        .select()
+        .from(socialPosts)
+        .where(and(
+          eq(socialPosts.id, postId),
+          eq(socialPosts.socialProfileId, profile.id)
+        ))
+        .limit(1);
+
+      if (!existingPost) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      // If post is scheduled in GetLate, cancel it
+      if (existingPost.getLatePostId && existingPost.status === 'scheduled') {
+        try {
+          await getLateService.deletePost(existingPost.getLatePostId);
+        } catch (error) {
+          console.error('[Social] Failed to cancel GetLate post:', error);
+        }
+      }
+
+      await db
+        .delete(socialPosts)
+        .where(eq(socialPosts.id, postId));
+
+      res.json({ deleted: true });
+    } catch (error: any) {
+      console.error('[Social] Error deleting post:', error);
+      res.status(500).json({ message: 'Failed to delete post', error: error.message });
     }
   });
 
