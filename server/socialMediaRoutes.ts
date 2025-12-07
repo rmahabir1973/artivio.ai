@@ -1618,6 +1618,91 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
+  // Retry media generation for a post
+  app.post('/api/social/posts/:postId/retry-media', requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const { postId } = req.params;
+      const userId = req.user.id;
+
+      const [post] = await db
+        .select()
+        .from(socialPosts)
+        .where(eq(socialPosts.id, postId))
+        .limit(1);
+
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      // Get profile to verify ownership
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(and(
+          eq(socialProfiles.id, post.socialProfileId),
+          eq(socialProfiles.userId, userId)
+        ))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(403).json({ message: 'Not authorized to modify this post' });
+      }
+
+      // Check if post has media prompts to regenerate
+      if (!post.imagePrompt && !post.videoPrompt) {
+        return res.status(400).json({ message: 'Post has no media prompts to generate from' });
+      }
+
+      // Reset the post's media generation status
+      await db
+        .update(socialPosts)
+        .set({
+          mediaGenerationStatus: 'pending',
+          status: post.status === 'needs_attention' ? 'scheduled' : post.status,
+          updatedAt: new Date(),
+        })
+        .where(eq(socialPosts.id, postId));
+
+      // Import and call the media generation function
+      const { enqueueMediaGenerations } = await import('./services/socialMediaGeneration');
+      
+      // Determine automation level from post's media mode
+      const automationLevel = post.mediaMode === 'full_auto' ? 'full_auto' : 'semi_auto';
+      
+      const result = await enqueueMediaGenerations(
+        postId,
+        userId,
+        automationLevel,
+        post.imagePrompt || null,
+        post.videoPrompt || null,
+        'seedream-4',  // Default image model
+        'kling-2-5-master',  // Default video model
+        '16:9'  // Default aspect ratio
+      );
+
+      if (!result.success) {
+        return res.status(400).json({ message: result.error || 'Failed to start media generation' });
+      }
+
+      // Get the updated post
+      const [updatedPost] = await db
+        .select()
+        .from(socialPosts)
+        .where(eq(socialPosts.id, postId))
+        .limit(1);
+
+      res.json({ 
+        message: 'Media generation started',
+        post: updatedPost,
+        creditsUsed: result.totalCredits,
+        jobCount: result.jobCount,
+      });
+    } catch (error: any) {
+      console.error('[Social] Error retrying media generation:', error);
+      res.status(500).json({ message: 'Failed to retry media generation', error: error.message });
+    }
+  });
+
   // =====================================================
   // ANALYTICS
   // =====================================================

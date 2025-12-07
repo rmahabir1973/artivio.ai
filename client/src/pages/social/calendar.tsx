@@ -73,6 +73,7 @@ import {
   Wand2,
   Copy,
   CalendarX,
+  RotateCw,
 } from "lucide-react";
 import {
   PLATFORM_CONFIGS,
@@ -1164,8 +1165,40 @@ export default function SocialCalendar() {
                   <Alert variant="destructive" className="mt-2">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Media Generation Failed</AlertTitle>
-                    <AlertDescription>
-                      The AI couldn't generate media for this post. You can manually add media using the image/video generator, or edit this post to remove the media requirement.
+                    <AlertDescription className="space-y-3">
+                      <p>The AI couldn't generate media for this post. You can retry, manually add media, or edit this post.</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const response = await fetchWithAuth(`/api/social/posts/${selectedPost.id}/retry-media`, {
+                              method: 'POST',
+                            });
+                            if (!response.ok) {
+                              const error = await response.json();
+                              throw new Error(error.message || 'Failed to retry');
+                            }
+                            toast({
+                              title: "Media generation started",
+                              description: "The AI is generating new media for this post.",
+                            });
+                            queryClient.invalidateQueries({ queryKey: ['/api/social/posts'] });
+                            setSelectedPost(null);
+                          } catch (error: any) {
+                            toast({
+                              title: "Retry failed",
+                              description: error.message || "Could not start media generation",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="border-destructive/50 hover:bg-destructive/10"
+                        data-testid="button-retry-media"
+                      >
+                        <RotateCw className="h-4 w-4 mr-2" />
+                        Retry Media Generation
+                      </Button>
                     </AlertDescription>
                   </Alert>
                 )}
