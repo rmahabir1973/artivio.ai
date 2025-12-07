@@ -182,6 +182,35 @@ class ContentExecutionAgent {
         continue;
       }
 
+      // Check if linked socialPost has failed media generation - skip for manual intervention
+      if (post.socialPostId) {
+        try {
+          const [linkedPost] = await db
+            .select({ mediaGenerationStatus: socialPosts.mediaGenerationStatus })
+            .from(socialPosts)
+            .where(eq(socialPosts.id, post.socialPostId))
+            .limit(1);
+          
+          if (linkedPost?.mediaGenerationStatus === 'failed') {
+            console.log(`[ContentExecutionAgent] Skipping post ${i} - media generation failed, needs manual intervention`);
+            updatedPosts[i] = { 
+              ...post, 
+              status: 'needs_attention',
+              skipReason: 'Media generation failed',
+            };
+            postsUpdated = true;
+            continue;
+          }
+          
+          if (linkedPost?.mediaGenerationStatus === 'generating' || linkedPost?.mediaGenerationStatus === 'pending') {
+            console.log(`[ContentExecutionAgent] Skipping post ${i} - media still generating`);
+            continue;
+          }
+        } catch (err) {
+          console.warn(`[ContentExecutionAgent] Failed to check media status for post ${i}:`, err);
+        }
+      }
+
       const postDate = post.date;
       const postTime = post.time || '09:00';
 

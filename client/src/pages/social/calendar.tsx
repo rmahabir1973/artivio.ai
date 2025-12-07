@@ -27,6 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SocialPostPreview } from "@/components/social-post-preview";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -783,6 +784,7 @@ export default function SocialCalendar() {
       case "scheduled": return "bg-blue-500";
       case "published": return "bg-green-500";
       case "failed": return "bg-red-500";
+      case "needs_attention": return "bg-amber-500";
       case "draft": return "bg-gray-500";
       default: return "bg-muted";
     }
@@ -1000,6 +1002,16 @@ export default function SocialCalendar() {
                           <div className="flex items-center gap-1 mt-1">
                             <MediaTypeIcon type={post.contentType || post.mediaType} />
                             <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(post.status)}`} />
+                            {post.mediaGenerationStatus === 'failed' && (
+                              <span className="text-xs text-destructive flex items-center gap-0.5" title="Media generation failed - needs attention">
+                                <AlertCircle className="w-3 h-3" />
+                              </span>
+                            )}
+                            {post.mediaGenerationStatus === 'generating' && (
+                              <span className="text-xs text-amber-500 flex items-center gap-0.5" title="Generating media...">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              </span>
+                            )}
                           </div>
                         </button>
                       );
@@ -1134,7 +1146,7 @@ export default function SocialCalendar() {
 
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge className={getStatusColor(selectedPost.status)}>
-                    {selectedPost.status}
+                    {selectedPost.status === 'needs_attention' ? 'Needs Attention' : selectedPost.status}
                   </Badge>
                   {selectedPost.aiGenerated && (
                     <Badge variant="outline">AI Generated</Badge>
@@ -1146,6 +1158,17 @@ export default function SocialCalendar() {
                     </span>
                   )}
                 </div>
+                
+                {/* Media generation failure alert */}
+                {(selectedPost.mediaGenerationStatus === 'failed' || selectedPost.status === 'needs_attention') && (
+                  <Alert variant="destructive" className="mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Media Generation Failed</AlertTitle>
+                    <AlertDescription>
+                      The AI couldn't generate media for this post. You can manually add media using the image/video generator, or edit this post to remove the media requirement.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 
                 {/* Platform-Specific Data (if available) */}
                 {selectedPost.platformSpecificData && Object.keys(selectedPost.platformSpecificData).length > 0 && (
