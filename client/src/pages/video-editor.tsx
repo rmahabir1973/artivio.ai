@@ -308,6 +308,65 @@ export default function VideoEditor() {
     }
   }, [page, totalPages, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Handle quick action from Library - pre-load clips added via "Add to Video Editor"
+  useEffect(() => {
+    const storedClips = sessionStorage.getItem('videoEditor_clips');
+    
+    if (storedClips) {
+      try {
+        const clips = JSON.parse(storedClips) as Array<{
+          id: string;
+          url: string;
+          prompt: string;
+          thumbnailUrl?: string | null;
+        }>;
+        
+        if (clips.length > 0) {
+          console.log('[QUICK ACTION] Loading clips for video editor:', clips);
+          
+          // Convert to VideoClip format and add to ordered clips
+          const newClips: VideoClip[] = clips.map(clip => ({
+            id: clip.id,
+            url: clip.url,
+            prompt: clip.prompt,
+            thumbnailUrl: clip.thumbnailUrl || null,
+            createdAt: new Date().toISOString(),
+          }));
+          
+          setOrderedClips(prev => {
+            // Avoid duplicates
+            const existingIds = new Set(prev.map(c => c.id));
+            const uniqueNewClips = newClips.filter(c => !existingIds.has(c.id));
+            return [...prev, ...uniqueNewClips];
+          });
+          
+          // Also add to selected IDs
+          setSelectedIds(prev => {
+            const newSet = new Set(prev);
+            clips.forEach(c => newSet.add(c.id));
+            return newSet;
+          });
+          
+          // Move to step 2 (arrange) if clips were added
+          if (step === 1) {
+            setStep(2);
+          }
+          
+          toast({
+            title: `${clips.length} Clip${clips.length > 1 ? 's' : ''} Added`,
+            description: "Your clips have been added to the video editor. Arrange and export!",
+          });
+        }
+      } catch (e) {
+        console.error('[QUICK ACTION] Failed to parse video editor clips:', e);
+      }
+      
+      // Clear the sessionStorage after consuming
+      sessionStorage.removeItem('videoEditor_clips');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - run only once on mount
+
   const stopPolling = () => {
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);

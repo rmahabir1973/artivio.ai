@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,29 @@ export default function BackgroundRemover() {
     moderate: "text-yellow-500",
     normal: "text-primary",
   };
+
+  // Handle quick action from Library - pre-load image for background removal
+  useEffect(() => {
+    const quickActionImage = sessionStorage.getItem('quickAction_bgRemove');
+    
+    if (quickActionImage) {
+      console.log('[QUICK ACTION] Loading image for background removal:', quickActionImage);
+      setImageUrl(quickActionImage);
+      // For external URLs, we can use them directly without base64 conversion
+      // The backend should handle URL-based images as well
+      setBase64Image(quickActionImage);
+      setUploadedFileName('Library Image');
+      
+      // Clear the sessionStorage after consuming
+      sessionStorage.removeItem('quickAction_bgRemove');
+      
+      toast({
+        title: "Image Loaded",
+        description: "Your image is ready. Click 'Remove Background' to process!",
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - run only once on mount
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

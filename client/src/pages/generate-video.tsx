@@ -290,6 +290,33 @@ export default function GenerateVideo() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - run only once on mount
 
+  // Handle quick action from Library - pre-load image for image-to-video
+  useEffect(() => {
+    const quickActionImage = sessionStorage.getItem('quickAction_imageToVideo');
+    const quickActionPrompt = sessionStorage.getItem('quickAction_prompt');
+    
+    if (quickActionImage) {
+      console.log('[QUICK ACTION] Loading image for image-to-video:', quickActionImage);
+      setReferenceImages([quickActionImage]);
+      setGenerationType('image-to-video');
+      
+      // Also load the prompt if available
+      if (quickActionPrompt) {
+        setPrompt(quickActionPrompt);
+      }
+      
+      // Clear the sessionStorage after consuming
+      sessionStorage.removeItem('quickAction_imageToVideo');
+      sessionStorage.removeItem('quickAction_prompt');
+      
+      toast({
+        title: "Image Loaded",
+        description: "Your image is ready for video generation. Choose a model and generate!",
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - run only once on mount
+
   // Poll for generation result when generationId is set
   // Keep polling active based ONLY on generationId - don't gate on isGenerating (causes race condition)
   const { data: pollData } = useQuery<any>({

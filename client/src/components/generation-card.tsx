@@ -4,7 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Zap, Heart, AlertCircle, Link2, Film } from "lucide-react";
+import { Download, Calendar, Sparkles, Trash2, Play, Copy, RotateCw, Maximize2, Info, Eye, EyeOff, Volume2, Mic, Music, FileAudio, MessageSquare, QrCode, Users, Zap, Heart, AlertCircle, Link2, Film, Video, Share2, Eraser, ChevronDown, Scissors } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useMutation } from "@tanstack/react-query";
@@ -340,6 +348,115 @@ export function GenerationCard({ generation }: GenerationCardProps) {
     }
   };
 
+  // Quick Action handlers for Content Pipeline
+  const handleCreateVideo = () => {
+    // Store the image URL for use in video generation page
+    if (generation.resultUrl) {
+      sessionStorage.setItem('quickAction_imageToVideo', generation.resultUrl);
+      sessionStorage.setItem('quickAction_prompt', generation.prompt || '');
+      setLocation('/generate/video');
+      toast({
+        title: "Image Ready",
+        description: "Your image has been loaded for video creation",
+      });
+    }
+  };
+
+  const handleRemoveBackground = () => {
+    if (generation.resultUrl) {
+      sessionStorage.setItem('quickAction_bgRemove', generation.resultUrl);
+      setLocation('/tools/background-remover');
+      toast({
+        title: "Image Ready",
+        description: "Your image has been loaded for background removal",
+      });
+    }
+  };
+
+  const handleAddToVideoEditor = () => {
+    if (generation.resultUrl) {
+      // Store the video for the video editor
+      const existingClips = sessionStorage.getItem('videoEditor_clips');
+      const clips = existingClips ? JSON.parse(existingClips) : [];
+      clips.push({
+        id: generation.id,
+        url: generation.resultUrl,
+        prompt: generation.prompt,
+        thumbnailUrl: generation.thumbnailUrl,
+      });
+      sessionStorage.setItem('videoEditor_clips', JSON.stringify(clips));
+      toast({
+        title: "Added to Video Editor",
+        description: "Video clip added. Go to Video Editor to combine clips.",
+      });
+    }
+  };
+
+  const handleSendToSocial = () => {
+    if (generation.resultUrl) {
+      // Store the asset for social posting
+      sessionStorage.setItem('quickAction_socialAsset', JSON.stringify({
+        id: generation.id,
+        url: generation.resultUrl,
+        type: generation.type,
+        prompt: generation.prompt,
+        thumbnailUrl: generation.thumbnailUrl,
+      }));
+      setLocation('/social/calendar');
+      toast({
+        title: "Ready to Post",
+        description: "Create a new post with your content",
+      });
+    }
+  };
+
+  // Determine which quick actions are available based on content type
+  const getQuickActions = () => {
+    if (generation.status !== 'completed' || !generation.resultUrl) return [];
+    
+    const actions: Array<{ label: string; icon: React.ReactNode; onClick: () => void; testId: string }> = [];
+    
+    if (generation.type === 'image' || generation.type === 'background-remover') {
+      actions.push({
+        label: 'Create Video',
+        icon: <Video className="h-4 w-4" />,
+        onClick: handleCreateVideo,
+        testId: `quick-create-video-${generation.id}`,
+      });
+      if (generation.type !== 'background-remover') {
+        actions.push({
+          label: 'Remove Background',
+          icon: <Eraser className="h-4 w-4" />,
+          onClick: handleRemoveBackground,
+          testId: `quick-remove-bg-${generation.id}`,
+        });
+      }
+    }
+    
+    if (generation.type === 'video' || generation.type === 'talking-avatar' || generation.type === 'video-editor') {
+      actions.push({
+        label: 'Add to Video Editor',
+        icon: <Scissors className="h-4 w-4" />,
+        onClick: handleAddToVideoEditor,
+        testId: `quick-video-editor-${generation.id}`,
+      });
+    }
+    
+    // All visual content can be sent to social
+    if (['image', 'video', 'background-remover', 'talking-avatar', 'video-editor'].includes(generation.type)) {
+      actions.push({
+        label: 'Send to Social',
+        icon: <Share2 className="h-4 w-4" />,
+        onClick: handleSendToSocial,
+        testId: `quick-send-social-${generation.id}`,
+      });
+    }
+    
+    return actions;
+  };
+
+  const quickActions = getQuickActions();
+
   const canUpscale = generation.status === 'completed' && 
                      generation.resultUrl && 
                      (generation.type === 'image' || generation.type === 'video' || generation.type === 'background-remover') &&
@@ -596,6 +713,38 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                     <Maximize2 className="h-4 w-4 shrink-0" />
                     <span className="ml-1 truncate">Upscale</span>
                   </Button>
+                )}
+                {/* Quick Actions Dropdown */}
+                {quickActions.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        className="flex-1 min-w-[80px]"
+                        data-testid={`button-quick-actions-${generation.id}`}
+                      >
+                        <Zap className="h-4 w-4 shrink-0" />
+                        <span className="ml-1 truncate">Use In</span>
+                        <ChevronDown className="h-3 w-3 ml-1 shrink-0" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {quickActions.map((action, index) => (
+                        <DropdownMenuItem 
+                          key={index}
+                          onClick={action.onClick}
+                          data-testid={action.testId}
+                          className="cursor-pointer"
+                        >
+                          {action.icon}
+                          <span className="ml-2">{action.label}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </>
             )}
