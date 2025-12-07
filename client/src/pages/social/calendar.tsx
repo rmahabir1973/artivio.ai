@@ -197,6 +197,48 @@ export default function SocialCalendar() {
   const [platformSpecificData, setPlatformSpecificData] = useState<Record<string, Record<string, any>>>({});
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Quick Action state - for pre-loading assets from Library
+  const [quickActionAsset, setQuickActionAsset] = useState<{
+    id: string;
+    url: string;
+    type: string;
+    prompt: string;
+    thumbnailUrl?: string | null;
+  } | null>(null);
+
+  // Handle quick action from Library - pre-load asset for social posting
+  useEffect(() => {
+    const storedAsset = sessionStorage.getItem('quickAction_socialAsset');
+    
+    if (storedAsset) {
+      try {
+        const asset = JSON.parse(storedAsset);
+        console.log('[QUICK ACTION] Loading asset for social posting:', asset);
+        
+        setQuickActionAsset(asset);
+        
+        // Pre-fill caption with prompt if available
+        if (asset.prompt) {
+          setCaption(asset.prompt);
+        }
+        
+        // Open the create modal
+        setShowCreateModal(true);
+        
+        toast({
+          title: "Content Ready",
+          description: "Your content has been loaded. Select platforms and schedule!",
+        });
+      } catch (e) {
+        console.error('[QUICK ACTION] Failed to parse social asset:', e);
+      }
+      
+      // Clear the sessionStorage after consuming
+      sessionStorage.removeItem('quickAction_socialAsset');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - run only once on mount
 
   // Helper to get/set platform-specific data for a given platform and field
   const getPlatformFieldValue = (platform: string, fieldKey: string) => {
@@ -420,6 +462,7 @@ export default function SocialCalendar() {
     setMediaFiles([]);
     setPlatformSpecificData({});
     setIsDragging(false);
+    setQuickActionAsset(null); // Clear quick action asset
   };
 
   // Media file handling
@@ -567,8 +610,9 @@ export default function SocialCalendar() {
       return;
     }
     
-    // Check if media is required but not provided
-    if (requiresMedia && mediaFiles.length === 0) {
+    // Check if media is required but not provided (accept either uploaded files or quick action asset)
+    const hasMedia = mediaFiles.length > 0 || quickActionAsset !== null;
+    if (requiresMedia && !hasMedia) {
       toast({
         title: "Media Required",
         description: `This content type requires ${acceptedMediaTypes.includes('video') ? 'a video' : 'an image'}.`,
@@ -601,7 +645,7 @@ export default function SocialCalendar() {
     }
 
     // Build the post data with new fields
-    const postData = {
+    const postData: any = {
       platforms: selectedPlatforms,
       title: caption,
       hashtags,
@@ -615,6 +659,12 @@ export default function SocialCalendar() {
       publishNow: postMode === "now",
       scheduledAt: undefined as string | undefined,
     };
+    
+    // If we have a quick action asset (from Library), include it as mediaUrl
+    if (quickActionAsset) {
+      postData.mediaUrl = quickActionAsset.url;
+      postData.mediaType = quickActionAsset.type === 'video' ? 'video' : 'image';
+    }
 
     if (postMode === "schedule") {
       if (!scheduleDate) {
@@ -1577,8 +1627,50 @@ export default function SocialCalendar() {
                 </div>
               )}
 
+              {/* Quick Action Asset Preview - From Library */}
+              {quickActionAsset && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      Content from Library
+                    </Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setQuickActionAsset(null)}
+                      data-testid="button-clear-library-asset"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                  <div className="relative aspect-video rounded-lg overflow-hidden border bg-muted max-w-sm">
+                    {quickActionAsset.type === 'video' || quickActionAsset.type === 'talking-avatar' || quickActionAsset.type === 'video-editor' ? (
+                      <video 
+                        src={quickActionAsset.url} 
+                        poster={quickActionAsset.thumbnailUrl || undefined}
+                        className="w-full h-full object-cover"
+                        controls
+                        data-testid="preview-library-video"
+                      />
+                    ) : (
+                      <img 
+                        src={quickActionAsset.url} 
+                        alt="Library content"
+                        className="w-full h-full object-cover"
+                        data-testid="preview-library-image"
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This content will be attached to your post
+                  </p>
+                </div>
+              )}
+
               {/* Media Upload Section - Moved before Caption for visibility */}
-              {selectedPlatforms.length > 0 && currentContentTypeConfig && (
+              {selectedPlatforms.length > 0 && currentContentTypeConfig && !quickActionAsset && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="flex items-center gap-2">
@@ -1874,7 +1966,7 @@ export default function SocialCalendar() {
                 !caption.trim() || 
                 selectedPlatforms.length === 0 ||
                 caption.length > effectiveMaxCharacters ||
-                (requiresMedia && mediaFiles.length === 0)
+                (requiresMedia && mediaFiles.length === 0 && !quickActionAsset)
               }
               data-testid="button-submit-post"
             >
