@@ -208,7 +208,10 @@ class ContentExecutionAgent {
       const maxRetries = 2;
       
       for (let retry = 0; retry <= maxRetries; retry++) {
-        result = await this.publishPost(post, i, accountsByPlatform, profile.getLateProfileId);
+        result = await this.publishPost(post, i, accountsByPlatform, profile.getLateProfileId, {
+          promoTextEnabled: profile.promoTextEnabled,
+          promoText: profile.promoText,
+        });
         
         if (result.success) {
           break;
@@ -291,7 +294,8 @@ class ContentExecutionAgent {
     post: any,
     index: number,
     accountsByPlatform: Map<string, any>,
-    getLateProfileId: string | null
+    getLateProfileId: string | null,
+    promoSettings?: { promoTextEnabled: boolean; promoText: string | null }
   ): Promise<ExecutionResult> {
     const postId = post.id || `post_${index}`;
 
@@ -338,6 +342,11 @@ class ContentExecutionAgent {
         content += '\n\n' + post.hashtags.map((h: string) => 
           h.startsWith('#') ? h : `#${h}`
         ).join(' ');
+      }
+      
+      // Append promotional text if enabled
+      if (promoSettings?.promoTextEnabled && promoSettings.promoText) {
+        content += '\n\n' + promoSettings.promoText;
       }
 
       const createOptions: CreatePostOptions = {

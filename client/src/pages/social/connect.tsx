@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
@@ -27,6 +29,7 @@ import {
   RefreshCw,
   X,
   Send,
+  Megaphone,
 } from "lucide-react";
 import { 
   SiInstagram, 
@@ -380,6 +383,39 @@ export default function SocialConnect() {
     queryKey: ["/api/social/accounts"],
     enabled: !!user && !!socialProfile && subscriptionStatus?.hasSocialPoster === true,
     retry: 1,
+  });
+
+  // Promo text settings
+  const [promoTextEnabled, setPromoTextEnabled] = useState(false);
+  const [promoText, setPromoText] = useState('Create yours at artivio.ai');
+  
+  // Sync promo settings from profile when loaded
+  useEffect(() => {
+    if (socialProfile) {
+      setPromoTextEnabled(socialProfile.promoTextEnabled ?? false);
+      setPromoText(socialProfile.promoText ?? 'Create yours at artivio.ai');
+    }
+  }, [socialProfile]);
+
+  const updatePromoSettingsMutation = useMutation({
+    mutationFn: async (settings: { promoTextEnabled: boolean; promoText: string }) => {
+      const response = await apiRequest("PATCH", "/api/social/profile/promo-settings", settings);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/profile"] });
+      toast({
+        title: "Settings Saved",
+        description: "Your promotional text settings have been updated.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Save",
+        description: error.message || "Could not save settings.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Auto-sync on page load when user has social poster access
@@ -833,6 +869,72 @@ export default function SocialConnect() {
       </div>
 
       <Separator className="my-8" />
+
+      {/* Promotional Text Settings */}
+      <Card className="mb-4" data-testid="card-promo-settings">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-primary" />
+            Promotional Text
+          </CardTitle>
+          <CardDescription>
+            Automatically add a line at the end of each post to promote your website.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="promo-toggle" className="text-base font-medium">
+                Enable promotional text
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Add your custom message to every post
+              </p>
+            </div>
+            <Switch
+              id="promo-toggle"
+              checked={promoTextEnabled}
+              onCheckedChange={(checked) => {
+                setPromoTextEnabled(checked);
+                updatePromoSettingsMutation.mutate({ promoTextEnabled: checked, promoText });
+              }}
+              disabled={updatePromoSettingsMutation.isPending}
+              data-testid="switch-promo-enabled"
+            />
+          </div>
+          
+          {promoTextEnabled && (
+            <div className="space-y-2">
+              <Label htmlFor="promo-text">Promotional message</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="promo-text"
+                  value={promoText}
+                  onChange={(e) => setPromoText(e.target.value)}
+                  placeholder="Create yours at artivio.ai"
+                  className="flex-1"
+                  data-testid="input-promo-text"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => updatePromoSettingsMutation.mutate({ promoTextEnabled, promoText })}
+                  disabled={updatePromoSettingsMutation.isPending}
+                  data-testid="button-save-promo"
+                >
+                  {updatePromoSettingsMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This text will be appended to the end of every post published through the Content Execution Agent.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

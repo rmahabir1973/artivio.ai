@@ -359,6 +359,41 @@ export function registerSocialMediaRoutes(app: Express) {
     }
   });
 
+  // Update promo text settings
+  app.patch('/api/social/profile/promo-settings', requireJWT, requireSocialPoster, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { promoTextEnabled, promoText } = req.body;
+
+      // Find user's profile
+      const [profile] = await db
+        .select()
+        .from(socialProfiles)
+        .where(eq(socialProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Social profile not found' });
+      }
+
+      // Update promo settings
+      const [updatedProfile] = await db
+        .update(socialProfiles)
+        .set({
+          promoTextEnabled: promoTextEnabled ?? profile.promoTextEnabled,
+          promoText: promoText ?? profile.promoText,
+        })
+        .where(eq(socialProfiles.id, profile.id))
+        .returning();
+
+      console.log(`[Social] Updated promo settings for user ${userId}: enabled=${updatedProfile.promoTextEnabled}`);
+      res.json(updatedProfile);
+    } catch (error: any) {
+      console.error('[Social] Error updating promo settings:', error);
+      res.status(500).json({ message: 'Failed to update promo settings', error: error.message });
+    }
+  });
+
   // DEPRECATED: Legacy endpoint - returns error directing to secure flow
   // Use /api/social/accounts/connect instead for secure OAuth with nonce protection
   app.post('/api/social/connect-url', requireJWT, requireSocialPoster, async (req: any, res) => {

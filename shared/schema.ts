@@ -1872,6 +1872,9 @@ export const socialProfiles = pgTable("social_profiles", {
   isActive: boolean("is_active").notNull().default(true),
   connectedAccountsCount: integer("connected_accounts_count").notNull().default(0),
   lastSyncAt: timestamp("last_sync_at"),
+  // Promotional text settings
+  promoTextEnabled: boolean("promo_text_enabled").notNull().default(false),
+  promoText: varchar("promo_text").default('Create yours at artivio.ai'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => [
