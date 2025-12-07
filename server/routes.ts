@@ -2740,15 +2740,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.updateGeneration(generation.id, { status: 'processing' });
 
-          // Convert base64 to hosted URL
+          // Convert image (base64 or URL) to hosted URL
           let hostedImageUrl: string;
           try {
-            console.log('Converting base64 image to hosted URL...');
-            const hostedUrls = await saveBase64Images([imageData]);
+            console.log('Processing image input (base64 or URL)...');
+            // Use processImageInputs to handle both base64 and URL inputs (from Library quick action)
+            const hostedUrls = await processImageInputs([imageData]);
             hostedImageUrl = hostedUrls[0];
-            console.log(`✓ Image hosted at: ${hostedImageUrl}`);
+            console.log(`✓ Image ready at: ${hostedImageUrl}`);
           } catch (imageError: any) {
-            console.error('Failed to host image:', imageError);
+            console.error('Failed to process image:', imageError);
             throw new Error(`Failed to process image: ${imageError.message}`);
           }
 
