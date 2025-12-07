@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { db } from "../db";
-import { generations, socialPosts, users, pricing } from "@shared/schema";
+import { generations, socialPosts, users, pricing, socialHubAssets } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { generateImage, generateVideo } from "../kieai";
 import { storage } from "../storage";
@@ -319,6 +319,36 @@ export async function handleGenerationComplete(
       .where(eq(socialPosts.id, generation.socialPostId));
     
     console.log(`[Social Gen] Updated social post ${generation.socialPostId} with media URL and status ${updateData.mediaGenerationStatus}`);
+    
+    // Also save to Social Hub Library for easy access
+    try {
+      const urlsToSave = resultUrls && resultUrls.length > 0 ? resultUrls : [resultUrl];
+      
+      for (const url of urlsToSave) {
+        const filename = url.split('/').pop() || `social-${generation.type}-${Date.now()}`;
+        const mimeType = generation.type === 'image' ? 'image/jpeg' : 'video/mp4';
+        
+        await db.insert(socialHubAssets).values({
+          userId: generation.userId,
+          source: 'ai_generated',
+          generationId: generation.id,
+          type: generation.type,
+          filename,
+          url,
+          thumbnailUrl: generation.type === 'image' ? url : undefined,
+          mimeType,
+          title: post.title || `AI Generated ${generation.type}`,
+          description: generation.prompt,
+          tags: ['ai-generated', 'social-auto'],
+          contentPlanId: undefined,
+          postIndex: undefined,
+        });
+      }
+      
+      console.log(`[Social Gen] Saved ${urlsToSave.length} asset(s) to Social Hub Library for generation ${generationId}`);
+    } catch (hubError) {
+      console.error(`[Social Gen] Failed to save to Social Hub Library (non-fatal):`, hubError);
+    }
   } catch (error) {
     console.error(`[Social Gen] Failed to handle generation complete:`, error);
   }
