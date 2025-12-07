@@ -2540,59 +2540,88 @@ CONTENT PREFERENCES:
         return res.status(503).json({ message: 'AI content generation is not configured' });
       }
 
-      const durationDays = duration === '1week' ? 7 : duration === '2weeks' ? 14 : 30;
+      const durationDays = duration === '1week' ? 7 : duration === '2weeks' ? 14 : duration === '3months' ? 90 : 30;
 
-      // OPTIMIZATION: Process platforms in batches to prevent timeout
-      // Batch size of 3 platforms keeps each API call under 30 seconds
-      const BATCH_SIZE = 3;
+      // OPTIMIZATION: Process in chunks to prevent timeout
+      // 1. Batch platforms (max 3 at a time)
+      // 2. Batch time periods (max 7 days at a time)
+      const PLATFORM_BATCH_SIZE = 3;
+      const DAYS_PER_CHUNK = 7; // Generate 1 week at a time to avoid timeout
+      
       const platformBatches: string[][] = [];
-      for (let i = 0; i < filteredPlatforms.length; i += BATCH_SIZE) {
-        platformBatches.push(filteredPlatforms.slice(i, i + BATCH_SIZE));
+      for (let i = 0; i < filteredPlatforms.length; i += PLATFORM_BATCH_SIZE) {
+        platformBatches.push(filteredPlatforms.slice(i, i + PLATFORM_BATCH_SIZE));
+      }
+      
+      // Create time period chunks (week 1, week 2, etc.)
+      const weekChunks: { startDay: number; endDay: number; weekNum: number }[] = [];
+      for (let day = 1; day <= durationDays; day += DAYS_PER_CHUNK) {
+        const endDay = Math.min(day + DAYS_PER_CHUNK - 1, durationDays);
+        weekChunks.push({ startDay: day, endDay, weekNum: weekChunks.length + 1 });
       }
 
-      console.log(`[Social AI] Processing ${filteredPlatforms.length} platforms in ${platformBatches.length} batches`);
+      const totalBatches = platformBatches.length * weekChunks.length;
+      console.log(`[Social AI] Processing ${filteredPlatforms.length} platforms over ${durationDays} days`);
+      console.log(`[Social AI] Split into ${platformBatches.length} platform batches × ${weekChunks.length} week chunks = ${totalBatches} total API calls`);
 
       // Process batches sequentially to avoid rate limits
       const allPosts: any[] = [];
       let combinedStrategy = '';
       let combinedThemes: string[] = [];
       let combinedTips: string[] = [];
+      let batchNum = 0;
 
-      for (let i = 0; i < platformBatches.length; i++) {
-        const batch = platformBatches[i];
-        console.log(`[Social AI] Processing batch ${i + 1}/${platformBatches.length}: ${batch.join(', ')}`);
-        
-        const batchStartTime = Date.now();
-        try {
-          const result = await generatePlanForPlatforms(
-            batch, 
-            durationDays, 
-            goal.trim(), 
-            enhancedBusinessDescription, 
-            enhancedTargetAudience,
-            OPENAI_API_KEY,
-            brandContext,
-            automationLevel,
-            featuredMediaTypes,
-            normalizedIntensity
-          );
+      // Iterate over week chunks first, then platforms
+      for (const weekChunk of weekChunks) {
+        for (let i = 0; i < platformBatches.length; i++) {
+          batchNum++;
+          const batch = platformBatches[i];
+          const chunkDays = weekChunk.endDay - weekChunk.startDay + 1;
           
-          const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(1);
-          console.log(`[Social AI] Batch ${i + 1} completed in ${batchDuration}s with ${result.posts.length} posts`);
+          console.log(`[Social AI] Batch ${batchNum}/${totalBatches}: Week ${weekChunk.weekNum} (days ${weekChunk.startDay}-${weekChunk.endDay}), platforms: ${batch.join(', ')}`);
           
-          allPosts.push(...result.posts);
-          if (i === 0) {
-            combinedStrategy = result.strategy;
-            combinedThemes = result.weeklyThemes;
-            combinedTips = result.tips;
-          } else {
-            combinedTips.push(...result.tips.slice(0, 2));
+          const batchStartTime = Date.now();
+          try {
+            const result = await generatePlanForPlatforms(
+              batch, 
+              chunkDays, // Only generate for this chunk's days
+              goal.trim(), 
+              enhancedBusinessDescription, 
+              enhancedTargetAudience,
+              OPENAI_API_KEY,
+              brandContext,
+              automationLevel,
+              featuredMediaTypes,
+              normalizedIntensity
+            );
+            
+            const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(1);
+            console.log(`[Social AI] Batch ${batchNum} completed in ${batchDuration}s with ${result.posts.length} posts`);
+            
+            // Adjust day numbers to account for week offset
+            const adjustedPosts = result.posts.map((post: any) => ({
+              ...post,
+              day: post.day + weekChunk.startDay - 1 // Offset by start day of this chunk
+            }));
+            
+            allPosts.push(...adjustedPosts);
+            
+            // Only grab strategy/themes from first batch
+            if (batchNum === 1) {
+              combinedStrategy = result.strategy;
+              combinedThemes = result.weeklyThemes;
+              combinedTips = result.tips;
+            } else {
+              // Add unique themes and tips from other batches
+              combinedThemes.push(...result.weeklyThemes.filter(t => !combinedThemes.includes(t)));
+              combinedTips.push(...result.tips.slice(0, 1));
+            }
+          } catch (batchError: any) {
+            const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(1);
+            const errorType = batchError.name === 'AbortError' ? 'TIMEOUT' : 'ERROR';
+            console.error(`[Social AI] Batch ${batchNum} ${errorType} after ${batchDuration}s:`, batchError.message);
+            // Continue with other batches even if one fails
           }
-        } catch (batchError: any) {
-          const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(1);
-          const errorType = batchError.name === 'AbortError' ? 'TIMEOUT' : 'ERROR';
-          console.error(`[Social AI] Batch ${i + 1} ${errorType} after ${batchDuration}s:`, batchError.message);
-          // Continue with other batches even if one fails
         }
       }
 
