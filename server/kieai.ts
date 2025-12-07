@@ -843,11 +843,19 @@ export async function generateImage(params: {
   const referenceImages = params.referenceImages || [];
   
   // Route to appropriate API based on model
-  if (params.model === 'seedream-4') {
+  // Handle seedream-4 variants (seedream-4, seedream-4-1, seedream-4-3, etc.)
+  if (params.model === 'seedream-4' || params.model.startsWith('seedream-4-')) {
     // Seedream 4.0 - uses /api/v1/jobs/createTask (Bytedance Playground API)
     const imageResolution = parameters.imageResolution || '1K';
     const imageSize = parameters.imageSize || 'square_hd';
-    const maxImages = parameters.maxImages || 1;
+    // Extract image count from model variant (e.g., seedream-4-3 = 3 images)
+    let maxImages = parameters.maxImages || 1;
+    if (params.model.startsWith('seedream-4-')) {
+      const variantCount = parseInt(params.model.split('-')[2], 10);
+      if (!isNaN(variantCount) && variantCount >= 1 && variantCount <= 6) {
+        maxImages = variantCount;
+      }
+    }
     // Auto-generate seed if not provided
     const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
     
@@ -1013,7 +1021,7 @@ export async function generateImage(params: {
     return await callKieApi('/api/v1/flux/kontext/generate', payload);
   }
   
-  throw new Error(`Unsupported image model: ${params.model}. Supported models: 4o-image, flux-kontext, nano-banana, seedream-4, midjourney-v7`);
+  throw new Error(`Unsupported image model: ${params.model}. Supported models: 4o-image, flux-kontext, nano-banana, seedream-4 (or seedream-4-1 through seedream-4-6), midjourney-v7`);
 }
 
 // Helper: Map frontend model names to Kie.ai API model names

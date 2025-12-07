@@ -2414,6 +2414,16 @@ export const aiContentPlans = pgTable("ai_content_plans", {
       mediaPrompt?: string;
       hashtags?: string[];
       status: 'pending' | 'approved' | 'rejected' | 'scheduled' | 'posted';
+      // Linkage to socialPosts for media retrieval
+      socialPostId?: string;
+      mediaUrl?: string;
+      mediaType?: string;
+      // Tracking fields
+      postedAt?: string;
+      getLatePostId?: string;
+      failureCount?: number;
+      lastFailureReason?: string;
+      lastFailureAt?: string;
     }[];
     strategy?: string;
     contentPillars?: string[];

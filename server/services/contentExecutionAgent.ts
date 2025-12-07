@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { aiContentPlans, socialProfiles, socialAccounts, socialBrandKits } from '@shared/schema';
+import { aiContentPlans, socialProfiles, socialAccounts, socialBrandKits, socialPosts } from '@shared/schema';
 import { eq, and, lte, inArray } from 'drizzle-orm';
 import { getLateService, type SocialPlatform, type CreatePostOptions } from '../getLate';
 
@@ -348,6 +348,39 @@ class ContentExecutionAgent {
 
       if (getLateProfileId) {
         createOptions.queuedFromProfile = getLateProfileId;
+      }
+
+      // Include media if available (from aiContentPlan post or linked socialPost)
+      let mediaUrl = post.mediaUrl;
+      let mediaType = post.mediaType || 'image';
+      
+      // If no direct mediaUrl but has socialPostId, look up from socialPosts table
+      if (!mediaUrl && post.socialPostId) {
+        try {
+          const [linkedPost] = await db
+            .select({ mediaUrl: socialPosts.mediaUrl, mediaType: socialPosts.mediaType })
+            .from(socialPosts)
+            .where(eq(socialPosts.id, post.socialPostId))
+            .limit(1);
+          
+          if (linkedPost?.mediaUrl) {
+            mediaUrl = linkedPost.mediaUrl;
+            mediaType = linkedPost.mediaType || 'image';
+            console.log(`[ContentExecutionAgent] Retrieved media from linked socialPost ${post.socialPostId}: ${mediaUrl}`);
+          }
+        } catch (err) {
+          console.warn(`[ContentExecutionAgent] Failed to look up linked socialPost ${post.socialPostId}:`, err);
+        }
+      }
+      
+      if (mediaUrl) {
+        createOptions.mediaItems = [{
+          type: mediaType.includes('video') ? 'video' : 'image',
+          url: mediaUrl,
+        }];
+        console.log(`[ContentExecutionAgent] Including media: ${mediaUrl}`);
+      } else {
+        console.log(`[ContentExecutionAgent] No media URL for post (socialPostId: ${post.socialPostId || 'none'})`);
       }
 
       console.log(`[ContentExecutionAgent] Publishing to ${platforms.length} platform(s)`);

@@ -441,11 +441,20 @@ export default function SocialStrategist() {
                 data-testid="button-generate-strategy"
               >
                 {createGoalMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>
+                      {duration === '1month' || duration === '3months' 
+                        ? 'Generating (this may take a minute)...' 
+                        : 'Generating...'}
+                    </span>
+                  </>
                 ) : (
-                  <Sparkles className="w-4 h-4" />
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate Strategy
+                  </>
                 )}
-                Generate Strategy
               </Button>
             </CardFooter>
           </Card>

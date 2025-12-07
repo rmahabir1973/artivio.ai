@@ -3312,8 +3312,24 @@ CONTENT PREFERENCES:
         console.log(`[Content Plans] Creating ${postsToCreate.length} posts in socialPosts table`);
         let postsCreated = 0;
         let postsSkipped = 0;
+        
+        // Track socialPostIds to update plan JSONB with linkage
+        const updatedPlanPosts = [...plan.plan.posts];
 
-        for (const planPost of postsToCreate) {
+        for (let i = 0; i < plan.plan.posts.length; i++) {
+          const planPost = plan.plan.posts[i];
+          
+          // Skip posts that aren't pending or approved
+          if (planPost.status !== 'pending' && planPost.status !== 'approved') {
+            continue;
+          }
+          
+          // Skip posts that already have a socialPostId (prevents duplicates)
+          if (planPost.socialPostId) {
+            console.log(`[Content Plans] Post ${i} already has socialPostId ${planPost.socialPostId}, skipping`);
+            continue;
+          }
+          
           // Handle time fallback - default to 12:00 if missing
           const time = planPost.time && planPost.time.match(/^\d{2}:\d{2}$/) ? planPost.time : '12:00';
           const dateStr = `${planPost.date}T${time}:00`;
@@ -3331,7 +3347,7 @@ CONTENT PREFERENCES:
             const contentType = rawContentType.toString().trim().toLowerCase();
             const postType = getPostType(contentType, !!planPost.mediaPrompt);
             
-            await db.insert(socialPosts).values({
+            const [createdPost] = await db.insert(socialPosts).values({
               socialProfileId: profile.id,
               postType,
               contentType,
@@ -3343,13 +3359,32 @@ CONTENT PREFERENCES:
               status: 'scheduled',
               aiGenerated: true,
               aiPromptUsed: planPost.mediaPrompt || null,
-            });
+              // Link back to content plan
+              imagePrompt: planPost.mediaPrompt || null,
+              mediaMode: 'manual',
+            }).returning();
+            
+            // Store socialPostId in plan for Content Execution Agent
+            updatedPlanPosts[i] = {
+              ...planPost,
+              socialPostId: createdPost.id,
+              status: 'approved' as const,
+            };
+            
             postsCreated++;
           } catch (postError: any) {
             console.error(`[Content Plans] Error creating post:`, postError);
             postsSkipped++;
           }
         }
+        
+        // Update plan with socialPostIds for media linkage
+        await db
+          .update(aiContentPlans)
+          .set({
+            plan: { ...plan.plan, posts: updatedPlanPosts },
+          })
+          .where(eq(aiContentPlans.id, id));
 
         console.log(`[Content Plans] Plan ${id}: ${postsCreated} posts created, ${postsSkipped} skipped`);
         return res.json({ ...statusUpdated, postsCreated, postsSkipped });
