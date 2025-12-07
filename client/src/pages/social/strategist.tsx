@@ -84,6 +84,27 @@ const DURATIONS = [
   { value: "3months", label: "3 Months" },
 ];
 
+const POSTING_INTENSITIES = [
+  { 
+    value: "conservative", 
+    label: "Conservative", 
+    description: "1 post per platform every 2-3 days. Best for established brands.",
+    postsPerDay: "~2-3 posts total per day"
+  },
+  { 
+    value: "moderate", 
+    label: "Moderate", 
+    description: "1 post per platform per day. Balanced approach.",
+    postsPerDay: "~5-7 posts total per day"
+  },
+  { 
+    value: "aggressive", 
+    label: "Aggressive", 
+    description: "Maximum safe posts per platform. Best for new brands building presence.",
+    postsPerDay: "~10-15+ posts total per day"
+  },
+];
+
 interface PostGoal {
   id: number;
   goal: string;
@@ -109,6 +130,7 @@ export default function SocialStrategist() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [duration, setDuration] = useState("1week");
+  const [postingIntensity, setPostingIntensity] = useState("moderate");
   const [startDate, setStartDate] = useState<Date>(new Date()); // Default: today
   const [businessDescription, setBusinessDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
@@ -194,6 +216,7 @@ export default function SocialStrategist() {
       goal: selectedGoal,
       platforms: selectedPlatforms,
       duration,
+      postingIntensity,
       startDate: startDate.toISOString(),
       businessDescription,
       targetAudience,
@@ -405,6 +428,39 @@ export default function SocialStrategist() {
                     </PopoverContent>
                   </Popover>
                 </div>
+              </div>
+              
+              {/* Posting Intensity */}
+              <div className="space-y-3">
+                <Label>Posting Intensity</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  {POSTING_INTENSITIES.map((intensity) => {
+                    const isSelected = postingIntensity === intensity.value;
+                    return (
+                      <button
+                        key={intensity.value}
+                        type="button"
+                        onClick={() => setPostingIntensity(intensity.value)}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          isSelected 
+                            ? "border-primary bg-primary/5" 
+                            : "border-border hover-elevate"
+                        }`}
+                        data-testid={`button-intensity-${intensity.value}`}
+                      >
+                        <p className={`font-medium text-sm ${isSelected ? "text-primary" : ""}`}>
+                          {intensity.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {intensity.postsPerDay}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {POSTING_INTENSITIES.find(i => i.value === postingIntensity)?.description}
+                </p>
               </div>
               
               <div className="space-y-2">

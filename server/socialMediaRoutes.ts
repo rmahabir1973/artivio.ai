@@ -2213,7 +2213,8 @@ Response format:
     OPENAI_API_KEY: string,
     brandContext: string = '',
     automationLevel: 'manual' | 'ai_suggests' | 'semi_auto' | 'full_auto' = 'ai_suggests',
-    featuredMediaTypes: string[] = ['text', 'image']
+    featuredMediaTypes: string[] = ['text', 'image'],
+    postingIntensity: 'conservative' | 'moderate' | 'aggressive' = 'moderate'
   ): Promise<{ posts: any[], strategy: string, weeklyThemes: string[], tips: string[] }> {
     // Build platform-specific configuration info for AI prompt
     const platformInfo = platformBatch.map((platform: string) => {
@@ -2261,8 +2262,32 @@ ${p.displayName} (${p.platform}):
 ${p.contentTypeDetails.map((ct: any) => `    * ${ct.id}: ${ct.description}${ct.requiresMedia ? ' (requires media)' : ''}`).join('\n')}`
     ).join('\n');
 
-    // Limit posts per platform based on duration (1 post every 2-3 days per platform)
-    const postsPerPlatform = Math.min(Math.ceil(durationDays / 2), 7);
+    // Calculate posts per platform based on posting intensity
+    // Safe daily limits per platform (to avoid being flagged as spam):
+    // Conservative: 1 post every 2-3 days
+    // Moderate: 1 post per day
+    // Aggressive: Maximum safe posts (2-3 for most, more for Twitter/Pinterest)
+    let postsPerPlatformPerDay: number;
+    let intensityDescription: string;
+    
+    switch (postingIntensity) {
+      case 'conservative':
+        postsPerPlatformPerDay = 0.4; // ~1 post every 2-3 days
+        intensityDescription = 'conservative (1 post every 2-3 days per platform)';
+        break;
+      case 'aggressive':
+        postsPerPlatformPerDay = 2.5; // Maximum safe posting
+        intensityDescription = 'aggressive (2-3 posts per day per platform, maximize reach)';
+        break;
+      case 'moderate':
+      default:
+        postsPerPlatformPerDay = 1; // 1 post per day
+        intensityDescription = 'moderate (1 post per day per platform)';
+        break;
+    }
+    
+    const postsPerPlatform = Math.max(1, Math.min(Math.round(durationDays * postsPerPlatformPerDay), 21));
+    console.log(`[Social AI] Posting intensity: ${postingIntensity}, ${postsPerPlatform} posts per platform over ${durationDays} days`);
 
     // Determine if we should generate media prompts based on automation level
     const includeMediaPrompts = automationLevel !== 'manual';
@@ -2300,6 +2325,7 @@ Business: ${businessDescription || 'Not specified'}
 Goal: ${goal.trim()}
 Target audience: ${targetAudience || 'General audience'}
 Duration: ${durationDays} days
+Posting Intensity: ${intensityDescription}
 ${brandContext ? `
 ${brandContext}
 Use the brand identity, voice, and preferences above to create highly personalized content that matches the brand's personality.` : ''}
@@ -2401,7 +2427,11 @@ Return ONLY valid JSON:
   app.post('/api/social/ai/generate-plan', requireJWT, requireSocialPoster, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { goal, platforms, duration, startDate: startDateStr, businessDescription, targetAudience } = req.body;
+      const { goal, platforms, duration, postingIntensity, startDate: startDateStr, businessDescription, targetAudience } = req.body;
+      
+      // Validate posting intensity
+      const validIntensities = ['conservative', 'moderate', 'aggressive'];
+      const normalizedIntensity = validIntensities.includes(postingIntensity) ? postingIntensity : 'moderate';
       
       // Parse start date or default to tomorrow
       const startDate = startDateStr ? new Date(startDateStr) : new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -2543,7 +2573,8 @@ CONTENT PREFERENCES:
             OPENAI_API_KEY,
             brandContext,
             automationLevel,
-            featuredMediaTypes
+            featuredMediaTypes,
+            normalizedIntensity
           );
           
           const batchDuration = ((Date.now() - batchStartTime) / 1000).toFixed(1);
