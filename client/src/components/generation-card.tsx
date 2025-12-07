@@ -550,51 +550,51 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             </Button>
           </div>
 
-          <div className={`grid ${canUpscale ? 'grid-cols-4' : 'grid-cols-3'} gap-2 w-full`}>
+          <div className="flex flex-wrap gap-2 w-full">
             {generation.status === 'completed' && generation.resultUrl && (
               <>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={handleDownload}
-                  className="w-full"
+                  className="flex-1 min-w-[70px]"
                   data-testid={`button-download-${generation.id}`}
                 >
-                  <Download className="h-4 w-4 mr-1" />
-                  Download
+                  <Download className="h-4 w-4 shrink-0" />
+                  <span className="ml-1 truncate">Download</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={handleCopyUrl}
-                  className="w-full"
+                  className="flex-1 min-w-[50px]"
                   data-testid={`button-copy-url-${generation.id}`}
                   title="Copy download URL"
                 >
-                  <Link2 className="h-4 w-4 mr-1" />
-                  URL
+                  <Link2 className="h-4 w-4 shrink-0" />
+                  <span className="ml-1 truncate">URL</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={handleCopyPrompt}
-                  className="w-full"
+                  className="flex-1 min-w-[50px]"
                   data-testid={`button-copy-${generation.id}`}
                   title="Copy prompt"
                 >
-                  <Copy className="h-4 w-4 mr-1" />
-                  Copy
+                  <Copy className="h-4 w-4 shrink-0" />
+                  <span className="ml-1 truncate">Copy</span>
                 </Button>
                 {canUpscale && (
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => setShowUpscaleModal(true)}
-                    className="w-full"
+                    className="flex-1 min-w-[70px]"
                     data-testid={`button-upscale-${generation.id}`}
                   >
-                    <Maximize2 className="h-4 w-4 mr-1" />
-                    Upscale
+                    <Maximize2 className="h-4 w-4 shrink-0" />
+                    <span className="ml-1 truncate">Upscale</span>
                   </Button>
                 )}
               </>
@@ -625,24 +625,18 @@ export function GenerationCard({ generation }: GenerationCardProps) {
             </Button>
           )}
 
-          <div className={
-            canRegenerate && generation.seed 
-              ? "grid grid-cols-3 gap-2 w-full" 
-              : canRegenerate 
-                ? "grid grid-cols-2 gap-2 w-full" 
-                : "w-full"
-          }>
+          <div className="flex flex-wrap gap-2 w-full">
             {canRegenerate && (
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={handleRegenerate}
                 disabled={regenerateMutation.isPending}
-                className="w-full"
+                className="flex-1 min-w-[90px]"
                 data-testid={`button-regenerate-${generation.id}`}
               >
-                <RotateCw className={cn("h-4 w-4 mr-1", regenerateMutation.isPending && "animate-spin")} />
-                {regenerateMutation.isPending ? "Regenerating..." : "Regenerate"}
+                <RotateCw className={cn("h-4 w-4 shrink-0", regenerateMutation.isPending && "animate-spin")} />
+                <span className="ml-1 truncate">{regenerateMutation.isPending ? "Regenerating..." : "Regenerate"}</span>
               </Button>
             )}
             {generation.seed && canRegenerate && (
@@ -650,11 +644,11 @@ export function GenerationCard({ generation }: GenerationCardProps) {
                 variant="outline" 
                 size="sm"
                 onClick={handleReuseSeed}
-                className="w-full"
+                className="flex-1 min-w-[70px]"
                 data-testid={`button-reuse-seed-${generation.id}`}
               >
-                <Copy className="h-4 w-4 mr-1" />
-                Use Seed
+                <Copy className="h-4 w-4 shrink-0" />
+                <span className="ml-1 truncate">Use Seed</span>
               </Button>
             )}
             <Button 
@@ -662,18 +656,18 @@ export function GenerationCard({ generation }: GenerationCardProps) {
               size="sm" 
               onClick={() => setShowDeleteDialog(true)}
               disabled={deleteMutation.isPending}
-              className="w-full text-destructive hover:text-destructive"
+              className="flex-1 min-w-[60px] text-destructive hover:text-destructive"
               data-testid={`button-delete-${generation.id}`}
             >
               {generation.status === 'processing' || generation.status === 'pending' ? (
                 <>
-                  <RotateCw className="h-4 w-4 mr-1" />
-                  Cancel
+                  <RotateCw className="h-4 w-4 shrink-0" />
+                  <span className="ml-1 truncate">Cancel</span>
                 </>
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
+                  <Trash2 className="h-4 w-4 shrink-0" />
+                  <span className="ml-1 truncate">Delete</span>
                 </>
               )}
             </Button>
