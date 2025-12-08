@@ -59,6 +59,10 @@ import {
   SlidersHorizontal,
   MessageSquare,
   ImageIcon,
+  Save,
+  FolderOpen,
+  Copy,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -76,6 +80,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import type { VideoProject } from "@shared/schema";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -454,6 +460,14 @@ export default function VideoEditor() {
   // Preview state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  // Project management state
+  const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [projectTitle, setProjectTitle] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
+  const [isSaveAs, setIsSaveAs] = useState(false);
 
   const ITEMS_PER_PAGE = 12;
   
@@ -994,6 +1008,217 @@ export default function VideoEditor() {
     },
   });
 
+  // ==========================================
+  // Project Management Queries & Mutations
+  // ==========================================
+
+  // Fetch user's saved projects
+  const { data: savedProjects = [], isLoading: projectsLoading, refetch: refetchProjects } = useQuery<VideoProject[]>({
+    queryKey: ['/api/video-projects'],
+    enabled: isAuthenticated,
+  });
+
+  // Save project mutation
+  const saveProjectMutation = useMutation({
+    mutationFn: async ({ title, description, isNew }: { title: string; description: string; isNew: boolean }) => {
+      // Build timeline data from current editor state
+      const timelineData = {
+        version: 1,
+        clips: orderedClips.map((clip, index) => ({
+          id: clip.id,
+          url: clip.url,
+          thumbnailUrl: clip.thumbnailUrl,
+          prompt: clip.prompt,
+          createdAt: clip.createdAt,
+          order: index,
+          settings: clipSettings.get(clip.id) || { clipId: clip.id, muted: false, volume: 1, speed: 1.0 },
+        })),
+        enhancements,
+        selectedIds: Array.from(selectedIds),
+      };
+
+      // Calculate total duration (estimate)
+      const durationSeconds = orderedClips.length * 5; // Approximate
+
+      if (isNew || !currentProject) {
+        // Create new project
+        const response = await apiRequest("POST", "/api/video-projects", {
+          title,
+          description,
+          timelineData,
+          settings: { step },
+          durationSeconds,
+        });
+        return await response.json();
+      } else {
+        // Update existing project
+        const response = await apiRequest("PATCH", `/api/video-projects/${currentProject.id}`, {
+          title,
+          description,
+          timelineData,
+          settings: { step },
+          durationSeconds,
+          status: 'saved',
+        });
+        return await response.json();
+      }
+    },
+    onSuccess: (project: VideoProject) => {
+      setCurrentProject(project);
+      setShowSaveModal(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/video-projects'] });
+      toast({
+        title: isSaveAs ? "Project Saved As New" : "Project Saved",
+        description: `"${project.title}" has been saved successfully.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save project",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Clone project mutation (Save As)
+  const cloneProjectMutation = useMutation({
+    mutationFn: async ({ projectId, title }: { projectId: string; title: string }) => {
+      const response = await apiRequest("POST", `/api/video-projects/${projectId}/clone`, { title });
+      return await response.json();
+    },
+    onSuccess: (project: VideoProject) => {
+      setCurrentProject(project);
+      setShowSaveModal(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/video-projects'] });
+      toast({
+        title: "Project Cloned",
+        description: `Created new project "${project.title}" from the original.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Clone Failed",
+        description: error.message || "Failed to clone project",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete project mutation
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      await apiRequest("DELETE", `/api/video-projects/${projectId}`);
+      return projectId;
+    },
+    onSuccess: (deletedId: string) => {
+      if (currentProject?.id === deletedId) {
+        setCurrentProject(null);
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/video-projects'] });
+      toast({
+        title: "Project Deleted",
+        description: "The project has been removed.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete project",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Load a project into the editor
+  const loadProject = useCallback((project: VideoProject) => {
+    const timeline = project.timelineData as any;
+    
+    if (!timeline || !timeline.clips) {
+      toast({
+        title: "Invalid Project",
+        description: "This project has no saved timeline data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Restore clips
+    const restoredClips: VideoClip[] = timeline.clips.map((c: any) => ({
+      id: c.id,
+      url: c.url,
+      thumbnailUrl: c.thumbnailUrl,
+      prompt: c.prompt,
+      createdAt: c.createdAt,
+    }));
+    setOrderedClips(restoredClips);
+
+    // Restore clip settings
+    const newClipSettings = new Map<string, ClipSettingsLocal>();
+    timeline.clips.forEach((c: any) => {
+      if (c.settings) {
+        newClipSettings.set(c.id, c.settings);
+      }
+    });
+    setClipSettings(newClipSettings);
+
+    // Restore selected IDs
+    if (timeline.selectedIds) {
+      setSelectedIds(new Set(timeline.selectedIds));
+    }
+
+    // Restore enhancements
+    if (timeline.enhancements) {
+      setEnhancements(timeline.enhancements);
+    }
+
+    // Set current project
+    setCurrentProject(project);
+    setShowLoadModal(false);
+
+    // Navigate to arrange step if we have clips
+    if (restoredClips.length > 0) {
+      setStep(2);
+    }
+
+    toast({
+      title: "Project Loaded",
+      description: `"${project.title}" has been loaded into the editor.`,
+    });
+  }, [toast]);
+
+  // Open save dialog
+  const openSaveDialog = useCallback((saveAs: boolean = false) => {
+    setIsSaveAs(saveAs);
+    setProjectTitle(currentProject?.title || '');
+    setProjectDescription(currentProject?.description || '');
+    setShowSaveModal(true);
+  }, [currentProject]);
+
+  // Handle save form submit
+  const handleSaveProject = useCallback(() => {
+    if (!projectTitle.trim()) {
+      toast({
+        title: "Title Required",
+        description: "Please enter a project title.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isSaveAs && currentProject) {
+      // Clone the project with new title
+      cloneProjectMutation.mutate({ projectId: currentProject.id, title: projectTitle });
+    } else {
+      // Save or update
+      saveProjectMutation.mutate({ 
+        title: projectTitle, 
+        description: projectDescription, 
+        isNew: isSaveAs || !currentProject 
+      });
+    }
+  }, [projectTitle, projectDescription, isSaveAs, currentProject, saveProjectMutation, cloneProjectMutation, toast]);
+
   const toggleVideoSelection = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -1135,12 +1360,59 @@ export default function VideoEditor() {
               </div>
             </div>
             
-            <Badge variant="secondary" className="flex items-center gap-1.5" data-testid="badge-credit-cost">
-              <Coins className="h-3.5 w-3.5" />
-              <span>{baseCreditCost} credits</span>
-            </Badge>
-
             <div className="flex items-center gap-2">
+              {/* Current Project Indicator */}
+              {currentProject && (
+                <Badge variant="outline" className="flex items-center gap-1.5 max-w-[150px]" data-testid="badge-current-project">
+                  <Film className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{currentProject.title}</span>
+                </Badge>
+              )}
+              
+              {/* Credit Cost */}
+              <Badge variant="secondary" className="flex items-center gap-1.5" data-testid="badge-credit-cost">
+                <Coins className="h-3.5 w-3.5" />
+                <span>{baseCreditCost} credits</span>
+              </Badge>
+
+              {/* Project Actions Dropdown */}
+              {isAuthenticated && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" data-testid="button-project-menu">
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      Projects
+                      <ChevronDown className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => setShowLoadModal(true)} data-testid="menu-item-load">
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      Open Project
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => openSaveDialog(false)}
+                      disabled={orderedClips.length === 0}
+                      data-testid="menu-item-save"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {currentProject ? 'Save Project' : 'Save As New'}
+                    </DropdownMenuItem>
+                    {currentProject && (
+                      <DropdownMenuItem onClick={() => openSaveDialog(true)} data-testid="menu-item-save-as">
+                        <Copy className="h-4 w-4 mr-2" />
+                        Save As Copy
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={resetEditor} data-testid="menu-item-new">
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Project
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
               {step > 1 && (
                 <Button variant="outline" onClick={goBack} data-testid="button-back">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -2635,6 +2907,184 @@ export default function VideoEditor() {
             >
               Continue to Export
               <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Project Dialog */}
+      <Dialog open={showSaveModal} onOpenChange={setShowSaveModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Save className="h-5 w-5" />
+              {isSaveAs ? 'Save As New Project' : (currentProject ? 'Save Project' : 'Save New Project')}
+            </DialogTitle>
+            <DialogDescription>
+              {isSaveAs 
+                ? 'Create a copy of this project with a new name.'
+                : 'Save your current timeline and settings for later.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="project-title">Project Title</Label>
+              <Input
+                id="project-title"
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                placeholder="My Video Project"
+                data-testid="input-project-title"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="project-description">Description (optional)</Label>
+              <Input
+                id="project-description"
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                placeholder="A brief description of your project"
+                data-testid="input-project-description"
+              />
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              {orderedClips.length} clip{orderedClips.length !== 1 ? 's' : ''} will be saved
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveModal(false)} data-testid="button-cancel-save">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveProject}
+              disabled={saveProjectMutation.isPending || cloneProjectMutation.isPending}
+              data-testid="button-confirm-save"
+            >
+              {(saveProjectMutation.isPending || cloneProjectMutation.isPending) && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              <Save className="h-4 w-4 mr-2" />
+              {isSaveAs ? 'Save Copy' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Load Project Dialog */}
+      <Dialog open={showLoadModal} onOpenChange={setShowLoadModal}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5" />
+              Open Project
+            </DialogTitle>
+            <DialogDescription>
+              Load a previously saved project to continue editing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {projectsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : savedProjects.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No saved projects yet.</p>
+                <p className="text-sm">Save your current work to see it here.</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-2">
+                  {savedProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-lg border hover-elevate cursor-pointer",
+                        currentProject?.id === project.id && "border-primary bg-primary/5"
+                      )}
+                      onClick={() => loadProject(project)}
+                      data-testid={`project-item-${project.id}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Film className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="font-medium truncate">{project.title}</span>
+                          {currentProject?.id === project.id && (
+                            <Badge variant="secondary" className="text-xs">Current</Badge>
+                          )}
+                        </div>
+                        {project.description && (
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">
+                            {project.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(project.updatedAt).toLocaleDateString()}
+                          </span>
+                          {project.durationSeconds && (
+                            <span>{Math.round(project.durationSeconds)}s</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" data-testid={`project-menu-${project.id}`}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              loadProject(project);
+                            }}
+                          >
+                            <FolderOpen className="h-4 w-4 mr-2" />
+                            Open
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cloneProjectMutation.mutate({ projectId: project.id, title: `${project.title} (Copy)` });
+                            }}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
+                                deleteProjectMutation.mutate(project.id);
+                              }
+                            }}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLoadModal(false)} data-testid="button-close-load">
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
