@@ -102,6 +102,7 @@ interface ClipSettingsLocal {
   clipId: string;
   muted: boolean;
   volume: number;
+  speed: number; // 0.5 to 2.0
   trimStartSeconds?: number;
   trimEndSeconds?: number;
 }
@@ -109,6 +110,10 @@ interface ClipSettingsLocal {
 interface EnhancementsState {
   transitionMode: 'none' | 'crossfade';
   transitionDuration: number;
+  fadeIn: boolean;
+  fadeOut: boolean;
+  fadeDuration: number; // seconds
+  aspectRatio: '16:9' | '9:16' | '1:1';
   backgroundMusic?: {
     audioUrl: string;
     volume: number;
@@ -412,6 +417,10 @@ export default function VideoEditor() {
   const [enhancements, setEnhancements] = useState<EnhancementsState>({
     transitionMode: 'none',
     transitionDuration: 1.0,
+    fadeIn: false,
+    fadeOut: false,
+    fadeDuration: 0.5,
+    aspectRatio: '16:9',
     textOverlays: [],
   });
   const [showClipSettingsModal, setShowClipSettingsModal] = useState(false);
@@ -437,6 +446,7 @@ export default function VideoEditor() {
       clipId,
       muted: false,
       volume: 1,
+      speed: 1.0,
     };
   }, [clipSettings]);
   
@@ -541,6 +551,7 @@ export default function VideoEditor() {
         clipId: secondClipId,
         muted: currentSettings.muted,
         volume: currentSettings.volume,
+        speed: currentSettings.speed,
         trimStartSeconds: existingTrimStart + splitTime,
         trimEndSeconds: existingTrimEnd,
       });
@@ -775,7 +786,7 @@ export default function VideoEditor() {
         })),
       };
 
-      // Serialize clip settings from local state (includes trim times for split clips)
+      // Serialize clip settings from local state (includes trim times for split clips and speed)
       const clipSettingsArray = clips.map((clip, index) => {
         const localSettings = clipSettings.get(clip.id);
         return {
@@ -783,6 +794,7 @@ export default function VideoEditor() {
           clipIndex: index,
           muted: localSettings?.muted ?? false,
           volume: localSettings?.volume ?? 1,
+          speed: localSettings?.speed ?? 1.0,
           trimStartSeconds: localSettings?.trimStartSeconds,
           trimEndSeconds: localSettings?.trimEndSeconds,
         };
@@ -794,6 +806,10 @@ export default function VideoEditor() {
           mode: 'crossfade' as const,
           durationSeconds: enhancements.transitionDuration,
         } : { mode: 'none' as const },
+        fadeIn: enhancements.fadeIn,
+        fadeOut: enhancements.fadeOut,
+        fadeDuration: enhancements.fadeDuration,
+        aspectRatio: enhancements.aspectRatio,
         backgroundMusic: enhancements.backgroundMusic ? {
           audioUrl: enhancements.backgroundMusic.audioUrl,
           volume: enhancements.backgroundMusic.volume,
@@ -807,7 +823,7 @@ export default function VideoEditor() {
           colorHex: to.colorHex,
         })),
         clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+          cs.muted || cs.volume !== 1 || cs.speed !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
         ),
         audioTrack: enhancements.audioTrack ? {
           audioUrl: enhancements.audioTrack.audioUrl,
@@ -890,6 +906,7 @@ export default function VideoEditor() {
           clipIndex: index,
           muted: localSettings?.muted ?? false,
           volume: localSettings?.volume ?? 1,
+          speed: localSettings?.speed ?? 1.0,
           trimStartSeconds: localSettings?.trimStartSeconds,
           trimEndSeconds: localSettings?.trimEndSeconds,
         };
@@ -900,8 +917,12 @@ export default function VideoEditor() {
           mode: 'crossfade' as const,
           durationSeconds: enhancements.transitionDuration,
         } : { mode: 'none' as const },
+        fadeIn: enhancements.fadeIn,
+        fadeOut: enhancements.fadeOut,
+        fadeDuration: enhancements.fadeDuration,
+        aspectRatio: enhancements.aspectRatio,
         clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+          cs.muted || cs.volume !== 1 || cs.speed !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
         ),
       };
 
@@ -1424,6 +1445,63 @@ export default function VideoEditor() {
                                       />
                                     </div>
                                   )}
+                                  
+                                  <div className="border-t pt-3 space-y-3">
+                                    <Label className="text-xs font-medium">Fade Effects</Label>
+                                    <div className="flex items-center gap-4">
+                                      <div className="flex items-center gap-2">
+                                        <Switch
+                                          checked={enhancements.fadeIn}
+                                          onCheckedChange={(v) => setEnhancements(prev => ({ ...prev, fadeIn: v }))}
+                                          data-testid="switch-fade-in"
+                                        />
+                                        <Label className="text-xs">Fade In</Label>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Switch
+                                          checked={enhancements.fadeOut}
+                                          onCheckedChange={(v) => setEnhancements(prev => ({ ...prev, fadeOut: v }))}
+                                          data-testid="switch-fade-out"
+                                        />
+                                        <Label className="text-xs">Fade Out</Label>
+                                      </div>
+                                    </div>
+                                    {(enhancements.fadeIn || enhancements.fadeOut) && (
+                                      <div className="space-y-2">
+                                        <Label className="text-xs flex justify-between">
+                                          Fade Duration
+                                          <span className="text-muted-foreground">{enhancements.fadeDuration}s</span>
+                                        </Label>
+                                        <Slider
+                                          value={[enhancements.fadeDuration]}
+                                          min={0.3}
+                                          max={2}
+                                          step={0.1}
+                                          onValueChange={([v]) => setEnhancements(prev => ({ ...prev, fadeDuration: v }))}
+                                          data-testid="slider-fade-duration"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="border-t pt-3 space-y-2">
+                                    <Label className="text-xs">Aspect Ratio</Label>
+                                    <Select
+                                      value={enhancements.aspectRatio}
+                                      onValueChange={(v: '16:9' | '9:16' | '1:1') => 
+                                        setEnhancements(prev => ({ ...prev, aspectRatio: v }))
+                                      }
+                                    >
+                                      <SelectTrigger className="h-9" data-testid="select-aspect-ratio">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
+                                        <SelectItem value="9:16">9:16 (Portrait/TikTok)</SelectItem>
+                                        <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
                                 </TabsContent>
 
                                 <TabsContent value="music" className="p-3 space-y-4 m-0">
@@ -2040,13 +2118,28 @@ export default function VideoEditor() {
                   </div>
                 )}
                 
-                <div className="pt-4 border-t">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <Scissors className="h-4 w-4" />
-                    Trim Controls (Coming Soon)
-                  </div>
+                <div className="pt-4 border-t space-y-2">
+                  <Label className="text-sm flex justify-between">
+                    <span className="flex items-center gap-2">
+                      <Play className="h-4 w-4" />
+                      Speed
+                    </span>
+                    <span className="text-muted-foreground">
+                      {getClipSettings(editingClip.clip.id).speed}x
+                    </span>
+                  </Label>
+                  <Slider
+                    value={[getClipSettings(editingClip.clip.id).speed]}
+                    min={0.5}
+                    max={2}
+                    step={0.25}
+                    onValueChange={([v]) => 
+                      updateClipSettings(editingClip.clip.id, { speed: v })
+                    }
+                    data-testid="slider-clip-speed"
+                  />
                   <p className="text-xs text-muted-foreground">
-                    Set start and end points to trim this clip in the final export.
+                    0.5x = slow motion, 2x = double speed
                   </p>
                 </div>
               </div>
