@@ -30,12 +30,15 @@ interface VideoMetadata {
 export interface CombineVideosOptions {
   videoUrls: string[];
   enhancements?: VideoEnhancements;
+  previewMode?: boolean; // Generate low-res 360p preview for speed
   onProgress?: (stage: string, message: string) => void;
 }
 
 export interface CombineVideosResult {
   outputPath: string;
+  outputUrl: string; // S3 URL or local path for serving
   durationSeconds: number;
+  duration: number; // Alias for durationSeconds
   tempFiles: string[];
 }
 
@@ -210,11 +213,18 @@ async function getAudioDuration(filepath: string): Promise<number> {
   }
 }
 
+interface NormalizeOptions {
+  trimStartSeconds?: number;
+  trimEndSeconds?: number;
+  previewMode?: boolean; // Use 360p and faster encoding for preview
+}
+
 /**
  * Normalize video to standard format (MP4 with H.264 + AAC) with bitrate limiting
  * CRITICAL: Ensures consistent fps, resolution, and audio sample rate for smooth transitions
+ * Supports optional trimming via trimStartSeconds and trimEndSeconds
  */
-async function normalizeVideo(inputPath: string, outputPath: string): Promise<void> {
+async function normalizeVideo(inputPath: string, outputPath: string, options?: NormalizeOptions): Promise<void> {
   try {
     // Get metadata first to check for audio
     const metadata = await getVideoMetadata(inputPath);
@@ -225,19 +235,43 @@ async function normalizeVideo(inputPath: string, outputPath: string): Promise<vo
       ? '-c:a aac -b:a 128k -ar 44100 -ac 2' 
       : '-an'; // No audio output if input has no audio
     
-    // Optimize for streaming: limit resolution to 720p and bitrate to 2500k
-    // movflags +faststart enables instant playback by moving metadata to start of file
-    // CRITICAL: Use pad filter to ensure all videos are EXACTLY 1280x720 for proper concatenation
+    // Build seek/trim flags for clip splitting
+    let seekFlags = '';
+    let durationFlags = '';
+    
+    if (options?.trimStartSeconds !== undefined && options.trimStartSeconds > 0) {
+      // Use -ss before -i for fast seeking
+      seekFlags = `-ss ${options.trimStartSeconds.toFixed(3)}`;
+    }
+    
+    if (options?.trimEndSeconds !== undefined && options.trimEndSeconds > 0) {
+      // Calculate duration if we have an end time
+      const startTime = options?.trimStartSeconds ?? 0;
+      const duration = Math.max(0.1, options.trimEndSeconds - startTime);
+      durationFlags = `-t ${duration.toFixed(3)}`;
+    }
+    
+    // Preview mode uses 360p and faster encoding for speed
+    // Normal mode uses 720p with higher quality
+    const resolution = options?.previewMode ? '640:360' : '1280:720';
+    const bitrate = options?.previewMode ? '800k' : '2500k';
+    const crf = options?.previewMode ? 28 : 24;
+    const preset = options?.previewMode ? 'ultrafast' : 'fast';
+    
+    // Optimize for streaming: movflags +faststart enables instant playback
+    // CRITICAL: Use pad filter to ensure consistent resolution for proper concatenation
     // CRITICAL: Force 30fps for consistent frame timing across all clips (prevents transition jitter)
-    // Without consistent fps, xfade transitions produce visual artifacts
-    const command = `ffmpeg -i "${inputPath}" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black,fps=30" -c:v libx264 -b:v 2500k -preset fast -crf 24 -movflags +faststart ${audioFlags} -y "${outputPath}"`;
+    const command = `ffmpeg ${seekFlags} -i "${inputPath}" ${durationFlags} -vf "scale=${resolution}:force_original_aspect_ratio=decrease,pad=${resolution}:-1:-1:color=black,fps=30" -c:v libx264 -b:v ${bitrate} -preset ${preset} -crf ${crf} -movflags +faststart ${audioFlags} -y "${outputPath}"`;
     
     await execAsync(command, {
       timeout: 300000,
       maxBuffer: 50 * 1024 * 1024,
     });
 
-    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'}, resolution: 720p, fps: 30, bitrate: 2500k)`);
+    const trimInfo = (options?.trimStartSeconds || options?.trimEndSeconds) 
+      ? `, trim: ${options.trimStartSeconds ?? 0}s - ${options.trimEndSeconds ?? 'end'}` 
+      : '';
+    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'}, resolution: 720p, fps: 30, bitrate: 2500k${trimInfo})`);
   } catch (error: any) {
     console.error(`Normalization error for ${inputPath}:`, error.message);
     throw new Error(`Failed to normalize video: ${error.message}`);
@@ -499,10 +533,12 @@ function getTextPosition(
 }
 
 export async function combineVideos(options: CombineVideosOptions): Promise<CombineVideosResult> {
-  const { videoUrls, enhancements, onProgress } = options;
+  const { videoUrls, enhancements, previewMode = false, onProgress } = options;
 
-  if (!videoUrls || videoUrls.length < 2) {
-    throw new Error('At least 2 videos are required');
+  // In preview mode, allow single videos; otherwise require 2+
+  const minVideos = previewMode ? 1 : 2;
+  if (!videoUrls || videoUrls.length < minVideos) {
+    throw new Error(`At least ${minVideos} videos are required`);
   }
 
   if (videoUrls.length > 20) {
@@ -536,13 +572,23 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       downloadedPaths.map(filepath => getVideoMetadata(filepath))
     );
 
-    // CRITICAL: Always normalize ALL videos to ensure consistent fps (30), resolution (720p), 
+    // CRITICAL: Always normalize ALL videos to ensure consistent fps (30), resolution (720p or 360p for preview), 
     // and audio sample rate (44100Hz) for smooth crossfade transitions
     // Without consistent parameters, xfade transitions produce visual/audio artifacts
+    // Also applies per-clip trimming from clipSettings (for split clips)
     const normalizePromises = downloadedPaths.map(async (filepath, i) => {
-      onProgress?.('normalize', `Normalizing video ${i + 1}/${downloadedPaths.length}...`);
+      onProgress?.('normalize', `Normalizing video ${i + 1}/${downloadedPaths.length}${previewMode ? ' (preview)' : ''}...`);
       const normalizedPath = path.join(tempDir!, `normalized_${i}.mp4`);
-      await normalizeVideo(filepath, normalizedPath);
+      
+      // Get trim settings for this clip (if it was split)
+      const clipSetting = enhancements?.clipSettings?.find(cs => cs.clipIndex === i);
+      const trimOptions: NormalizeOptions = {
+        trimStartSeconds: clipSetting?.trimStartSeconds,
+        trimEndSeconds: clipSetting?.trimEndSeconds,
+        previewMode, // Pass preview mode for lower quality encoding
+      };
+      
+      await normalizeVideo(filepath, normalizedPath, trimOptions);
       tempFiles.push(normalizedPath);
       return normalizedPath;
     });
@@ -861,7 +907,9 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
     return {
       outputPath: finalUrl,
+      outputUrl: finalUrl,
       durationSeconds: Math.round(totalDuration),
+      duration: Math.round(totalDuration),
       tempFiles,
     };
 

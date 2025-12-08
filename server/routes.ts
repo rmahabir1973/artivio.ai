@@ -8226,6 +8226,58 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
   
+  // Generate quick low-res preview (local processing for speed)
+  // This creates a fast 360p preview of the video project
+  app.post('/api/video-editor/preview', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { project, enhancements } = req.body;
+      
+      if (!project || !project.clips || !Array.isArray(project.clips) || project.clips.length < 1) {
+        return res.status(400).json({ message: "Project with at least one clip is required" });
+      }
+      
+      // Limit preview to first 3 clips for speed
+      const previewClips = project.clips.slice(0, 3);
+      
+      console.log(`[Video Editor] Starting preview generation for user ${userId} with ${previewClips.length} clips`);
+      
+      // Extract video URLs from clips (handle both formats from frontend)
+      const videoUrls = previewClips.map((clip: any) => clip.sourceUrl || clip.url);
+      
+      // Build preview enhancements (simplified)
+      const previewEnhancements = enhancements ? {
+        transitions: enhancements.transitions,
+        clipSettings: enhancements.clipSettings?.filter((cs: any) => 
+          previewClips.some((clip: any, index: number) => cs.clipIndex === index)
+        ),
+      } : undefined;
+      
+      // Use local FFmpeg processing with lower quality settings for speed
+      const { combineVideos } = await import('./videoProcessor.js');
+      
+      const result = await combineVideos({
+        videoUrls,
+        enhancements: previewEnhancements,
+        previewMode: true, // Signal to use lower quality settings
+        onProgress: (stage, message) => {
+          console.log(`[Preview] ${stage}: ${message}`);
+        },
+      });
+      
+      res.json({
+        status: 'completed',
+        previewUrl: result.outputUrl,
+        duration: result.duration,
+        message: 'Preview generated successfully',
+      });
+      
+    } catch (error: any) {
+      console.error('[Video Editor] Preview error:', error);
+      res.status(500).json({ message: error.message || "Failed to generate preview" });
+    }
+  });
+  
   // Lambda callback for async export completion
   // Security: Validate callback with shared secret from AWS Lambda
   app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {

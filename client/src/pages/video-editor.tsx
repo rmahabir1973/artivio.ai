@@ -54,6 +54,7 @@ import {
   Scissors,
   Plus,
   ChevronDown,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -140,6 +141,7 @@ interface SortableClipProps {
   onRemove: (id: string) => void;
   onToggleMute: (id: string) => void;
   onOpenSettings: (clip: VideoClip, index: number) => void;
+  onSplitClip: (clip: VideoClip, index: number) => void;
   isMobile: boolean;
   showTransition: boolean;
   transitionMode: 'none' | 'crossfade';
@@ -152,6 +154,7 @@ function SortableClip({
   onRemove, 
   onToggleMute,
   onOpenSettings,
+  onSplitClip,
   isMobile,
   showTransition,
   transitionMode,
@@ -249,6 +252,23 @@ function SortableClip({
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 {clipSettings.muted ? 'Unmute clip' : 'Mute clip'}
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onSplitClip(clip, clipIndex)}
+                  data-testid={`split-clip-${clip.id}`}
+                >
+                  <Scissors className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Split clip
               </TooltipContent>
             </Tooltip>
             
@@ -395,6 +415,17 @@ export default function VideoEditor() {
   const [showClipSettingsModal, setShowClipSettingsModal] = useState(false);
   const [editingClip, setEditingClip] = useState<{ clip: VideoClip; index: number } | null>(null);
   const [enhancementsPanelOpen, setEnhancementsPanelOpen] = useState(true);
+  
+  // Split dialog state
+  const [showSplitModal, setShowSplitModal] = useState(false);
+  const [splittingClip, setSplittingClip] = useState<{ clip: VideoClip; index: number } | null>(null);
+  const [splitTime, setSplitTime] = useState(0);
+  const [clipDuration, setClipDuration] = useState(0);
+  const splitVideoRef = useRef<HTMLVideoElement>(null);
+  
+  // Preview state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const ITEMS_PER_PAGE = 12;
   
@@ -432,6 +463,103 @@ export default function VideoEditor() {
     setEditingClip({ clip, index });
     setShowClipSettingsModal(true);
   }, []);
+  
+  // Open split dialog
+  const openSplitDialog = useCallback((clip: VideoClip, index: number) => {
+    setSplittingClip({ clip, index });
+    setSplitTime(0);
+    setClipDuration(0);
+    setShowSplitModal(true);
+  }, []);
+  
+  // Handle video loaded metadata to get duration
+  const handleSplitVideoLoaded = useCallback(() => {
+    if (splitVideoRef.current) {
+      const duration = splitVideoRef.current.duration;
+      setClipDuration(duration);
+      setSplitTime(duration / 2); // Default to middle
+    }
+  }, []);
+  
+  // Handle split time change from slider
+  const handleSplitTimeChange = useCallback((value: number[]) => {
+    const newTime = value[0];
+    setSplitTime(newTime);
+    if (splitVideoRef.current) {
+      splitVideoRef.current.currentTime = newTime;
+    }
+  }, []);
+  
+  // Format time as MM:SS.ms
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toFixed(2).padStart(5, '0')}`;
+  };
+  
+  // Confirm split operation
+  const confirmSplit = useCallback(() => {
+    if (!splittingClip || splitTime <= 0 || splitTime >= clipDuration) {
+      toast({
+        title: "Invalid Split Point",
+        description: "Please select a valid split point between the start and end of the clip.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const { clip, index } = splittingClip;
+    
+    // Create two clips from the original
+    // First clip: original with trimEnd set to splitTime
+    // Second clip: new clip with trimStart set to splitTime
+    const firstClipId = clip.id;
+    const secondClipId = `${clip.id}_split_${Date.now()}`;
+    
+    // Create the second clip (the split-off portion)
+    const secondClip: VideoClip = {
+      ...clip,
+      id: secondClipId,
+    };
+    
+    // Update clip settings for both clips
+    const currentSettings = getClipSettings(firstClipId);
+    const existingTrimStart = currentSettings.trimStartSeconds ?? 0;
+    const existingTrimEnd = currentSettings.trimEndSeconds ?? clipDuration;
+    
+    // First clip: from original start to split point
+    updateClipSettings(firstClipId, {
+      trimEndSeconds: existingTrimStart + splitTime,
+    });
+    
+    // Second clip: from split point to original end
+    setClipSettings(prev => {
+      const newMap = new Map(prev);
+      newMap.set(secondClipId, {
+        clipId: secondClipId,
+        muted: currentSettings.muted,
+        volume: currentSettings.volume,
+        trimStartSeconds: existingTrimStart + splitTime,
+        trimEndSeconds: existingTrimEnd,
+      });
+      return newMap;
+    });
+    
+    // Insert the second clip right after the first one
+    setOrderedClips(prev => {
+      const newClips = [...prev];
+      newClips.splice(index + 1, 0, secondClip);
+      return newClips;
+    });
+    
+    setShowSplitModal(false);
+    setSplittingClip(null);
+    
+    toast({
+      title: "Clip Split",
+      description: `Clip has been split at ${formatTime(splitTime)}. You now have ${orderedClips.length + 1} clips.`,
+    });
+  }, [splittingClip, splitTime, clipDuration, getClipSettings, updateClipSettings, orderedClips.length, toast]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -645,7 +773,7 @@ export default function VideoEditor() {
         })),
       };
 
-      // Serialize clip settings from local state
+      // Serialize clip settings from local state (includes trim times for split clips)
       const clipSettingsArray = clips.map((clip, index) => {
         const localSettings = clipSettings.get(clip.id);
         return {
@@ -653,6 +781,8 @@ export default function VideoEditor() {
           clipIndex: index,
           muted: localSettings?.muted ?? false,
           volume: localSettings?.volume ?? 1,
+          trimStartSeconds: localSettings?.trimStartSeconds,
+          trimEndSeconds: localSettings?.trimEndSeconds,
         };
       });
 
@@ -662,29 +792,31 @@ export default function VideoEditor() {
           mode: 'crossfade' as const,
           durationSeconds: enhancements.transitionDuration,
         } : { mode: 'none' as const },
-        backgroundMusic: enhancements.musicUrl ? {
-          audioUrl: enhancements.musicUrl,
-          volume: enhancements.musicVolume,
+        backgroundMusic: enhancements.backgroundMusic ? {
+          audioUrl: enhancements.backgroundMusic.audioUrl,
+          volume: enhancements.backgroundMusic.volume,
         } : undefined,
         textOverlays: enhancements.textOverlays.map(to => ({
           id: to.id,
           text: to.text,
           position: to.position,
           timing: to.timing,
-          fontSize: 48,
-          colorHex: '#FFFFFF',
+          fontSize: to.fontSize,
+          colorHex: to.colorHex,
         })),
-        clipSettings: clipSettingsArray.filter(cs => cs.muted || cs.volume !== 1),
-        audioTrack: enhancements.voiceUrl ? {
-          audioUrl: enhancements.voiceUrl,
-          type: 'tts' as const,
-          volume: enhancements.voiceVolume,
+        clipSettings: clipSettingsArray.filter(cs => 
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+        ),
+        audioTrack: enhancements.audioTrack ? {
+          audioUrl: enhancements.audioTrack.audioUrl,
+          type: enhancements.audioTrack.type,
+          volume: enhancements.audioTrack.volume,
           startAtSeconds: 0,
         } : undefined,
-        avatarOverlay: enhancements.avatarUrl ? {
-          videoUrl: enhancements.avatarUrl,
-          position: enhancements.avatarPosition,
-          size: enhancements.avatarSize,
+        avatarOverlay: enhancements.avatarOverlay ? {
+          videoUrl: enhancements.avatarOverlay.videoUrl,
+          position: enhancements.avatarOverlay.position,
+          size: enhancements.avatarOverlay.size,
         } : undefined,
       };
 
@@ -730,6 +862,67 @@ export default function VideoEditor() {
       toast({
         title: "Export Failed",
         description: error.message || "Failed to start video export",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Preview mutation for quick low-res preview
+  const previewMutation = useMutation({
+    mutationFn: async (clips: VideoClip[]) => {
+      // Build project payload (limit to first 3 clips for speed)
+      const previewClips = clips.slice(0, 3);
+      const project = {
+        clips: previewClips.map((clip, index) => ({
+          id: clip.id,
+          sourceUrl: clip.url,
+          order: index,
+        })),
+      };
+
+      // Serialize clip settings for preview clips
+      const clipSettingsArray = previewClips.map((clip, index) => {
+        const localSettings = clipSettings.get(clip.id);
+        return {
+          clipId: clip.id,
+          clipIndex: index,
+          muted: localSettings?.muted ?? false,
+          volume: localSettings?.volume ?? 1,
+          trimStartSeconds: localSettings?.trimStartSeconds,
+          trimEndSeconds: localSettings?.trimEndSeconds,
+        };
+      });
+
+      const enhancementsPayload = {
+        transitions: enhancements.transitionMode === 'crossfade' ? {
+          mode: 'crossfade' as const,
+          durationSeconds: enhancements.transitionDuration,
+        } : { mode: 'none' as const },
+        clipSettings: clipSettingsArray.filter(cs => 
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+        ),
+      };
+
+      const response = await apiRequest("POST", "/api/video-editor/preview", { 
+        project,
+        enhancements: enhancementsPayload,
+      });
+      return await response.json();
+    },
+    onSuccess: (data: { status: string; previewUrl?: string; message?: string }) => {
+      if (data.status === 'completed' && data.previewUrl) {
+        setPreviewUrl(data.previewUrl);
+        setShowPreviewModal(true);
+        toast({
+          title: "Preview Ready",
+          description: "Your low-res preview is ready to view.",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Preview Failed",
+        description: error.message || "Failed to generate preview",
         variant: "destructive",
       });
     },
@@ -1084,6 +1277,7 @@ export default function VideoEditor() {
                                       onRemove={removeClip}
                                       onToggleMute={toggleClipMute}
                                       onOpenSettings={openClipSettings}
+                                      onSplitClip={openSplitDialog}
                                       isMobile={isMobile}
                                       showTransition={index > 0}
                                       transitionMode={enhancements.transitionMode}
@@ -1129,14 +1323,29 @@ export default function VideoEditor() {
                           <Badge variant="secondary">
                             {orderedClips.length} clips
                           </Badge>
-                          <Button
-                            onClick={proceedToExport}
-                            disabled={orderedClips.length === 0}
-                            data-testid="button-continue-to-export"
-                          >
-                            Continue to Export
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => previewMutation.mutate(orderedClips)}
+                              disabled={orderedClips.length === 0 || previewMutation.isPending}
+                              data-testid="button-preview"
+                            >
+                              {previewMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Eye className="h-4 w-4 mr-2" />
+                              )}
+                              Preview
+                            </Button>
+                            <Button
+                              onClick={proceedToExport}
+                              disabled={orderedClips.length === 0}
+                              data-testid="button-continue-to-export"
+                            >
+                              Continue to Export
+                              <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
 
@@ -1738,6 +1947,152 @@ export default function VideoEditor() {
               data-testid="button-close-clip-settings"
             >
               Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showSplitModal} onOpenChange={setShowSplitModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scissors className="h-5 w-5" />
+              Split Clip
+            </DialogTitle>
+            <DialogDescription>
+              {splittingClip && `Select a split point for clip #${splittingClip.index + 1}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {splittingClip && (
+            <div className="space-y-6 py-4">
+              <div className="aspect-video rounded-lg overflow-hidden bg-muted relative">
+                <video
+                  ref={splitVideoRef}
+                  src={splittingClip.clip.url}
+                  poster={splittingClip.clip.thumbnailUrl || undefined}
+                  className="w-full h-full object-cover"
+                  onLoadedMetadata={handleSplitVideoLoaded}
+                  muted
+                />
+                <div className="absolute bottom-2 left-2 right-2 bg-black/60 rounded-lg px-3 py-2">
+                  <div className="flex items-center justify-between text-white text-sm mb-2">
+                    <span>{formatTime(splitTime)}</span>
+                    <span className="text-muted-foreground">/</span>
+                    <span>{formatTime(clipDuration)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Split Point
+                  </Label>
+                  <Slider
+                    value={[splitTime]}
+                    min={0.1}
+                    max={Math.max(0.2, clipDuration - 0.1)}
+                    step={0.01}
+                    onValueChange={handleSplitTimeChange}
+                    disabled={clipDuration === 0}
+                    data-testid="slider-split-time"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Drag the slider to select where to split the clip. The first part will be from the start to this point, and the second part will be from this point to the end.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground mb-1">First Part</div>
+                    <div className="text-sm font-mono">0:00 → {formatTime(splitTime)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Duration: {formatTime(splitTime)}
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs font-medium text-muted-foreground mb-1">Second Part</div>
+                    <div className="text-sm font-mono">{formatTime(splitTime)} → {formatTime(clipDuration)}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Duration: {formatTime(clipDuration - splitTime)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="outline"
+              onClick={() => setShowSplitModal(false)}
+              data-testid="button-cancel-split"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={confirmSplit}
+              disabled={clipDuration === 0 || splitTime <= 0 || splitTime >= clipDuration}
+              data-testid="button-confirm-split"
+            >
+              <Scissors className="h-4 w-4 mr-2" />
+              Split Clip
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Preview (Low Resolution)
+            </DialogTitle>
+            <DialogDescription>
+              This is a quick low-resolution preview of your combined video. The final export will be higher quality.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+            {previewUrl ? (
+              <video
+                src={previewUrl}
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+                data-testid="video-preview"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setShowPreviewModal(false);
+                setPreviewUrl(null);
+              }}
+              data-testid="button-close-preview"
+            >
+              Close
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowPreviewModal(false);
+                setPreviewUrl(null);
+                proceedToExport();
+              }}
+              data-testid="button-proceed-to-export-from-preview"
+            >
+              Continue to Export
+              <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </DialogFooter>
         </DialogContent>
