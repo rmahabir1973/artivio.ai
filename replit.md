@@ -37,7 +37,7 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 -   **AI Sound Effects**: ElevenLabs Sound Effect V2 with customizable parameters.
 -   **AI Text-to-Speech**: Fish Audio TTS with S1 model, multi-language support.
 -   **AI Image Analysis**: OpenAI GPT-4o Vision API for comprehensive analysis.
--   **Video Editor/Combiner**: Drag-and-drop FFmpeg-based tool for combining AI-generated videos. Features clip splitting (via timeline scrubber), per-clip trimming (trimStartSeconds/trimEndSeconds), and quick preview mode (360p local FFmpeg processing with ultrafast preset for faster previews before full-quality Lambda export).
+-   **Video Editor/Combiner**: Drag-and-drop FFmpeg-based tool for combining AI-generated videos. Features clip splitting (via timeline scrubber), per-clip trimming (trimStartSeconds/trimEndSeconds), quick preview mode (360p local FFmpeg processing with ultrafast preset for faster previews before full-quality Lambda export), voice overlay selection (TTS/voice/SFX from library), and multi-track audio mixer with per-track volume controls for clip audio, background music, and voice overlay.
 -   **QR Code Generator**: Client-side with logo embedding and customization.
 -   **AI Chat**: Deepseek and OpenAI model support with streaming responses and conversation history.
 -   **Voice Cloning**: Fish Audio API for voice model creation via audio uploads or microphone.

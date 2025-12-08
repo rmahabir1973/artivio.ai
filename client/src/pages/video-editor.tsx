@@ -55,6 +55,8 @@ import {
   Plus,
   ChevronDown,
   Eye,
+  Mic,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -1425,84 +1427,194 @@ export default function VideoEditor() {
                                 </TabsContent>
 
                                 <TabsContent value="music" className="p-3 space-y-4 m-0">
-                                  {enhancements.backgroundMusic ? (
-                                    <div className="space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium">Selected Track</span>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 text-xs px-2"
-                                          onClick={() => setEnhancements(prev => ({ ...prev, backgroundMusic: undefined }))}
-                                          data-testid="button-remove-music"
-                                        >
-                                          <X className="h-3 w-3 mr-1" />
-                                          Remove
-                                        </Button>
-                                      </div>
-                                      <div className="p-2 border rounded-md bg-muted/50">
-                                        <p className="text-xs font-medium line-clamp-1">{enhancements.backgroundMusic.name}</p>
-                                        <audio src={enhancements.backgroundMusic.audioUrl} controls className="w-full h-8 mt-2" />
-                                      </div>
+                                  <ScrollArea className="h-[320px] pr-2">
+                                    <div className="space-y-4">
                                       <div className="space-y-2">
-                                        <Label className="text-xs flex justify-between">
-                                          Volume
-                                          <span className="text-muted-foreground">
-                                            {Math.round(enhancements.backgroundMusic.volume * 100)}%
-                                          </span>
-                                        </Label>
-                                        <Slider
-                                          value={[enhancements.backgroundMusic.volume]}
-                                          min={0}
-                                          max={1}
-                                          step={0.05}
-                                          onValueChange={([v]) => 
-                                            setEnhancements(prev => ({ 
-                                              ...prev, 
-                                              backgroundMusic: prev.backgroundMusic ? { ...prev.backgroundMusic, volume: v } : undefined 
-                                            }))
-                                          }
-                                          data-testid="slider-music-volume"
-                                        />
+                                        <div className="flex items-center gap-2 text-xs font-medium">
+                                          <Music className="h-3.5 w-3.5" />
+                                          Background Music
+                                        </div>
+                                        {enhancements.backgroundMusic ? (
+                                          <div className="p-2 border rounded-md bg-muted/50 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <p className="text-xs font-medium line-clamp-1 flex-1">{enhancements.backgroundMusic.name}</p>
+                                              <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-6 w-6 shrink-0"
+                                                onClick={() => setEnhancements(prev => ({ ...prev, backgroundMusic: undefined }))}
+                                                data-testid="button-remove-music"
+                                              >
+                                                <X className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                            <audio src={enhancements.backgroundMusic.audioUrl} controls className="w-full h-8" />
+                                          </div>
+                                        ) : audioLoading ? (
+                                          <div className="text-center py-4">
+                                            <Loader2 className="h-5 w-5 mx-auto animate-spin text-muted-foreground" />
+                                          </div>
+                                        ) : musicTracks.length === 0 ? (
+                                          <div className="text-center py-4 text-muted-foreground border rounded-md">
+                                            <Music className="h-6 w-6 mx-auto mb-1 opacity-50" />
+                                            <p className="text-[10px]">No music in library</p>
+                                          </div>
+                                        ) : (
+                                          <ScrollArea className="h-24">
+                                            <div className="space-y-1 pr-2">
+                                              {musicTracks.map((track) => (
+                                                <button
+                                                  key={track.id}
+                                                  className="w-full p-2 border rounded-md text-left hover-elevate transition-colors"
+                                                  onClick={() => setEnhancements(prev => ({
+                                                    ...prev,
+                                                    backgroundMusic: {
+                                                      audioUrl: track.resultUrl!,
+                                                      volume: 0.5,
+                                                      name: track.prompt.slice(0, 40) + (track.prompt.length > 40 ? '...' : ''),
+                                                    }
+                                                  }))}
+                                                  data-testid={`select-music-${track.id}`}
+                                                >
+                                                  <p className="text-xs font-medium line-clamp-1">{track.prompt}</p>
+                                                  <p className="text-[10px] text-muted-foreground">{track.model}</p>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </ScrollArea>
+                                        )}
                                       </div>
-                                    </div>
-                                  ) : audioLoading ? (
-                                    <div className="text-center py-6">
-                                      <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
-                                      <p className="text-xs text-muted-foreground mt-2">Loading music...</p>
-                                    </div>
-                                  ) : musicTracks.length === 0 ? (
-                                    <div className="text-center py-6 text-muted-foreground">
-                                      <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                      <p className="text-xs">No music in library</p>
-                                      <p className="text-[10px] mt-1">Generate music using AI Music tool first</p>
-                                    </div>
-                                  ) : (
-                                    <ScrollArea className="h-48">
-                                      <div className="space-y-2 pr-3">
-                                        {musicTracks.map((track) => (
-                                          <button
-                                            key={track.id}
-                                            className="w-full p-2 border rounded-md text-left hover-elevate transition-colors"
-                                            onClick={() => setEnhancements(prev => ({
-                                              ...prev,
-                                              backgroundMusic: {
-                                                audioUrl: track.resultUrl!,
-                                                volume: 0.5,
-                                                name: track.prompt.slice(0, 40) + (track.prompt.length > 40 ? '...' : ''),
-                                              }
-                                            }))}
-                                            data-testid={`select-music-${track.id}`}
-                                          >
-                                            <p className="text-xs font-medium line-clamp-1">{track.prompt}</p>
-                                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                                              {track.model} • {new Date(track.createdAt).toLocaleDateString()}
-                                            </p>
-                                          </button>
-                                        ))}
+
+                                      <div className="border-t pt-4 space-y-2">
+                                        <div className="flex items-center gap-2 text-xs font-medium">
+                                          <Mic className="h-3.5 w-3.5" />
+                                          Voice Overlay
+                                        </div>
+                                        {enhancements.audioTrack ? (
+                                          <div className="p-2 border rounded-md bg-muted/50 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <p className="text-xs font-medium line-clamp-1 flex-1">{enhancements.audioTrack.name}</p>
+                                              <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-6 w-6 shrink-0"
+                                                onClick={() => setEnhancements(prev => ({ ...prev, audioTrack: undefined }))}
+                                                data-testid="button-remove-voice"
+                                              >
+                                                <X className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                            <audio src={enhancements.audioTrack.audioUrl} controls className="w-full h-8" />
+                                          </div>
+                                        ) : audioLoading ? (
+                                          <div className="text-center py-4">
+                                            <Loader2 className="h-5 w-5 mx-auto animate-spin text-muted-foreground" />
+                                          </div>
+                                        ) : voiceTracks.length === 0 ? (
+                                          <div className="text-center py-4 text-muted-foreground border rounded-md">
+                                            <Mic className="h-6 w-6 mx-auto mb-1 opacity-50" />
+                                            <p className="text-[10px]">No voice/TTS in library</p>
+                                          </div>
+                                        ) : (
+                                          <ScrollArea className="h-24">
+                                            <div className="space-y-1 pr-2">
+                                              {voiceTracks.map((track) => (
+                                                <button
+                                                  key={track.id}
+                                                  className="w-full p-2 border rounded-md text-left hover-elevate transition-colors"
+                                                  onClick={() => setEnhancements(prev => ({
+                                                    ...prev,
+                                                    audioTrack: {
+                                                      audioUrl: track.resultUrl!,
+                                                      volume: 1.0,
+                                                      type: track.type === 'text-to-speech' ? 'tts' : track.type === 'sound-effects' ? 'sfx' : 'voice',
+                                                      name: track.prompt.slice(0, 40) + (track.prompt.length > 40 ? '...' : ''),
+                                                    }
+                                                  }))}
+                                                  data-testid={`select-voice-${track.id}`}
+                                                >
+                                                  <p className="text-xs font-medium line-clamp-1">{track.prompt}</p>
+                                                  <p className="text-[10px] text-muted-foreground">
+                                                    {track.type === 'text-to-speech' ? 'TTS' : track.type === 'sound-effects' ? 'SFX' : 'Voice'} • {track.model}
+                                                  </p>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </ScrollArea>
+                                        )}
                                       </div>
-                                    </ScrollArea>
-                                  )}
+
+                                      {(enhancements.backgroundMusic || enhancements.audioTrack) && (
+                                        <div className="border-t pt-4 space-y-3">
+                                          <div className="flex items-center gap-2 text-xs font-medium">
+                                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                                            Audio Mixer
+                                          </div>
+                                          
+                                          <div className="space-y-3 p-2 border rounded-md bg-muted/30">
+                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                              <Film className="h-3 w-3" />
+                                              Clip Audio: Use per-clip mute controls
+                                            </div>
+                                            
+                                            {enhancements.backgroundMusic && (
+                                              <div className="space-y-1">
+                                                <div className="flex items-center justify-between">
+                                                  <Label className="text-xs flex items-center gap-1.5">
+                                                    <Music className="h-3 w-3" />
+                                                    Music
+                                                  </Label>
+                                                  <span className="text-[10px] text-muted-foreground">
+                                                    {Math.round(enhancements.backgroundMusic.volume * 100)}%
+                                                  </span>
+                                                </div>
+                                                <Slider
+                                                  value={[enhancements.backgroundMusic.volume]}
+                                                  min={0}
+                                                  max={1}
+                                                  step={0.05}
+                                                  onValueChange={([v]) => 
+                                                    setEnhancements(prev => ({ 
+                                                      ...prev, 
+                                                      backgroundMusic: prev.backgroundMusic ? { ...prev.backgroundMusic, volume: v } : undefined 
+                                                    }))
+                                                  }
+                                                  data-testid="slider-music-volume"
+                                                />
+                                              </div>
+                                            )}
+                                            
+                                            {enhancements.audioTrack && (
+                                              <div className="space-y-1">
+                                                <div className="flex items-center justify-between">
+                                                  <Label className="text-xs flex items-center gap-1.5">
+                                                    <Mic className="h-3 w-3" />
+                                                    Voice
+                                                  </Label>
+                                                  <span className="text-[10px] text-muted-foreground">
+                                                    {Math.round(enhancements.audioTrack.volume * 100)}%
+                                                  </span>
+                                                </div>
+                                                <Slider
+                                                  value={[enhancements.audioTrack.volume]}
+                                                  min={0}
+                                                  max={1}
+                                                  step={0.05}
+                                                  onValueChange={([v]) => 
+                                                    setEnhancements(prev => ({ 
+                                                      ...prev, 
+                                                      audioTrack: prev.audioTrack ? { ...prev.audioTrack, volume: v } : undefined 
+                                                    }))
+                                                  }
+                                                  data-testid="slider-voice-volume"
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </ScrollArea>
                                 </TabsContent>
 
                                 <TabsContent value="text" className="p-3 space-y-4 m-0">
