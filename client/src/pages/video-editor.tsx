@@ -473,6 +473,40 @@ export default function VideoEditor() {
       (g) => g.type === "video" && g.status === "completed" && g.resultUrl
     );
   }, [generationsData]);
+  
+  // Use the same generations data to filter for audio/music/avatar (client-side filtering)
+  // Filter music tracks from all loaded generations
+  const musicTracks = useMemo(() => {
+    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    return items.filter(
+      (g) => g.type === "music" && g.status === "completed" && g.resultUrl
+    );
+  }, [generationsData]);
+  
+  // Filter audio tracks (TTS, voice) from all loaded generations  
+  const voiceTracks = useMemo(() => {
+    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    return items.filter(
+      (g) => (g.type === "audio" || g.type === "text-to-speech" || g.type === "sound-effects") && 
+             g.status === "completed" && g.resultUrl
+    );
+  }, [generationsData]);
+  
+  // Filter avatar videos (InfiniteTalk/talking-avatar) from all loaded generations
+  const avatarVideos = useMemo(() => {
+    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    return items.filter((g) => {
+      const model = (g.model ?? "").toLowerCase();
+      return (g.type === "talking-avatar" || g.type === "avatar" || 
+              model.includes("infinitetalk") || 
+              model.includes("infinite-talk")) && 
+             g.status === "completed" && g.resultUrl;
+    });
+  }, [generationsData]);
+  
+  // Loading states derived from main query
+  const audioLoading = generationsLoading;
+  const avatarLoading = generationsLoading;
 
   // Apply client-side pagination for display
   const videos = useMemo(() => {
@@ -1138,27 +1172,323 @@ export default function VideoEditor() {
                                 </TabsContent>
 
                                 <TabsContent value="music" className="p-3 space-y-4 m-0">
-                                  <div className="text-center py-6 text-muted-foreground">
-                                    <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                    <p className="text-xs">Background music coming soon</p>
-                                    <p className="text-[10px] mt-1">Select from your saved music</p>
-                                  </div>
+                                  {enhancements.backgroundMusic ? (
+                                    <div className="space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-xs font-medium">Selected Track</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 text-xs px-2"
+                                          onClick={() => setEnhancements(prev => ({ ...prev, backgroundMusic: undefined }))}
+                                          data-testid="button-remove-music"
+                                        >
+                                          <X className="h-3 w-3 mr-1" />
+                                          Remove
+                                        </Button>
+                                      </div>
+                                      <div className="p-2 border rounded-md bg-muted/50">
+                                        <p className="text-xs font-medium line-clamp-1">{enhancements.backgroundMusic.name}</p>
+                                        <audio src={enhancements.backgroundMusic.audioUrl} controls className="w-full h-8 mt-2" />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs flex justify-between">
+                                          Volume
+                                          <span className="text-muted-foreground">
+                                            {Math.round(enhancements.backgroundMusic.volume * 100)}%
+                                          </span>
+                                        </Label>
+                                        <Slider
+                                          value={[enhancements.backgroundMusic.volume]}
+                                          min={0}
+                                          max={1}
+                                          step={0.05}
+                                          onValueChange={([v]) => 
+                                            setEnhancements(prev => ({ 
+                                              ...prev, 
+                                              backgroundMusic: prev.backgroundMusic ? { ...prev.backgroundMusic, volume: v } : undefined 
+                                            }))
+                                          }
+                                          data-testid="slider-music-volume"
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : audioLoading ? (
+                                    <div className="text-center py-6">
+                                      <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
+                                      <p className="text-xs text-muted-foreground mt-2">Loading music...</p>
+                                    </div>
+                                  ) : musicTracks.length === 0 ? (
+                                    <div className="text-center py-6 text-muted-foreground">
+                                      <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                      <p className="text-xs">No music in library</p>
+                                      <p className="text-[10px] mt-1">Generate music using AI Music tool first</p>
+                                    </div>
+                                  ) : (
+                                    <ScrollArea className="h-48">
+                                      <div className="space-y-2 pr-3">
+                                        {musicTracks.map((track) => (
+                                          <button
+                                            key={track.id}
+                                            className="w-full p-2 border rounded-md text-left hover-elevate transition-colors"
+                                            onClick={() => setEnhancements(prev => ({
+                                              ...prev,
+                                              backgroundMusic: {
+                                                audioUrl: track.resultUrl!,
+                                                volume: 0.5,
+                                                name: track.prompt.slice(0, 40) + (track.prompt.length > 40 ? '...' : ''),
+                                              }
+                                            }))}
+                                            data-testid={`select-music-${track.id}`}
+                                          >
+                                            <p className="text-xs font-medium line-clamp-1">{track.prompt}</p>
+                                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                                              {track.model} • {new Date(track.createdAt).toLocaleDateString()}
+                                            </p>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </ScrollArea>
+                                  )}
                                 </TabsContent>
 
                                 <TabsContent value="text" className="p-3 space-y-4 m-0">
-                                  <div className="text-center py-6 text-muted-foreground">
-                                    <Type className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                    <p className="text-xs">Text overlays coming soon</p>
-                                    <p className="text-[10px] mt-1">Add captions and titles</p>
-                                  </div>
+                                  {enhancements.textOverlays.length > 0 ? (
+                                    <div className="space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-xs font-medium">Text Overlays</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 text-xs px-2"
+                                          onClick={() => setEnhancements(prev => ({
+                                            ...prev,
+                                            textOverlays: [...prev.textOverlays, {
+                                              id: `text-${Date.now()}`,
+                                              text: '',
+                                              position: 'bottom' as const,
+                                              timing: 'all' as const,
+                                              fontSize: 24,
+                                              colorHex: '#ffffff',
+                                            }]
+                                          }))}
+                                          data-testid="button-add-text"
+                                        >
+                                          <Plus className="h-3 w-3 mr-1" />
+                                          Add
+                                        </Button>
+                                      </div>
+                                      <ScrollArea className="max-h-52">
+                                        <div className="space-y-2 pr-3">
+                                          {enhancements.textOverlays.map((overlay, idx) => (
+                                            <div key={overlay.id} className="p-2 border rounded-md space-y-2">
+                                              <div className="flex items-center justify-between gap-2">
+                                                <Input
+                                                  placeholder="Enter caption text..."
+                                                  value={overlay.text}
+                                                  onChange={(e) => {
+                                                    const newOverlays = [...enhancements.textOverlays];
+                                                    newOverlays[idx] = { ...overlay, text: e.target.value };
+                                                    setEnhancements(prev => ({ ...prev, textOverlays: newOverlays }));
+                                                  }}
+                                                  className="h-8 text-xs"
+                                                  data-testid={`input-text-${idx}`}
+                                                />
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  className="h-6 w-6 shrink-0"
+                                                  onClick={() => {
+                                                    setEnhancements(prev => ({
+                                                      ...prev,
+                                                      textOverlays: prev.textOverlays.filter(t => t.id !== overlay.id)
+                                                    }));
+                                                  }}
+                                                  data-testid={`remove-text-${idx}`}
+                                                >
+                                                  <X className="h-3 w-3" />
+                                                </Button>
+                                              </div>
+                                              <div className="flex gap-2">
+                                                <Select
+                                                  value={overlay.position}
+                                                  onValueChange={(v: 'top' | 'center' | 'bottom') => {
+                                                    const newOverlays = [...enhancements.textOverlays];
+                                                    newOverlays[idx] = { ...overlay, position: v };
+                                                    setEnhancements(prev => ({ ...prev, textOverlays: newOverlays }));
+                                                  }}
+                                                >
+                                                  <SelectTrigger className="h-7 text-xs flex-1">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="top">Top</SelectItem>
+                                                    <SelectItem value="center">Center</SelectItem>
+                                                    <SelectItem value="bottom">Bottom</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                                <Select
+                                                  value={overlay.timing}
+                                                  onValueChange={(v: 'intro' | 'outro' | 'all') => {
+                                                    const newOverlays = [...enhancements.textOverlays];
+                                                    newOverlays[idx] = { ...overlay, timing: v };
+                                                    setEnhancements(prev => ({ ...prev, textOverlays: newOverlays }));
+                                                  }}
+                                                >
+                                                  <SelectTrigger className="h-7 text-xs flex-1">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="intro">Intro Only</SelectItem>
+                                                    <SelectItem value="outro">Outro Only</SelectItem>
+                                                    <SelectItem value="all">Full Video</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </ScrollArea>
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-4">
+                                      <Type className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
+                                      <p className="text-xs text-muted-foreground mb-3">Add captions and titles</p>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEnhancements(prev => ({
+                                          ...prev,
+                                          textOverlays: [{
+                                            id: `text-${Date.now()}`,
+                                            text: '',
+                                            position: 'bottom' as const,
+                                            timing: 'all' as const,
+                                            fontSize: 24,
+                                            colorHex: '#ffffff',
+                                          }]
+                                        }))}
+                                        data-testid="button-add-first-text"
+                                      >
+                                        <Plus className="h-3 w-3 mr-1" />
+                                        Add Text Overlay
+                                      </Button>
+                                    </div>
+                                  )}
                                 </TabsContent>
 
                                 <TabsContent value="avatar" className="p-3 space-y-4 m-0">
-                                  <div className="text-center py-6 text-muted-foreground">
-                                    <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                    <p className="text-xs">Avatar overlay coming soon</p>
-                                    <p className="text-[10px] mt-1">Picture-in-picture narrator</p>
-                                  </div>
+                                  {enhancements.avatarOverlay ? (
+                                    <div className="space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-xs font-medium">Avatar Overlay</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 text-xs px-2"
+                                          onClick={() => setEnhancements(prev => ({ ...prev, avatarOverlay: undefined }))}
+                                          data-testid="button-remove-avatar"
+                                        >
+                                          <X className="h-3 w-3 mr-1" />
+                                          Remove
+                                        </Button>
+                                      </div>
+                                      <div className="p-2 border rounded-md bg-muted/50">
+                                        <video 
+                                          src={enhancements.avatarOverlay.videoUrl} 
+                                          className="w-full aspect-video rounded object-cover" 
+                                          muted 
+                                          controls 
+                                        />
+                                        <p className="text-xs font-medium mt-2 line-clamp-1">{enhancements.avatarOverlay.name}</p>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs">Position</Label>
+                                        <Select
+                                          value={enhancements.avatarOverlay.position}
+                                          onValueChange={(v: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => 
+                                            setEnhancements(prev => ({ 
+                                              ...prev, 
+                                              avatarOverlay: prev.avatarOverlay ? { ...prev.avatarOverlay, position: v } : undefined 
+                                            }))
+                                          }
+                                        >
+                                          <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="top-left">Top Left</SelectItem>
+                                            <SelectItem value="top-right">Top Right</SelectItem>
+                                            <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                                            <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs">Size</Label>
+                                        <Select
+                                          value={enhancements.avatarOverlay.size}
+                                          onValueChange={(v: 'small' | 'medium' | 'large') => 
+                                            setEnhancements(prev => ({ 
+                                              ...prev, 
+                                              avatarOverlay: prev.avatarOverlay ? { ...prev.avatarOverlay, size: v } : undefined 
+                                            }))
+                                          }
+                                        >
+                                          <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="small">Small (15%)</SelectItem>
+                                            <SelectItem value="medium">Medium (25%)</SelectItem>
+                                            <SelectItem value="large">Large (35%)</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </div>
+                                  ) : avatarLoading ? (
+                                    <div className="text-center py-6">
+                                      <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
+                                      <p className="text-xs text-muted-foreground mt-2">Loading avatars...</p>
+                                    </div>
+                                  ) : !avatarVideos || avatarVideos.length === 0 ? (
+                                    <div className="text-center py-6 text-muted-foreground">
+                                      <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                      <p className="text-xs">No avatar videos found</p>
+                                      <p className="text-[10px] mt-1">Create lip-synced videos with InfiniteTalk first</p>
+                                    </div>
+                                  ) : (
+                                    <ScrollArea className="h-48">
+                                      <div className="grid grid-cols-2 gap-2 pr-3">
+                                        {avatarVideos.map((avatar) => (
+                                          <button
+                                            key={avatar.id}
+                                            className="group relative aspect-video rounded-md overflow-hidden border hover-elevate"
+                                            onClick={() => setEnhancements(prev => ({
+                                              ...prev,
+                                              avatarOverlay: {
+                                                videoUrl: avatar.resultUrl!,
+                                                position: 'bottom-right',
+                                                size: 'medium',
+                                                name: avatar.prompt.slice(0, 30) + (avatar.prompt.length > 30 ? '...' : ''),
+                                              }
+                                            }))}
+                                            data-testid={`select-avatar-${avatar.id}`}
+                                          >
+                                            <video
+                                              src={avatar.resultUrl!}
+                                              poster={avatar.thumbnailUrl || undefined}
+                                              className="w-full h-full object-cover"
+                                              muted
+                                            />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <Plus className="h-5 w-5 text-white" />
+                                            </div>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </ScrollArea>
+                                  )}
                                 </TabsContent>
                               </Tabs>
                             </CollapsibleContent>
