@@ -1,0 +1,144 @@
+2025-12-07 21:38:15.84
+e95a1aa5
+User
+[Stock Photos] Uploaded to s3: https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/1765161495620-62c8834237a53753d8bf7adbc1f7d104.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251208%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251208T023815Z&X-Amz-Expires=604800&X-Amz-Signature=6280ef6163d96ac72252b13ea180c0638a329737a1b425a0020541ce5d9a1b98&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+2025-12-07 21:38:15.89
+e95a1aa5
+User
+[Upload] Uploading image to S3...
+2025-12-07 21:38:15.89
+e95a1aa5
+User
+[S3] Uploading 8709 bytes to uploads/images/1765161495895-16b3ee85cbd17708abeec56049569436.jpeg (image/jpeg)
+2025-12-07 21:38:15.95
+e95a1aa5
+User
+[S3] Upload complete: uploads/images/1765161495895-16b3ee85cbd17708abeec56049569436.jpeg
+2025-12-07 21:38:15.95
+e95a1aa5
+User
+[Stock Photos] Saving to database for user: 49729939
+2025-12-07 21:38:15.97
+e95a1aa5
+User
+[Stock Photos] Successfully saved to database: 72f69175-0ef2-4fc4-80ad-f427a6821d5c
+2025-12-07 21:38:15.98
+e95a1aa5
+User
+2:38:15 AM [express] POST /api/stock-photos/save 200 in 544ms :: {"success":true,"image":{"id":"72f6…
+2025-12-07 21:38:22.68
+e95a1aa5
+System
+system: received signal terminated
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"externalId": "3809175",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+[Stock Photos] Save request received for user: 49729939
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"webformatUrl": "https://images.pexels.com/photos/3809175/pexels-photo-3809175.jpeg?auto=compress&cs=tinysrgb&h=350",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+[Stock Photos] Downloading image from pexels: 3809175
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+}
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"largeUrl": "https://images.pexels.com/photos/3809175/pexels-photo-3809175.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"photographer": "Leef Parks",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"width": 3674,
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"height": 2449,
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"originalUrl": "https://images.pexels.com/photos/3809175/pexels-photo-3809175.jpeg",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"previewUrl": "https://images.pexels.com/photos/3809175/pexels-photo-3809175.jpeg?auto=compress&cs=tinysrgb&dpr=1&fit=crop&h=200&w=280",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"tags": "Close-up of a luxury Rolex wristwatch with gold and silver detailing, symbolizing elegance and precision.",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+[Stock Photos] Request body: {
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"source": "pexels",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"photographerUrl": "https://www.pexels.com/@leef-parks-1921359",
+2025-12-07 21:38:34.42
+e95a1aa5
+User
+"pageUrl": "https://www.pexels.com/photo/silver-and-gold-round-watch-3809175/"
+2025-12-07 21:38:34.58
+e95a1aa5
+User
+[S3] Uploading 43518 bytes to uploads/images/1765161514586-ecf6a5380c110ce7d7396fac915e8176.jpeg (image/jpeg)
+2025-12-07 21:38:34.58
+e95a1aa5
+User
+[Upload] Uploading image to S3...
+2025-12-07 21:38:34.79
+e95a1aa5
+User
+[Stock Photos] Uploaded to s3: https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/1765161514586-ecf6a5380c110ce7d7396fac915e8176.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251208%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251208T023834Z&X-Amz-Expires=604800&X-Amz-Signature=dc703b8ab142ab76710d81a78984bc7ded878d61fd39bfbdcdae3adee84e4d46&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+2025-12-07 21:38:34.79
+e95a1aa5
+User
+[S3] Upload complete: uploads/images/1765161514586-ecf6a5380c110ce7d7396fac915e8176.jpeg
+2025-12-07 21:38:34.87
+e95a1aa5
+User
+[Upload] Uploading image to S3...
+2025-12-07 21:38:34.87
+e95a1aa5
+User
+[S3] Uploading 8061 bytes to uploads/images/1765161514873-0e44d2df9a22c4eeb2c90dd3eb63146e.jpeg (image/jpeg)
+2025-12-07 21:38:34.93
+e95a1aa5
+User
+[S3] Upload complete: uploads/images/1765161514873-0e44d2df9a22c4eeb2c90dd3eb63146e.jpeg
+2025-12-07 21:38:34.93
+e95a1aa5
+User
+[Stock Photos] Saving to database for user: 49729939
+2025-12-07 21:38:34.95
+e95a1aa5
+User
+[Stock Photos] Successfully saved to database: 205bd711-8bb9-454f-9e1b-0311d5354cba
+2025-12-07 21:38:34.95
+e95a1aa5
+User
+2:38:34 AM [express] POST /api/stock-photos/save 200 in 556ms :: {"success":true,"image":{"id":"205b…
+2025-12-07 21:38:51.68
+e95a1aa5
+User
+2:38:51 AM [express] GET /api/announcements/active 304 in 22ms :: []
