@@ -9891,12 +9891,14 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
   app.get('/api/stock-photos/saved', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log(`[Stock Photos] Getting saved images for user: ${userId}`);
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
       const offset = (page - 1) * limit;
 
       const saved = await storage.getSavedStockImages(userId, limit, offset);
       const total = await storage.countSavedStockImages(userId);
+      console.log(`[Stock Photos] Found ${saved.length} saved images, total: ${total}`);
 
       // Transform saved images to match StockImage interface expected by frontend
       // Maps externalId to id so frontend displays correctly
