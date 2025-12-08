@@ -164,6 +164,8 @@ export default function StockPhotos() {
     queryKey: ["/api/stock-photos/saved"],
     enabled: activeTab === "saved",
     staleTime: 0, // Always consider stale to ensure fresh data
+    refetchOnMount: "always", // Always refetch when component mounts or tab becomes active
+    gcTime: 0, // Don't cache - always get fresh data
   });
 
   // Check which images are saved
@@ -258,6 +260,14 @@ export default function StockPhotos() {
       checkSavedMutation.mutate(imagesToCheck);
     }
   }, [searchResults?.images]);
+
+  // Force refetch saved images when switching to saved tab
+  useEffect(() => {
+    if (activeTab === "saved") {
+      console.log("[Stock Photos] Saved tab activated, forcing refetch");
+      refetchSavedImages();
+    }
+  }, [activeTab, refetchSavedImages]);
 
   const isImageSaved = (image: StockImage) => {
     return savedIds.has(`${image.source}-${image.id}`);
