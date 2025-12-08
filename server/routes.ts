@@ -8035,7 +8035,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
   app.post('/api/video-editor/export', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { project, videoSettings } = req.body;
+      const { project, videoSettings, enhancements } = req.body;
       
       if (!project || !project.clips || !Array.isArray(project.clips) || project.clips.length < 1) {
         return res.status(400).json({ message: "Project with at least one clip is required" });
@@ -8095,6 +8095,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           audioTracks: project.audioTracks,
           watermark: project.watermark,
         },
+        // Include enhancements (transitions, music, text overlays, voice track, avatar)
+        enhancements: enhancements || undefined,
         // Include callback URL for async completion notification
         callbackUrl: `${getBaseUrl()}/api/video-editor/callback/${jobId}`,
       };

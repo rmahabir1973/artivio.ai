@@ -288,10 +288,20 @@ function buildFilterGraph(
     ? (enhancements.transitions.durationSeconds || 1.0) 
     : 0;
   
+  // Helper to get clip settings (mute, volume) for a specific clip
+  const getClipSettings = (clipIndex: number) => {
+    const clipSetting = enhancements?.clipSettings?.find(cs => cs.clipIndex === clipIndex);
+    return {
+      muted: clipSetting?.muted ?? false,
+      volume: clipSetting?.volume ?? 1.0,
+    };
+  };
+  
   for (let i = 0; i < videoCount; i++) {
     const speedFactor = getSpeedFactorForClip(i, enhancements?.speed);
     const originalDuration = metadataList[i].duration;
     const hasAudio = metadataList[i].hasAudio;
+    const { muted, volume } = getClipSettings(i);
     
     const adjustedDuration = originalDuration / speedFactor;
     adjustedDurations.push(adjustedDuration);
@@ -300,21 +310,31 @@ function buildFilterGraph(
       videoFilterSteps.push(`[${i}:v]setpts=${(1.0 / speedFactor).toFixed(3)}*PTS[v${i}s]`);
       videoStreams.push(`[v${i}s]`);
       
-      if (hasAudio) {
+      if (hasAudio && !muted) {
+        // Apply volume and speed adjustment
+        const volumeFilter = volume !== 1.0 ? `,volume=${volume.toFixed(2)}` : '';
         const aSpeed = speedFactor <= 2.0
-          ? `[${i}:a]atempo=${speedFactor.toFixed(3)}[a${i}s]`
-          : `[${i}:a]atempo=2.0,atempo=${(speedFactor / 2.0).toFixed(3)}[a${i}s]`;
+          ? `[${i}:a]atempo=${speedFactor.toFixed(3)}${volumeFilter}[a${i}s]`
+          : `[${i}:a]atempo=2.0,atempo=${(speedFactor / 2.0).toFixed(3)}${volumeFilter}[a${i}s]`;
         audioFilterSteps.push(aSpeed);
         audioStreamLabels.push(`[a${i}s]`);
       } else {
+        // Muted or no audio - use silent audio
         audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${adjustedDuration.toFixed(3)}[a${i}s]`);
         audioStreamLabels.push(`[a${i}s]`);
       }
     } else {
       videoStreams.push(`[${i}:v]`);
-      if (hasAudio) {
-        audioStreamLabels.push(`[${i}:a]`);
+      if (hasAudio && !muted) {
+        if (volume !== 1.0) {
+          // Apply volume adjustment without speed change
+          audioFilterSteps.push(`[${i}:a]volume=${volume.toFixed(2)}[a${i}v]`);
+          audioStreamLabels.push(`[a${i}v]`);
+        } else {
+          audioStreamLabels.push(`[${i}:a]`);
+        }
       } else {
+        // Muted or no audio - use silent audio
         audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${originalDuration.toFixed(3)}[a${i}s]`);
         audioStreamLabels.push(`[a${i}s]`);
       }
@@ -549,11 +569,54 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       tempFiles.push(musicPath);
     }
 
+    // Download voice/TTS audio track if specified
+    let voicePath: string | undefined;
+    if (enhancements?.audioTrack?.audioUrl) {
+      onProgress?.('download', 'Downloading voice track...');
+      const voiceExt = path.extname(new URL(enhancements.audioTrack.audioUrl).pathname) || '.mp3';
+      const voiceFilename = `voice_track${voiceExt}`;
+      const voiceFilepath = path.join(tempDir!, voiceFilename);
+      
+      const response = await axios({
+        method: 'GET',
+        url: enhancements.audioTrack.audioUrl,
+        responseType: 'stream',
+        timeout: 60000,
+      });
+      
+      const writer = createWriteStream(voiceFilepath);
+      response.data.pipe(writer);
+      await new Promise<void>((resolve, reject) => {
+        writer.on('finish', () => resolve());
+        writer.on('error', reject);
+      });
+      
+      voicePath = voiceFilepath;
+      tempFiles.push(voicePath);
+    }
+
+    // Download avatar overlay video if specified
+    let avatarPath: string | undefined;
+    if (enhancements?.avatarOverlay?.videoUrl) {
+      onProgress?.('download', 'Downloading avatar overlay...');
+      avatarPath = await downloadVideo(enhancements.avatarOverlay.videoUrl, tempDir!, 999);
+      tempFiles.push(avatarPath);
+      
+      // Normalize avatar to same format as main videos
+      const normalizedAvatarPath = path.join(tempDir!, 'normalized_avatar.mp4');
+      await normalizeVideo(avatarPath, normalizedAvatarPath);
+      tempFiles.push(normalizedAvatarPath);
+      avatarPath = normalizedAvatarPath;
+    }
+
     const hasEnhancements = !!(
       enhancements?.transitions?.mode === 'crossfade' ||
       enhancements?.backgroundMusic ||
+      enhancements?.audioTrack ||
+      enhancements?.avatarOverlay ||
       (enhancements?.textOverlays && enhancements.textOverlays.length > 0) ||
-      (enhancements?.speed && enhancements.speed.mode !== 'none')
+      (enhancements?.speed && enhancements.speed.mode !== 'none') ||
+      (enhancements?.clipSettings && enhancements.clipSettings.some(cs => cs.muted || cs.volume !== 1))
     );
 
     const outputFilename = `combined_${jobId}.mp4`;
@@ -578,8 +641,18 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     } else {
       onProgress?.('process', 'Applying enhancements and combining...');
 
+      // Build input flags - track indices for each input type
+      let inputIdx = normalizedPaths.length; // Start after video inputs
       const inputFlags = normalizedPaths.map(p => `-i "${p}"`).join(' ');
+      
       const musicInputFlag = musicPath ? `-i "${musicPath}"` : '';
+      const musicStreamIdx = musicPath ? inputIdx++ : -1;
+      
+      const voiceInputFlag = voicePath ? `-i "${voicePath}"` : '';
+      const voiceStreamIdx = voicePath ? inputIdx++ : -1;
+      
+      const avatarInputFlag = avatarPath ? `-i "${avatarPath}"` : '';
+      const avatarStreamIdx = avatarPath ? inputIdx++ : -1;
 
       const { videoFilters, audioFilters, adjustedDurations, transitionDuration } = buildFilterGraph(
         normalizedPaths.length,
@@ -597,10 +670,13 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       // Final duration = raw sum - overlap + totalPadDuration (preserves original duration)
       totalDuration = rawDuration - crossfadeOverlap + totalPadDuration;
 
+      let completeVideoFilter = videoFilters;
+      let finalVideoLabel = '[vfinal]';
       let completeAudioFilter = audioFilters;
       let finalAudioLabel = '[aout]';
       
-      if (musicPath && enhancements?.backgroundMusic) {
+      // Add background music track
+      if (musicPath && enhancements?.backgroundMusic && musicStreamIdx >= 0) {
         // Get actual music duration using ffprobe
         const musicDuration = await getAudioDuration(musicPath);
         
@@ -609,7 +685,6 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
         const fadeOut = enhancements.backgroundMusic.fadeOutSeconds || 0;
         const trimStart = Math.max(0, enhancements.backgroundMusic.trimStartSeconds || 0);
         const trimEnd = enhancements.backgroundMusic.trimEndSeconds || 0;
-        const musicStreamIdx = normalizedPaths.length;
 
         // Clamp trimStart to music duration
         const safeTrimStart = Math.min(trimStart, Math.max(0, musicDuration - 0.1));
@@ -642,18 +717,102 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
         }
         musicFilter += `[music]`;
 
-        completeAudioFilter += `;${musicFilter};[aout][music]amix=inputs=2:duration=first:dropout_transition=0[afinal]`;
-        finalAudioLabel = '[afinal]';
+        completeAudioFilter += `;${musicFilter};${finalAudioLabel}[music]amix=inputs=2:duration=first:dropout_transition=0[amix1]`;
+        finalAudioLabel = '[amix1]';
+      }
+      
+      // Add voice/TTS track overlay
+      if (voicePath && enhancements?.audioTrack && voiceStreamIdx >= 0) {
+        const voiceVolume = enhancements.audioTrack.volume ?? 0.8;
+        const startAt = enhancements.audioTrack.startAtSeconds ?? 0;
+        const fadeIn = enhancements.audioTrack.fadeInSeconds ?? 0;
+        const fadeOut = enhancements.audioTrack.fadeOutSeconds ?? 0;
+        
+        let voiceFilter = `[${voiceStreamIdx}:a]volume=${voiceVolume.toFixed(2)}`;
+        
+        // Apply fade in/out if specified
+        if (fadeIn > 0) {
+          voiceFilter += `,afade=t=in:st=0:d=${fadeIn.toFixed(2)}`;
+        }
+        if (fadeOut > 0) {
+          const voiceDuration = await getAudioDuration(voicePath);
+          const fadeOutStart = Math.max(0, voiceDuration - fadeOut);
+          voiceFilter += `,afade=t=out:st=${fadeOutStart.toFixed(2)}:d=${fadeOut.toFixed(2)}`;
+        }
+        
+        // Delay voice start if startAt > 0
+        if (startAt > 0) {
+          voiceFilter += `,adelay=${Math.round(startAt * 1000)}|${Math.round(startAt * 1000)}`;
+        }
+        voiceFilter += `[voice]`;
+        
+        completeAudioFilter += `;${voiceFilter};${finalAudioLabel}[voice]amix=inputs=2:duration=first:dropout_transition=0[amix2]`;
+        finalAudioLabel = '[amix2]';
+      }
+      
+      // Add avatar PiP overlay
+      if (avatarPath && enhancements?.avatarOverlay && avatarStreamIdx >= 0) {
+        const position = enhancements.avatarOverlay.position ?? 'bottom-right';
+        const size = enhancements.avatarOverlay.size ?? 'medium';
+        const startAt = enhancements.avatarOverlay.startAtSeconds ?? 0;
+        const endAt = enhancements.avatarOverlay.endAtSeconds ?? totalDuration;
+        
+        // Size percentages: small=15%, medium=25%, large=35%
+        const sizePercent = size === 'small' ? 0.15 : size === 'large' ? 0.35 : 0.25;
+        const scaledWidth = Math.round(1280 * sizePercent);
+        const scaledHeight = Math.round(720 * sizePercent);
+        
+        // Position coordinates (10px padding from edges)
+        const padding = 20;
+        let overlayX = padding;
+        let overlayY = padding;
+        
+        switch (position) {
+          case 'top-left':
+            overlayX = padding;
+            overlayY = padding;
+            break;
+          case 'top-right':
+            overlayX = 1280 - scaledWidth - padding;
+            overlayY = padding;
+            break;
+          case 'bottom-left':
+            overlayX = padding;
+            overlayY = 720 - scaledHeight - padding;
+            break;
+          case 'bottom-right':
+            overlayX = 1280 - scaledWidth - padding;
+            overlayY = 720 - scaledHeight - padding;
+            break;
+        }
+        
+        // Scale avatar video for PiP
+        const scaleFilter = `[${avatarStreamIdx}:v]scale=${scaledWidth}:${scaledHeight}[pip_scaled]`;
+        
+        // Enable expression for timing (show only between startAt and endAt)
+        const enableExpr = `between(t,${startAt.toFixed(2)},${endAt.toFixed(2)})`;
+        
+        // Overlay filter with timing
+        const overlayFilter = `${finalVideoLabel}[pip_scaled]overlay=${overlayX}:${overlayY}:enable='${enableExpr}'[vavatar]`;
+        
+        completeVideoFilter += `;${scaleFilter};${overlayFilter}`;
+        finalVideoLabel = '[vavatar]';
+        
+        // Mix avatar audio with main audio (if avatar has audio)
+        const avatarAudioFilter = `[${avatarStreamIdx}:a]volume=0.7,adelay=${Math.round(startAt * 1000)}|${Math.round(startAt * 1000)}[avatar_audio]`;
+        completeAudioFilter += `;${avatarAudioFilter};${finalAudioLabel}[avatar_audio]amix=inputs=2:duration=first:dropout_transition=0[amix_avatar]`;
+        finalAudioLabel = '[amix_avatar]';
       }
 
-      const fullFilterComplex = videoFilters + ';' + completeAudioFilter;
+      const fullFilterComplex = completeVideoFilter + ';' + completeAudioFilter;
 
       // Optimized for streaming: resolution capped at 720p, bitrate limited to 2500k
       // Resolution: max 720p | Bitrate: 2500k | Preset: fast | CRF: 24 | movflags: faststart
       // CRITICAL: Videos are already normalized to 720p in normalizeVideo() step
       // DO NOT add -vf here - it conflicts with filter_complex outputs and causes artifacts
       // The normalized inputs already have consistent 720p, 30fps, 44100Hz audio
-      ffmpegCommand = `ffmpeg ${inputFlags} ${musicInputFlag} -filter_complex "${fullFilterComplex}" -map "[vfinal]" -map "${finalAudioLabel}" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k -ar 44100 "${outputPath}"`;
+      const allInputFlags = [inputFlags, musicInputFlag, voiceInputFlag, avatarInputFlag].filter(Boolean).join(' ');
+      ffmpegCommand = `ffmpeg ${allInputFlags} -filter_complex "${fullFilterComplex}" -map "${finalVideoLabel}" -map "${finalAudioLabel}" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k -ar 44100 "${outputPath}"`;
     }
 
     onProgress?.('process', 'Running FFmpeg...');

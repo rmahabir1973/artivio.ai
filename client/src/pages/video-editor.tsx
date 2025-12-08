@@ -645,12 +645,56 @@ export default function VideoEditor() {
         })),
       };
 
+      // Serialize clip settings from local state
+      const clipSettingsArray = clips.map((clip, index) => {
+        const localSettings = clipSettings.get(clip.id);
+        return {
+          clipId: clip.id,
+          clipIndex: index,
+          muted: localSettings?.muted ?? false,
+          volume: localSettings?.volume ?? 1,
+        };
+      });
+
+      // Build enhancements payload with all enhancement state
+      const enhancementsPayload = {
+        transitions: enhancements.transitionMode === 'crossfade' ? {
+          mode: 'crossfade' as const,
+          durationSeconds: enhancements.transitionDuration,
+        } : { mode: 'none' as const },
+        backgroundMusic: enhancements.musicUrl ? {
+          audioUrl: enhancements.musicUrl,
+          volume: enhancements.musicVolume,
+        } : undefined,
+        textOverlays: enhancements.textOverlays.map(to => ({
+          id: to.id,
+          text: to.text,
+          position: to.position,
+          timing: to.timing,
+          fontSize: 48,
+          colorHex: '#FFFFFF',
+        })),
+        clipSettings: clipSettingsArray.filter(cs => cs.muted || cs.volume !== 1),
+        audioTrack: enhancements.voiceUrl ? {
+          audioUrl: enhancements.voiceUrl,
+          type: 'tts' as const,
+          volume: enhancements.voiceVolume,
+          startAtSeconds: 0,
+        } : undefined,
+        avatarOverlay: enhancements.avatarUrl ? {
+          videoUrl: enhancements.avatarUrl,
+          position: enhancements.avatarPosition,
+          size: enhancements.avatarSize,
+        } : undefined,
+      };
+
       const response = await apiRequest("POST", "/api/video-editor/export", { 
         project,
         videoSettings: {
           format: 'mp4',
           quality: 'high',
-        }
+        },
+        enhancements: enhancementsPayload,
       });
       const result = await response.json();
 
