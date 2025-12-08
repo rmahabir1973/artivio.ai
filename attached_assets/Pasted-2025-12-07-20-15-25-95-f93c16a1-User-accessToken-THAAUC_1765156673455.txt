@@ -1,0 +1,284 @@
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"accessToken": "THAAUC41UtkBZABUVJuejB3ejRrWXJOVExRXzJxQnpaNURZASzEydVlpQnBqblZAIVzRBT1dDTXZAScW5xeWRCR1A1YTlrSTAtMkxEbGdpWHNmMjVwcV92aFpDSFh0SVRNZA1lERU9iRE9WLTl1UC04MGJtYWhIUWtmbk1GUHFmV21YTFFkQQZDZD",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"username": "artivio.ai",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+[Social] GetLate returned 9 accounts: [
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"isActive": true,
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"userId": "692dd31d955508c697d01c5a",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"_id": "692f0dbff43160a0bc999cdd",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"updatedAt": "2025-12-08T00:13:23.176Z",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"name": "artivio_49729939",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"isDefault": false,
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"platformUserId": "10166334753237738:page:950972651425099",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+[GetLate] Accounts API returned 9 accounts
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"updatedAt": "2025-12-01T19:11:13.296Z",
+2025-12-07 20:15:25.95
+f93c16a1
+User
+"isDefault": false,
+2025-12-07 20:15:48.78
+f93c16a1
+User
+1:15:48 AM [express] GET /api/announcements/active 304 in 25ms :: []
+2025-12-07 20:16:03.47
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:03.71
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:03.73
+f93c16a1
+User
+Pixabay API error: Request failed with status code 400
+2025-12-07 20:16:03.82
+f93c16a1
+User
+1:16:03 AM [express] GET /api/stock-photos/search 200 in 381ms :: {"query":"w","page":1,"perPage":40…
+2025-12-07 20:16:03.85
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:03.87
+f93c16a1
+User
+Pixabay API error: Request failed with status code 400
+2025-12-07 20:16:03.98
+f93c16a1
+User
+Pixabay API error: Request failed with status code 400
+2025-12-07 20:16:04.14
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:04.21
+f93c16a1
+User
+1:16:04 AM [express] GET /api/stock-photos/search 200 in 389ms :: {"query":"wat","page":1,"perPage":…
+2025-12-07 20:16:04.21
+f93c16a1
+User
+1:16:04 AM [express] GET /api/stock-photos/search 200 in 525ms :: {"query":"wa","page":1,"perPage":4…
+2025-12-07 20:16:04.27
+f93c16a1
+User
+Pixabay API error: Request failed with status code 400
+2025-12-07 20:16:04.50
+f93c16a1
+User
+1:16:04 AM [express] GET /api/stock-photos/search 200 in 386ms :: {"query":"wat h","page":1,"perPage…
+2025-12-07 20:16:04.61
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:04.64
+f93c16a1
+User
+1:16:04 AM [express] POST /api/stock-photos/check-saved 200 in 50ms :: {"savedIds":[]}
+2025-12-07 20:16:05.14
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:05.23
+f93c16a1
+User
+Pixabay API error: Request failed with status code 400
+2025-12-07 20:16:05.32
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:05.35
+f93c16a1
+User
+1:16:05 AM [express] POST /api/stock-photos/check-saved 200 in 57ms :: {"savedIds":[]}
+2025-12-07 20:16:05.52
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:05.54
+f93c16a1
+User
+1:16:05 AM [express] POST /api/stock-photos/check-saved 200 in 52ms :: {"savedIds":[]}
+2025-12-07 20:16:05.55
+f93c16a1
+User
+1:16:05 AM [express] GET /api/stock-photos/search 200 in 440ms :: {"query":"wat h\\","page":1,"perPa…
+2025-12-07 20:16:06.47
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:06.53
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:06.58
+f93c16a1
+User
+Pixabay API error: Request failed with status code 400
+2025-12-07 20:16:06.59
+f93c16a1
+User
+1:16:06 AM [express] GET /api/stock-photos/search 200 in 143ms :: {"query":"watc","page":1,"perPage"…
+2025-12-07 20:16:06.63
+f93c16a1
+User
+Pixabay API error: Request failed with status code 400
+2025-12-07 20:16:06.68
+f93c16a1
+User
+1:16:06 AM [express] GET /api/stock-photos/search 200 in 178ms :: {"query":"watch","page":1,"perPage…
+2025-12-07 20:16:06.80
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:06.82
+f93c16a1
+User
+1:16:06 AM [express] POST /api/stock-photos/check-saved 200 in 48ms :: {"savedIds":[]}
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"photographer": "Pixabay",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"externalId": "277390",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+[Stock Photos] Downloading image from pexels: 277390
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"pageUrl": "https://www.pexels.com/photo/round-silver-colored-analog-watch-with-black-strap-277390/"
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"height": 3002,
+2025-12-07 20:16:17.03
+f93c16a1
+User
+[Stock Photos] Save request received for user: 49729939
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"originalUrl": "https://images.pexels.com/photos/277390/pexels-photo-277390.jpeg",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"photographerUrl": "https://www.pexels.com/@pixabay",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"webformatUrl": "https://images.pexels.com/photos/277390/pexels-photo-277390.jpeg?auto=compress&cs=tinysrgb&h=350",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+[Stock Photos] Request body: {
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"source": "pexels",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+}
+2025-12-07 20:16:17.03
+f93c16a1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"tags": "Stylish black analog wristwatch with a black strap on a vibrant yellow background.",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"previewUrl": "https://images.pexels.com/photos/277390/pexels-photo-277390.jpeg?auto=compress&cs=tinysrgb&dpr=1&fit=crop&h=200&w=280",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"largeUrl": "https://images.pexels.com/photos/277390/pexels-photo-277390.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+2025-12-07 20:16:17.03
+f93c16a1
+User
+"width": 4504,
+2025-12-07 20:16:17.58
+f93c16a1
+User
+[Upload] Uploading image to S3...
+2025-12-07 20:16:17.58
+f93c16a1
+User
+[S3] Uploading 48787 bytes to uploads/images/1765156577586-9e67bb35de354628508f8ff00ffb0748.jpeg (image/jpeg)
+2025-12-07 20:16:17.90
+f93c16a1
+User
+[S3] Upload complete: uploads/images/1765156577586-9e67bb35de354628508f8ff00ffb0748.jpeg
+2025-12-07 20:16:17.90
+f93c16a1
+User
+[Stock Photos] Uploaded to s3: https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/images/1765156577586-9e67bb35de354628508f8ff00ffb0748.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251208%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251208T011617Z&X-Amz-Expires=604800&X-Amz-Signature=4a432dcfab8e48ecc4e5f8548bf8f882746fc4cbc4332357f8d62d3bde8dfde3&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+2025-12-07 20:16:17.95
+f93c16a1
+User
+[Upload] Uploading image to S3...
+2025-12-07 20:16:17.95
+f93c16a1
+User
+[S3] Uploading 8287 bytes to uploads/images/1765156577957-f84fa44c387c9176aa515b9ae97dd608.jpeg (image/jpeg)
+2025-12-07 20:16:18.02
+f93c16a1
+User
+[S3] Upload complete: uploads/images/1765156577957-f84fa44c387c9176aa515b9ae97dd608.jpeg
+2025-12-07 20:16:18.02
+f93c16a1
+User
+[Stock Photos] Saving to database for user: 49729939
+2025-12-07 20:16:18.04
+f93c16a1
+User
+1:16:18 AM [express] POST /api/stock-photos/save 200 in 1042ms :: {"success":true,"image":{"id":"161…
+2025-12-07 20:16:18.04
+f93c16a1
+User
+[Stock Photos] Successfully saved to database: 161319c0-54a3-4524-aed2-7af41e80d0b6
