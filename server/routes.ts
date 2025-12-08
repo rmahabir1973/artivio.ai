@@ -9986,89 +9986,124 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
-  // Save a stock image to user's library (downloads and uploads to S3)
+  // Save a stock image to user's library (with S3/local upload and original URL fallback)
   app.post('/api/stock-photos/save', requireJWT, async (req: any, res) => {
+    // Track uploaded keys for cleanup on error
+    let uploadedKey: string | undefined;
+    let isS3Storage = false;
+    
     try {
       const userId = req.user.id;
-      console.log(`[Stock Photos] Save request received for user: ${userId}`);
-      console.log(`[Stock Photos] Request body:`, JSON.stringify(req.body, null, 2));
+      console.log(`[Stock Photos] Save request for user: ${userId}`);
       
       const { source, externalId, largeUrl, webformatUrl, previewUrl, width, height, tags, photographer, photographerUrl, pageUrl, originalUrl } = req.body;
       
-      // Download the image from the source and upload to our storage
-      const imageUrlToSave = largeUrl || webformatUrl;
+      // Validate required fields
+      if (!source || !externalId) {
+        return res.status(400).json({ message: 'Missing required fields: source and externalId' });
+      }
+      
+      // Get best quality URL for saving
+      const imageUrlToSave = largeUrl || webformatUrl || previewUrl;
       if (!imageUrlToSave) {
-        console.log('[Stock Photos] No image URL provided');
         return res.status(400).json({ message: 'No image URL provided' });
       }
 
-      console.log(`[Stock Photos] Downloading image from ${source}: ${externalId}`);
+      console.log(`[Stock Photos] Processing ${source}:${externalId}`);
       
-      // Fetch the image from the external URL
-      const imageResponse = await fetch(imageUrlToSave, {
-        headers: {
-          'User-Agent': 'Artivio-AI/1.0',
-        },
-      });
+      // Initialize with original URLs (always valid fallback)
+      let savedImageUrl = imageUrlToSave;
+      let savedPreviewUrl = previewUrl || imageUrlToSave;
+      let savedOriginalUrl = originalUrl || largeUrl || webformatUrl || imageUrlToSave;
+      let storageType = 'remote';
       
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download image: ${imageResponse.status}`);
-      }
-      
-      const arrayBuffer = await imageResponse.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      
-      // Determine content type from response or URL
-      const contentType = imageResponse.headers.get('content-type') || 
-        (imageUrlToSave.includes('.png') ? 'image/png' : 
-         imageUrlToSave.includes('.webp') ? 'image/webp' : 'image/jpeg');
-      
-      // Convert to base64 for our upload service
-      const base64Data = `data:${contentType};base64,${buffer.toString('base64')}`;
-      
-      // Upload to S3/local storage using existing service
-      const { saveImage } = await import('./services/uploadService');
-      const uploadResult = await saveImage(base64Data);
-      
-      console.log(`[Stock Photos] Uploaded to ${uploadResult.storageType}: ${uploadResult.url}`);
-      
-      // Also upload preview if different
-      let savedPreviewUrl = uploadResult.url; // Default to same as large
-      if (previewUrl && previewUrl !== imageUrlToSave) {
-        try {
-          const previewResponse = await fetch(previewUrl, {
+      // Try to upload to our storage (optional - fallback to original URLs on any failure)
+      try {
+        // Lazy import S3 service
+        const s3 = await import('./services/awsS3');
+        
+        if (s3.isS3Enabled()) {
+          // S3 path: direct URL upload
+          const extension = imageUrlToSave.includes('.png') ? 'png' : 
+                           imageUrlToSave.includes('.webp') ? 'webp' : 'jpeg';
+          const filename = `stock-${source}-${externalId}-${Date.now()}.${extension}`;
+          
+          console.log(`[Stock Photos] Uploading to S3: ${filename}`);
+          const uploadResult = await s3.uploadFromUrl(imageUrlToSave, {
+            prefix: 'uploads/images',
+            contentType: `image/${extension}`,
+            filename,
+          });
+          
+          savedImageUrl = uploadResult.signedUrl;
+          savedPreviewUrl = uploadResult.signedUrl;
+          savedOriginalUrl = uploadResult.signedUrl;
+          uploadedKey = uploadResult.key;
+          isS3Storage = true;
+          storageType = 's3';
+          
+          console.log(`[Stock Photos] S3 upload success: ${uploadedKey}`);
+        } else {
+          // Local path: download then save via uploadService
+          const { saveImage } = await import('./services/uploadService');
+          
+          console.log('[Stock Photos] Downloading for local storage');
+          const imageResponse = await fetch(imageUrlToSave, {
             headers: { 'User-Agent': 'Artivio-AI/1.0' },
           });
-          if (previewResponse.ok) {
-            const previewBuffer = Buffer.from(await previewResponse.arrayBuffer());
-            const previewContentType = previewResponse.headers.get('content-type') || 'image/jpeg';
-            const previewBase64 = `data:${previewContentType};base64,${previewBuffer.toString('base64')}`;
-            const previewResult = await saveImage(previewBase64);
-            savedPreviewUrl = previewResult.url;
+          
+          if (!imageResponse.ok) {
+            throw new Error(`Download failed: ${imageResponse.status}`);
           }
-        } catch (e) {
-          console.log('[Stock Photos] Preview download failed, using main image URL');
+          
+          const buffer = Buffer.from(await imageResponse.arrayBuffer());
+          const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+          const base64Data = `data:${contentType};base64,${buffer.toString('base64')}`;
+          
+          const uploadResult = await saveImage(base64Data);
+          savedImageUrl = uploadResult.url;
+          savedPreviewUrl = uploadResult.url;
+          savedOriginalUrl = uploadResult.url;
+          uploadedKey = uploadResult.key;
+          isS3Storage = uploadResult.storageType === 's3';
+          storageType = uploadResult.storageType;
+          
+          console.log(`[Stock Photos] ${storageType} storage success`);
         }
+      } catch (uploadError: any) {
+        // Upload failed - continue with original remote URLs (still valid for display)
+        console.warn('[Stock Photos] Upload failed, using original URLs:', uploadError.message);
+        storageType = 'remote';
+        uploadedKey = undefined;
+        isS3Storage = false;
       }
       
-      // Validate and save to database with our hosted URLs
+      // Validate payload
       const validationResult = insertSavedStockImageSchema.safeParse({
         userId,
         source,
-        externalId,
+        externalId: String(externalId),
         previewUrl: savedPreviewUrl,
-        webformatUrl: uploadResult.url,
-        largeUrl: uploadResult.url,
-        originalUrl: uploadResult.url,
-        width,
-        height,
-        tags,
-        photographer,
-        photographerUrl,
-        pageUrl,
+        webformatUrl: savedImageUrl,
+        largeUrl: savedImageUrl,
+        originalUrl: savedOriginalUrl,
+        width: width || 0,
+        height: height || 0,
+        tags: tags || '',
+        photographer: photographer || '',
+        photographerUrl: photographerUrl || '',
+        pageUrl: pageUrl || '',
       });
       
       if (!validationResult.success) {
+        // Cleanup uploaded file if validation fails
+        if (uploadedKey && isS3Storage) {
+          try {
+            const s3 = await import('./services/awsS3');
+            await s3.deleteObject(uploadedKey);
+            console.log('[Stock Photos] Cleaned up S3 after validation failure');
+          } catch (e) { /* ignore cleanup errors */ }
+        }
         console.log('[Stock Photos] Validation failed:', validationResult.error.errors);
         return res.status(400).json({ 
           message: 'Invalid request data', 
@@ -10076,17 +10111,41 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         });
       }
 
-      console.log('[Stock Photos] Saving to database for user:', userId);
-      const saved = await storage.saveStockImage(validationResult.data);
-      console.log('[Stock Photos] Successfully saved to database:', saved.id);
-
-      res.json({ success: true, image: saved });
+      // Save to database
+      console.log('[Stock Photos] Saving to database');
+      let saved;
+      try {
+        saved = await storage.saveStockImage(validationResult.data);
+      } catch (dbError) {
+        // Cleanup uploaded file if DB save fails
+        if (uploadedKey && isS3Storage) {
+          try {
+            const s3 = await import('./services/awsS3');
+            await s3.deleteObject(uploadedKey);
+            console.log('[Stock Photos] Cleaned up S3 after DB failure');
+          } catch (e) { /* ignore cleanup errors */ }
+        }
+        throw dbError;
+      }
+      
+      console.log(`[Stock Photos] Success - saved as ${saved.id}, storage: ${storageType}`);
+      res.json({ success: true, image: saved, storageType });
+      
     } catch (error: any) {
-      // Handle duplicate
+      // Final cleanup on any uncaught error
+      if (uploadedKey && isS3Storage) {
+        try {
+          const s3 = await import('./services/awsS3');
+          await s3.deleteObject(uploadedKey);
+          console.log('[Stock Photos] Cleaned up S3 after error');
+        } catch (e) { /* ignore cleanup errors */ }
+      }
+      
       if (error.message?.includes('duplicate') || error.code === '23505') {
         return res.status(409).json({ message: 'Image already saved to library' });
       }
-      console.error('Save stock image error:', error);
+      
+      console.error('[Stock Photos] Save error:', error);
       res.status(500).json({ message: error.message || 'Failed to save stock image' });
     }
   });
