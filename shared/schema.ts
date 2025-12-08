@@ -590,11 +590,47 @@ export const speedEnhancementSchema = z.object({
   })).optional(), // For perClip mode
 }).default({ mode: 'none' });
 
+// Per-clip settings (mute, trim/split)
+export const clipSettingSchema = z.object({
+  clipId: z.string(), // Reference to the clip
+  clipIndex: z.number().int().min(0),
+  muted: z.boolean().default(false),
+  volume: z.number().min(0).max(1).default(1), // Clip-specific volume
+  trimStartSeconds: z.number().min(0).optional(), // For splitting/trimming
+  trimEndSeconds: z.number().min(0).optional(),
+});
+
+export const clipSettingsEnhancementSchema = z.array(clipSettingSchema).default([]);
+
+// Audio track (separate from background music - for TTS/voice)
+export const audioTrackSchema = z.object({
+  audioUrl: z.string().url(),
+  type: z.enum(['tts', 'voice', 'sfx']).default('tts'), // TTS, voice recording, sound effects
+  volume: z.number().min(0).max(1).default(0.8),
+  startAtSeconds: z.number().min(0).default(0), // When in timeline to start
+  fadeInSeconds: z.number().min(0).max(5).optional(),
+  fadeOutSeconds: z.number().min(0).max(5).optional(),
+}).optional();
+
+// Avatar overlay (picture-in-picture)
+export const avatarOverlaySchema = z.object({
+  videoUrl: z.string().url(), // URL to the InfiniteTalk avatar video
+  position: z.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right']).default('bottom-right'),
+  size: z.enum(['small', 'medium', 'large']).default('medium'), // 15%, 25%, 35% of frame
+  opacity: z.number().min(0.5).max(1).default(1),
+  borderRadius: z.boolean().default(true), // Rounded corners
+  startAtSeconds: z.number().min(0).default(0), // When to show
+  endAtSeconds: z.number().min(0).optional(), // When to hide (undefined = entire video)
+}).optional();
+
 export const videoEnhancementsSchema = z.object({
   transitions: transitionsEnhancementSchema,
   backgroundMusic: backgroundMusicEnhancementSchema,
   textOverlays: textOverlaysEnhancementSchema,
   speed: speedEnhancementSchema,
+  clipSettings: clipSettingsEnhancementSchema,
+  audioTrack: audioTrackSchema,
+  avatarOverlay: avatarOverlaySchema,
 }).partial().default({});
 
 export type VideoEnhancements = z.infer<typeof videoEnhancementsSchema>;
@@ -602,6 +638,9 @@ export type TransitionsEnhancement = z.infer<typeof transitionsEnhancementSchema
 export type BackgroundMusicEnhancement = z.infer<typeof backgroundMusicEnhancementSchema>;
 export type TextOverlay = z.infer<typeof textOverlaySchema>;
 export type SpeedEnhancement = z.infer<typeof speedEnhancementSchema>;
+export type ClipSetting = z.infer<typeof clipSettingSchema>;
+export type AudioTrack = z.infer<typeof audioTrackSchema>;
+export type AvatarOverlay = z.infer<typeof avatarOverlaySchema>;
 
 // Video Combination Request Schema
 export const combineVideosRequestSchema = z.object({
