@@ -57,6 +57,8 @@ import {
   Eye,
   Mic,
   SlidersHorizontal,
+  MessageSquare,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -139,6 +141,20 @@ interface EnhancementsState {
     size: 'small' | 'medium' | 'large';
     name?: string;
   };
+  watermark?: {
+    imageUrl: string;
+    position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
+    size: number; // percentage of video width (5-30)
+    opacity: number; // 0-1
+    name?: string;
+  };
+  captions: Array<{
+    id: string;
+    startSeconds: number;
+    endSeconds: number;
+    text: string;
+    style: 'default' | 'bold' | 'outline';
+  }>;
 }
 
 interface SortableClipProps {
@@ -422,6 +438,7 @@ export default function VideoEditor() {
     fadeDuration: 0.5,
     aspectRatio: '16:9',
     textOverlays: [],
+    captions: [],
   });
   const [showClipSettingsModal, setShowClipSettingsModal] = useState(false);
   const [editingClip, setEditingClip] = useState<{ clip: VideoClip; index: number } | null>(null);
@@ -836,6 +853,19 @@ export default function VideoEditor() {
           position: enhancements.avatarOverlay.position,
           size: enhancements.avatarOverlay.size,
         } : undefined,
+        watermark: enhancements.watermark ? {
+          imageUrl: enhancements.watermark.imageUrl,
+          position: enhancements.watermark.position,
+          size: enhancements.watermark.size,
+          opacity: enhancements.watermark.opacity,
+        } : undefined,
+        captions: enhancements.captions.filter(c => c.text.trim()).map(c => ({
+          id: c.id,
+          startSeconds: c.startSeconds,
+          endSeconds: c.endSeconds,
+          text: c.text,
+          style: c.style,
+        })),
       };
 
       const response = await apiRequest("POST", "/api/video-editor/export", { 
@@ -924,6 +954,19 @@ export default function VideoEditor() {
         clipSettings: clipSettingsArray.filter(cs => 
           cs.muted || cs.volume !== 1 || cs.speed !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
         ),
+        watermark: enhancements.watermark ? {
+          imageUrl: enhancements.watermark.imageUrl,
+          position: enhancements.watermark.position,
+          size: enhancements.watermark.size,
+          opacity: enhancements.watermark.opacity,
+        } : undefined,
+        captions: enhancements.captions.filter(c => c.text.trim()).map(c => ({
+          id: c.id,
+          startSeconds: c.startSeconds,
+          endSeconds: c.endSeconds,
+          text: c.text,
+          style: c.style,
+        })),
       };
 
       const response = await apiRequest("POST", "/api/video-editor/preview", { 
@@ -1393,18 +1436,24 @@ export default function VideoEditor() {
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <Tabs defaultValue="transitions" className="w-full">
-                                <TabsList className="w-full grid grid-cols-4 rounded-none h-9">
-                                  <TabsTrigger value="transitions" className="text-xs px-2" data-testid="tab-transitions">
+                                <TabsList className="w-full grid grid-cols-6 rounded-none h-9">
+                                  <TabsTrigger value="transitions" className="text-xs px-1" data-testid="tab-transitions">
                                     <Layers className="h-3.5 w-3.5" />
                                   </TabsTrigger>
-                                  <TabsTrigger value="music" className="text-xs px-2" data-testid="tab-music">
+                                  <TabsTrigger value="music" className="text-xs px-1" data-testid="tab-music">
                                     <Music className="h-3.5 w-3.5" />
                                   </TabsTrigger>
-                                  <TabsTrigger value="text" className="text-xs px-2" data-testid="tab-text">
+                                  <TabsTrigger value="text" className="text-xs px-1" data-testid="tab-text">
                                     <Type className="h-3.5 w-3.5" />
                                   </TabsTrigger>
-                                  <TabsTrigger value="avatar" className="text-xs px-2" data-testid="tab-avatar">
+                                  <TabsTrigger value="avatar" className="text-xs px-1" data-testid="tab-avatar">
                                     <User className="h-3.5 w-3.5" />
+                                  </TabsTrigger>
+                                  <TabsTrigger value="watermark" className="text-xs px-1" data-testid="tab-watermark">
+                                    <ImageIcon className="h-3.5 w-3.5" />
+                                  </TabsTrigger>
+                                  <TabsTrigger value="captions" className="text-xs px-1" data-testid="tab-captions">
+                                    <MessageSquare className="h-3.5 w-3.5" />
                                   </TabsTrigger>
                                 </TabsList>
 
@@ -1932,6 +1981,294 @@ export default function VideoEditor() {
                                       </div>
                                     </ScrollArea>
                                   )}
+                                </TabsContent>
+
+                                <TabsContent value="watermark" className="p-3 space-y-4 m-0">
+                                  {enhancements.watermark ? (
+                                    <div className="space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-xs font-medium">Watermark</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 text-xs px-2"
+                                          onClick={() => setEnhancements(prev => ({ ...prev, watermark: undefined }))}
+                                          data-testid="button-remove-watermark"
+                                        >
+                                          <X className="h-3 w-3 mr-1" />
+                                          Remove
+                                        </Button>
+                                      </div>
+                                      <div className="p-2 border rounded-md bg-muted/50">
+                                        <img 
+                                          src={enhancements.watermark.imageUrl} 
+                                          alt="Watermark preview"
+                                          className="w-full max-h-20 object-contain rounded" 
+                                        />
+                                        {enhancements.watermark.name && (
+                                          <p className="text-xs font-medium mt-2 line-clamp-1">{enhancements.watermark.name}</p>
+                                        )}
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs">Position</Label>
+                                        <Select
+                                          value={enhancements.watermark.position}
+                                          onValueChange={(v: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center') => 
+                                            setEnhancements(prev => ({ 
+                                              ...prev, 
+                                              watermark: prev.watermark ? { ...prev.watermark, position: v } : undefined 
+                                            }))
+                                          }
+                                        >
+                                          <SelectTrigger className="h-8 text-xs" data-testid="select-watermark-position">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="top-left">Top Left</SelectItem>
+                                            <SelectItem value="top-right">Top Right</SelectItem>
+                                            <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                                            <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                                            <SelectItem value="center">Center</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs flex justify-between">
+                                          Size
+                                          <span className="text-muted-foreground">{enhancements.watermark.size}%</span>
+                                        </Label>
+                                        <Slider
+                                          value={[enhancements.watermark.size]}
+                                          min={5}
+                                          max={30}
+                                          step={1}
+                                          onValueChange={([v]) => 
+                                            setEnhancements(prev => ({ 
+                                              ...prev, 
+                                              watermark: prev.watermark ? { ...prev.watermark, size: v } : undefined 
+                                            }))
+                                          }
+                                          data-testid="slider-watermark-size"
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs flex justify-between">
+                                          Opacity
+                                          <span className="text-muted-foreground">{Math.round(enhancements.watermark.opacity * 100)}%</span>
+                                        </Label>
+                                        <Slider
+                                          value={[enhancements.watermark.opacity]}
+                                          min={0.1}
+                                          max={1}
+                                          step={0.05}
+                                          onValueChange={([v]) => 
+                                            setEnhancements(prev => ({ 
+                                              ...prev, 
+                                              watermark: prev.watermark ? { ...prev.watermark, opacity: v } : undefined 
+                                            }))
+                                          }
+                                          data-testid="slider-watermark-opacity"
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      <p className="text-xs text-muted-foreground">
+                                        Add your logo or watermark to the video
+                                      </p>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs">Image URL</Label>
+                                        <div className="flex gap-2">
+                                          <Input
+                                            placeholder="https://example.com/logo.png"
+                                            className="h-8 text-xs"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                const url = (e.target as HTMLInputElement).value.trim();
+                                                if (url) {
+                                                  setEnhancements(prev => ({
+                                                    ...prev,
+                                                    watermark: {
+                                                      imageUrl: url,
+                                                      position: 'bottom-right',
+                                                      size: 15,
+                                                      opacity: 0.8,
+                                                    }
+                                                  }));
+                                                }
+                                              }
+                                            }}
+                                            data-testid="input-watermark-url"
+                                          />
+                                          <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            className="h-8"
+                                            onClick={() => {
+                                              const input = document.querySelector('[data-testid="input-watermark-url"]') as HTMLInputElement;
+                                              const url = input?.value?.trim();
+                                              if (url) {
+                                                setEnhancements(prev => ({
+                                                  ...prev,
+                                                  watermark: {
+                                                    imageUrl: url,
+                                                    position: 'bottom-right',
+                                                    size: 15,
+                                                    opacity: 0.8,
+                                                  }
+                                                }));
+                                              }
+                                            }}
+                                            data-testid="button-add-watermark"
+                                          >
+                                            <Plus className="h-3.5 w-3.5" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </TabsContent>
+
+                                <TabsContent value="captions" className="p-3 space-y-4 m-0">
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-medium">Captions ({enhancements.captions.length})</span>
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="h-6 text-xs px-2"
+                                        onClick={() => {
+                                          const newCaption = {
+                                            id: `caption-${Date.now()}`,
+                                            startSeconds: 0,
+                                            endSeconds: 3,
+                                            text: '',
+                                            style: 'default' as const,
+                                          };
+                                          setEnhancements(prev => ({
+                                            ...prev,
+                                            captions: [...prev.captions, newCaption]
+                                          }));
+                                        }}
+                                        data-testid="button-add-caption"
+                                      >
+                                        <Plus className="h-3 w-3 mr-1" />
+                                        Add
+                                      </Button>
+                                    </div>
+                                    
+                                    {enhancements.captions.length === 0 ? (
+                                      <div className="text-center py-6 text-muted-foreground">
+                                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                        <p className="text-xs">No captions added</p>
+                                        <p className="text-[10px] mt-1">Add captions with timing</p>
+                                      </div>
+                                    ) : (
+                                      <ScrollArea className="h-64">
+                                        <div className="space-y-3 pr-2">
+                                          {enhancements.captions.map((caption, idx) => (
+                                            <div 
+                                              key={caption.id} 
+                                              className="p-2 border rounded-md bg-muted/30 space-y-2"
+                                              data-testid={`caption-item-${idx}`}
+                                            >
+                                              <div className="flex items-center justify-between">
+                                                <span className="text-[10px] text-muted-foreground">Caption {idx + 1}</span>
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className="h-5 w-5 p-0"
+                                                  onClick={() => {
+                                                    setEnhancements(prev => ({
+                                                      ...prev,
+                                                      captions: prev.captions.filter(c => c.id !== caption.id)
+                                                    }));
+                                                  }}
+                                                  data-testid={`button-remove-caption-${idx}`}
+                                                >
+                                                  <X className="h-3 w-3" />
+                                                </Button>
+                                              </div>
+                                              <Input
+                                                value={caption.text}
+                                                placeholder="Caption text..."
+                                                className="h-7 text-xs"
+                                                onChange={(e) => {
+                                                  setEnhancements(prev => ({
+                                                    ...prev,
+                                                    captions: prev.captions.map(c => 
+                                                      c.id === caption.id ? { ...c, text: e.target.value } : c
+                                                    )
+                                                  }));
+                                                }}
+                                                data-testid={`input-caption-text-${idx}`}
+                                              />
+                                              <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                  <Label className="text-[10px]">Start (s)</Label>
+                                                  <Input
+                                                    type="number"
+                                                    value={caption.startSeconds}
+                                                    min={0}
+                                                    step={0.5}
+                                                    className="h-6 text-xs"
+                                                    onChange={(e) => {
+                                                      setEnhancements(prev => ({
+                                                        ...prev,
+                                                        captions: prev.captions.map(c => 
+                                                          c.id === caption.id ? { ...c, startSeconds: parseFloat(e.target.value) || 0 } : c
+                                                        )
+                                                      }));
+                                                    }}
+                                                    data-testid={`input-caption-start-${idx}`}
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <Label className="text-[10px]">End (s)</Label>
+                                                  <Input
+                                                    type="number"
+                                                    value={caption.endSeconds}
+                                                    min={0}
+                                                    step={0.5}
+                                                    className="h-6 text-xs"
+                                                    onChange={(e) => {
+                                                      setEnhancements(prev => ({
+                                                        ...prev,
+                                                        captions: prev.captions.map(c => 
+                                                          c.id === caption.id ? { ...c, endSeconds: parseFloat(e.target.value) || 0 } : c
+                                                        )
+                                                      }));
+                                                    }}
+                                                    data-testid={`input-caption-end-${idx}`}
+                                                  />
+                                                </div>
+                                              </div>
+                                              <Select
+                                                value={caption.style}
+                                                onValueChange={(v: 'default' | 'bold' | 'outline') => {
+                                                  setEnhancements(prev => ({
+                                                    ...prev,
+                                                    captions: prev.captions.map(c => 
+                                                      c.id === caption.id ? { ...c, style: v } : c
+                                                    )
+                                                  }));
+                                                }}
+                                              >
+                                                <SelectTrigger className="h-6 text-xs" data-testid={`select-caption-style-${idx}`}>
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="default">Default</SelectItem>
+                                                  <SelectItem value="bold">Bold</SelectItem>
+                                                  <SelectItem value="outline">Outline</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </ScrollArea>
+                                    )}
+                                  </div>
                                 </TabsContent>
                               </Tabs>
                             </CollapsibleContent>

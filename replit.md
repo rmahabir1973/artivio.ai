@@ -22,7 +22,7 @@ Artivio AI supports a wide array of AI generation capabilities:
 -   **AI Sound Effects**: ElevenLabs Sound Effect V2.
 -   **AI Text-to-Speech**: Fish Audio TTS (S1 model) with multi-language support.
 -   **AI Image Analysis**: OpenAI GPT-4o Vision API.
--   **Video Editor/Combiner**: An FFmpeg-based drag-and-drop tool for combining AI-generated videos, offering clip splitting, trimming, speed control, quick previews, multi-track audio mixing, and fade effects.
+-   **Video Editor/Combiner**: An FFmpeg-based drag-and-drop tool for combining AI-generated videos, offering clip splitting, trimming, speed control (0.5x-2x), quick previews, multi-track audio mixing, fade in/out effects, aspect ratio conversion (16:9/9:16/1:1), watermark overlay (image with position, size, opacity controls), and timed captions (start/end seconds, text, style: default/bold/outline).
 -   **QR Code Generator**: Client-side with customization.
 -   **AI Chat**: Deepseek and OpenAI model support with streaming responses.
 -   **Voice Cloning & Speech-to-Text**: Fish Audio API for voice model creation and synchronous transcription.
