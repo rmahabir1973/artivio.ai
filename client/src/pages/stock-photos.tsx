@@ -159,9 +159,11 @@ export default function StockPhotos() {
   const {
     data: savedImages,
     isLoading: savedLoading,
+    refetch: refetchSavedImages,
   } = useQuery<SavedResponse>({
-    queryKey: ["/api/stock-photos/saved?limit=100"],
+    queryKey: ["/api/stock-photos/saved"],
     enabled: activeTab === "saved",
+    staleTime: 0, // Always consider stale to ensure fresh data
   });
 
   // Check which images are saved
@@ -207,7 +209,12 @@ export default function StockPhotos() {
     onSuccess: (_, image) => {
       console.log("[Stock Photos] Save mutation success for:", image.id);
       setSavedIds((prev) => new Set(Array.from(prev).concat([`${image.source}-${image.id}`])));
-      queryClient.invalidateQueries({ queryKey: ["/api/stock-photos/saved?limit=100"] });
+      // Invalidate and force refetch of saved images
+      queryClient.invalidateQueries({ queryKey: ["/api/stock-photos/saved"] });
+      // If already on saved tab, force immediate refetch
+      if (activeTab === "saved") {
+        refetchSavedImages();
+      }
       toast({ title: "Image saved to library" });
     },
     onError: (error: any) => {
@@ -226,7 +233,7 @@ export default function StockPhotos() {
       return apiRequest("DELETE", `/api/stock-photos/saved/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stock-photos/saved?limit=100"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stock-photos/saved"] });
       toast({ title: "Image removed from library" });
     },
     onError: () => {

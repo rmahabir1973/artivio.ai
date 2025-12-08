@@ -9893,7 +9893,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       const userId = req.user.id;
       console.log(`[Stock Photos] Getting saved images for user: ${userId}`);
       const page = parseInt(req.query.page as string) || 1;
-      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const limit = Math.min(parseInt(req.query.limit as string) || 100, 200);
       const offset = (page - 1) * limit;
 
       const saved = await storage.getSavedStockImages(userId, limit, offset);
