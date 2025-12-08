@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
@@ -25,7 +25,7 @@ import { usePricing } from "@/hooks/use-pricing";
 import { fetchWithAuth, apiRequest, queryClient } from "@/lib/queryClient";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { Generation } from "@shared/schema";
+import type { Generation, VideoEnhancements, ClipSetting, TextOverlay } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import {
   Loader2,
@@ -44,6 +44,16 @@ import {
   Clock,
   Sparkles,
   Coins,
+  Volume2,
+  VolumeX,
+  Settings,
+  Music,
+  Type,
+  Layers,
+  User,
+  Scissors,
+  Plus,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,6 +62,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -76,13 +95,67 @@ interface VideoClip {
   createdAt: string;
 }
 
-interface SortableClipProps {
-  clip: VideoClip;
-  onRemove: (id: string) => void;
-  isMobile: boolean;
+interface ClipSettingsLocal {
+  clipId: string;
+  muted: boolean;
+  volume: number;
+  trimStartSeconds?: number;
+  trimEndSeconds?: number;
 }
 
-function SortableClip({ clip, onRemove, isMobile }: SortableClipProps) {
+interface EnhancementsState {
+  transitionMode: 'none' | 'crossfade';
+  transitionDuration: number;
+  backgroundMusic?: {
+    audioUrl: string;
+    volume: number;
+    name?: string;
+  };
+  audioTrack?: {
+    audioUrl: string;
+    volume: number;
+    type: 'tts' | 'voice' | 'sfx';
+    name?: string;
+  };
+  textOverlays: Array<{
+    id: string;
+    text: string;
+    position: 'top' | 'center' | 'bottom';
+    timing: 'intro' | 'outro' | 'all';
+    fontSize: number;
+    colorHex: string;
+  }>;
+  avatarOverlay?: {
+    videoUrl: string;
+    position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+    size: 'small' | 'medium' | 'large';
+    name?: string;
+  };
+}
+
+interface SortableClipProps {
+  clip: VideoClip;
+  clipIndex: number;
+  clipSettings: ClipSettingsLocal;
+  onRemove: (id: string) => void;
+  onToggleMute: (id: string) => void;
+  onOpenSettings: (clip: VideoClip, index: number) => void;
+  isMobile: boolean;
+  showTransition: boolean;
+  transitionMode: 'none' | 'crossfade';
+}
+
+function SortableClip({ 
+  clip, 
+  clipIndex,
+  clipSettings,
+  onRemove, 
+  onToggleMute,
+  onOpenSettings,
+  isMobile,
+  showTransition,
+  transitionMode,
+}: SortableClipProps) {
   const {
     attributes,
     listeners,
@@ -99,56 +172,120 @@ function SortableClip({ clip, onRemove, isMobile }: SortableClipProps) {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "relative group bg-card border rounded-lg overflow-hidden shrink-0",
-        isMobile ? "w-full" : "w-40",
-        isDragging && "ring-2 ring-primary z-10"
-      )}
-      data-testid={`clip-${clip.id}`}
-    >
-      <div className="relative aspect-video bg-muted">
-        {clip.thumbnailUrl || clip.url ? (
-          <video
-            src={clip.url}
-            poster={clip.thumbnailUrl || undefined}
-            className="w-full h-full object-cover"
-            muted
-            preload="metadata"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Video className="h-8 w-8 text-muted-foreground" />
+    <div className="flex items-center gap-1 shrink-0">
+      {showTransition && transitionMode === 'crossfade' && (
+        <div className="flex flex-col items-center px-1">
+          <div className="w-px h-4 bg-primary/50" />
+          <div className="text-[10px] text-primary/70 font-medium px-1">
+            <Layers className="h-3 w-3" />
           </div>
-        )}
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <Play className="h-6 w-6 text-white fill-white" />
+          <div className="w-px h-4 bg-primary/50" />
         </div>
-      </div>
+      )}
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={cn(
+          "relative group bg-card border rounded-lg overflow-visible shrink-0",
+          isMobile ? "w-full" : "w-44",
+          isDragging && "ring-2 ring-primary z-10"
+        )}
+        data-testid={`clip-${clip.id}`}
+      >
+        <div className="relative aspect-video bg-muted rounded-t-lg overflow-hidden">
+          {clip.thumbnailUrl || clip.url ? (
+            <video
+              src={clip.url}
+              poster={clip.thumbnailUrl || undefined}
+              className="w-full h-full object-cover"
+              muted
+              preload="metadata"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Video className="h-8 w-8 text-muted-foreground" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <Play className="h-6 w-6 text-white fill-white" />
+          </div>
+          
+          <Badge className="absolute top-1 left-1 text-[10px] h-5 px-1.5" variant="secondary">
+            #{clipIndex + 1}
+          </Badge>
+          
+          <Button
+            size="icon"
+            variant="ghost"
+            className="absolute top-1 right-1 h-6 w-6 bg-black/40 hover:bg-black/60 text-white"
+            onClick={() => onRemove(clip.id)}
+            data-testid={`remove-clip-${clip.id}`}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
 
-      <div className="flex items-center gap-2 p-2">
-        <button
-          {...attributes}
-          {...listeners}
-          className="min-h-[48px] min-w-[48px] flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
-          data-testid={`drag-handle-${clip.id}`}
-        >
-          <GripVertical className="h-5 w-5 text-muted-foreground" />
-        </button>
-        <p className="flex-1 text-xs line-clamp-1 text-muted-foreground">
-          {clip.prompt}
-        </p>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 shrink-0"
-          onClick={() => onRemove(clip.id)}
-          data-testid={`remove-clip-${clip.id}`}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="p-2 space-y-2">
+          <p className="text-xs line-clamp-1 text-muted-foreground">
+            {clip.prompt}
+          </p>
+          
+          <div className="flex items-center justify-between gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant={clipSettings.muted ? "destructive" : "ghost"}
+                  className="h-7 w-7"
+                  onClick={() => onToggleMute(clip.id)}
+                  data-testid={`mute-clip-${clip.id}`}
+                >
+                  {clipSettings.muted ? (
+                    <VolumeX className="h-3.5 w-3.5" />
+                  ) : (
+                    <Volume2 className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {clipSettings.muted ? 'Unmute clip' : 'Mute clip'}
+              </TooltipContent>
+            </Tooltip>
+            
+            <button
+              {...attributes}
+              {...listeners}
+              className="h-7 w-7 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none rounded-md hover:bg-muted"
+              data-testid={`drag-handle-${clip.id}`}
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </button>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => onOpenSettings(clip, clipIndex)}
+                  data-testid={`settings-clip-${clip.id}`}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Clip settings
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          
+          {clipSettings.volume < 1 && !clipSettings.muted && (
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Volume2 className="h-3 w-3" />
+              <span>{Math.round(clipSettings.volume * 100)}%</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -247,8 +384,54 @@ export default function VideoEditor() {
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Enhanced editor state
+  const [clipSettings, setClipSettings] = useState<Map<string, ClipSettingsLocal>>(new Map());
+  const [enhancements, setEnhancements] = useState<EnhancementsState>({
+    transitionMode: 'none',
+    transitionDuration: 1.0,
+    textOverlays: [],
+  });
+  const [showClipSettingsModal, setShowClipSettingsModal] = useState(false);
+  const [editingClip, setEditingClip] = useState<{ clip: VideoClip; index: number } | null>(null);
+  const [enhancementsPanelOpen, setEnhancementsPanelOpen] = useState(true);
 
   const ITEMS_PER_PAGE = 12;
+  
+  // Get clip settings for a clip, with defaults
+  const getClipSettings = useCallback((clipId: string): ClipSettingsLocal => {
+    return clipSettings.get(clipId) || {
+      clipId,
+      muted: false,
+      volume: 1,
+    };
+  }, [clipSettings]);
+  
+  // Toggle mute for a clip
+  const toggleClipMute = useCallback((clipId: string) => {
+    setClipSettings(prev => {
+      const newMap = new Map(prev);
+      const current = getClipSettings(clipId);
+      newMap.set(clipId, { ...current, muted: !current.muted });
+      return newMap;
+    });
+  }, [getClipSettings]);
+  
+  // Update clip settings
+  const updateClipSettings = useCallback((clipId: string, updates: Partial<ClipSettingsLocal>) => {
+    setClipSettings(prev => {
+      const newMap = new Map(prev);
+      const current = getClipSettings(clipId);
+      newMap.set(clipId, { ...current, ...updates });
+      return newMap;
+    });
+  }, [getClipSettings]);
+  
+  // Open clip settings modal
+  const openClipSettings = useCallback((clip: VideoClip, index: number) => {
+    setEditingClip({ clip, index });
+    setShowClipSettingsModal(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -783,59 +966,206 @@ export default function VideoEditor() {
                       </Button>
                     </div>
                   ) : (
-                    <>
-                      <div className="text-sm text-muted-foreground mb-4">
-                        Drag the clips to reorder them. The final video will play in this order.
-                      </div>
+                    <div className="flex flex-col lg:flex-row gap-4 h-full overflow-hidden">
+                      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                        <div className="text-sm text-muted-foreground mb-3">
+                          Drag clips to reorder. Use controls to mute audio or adjust settings.
+                        </div>
 
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <SortableContext
-                          items={orderedClips.map((c) => c.id)}
-                          strategy={
-                            isMobile
-                              ? verticalListSortingStrategy
-                              : horizontalListSortingStrategy
-                          }
-                        >
-                          <ScrollArea className="flex-1">
-                            <div
-                              className={cn(
-                                "gap-4 pb-4",
-                                isMobile ? "flex flex-col" : "flex flex-row"
-                              )}
+                        <div className="border rounded-lg bg-muted/30 p-3 mb-4">
+                          <div className="flex items-center gap-2 mb-2 text-xs font-medium text-muted-foreground">
+                            <Film className="h-3.5 w-3.5" />
+                            VIDEO TRACK
+                          </div>
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <SortableContext
+                              items={orderedClips.map((c) => c.id)}
+                              strategy={
+                                isMobile
+                                  ? verticalListSortingStrategy
+                                  : horizontalListSortingStrategy
+                              }
                             >
-                              {orderedClips.map((clip) => (
-                                <SortableClip
-                                  key={clip.id}
-                                  clip={clip}
-                                  onRemove={removeClip}
-                                  isMobile={isMobile}
-                                />
-                              ))}
-                            </div>
-                            {!isMobile && <ScrollBar orientation="horizontal" />}
-                          </ScrollArea>
-                        </SortableContext>
-                      </DndContext>
+                              <ScrollArea className="w-full">
+                                <div
+                                  className={cn(
+                                    "gap-2 pb-2",
+                                    isMobile ? "flex flex-col" : "flex flex-row"
+                                  )}
+                                >
+                                  {orderedClips.map((clip, index) => (
+                                    <SortableClip
+                                      key={clip.id}
+                                      clip={clip}
+                                      clipIndex={index}
+                                      clipSettings={getClipSettings(clip.id)}
+                                      onRemove={removeClip}
+                                      onToggleMute={toggleClipMute}
+                                      onOpenSettings={openClipSettings}
+                                      isMobile={isMobile}
+                                      showTransition={index > 0}
+                                      transitionMode={enhancements.transitionMode}
+                                    />
+                                  ))}
+                                </div>
+                                {!isMobile && <ScrollBar orientation="horizontal" />}
+                              </ScrollArea>
+                            </SortableContext>
+                          </DndContext>
+                        </div>
 
-                      <div className="shrink-0 pt-4 border-t flex items-center justify-between">
-                        <Badge variant="secondary">
-                          {orderedClips.length} clips
-                        </Badge>
-                        <Button
-                          onClick={proceedToExport}
-                          disabled={orderedClips.length === 0}
-                          data-testid="button-continue-to-export"
-                        >
-                          Continue to Export
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
+                        {(enhancements.backgroundMusic || enhancements.audioTrack) && (
+                          <div className="border rounded-lg bg-muted/30 p-3 mb-4">
+                            <div className="flex items-center gap-2 mb-2 text-xs font-medium text-muted-foreground">
+                              <Music className="h-3.5 w-3.5" />
+                              AUDIO TRACK
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {enhancements.backgroundMusic && (
+                                <Badge variant="secondary" className="gap-1">
+                                  <Music className="h-3 w-3" />
+                                  {enhancements.backgroundMusic.name || 'Background Music'}
+                                  <span className="text-muted-foreground ml-1">
+                                    {Math.round(enhancements.backgroundMusic.volume * 100)}%
+                                  </span>
+                                </Badge>
+                              )}
+                              {enhancements.audioTrack && (
+                                <Badge variant="secondary" className="gap-1">
+                                  <Volume2 className="h-3 w-3" />
+                                  {enhancements.audioTrack.name || 'Voice Track'}
+                                  <span className="text-muted-foreground ml-1">
+                                    {Math.round(enhancements.audioTrack.volume * 100)}%
+                                  </span>
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="shrink-0 pt-4 border-t flex items-center justify-between gap-2">
+                          <Badge variant="secondary">
+                            {orderedClips.length} clips
+                          </Badge>
+                          <Button
+                            onClick={proceedToExport}
+                            disabled={orderedClips.length === 0}
+                            data-testid="button-continue-to-export"
+                          >
+                            Continue to Export
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </div>
                       </div>
-                    </>
+
+                      <div className="lg:w-80 shrink-0">
+                        <Collapsible open={enhancementsPanelOpen} onOpenChange={setEnhancementsPanelOpen}>
+                          <div className="border rounded-lg overflow-hidden">
+                            <CollapsibleTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                className="w-full justify-between rounded-none border-b h-10"
+                                data-testid="button-toggle-enhancements"
+                              >
+                                <span className="flex items-center gap-2 text-sm font-medium">
+                                  <Sparkles className="h-4 w-4" />
+                                  Enhancements
+                                </span>
+                                <ChevronDown className={cn(
+                                  "h-4 w-4 transition-transform",
+                                  enhancementsPanelOpen && "rotate-180"
+                                )} />
+                              </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <Tabs defaultValue="transitions" className="w-full">
+                                <TabsList className="w-full grid grid-cols-4 rounded-none h-9">
+                                  <TabsTrigger value="transitions" className="text-xs px-2" data-testid="tab-transitions">
+                                    <Layers className="h-3.5 w-3.5" />
+                                  </TabsTrigger>
+                                  <TabsTrigger value="music" className="text-xs px-2" data-testid="tab-music">
+                                    <Music className="h-3.5 w-3.5" />
+                                  </TabsTrigger>
+                                  <TabsTrigger value="text" className="text-xs px-2" data-testid="tab-text">
+                                    <Type className="h-3.5 w-3.5" />
+                                  </TabsTrigger>
+                                  <TabsTrigger value="avatar" className="text-xs px-2" data-testid="tab-avatar">
+                                    <User className="h-3.5 w-3.5" />
+                                  </TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="transitions" className="p-3 space-y-4 m-0">
+                                  <div className="space-y-2">
+                                    <Label className="text-xs">Transition Type</Label>
+                                    <Select
+                                      value={enhancements.transitionMode}
+                                      onValueChange={(v: 'none' | 'crossfade') => 
+                                        setEnhancements(prev => ({ ...prev, transitionMode: v }))
+                                      }
+                                    >
+                                      <SelectTrigger className="h-9" data-testid="select-transition-mode">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">None (Hard Cut)</SelectItem>
+                                        <SelectItem value="crossfade">Crossfade</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  
+                                  {enhancements.transitionMode === 'crossfade' && (
+                                    <div className="space-y-2">
+                                      <Label className="text-xs flex justify-between">
+                                        Duration
+                                        <span className="text-muted-foreground">{enhancements.transitionDuration}s</span>
+                                      </Label>
+                                      <Slider
+                                        value={[enhancements.transitionDuration]}
+                                        min={0.5}
+                                        max={3}
+                                        step={0.5}
+                                        onValueChange={([v]) => 
+                                          setEnhancements(prev => ({ ...prev, transitionDuration: v }))
+                                        }
+                                        data-testid="slider-transition-duration"
+                                      />
+                                    </div>
+                                  )}
+                                </TabsContent>
+
+                                <TabsContent value="music" className="p-3 space-y-4 m-0">
+                                  <div className="text-center py-6 text-muted-foreground">
+                                    <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                    <p className="text-xs">Background music coming soon</p>
+                                    <p className="text-[10px] mt-1">Select from your saved music</p>
+                                  </div>
+                                </TabsContent>
+
+                                <TabsContent value="text" className="p-3 space-y-4 m-0">
+                                  <div className="text-center py-6 text-muted-foreground">
+                                    <Type className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                    <p className="text-xs">Text overlays coming soon</p>
+                                    <p className="text-[10px] mt-1">Add captions and titles</p>
+                                  </div>
+                                </TabsContent>
+
+                                <TabsContent value="avatar" className="p-3 space-y-4 m-0">
+                                  <div className="text-center py-6 text-muted-foreground">
+                                    <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                    <p className="text-xs">Avatar overlay coming soon</p>
+                                    <p className="text-[10px] mt-1">Picture-in-picture narrator</p>
+                                  </div>
+                                </TabsContent>
+                              </Tabs>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -949,6 +1279,95 @@ export default function VideoEditor() {
         onOpenChange={setShowGuestModal}
         featureName="videos"
       />
+
+      <Dialog open={showClipSettingsModal} onOpenChange={setShowClipSettingsModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Clip Settings
+            </DialogTitle>
+            <DialogDescription>
+              {editingClip && `Adjust settings for clip #${editingClip.index + 1}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingClip && (
+            <div className="space-y-6 py-4">
+              <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                <video
+                  src={editingClip.clip.url}
+                  poster={editingClip.clip.thumbnailUrl || undefined}
+                  className="w-full h-full object-cover"
+                  controls
+                  muted
+                />
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="clip-mute" className="flex items-center gap-2">
+                    {getClipSettings(editingClip.clip.id).muted ? (
+                      <VolumeX className="h-4 w-4" />
+                    ) : (
+                      <Volume2 className="h-4 w-4" />
+                    )}
+                    Mute Audio
+                  </Label>
+                  <Switch
+                    id="clip-mute"
+                    checked={getClipSettings(editingClip.clip.id).muted}
+                    onCheckedChange={(checked) => 
+                      updateClipSettings(editingClip.clip.id, { muted: checked })
+                    }
+                    data-testid="switch-clip-mute"
+                  />
+                </div>
+                
+                {!getClipSettings(editingClip.clip.id).muted && (
+                  <div className="space-y-2">
+                    <Label className="text-sm flex justify-between">
+                      Volume
+                      <span className="text-muted-foreground">
+                        {Math.round(getClipSettings(editingClip.clip.id).volume * 100)}%
+                      </span>
+                    </Label>
+                    <Slider
+                      value={[getClipSettings(editingClip.clip.id).volume]}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      onValueChange={([v]) => 
+                        updateClipSettings(editingClip.clip.id, { volume: v })
+                      }
+                      data-testid="slider-clip-volume"
+                    />
+                  </div>
+                )}
+                
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <Scissors className="h-4 w-4" />
+                    Trim Controls (Coming Soon)
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Set start and end points to trim this clip in the final export.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              onClick={() => setShowClipSettingsModal(false)}
+              data-testid="button-close-clip-settings"
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarInset>
   );
 }
