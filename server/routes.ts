@@ -8324,6 +8324,181 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // ==========================================
+  // Video Project Management Routes
+  // ==========================================
+
+  // Get all projects for current user
+  app.get('/api/video-projects', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projects = await storage.getUserOwnedProjects(userId);
+      res.json(projects);
+    } catch (error: any) {
+      console.error('[Video Projects] Error fetching projects:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch projects' });
+    }
+  });
+
+  // Get a specific project
+  app.get('/api/video-projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check ownership or collaboration access
+      if (project.ownerUserId !== userId) {
+        const access = await storage.checkProjectAccess(id, userId);
+        if (!access.hasAccess) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
+      }
+      
+      res.json(project);
+    } catch (error: any) {
+      console.error('[Video Projects] Error fetching project:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch project' });
+    }
+  });
+
+  // Create a new project
+  app.post('/api/video-projects', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { title, description, timelineData, settings, durationSeconds } = req.body;
+      
+      if (!title || !timelineData) {
+        return res.status(400).json({ message: 'Title and timeline data are required' });
+      }
+      
+      const project = await storage.createVideoProject({
+        ownerUserId: userId,
+        title,
+        description: description || null,
+        timelineData,
+        settings: settings || {},
+        isTemplate: false,
+        thumbnailUrl: null,
+        durationSeconds: durationSeconds || null,
+        status: 'saved',
+        clonedFromProjectId: null,
+      });
+      
+      console.log(`[Video Projects] Created project ${project.id} for user ${userId}`);
+      res.json(project);
+    } catch (error: any) {
+      console.error('[Video Projects] Error creating project:', error);
+      res.status(500).json({ message: error.message || 'Failed to create project' });
+    }
+  });
+
+  // Update a project
+  app.patch('/api/video-projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const updates = req.body;
+      
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Only owner can update
+      if (project.ownerUserId !== userId) {
+        return res.status(403).json({ message: 'Only the project owner can update' });
+      }
+      
+      // Filter allowed update fields
+      const allowedFields = ['title', 'description', 'timelineData', 'settings', 'thumbnailUrl', 'durationSeconds', 'status'];
+      const filteredUpdates: Record<string, any> = {};
+      for (const field of allowedFields) {
+        if (updates[field] !== undefined) {
+          filteredUpdates[field] = updates[field];
+        }
+      }
+      
+      const updated = await storage.updateVideoProject(id, filteredUpdates);
+      console.log(`[Video Projects] Updated project ${id}`);
+      res.json(updated);
+    } catch (error: any) {
+      console.error('[Video Projects] Error updating project:', error);
+      res.status(500).json({ message: error.message || 'Failed to update project' });
+    }
+  });
+
+  // Delete a project
+  app.delete('/api/video-projects/:id', requireJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Only owner can delete
+      if (project.ownerUserId !== userId) {
+        return res.status(403).json({ message: 'Only the project owner can delete' });
+      }
+      
+      await storage.deleteVideoProject(id);
+      console.log(`[Video Projects] Deleted project ${id}`);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[Video Projects] Error deleting project:', error);
+      res.status(500).json({ message: error.message || 'Failed to delete project' });
+    }
+  });
+
+  // Clone a project (Save As)
+  app.post('/api/video-projects/:id/clone', requireJWT, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { title } = req.body;
+      
+      const project = await storage.getVideoProject(id);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Check access - owner or collaborator
+      if (project.ownerUserId !== userId) {
+        const access = await storage.checkProjectAccess(id, userId);
+        if (!access.hasAccess) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
+      }
+      
+      const newTitle = title || `${project.title} (Copy)`;
+      const cloned = await storage.cloneVideoProject(id, userId, newTitle);
+      
+      console.log(`[Video Projects] Cloned project ${id} to ${cloned.id} for user ${userId}`);
+      res.json(cloned);
+    } catch (error: any) {
+      console.error('[Video Projects] Error cloning project:', error);
+      res.status(500).json({ message: error.message || 'Failed to clone project' });
+    }
+  });
+
+  // Get template projects (public templates)
+  app.get('/api/video-projects/templates', async (req, res) => {
+    try {
+      const templates = await storage.getTemplateProjects();
+      res.json(templates);
+    } catch (error: any) {
+      console.error('[Video Projects] Error fetching templates:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch templates' });
+    }
+  });
+
   // Stripe Billing Routes
 
   // Get all subscription plans (public route for billing page)

@@ -1703,14 +1703,18 @@ export const videoProjects = pgTable("video_projects", {
   ownerUserId: varchar("owner_user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  timelineData: jsonb("timeline_data").notNull(), // Stores Twick timeline JSON
+  timelineData: jsonb("timeline_data").notNull(), // Stores timeline clips, settings, overlays, etc.
   settings: jsonb("settings").default(sql`'{}'::jsonb`).notNull(), // Export settings, canvas size, etc.
   isTemplate: boolean("is_template").notNull().default(false),
   thumbnailUrl: text("thumbnail_url"),
+  clonedFromProjectId: varchar("cloned_from_project_id"), // For Save As lineage (references video_projects.id)
+  durationSeconds: integer("duration_seconds"), // Total project duration
+  status: varchar("status", { length: 50 }).default('draft').notNull(), // draft, saved, exported
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => [
   index("video_projects_owner_idx").on(table.ownerUserId),
+  index("video_projects_status_idx").on(table.status),
 ]);
 
 export const insertVideoProjectSchema = createInsertSchema(videoProjects).omit({

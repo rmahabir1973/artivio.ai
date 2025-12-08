@@ -365,6 +365,7 @@ export interface IStorage {
   updateVideoProject(id: string, data: Partial<InsertVideoProject>): Promise<VideoProject | undefined>;
   deleteVideoProject(id: string): Promise<boolean>;
   getTemplateProjects(): Promise<VideoProject[]>;
+  cloneVideoProject(projectId: string, newOwnerId: string, newTitle: string): Promise<VideoProject>;
 
   // Brand Kit operations
   getBrandKit(userId: string): Promise<BrandKit>;
@@ -2572,6 +2573,30 @@ export class DatabaseStorage implements IStorage {
       .from(videoProjects)
       .where(eq(videoProjects.isTemplate, true))
       .orderBy(desc(videoProjects.createdAt));
+  }
+
+  async cloneVideoProject(projectId: string, newOwnerId: string, newTitle: string): Promise<VideoProject> {
+    const original = await this.getVideoProject(projectId);
+    if (!original) {
+      throw new Error('Project not found');
+    }
+
+    const [cloned] = await db
+      .insert(videoProjects)
+      .values({
+        ownerUserId: newOwnerId,
+        title: newTitle,
+        description: original.description,
+        timelineData: original.timelineData,
+        settings: original.settings,
+        isTemplate: false,
+        thumbnailUrl: original.thumbnailUrl,
+        clonedFromProjectId: projectId,
+        durationSeconds: original.durationSeconds,
+        status: 'draft',
+      })
+      .returning();
+    return cloned;
   }
 
   // Brand Kit operations
