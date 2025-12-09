@@ -451,7 +451,6 @@ export default function VideoEditor() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [orderedClips, setOrderedClips] = useState<VideoClip[]>([]);
   const [audioTracks, setAudioTracks] = useState<Array<{ id: string; url: string; name: string; type: 'music' | 'voice' | 'sfx'; volume: number }>>([]);
-  const [page, setPage] = useState(1);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
@@ -502,8 +501,6 @@ export default function VideoEditor() {
   const [projectTitle, setProjectTitle] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [isSaveAs, setIsSaveAs] = useState(false);
-
-  const ITEMS_PER_PAGE = 12;
   
   // Get clip settings for a clip, with defaults
   const getClipSettings = useCallback((clipId: string): ClipSettingsLocal => {
@@ -1054,22 +1051,8 @@ export default function VideoEditor() {
   const hasNextPage = hasNextVideoPage;
   const isFetchingNextPage = isFetchingNextVideoPage;
 
-  // Apply client-side pagination for display
-  const videos = useMemo(() => {
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    return allVideos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [allVideos, page]);
-
-  const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil(allVideos.length / ITEMS_PER_PAGE));
-  }, [allVideos.length]);
-
-  // Load more when reaching last page
-  useEffect(() => {
-    if (page >= totalPages && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [page, totalPages, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  // Show all loaded videos (no client-side pagination - use server pagination only)
+  const videos = allVideos;
 
   // Handle quick action from Library - pre-load clips added via "Add to Video Editor"
   useEffect(() => {
@@ -1926,6 +1909,14 @@ export default function VideoEditor() {
                             >
                               {video.thumbnailUrl ? (
                                 <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                              ) : video.resultUrl ? (
+                                <video 
+                                  src={video.resultUrl} 
+                                  className="w-full h-full object-cover"
+                                  preload="metadata"
+                                  muted
+                                  playsInline
+                                />
                               ) : (
                                 <div className="w-full h-full bg-muted flex items-center justify-center">
                                   <Video className="h-6 w-6 text-muted-foreground" />
@@ -2542,6 +2533,14 @@ export default function VideoEditor() {
                             >
                               {avatar.thumbnailUrl ? (
                                 <img src={avatar.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                              ) : avatar.resultUrl ? (
+                                <video 
+                                  src={avatar.resultUrl} 
+                                  className="w-full h-full object-cover"
+                                  preload="metadata"
+                                  muted
+                                  playsInline
+                                />
                               ) : (
                                 <div className="w-full h-full bg-muted flex items-center justify-center">
                                   <User className="h-6 w-6 text-muted-foreground" />
