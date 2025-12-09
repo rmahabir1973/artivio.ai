@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Timeline, TimelineRow, TimelineAction, TimelineState, TimelineEffect } from '@xzdarcy/react-timeline-editor';
 import { useDroppable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
@@ -139,7 +139,7 @@ export function MultiTrackTimeline({
   const [isPlaying, setIsPlaying] = useState(false);
   const [scale, setScale] = useState(10);
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
-  const [timelineState, setTimelineState] = useState<TimelineState | null>(null);
+  const timelineStateRef = useRef<TimelineState | null>(null);
 
   const timelineData: TimelineRow[] = useMemo(() => {
     return TRACK_CONFIGS.map(track => {
@@ -240,18 +240,18 @@ export function MultiTrackTimeline({
 
   const handlePlayPause = useCallback(() => {
     if (isPlaying) {
-      timelineState?.pause();
+      timelineStateRef.current?.pause();
     } else {
-      timelineState?.play({ autoEnd: true });
+      timelineStateRef.current?.play({ autoEnd: true });
     }
     setIsPlaying(!isPlaying);
-  }, [isPlaying, timelineState]);
+  }, [isPlaying]);
 
   const handleRestart = useCallback(() => {
-    timelineState?.setTime(0);
+    timelineStateRef.current?.setTime(0);
     setCurrentTime(0);
     setIsPlaying(false);
-  }, [timelineState]);
+  }, []);
 
   const handleZoomIn = useCallback(() => {
     setScale(prev => Math.min(prev * 1.5, 100));
@@ -401,7 +401,7 @@ export function MultiTrackTimeline({
             onActionMoveEnd={handleActionMoveEnd}
             onActionResizeEnd={handleActionResizeEnd}
             onCursorDragEnd={handleTimeChange}
-            ref={(ref) => setTimelineState(ref)}
+            ref={timelineStateRef}
           />
         </div>
       </div>
