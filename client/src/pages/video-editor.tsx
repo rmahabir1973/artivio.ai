@@ -901,6 +901,7 @@ export default function VideoEditor() {
     isLoading: musicLoading,
     fetchNextPage: fetchNextMusicPage,
     hasNextPage: hasNextMusicPage,
+    isFetchingNextPage: isFetchingNextMusicPage,
   } = useInfiniteQuery({
     queryKey: ["/api/generations", { paginated: true, type: "music" }],
     queryFn: async ({ pageParam }: { pageParam?: string }) => {
@@ -925,6 +926,7 @@ export default function VideoEditor() {
     isLoading: audioLoading,
     fetchNextPage: fetchNextAudioPage,
     hasNextPage: hasNextAudioPage,
+    isFetchingNextPage: isFetchingNextAudioPage,
   } = useInfiniteQuery({
     queryKey: ["/api/generations", { paginated: true, type: "audio" }],
     queryFn: async ({ pageParam }: { pageParam?: string }) => {
@@ -1785,7 +1787,7 @@ export default function VideoEditor() {
           
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background" data-testid="media-panel">
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -1877,37 +1879,53 @@ export default function VideoEditor() {
                           <p className="text-sm text-muted-foreground">No music tracks</p>
                         </div>
                       ) : (
-                        musicTracks.map((track) => (
-                          <div
-                            key={track.id}
-                            className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
-                            onClick={() => {
-                              const trackId = `music_${track.id}_${Date.now()}`;
-                              setAudioTracks(prev => [...prev, {
-                                id: trackId,
-                                url: track.resultUrl!,
-                                name: track.prompt || 'Music Track',
-                                type: 'music',
-                                volume: 0.5,
-                              }]);
-                              setEnhancements(prev => ({
-                                ...prev,
-                                backgroundMusic: {
-                                  audioUrl: track.resultUrl!,
-                                  volume: 0.5,
+                        <>
+                          {musicTracks.map((track) => (
+                            <div
+                              key={track.id}
+                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                              onClick={() => {
+                                const trackId = `music_${track.id}_${Date.now()}`;
+                                setAudioTracks(prev => [...prev, {
+                                  id: trackId,
+                                  url: track.resultUrl!,
                                   name: track.prompt || 'Music Track',
-                                },
-                              }));
-                              toast({ title: "Music Added", description: "Music track added to timeline" });
-                            }}
-                            data-testid={`music-item-${track.id}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Music className="h-4 w-4 text-muted-foreground shrink-0" />
-                              <span className="text-sm truncate">{track.prompt || 'Music Track'}</span>
+                                  type: 'music',
+                                  volume: 0.5,
+                                }]);
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  backgroundMusic: {
+                                    audioUrl: track.resultUrl!,
+                                    volume: 0.5,
+                                    name: track.prompt || 'Music Track',
+                                  },
+                                }));
+                                toast({ title: "Music Added", description: "Music track added to timeline" });
+                              }}
+                              data-testid={`music-item-${track.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm truncate">{track.prompt || 'Music Track'}</span>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ))}
+                          
+                          {/* Load More for Music */}
+                          {hasNextMusicPage && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full mt-2"
+                              onClick={() => fetchNextMusicPage()}
+                              disabled={isFetchingNextMusicPage}
+                              data-testid="button-load-more-music"
+                            >
+                              {isFetchingNextMusicPage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -1927,38 +1945,54 @@ export default function VideoEditor() {
                           <p className="text-sm text-muted-foreground">No audio tracks</p>
                         </div>
                       ) : (
-                        voiceTracks.map((track) => (
-                          <div
-                            key={track.id}
-                            className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
-                            onClick={() => {
-                              const trackId = `voice_${track.id}_${Date.now()}`;
-                              setAudioTracks(prev => [...prev, {
-                                id: trackId,
-                                url: track.resultUrl!,
-                                name: track.prompt || 'Voice Track',
-                                type: 'voice',
-                                volume: 1.0,
-                              }]);
-                              setEnhancements(prev => ({
-                                ...prev,
-                                audioTrack: {
-                                  audioUrl: track.resultUrl!,
-                                  volume: 1.0,
-                                  type: 'tts',
+                        <>
+                          {voiceTracks.map((track) => (
+                            <div
+                              key={track.id}
+                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                              onClick={() => {
+                                const trackId = `voice_${track.id}_${Date.now()}`;
+                                setAudioTracks(prev => [...prev, {
+                                  id: trackId,
+                                  url: track.resultUrl!,
                                   name: track.prompt || 'Voice Track',
-                                },
-                              }));
-                              toast({ title: "Audio Added", description: "Audio track added to timeline" });
-                            }}
-                            data-testid={`audio-item-${track.id}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
-                              <span className="text-sm truncate">{track.prompt || 'Audio Track'}</span>
+                                  type: 'voice',
+                                  volume: 1.0,
+                                }]);
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  audioTrack: {
+                                    audioUrl: track.resultUrl!,
+                                    volume: 1.0,
+                                    type: 'tts',
+                                    name: track.prompt || 'Voice Track',
+                                  },
+                                }));
+                                toast({ title: "Audio Added", description: "Audio track added to timeline" });
+                              }}
+                              data-testid={`audio-item-${track.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm truncate">{track.prompt || 'Audio Track'}</span>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ))}
+                          
+                          {/* Load More for Audio */}
+                          {hasNextAudioPage && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full mt-2"
+                              onClick={() => fetchNextAudioPage()}
+                              disabled={isFetchingNextAudioPage}
+                              data-testid="button-load-more-audio"
+                            >
+                              {isFetchingNextAudioPage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
