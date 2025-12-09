@@ -118,7 +118,7 @@ import {
   type InsertSavedStockImage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, sql, inArray, ilike, or, asc } from "drizzle-orm";
+import { eq, desc, and, gte, sql, inArray, ilike, or, asc, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -174,7 +174,7 @@ export interface IStorage {
   cancelGeneration(generationId: string): Promise<{ refunded: boolean; amount: number } | undefined>;
   getUserGenerations(userId: string): Promise<Generation[]>;
   getRecentGenerations(userId: string, limit?: number): Promise<Generation[]>;
-  getUserGenerationsPage(userId: string, limit: number, cursor?: { createdAt: Date; id: string }, typeFilter?: string): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }>;
+  getUserGenerationsPage(userId: string, limit: number, cursor?: { createdAt: Date; id: string }, typeFilter?: string, completedOnly?: boolean): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }>;
   getGenerationsByCollection(collectionId: string): Promise<Generation[]>;
   deleteGeneration(id: string): Promise<void>;
   getUserStats(userId: string): Promise<{
@@ -919,10 +919,17 @@ export class DatabaseStorage implements IStorage {
     userId: string, 
     limit: number, 
     cursor?: { createdAt: Date; id: string },
-    typeFilter?: string // Optional type filter: 'video', 'image', 'music', 'audio'
+    typeFilter?: string, // Optional type filter: 'video', 'image', 'music', 'audio'
+    completedOnly?: boolean // When true, only return completed generations with resultUrl
   ): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }> {
     // Build conditions array for the where clause
     const conditions: any[] = [eq(generations.userId, userId)];
+    
+    // When completedOnly is true, only return completed generations with a result URL
+    if (completedOnly) {
+      conditions.push(eq(generations.status, 'completed'));
+      conditions.push(isNotNull(generations.resultUrl));
+    }
     
     // Add cursor condition for pagination
     if (cursor) {

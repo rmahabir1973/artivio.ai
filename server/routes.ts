@@ -3357,8 +3357,9 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         }
         
         const startTime = Date.now();
-        // Pass type filter to storage for server-side filtering
-        const { items, nextCursor } = await storage.getUserGenerationsPage(userId, limit, cursor, typeFilter);
+        // Pass type filter and completedOnly flag to storage for server-side filtering
+        const completedOnly = req.query.completedOnly === 'true';
+        const { items, nextCursor } = await storage.getUserGenerationsPage(userId, limit, cursor, typeFilter, completedOnly);
         const queryTime = Date.now() - startTime;
         
         console.log(`[/api/generations] Paginated query completed in ${queryTime}ms, found ${items.length} generations, hasMore: ${!!nextCursor}`);

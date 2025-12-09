@@ -910,6 +910,7 @@ export default function VideoEditor() {
       const params = new URLSearchParams();
       params.set('cursor', cursor);
       params.set('type', 'video');
+      params.set('completedOnly', 'true');
       const url = `/api/generations?${params.toString()}`;
       const response = await fetchWithAuth(url);
       if (!response.ok) throw new Error("Failed to fetch videos");
@@ -935,6 +936,7 @@ export default function VideoEditor() {
       const params = new URLSearchParams();
       params.set('cursor', cursor);
       params.set('type', 'music');
+      params.set('completedOnly', 'true');
       const url = `/api/generations?${params.toString()}`;
       const response = await fetchWithAuth(url);
       if (!response.ok) throw new Error("Failed to fetch music");
@@ -960,6 +962,7 @@ export default function VideoEditor() {
       const params = new URLSearchParams();
       params.set('cursor', cursor);
       params.set('type', 'audio');
+      params.set('completedOnly', 'true');
       const url = `/api/generations?${params.toString()}`;
       const response = await fetchWithAuth(url);
       if (!response.ok) throw new Error("Failed to fetch audio");
@@ -985,6 +988,7 @@ export default function VideoEditor() {
       const params = new URLSearchParams();
       params.set('cursor', cursor);
       params.set('type', 'image');
+      params.set('completedOnly', 'true');
       const url = `/api/generations?${params.toString()}`;
       const response = await fetchWithAuth(url);
       if (!response.ok) throw new Error("Failed to fetch images");
@@ -1874,7 +1878,7 @@ export default function VideoEditor() {
                 </Button>
               </div>
               
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 h-0">
                 <div className="p-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
