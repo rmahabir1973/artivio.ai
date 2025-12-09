@@ -7,3 +7,5 @@ export type { VideoClip, ClipSettings, AudioTrackItem } from './timeline-track';
 export { MultiTrackTimeline } from './multi-track-timeline';
 export type { MultiTrackTimelineItem, DroppedMediaItem } from './multi-track-timeline';
 export { DraggableMediaItem } from './draggable-media-item';
+export { TextOverlayEditor } from './text-overlay-editor';
+export { TextOverlayRenderer } from './text-overlay-renderer';

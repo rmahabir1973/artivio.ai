@@ -92,8 +92,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
-import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline } from "./video-editor/components";
+import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer } from "./video-editor/components";
 import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
+import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -453,6 +454,18 @@ export default function VideoEditor() {
   const [audioTracks, setAudioTracks] = useState<Array<{ id: string; url: string; name: string; type: 'music' | 'voice' | 'sfx'; volume: number }>>([]);
   const [multiTrackItems, setMultiTrackItems] = useState<MultiTrackTimelineItem[]>([]);
   const [useMultiTrack, setUseMultiTrack] = useState(false);
+  
+  const {
+    overlays: textOverlays,
+    addOverlay: addTextOverlay,
+    updateOverlay: updateTextOverlay,
+    removeOverlay: removeTextOverlay,
+    selectedOverlayId,
+    setSelectedOverlayId,
+    duplicateOverlay: duplicateTextOverlay,
+    clearAllOverlays: clearTextOverlays,
+  } = useTextOverlay();
+  
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
@@ -2450,109 +2463,17 @@ export default function VideoEditor() {
                   
                   {/* Text Category Content */}
                   {activeCategory === 'text' && (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">Add text overlays to your video</p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full"
-                        onClick={() => {
-                          const newOverlay = {
-                            id: `text_${Date.now()}`,
-                            text: 'New Text',
-                            position: 'center' as const,
-                            timing: 'all' as const,
-                            fontSize: 24,
-                            colorHex: '#ffffff',
-                          };
-                          setEnhancements(prev => ({
-                            ...prev,
-                            textOverlays: [...prev.textOverlays, newOverlay],
-                          }));
-                        }}
-                        data-testid="button-add-text-overlay"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Text Overlay
-                      </Button>
-                      
-                      {enhancements.textOverlays.map((overlay) => (
-                        <div key={overlay.id} className="p-3 border rounded-md space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <Input
-                              value={overlay.text}
-                              onChange={(e) => {
-                                setEnhancements(prev => ({
-                                  ...prev,
-                                  textOverlays: prev.textOverlays.map(o => 
-                                    o.id === overlay.id ? { ...o, text: e.target.value } : o
-                                  ),
-                                }));
-                              }}
-                              placeholder="Enter text..."
-                              className="h-8 text-sm"
-                              data-testid={`input-text-overlay-${overlay.id}`}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 shrink-0"
-                              onClick={() => {
-                                setEnhancements(prev => ({
-                                  ...prev,
-                                  textOverlays: prev.textOverlays.filter(o => o.id !== overlay.id),
-                                }));
-                              }}
-                              data-testid={`button-remove-overlay-${overlay.id}`}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          <div className="flex gap-2">
-                            <Select
-                              value={overlay.position}
-                              onValueChange={(value: 'top' | 'center' | 'bottom') => {
-                                setEnhancements(prev => ({
-                                  ...prev,
-                                  textOverlays: prev.textOverlays.map(o => 
-                                    o.id === overlay.id ? { ...o, position: value } : o
-                                  ),
-                                }));
-                              }}
-                            >
-                              <SelectTrigger className="h-7 text-xs flex-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="top">Top</SelectItem>
-                                <SelectItem value="center">Center</SelectItem>
-                                <SelectItem value="bottom">Bottom</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Select
-                              value={overlay.timing}
-                              onValueChange={(value: 'intro' | 'outro' | 'all') => {
-                                setEnhancements(prev => ({
-                                  ...prev,
-                                  textOverlays: prev.textOverlays.map(o => 
-                                    o.id === overlay.id ? { ...o, timing: value } : o
-                                  ),
-                                }));
-                              }}
-                            >
-                              <SelectTrigger className="h-7 text-xs flex-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="intro">Intro</SelectItem>
-                                <SelectItem value="all">All</SelectItem>
-                                <SelectItem value="outro">Outro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <TextOverlayEditor
+                      overlays={textOverlays}
+                      selectedOverlayId={selectedOverlayId}
+                      currentTime={0}
+                      totalDuration={totalDuration || 60}
+                      onAddOverlay={addTextOverlay}
+                      onUpdateOverlay={updateTextOverlay}
+                      onRemoveOverlay={removeTextOverlay}
+                      onSelectOverlay={setSelectedOverlayId}
+                      onDuplicateOverlay={duplicateTextOverlay}
+                    />
                   )}
                   
                   {/* Overlays Category Content */}
@@ -2904,7 +2825,7 @@ export default function VideoEditor() {
           )}
           
           {/* Preview Surface - Always Visible with Auto-Update */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 relative">
             <PreviewSurface
               previewUrl={previewUrl}
               status={previewStatus}
@@ -2914,6 +2835,15 @@ export default function VideoEditor() {
               errorMessage={previewError}
               className="flex-1"
             />
+            {textOverlays.length > 0 && (
+              <TextOverlayRenderer
+                overlays={textOverlays}
+                currentTime={0}
+                selectedOverlayId={selectedOverlayId}
+                onSelectOverlay={setSelectedOverlayId}
+                isPlaying={false}
+              />
+            )}
           </div>
         </div>
         
