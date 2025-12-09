@@ -8172,6 +8172,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         },
         // Include enhancements (transitions, music, text overlays, voice track, avatar)
         enhancements: enhancements || undefined,
+        // Include multi-track timeline if enabled (new editor feature)
+        multiTrackTimeline: req.body.multiTrackTimeline || undefined,
         // Include callback URL for async completion notification
         callbackUrl: `${getBaseUrl()}/api/video-editor/callback/${jobId}`,
       };

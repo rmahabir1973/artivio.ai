@@ -1250,6 +1250,21 @@ export default function VideoEditor() {
           fontSize: to.fontSize,
           colorHex: to.colorHex,
         })),
+        editorTextOverlays: textOverlays.length > 0 ? textOverlays.map(to => ({
+          id: to.id,
+          text: to.text,
+          x: to.x,
+          y: to.y,
+          fontSize: to.fontSize,
+          fontFamily: to.fontFamily,
+          color: to.color,
+          backgroundColor: to.backgroundColor,
+          bold: to.bold,
+          italic: to.italic,
+          startTime: to.startTime,
+          endTime: to.endTime,
+          animation: to.animation,
+        })) : undefined,
         clipSettings: clipSettingsArray.filter(cs => 
           cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined || cs.isImage
         ),
@@ -1286,6 +1301,18 @@ export default function VideoEditor() {
           quality: 'high',
         },
         enhancements: enhancementsPayload,
+        multiTrackTimeline: useMultiTrack && multiTrackItems.length > 0 ? {
+          enabled: true,
+          items: multiTrackItems.map(item => ({
+            id: item.id,
+            type: item.type,
+            track: item.track,
+            startTime: item.startTime,
+            duration: item.duration,
+            url: item.url,
+            name: item.name,
+          })),
+        } : undefined,
       });
       const result = await response.json();
 
