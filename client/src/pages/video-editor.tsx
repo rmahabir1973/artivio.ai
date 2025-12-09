@@ -1791,22 +1791,78 @@ export default function VideoEditor() {
                       </Button>
                       
                       {enhancements.textOverlays.map((overlay) => (
-                        <div key={overlay.id} className="p-2 border rounded-md">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm truncate">{overlay.text}</span>
+                        <div key={overlay.id} className="p-3 border rounded-md space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <Input
+                              value={overlay.text}
+                              onChange={(e) => {
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  textOverlays: prev.textOverlays.map(o => 
+                                    o.id === overlay.id ? { ...o, text: e.target.value } : o
+                                  ),
+                                }));
+                              }}
+                              placeholder="Enter text..."
+                              className="h-8 text-sm"
+                              data-testid={`input-text-overlay-${overlay.id}`}
+                            />
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6"
+                              className="h-6 w-6 shrink-0"
                               onClick={() => {
                                 setEnhancements(prev => ({
                                   ...prev,
                                   textOverlays: prev.textOverlays.filter(o => o.id !== overlay.id),
                                 }));
                               }}
+                              data-testid={`button-remove-overlay-${overlay.id}`}
                             >
                               <X className="h-3 w-3" />
                             </Button>
+                          </div>
+                          <div className="flex gap-2">
+                            <Select
+                              value={overlay.position}
+                              onValueChange={(value: 'top' | 'center' | 'bottom') => {
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  textOverlays: prev.textOverlays.map(o => 
+                                    o.id === overlay.id ? { ...o, position: value } : o
+                                  ),
+                                }));
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-xs flex-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="top">Top</SelectItem>
+                                <SelectItem value="center">Center</SelectItem>
+                                <SelectItem value="bottom">Bottom</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Select
+                              value={overlay.timing}
+                              onValueChange={(value: 'intro' | 'outro' | 'all') => {
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  textOverlays: prev.textOverlays.map(o => 
+                                    o.id === overlay.id ? { ...o, timing: value } : o
+                                  ),
+                                }));
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-xs flex-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="intro">Intro</SelectItem>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="outro">Outro</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                       ))}
@@ -1902,7 +1958,23 @@ export default function VideoEditor() {
                         />
                       </div>
                       
-                      <div className="pt-4 space-y-2">
+                      {/* AWS Lambda Timeout Warning */}
+                      {totalDuration > 600 && (
+                        <div className="p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-xs space-y-1">
+                          <div className="flex items-center gap-2 font-medium">
+                            <Clock className="h-4 w-4" />
+                            Long Video Warning
+                          </div>
+                          <p>Videos longer than 10 minutes may take significant time to process. AWS Lambda has a maximum processing time of 15 minutes.</p>
+                        </div>
+                      )}
+                      
+                      <div className="p-2 rounded-md bg-muted/50 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3 inline mr-1" />
+                        Max processing time: 15 minutes (AWS Lambda limit)
+                      </div>
+                      
+                      <div className="pt-2 space-y-2">
                         <Button 
                           className="w-full"
                           onClick={startExport}
