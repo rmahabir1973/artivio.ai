@@ -3318,11 +3318,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
   app.get('/api/generations', requireJWT, async (req: any, res) => {
     try {
       const isPaginated = req.query.cursor !== undefined;
+      // Get type filter from query params (optional)
+      const typeFilter = req.query.type as string | undefined;
+      
       console.log('[/api/generations] Request received', {
         userId: req.user?.id,
         hasUser: !!req.user,
         isPaginated,
-        cursor: req.query.cursor
+        cursor: req.query.cursor,
+        typeFilter: typeFilter || 'all'
       });
       
       // Guard: Check if user exists (session might be cleared after middleware)
@@ -3353,7 +3357,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         }
         
         const startTime = Date.now();
-        const { items, nextCursor } = await storage.getUserGenerationsPage(userId, limit, cursor);
+        // Pass type filter to storage for server-side filtering
+        const { items, nextCursor } = await storage.getUserGenerationsPage(userId, limit, cursor, typeFilter);
         const queryTime = Date.now() - startTime;
         
         console.log(`[/api/generations] Paginated query completed in ${queryTime}ms, found ${items.length} generations, hasMore: ${!!nextCursor}`);

@@ -174,7 +174,7 @@ export interface IStorage {
   cancelGeneration(generationId: string): Promise<{ refunded: boolean; amount: number } | undefined>;
   getUserGenerations(userId: string): Promise<Generation[]>;
   getRecentGenerations(userId: string, limit?: number): Promise<Generation[]>;
-  getUserGenerationsPage(userId: string, limit: number, cursor?: { createdAt: Date; id: string }): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }>;
+  getUserGenerationsPage(userId: string, limit: number, cursor?: { createdAt: Date; id: string }, typeFilter?: string): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }>;
   getGenerationsByCollection(collectionId: string): Promise<Generation[]>;
   deleteGeneration(id: string): Promise<void>;
   getUserStats(userId: string): Promise<{
@@ -918,20 +918,29 @@ export class DatabaseStorage implements IStorage {
   async getUserGenerationsPage(
     userId: string, 
     limit: number, 
-    cursor?: { createdAt: Date; id: string }
+    cursor?: { createdAt: Date; id: string },
+    typeFilter?: string // Optional type filter: 'video', 'image', 'music', 'audio'
   ): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }> {
-    // Build query with cursor-based pagination
+    // Build conditions array for the where clause
+    const conditions: any[] = [eq(generations.userId, userId)];
+    
+    // Add cursor condition for pagination
+    if (cursor) {
+      conditions.push(
+        sql`(${generations.createdAt}, ${generations.id}) < (${cursor.createdAt}, ${cursor.id})`
+      );
+    }
+    
+    // Add type filter condition if provided
+    if (typeFilter && typeFilter !== 'all') {
+      conditions.push(eq(generations.type, typeFilter));
+    }
+    
+    // Build query with cursor-based pagination and optional type filter
     const query = db
       .select()
       .from(generations)
-      .where(
-        cursor
-          ? and(
-              eq(generations.userId, userId),
-              sql`(${generations.createdAt}, ${generations.id}) < (${cursor.createdAt}, ${cursor.id})`
-            )
-          : eq(generations.userId, userId)
-      )
+      .where(and(...conditions))
       .orderBy(desc(generations.createdAt), desc(generations.id))
       .limit(limit + 1); // Fetch one extra to determine if there's a next page
 

@@ -616,18 +616,22 @@ export default function VideoEditor() {
     })
   );
 
-  // Use same pattern as History page - useInfiniteQuery with cursor-based pagination
+  // Separate queries with server-side type filtering for each asset type needed
+  // VIDEO GENERATIONS - cursor-based pagination with server-side filtering
   const {
-    data: generationsData,
-    isLoading: generationsLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    data: videoData,
+    isLoading: videoLoading,
+    fetchNextPage: fetchNextVideoPage,
+    hasNextPage: hasNextVideoPage,
+    isFetchingNextPage: isFetchingNextVideoPage,
   } = useInfiniteQuery({
     queryKey: ["/api/generations", { paginated: true, type: "video" }],
     queryFn: async ({ pageParam }: { pageParam?: string }) => {
       const cursor = pageParam || '';
-      const url = `/api/generations?cursor=${encodeURIComponent(cursor)}`;
+      const params = new URLSearchParams();
+      params.set('cursor', cursor);
+      params.set('type', 'video');
+      const url = `/api/generations?${params.toString()}`;
       const response = await fetchWithAuth(url);
       if (!response.ok) throw new Error("Failed to fetch videos");
       const result = await response.json() as { items: Generation[]; nextCursor: string | null };
@@ -638,35 +642,84 @@ export default function VideoEditor() {
     enabled: isAuthenticated,
   });
 
-  // Flatten all pages and filter for completed videos
+  // MUSIC GENERATIONS - separate query with server-side filtering
+  const {
+    data: musicData,
+    isLoading: musicLoading,
+    fetchNextPage: fetchNextMusicPage,
+    hasNextPage: hasNextMusicPage,
+  } = useInfiniteQuery({
+    queryKey: ["/api/generations", { paginated: true, type: "music" }],
+    queryFn: async ({ pageParam }: { pageParam?: string }) => {
+      const cursor = pageParam || '';
+      const params = new URLSearchParams();
+      params.set('cursor', cursor);
+      params.set('type', 'music');
+      const url = `/api/generations?${params.toString()}`;
+      const response = await fetchWithAuth(url);
+      if (!response.ok) throw new Error("Failed to fetch music");
+      const result = await response.json() as { items: Generation[]; nextCursor: string | null };
+      return result;
+    },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: isAuthenticated,
+  });
+
+  // AUDIO GENERATIONS (TTS, voice, sound effects) - separate query with server-side filtering
+  const {
+    data: audioData,
+    isLoading: audioLoading,
+    fetchNextPage: fetchNextAudioPage,
+    hasNextPage: hasNextAudioPage,
+  } = useInfiniteQuery({
+    queryKey: ["/api/generations", { paginated: true, type: "audio" }],
+    queryFn: async ({ pageParam }: { pageParam?: string }) => {
+      const cursor = pageParam || '';
+      const params = new URLSearchParams();
+      params.set('cursor', cursor);
+      params.set('type', 'audio');
+      const url = `/api/generations?${params.toString()}`;
+      const response = await fetchWithAuth(url);
+      if (!response.ok) throw new Error("Failed to fetch audio");
+      const result = await response.json() as { items: Generation[]; nextCursor: string | null };
+      return result;
+    },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: isAuthenticated,
+  });
+
+  // Combine loading state for the main display
+  const generationsLoading = videoLoading;
+
+  // Flatten video pages and filter for completed videos
   const allVideos = useMemo(() => {
-    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    const items = videoData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.type === "video" && g.status === "completed" && g.resultUrl
+      (g) => g.status === "completed" && g.resultUrl
     );
-  }, [generationsData]);
+  }, [videoData]);
   
-  // Use the same generations data to filter for audio/music/avatar (client-side filtering)
-  // Filter music tracks from all loaded generations
+  // Flatten and filter music tracks (already filtered by server, just check status)
   const musicTracks = useMemo(() => {
-    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    const items = musicData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.type === "music" && g.status === "completed" && g.resultUrl
+      (g) => g.status === "completed" && g.resultUrl
     );
-  }, [generationsData]);
+  }, [musicData]);
   
-  // Filter audio tracks (TTS, voice) from all loaded generations  
+  // Flatten and filter audio tracks (TTS, voice, sound effects)
   const voiceTracks = useMemo(() => {
-    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    const items = audioData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => (g.type === "audio" || g.type === "text-to-speech" || g.type === "sound-effects") && 
-             g.status === "completed" && g.resultUrl
+      (g) => g.status === "completed" && g.resultUrl
     );
-  }, [generationsData]);
+  }, [audioData]);
   
-  // Filter avatar videos (InfiniteTalk/talking-avatar) from all loaded generations
+  // Avatar videos from video query (filter by model type)
   const avatarVideos = useMemo(() => {
-    const items = generationsData?.pages.flatMap(page => page.items) ?? [];
+    const items = videoData?.pages.flatMap(page => page.items) ?? [];
     return items.filter((g) => {
       const model = (g.model ?? "").toLowerCase();
       return (g.type === "talking-avatar" || g.type === "avatar" || 
@@ -674,11 +727,15 @@ export default function VideoEditor() {
               model.includes("infinite-talk")) && 
              g.status === "completed" && g.resultUrl;
     });
-  }, [generationsData]);
+  }, [videoData]);
   
-  // Loading states derived from main query
-  const audioLoading = generationsLoading;
-  const avatarLoading = generationsLoading;
+  // Derived loading states
+  const avatarLoading = videoLoading;
+  
+  // Pagination tracking
+  const fetchNextPage = fetchNextVideoPage;
+  const hasNextPage = hasNextVideoPage;
+  const isFetchingNextPage = isFetchingNextVideoPage;
 
   // Apply client-side pagination for display
   const videos = useMemo(() => {

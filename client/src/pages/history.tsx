@@ -479,12 +479,19 @@ export default function History() {
     fetchNextPage,
     isError,
   } = useInfiniteQuery({
-    queryKey: ["/api/generations", { paginated: true }],
+    // Include typeFilter in queryKey so pagination resets when filter changes
+    queryKey: ["/api/generations", { paginated: true, type: typeFilter }],
     queryFn: async ({ pageParam }: { pageParam?: string }) => {
       const cursor = pageParam || '';
-      const url = `/api/generations?cursor=${encodeURIComponent(cursor)}`;
+      // Build URL with both cursor and type filter for server-side filtering
+      const params = new URLSearchParams();
+      params.set('cursor', cursor);
+      if (typeFilter && typeFilter !== 'all') {
+        params.set('type', typeFilter);
+      }
+      const url = `/api/generations?${params.toString()}`;
       
-      console.log('[HISTORY] Fetching generations with cursor:', cursor || 'first page');
+      console.log('[HISTORY] Fetching generations with cursor:', cursor || 'first page', 'type:', typeFilter);
       
       const response = await fetchWithAuth(url, {
         method: 'GET',
