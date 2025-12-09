@@ -1,0 +1,156 @@
+2025-12-09 14:05:12.90
+dc8d9b47
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-09 14:05:12.90
+dc8d9b47
+User
+at combineVideos (file:///home/runner/workspace/dist/index.js:9891:11)
+2025-12-09 14:05:12.90
+dc8d9b47
+User
+[Preview] error: Video combination failed. Please check your videos and try again.
+2025-12-09 14:05:12.90
+dc8d9b47
+User
+[Video Editor] Preview error: Error: Video combination failed. Please check your videos and try again.
+2025-12-09 14:05:12.90
+dc8d9b47
+User
+7:05:12 PM [express] POST /api/video-editor/preview 500 in 135ms :: {"message":"Video combination fa…
+2025-12-09 14:05:15.37
+dc8d9b47
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-09 14:05:15.37
+dc8d9b47
+User
+[Video Editor] Starting preview generation for user 49729939 with 1 clips
+2025-12-09 14:05:15.37
+dc8d9b47
+User
+[Preview] download: Downloading 1 media files...
+2025-12-09 14:05:15.49
+dc8d9b47
+User
+✓ Downloaded video 0: /home/runner/workspace/temp/video-processing/R3IxPm2e0W/input_0.mp4 (0.98MB)
+2025-12-09 14:05:15.49
+dc8d9b47
+User
+[Preview] validate: Validating and normalizing videos...
+2025-12-09 14:05:17.16
+dc8d9b47
+User
+[Preview] normalize: Normalizing clip 1/1 (preview)...
+2025-12-09 14:05:17.75
+dc8d9b47
+User
+[Preview] validate: Verifying normalized video durations...
+2025-12-09 14:05:17.75
+dc8d9b47
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/R3IxPm2e0W/normalized_0.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k)
+2025-12-09 14:05:17.79
+dc8d9b47
+User
+[Preview] process: Combining videos (fast mode)...
+2025-12-09 14:05:17.79
+dc8d9b47
+User
+✓ Clip 1 normalized duration: 6.733s
+2025-12-09 14:05:17.79
+dc8d9b47
+User
+[Preview] process: Running FFmpeg...
+2025-12-09 14:05:19.51
+dc8d9b47
+User
+[Preview] upload: Uploading to cloud storage...
+2025-12-09 14:05:19.51
+dc8d9b47
+User
+✓ Final output duration verified: 6.767s
+2025-12-09 14:05:19.52
+dc8d9b47
+User
+[S3] Initialized S3 client for bucket: artivio-video-exports in region: us-east-1
+2025-12-09 14:05:19.52
+dc8d9b47
+User
+[S3] Uploading 771411 bytes to video-exports/combined_R3IxPm2e0W.mp4 (video/mp4)
+2025-12-09 14:05:20.08
+dc8d9b47
+User
+✓ Combined video uploaded to S3: video-exports/combined_R3IxPm2e0W.mp4
+2025-12-09 14:05:20.08
+dc8d9b47
+User
+[Preview] complete: Video combination complete!
+2025-12-09 14:05:20.08
+dc8d9b47
+User
+[S3] Upload complete: video-exports/combined_R3IxPm2e0W.mp4
+2025-12-09 14:05:20.08
+dc8d9b47
+User
+7:05:20 PM [express] POST /api/video-editor/preview 200 in 4736ms :: {"status":"completed","previewU…
+2025-12-09 14:05:43.10
+dc8d9b47
+User
+7:05:43 PM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-12-09 14:06:43.35
+dc8d9b47
+User
+7:06:43 PM [express] GET /api/announcements/active 304 in 154ms :: []
+2025-12-09 14:06:43.35
+dc8d9b47
+User
+7:06:43 PM [express] GET /api/announcements/active 304 in 154ms :: []
+2025-12-09 14:06:43.35
+dc8d9b47
+User
+7:06:43 PM [express] GET /api/announcements/active 304 in 154ms :: []
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+typeFilter: 'video'
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+cursor: 'eyJjcmVhdGVkQXQiOiIyMDI1LTExLTMwVDE5OjM2OjQxLjIwNVoiLCJpZCI6IjBmOTc4MTdhLTdhYzctNDZhNi04NDA5LTg2ZDk2MzlmYmE3NSJ9',
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+[/api/generations] Request received {
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+}
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+hasUser: true,
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+isPaginated: true,
+2025-12-09 14:07:04.76
+dc8d9b47
+User
+userId: '49729939',
+2025-12-09 14:07:04.82
+dc8d9b47
+User
+[/api/generations] Paginated query completed in 65ms, found 15 generations, hasMore: true
+2025-12-09 14:07:04.82
+dc8d9b47
+User
+7:07:04 PM [express] GET /api/generations 200 in 95ms :: {"items":[{"id":"c36d18e2-baa5-41e7-81ad-c1…

@@ -1864,7 +1864,7 @@ export default function VideoEditor() {
           
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" data-testid="media-panel">
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden min-h-0" data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
