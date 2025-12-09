@@ -28,6 +28,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { Generation, VideoEnhancements, ClipSetting, TextOverlay } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import {
   Loader2,
   Download,
   Film,
@@ -63,6 +68,9 @@ import {
   FolderOpen,
   Copy,
   MoreHorizontal,
+  Upload,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -82,6 +90,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
+import { EditorSidebar, PreviewSurface, TimelineTrack } from "./video-editor/components";
+import type { EditorCategory } from "./video-editor/components";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -113,6 +123,7 @@ interface ClipSettingsLocal {
   speed: number; // 0.5 to 2.0
   trimStartSeconds?: number;
   trimEndSeconds?: number;
+  originalDuration?: number; // Actual video duration in seconds (loaded from video metadata)
 }
 
 interface EnhancementsState {
@@ -434,6 +445,10 @@ export default function VideoEditor() {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
+  // New OpenCut/CapCut-style layout state
+  const [activeCategory, setActiveCategory] = useState<EditorCategory>('media');
+  const [mediaPanelOpen, setMediaPanelOpen] = useState(true);
+  
   // Enhanced editor state
   const [clipSettings, setClipSettings] = useState<Map<string, ClipSettingsLocal>>(new Map());
   const [enhancements, setEnhancements] = useState<EnhancementsState>({
@@ -481,6 +496,31 @@ export default function VideoEditor() {
     };
   }, [clipSettings]);
   
+  // Calculate total timeline duration based on actual clip durations, trim settings, and speed
+  const calculateTotalDuration = useCallback((): number => {
+    let totalDuration = 0;
+    
+    for (const clip of orderedClips) {
+      const settings = getClipSettings(clip.id);
+      // Use original duration if available, otherwise estimate 5 seconds
+      const originalDuration = settings.originalDuration ?? 5;
+      const trimStart = settings.trimStartSeconds ?? 0;
+      const trimEnd = settings.trimEndSeconds ?? originalDuration;
+      const speed = settings.speed ?? 1.0;
+      
+      // Calculate effective duration after trim and speed adjustment
+      const trimmedDuration = Math.max(0, trimEnd - trimStart);
+      const effectiveDuration = trimmedDuration / speed;
+      
+      totalDuration += effectiveDuration;
+    }
+    
+    return totalDuration;
+  }, [orderedClips, getClipSettings]);
+  
+  // Load video metadata to get actual duration (defined after updateClipSettings)
+  const loadClipDurationRef = useRef<((clipId: string, url: string) => void) | null>(null);
+  
   // Toggle mute for a clip
   const toggleClipMute = useCallback((clipId: string) => {
     setClipSettings(prev => {
@@ -500,6 +540,37 @@ export default function VideoEditor() {
       return newMap;
     });
   }, [getClipSettings]);
+  
+  // Load video metadata to get actual duration for a clip
+  const loadClipDuration = useCallback((clipId: string, url: string) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = url;
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      if (duration && isFinite(duration)) {
+        updateClipSettings(clipId, { originalDuration: duration });
+      }
+      video.src = ''; // Clean up
+    };
+    video.onerror = () => {
+      console.warn(`Could not load duration for clip ${clipId}`);
+    };
+  }, [updateClipSettings]);
+  
+  // Store ref for use in effects
+  loadClipDurationRef.current = loadClipDuration;
+  
+  // Load durations for newly added clips
+  useEffect(() => {
+    for (const clip of orderedClips) {
+      const settings = clipSettings.get(clip.id);
+      // Only load duration if not already loaded
+      if (!settings?.originalDuration && clip.url) {
+        loadClipDuration(clip.id, clip.url);
+      }
+    }
+  }, [orderedClips, clipSettings, loadClipDuration]);
   
   // Open clip settings modal
   const openClipSettings = useCallback((clip: VideoClip, index: number) => {
@@ -1094,8 +1165,8 @@ export default function VideoEditor() {
         selectedIds: Array.from(selectedIds),
       };
 
-      // Calculate total duration (estimate)
-      const durationSeconds = orderedClips.length * 5; // Approximate
+      // Calculate actual timeline duration based on clip durations, trim, and speed
+      const durationSeconds = calculateTotalDuration();
 
       if (isNew || !currentProject) {
         // Create new project
@@ -1390,6 +1461,37 @@ export default function VideoEditor() {
     3: "Preview and export your combined video",
   };
 
+  // Calculate total timeline duration
+  const totalDuration = calculateTotalDuration();
+
+  // Handle adding clip to timeline from media panel
+  const addClipToTimeline = useCallback((video: Generation) => {
+    if (!video.resultUrl) return;
+    
+    const clip: VideoClip = {
+      id: video.id,
+      url: video.resultUrl,
+      thumbnailUrl: video.thumbnailUrl || null,
+      prompt: video.prompt || '',
+      createdAt: video.createdAt.toString(),
+    };
+    
+    setOrderedClips(prev => {
+      if (prev.find(c => c.id === clip.id)) return prev;
+      return [...prev, clip];
+    });
+    
+    toast({
+      title: "Clip Added",
+      description: "Video added to timeline",
+    });
+  }, [toast]);
+
+  // Handle removing clip from timeline
+  const removeClipFromTimeline = useCallback((clipId: string) => {
+    setOrderedClips(prev => prev.filter(c => c.id !== clipId));
+  }, []);
+
   if (authLoading) {
     return (
       <SidebarInset>
@@ -1400,1319 +1502,469 @@ export default function VideoEditor() {
     );
   }
 
+  // ==========================================
+  // NEW OPENCUT/CAPCUT-STYLE LAYOUT
+  // ==========================================
   return (
     <SidebarInset>
       <div className="flex flex-col h-full">
-        <header className="shrink-0 border-b p-4 md:p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
-                <Film className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold">Video Editor</h1>
-                <p className="text-sm text-muted-foreground hidden sm:block">
-                  Combine and export your AI-generated videos
-                </p>
-              </div>
+        {/* Compact Header */}
+        <header className="shrink-0 border-b px-4 py-2 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+              <Film className="h-4 w-4 text-white" />
             </div>
-            
-            <div className="flex items-center gap-2">
-              {/* Current Project Indicator */}
-              {currentProject && (
-                <Badge variant="outline" className="flex items-center gap-1.5 max-w-[150px]" data-testid="badge-current-project">
-                  <Film className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{currentProject.title}</span>
-                </Badge>
-              )}
-              
-              {/* Credit Cost */}
-              <Badge variant="secondary" className="flex items-center gap-1.5" data-testid="badge-credit-cost">
-                <Coins className="h-3.5 w-3.5" />
-                <span>{baseCreditCost} credits</span>
+            <h1 className="text-lg font-bold">Video Editor</h1>
+            {currentProject && (
+              <Badge variant="outline" className="flex items-center gap-1 max-w-[120px]" data-testid="badge-current-project">
+                <span className="truncate text-xs">{currentProject.title}</span>
               </Badge>
-
-              {/* Project Actions Dropdown */}
-              {isAuthenticated && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" data-testid="button-project-menu">
-                      <FolderOpen className="h-4 w-4 mr-2" />
-                      Projects
-                      <ChevronDown className="h-4 w-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => setShowLoadModal(true)} data-testid="menu-item-load">
-                      <FolderOpen className="h-4 w-4 mr-2" />
-                      Open Project
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => openSaveDialog(false)}
-                      disabled={orderedClips.length === 0}
-                      data-testid="menu-item-save"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {currentProject ? 'Save Project' : 'Save As New'}
-                    </DropdownMenuItem>
-                    {currentProject && (
-                      <DropdownMenuItem onClick={() => openSaveDialog(true)} data-testid="menu-item-save-as">
-                        <Copy className="h-4 w-4 mr-2" />
-                        Save As Copy
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={resetEditor} data-testid="menu-item-new">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Project
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-
-              {step > 1 && (
-                <Button variant="outline" onClick={goBack} data-testid="button-back">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-
-          <div className="flex items-center gap-2 mt-4">
-            {[1, 2, 3].map((s) => (
-              <div
-                key={s}
-                className={cn(
-                  "flex items-center",
-                  s < 3 && "flex-1"
-                )}
-              >
-                <div
-                  className={cn(
-                    "h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                    step === s
-                      ? "bg-primary text-primary-foreground"
-                      : step > s
-                      ? "bg-green-500 text-white"
-                      : "bg-muted text-muted-foreground"
+          
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-credit-cost">
+              <Coins className="h-3 w-3" />
+              <span className="text-xs">{baseCreditCost} credits</span>
+            </Badge>
+            
+            {isAuthenticated && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" data-testid="button-project-menu">
+                    <FolderOpen className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Projects</span>
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setShowLoadModal(true)} data-testid="menu-item-load">
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Open Project
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => openSaveDialog(false)}
+                    disabled={orderedClips.length === 0}
+                    data-testid="menu-item-save"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {currentProject ? 'Save' : 'Save As'}
+                  </DropdownMenuItem>
+                  {currentProject && (
+                    <DropdownMenuItem onClick={() => openSaveDialog(true)} data-testid="menu-item-save-as">
+                      <Copy className="h-4 w-4 mr-2" />
+                      Save As Copy
+                    </DropdownMenuItem>
                   )}
-                  data-testid={`step-indicator-${s}`}
-                >
-                  {step > s ? <Check className="h-4 w-4" /> : s}
-                </div>
-                {s < 3 && (
-                  <div
-                    className={cn(
-                      "flex-1 h-1 mx-2 rounded-full transition-colors",
-                      step > s ? "bg-green-500" : "bg-muted"
-                    )}
-                  />
-                )}
-              </div>
-            ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={resetEditor} data-testid="menu-item-new">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Project
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </header>
 
-        <main className="flex-1 overflow-hidden p-4 md:p-6">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="shrink-0">
-              <CardTitle className="flex items-center gap-2">
-                {step === 1 && <Video className="h-5 w-5" />}
-                {step === 2 && <GripVertical className="h-5 w-5" />}
-                {step === 3 && <Sparkles className="h-5 w-5" />}
-                {stepTitles[step]}
-              </CardTitle>
-              <CardDescription>{stepDescriptions[step]}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex-1 overflow-hidden">
-              {step === 1 && (
-                <div className="flex flex-col h-full">
-                  {!isAuthenticated ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center">
-                      <Video className="h-16 w-16 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">
-                        Sign in to Access Your Videos
-                      </h3>
-                      <p className="text-muted-foreground mb-4">
-                        Log in to view and combine your generated videos
-                      </p>
-                      <Button onClick={() => setShowGuestModal(true)} data-testid="button-sign-in">
-                        Sign In
-                      </Button>
-                    </div>
-                  ) : generationsLoading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {Array.from({ length: 8 }).map((_, i) => (
-                        <VideoCardSkeleton key={i} />
-                      ))}
-                    </div>
-                  ) : videos.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center">
-                      <Video className="h-16 w-16 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No Videos Found</h3>
-                      <p className="text-muted-foreground">
-                        Generate some videos first to use the editor
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <ScrollArea className="flex-1">
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
-                          {videos.map((video) => (
-                            <VideoCard
-                              key={video.id}
-                              generation={video}
-                              isSelected={selectedIds.has(video.id)}
-                              onToggle={toggleVideoSelection}
-                            />
+        {/* Main Editor Layout: Sidebar + Media Panel + Preview */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Icon Sidebar */}
+          <EditorSidebar 
+            activeCategory={activeCategory} 
+            onCategoryChange={setActiveCategory} 
+          />
+          
+          {/* Collapsible Media/Asset Panel */}
+          {mediaPanelOpen && (
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background" data-testid="media-panel">
+              <div className="flex items-center justify-between p-3 border-b">
+                <span className="text-sm font-medium capitalize">{activeCategory}</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7"
+                  onClick={() => setMediaPanelOpen(false)}
+                  data-testid="button-close-media-panel"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <ScrollArea className="flex-1">
+                <div className="p-3">
+                  {/* Media Category Content */}
+                  {activeCategory === 'media' && (
+                    <div className="space-y-3">
+                      {!isAuthenticated ? (
+                        <div className="text-center py-8">
+                          <Video className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">Sign in to access your videos</p>
+                          <Button size="sm" className="mt-2" onClick={() => setShowGuestModal(true)}>
+                            Sign In
+                          </Button>
+                        </div>
+                      ) : generationsLoading ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {Array.from({ length: 4 }).map((_, i) => (
+                            <Skeleton key={i} className="aspect-video rounded-md" />
                           ))}
                         </div>
-                      </ScrollArea>
-
-                      <div className="shrink-0 pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            disabled={page <= 1}
-                            onClick={() => setPage((p) => p - 1)}
-                            data-testid="button-prev-page"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <span className="text-sm text-muted-foreground">
-                            Page {page} of {totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            disabled={page >= totalPages}
-                            onClick={() => setPage((p) => p + 1)}
-                            data-testid="button-next-page"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                      ) : videos.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Video className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">No videos yet</p>
                         </div>
-
-                        <div className="flex items-center gap-4">
-                          <Badge variant="secondary">
-                            {selectedIds.size} selected
-                          </Badge>
-                          <Button
-                            onClick={proceedToArrange}
-                            disabled={selectedIds.size === 0}
-                            data-testid="button-continue-to-arrange"
-                          >
-                            Continue
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className="flex flex-col h-full">
-                  {orderedClips.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center">
-                      <Trash2 className="h-16 w-16 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">
-                        All Clips Removed
-                      </h3>
-                      <p className="text-muted-foreground mb-4">
-                        Go back to select more videos
-                      </p>
-                      <Button variant="outline" onClick={goBack}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Go Back
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col lg:flex-row gap-4 h-full overflow-hidden">
-                      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                        <div className="text-sm text-muted-foreground mb-3">
-                          Drag clips to reorder. Use controls to mute audio or adjust settings.
-                        </div>
-
-                        <div className="border rounded-lg bg-muted/30 p-3 mb-4">
-                          <div className="flex items-center gap-2 mb-2 text-xs font-medium text-muted-foreground">
-                            <Film className="h-3.5 w-3.5" />
-                            VIDEO TRACK
-                          </div>
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                          >
-                            <SortableContext
-                              items={orderedClips.map((c) => c.id)}
-                              strategy={
-                                isMobile
-                                  ? verticalListSortingStrategy
-                                  : horizontalListSortingStrategy
-                              }
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {videos.map((video) => (
+                            <div 
+                              key={video.id}
+                              className="group relative aspect-video rounded-md overflow-hidden border cursor-pointer hover:ring-2 hover:ring-primary"
+                              onClick={() => addClipToTimeline(video)}
+                              data-testid={`media-item-${video.id}`}
                             >
-                              <ScrollArea className="w-full">
-                                <div
-                                  className={cn(
-                                    "gap-2 pb-2",
-                                    isMobile ? "flex flex-col" : "flex flex-row"
-                                  )}
-                                >
-                                  {orderedClips.map((clip, index) => (
-                                    <SortableClip
-                                      key={clip.id}
-                                      clip={clip}
-                                      clipIndex={index}
-                                      clipSettings={getClipSettings(clip.id)}
-                                      onRemove={removeClip}
-                                      onToggleMute={toggleClipMute}
-                                      onOpenSettings={openClipSettings}
-                                      onSplitClip={openSplitDialog}
-                                      isMobile={isMobile}
-                                      showTransition={index > 0}
-                                      transitionMode={enhancements.transitionMode}
-                                    />
-                                  ))}
-                                </div>
-                                {!isMobile && <ScrollBar orientation="horizontal" />}
-                              </ScrollArea>
-                            </SortableContext>
-                          </DndContext>
-                        </div>
-
-                        {(enhancements.backgroundMusic || enhancements.audioTrack) && (
-                          <div className="border rounded-lg bg-muted/30 p-3 mb-4">
-                            <div className="flex items-center gap-2 mb-2 text-xs font-medium text-muted-foreground">
-                              <Music className="h-3.5 w-3.5" />
-                              AUDIO TRACK
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {enhancements.backgroundMusic && (
-                                <Badge variant="secondary" className="gap-1">
-                                  <Music className="h-3 w-3" />
-                                  {enhancements.backgroundMusic.name || 'Background Music'}
-                                  <span className="text-muted-foreground ml-1">
-                                    {Math.round(enhancements.backgroundMusic.volume * 100)}%
-                                  </span>
-                                </Badge>
-                              )}
-                              {enhancements.audioTrack && (
-                                <Badge variant="secondary" className="gap-1">
-                                  <Volume2 className="h-3 w-3" />
-                                  {enhancements.audioTrack.name || 'Voice Track'}
-                                  <span className="text-muted-foreground ml-1">
-                                    {Math.round(enhancements.audioTrack.volume * 100)}%
-                                  </span>
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="shrink-0 pt-4 border-t flex items-center justify-between gap-2">
-                          <Badge variant="secondary">
-                            {orderedClips.length} clips
-                          </Badge>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              onClick={() => previewMutation.mutate(orderedClips)}
-                              disabled={orderedClips.length === 0 || previewMutation.isPending}
-                              data-testid="button-preview"
-                            >
-                              {previewMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              {video.thumbnailUrl ? (
+                                <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                               ) : (
-                                <Eye className="h-4 w-4 mr-2" />
+                                <div className="w-full h-full bg-muted flex items-center justify-center">
+                                  <Video className="h-6 w-6 text-muted-foreground" />
+                                </div>
                               )}
-                              Preview
-                            </Button>
-                            <Button
-                              onClick={proceedToExport}
-                              disabled={orderedClips.length === 0}
-                              data-testid="button-continue-to-export"
-                            >
-                              Continue to Export
-                              <ArrowRight className="h-4 w-4 ml-2" />
-                            </Button>
-                          </div>
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Plus className="h-6 w-6 text-white" />
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-
-                      <div className="lg:w-80 shrink-0">
-                        <Collapsible open={enhancementsPanelOpen} onOpenChange={setEnhancementsPanelOpen}>
-                          <div className="border rounded-lg overflow-hidden">
-                            <CollapsibleTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                className="w-full justify-between rounded-none border-b h-10"
-                                data-testid="button-toggle-enhancements"
-                              >
-                                <span className="flex items-center gap-2 text-sm font-medium">
-                                  <Sparkles className="h-4 w-4" />
-                                  Enhancements
-                                </span>
-                                <ChevronDown className={cn(
-                                  "h-4 w-4 transition-transform",
-                                  enhancementsPanelOpen && "rotate-180"
-                                )} />
-                              </Button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <Tabs defaultValue="transitions" className="w-full">
-                                <TabsList className="w-full grid grid-cols-6 rounded-none h-9">
-                                  <TabsTrigger value="transitions" className="text-xs px-1" data-testid="tab-transitions">
-                                    <Layers className="h-3.5 w-3.5" />
-                                  </TabsTrigger>
-                                  <TabsTrigger value="music" className="text-xs px-1" data-testid="tab-music">
-                                    <Music className="h-3.5 w-3.5" />
-                                  </TabsTrigger>
-                                  <TabsTrigger value="text" className="text-xs px-1" data-testid="tab-text">
-                                    <Type className="h-3.5 w-3.5" />
-                                  </TabsTrigger>
-                                  <TabsTrigger value="avatar" className="text-xs px-1" data-testid="tab-avatar">
-                                    <User className="h-3.5 w-3.5" />
-                                  </TabsTrigger>
-                                  <TabsTrigger value="watermark" className="text-xs px-1" data-testid="tab-watermark">
-                                    <ImageIcon className="h-3.5 w-3.5" />
-                                  </TabsTrigger>
-                                  <TabsTrigger value="captions" className="text-xs px-1" data-testid="tab-captions">
-                                    <MessageSquare className="h-3.5 w-3.5" />
-                                  </TabsTrigger>
-                                </TabsList>
-
-                                <TabsContent value="transitions" className="p-3 space-y-4 m-0">
-                                  <div className="space-y-2">
-                                    <Label className="text-xs">Transition Type</Label>
-                                    <Select
-                                      value={enhancements.transitionMode}
-                                      onValueChange={(v: 'none' | 'crossfade') => 
-                                        setEnhancements(prev => ({ ...prev, transitionMode: v }))
-                                      }
-                                    >
-                                      <SelectTrigger className="h-9" data-testid="select-transition-mode">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="none">None (Hard Cut)</SelectItem>
-                                        <SelectItem value="crossfade">Crossfade</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  
-                                  {enhancements.transitionMode === 'crossfade' && (
-                                    <div className="space-y-2">
-                                      <Label className="text-xs flex justify-between">
-                                        Duration
-                                        <span className="text-muted-foreground">{enhancements.transitionDuration}s</span>
-                                      </Label>
-                                      <Slider
-                                        value={[enhancements.transitionDuration]}
-                                        min={0.5}
-                                        max={3}
-                                        step={0.5}
-                                        onValueChange={([v]) => 
-                                          setEnhancements(prev => ({ ...prev, transitionDuration: v }))
-                                        }
-                                        data-testid="slider-transition-duration"
-                                      />
-                                    </div>
-                                  )}
-                                  
-                                  <div className="border-t pt-3 space-y-3">
-                                    <Label className="text-xs font-medium">Fade Effects</Label>
-                                    <div className="flex items-center gap-4">
-                                      <div className="flex items-center gap-2">
-                                        <Switch
-                                          checked={enhancements.fadeIn}
-                                          onCheckedChange={(v) => setEnhancements(prev => ({ ...prev, fadeIn: v }))}
-                                          data-testid="switch-fade-in"
-                                        />
-                                        <Label className="text-xs">Fade In</Label>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <Switch
-                                          checked={enhancements.fadeOut}
-                                          onCheckedChange={(v) => setEnhancements(prev => ({ ...prev, fadeOut: v }))}
-                                          data-testid="switch-fade-out"
-                                        />
-                                        <Label className="text-xs">Fade Out</Label>
-                                      </div>
-                                    </div>
-                                    {(enhancements.fadeIn || enhancements.fadeOut) && (
-                                      <div className="space-y-2">
-                                        <Label className="text-xs flex justify-between">
-                                          Fade Duration
-                                          <span className="text-muted-foreground">{enhancements.fadeDuration}s</span>
-                                        </Label>
-                                        <Slider
-                                          value={[enhancements.fadeDuration]}
-                                          min={0.3}
-                                          max={2}
-                                          step={0.1}
-                                          onValueChange={([v]) => setEnhancements(prev => ({ ...prev, fadeDuration: v }))}
-                                          data-testid="slider-fade-duration"
-                                        />
-                                      </div>
-                                    )}
-                                  </div>
-                                  
-                                  <div className="border-t pt-3 space-y-2">
-                                    <Label className="text-xs">Aspect Ratio</Label>
-                                    <Select
-                                      value={enhancements.aspectRatio}
-                                      onValueChange={(v: '16:9' | '9:16' | '1:1') => 
-                                        setEnhancements(prev => ({ ...prev, aspectRatio: v }))
-                                      }
-                                    >
-                                      <SelectTrigger className="h-9" data-testid="select-aspect-ratio">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
-                                        <SelectItem value="9:16">9:16 (Portrait/TikTok)</SelectItem>
-                                        <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </TabsContent>
-
-                                <TabsContent value="music" className="p-3 space-y-4 m-0">
-                                  <ScrollArea className="h-[320px] pr-2">
-                                    <div className="space-y-4">
-                                      <div className="space-y-2">
-                                        <div className="flex items-center gap-2 text-xs font-medium">
-                                          <Music className="h-3.5 w-3.5" />
-                                          Background Music
-                                        </div>
-                                        {enhancements.backgroundMusic ? (
-                                          <div className="p-2 border rounded-md bg-muted/50 space-y-2">
-                                            <div className="flex items-center justify-between">
-                                              <p className="text-xs font-medium line-clamp-1 flex-1">{enhancements.backgroundMusic.name}</p>
-                                              <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-6 w-6 shrink-0"
-                                                onClick={() => setEnhancements(prev => ({ ...prev, backgroundMusic: undefined }))}
-                                                data-testid="button-remove-music"
-                                              >
-                                                <X className="h-3 w-3" />
-                                              </Button>
-                                            </div>
-                                            <audio src={enhancements.backgroundMusic.audioUrl} controls className="w-full h-8" />
-                                          </div>
-                                        ) : audioLoading ? (
-                                          <div className="text-center py-4">
-                                            <Loader2 className="h-5 w-5 mx-auto animate-spin text-muted-foreground" />
-                                          </div>
-                                        ) : musicTracks.length === 0 ? (
-                                          <div className="text-center py-4 text-muted-foreground border rounded-md">
-                                            <Music className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                                            <p className="text-[10px]">No music in library</p>
-                                          </div>
-                                        ) : (
-                                          <ScrollArea className="h-24">
-                                            <div className="space-y-1 pr-2">
-                                              {musicTracks.map((track) => (
-                                                <button
-                                                  key={track.id}
-                                                  className="w-full p-2 border rounded-md text-left hover-elevate transition-colors"
-                                                  onClick={() => setEnhancements(prev => ({
-                                                    ...prev,
-                                                    backgroundMusic: {
-                                                      audioUrl: track.resultUrl!,
-                                                      volume: 0.5,
-                                                      name: track.prompt.slice(0, 40) + (track.prompt.length > 40 ? '...' : ''),
-                                                    }
-                                                  }))}
-                                                  data-testid={`select-music-${track.id}`}
-                                                >
-                                                  <p className="text-xs font-medium line-clamp-1">{track.prompt}</p>
-                                                  <p className="text-[10px] text-muted-foreground">{track.model}</p>
-                                                </button>
-                                              ))}
-                                            </div>
-                                          </ScrollArea>
-                                        )}
-                                      </div>
-
-                                      <div className="border-t pt-4 space-y-2">
-                                        <div className="flex items-center gap-2 text-xs font-medium">
-                                          <Mic className="h-3.5 w-3.5" />
-                                          Voice Overlay
-                                        </div>
-                                        {enhancements.audioTrack ? (
-                                          <div className="p-2 border rounded-md bg-muted/50 space-y-2">
-                                            <div className="flex items-center justify-between">
-                                              <p className="text-xs font-medium line-clamp-1 flex-1">{enhancements.audioTrack.name}</p>
-                                              <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-6 w-6 shrink-0"
-                                                onClick={() => setEnhancements(prev => ({ ...prev, audioTrack: undefined }))}
-                                                data-testid="button-remove-voice"
-                                              >
-                                                <X className="h-3 w-3" />
-                                              </Button>
-                                            </div>
-                                            <audio src={enhancements.audioTrack.audioUrl} controls className="w-full h-8" />
-                                          </div>
-                                        ) : audioLoading ? (
-                                          <div className="text-center py-4">
-                                            <Loader2 className="h-5 w-5 mx-auto animate-spin text-muted-foreground" />
-                                          </div>
-                                        ) : voiceTracks.length === 0 ? (
-                                          <div className="text-center py-4 text-muted-foreground border rounded-md">
-                                            <Mic className="h-6 w-6 mx-auto mb-1 opacity-50" />
-                                            <p className="text-[10px]">No voice/TTS in library</p>
-                                          </div>
-                                        ) : (
-                                          <ScrollArea className="h-24">
-                                            <div className="space-y-1 pr-2">
-                                              {voiceTracks.map((track) => (
-                                                <button
-                                                  key={track.id}
-                                                  className="w-full p-2 border rounded-md text-left hover-elevate transition-colors"
-                                                  onClick={() => setEnhancements(prev => ({
-                                                    ...prev,
-                                                    audioTrack: {
-                                                      audioUrl: track.resultUrl!,
-                                                      volume: 1.0,
-                                                      type: track.type === 'text-to-speech' ? 'tts' : track.type === 'sound-effects' ? 'sfx' : 'voice',
-                                                      name: track.prompt.slice(0, 40) + (track.prompt.length > 40 ? '...' : ''),
-                                                    }
-                                                  }))}
-                                                  data-testid={`select-voice-${track.id}`}
-                                                >
-                                                  <p className="text-xs font-medium line-clamp-1">{track.prompt}</p>
-                                                  <p className="text-[10px] text-muted-foreground">
-                                                    {track.type === 'text-to-speech' ? 'TTS' : track.type === 'sound-effects' ? 'SFX' : 'Voice'} • {track.model}
-                                                  </p>
-                                                </button>
-                                              ))}
-                                            </div>
-                                          </ScrollArea>
-                                        )}
-                                      </div>
-
-                                      {(enhancements.backgroundMusic || enhancements.audioTrack) && (
-                                        <div className="border-t pt-4 space-y-3">
-                                          <div className="flex items-center gap-2 text-xs font-medium">
-                                            <SlidersHorizontal className="h-3.5 w-3.5" />
-                                            Audio Mixer
-                                          </div>
-                                          
-                                          <div className="space-y-3 p-2 border rounded-md bg-muted/30">
-                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                              <Film className="h-3 w-3" />
-                                              Clip Audio: Use per-clip mute controls
-                                            </div>
-                                            
-                                            {enhancements.backgroundMusic && (
-                                              <div className="space-y-1">
-                                                <div className="flex items-center justify-between">
-                                                  <Label className="text-xs flex items-center gap-1.5">
-                                                    <Music className="h-3 w-3" />
-                                                    Music
-                                                  </Label>
-                                                  <span className="text-[10px] text-muted-foreground">
-                                                    {Math.round(enhancements.backgroundMusic.volume * 100)}%
-                                                  </span>
-                                                </div>
-                                                <Slider
-                                                  value={[enhancements.backgroundMusic.volume]}
-                                                  min={0}
-                                                  max={1}
-                                                  step={0.05}
-                                                  onValueChange={([v]) => 
-                                                    setEnhancements(prev => ({ 
-                                                      ...prev, 
-                                                      backgroundMusic: prev.backgroundMusic ? { ...prev.backgroundMusic, volume: v } : undefined 
-                                                    }))
-                                                  }
-                                                  data-testid="slider-music-volume"
-                                                />
-                                              </div>
-                                            )}
-                                            
-                                            {enhancements.audioTrack && (
-                                              <div className="space-y-1">
-                                                <div className="flex items-center justify-between">
-                                                  <Label className="text-xs flex items-center gap-1.5">
-                                                    <Mic className="h-3 w-3" />
-                                                    Voice
-                                                  </Label>
-                                                  <span className="text-[10px] text-muted-foreground">
-                                                    {Math.round(enhancements.audioTrack.volume * 100)}%
-                                                  </span>
-                                                </div>
-                                                <Slider
-                                                  value={[enhancements.audioTrack.volume]}
-                                                  min={0}
-                                                  max={1}
-                                                  step={0.05}
-                                                  onValueChange={([v]) => 
-                                                    setEnhancements(prev => ({ 
-                                                      ...prev, 
-                                                      audioTrack: prev.audioTrack ? { ...prev.audioTrack, volume: v } : undefined 
-                                                    }))
-                                                  }
-                                                  data-testid="slider-voice-volume"
-                                                />
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </ScrollArea>
-                                </TabsContent>
-
-                                <TabsContent value="text" className="p-3 space-y-4 m-0">
-                                  {enhancements.textOverlays.length > 0 ? (
-                                    <div className="space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium">Text Overlays</span>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 text-xs px-2"
-                                          onClick={() => setEnhancements(prev => ({
-                                            ...prev,
-                                            textOverlays: [...prev.textOverlays, {
-                                              id: `text-${Date.now()}`,
-                                              text: '',
-                                              position: 'bottom' as const,
-                                              timing: 'all' as const,
-                                              fontSize: 24,
-                                              colorHex: '#ffffff',
-                                            }]
-                                          }))}
-                                          data-testid="button-add-text"
-                                        >
-                                          <Plus className="h-3 w-3 mr-1" />
-                                          Add
-                                        </Button>
-                                      </div>
-                                      <ScrollArea className="max-h-52">
-                                        <div className="space-y-2 pr-3">
-                                          {enhancements.textOverlays.map((overlay, idx) => (
-                                            <div key={overlay.id} className="p-2 border rounded-md space-y-2">
-                                              <div className="flex items-center justify-between gap-2">
-                                                <Input
-                                                  placeholder="Enter caption text..."
-                                                  value={overlay.text}
-                                                  onChange={(e) => {
-                                                    const newOverlays = [...enhancements.textOverlays];
-                                                    newOverlays[idx] = { ...overlay, text: e.target.value };
-                                                    setEnhancements(prev => ({ ...prev, textOverlays: newOverlays }));
-                                                  }}
-                                                  className="h-8 text-xs"
-                                                  data-testid={`input-text-${idx}`}
-                                                />
-                                                <Button
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  className="h-6 w-6 shrink-0"
-                                                  onClick={() => {
-                                                    setEnhancements(prev => ({
-                                                      ...prev,
-                                                      textOverlays: prev.textOverlays.filter(t => t.id !== overlay.id)
-                                                    }));
-                                                  }}
-                                                  data-testid={`remove-text-${idx}`}
-                                                >
-                                                  <X className="h-3 w-3" />
-                                                </Button>
-                                              </div>
-                                              <div className="flex gap-2">
-                                                <Select
-                                                  value={overlay.position}
-                                                  onValueChange={(v: 'top' | 'center' | 'bottom') => {
-                                                    const newOverlays = [...enhancements.textOverlays];
-                                                    newOverlays[idx] = { ...overlay, position: v };
-                                                    setEnhancements(prev => ({ ...prev, textOverlays: newOverlays }));
-                                                  }}
-                                                >
-                                                  <SelectTrigger className="h-7 text-xs flex-1">
-                                                    <SelectValue />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                    <SelectItem value="top">Top</SelectItem>
-                                                    <SelectItem value="center">Center</SelectItem>
-                                                    <SelectItem value="bottom">Bottom</SelectItem>
-                                                  </SelectContent>
-                                                </Select>
-                                                <Select
-                                                  value={overlay.timing}
-                                                  onValueChange={(v: 'intro' | 'outro' | 'all') => {
-                                                    const newOverlays = [...enhancements.textOverlays];
-                                                    newOverlays[idx] = { ...overlay, timing: v };
-                                                    setEnhancements(prev => ({ ...prev, textOverlays: newOverlays }));
-                                                  }}
-                                                >
-                                                  <SelectTrigger className="h-7 text-xs flex-1">
-                                                    <SelectValue />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                    <SelectItem value="intro">Intro Only</SelectItem>
-                                                    <SelectItem value="outro">Outro Only</SelectItem>
-                                                    <SelectItem value="all">Full Video</SelectItem>
-                                                  </SelectContent>
-                                                </Select>
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </ScrollArea>
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-4">
-                                      <Type className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
-                                      <p className="text-xs text-muted-foreground mb-3">Add captions and titles</p>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => setEnhancements(prev => ({
-                                          ...prev,
-                                          textOverlays: [{
-                                            id: `text-${Date.now()}`,
-                                            text: '',
-                                            position: 'bottom' as const,
-                                            timing: 'all' as const,
-                                            fontSize: 24,
-                                            colorHex: '#ffffff',
-                                          }]
-                                        }))}
-                                        data-testid="button-add-first-text"
-                                      >
-                                        <Plus className="h-3 w-3 mr-1" />
-                                        Add Text Overlay
-                                      </Button>
-                                    </div>
-                                  )}
-                                </TabsContent>
-
-                                <TabsContent value="avatar" className="p-3 space-y-4 m-0">
-                                  {enhancements.avatarOverlay ? (
-                                    <div className="space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium">Avatar Overlay</span>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 text-xs px-2"
-                                          onClick={() => setEnhancements(prev => ({ ...prev, avatarOverlay: undefined }))}
-                                          data-testid="button-remove-avatar"
-                                        >
-                                          <X className="h-3 w-3 mr-1" />
-                                          Remove
-                                        </Button>
-                                      </div>
-                                      <div className="p-2 border rounded-md bg-muted/50">
-                                        <video 
-                                          src={enhancements.avatarOverlay.videoUrl} 
-                                          className="w-full aspect-video rounded object-cover" 
-                                          muted 
-                                          controls 
-                                        />
-                                        <p className="text-xs font-medium mt-2 line-clamp-1">{enhancements.avatarOverlay.name}</p>
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs">Position</Label>
-                                        <Select
-                                          value={enhancements.avatarOverlay.position}
-                                          onValueChange={(v: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => 
-                                            setEnhancements(prev => ({ 
-                                              ...prev, 
-                                              avatarOverlay: prev.avatarOverlay ? { ...prev.avatarOverlay, position: v } : undefined 
-                                            }))
-                                          }
-                                        >
-                                          <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="top-left">Top Left</SelectItem>
-                                            <SelectItem value="top-right">Top Right</SelectItem>
-                                            <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                                            <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs">Size</Label>
-                                        <Select
-                                          value={enhancements.avatarOverlay.size}
-                                          onValueChange={(v: 'small' | 'medium' | 'large') => 
-                                            setEnhancements(prev => ({ 
-                                              ...prev, 
-                                              avatarOverlay: prev.avatarOverlay ? { ...prev.avatarOverlay, size: v } : undefined 
-                                            }))
-                                          }
-                                        >
-                                          <SelectTrigger className="h-8 text-xs">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="small">Small (15%)</SelectItem>
-                                            <SelectItem value="medium">Medium (25%)</SelectItem>
-                                            <SelectItem value="large">Large (35%)</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                    </div>
-                                  ) : avatarLoading ? (
-                                    <div className="text-center py-6">
-                                      <Loader2 className="h-6 w-6 mx-auto animate-spin text-muted-foreground" />
-                                      <p className="text-xs text-muted-foreground mt-2">Loading avatars...</p>
-                                    </div>
-                                  ) : !avatarVideos || avatarVideos.length === 0 ? (
-                                    <div className="text-center py-6 text-muted-foreground">
-                                      <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                      <p className="text-xs">No avatar videos found</p>
-                                      <p className="text-[10px] mt-1">Create lip-synced videos with InfiniteTalk first</p>
-                                    </div>
-                                  ) : (
-                                    <ScrollArea className="h-48">
-                                      <div className="grid grid-cols-2 gap-2 pr-3">
-                                        {avatarVideos.map((avatar) => (
-                                          <button
-                                            key={avatar.id}
-                                            className="group relative aspect-video rounded-md overflow-hidden border hover-elevate"
-                                            onClick={() => setEnhancements(prev => ({
-                                              ...prev,
-                                              avatarOverlay: {
-                                                videoUrl: avatar.resultUrl!,
-                                                position: 'bottom-right',
-                                                size: 'medium',
-                                                name: avatar.prompt.slice(0, 30) + (avatar.prompt.length > 30 ? '...' : ''),
-                                              }
-                                            }))}
-                                            data-testid={`select-avatar-${avatar.id}`}
-                                          >
-                                            <video
-                                              src={avatar.resultUrl!}
-                                              poster={avatar.thumbnailUrl || undefined}
-                                              className="w-full h-full object-cover"
-                                              muted
-                                            />
-                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                              <Plus className="h-5 w-5 text-white" />
-                                            </div>
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </ScrollArea>
-                                  )}
-                                </TabsContent>
-
-                                <TabsContent value="watermark" className="p-3 space-y-4 m-0">
-                                  {enhancements.watermark ? (
-                                    <div className="space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium">Watermark</span>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-6 text-xs px-2"
-                                          onClick={() => setEnhancements(prev => ({ ...prev, watermark: undefined }))}
-                                          data-testid="button-remove-watermark"
-                                        >
-                                          <X className="h-3 w-3 mr-1" />
-                                          Remove
-                                        </Button>
-                                      </div>
-                                      <div className="p-2 border rounded-md bg-muted/50">
-                                        <img 
-                                          src={enhancements.watermark.imageUrl} 
-                                          alt="Watermark preview"
-                                          className="w-full max-h-20 object-contain rounded" 
-                                        />
-                                        {enhancements.watermark.name && (
-                                          <p className="text-xs font-medium mt-2 line-clamp-1">{enhancements.watermark.name}</p>
-                                        )}
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs">Position</Label>
-                                        <Select
-                                          value={enhancements.watermark.position}
-                                          onValueChange={(v: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center') => 
-                                            setEnhancements(prev => ({ 
-                                              ...prev, 
-                                              watermark: prev.watermark ? { ...prev.watermark, position: v } : undefined 
-                                            }))
-                                          }
-                                        >
-                                          <SelectTrigger className="h-8 text-xs" data-testid="select-watermark-position">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="top-left">Top Left</SelectItem>
-                                            <SelectItem value="top-right">Top Right</SelectItem>
-                                            <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                                            <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                                            <SelectItem value="center">Center</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs flex justify-between">
-                                          Size
-                                          <span className="text-muted-foreground">{enhancements.watermark.size}%</span>
-                                        </Label>
-                                        <Slider
-                                          value={[enhancements.watermark.size]}
-                                          min={5}
-                                          max={30}
-                                          step={1}
-                                          onValueChange={([v]) => 
-                                            setEnhancements(prev => ({ 
-                                              ...prev, 
-                                              watermark: prev.watermark ? { ...prev.watermark, size: v } : undefined 
-                                            }))
-                                          }
-                                          data-testid="slider-watermark-size"
-                                        />
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs flex justify-between">
-                                          Opacity
-                                          <span className="text-muted-foreground">{Math.round(enhancements.watermark.opacity * 100)}%</span>
-                                        </Label>
-                                        <Slider
-                                          value={[enhancements.watermark.opacity]}
-                                          min={0.1}
-                                          max={1}
-                                          step={0.05}
-                                          onValueChange={([v]) => 
-                                            setEnhancements(prev => ({ 
-                                              ...prev, 
-                                              watermark: prev.watermark ? { ...prev.watermark, opacity: v } : undefined 
-                                            }))
-                                          }
-                                          data-testid="slider-watermark-opacity"
-                                        />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="space-y-3">
-                                      <p className="text-xs text-muted-foreground">
-                                        Add your logo or watermark to the video
-                                      </p>
-                                      <div className="space-y-2">
-                                        <Label className="text-xs">Image URL</Label>
-                                        <div className="flex gap-2">
-                                          <Input
-                                            placeholder="https://example.com/logo.png"
-                                            className="h-8 text-xs"
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                const url = (e.target as HTMLInputElement).value.trim();
-                                                if (url) {
-                                                  setEnhancements(prev => ({
-                                                    ...prev,
-                                                    watermark: {
-                                                      imageUrl: url,
-                                                      position: 'bottom-right',
-                                                      size: 15,
-                                                      opacity: 0.8,
-                                                    }
-                                                  }));
-                                                }
-                                              }
-                                            }}
-                                            data-testid="input-watermark-url"
-                                          />
-                                          <Button
-                                            size="sm"
-                                            variant="secondary"
-                                            className="h-8"
-                                            onClick={() => {
-                                              const input = document.querySelector('[data-testid="input-watermark-url"]') as HTMLInputElement;
-                                              const url = input?.value?.trim();
-                                              if (url) {
-                                                setEnhancements(prev => ({
-                                                  ...prev,
-                                                  watermark: {
-                                                    imageUrl: url,
-                                                    position: 'bottom-right',
-                                                    size: 15,
-                                                    opacity: 0.8,
-                                                  }
-                                                }));
-                                              }
-                                            }}
-                                            data-testid="button-add-watermark"
-                                          >
-                                            <Plus className="h-3.5 w-3.5" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </TabsContent>
-
-                                <TabsContent value="captions" className="p-3 space-y-4 m-0">
-                                  <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-medium">Captions ({enhancements.captions.length})</span>
-                                      <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="h-6 text-xs px-2"
-                                        onClick={() => {
-                                          const newCaption = {
-                                            id: `caption-${Date.now()}`,
-                                            startSeconds: 0,
-                                            endSeconds: 3,
-                                            text: '',
-                                            style: 'default' as const,
-                                          };
-                                          setEnhancements(prev => ({
-                                            ...prev,
-                                            captions: [...prev.captions, newCaption]
-                                          }));
-                                        }}
-                                        data-testid="button-add-caption"
-                                      >
-                                        <Plus className="h-3 w-3 mr-1" />
-                                        Add
-                                      </Button>
-                                    </div>
-                                    
-                                    {enhancements.captions.length === 0 ? (
-                                      <div className="text-center py-6 text-muted-foreground">
-                                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                        <p className="text-xs">No captions added</p>
-                                        <p className="text-[10px] mt-1">Add captions with timing</p>
-                                      </div>
-                                    ) : (
-                                      <ScrollArea className="h-64">
-                                        <div className="space-y-3 pr-2">
-                                          {enhancements.captions.map((caption, idx) => (
-                                            <div 
-                                              key={caption.id} 
-                                              className="p-2 border rounded-md bg-muted/30 space-y-2"
-                                              data-testid={`caption-item-${idx}`}
-                                            >
-                                              <div className="flex items-center justify-between">
-                                                <span className="text-[10px] text-muted-foreground">Caption {idx + 1}</span>
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  className="h-5 w-5 p-0"
-                                                  onClick={() => {
-                                                    setEnhancements(prev => ({
-                                                      ...prev,
-                                                      captions: prev.captions.filter(c => c.id !== caption.id)
-                                                    }));
-                                                  }}
-                                                  data-testid={`button-remove-caption-${idx}`}
-                                                >
-                                                  <X className="h-3 w-3" />
-                                                </Button>
-                                              </div>
-                                              <Input
-                                                value={caption.text}
-                                                placeholder="Caption text..."
-                                                className="h-7 text-xs"
-                                                onChange={(e) => {
-                                                  setEnhancements(prev => ({
-                                                    ...prev,
-                                                    captions: prev.captions.map(c => 
-                                                      c.id === caption.id ? { ...c, text: e.target.value } : c
-                                                    )
-                                                  }));
-                                                }}
-                                                data-testid={`input-caption-text-${idx}`}
-                                              />
-                                              <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                  <Label className="text-[10px]">Start (s)</Label>
-                                                  <Input
-                                                    type="number"
-                                                    value={caption.startSeconds}
-                                                    min={0}
-                                                    step={0.5}
-                                                    className="h-6 text-xs"
-                                                    onChange={(e) => {
-                                                      setEnhancements(prev => ({
-                                                        ...prev,
-                                                        captions: prev.captions.map(c => 
-                                                          c.id === caption.id ? { ...c, startSeconds: parseFloat(e.target.value) || 0 } : c
-                                                        )
-                                                      }));
-                                                    }}
-                                                    data-testid={`input-caption-start-${idx}`}
-                                                  />
-                                                </div>
-                                                <div>
-                                                  <Label className="text-[10px]">End (s)</Label>
-                                                  <Input
-                                                    type="number"
-                                                    value={caption.endSeconds}
-                                                    min={0}
-                                                    step={0.5}
-                                                    className="h-6 text-xs"
-                                                    onChange={(e) => {
-                                                      setEnhancements(prev => ({
-                                                        ...prev,
-                                                        captions: prev.captions.map(c => 
-                                                          c.id === caption.id ? { ...c, endSeconds: parseFloat(e.target.value) || 0 } : c
-                                                        )
-                                                      }));
-                                                    }}
-                                                    data-testid={`input-caption-end-${idx}`}
-                                                  />
-                                                </div>
-                                              </div>
-                                              <Select
-                                                value={caption.style}
-                                                onValueChange={(v: 'default' | 'bold' | 'outline') => {
-                                                  setEnhancements(prev => ({
-                                                    ...prev,
-                                                    captions: prev.captions.map(c => 
-                                                      c.id === caption.id ? { ...c, style: v } : c
-                                                    )
-                                                  }));
-                                                }}
-                                              >
-                                                <SelectTrigger className="h-6 text-xs" data-testid={`select-caption-style-${idx}`}>
-                                                  <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                  <SelectItem value="default">Default</SelectItem>
-                                                  <SelectItem value="bold">Bold</SelectItem>
-                                                  <SelectItem value="outline">Outline</SelectItem>
-                                                </SelectContent>
-                                              </Select>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </ScrollArea>
-                                    )}
-                                  </div>
-                                </TabsContent>
-                              </Tabs>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-                      </div>
+                      )}
+                      
+                      {/* Load More for Media */}
+                      {hasNextPage && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => fetchNextPage()}
+                          disabled={isFetchingNextPage}
+                        >
+                          {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
+                        </Button>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="flex flex-col h-full">
-                  <div className="flex-1 flex flex-col items-center justify-center">
-                    {exportedUrl ? (
-                      <div className="text-center space-y-6 max-w-md">
-                        <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-                          <Check className="h-8 w-8 text-green-500" />
+                  
+                  {/* Music Category Content */}
+                  {activeCategory === 'music' && (
+                    <div className="space-y-2">
+                      {musicLoading ? (
+                        <div className="space-y-2">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <Skeleton key={i} className="h-14 rounded-md" />
+                          ))}
                         </div>
-                        <div>
-                          <h3 className="text-xl font-semibold mb-2">
-                            Export Complete!
-                          </h3>
-                          <p className="text-muted-foreground">
-                            Your {orderedClips.length} clips have been combined into one video.
-                          </p>
+                      ) : musicTracks.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Music className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">No music tracks</p>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                          <Button asChild data-testid="button-download-video">
-                            <a href={exportedUrl} download target="_blank" rel="noopener noreferrer">
+                      ) : (
+                        musicTracks.map((track) => (
+                          <div
+                            key={track.id}
+                            className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                            onClick={() => {
+                              setEnhancements(prev => ({
+                                ...prev,
+                                backgroundMusic: {
+                                  audioUrl: track.resultUrl!,
+                                  volume: 0.5,
+                                  name: track.prompt || 'Music Track',
+                                },
+                              }));
+                              toast({ title: "Music Added", description: "Background music added to project" });
+                            }}
+                            data-testid={`music-item-${track.id}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <span className="text-sm truncate">{track.prompt || 'Music Track'}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Audio Category Content */}
+                  {activeCategory === 'audio' && (
+                    <div className="space-y-2">
+                      {audioLoading ? (
+                        <div className="space-y-2">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <Skeleton key={i} className="h-14 rounded-md" />
+                          ))}
+                        </div>
+                      ) : voiceTracks.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Mic className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">No audio tracks</p>
+                        </div>
+                      ) : (
+                        voiceTracks.map((track) => (
+                          <div
+                            key={track.id}
+                            className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                            onClick={() => {
+                              setEnhancements(prev => ({
+                                ...prev,
+                                audioTrack: {
+                                  audioUrl: track.resultUrl!,
+                                  volume: 1.0,
+                                  type: 'tts',
+                                  name: track.prompt || 'Voice Track',
+                                },
+                              }));
+                              toast({ title: "Audio Added", description: "Audio track added to project" });
+                            }}
+                            data-testid={`audio-item-${track.id}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <span className="text-sm truncate">{track.prompt || 'Audio Track'}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Text Category Content */}
+                  {activeCategory === 'text' && (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">Add text overlays to your video</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => {
+                          const newOverlay = {
+                            id: `text_${Date.now()}`,
+                            text: 'New Text',
+                            position: 'center' as const,
+                            timing: 'all' as const,
+                            fontSize: 24,
+                            colorHex: '#ffffff',
+                          };
+                          setEnhancements(prev => ({
+                            ...prev,
+                            textOverlays: [...prev.textOverlays, newOverlay],
+                          }));
+                        }}
+                        data-testid="button-add-text-overlay"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Text Overlay
+                      </Button>
+                      
+                      {enhancements.textOverlays.map((overlay) => (
+                        <div key={overlay.id} className="p-2 border rounded-md">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm truncate">{overlay.text}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  textOverlays: prev.textOverlays.filter(o => o.id !== overlay.id),
+                                }));
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Overlays Category Content */}
+                  {activeCategory === 'overlays' && (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">Add avatar overlays (PiP)</p>
+                      {avatarLoading ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {Array.from({ length: 2 }).map((_, i) => (
+                            <Skeleton key={i} className="aspect-video rounded-md" />
+                          ))}
+                        </div>
+                      ) : avatarVideos.length === 0 ? (
+                        <div className="text-center py-4">
+                          <User className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-xs text-muted-foreground">No avatar videos</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {avatarVideos.map((avatar) => (
+                            <div
+                              key={avatar.id}
+                              className="aspect-video rounded-md overflow-hidden border cursor-pointer hover:ring-2 hover:ring-primary"
+                              onClick={() => {
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  avatarOverlay: {
+                                    videoUrl: avatar.resultUrl!,
+                                    position: 'bottom-right',
+                                    size: 'medium',
+                                    name: avatar.prompt || 'Avatar',
+                                  },
+                                }));
+                                toast({ title: "Avatar Added", description: "Avatar overlay added" });
+                              }}
+                              data-testid={`avatar-item-${avatar.id}`}
+                            >
+                              {avatar.thumbnailUrl ? (
+                                <img src={avatar.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-muted flex items-center justify-center">
+                                  <User className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Export Category Content */}
+                  {activeCategory === 'export' && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Aspect Ratio</Label>
+                        <Select 
+                          value={enhancements.aspectRatio} 
+                          onValueChange={(value: '16:9' | '9:16' | '1:1') => {
+                            setEnhancements(prev => ({ ...prev, aspectRatio: value }));
+                          }}
+                        >
+                          <SelectTrigger data-testid="select-aspect-ratio">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
+                            <SelectItem value="9:16">9:16 (Portrait)</SelectItem>
+                            <SelectItem value="1:1">1:1 (Square)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Fade In</Label>
+                        <Switch
+                          checked={enhancements.fadeIn}
+                          onCheckedChange={(checked) => setEnhancements(prev => ({ ...prev, fadeIn: checked }))}
+                          data-testid="switch-fade-in"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Fade Out</Label>
+                        <Switch
+                          checked={enhancements.fadeOut}
+                          onCheckedChange={(checked) => setEnhancements(prev => ({ ...prev, fadeOut: checked }))}
+                          data-testid="switch-fade-out"
+                        />
+                      </div>
+                      
+                      <div className="pt-4 space-y-2">
+                        <Button 
+                          className="w-full"
+                          onClick={startExport}
+                          disabled={orderedClips.length === 0 || exportMutation.isPending}
+                          data-testid="button-export"
+                        >
+                          {exportMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Exporting...
+                            </>
+                          ) : (
+                            <>
                               <Download className="h-4 w-4 mr-2" />
-                              Download Video
+                              Export Video
+                            </>
+                          )}
+                        </Button>
+                        
+                        {exportedUrl && (
+                          <Button variant="outline" className="w-full" asChild>
+                            <a href={exportedUrl} download data-testid="button-download">
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
                             </a>
                           </Button>
-                          <Button variant="outline" onClick={resetEditor} data-testid="button-start-over">
-                            Start Over
-                          </Button>
-                        </div>
-                      </div>
-                    ) : exportMutation.isPending ? (
-                      <div className="text-center space-y-6 max-w-md w-full">
-                        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                          <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold mb-2">
-                            Exporting Your Video
-                          </h3>
-                          <p className="text-muted-foreground">
-                            Combining {orderedClips.length} clips. This may take a few minutes.
-                          </p>
-                        </div>
-                        <div className="w-full px-8">
-                          <Progress value={exportProgress} className="h-2" />
-                          <p className="text-sm text-muted-foreground mt-2">
-                            {exportProgress}% complete
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center space-y-6 max-w-lg">
-                        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                          <Film className="h-8 w-8 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold mb-2">
-                            Ready to Export
-                          </h3>
-                          <p className="text-muted-foreground">
-                            Your video will combine {orderedClips.length} clips in the order you arranged them.
-                          </p>
-                        </div>
+                        )}
                         
-                        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-muted/50 rounded-lg" data-testid="export-credit-cost">
-                          <Coins className="h-5 w-5 text-primary" />
-                          <span className="font-medium">Cost: {baseCreditCost} credits</span>
-                        </div>
-
-                        <ScrollArea className="max-h-48 w-full border rounded-lg">
-                          <div className="p-4 space-y-2">
-                            {orderedClips.map((clip, index) => (
-                              <div
-                                key={clip.id}
-                                className="flex items-center gap-3 text-sm"
-                              >
-                                <span className="text-muted-foreground font-mono w-6">
-                                  {index + 1}.
-                                </span>
-                                <span className="line-clamp-1 flex-1">
-                                  {clip.prompt}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-
-                        <Button
-                          size="lg"
-                          onClick={startExport}
-                          className="min-w-40"
-                          data-testid="button-start-export"
-                        >
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Export Video
-                        </Button>
+                        {exportProgress > 0 && exportProgress < 100 && (
+                          <Progress value={exportProgress} className="h-2" />
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </main>
+              </ScrollArea>
+            </div>
+          )}
+          
+          {/* Media Panel Toggle (when closed) */}
+          {!mediaPanelOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-full w-8 rounded-none border-r shrink-0"
+              onClick={() => setMediaPanelOpen(true)}
+              data-testid="button-open-media-panel"
+            >
+              <PanelLeft className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {/* Preview Surface - Always Visible */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <PreviewSurface
+              previewUrl={previewUrl}
+              isGenerating={previewMutation.isPending}
+              clipCount={orderedClips.length}
+              totalDuration={totalDuration}
+              onGeneratePreview={() => previewMutation.mutate(orderedClips)}
+              className="flex-1"
+            />
+          </div>
+        </div>
+        
+        {/* Timeline at Bottom */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
+            <TimelineTrack
+              clips={orderedClips}
+              getClipSettings={getClipSettings}
+              onMuteToggle={toggleClipMute}
+              onRemoveClip={removeClipFromTimeline}
+              onOpenSettings={openClipSettings}
+              totalDuration={totalDuration}
+            />
+          </SortableContext>
+        </DndContext>
       </div>
 
+      {/* Dialogs and Modals */}
       <GuestGenerateModal
         open={showGuestModal}
         onOpenChange={setShowGuestModal}
