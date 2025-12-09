@@ -341,13 +341,17 @@ export function MultiTrackTimeline({
             autoScroll={true}
             dragLine={true}
             getActionRender={(action) => {
-              const item = action.data as MultiTrackTimelineItem;
+              const item = items.find(i => i.id === action.id);
               const isSelected = action.id === selectedActionId;
+              
+              if (!item) {
+                return <div className="h-full bg-muted rounded-sm" />;
+              }
               
               return (
                 <div
                   className={cn(
-                    "h-full rounded-sm flex items-center justify-center text-xs font-medium overflow-hidden cursor-pointer transition-all",
+                    "h-full rounded-sm flex items-center justify-center text-xs font-medium overflow-hidden cursor-pointer transition-all relative",
                     isSelected && "ring-2 ring-primary ring-offset-1",
                     item.type === 'video' && "bg-blue-500/80 text-white",
                     item.type === 'image' && "bg-green-500/80 text-white",
@@ -370,8 +374,8 @@ export function MultiTrackTimeline({
                 </div>
               );
             }}
-            onActionMoveEnd={handleActionChange}
-            onActionResizeEnd={handleActionChange}
+            onActionMoveEnd={handleActionMoveEnd}
+            onActionResizeEnd={handleActionResizeEnd}
             onCursorDragEnd={handleTimeChange}
             ref={(ref) => setTimelineState(ref)}
           />
