@@ -473,9 +473,14 @@ export default function VideoEditor() {
   const [clipDuration, setClipDuration] = useState(0);
   const splitVideoRef = useRef<HTMLVideoElement>(null);
   
-  // Preview state
+  // Preview state with auto-update support
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewStatus, setPreviewStatus] = useState<'idle' | 'stale' | 'refreshing' | 'ready' | 'error'>('idle');
+  const [previewError, setPreviewError] = useState<string | undefined>(undefined);
+  const previewCacheRef = useRef<Map<string, string>>(new Map());
+  const lastPreviewSignatureRef = useRef<string | null>(null);
+  const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
@@ -572,6 +577,182 @@ export default function VideoEditor() {
       }
     }
   }, [orderedClips, clipSettings, loadClipDuration]);
+
+  // Build a signature string that represents the current preview state
+  // Used for caching and detecting changes
+  const buildPreviewSignature = useCallback(() => {
+    if (orderedClips.length === 0) return null;
+    
+    const previewClips = orderedClips.slice(0, 3); // Preview limited to first 3 clips
+    
+    const signatureData = {
+      clips: previewClips.map((clip, index) => ({
+        url: clip.url,
+        index,
+        settings: {
+          muted: getClipSettings(clip.id).muted,
+          volume: getClipSettings(clip.id).volume,
+          speed: getClipSettings(clip.id).speed,
+          trimStart: getClipSettings(clip.id).trimStartSeconds,
+          trimEnd: getClipSettings(clip.id).trimEndSeconds,
+        }
+      })),
+      enhancements: {
+        transitionMode: enhancements.transitionMode,
+        transitionDuration: enhancements.transitionDuration,
+        fadeIn: enhancements.fadeIn,
+        fadeOut: enhancements.fadeOut,
+        fadeDuration: enhancements.fadeDuration,
+        aspectRatio: enhancements.aspectRatio,
+      },
+    };
+    
+    return JSON.stringify(signatureData);
+  }, [orderedClips, getClipSettings, enhancements]);
+
+  // Trigger preview generation (used by debouncer and manual refresh)
+  const triggerPreviewGeneration = useCallback(async () => {
+    if (orderedClips.length === 0) return;
+    
+    const signature = buildPreviewSignature();
+    if (!signature) return;
+    
+    // Check cache first
+    const cachedUrl = previewCacheRef.current.get(signature);
+    if (cachedUrl) {
+      setPreviewUrl(cachedUrl);
+      setPreviewStatus('ready');
+      setPreviewError(undefined);
+      lastPreviewSignatureRef.current = signature;
+      return;
+    }
+    
+    // Generate new preview
+    setPreviewStatus('refreshing');
+    setPreviewError(undefined);
+    
+    try {
+      const previewClips = orderedClips.slice(0, 3);
+      const project = {
+        clips: previewClips.map((clip, index) => ({
+          id: clip.id,
+          sourceUrl: clip.url,
+          order: index,
+        })),
+      };
+
+      const clipSettingsArray = previewClips.map((clip, index) => {
+        const localSettings = clipSettings.get(clip.id);
+        return {
+          clipId: clip.id,
+          clipIndex: index,
+          muted: localSettings?.muted ?? false,
+          volume: localSettings?.volume ?? 1,
+          speed: localSettings?.speed ?? 1.0,
+          trimStartSeconds: localSettings?.trimStartSeconds,
+          trimEndSeconds: localSettings?.trimEndSeconds,
+        };
+      });
+
+      const perClipSpeeds = clipSettingsArray
+        .filter(cs => cs.speed !== 1.0)
+        .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
+      
+      const speedConfig = perClipSpeeds.length > 0 
+        ? { mode: 'perClip' as const, perClip: perClipSpeeds }
+        : { mode: 'none' as const };
+
+      const enhancementsPayload = {
+        transitions: enhancements.transitionMode === 'crossfade' ? {
+          mode: 'crossfade' as const,
+          durationSeconds: enhancements.transitionDuration,
+        } : { mode: 'none' as const },
+        fadeIn: enhancements.fadeIn,
+        fadeOut: enhancements.fadeOut,
+        fadeDuration: enhancements.fadeDuration,
+        aspectRatio: enhancements.aspectRatio,
+        speed: speedConfig,
+        clipSettings: clipSettingsArray.filter(cs => 
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+        ),
+      };
+
+      const response = await apiRequest("POST", "/api/video-editor/preview", { 
+        project,
+        enhancements: enhancementsPayload,
+      });
+      const data = await response.json();
+      
+      if (data.status === 'completed' && data.previewUrl) {
+        // Cache the result
+        previewCacheRef.current.set(signature, data.previewUrl);
+        lastPreviewSignatureRef.current = signature;
+        setPreviewUrl(data.previewUrl);
+        setPreviewStatus('ready');
+      } else {
+        throw new Error(data.message || 'Preview generation failed');
+      }
+    } catch (error) {
+      console.error('Preview generation error:', error);
+      setPreviewStatus('error');
+      setPreviewError(error instanceof Error ? error.message : 'Preview generation failed');
+    }
+  }, [orderedClips, clipSettings, enhancements, buildPreviewSignature]);
+
+  // Auto-update preview with debouncing when state changes
+  useEffect(() => {
+    if (orderedClips.length === 0) {
+      setPreviewStatus('idle');
+      return;
+    }
+    
+    const currentSignature = buildPreviewSignature();
+    if (!currentSignature) return;
+    
+    // Check if signature changed
+    if (currentSignature === lastPreviewSignatureRef.current) {
+      return; // No change, don't regenerate
+    }
+    
+    // Check if we have this in cache
+    const cachedUrl = previewCacheRef.current.get(currentSignature);
+    if (cachedUrl) {
+      setPreviewUrl(cachedUrl);
+      setPreviewStatus('ready');
+      lastPreviewSignatureRef.current = currentSignature;
+      return;
+    }
+    
+    // Mark as stale and debounce regeneration
+    setPreviewStatus('stale');
+    
+    // Clear existing debounce timer
+    if (previewDebounceRef.current) {
+      clearTimeout(previewDebounceRef.current);
+    }
+    
+    // Debounce preview generation (750ms)
+    previewDebounceRef.current = setTimeout(() => {
+      triggerPreviewGeneration();
+    }, 750);
+    
+    return () => {
+      if (previewDebounceRef.current) {
+        clearTimeout(previewDebounceRef.current);
+      }
+    };
+  }, [orderedClips, clipSettings, enhancements, buildPreviewSignature, triggerPreviewGeneration]);
+
+  // Force refresh preview (bypasses cache)
+  const forceRefreshPreview = useCallback(() => {
+    const signature = buildPreviewSignature();
+    if (signature) {
+      // Remove from cache to force regeneration
+      previewCacheRef.current.delete(signature);
+      lastPreviewSignatureRef.current = null;
+    }
+    triggerPreviewGeneration();
+  }, [buildPreviewSignature, triggerPreviewGeneration]);
   
   // Open clip settings modal
   const openClipSettings = useCallback((clip: VideoClip, index: number) => {
@@ -2047,14 +2228,15 @@ export default function VideoEditor() {
             </Button>
           )}
           
-          {/* Preview Surface - Always Visible */}
+          {/* Preview Surface - Always Visible with Auto-Update */}
           <div className="flex-1 flex flex-col min-w-0">
             <PreviewSurface
               previewUrl={previewUrl}
-              isGenerating={previewMutation.isPending}
+              status={previewStatus}
               clipCount={orderedClips.length}
               totalDuration={totalDuration}
-              onGeneratePreview={() => previewMutation.mutate(orderedClips)}
+              onForceRefresh={forceRefreshPreview}
+              errorMessage={previewError}
               className="flex-1"
             />
           </div>

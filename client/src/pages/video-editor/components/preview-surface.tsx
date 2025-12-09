@@ -1,28 +1,84 @@
-import { Play, Loader2, Film } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { Play, Loader2, Film, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+
+export type PreviewStatus = 'idle' | 'stale' | 'refreshing' | 'ready' | 'error';
 
 interface PreviewSurfaceProps {
   previewUrl: string | null;
-  isGenerating: boolean;
+  status: PreviewStatus;
   clipCount: number;
   totalDuration: number;
-  onGeneratePreview: () => void;
+  onForceRefresh?: () => void;
+  errorMessage?: string;
   className?: string;
 }
 
 export function PreviewSurface({ 
   previewUrl, 
-  isGenerating, 
+  status,
   clipCount, 
   totalDuration,
-  onGeneratePreview,
+  onForceRefresh,
+  errorMessage,
   className 
 }: PreviewSurfaceProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  
+  // Preserve playback position when preview URL changes
+  useEffect(() => {
+    if (videoRef.current && previewUrl) {
+      const video = videoRef.current;
+      // Try to restore playback position on new preview
+      if (currentTime > 0 && currentTime < video.duration) {
+        video.currentTime = currentTime;
+      }
+    }
+  }, [previewUrl]);
+  
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`;
+  };
+
+  const getStatusBadge = () => {
+    switch (status) {
+      case 'refreshing':
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Updating...
+          </Badge>
+        );
+      case 'stale':
+        return (
+          <Badge variant="outline" className="gap-1 text-yellow-600 dark:text-yellow-400">
+            <RefreshCw className="h-3 w-3" />
+            Pending update
+          </Badge>
+        );
+      case 'error':
+        return (
+          <Badge variant="destructive" className="gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Error
+          </Badge>
+        );
+      case 'ready':
+        return null;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -31,6 +87,7 @@ export function PreviewSurface({
         <div className="flex items-center gap-2">
           <Film className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Preview</span>
+          {getStatusBadge()}
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {clipCount > 0 && (
@@ -40,44 +97,107 @@ export function PreviewSurface({
               <span>{formatDuration(totalDuration)}</span>
             </>
           )}
+          {previewUrl && onForceRefresh && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6"
+              onClick={onForceRefresh}
+              disabled={status === 'refreshing'}
+              data-testid="button-force-refresh"
+            >
+              <RefreshCw className={cn("h-3 w-3", status === 'refreshing' && "animate-spin")} />
+            </Button>
+          )}
         </div>
       </div>
       
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 relative">
         {previewUrl ? (
-          <video
-            src={previewUrl}
-            controls
-            className="max-w-full max-h-full rounded-lg shadow-lg"
-            data-testid="preview-video"
-          />
+          <div className="relative w-full h-full flex items-center justify-center">
+            <video
+              ref={videoRef}
+              src={previewUrl}
+              controls
+              className={cn(
+                "max-w-full max-h-full rounded-lg shadow-lg transition-opacity",
+                status === 'refreshing' && "opacity-70"
+              )}
+              onTimeUpdate={handleTimeUpdate}
+              data-testid="preview-video"
+            />
+            {status === 'refreshing' && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span className="text-sm">Updating preview...</span>
+                </div>
+              </div>
+            )}
+          </div>
         ) : clipCount > 0 ? (
           <div className="text-center space-y-4">
-            <div className="h-32 w-48 mx-auto rounded-lg bg-muted/50 flex items-center justify-center">
-              <Film className="h-12 w-12 text-muted-foreground/50" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">
-                {clipCount} clip{clipCount !== 1 ? 's' : ''} ready to preview
-              </p>
-              <Button 
-                onClick={onGeneratePreview}
-                disabled={isGenerating}
-                data-testid="button-generate-preview"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Generate Preview
-                  </>
-                )}
-              </Button>
-            </div>
+            {status === 'refreshing' ? (
+              <>
+                <div className="h-32 w-48 mx-auto rounded-lg bg-muted/50 flex items-center justify-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary/50" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Generating first preview...
+                </p>
+              </>
+            ) : status === 'stale' ? (
+              <>
+                <div className="h-32 w-48 mx-auto rounded-lg bg-muted/50 flex items-center justify-center">
+                  <RefreshCw className="h-12 w-12 text-muted-foreground/50" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Preview will generate automatically...
+                </p>
+              </>
+            ) : status === 'error' ? (
+              <>
+                <div className="h-32 w-48 mx-auto rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <AlertCircle className="h-12 w-12 text-destructive/50" />
+                </div>
+                <div>
+                  <p className="text-sm text-destructive mb-2">
+                    {errorMessage || "Failed to generate preview"}
+                  </p>
+                  {onForceRefresh && (
+                    <Button 
+                      onClick={onForceRefresh}
+                      variant="outline"
+                      size="sm"
+                      data-testid="button-retry-preview"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Retry
+                    </Button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-32 w-48 mx-auto rounded-lg bg-muted/50 flex items-center justify-center">
+                  <Film className="h-12 w-12 text-muted-foreground/50" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {clipCount} clip{clipCount !== 1 ? 's' : ''} ready
+                  </p>
+                  {onForceRefresh && (
+                    <Button 
+                      onClick={onForceRefresh}
+                      data-testid="button-generate-preview"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Generate Preview
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="text-center">
