@@ -438,6 +438,7 @@ export default function VideoEditor() {
   const [step, setStep] = useState<WizardStep>(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [orderedClips, setOrderedClips] = useState<VideoClip[]>([]);
+  const [audioTracks, setAudioTracks] = useState<Array<{ id: string; url: string; name: string; type: 'music' | 'voice' | 'sfx'; volume: number }>>([]);
   const [page, setPage] = useState(1);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
@@ -1465,21 +1466,22 @@ export default function VideoEditor() {
   const totalDuration = calculateTotalDuration();
 
   // Handle adding clip to timeline from media panel
+  // Uses unique instance IDs to allow the same video to be added multiple times
   const addClipToTimeline = useCallback((video: Generation) => {
     if (!video.resultUrl) return;
     
+    // Generate unique instance ID to allow duplicates
+    const instanceId = `${video.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     const clip: VideoClip = {
-      id: video.id,
+      id: instanceId, // Unique instance ID
       url: video.resultUrl,
       thumbnailUrl: video.thumbnailUrl || null,
       prompt: video.prompt || '',
       createdAt: video.createdAt.toString(),
     };
     
-    setOrderedClips(prev => {
-      if (prev.find(c => c.id === clip.id)) return prev;
-      return [...prev, clip];
-    });
+    setOrderedClips(prev => [...prev, clip]);
     
     toast({
       title: "Clip Added",
@@ -1490,6 +1492,11 @@ export default function VideoEditor() {
   // Handle removing clip from timeline
   const removeClipFromTimeline = useCallback((clipId: string) => {
     setOrderedClips(prev => prev.filter(c => c.id !== clipId));
+  }, []);
+
+  // Handle removing audio track from timeline
+  const removeAudioTrack = useCallback((trackId: string) => {
+    setAudioTracks(prev => prev.filter(t => t.id !== trackId));
   }, []);
 
   if (authLoading) {
@@ -1674,6 +1681,14 @@ export default function VideoEditor() {
                             key={track.id}
                             className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
                             onClick={() => {
+                              const trackId = `music_${track.id}_${Date.now()}`;
+                              setAudioTracks(prev => [...prev, {
+                                id: trackId,
+                                url: track.resultUrl!,
+                                name: track.prompt || 'Music Track',
+                                type: 'music',
+                                volume: 0.5,
+                              }]);
                               setEnhancements(prev => ({
                                 ...prev,
                                 backgroundMusic: {
@@ -1682,7 +1697,7 @@ export default function VideoEditor() {
                                   name: track.prompt || 'Music Track',
                                 },
                               }));
-                              toast({ title: "Music Added", description: "Background music added to project" });
+                              toast({ title: "Music Added", description: "Music track added to timeline" });
                             }}
                             data-testid={`music-item-${track.id}`}
                           >
@@ -1716,6 +1731,14 @@ export default function VideoEditor() {
                             key={track.id}
                             className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
                             onClick={() => {
+                              const trackId = `voice_${track.id}_${Date.now()}`;
+                              setAudioTracks(prev => [...prev, {
+                                id: trackId,
+                                url: track.resultUrl!,
+                                name: track.prompt || 'Voice Track',
+                                type: 'voice',
+                                volume: 1.0,
+                              }]);
                               setEnhancements(prev => ({
                                 ...prev,
                                 audioTrack: {
@@ -1725,7 +1748,7 @@ export default function VideoEditor() {
                                   name: track.prompt || 'Voice Track',
                                 },
                               }));
-                              toast({ title: "Audio Added", description: "Audio track added to project" });
+                              toast({ title: "Audio Added", description: "Audio track added to timeline" });
                             }}
                             data-testid={`audio-item-${track.id}`}
                           >
@@ -1954,9 +1977,11 @@ export default function VideoEditor() {
           <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
             <TimelineTrack
               clips={orderedClips}
+              audioTracks={audioTracks}
               getClipSettings={getClipSettings}
               onMuteToggle={toggleClipMute}
               onRemoveClip={removeClipFromTimeline}
+              onRemoveAudioTrack={removeAudioTrack}
               onOpenSettings={openClipSettings}
               totalDuration={totalDuration}
             />
