@@ -92,8 +92,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
-import { EditorSidebar, PreviewSurface, TimelineTrack } from "./video-editor/components";
-import type { EditorCategory } from "./video-editor/components";
+import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline } from "./video-editor/components";
+import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -451,6 +451,8 @@ export default function VideoEditor() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [orderedClips, setOrderedClips] = useState<VideoClip[]>([]);
   const [audioTracks, setAudioTracks] = useState<Array<{ id: string; url: string; name: string; type: 'music' | 'voice' | 'sfx'; volume: number }>>([]);
+  const [multiTrackItems, setMultiTrackItems] = useState<MultiTrackTimelineItem[]>([]);
+  const [useMultiTrack, setUseMultiTrack] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
@@ -1661,10 +1663,91 @@ export default function VideoEditor() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id) {
+    if (!over) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    if (activeId.startsWith('draggable-') && overId.startsWith('track-drop-')) {
+      const dragData = active.data.current as { 
+        type: string; 
+        mediaType: 'video' | 'image' | 'audio';
+        item: DroppedMediaItem;
+      };
+      
+      const dropData = over.data.current as { trackId: string; trackType: string } | undefined;
+      
+      if (dragData?.type === 'media-item' && dragData.item?.url) {
+        const mediaType = dragData.mediaType;
+        const item = dragData.item;
+        const trackId = dropData?.trackId || 'video-0';
+        
+        const instanceId = `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        if (useMultiTrack) {
+          const getTrackNumberFromId = (id: string): number => {
+            switch (id) {
+              case 'video-0': return 0;
+              case 'video-1': return 1;
+              case 'text-0': return 2;
+              case 'audio-0': return 3;
+              case 'audio-1': return 4;
+              default: return 0;
+            }
+          };
+          
+          const currentMaxEnd = multiTrackItems
+            .filter(i => i.track === getTrackNumberFromId(trackId))
+            .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
+          
+          const newItem: MultiTrackTimelineItem = {
+            id: instanceId,
+            type: mediaType,
+            track: getTrackNumberFromId(trackId),
+            startTime: currentMaxEnd,
+            duration: item.duration || (mediaType === 'image' ? 5 : 10),
+            url: item.url,
+            thumbnailUrl: item.thumbnailUrl,
+            name: item.name,
+          };
+          
+          setMultiTrackItems(prev => [...prev, newItem]);
+        } else {
+          if (mediaType === 'audio') {
+            const audioTrack = {
+              id: instanceId,
+              url: item.url,
+              name: item.name || 'Audio track',
+              type: 'music' as const,
+              volume: 1,
+            };
+            setAudioTracks(prev => [...prev, audioTrack]);
+          } else {
+            const clip: VideoClip = {
+              id: instanceId,
+              url: item.url,
+              thumbnailUrl: item.thumbnailUrl || null,
+              prompt: item.name || '',
+              createdAt: new Date().toISOString(),
+              type: mediaType,
+            };
+            setOrderedClips(prev => [...prev, clip]);
+          }
+        }
+        
+        toast({
+          title: "Added to timeline",
+          description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to timeline`,
+        });
+      }
+      return;
+    }
+
+    if (active.id !== over.id) {
       setOrderedClips((items) => {
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) return items;
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -1854,7 +1937,12 @@ export default function VideoEditor() {
           </div>
         </header>
 
-        {/* Main Editor Layout: Sidebar + Media Panel + Preview */}
+        {/* Main Editor Layout: Sidebar + Media Panel + Preview - wrapped in DndContext for cross-component drag */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
         <div className="flex-1 flex overflow-hidden">
           {/* Left Icon Sidebar */}
           <EditorSidebar 
@@ -1905,31 +1993,12 @@ export default function VideoEditor() {
                       ) : (
                         <div className="grid grid-cols-2 gap-2">
                           {videos.map((video) => (
-                            <div 
+                            <DraggableMediaItem
                               key={video.id}
-                              className="group relative aspect-video rounded-md overflow-hidden border cursor-pointer hover:ring-2 hover:ring-primary"
+                              item={video}
+                              mediaType="video"
                               onClick={() => addClipToTimeline(video)}
-                              data-testid={`media-item-${video.id}`}
-                            >
-                              {video.thumbnailUrl ? (
-                                <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                              ) : video.resultUrl ? (
-                                <video 
-                                  src={video.resultUrl} 
-                                  className="w-full h-full object-cover"
-                                  preload="metadata"
-                                  muted
-                                  playsInline
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-muted flex items-center justify-center">
-                                  <Video className="h-6 w-6 text-muted-foreground" />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Plus className="h-6 w-6 text-white" />
-                              </div>
-                            </div>
+                            />
                           ))}
                         </div>
                       )}
@@ -1975,26 +2044,12 @@ export default function VideoEditor() {
                       ) : (
                         <div className="grid grid-cols-2 gap-2">
                           {allImages.map((image) => (
-                            <div 
+                            <DraggableMediaItem
                               key={image.id}
-                              className="group relative aspect-square rounded-md overflow-hidden border cursor-pointer hover:ring-2 hover:ring-primary"
+                              item={image}
+                              mediaType="image"
                               onClick={() => addClipToTimeline(image, 'image')}
-                              data-testid={`image-item-${image.id}`}
-                            >
-                              {image.resultUrl ? (
-                                <img src={image.resultUrl} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full bg-muted flex items-center justify-center">
-                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Plus className="h-6 w-6 text-white" />
-                              </div>
-                              <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
-                                5s
-                              </div>
-                            </div>
+                            />
                           ))}
                         </div>
                       )}
@@ -2863,23 +2918,52 @@ export default function VideoEditor() {
         </div>
         
         {/* Timeline at Bottom */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
-            <TimelineTrack
-              clips={orderedClips}
-              audioTracks={audioTracks}
-              getClipSettings={getClipSettings}
-              onMuteToggle={toggleClipMute}
-              onRemoveClip={removeClipFromTimeline}
-              onRemoveAudioTrack={removeAudioTrack}
-              onOpenSettings={openClipSettings}
-              totalDuration={totalDuration}
+        <div className="border-t">
+          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+            <span className="text-sm font-medium">Timeline</span>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="multi-track-toggle" className="text-xs text-muted-foreground">
+                Multi-Track
+              </Label>
+              <Switch
+                id="multi-track-toggle"
+                checked={useMultiTrack}
+                onCheckedChange={setUseMultiTrack}
+                data-testid="switch-multi-track-mode"
+              />
+            </div>
+          </div>
+          
+          {useMultiTrack ? (
+            <MultiTrackTimeline
+              items={multiTrackItems}
+              onItemsChange={setMultiTrackItems}
+              onItemSelect={(item) => {
+                if (item) {
+                  toast({
+                    title: "Clip selected",
+                    description: `Selected: ${item.name || item.type} clip`,
+                  });
+                }
+              }}
+              totalDuration={Math.max(totalDuration, 60)}
+              className="h-80"
             />
-          </SortableContext>
+          ) : (
+            <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
+              <TimelineTrack
+                clips={orderedClips}
+                audioTracks={audioTracks}
+                getClipSettings={getClipSettings}
+                onMuteToggle={toggleClipMute}
+                onRemoveClip={removeClipFromTimeline}
+                onRemoveAudioTrack={removeAudioTrack}
+                onOpenSettings={openClipSettings}
+                totalDuration={totalDuration}
+              />
+            </SortableContext>
+          )}
+        </div>
         </DndContext>
       </div>
 

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Timeline, TimelineRow, TimelineAction, TimelineState, TimelineEffect } from '@xzdarcy/react-timeline-editor';
+import { useDroppable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { 
@@ -52,18 +53,28 @@ export interface MultiTrackTimelineItem {
   muted?: boolean;
 }
 
+export interface DroppedMediaItem {
+  id: string;
+  type: 'video' | 'image' | 'audio';
+  url: string;
+  thumbnailUrl?: string | null;
+  name?: string;
+  duration?: number;
+}
+
 interface MultiTrackTimelineProps {
   items: MultiTrackTimelineItem[];
   onItemsChange: (items: MultiTrackTimelineItem[]) => void;
   onItemSelect?: (item: MultiTrackTimelineItem | null) => void;
   onTimeChange?: (time: number) => void;
+  onDropMedia?: (media: DroppedMediaItem, trackId: string, dropTime: number) => void;
   totalDuration?: number;
   className?: string;
 }
 
 const TRACK_CONFIGS = [
-  { id: 'video-0', name: 'Main Video', type: 'video', icon: Video },
-  { id: 'video-1', name: 'Overlay', type: 'video', icon: Layers },
+  { id: 'video-0', name: 'Main Video', type: 'video' as const, icon: Video },
+  { id: 'video-1', name: 'Overlay', type: 'video' as const, icon: Layers },
   { id: 'text-0', name: 'Text', type: 'text', icon: Type },
   { id: 'audio-0', name: 'Music', type: 'audio', icon: Music },
   { id: 'audio-1', name: 'Voiceover', type: 'audio', icon: Volume2 },
@@ -92,6 +103,29 @@ const getTrackNumber = (trackId: string): number => {
     default: return 0;
   }
 };
+
+function DroppableTrackLabel({ track }: { track: typeof TRACK_CONFIGS[0] }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `track-drop-${track.id}`,
+    data: { trackId: track.id, trackType: track.type }
+  });
+  
+  const Icon = track.icon;
+  
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "h-16 flex items-center gap-2 px-2 border-b text-sm transition-colors",
+        isOver && "bg-primary/20 ring-2 ring-primary ring-inset"
+      )}
+      data-testid={`track-label-${track.id}`}
+    >
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      <span className="truncate">{track.name}</span>
+    </div>
+  );
+}
 
 export function MultiTrackTimeline({
   items,
@@ -316,19 +350,9 @@ export function MultiTrackTimeline({
 
       <div className="flex flex-1 min-h-0">
         <div className="w-32 shrink-0 border-r bg-muted/20">
-          {TRACK_CONFIGS.map(track => {
-            const Icon = track.icon;
-            return (
-              <div
-                key={track.id}
-                className="h-16 flex items-center gap-2 px-2 border-b text-sm"
-                data-testid={`track-label-${track.id}`}
-              >
-                <Icon className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate">{track.name}</span>
-              </div>
-            );
-          })}
+          {TRACK_CONFIGS.map(track => (
+            <DroppableTrackLabel key={track.id} track={track} />
+          ))}
         </div>
 
         <div className="flex-1 overflow-x-auto min-h-0">
