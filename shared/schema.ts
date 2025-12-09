@@ -550,9 +550,32 @@ export const loopsTestContactRequestSchema = z.object({
 export type LoopsTestContactRequest = z.infer<typeof loopsTestContactRequestSchema>;
 
 // Video Enhancement Schemas
+// All available FFmpeg xfade transition types
+export const TRANSITION_TYPES = [
+  'fade', 'dissolve', 'wipeleft', 'wiperight', 'wipeup', 'wipedown',
+  'slideleft', 'slideright', 'slideup', 'slidedown',
+  'circleopen', 'circleclose', 'circlecrop',
+  'rectcrop', 'distance', 'fadeblack', 'fadewhite', 'fadegrays',
+  'radial', 'smoothleft', 'smoothright', 'smoothup', 'smoothdown',
+  'hblur', 'hlslice', 'hrslice', 'vuslice', 'vdslice',
+  'diagtl', 'diagtr', 'diagbl', 'diagbr', 'pixelize',
+] as const;
+
+export type TransitionType = typeof TRANSITION_TYPES[number];
+
+// Per-clip transition settings (transition AFTER this clip, before the next)
+export const clipTransitionSchema = z.object({
+  afterClipIndex: z.number().int().min(0), // This is the index of the clip this transition follows
+  type: z.enum(TRANSITION_TYPES).default('fade'),
+  durationSeconds: z.number().min(0.3).max(3.0).default(1.0),
+});
+
+export type ClipTransition = z.infer<typeof clipTransitionSchema>;
+
 export const transitionsEnhancementSchema = z.object({
-  mode: z.enum(['none', 'crossfade']).default('none'),
-  durationSeconds: z.number().min(0.5).max(3.0).optional(), // Only for crossfade
+  mode: z.enum(['none', 'crossfade', 'perClip']).default('none'),
+  durationSeconds: z.number().min(0.5).max(3.0).optional(), // For global crossfade mode
+  perClip: z.array(clipTransitionSchema).optional(), // For perClip mode
 }).default({ mode: 'none' });
 
 export const backgroundMusicEnhancementSchema = z.object({

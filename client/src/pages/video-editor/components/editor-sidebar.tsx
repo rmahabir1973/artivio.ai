@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Video, Music, Mic, Type, Layers, Download, ImageIcon } from "lucide-react";
+import { Video, Music, Mic, Type, Layers, Download, ImageIcon, Shuffle, Upload } from "lucide-react";
 
 // Sidebar categories for the OpenCut/CapCut-style layout
-export type EditorCategory = 'media' | 'images' | 'music' | 'audio' | 'text' | 'overlays' | 'export';
+export type EditorCategory = 'media' | 'images' | 'music' | 'audio' | 'transitions' | 'text' | 'overlays' | 'upload' | 'export';
 
 // Editor sidebar menu configuration
 const SIDEBAR_MENU: { id: EditorCategory; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -12,8 +12,10 @@ const SIDEBAR_MENU: { id: EditorCategory; label: string; icon: React.ComponentTy
   { id: 'images', label: 'Images', icon: ImageIcon },
   { id: 'music', label: 'Music', icon: Music },
   { id: 'audio', label: 'Audio', icon: Mic },
+  { id: 'transitions', label: 'Effects', icon: Shuffle },
   { id: 'text', label: 'Text', icon: Type },
   { id: 'overlays', label: 'Overlays', icon: Layers },
+  { id: 'upload', label: 'Upload', icon: Upload },
   { id: 'export', label: 'Export', icon: Download },
 ];
 

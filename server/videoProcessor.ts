@@ -444,30 +444,67 @@ function buildFilterGraph(
 
   // Precompute start times for each clip (cumulative sum of previous durations)
   // CRITICAL FIX: Calculate proper xfade offsets to prevent early clipping
-  if (enhancements?.transitions?.mode === 'crossfade' && videoCount > 1) {
-    const duration = transitionDuration;
+  // Support both global crossfade and per-clip transitions
+  const hasPerClipTransitions = enhancements?.transitions?.mode === 'perClip' && 
+    enhancements.transitions.perClip && 
+    enhancements.transitions.perClip.length > 0;
+  
+  if ((enhancements?.transitions?.mode === 'crossfade' || hasPerClipTransitions) && videoCount > 1) {
     let currentStream = videoStreams[0];
     
-    // Calculate cumulative start times for each clip
+    // For perClip mode, build a map of transitions by afterClipIndex
+    const perClipTransitions = new Map<number, { type: string; durationSeconds: number }>();
+    if (hasPerClipTransitions && enhancements?.transitions?.perClip) {
+      for (const t of enhancements.transitions.perClip) {
+        perClipTransitions.set(t.afterClipIndex, { type: t.type, durationSeconds: t.durationSeconds });
+      }
+    }
+    
+    // Calculate cumulative start times for each clip with varying transition durations
     const startTimes: number[] = [0];
+    let totalTransitionDuration = 0;
+    
     for (let i = 1; i < videoCount; i++) {
+      // Get transition duration for the gap between clip i-1 and clip i
+      const transition = hasPerClipTransitions 
+        ? perClipTransitions.get(i - 1) 
+        : { type: 'fade', durationSeconds: transitionDuration };
+      const duration = transition?.durationSeconds || (hasPerClipTransitions ? 0 : transitionDuration);
+      
+      if (transition) {
+        totalTransitionDuration += duration;
+      }
+      
       // Each clip starts at the end of the previous clip minus the transition overlap
-      startTimes.push(startTimes[i - 1] + adjustedDurations[i - 1] - duration);
+      startTimes.push(startTimes[i - 1] + adjustedDurations[i - 1] - (transition ? duration : 0));
     }
     
     for (let i = 1; i < videoCount; i++) {
+      // Get transition settings for this gap
+      const transition = hasPerClipTransitions 
+        ? perClipTransitions.get(i - 1) 
+        : { type: 'fade', durationSeconds: transitionDuration };
+      
+      if (!transition) {
+        // No transition for this gap - use concat instead
+        continue;
+      }
+      
+      const duration = transition.durationSeconds;
+      const transitionType = transition.type || 'fade';
+      
       // Offset is the start time of clip i (clamped to >= 0)
       const offset = Math.max(0, startTimes[i]);
       const isLast = i === videoCount - 1;
       // Use intermediate label for the xfade output, then apply tpad to final
       const nextLabel = isLast ? 'vxfout' : `v${i}xf`;
-      videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=fade:duration=${duration.toFixed(3)}:offset=${offset.toFixed(3)}[${nextLabel}]`);
+      videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=${transitionType}:duration=${duration.toFixed(3)}:offset=${offset.toFixed(3)}[${nextLabel}]`);
       currentStream = `[${nextLabel}]`;
     }
     
     // CRITICAL: Add tpad to preserve full original duration
-    // Crossfade consumes (n-1)*transitionDuration, so we pad that much back
-    const totalPadDuration = (videoCount - 1) * duration;
+    // Crossfade consumes total transition duration, so we pad that much back
+    const totalPadDuration = totalTransitionDuration || (videoCount - 1) * transitionDuration;
     videoFilterSteps.push(`[vxfout]tpad=stop_duration=${totalPadDuration.toFixed(3)}[vout]`);
   } else if (videoCount > 1) {
     videoFilterSteps.push(`${videoStreams.join('')}concat=n=${videoCount}:v=1:a=0[vout]`);

@@ -8028,6 +8028,74 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
 
   // ===== Video Editor Routes (Twick + AWS Lambda) =====
   
+  // Upload endpoint for importing local media to video editor
+  app.post('/api/video-editor/upload', requireJWT, async (req: any, res) => {
+    const uploadMiddleware = multer({
+      limits: { fileSize: 500 * 1024 * 1024 }, // 500MB max
+      storage: multer.memoryStorage(),
+    }).single('file');
+    
+    uploadMiddleware(req, res, async (err: any) => {
+      if (err) {
+        return res.status(400).json({ message: err.message || "Upload failed" });
+      }
+      
+      try {
+        const file = req.file;
+        const type = req.body.type || 'video'; // 'video', 'image', or 'audio'
+        
+        if (!file) {
+          return res.status(400).json({ message: "No file provided" });
+        }
+        
+        const userId = req.user.id;
+        const ext = path.extname(file.originalname).toLowerCase() || '.mp4';
+        const filename = `${type}_${userId}_${Date.now()}${ext}`;
+        
+        // Upload to S3 - use appropriate prefix based on type
+        const s3Prefix = type === 'image' ? 'uploads/images' : type === 'audio' ? 'uploads/audio' : 'uploads/video';
+        
+        try {
+          const uploadResult = await s3.uploadBuffer(file.buffer, {
+            prefix: s3Prefix as any,
+            filename,
+            contentType: file.mimetype,
+          });
+          
+          console.log(`[Video Editor Upload] Uploaded ${type}: ${uploadResult.key}`);
+          
+          // Generate presigned URL for access
+          const url = await s3.generateSignedUrl(uploadResult.key, 3600 * 24 * 7); // 7 days
+          
+          res.json({
+            url,
+            key: uploadResult.key,
+            filename: file.originalname,
+            type,
+          });
+        } catch (s3Error: any) {
+          console.error('[Video Editor Upload] S3 upload failed:', s3Error);
+          
+          // Fallback to local storage
+          const localDir = path.join(process.cwd(), 'public', 'uploads', 'video-editor', userId);
+          await fs.mkdir(localDir, { recursive: true });
+          const localPath = path.join(localDir, filename);
+          await fs.writeFile(localPath, file.buffer);
+          
+          const localUrl = `/uploads/video-editor/${userId}/${filename}`;
+          res.json({
+            url: localUrl,
+            filename: file.originalname,
+            type,
+          });
+        }
+      } catch (error: any) {
+        console.error('[Video Editor Upload] Error:', error);
+        res.status(500).json({ message: error.message || "Upload failed" });
+      }
+    });
+  });
+  
   // Store for tracking export jobs (in-memory for now, could be moved to DB)
   const videoExportJobs: Map<string, {
     status: 'processing' | 'completed' | 'failed';

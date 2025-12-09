@@ -25,7 +25,8 @@ import { usePricing } from "@/hooks/use-pricing";
 import { fetchWithAuth, apiRequest, queryClient } from "@/lib/queryClient";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { Generation, VideoEnhancements, ClipSetting, TextOverlay } from "@shared/schema";
+import type { Generation, VideoEnhancements, ClipSetting, TextOverlay, TransitionType, ClipTransition } from "@shared/schema";
+import { TRANSITION_TYPES } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import {
   ResizableHandle,
@@ -71,6 +72,7 @@ import {
   Upload,
   PanelLeftClose,
   PanelLeft,
+  Shuffle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -128,9 +130,17 @@ interface ClipSettingsLocal {
   displayDuration?: number; // For images: how long to display (default 5 seconds)
 }
 
+// Per-clip transition state (for the transition AFTER each clip)
+interface ClipTransitionLocal {
+  afterClipIndex: number;
+  type: TransitionType;
+  durationSeconds: number;
+}
+
 interface EnhancementsState {
-  transitionMode: 'none' | 'crossfade';
+  transitionMode: 'none' | 'crossfade' | 'perClip';
   transitionDuration: number;
+  clipTransitions: ClipTransitionLocal[]; // Per-clip transitions
   fadeIn: boolean;
   fadeOut: boolean;
   fadeDuration: number; // seconds
@@ -457,6 +467,7 @@ export default function VideoEditor() {
   const [enhancements, setEnhancements] = useState<EnhancementsState>({
     transitionMode: 'none',
     transitionDuration: 1.0,
+    clipTransitions: [],
     fadeIn: false,
     fadeOut: false,
     fadeDuration: 0.5,
@@ -674,7 +685,14 @@ export default function VideoEditor() {
         : { mode: 'none' as const };
 
       const enhancementsPayload = {
-        transitions: enhancements.transitionMode === 'crossfade' ? {
+        transitions: enhancements.transitionMode === 'perClip' ? {
+          mode: 'perClip' as const,
+          perClip: enhancements.clipTransitions.map(t => ({
+            afterClipIndex: t.afterClipIndex,
+            type: t.type,
+            durationSeconds: t.durationSeconds,
+          })),
+        } : enhancements.transitionMode === 'crossfade' ? {
           mode: 'crossfade' as const,
           durationSeconds: enhancements.transitionDuration,
         } : { mode: 'none' as const },
@@ -1202,7 +1220,14 @@ export default function VideoEditor() {
 
       // Build enhancements payload with all enhancement state
       const enhancementsPayload = {
-        transitions: enhancements.transitionMode === 'crossfade' ? {
+        transitions: enhancements.transitionMode === 'perClip' ? {
+          mode: 'perClip' as const,
+          perClip: enhancements.clipTransitions.map(t => ({
+            afterClipIndex: t.afterClipIndex,
+            type: t.type,
+            durationSeconds: t.durationSeconds,
+          })),
+        } : enhancements.transitionMode === 'crossfade' ? {
           mode: 'crossfade' as const,
           durationSeconds: enhancements.transitionDuration,
         } : { mode: 'none' as const },
@@ -1339,7 +1364,14 @@ export default function VideoEditor() {
         : { mode: 'none' as const };
 
       const enhancementsPayload = {
-        transitions: enhancements.transitionMode === 'crossfade' ? {
+        transitions: enhancements.transitionMode === 'perClip' ? {
+          mode: 'perClip' as const,
+          perClip: enhancements.clipTransitions.map(t => ({
+            afterClipIndex: t.afterClipIndex,
+            type: t.type,
+            durationSeconds: t.durationSeconds,
+          })),
+        } : enhancements.transitionMode === 'crossfade' ? {
           mode: 'crossfade' as const,
           durationSeconds: enhancements.transitionDuration,
         } : { mode: 'none' as const },
@@ -2121,6 +2153,251 @@ export default function VideoEditor() {
                     </div>
                   )}
                   
+                  {/* Transitions Category Content */}
+                  {activeCategory === 'transitions' && (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">Click a transition to add it between clips on the timeline</p>
+                      
+                      {/* Transition type groups */}
+                      <div className="space-y-4">
+                        {/* Fade transitions */}
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Fade Effects</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(['fade', 'dissolve', 'fadeblack', 'fadewhite', 'fadegrays'] as TransitionType[]).map((type) => (
+                              <div
+                                key={type}
+                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
+                                onClick={() => {
+                                  if (orderedClips.length < 2) {
+                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
+                                    return;
+                                  }
+                                  // Add transition after the first clip that doesn't have one
+                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
+                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
+                                  if (firstEmpty !== undefined) {
+                                    setEnhancements(prev => ({
+                                      ...prev,
+                                      transitionMode: 'perClip',
+                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
+                                    }));
+                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
+                                  } else {
+                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
+                                  }
+                                }}
+                                data-testid={`transition-${type}`}
+                              >
+                                <Shuffle className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                <span className="text-xs capitalize">{type}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Wipe transitions */}
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Wipe Effects</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(['wipeleft', 'wiperight', 'wipeup', 'wipedown'] as TransitionType[]).map((type) => (
+                              <div
+                                key={type}
+                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
+                                onClick={() => {
+                                  if (orderedClips.length < 2) {
+                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
+                                    return;
+                                  }
+                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
+                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
+                                  if (firstEmpty !== undefined) {
+                                    setEnhancements(prev => ({
+                                      ...prev,
+                                      transitionMode: 'perClip',
+                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
+                                    }));
+                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
+                                  } else {
+                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
+                                  }
+                                }}
+                                data-testid={`transition-${type}`}
+                              >
+                                <ArrowRight className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                <span className="text-xs capitalize">{type.replace('wipe', '')}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Slide transitions */}
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Slide Effects</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(['slideleft', 'slideright', 'slideup', 'slidedown'] as TransitionType[]).map((type) => (
+                              <div
+                                key={type}
+                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
+                                onClick={() => {
+                                  if (orderedClips.length < 2) {
+                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
+                                    return;
+                                  }
+                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
+                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
+                                  if (firstEmpty !== undefined) {
+                                    setEnhancements(prev => ({
+                                      ...prev,
+                                      transitionMode: 'perClip',
+                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
+                                    }));
+                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
+                                  } else {
+                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
+                                  }
+                                }}
+                                data-testid={`transition-${type}`}
+                              >
+                                <Film className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                <span className="text-xs capitalize">{type.replace('slide', '')}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Circle/Shape transitions */}
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Shape Effects</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(['circleopen', 'circleclose', 'circlecrop', 'rectcrop', 'radial', 'pixelize'] as TransitionType[]).map((type) => (
+                              <div
+                                key={type}
+                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
+                                onClick={() => {
+                                  if (orderedClips.length < 2) {
+                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
+                                    return;
+                                  }
+                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
+                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
+                                  if (firstEmpty !== undefined) {
+                                    setEnhancements(prev => ({
+                                      ...prev,
+                                      transitionMode: 'perClip',
+                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
+                                    }));
+                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
+                                  } else {
+                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
+                                  }
+                                }}
+                                data-testid={`transition-${type}`}
+                              >
+                                <Layers className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                <span className="text-xs capitalize">{type}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Diagonal & Other transitions */}
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Other Effects</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(['diagtl', 'diagtr', 'diagbl', 'diagbr', 'distance', 'hblur'] as TransitionType[]).map((type) => (
+                              <div
+                                key={type}
+                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
+                                onClick={() => {
+                                  if (orderedClips.length < 2) {
+                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
+                                    return;
+                                  }
+                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
+                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
+                                  if (firstEmpty !== undefined) {
+                                    setEnhancements(prev => ({
+                                      ...prev,
+                                      transitionMode: 'perClip',
+                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
+                                    }));
+                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
+                                  } else {
+                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
+                                  }
+                                }}
+                                data-testid={`transition-${type}`}
+                              >
+                                <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                <span className="text-xs capitalize">{type}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Active transitions list */}
+                      {enhancements.clipTransitions.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Active Transitions</p>
+                          {enhancements.clipTransitions
+                            .sort((a, b) => a.afterClipIndex - b.afterClipIndex)
+                            .map((transition) => (
+                              <div key={transition.afterClipIndex} className="p-2 border rounded-md flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Shuffle className="h-3 w-3 text-primary" />
+                                  <span className="text-xs">
+                                    Clip {transition.afterClipIndex + 1} → {transition.afterClipIndex + 2}
+                                  </span>
+                                  <Badge variant="secondary" className="text-[10px]">{transition.type}</Badge>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Select
+                                    value={transition.durationSeconds.toString()}
+                                    onValueChange={(val) => {
+                                      setEnhancements(prev => ({
+                                        ...prev,
+                                        clipTransitions: prev.clipTransitions.map(t =>
+                                          t.afterClipIndex === transition.afterClipIndex
+                                            ? { ...t, durationSeconds: parseFloat(val) }
+                                            : t
+                                        ),
+                                      }));
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-6 w-14 text-xs">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="0.5">0.5s</SelectItem>
+                                      <SelectItem value="1">1s</SelectItem>
+                                      <SelectItem value="1.5">1.5s</SelectItem>
+                                      <SelectItem value="2">2s</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => {
+                                      setEnhancements(prev => ({
+                                        ...prev,
+                                        clipTransitions: prev.clipTransitions.filter(t => t.afterClipIndex !== transition.afterClipIndex),
+                                        transitionMode: prev.clipTransitions.length <= 1 ? 'none' : 'perClip',
+                                      }));
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   {/* Text Category Content */}
                   {activeCategory === 'text' && (
                     <div className="space-y-3">
@@ -2274,6 +2551,188 @@ export default function VideoEditor() {
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+                  
+                  {/* Upload Category Content */}
+                  {activeCategory === 'upload' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">Import your own media to use in the editor</p>
+                      
+                      {/* Video Upload */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Upload Video</Label>
+                        <div className="border-2 border-dashed rounded-md p-4 text-center">
+                          <input
+                            type="file"
+                            accept="video/*"
+                            className="hidden"
+                            id="video-upload"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 500 * 1024 * 1024) {
+                                toast({ title: "File Too Large", description: "Maximum video size is 500MB", variant: "destructive" });
+                                return;
+                              }
+                              
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              formData.append('type', 'video');
+                              
+                              try {
+                                toast({ title: "Uploading...", description: "Uploading your video" });
+                                const response = await fetchWithAuth('/api/video-editor/upload', {
+                                  method: 'POST',
+                                  body: formData,
+                                });
+                                const result = await response.json();
+                                if (result.url) {
+                                  const newClip: VideoClip = {
+                                    id: `upload_${Date.now()}`,
+                                    url: result.url,
+                                    thumbnailUrl: result.thumbnailUrl || null,
+                                    prompt: file.name,
+                                    createdAt: new Date().toISOString(),
+                                    type: 'video',
+                                  };
+                                  setOrderedClips(prev => [...prev, newClip]);
+                                  toast({ title: "Video Added", description: "Your video has been added to the timeline" });
+                                }
+                              } catch (error: any) {
+                                toast({ title: "Upload Failed", description: error.message || "Failed to upload video", variant: "destructive" });
+                              }
+                              e.target.value = '';
+                            }}
+                            data-testid="input-video-upload"
+                          />
+                          <label htmlFor="video-upload" className="cursor-pointer">
+                            <Video className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-xs text-muted-foreground">Click to upload video</p>
+                            <p className="text-[10px] text-muted-foreground/70 mt-1">MP4, MOV, WebM (max 500MB)</p>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      {/* Image Upload */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Upload Image</Label>
+                        <div className="border-2 border-dashed rounded-md p-4 text-center">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            id="image-upload"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 50 * 1024 * 1024) {
+                                toast({ title: "File Too Large", description: "Maximum image size is 50MB", variant: "destructive" });
+                                return;
+                              }
+                              
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              formData.append('type', 'image');
+                              
+                              try {
+                                toast({ title: "Uploading...", description: "Uploading your image" });
+                                const response = await fetchWithAuth('/api/video-editor/upload', {
+                                  method: 'POST',
+                                  body: formData,
+                                });
+                                const result = await response.json();
+                                if (result.url) {
+                                  const newClip: VideoClip = {
+                                    id: `upload_${Date.now()}`,
+                                    url: result.url,
+                                    thumbnailUrl: result.url,
+                                    prompt: file.name,
+                                    createdAt: new Date().toISOString(),
+                                    type: 'image',
+                                  };
+                                  setOrderedClips(prev => [...prev, newClip]);
+                                  setClipSettings(prev => {
+                                    const newMap = new Map(prev);
+                                    newMap.set(newClip.id, {
+                                      clipId: newClip.id,
+                                      muted: false,
+                                      volume: 1,
+                                      speed: 1.0,
+                                      displayDuration: 5,
+                                    });
+                                    return newMap;
+                                  });
+                                  toast({ title: "Image Added", description: "Your image has been added to the timeline" });
+                                }
+                              } catch (error: any) {
+                                toast({ title: "Upload Failed", description: error.message || "Failed to upload image", variant: "destructive" });
+                              }
+                              e.target.value = '';
+                            }}
+                            data-testid="input-image-upload"
+                          />
+                          <label htmlFor="image-upload" className="cursor-pointer">
+                            <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-xs text-muted-foreground">Click to upload image</p>
+                            <p className="text-[10px] text-muted-foreground/70 mt-1">JPG, PNG, WebP (max 50MB)</p>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      {/* Audio Upload */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Upload Audio</Label>
+                        <div className="border-2 border-dashed rounded-md p-4 text-center">
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            className="hidden"
+                            id="audio-upload"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 100 * 1024 * 1024) {
+                                toast({ title: "File Too Large", description: "Maximum audio size is 100MB", variant: "destructive" });
+                                return;
+                              }
+                              
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              formData.append('type', 'audio');
+                              
+                              try {
+                                toast({ title: "Uploading...", description: "Uploading your audio" });
+                                const response = await fetchWithAuth('/api/video-editor/upload', {
+                                  method: 'POST',
+                                  body: formData,
+                                });
+                                const result = await response.json();
+                                if (result.url) {
+                                  setEnhancements(prev => ({
+                                    ...prev,
+                                    backgroundMusic: {
+                                      audioUrl: result.url,
+                                      volume: 0.5,
+                                      name: file.name,
+                                    },
+                                  }));
+                                  toast({ title: "Audio Added", description: "Your audio has been set as background music" });
+                                }
+                              } catch (error: any) {
+                                toast({ title: "Upload Failed", description: error.message || "Failed to upload audio", variant: "destructive" });
+                              }
+                              e.target.value = '';
+                            }}
+                            data-testid="input-audio-upload"
+                          />
+                          <label htmlFor="audio-upload" className="cursor-pointer">
+                            <Music className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-xs text-muted-foreground">Click to upload audio</p>
+                            <p className="text-[10px] text-muted-foreground/70 mt-1">MP3, WAV, AAC (max 100MB)</p>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   )}
                   
