@@ -59,6 +59,73 @@ async function ensureDirectories(): Promise<void> {
   await fs.mkdir(THUMBNAIL_DIR, { recursive: true });
 }
 
+// Helper to detect if URL points to an image
+function isImageUrl(url: string): boolean {
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
+  const pathname = new URL(url).pathname.toLowerCase();
+  return imageExtensions.some(ext => pathname.endsWith(ext));
+}
+
+// Download an image file
+async function downloadImage(url: string, tempDir: string, index: number): Promise<string> {
+  const ext = path.extname(new URL(url).pathname) || '.png';
+  const filename = `image_${index}${ext}`;
+  const filepath = path.join(tempDir, filename);
+
+  try {
+    const response = await axios({
+      method: 'GET',
+      url,
+      responseType: 'stream',
+      timeout: 60000,
+      validateStatus: (status) => status >= 200 && status < 300,
+    });
+
+    const writer = createWriteStream(filepath);
+    response.data.pipe(writer);
+
+    await new Promise<void>((resolve, reject) => {
+      writer.on('finish', () => resolve());
+      writer.on('error', reject);
+    });
+
+    const stats = await fs.stat(filepath);
+    if (stats.size === 0) {
+      throw new Error('Downloaded image is empty');
+    }
+    
+    console.log(`✓ Downloaded image ${index}: ${filepath} (${(stats.size / 1024).toFixed(2)}KB)`);
+    return filepath;
+  } catch (error: any) {
+    throw new Error(`Failed to download image ${index + 1}: ${error.message}`);
+  }
+}
+
+// Convert an image to a video with specified duration
+async function imageToVideo(imagePath: string, outputPath: string, durationSeconds: number, previewMode: boolean = false): Promise<void> {
+  try {
+    const resolution = previewMode ? '640:360' : '1280:720';
+    const bitrate = previewMode ? '800k' : '2500k';
+    const crf = previewMode ? 28 : 24;
+    const preset = previewMode ? 'ultrafast' : 'fast';
+    
+    // Loop the image for the specified duration with Ken Burns style zoom (subtle)
+    // -loop 1 loops the image, -t sets duration, -r sets framerate
+    // scale filter ensures proper resolution, pad adds letterboxing if needed
+    const command = `ffmpeg -loop 1 -i "${imagePath}" -c:v libx264 -t ${durationSeconds} -pix_fmt yuv420p -r 30 -vf "scale=${resolution}:force_original_aspect_ratio=decrease,pad=${resolution}:-1:-1:color=black,fps=30" -b:v ${bitrate} -preset ${preset} -crf ${crf} -an -movflags +faststart -y "${outputPath}"`;
+    
+    await execAsync(command, {
+      timeout: 60000,
+      maxBuffer: 20 * 1024 * 1024,
+    });
+    
+    console.log(`✓ Converted image to video: ${outputPath} (${durationSeconds}s, ${previewMode ? '360p' : '720p'})`);
+  } catch (error: any) {
+    console.error(`Image to video conversion error:`, error.message);
+    throw new Error(`Failed to convert image to video: ${error.message}`);
+  }
+}
+
 async function downloadVideo(url: string, tempDir: string, index: number): Promise<string> {
   const ext = path.extname(new URL(url).pathname) || '.mp4';
   const filename = `input_${index}${ext}`;
@@ -557,13 +624,40 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     tempDir = path.join(TEMP_DIR, jobId);
     await fs.mkdir(tempDir, { recursive: true });
 
-    onProgress?.('download', `Downloading ${videoUrls.length} videos...`);
+    onProgress?.('download', `Downloading ${videoUrls.length} media files...`);
 
-    // Download all videos in parallel for speed
+    // Download all media (videos and images) in parallel
+    // For images, we'll convert them to videos after download
     const downloadedPaths = await Promise.all(
-      videoUrls.map((url, i) => downloadVideo(url, tempDir!, i))
+      videoUrls.map(async (url, i) => {
+        // Check if this is an image based on URL extension OR clipSettings.isImage flag
+        const clipSetting = enhancements?.clipSettings?.find(cs => cs.clipIndex === i);
+        const urlIsImage = isImageUrl(url);
+        const isImage = clipSetting?.isImage || urlIsImage;
+        
+        if (isImage) {
+          // Download image
+          const imagePath = await downloadImage(url, tempDir!, i);
+          
+          // Convert image to video with specified duration (default 5s)
+          const displayDuration = clipSetting?.displayDuration ?? 5;
+          const videoOutputPath = path.join(tempDir!, `image_video_${i}.mp4`);
+          await imageToVideo(imagePath, videoOutputPath, displayDuration, previewMode);
+          
+          tempFiles.push(imagePath);
+          tempFiles.push(videoOutputPath);
+          return videoOutputPath;
+        } else {
+          // Download video normally
+          return downloadVideo(url, tempDir!, i);
+        }
+      })
     );
-    downloadedPaths.forEach(filepath => tempFiles.push(filepath));
+    downloadedPaths.forEach(filepath => {
+      if (!tempFiles.includes(filepath)) {
+        tempFiles.push(filepath);
+      }
+    });
 
     onProgress?.('validate', 'Validating and normalizing videos...');
 
@@ -576,15 +670,20 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     // and audio sample rate (44100Hz) for smooth crossfade transitions
     // Without consistent parameters, xfade transitions produce visual/audio artifacts
     // Also applies per-clip trimming from clipSettings (for split clips)
+    // Note: Images converted to video already have correct fps/resolution, but we still normalize for consistency
     const normalizePromises = downloadedPaths.map(async (filepath, i) => {
-      onProgress?.('normalize', `Normalizing video ${i + 1}/${downloadedPaths.length}${previewMode ? ' (preview)' : ''}...`);
+      onProgress?.('normalize', `Normalizing clip ${i + 1}/${downloadedPaths.length}${previewMode ? ' (preview)' : ''}...`);
       const normalizedPath = path.join(tempDir!, `normalized_${i}.mp4`);
       
       // Get trim settings for this clip (if it was split)
+      // Note: For images, we don't apply trim since duration is already set in imageToVideo
       const clipSetting = enhancements?.clipSettings?.find(cs => cs.clipIndex === i);
+      const isImage = clipSetting?.isImage || isImageUrl(videoUrls[i]);
+      
       const trimOptions: NormalizeOptions = {
-        trimStartSeconds: clipSetting?.trimStartSeconds,
-        trimEndSeconds: clipSetting?.trimEndSeconds,
+        // Only apply trim for videos, not images (images already have correct duration)
+        trimStartSeconds: isImage ? undefined : clipSetting?.trimStartSeconds,
+        trimEndSeconds: isImage ? undefined : clipSetting?.trimEndSeconds,
         previewMode, // Pass preview mode for lower quality encoding
       };
       

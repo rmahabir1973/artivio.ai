@@ -1,0 +1,219 @@
+CrossFade, Dissolve, and other Effects using FFmpeg’s xfade Filter
+FFmpeg / By Krishna Rao Vijayanagar / December 13, 2020
+Whenever two videos are joined together, a transition is usually added at the transition point – typically, a crossfade, dissolve, or a wipe-effect. You don’t need any expensive software to do this – all you need is FFmpeg and an understanding of the xfade filter to add an eye-catching crossfade, dissolve, or any other transition effect to your videos.
+
+In this tutorial, let’s take a look at some common transitions to make your videos look amazing!
+
+Table of Contents
+
+How do you add a CrossFade using FFmpeg?
+Dissolve Transition using FFmpeg
+radial Transition using FFmpeg
+circleopen Transition using FFmpeg
+circleclose Transition using FFmpeg
+pixelize Transition using FFmpeg
+hlslice Transition using FFmpeg
+hrslice Transition using FFmpeg
+vuslice Transition using FFmpeg
+vdslice Transition using FFmpeg
+hblur Transition using FFmpeg
+fadegrays Transition using FFmpeg
+fadeblack Transition using FFmpeg
+fadewhite Transition using FFmpeg
+rectcrop Transition using FFmpeg
+circlecrop Transition using FFmpeg
+wipeleft Transition using FFmpeg
+wiperight Transition using FFmpeg
+slidedown Transition using FFmpeg
+slideup Transition using FFmpeg
+slideleft Transition using FFmpeg
+slideright Transition using FFmpeg
+distance Transition using FFmpeg
+diagtl Transition using FFmpeg
+Reference
+How do you add a CrossFade using FFmpeg?
+The anatomy of a FFmpeg commandline using the xfade filter is as follows. Let’s look at it one line at a time.
+
+ffmpeg \
+-i video1.mp4 \
+-i video2.mp4 \
+-filter_complex xfade=transition=<FADE_TYPE>:\
+duration=<TRANSITION_DURATION_IN_SECONDS>:\
+offset=<OFFSET_RELATIVE_TO_FIRST_STREAM_IN_SECONDS> \
+outputVideo.mp4
+you need to provide two input videos – the first video appears before the transition and the second one appears after the transition
+then we call upon the xfade filter with the following parameters –
+<FADE_TYPE> – here, you can choose from a wide range of transitions that the xfade filter supports (fade, dissolve, wipeleft, wiperight, etc.)
+<TRANSITION_DURATION_IN_SECONDS> – here, you specify how long you want the transition to last
+<OFFSET_RELATIVE_TO_FIRST_STREAM_IN_SECONDS> – here, you can specify (in seconds)after how many seconds you want the transition to begin relative to the first video
+finally, you specify the output video. Note, that you can also provide encoding parameters here. In the absence of any encoding parameters, FFmpeg will default to crf = 23 with libx264.
+In the following sections, let’s take a look at almost all the transitions that are available in FFmpeg’s xfade filter. I have taken two video clips – CrowdRun and Parkjoy and I’ll be concatenating them using a different transition each time.
+
+To make things easier, I’ve created a video for each transition and attached it here. YouTube might experience some buffering issues and start-up delay – please wait a couple of seconds and it will improve.
+
+Okay, let’s get started.
+
+Dissolve Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 \
+-filter_complex xfade=transition=dissolve:duration=3:offset=3 \
+dissolveVideo.mp4
+
+radial Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=radial:duration=5:offset=0 radialVideo.mp4
+
+circleopen Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=circleopen:duration=5:offset=0 circleOpenVideo.mp4
+
+circleclose Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=circleclose:duration=5:offset=0 circleCloseVideo.mp4
+
+pixelize Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=pixelize:duration=5:offset=0 pixelizeVideo.mp4
+
+hlslice Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=hlslice:duration=5:offset=0 hlsliceVideo.mp4
+
+hrslice Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=hrslice:duration=5:offset=0 hrsliceVideo.mp4
+
+vuslice Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=vuslice:duration=5:offset=0 vusliceVideo.mp4
+
+vdslice Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=vdslice:duration=5:offset=0 vdsliceVideo.mp4
+
+hblur Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=hblur:duration=5:offset=0 hblurVideo.mp4
+
+fadegrays Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=fadegrays:duration=5:offset=0 fadegraysVideo.mp4
+
+fadeblack Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=fadeblack:duration=5:offset=0 fadeblackVideo.mp4
+
+fadewhite Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=fadewhite:duration=5:offset=0 fadewhiteVideo.mp4
+
+rectcrop Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=rectcrop:duration=5:offset=0 rectcropVideo.mp4
+
+circlecrop Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=circlecrop:duration=5:offset=0 circlecropVideo.mp4
+
+wipeleft Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=wipeleft:duration=5:offset=0 wipeleftVideo.mp4
+
+wiperight Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=wiperight:duration=5:offset=0 wiperightVideo.mp4
+
+slidedown Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=slidedown:duration=5:offset=0 slidedownVideo.mp4
+
+slideup Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=slideup:duration=5:offset=0 slideupVideo.mp4
+
+slideleft Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=slideleft:duration=5:offset=0 slideleftVideo.mp4
+
+slideright Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=slideright:duration=5:offset=0 sliderightVideo.mp4
+
+distance Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=distance:duration=5:offset=0 distanceVideo.mp4
+
+diagtl Transition using FFmpeg
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=diagtl:duration=5:offset=0 diagtlVideo.mp4
+
+Reference
+xfade filter documentation on the FFmpeg website. It contains a list of all the transitions that FFmpeg supports. You can download a static FFmpeg build for Windows 64 bit here on OTTVerse.com if you want to test some of these effects.
+
+Prev
+FFmpeg Menu
+Next
+Related
+
+What is FFmpeg? Usage, Benefits, and Installation Simplified
+
+Install and Use FFmpeg on Windows: A Simplified Step-By-Step Guide
+
+How to Create a GIF from a Video using FFmpeg with Examples
+
+Adding a Watermark in FFmpeg: A Comprehensive Guide
+
+How to Rotate A Video using FFmpeg Easily – OTTVerse
+adjust audio volume using FFmpeg
+How to Adjust Volume Using FFmpeg (Volume, DRC, Normalization included)
+
+How to Reverse a Video using FFmpeg
+
+FFmpeg drawtext filter to Insert Dynamic Overlays, Scrolling Text, and Timestamps
+adjust contrast and brightness using FFMpeg
+Adjust Brightness and Contrast using FFmpeg
+Post navigation
+← Previous Post
+Next Post →
+7 thoughts on “CrossFade, Dissolve, and other Effects using FFmpeg’s xfade Filter”
+
+vweb
+February 26, 2021 at 6:46 pm
+i Need your help badly regarding xfade. can you please help me .
+
+Reply
+
+William Sengdara
+March 23, 2021 at 7:12 pm
+Great tutorial. The internet is full of all these wonderful commands for ffmpeg. Well I got tired of memorizing them/jogging down & decided to create a front end for ffmpeg in PHP.
+For example, in your transitions examples only these variables change: filename1, filename2, transition type, duration and offset.
+
+So we can create a definition for an HTML form for the ffmpeg command:
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=diagtl:duration=5:offset=0 diagtlVideo.mp4
+
+as:
+ffmpeg -i %inputVideo1% -i %inputVideo2% -filter_complex xfade=transition=%transition%:duration=%duration%:offset=%offset% %outputVideo%
+
+In this way, I have created, so far 79 actions for ffmpeg. I am now adding this transition action to that code.
+
+Thank you
+
+Reply
+
+Krishna Rao
+March 23, 2021 at 9:35 pm
+That’s a really good idea. Do let me know when you publicize your tool and I’ll be happy to retweet and share it on LinkedIn with all my contacts!
+
+Reply
+
+William Sengdara
+April 17, 2022 at 4:10 pm
+Hi Krishna. Sorry I never got a notification for your reply.
+I did create a GitHub for the code:
+https://github.com/wilwad/frontend-for-ffmpeg
+
+Reply
+
+Hitesh
+April 2, 2021 at 6:52 pm
+I want to concate n number of videos with different effects between each video depending upon user’s preference. How can I achieve that?
+
+ex. In this example I am doing some trimming, scaling and also I want transition in between. But I am not sure where to add xfade in this.
+
+ffmpeg -y -loglevel warning -i ../source/sea.mp4 -i ../source/voice.mp4 -f lavfi -t 0.1 -i anullsrc=channel_layout=mono:sample_rate=44100 -filter_complex “[0:v] trim=start=5:end=8,setpts=PTS-STARTPTS,scale=w=min(iw*480/ih\,640):h=min(480\,ih*640/iw), pad=w=640:h=480:x=(640-iw)/2:y=(480-ih)/2 [video0]; [1:v] trim=start=5:end=8,setpts=PTS-STARTPTS,scale=w=min(iw*480/ih\,640):h=min(480\,ih*640/iw), pad=w=640:h=480:x=(640-iw)/2:y=(480-ih)/2 [video1];[1:a]atrim=start=5:end=12,asetpts=PTS-STARTPTS[audio1];[video0][2][video1][audio1] concat=n=2:v=1:a=1 [v][a]” -vsync 2 -map “[v]” -map “[a]” -c:a aac -c:v h264 -crf 18 -preset veryfast -f mp4 ../dest/output.mp4
+
+Reply
+
+Md Jamiruddin
+October 13, 2021 at 6:16 pm
+ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=fade:duration=5:offset=2 outputVideo.mp4
+
+I am trying to apply this type of command between 2 video clips where the first clip has no sound and the second clip have some sound. As I noticed, the sound starts at the beginning of the output video.
+
+If the first video clip is of 5 seconds and has no sound, then in the output video, there will no sound for 5 seconds in the output video. Basically the sound should remain in the portion of the output video where a particular clip has some sound.
+
+Kindly help me out on how it can be implemented using FFMPEG command.
+
+Reply
+
+Jan
+November 13, 2021 at 9:27 pm
+how to combine and fade a folder full of videos? like to make a videoslideshow. a loop going through all videos in that folder so you dont have to edit the script all the time.
+

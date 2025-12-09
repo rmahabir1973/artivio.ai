@@ -1,4 +1,4 @@
-import { GripVertical, Volume2, VolumeX, Trash2, Settings, Music, Mic } from "lucide-react";
+import { GripVertical, Volume2, VolumeX, Trash2, Settings, Music, Mic, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ interface VideoClip {
   thumbnailUrl: string | null;
   prompt: string;
   createdAt: string;
+  type: 'video' | 'image';
 }
 
 interface AudioTrackItem {
@@ -29,6 +30,7 @@ interface ClipSettings {
   originalDuration?: number;
   trimStartSeconds?: number;
   trimEndSeconds?: number;
+  displayDuration?: number; // For images: how long to display
 }
 
 interface TimelineClipProps {
@@ -56,10 +58,14 @@ function TimelineClip({ clip, index, settings, onMuteToggle, onRemove, onOpenSet
     zIndex: isDragging ? 50 : undefined,
   };
 
+  // For images, use displayDuration; for videos, calculate from trim/speed
+  const isImage = clip.type === 'image';
   const duration = settings.originalDuration ?? 5;
   const trimStart = settings.trimStartSeconds ?? 0;
   const trimEnd = settings.trimEndSeconds ?? duration;
-  const effectiveDuration = (trimEnd - trimStart) / (settings.speed ?? 1);
+  const effectiveDuration = isImage 
+    ? (settings.displayDuration ?? 5) 
+    : (trimEnd - trimStart) / (settings.speed ?? 1);
 
   return (
     <div
@@ -72,7 +78,13 @@ function TimelineClip({ clip, index, settings, onMuteToggle, onRemove, onOpenSet
       data-testid={`timeline-clip-${clip.id}`}
     >
       <div className="relative aspect-video w-32 bg-muted">
-        {clip.thumbnailUrl ? (
+        {isImage ? (
+          <img
+            src={clip.url}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        ) : clip.thumbnailUrl ? (
           <img
             src={clip.thumbnailUrl}
             alt=""
@@ -91,7 +103,12 @@ function TimelineClip({ clip, index, settings, onMuteToggle, onRemove, onOpenSet
             {Math.round(effectiveDuration)}s
           </span>
         </div>
-        {settings.muted && (
+        {isImage && (
+          <div className="absolute top-1 left-1 bg-blue-500/80 text-white p-0.5 rounded">
+            <ImageIcon className="h-3 w-3" />
+          </div>
+        )}
+        {settings.muted && !isImage && (
           <div className="absolute top-1 right-1 bg-red-500/80 text-white p-0.5 rounded">
             <VolumeX className="h-3 w-3" />
           </div>
@@ -108,26 +125,28 @@ function TimelineClip({ clip, index, settings, onMuteToggle, onRemove, onOpenSet
         </div>
         
         <div className="flex items-center gap-0.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={settings.muted ? "destructive" : "ghost"}
-                size="icon"
-                className="h-6 w-6"
-                onClick={onMuteToggle}
-                data-testid={`timeline-mute-${clip.id}`}
-              >
-                {settings.muted ? (
-                  <VolumeX className="h-3 w-3" />
-                ) : (
-                  <Volume2 className="h-3 w-3" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              {settings.muted ? 'Unmute' : 'Mute'}
-            </TooltipContent>
-          </Tooltip>
+          {!isImage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={settings.muted ? "destructive" : "ghost"}
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={onMuteToggle}
+                  data-testid={`timeline-mute-${clip.id}`}
+                >
+                  {settings.muted ? (
+                    <VolumeX className="h-3 w-3" />
+                  ) : (
+                    <Volume2 className="h-3 w-3" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {settings.muted ? 'Unmute' : 'Mute'}
+              </TooltipContent>
+            </Tooltip>
+          )}
           
           <Tooltip>
             <TooltipTrigger asChild>

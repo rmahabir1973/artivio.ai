@@ -114,6 +114,7 @@ interface VideoClip {
   thumbnailUrl: string | null;
   prompt: string;
   createdAt: string;
+  type: 'video' | 'image'; // Type of media
 }
 
 interface ClipSettingsLocal {
@@ -124,6 +125,7 @@ interface ClipSettingsLocal {
   trimStartSeconds?: number;
   trimEndSeconds?: number;
   originalDuration?: number; // Actual video duration in seconds (loaded from video metadata)
+  displayDuration?: number; // For images: how long to display (default 5 seconds)
 }
 
 interface EnhancementsState {
@@ -508,17 +510,23 @@ export default function VideoEditor() {
     
     for (const clip of orderedClips) {
       const settings = getClipSettings(clip.id);
-      // Use original duration if available, otherwise estimate 5 seconds
-      const originalDuration = settings.originalDuration ?? 5;
-      const trimStart = settings.trimStartSeconds ?? 0;
-      const trimEnd = settings.trimEndSeconds ?? originalDuration;
-      const speed = settings.speed ?? 1.0;
       
-      // Calculate effective duration after trim and speed adjustment
-      const trimmedDuration = Math.max(0, trimEnd - trimStart);
-      const effectiveDuration = trimmedDuration / speed;
-      
-      totalDuration += effectiveDuration;
+      // For images, use displayDuration; for videos, calculate from trim/speed
+      if (clip.type === 'image') {
+        totalDuration += settings.displayDuration ?? 5;
+      } else {
+        // Use original duration if available, otherwise estimate 5 seconds
+        const originalDuration = settings.originalDuration ?? 5;
+        const trimStart = settings.trimStartSeconds ?? 0;
+        const trimEnd = settings.trimEndSeconds ?? originalDuration;
+        const speed = settings.speed ?? 1.0;
+        
+        // Calculate effective duration after trim and speed adjustment
+        const trimmedDuration = Math.max(0, trimEnd - trimStart);
+        const effectiveDuration = trimmedDuration / speed;
+        
+        totalDuration += effectiveDuration;
+      }
     }
     
     return totalDuration;
@@ -643,6 +651,7 @@ export default function VideoEditor() {
 
       const clipSettingsArray = previewClips.map((clip, index) => {
         const localSettings = clipSettings.get(clip.id);
+        const isImage = clip.type === 'image';
         return {
           clipId: clip.id,
           clipIndex: index,
@@ -651,11 +660,13 @@ export default function VideoEditor() {
           speed: localSettings?.speed ?? 1.0,
           trimStartSeconds: localSettings?.trimStartSeconds,
           trimEndSeconds: localSettings?.trimEndSeconds,
+          isImage,
+          displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
         };
       });
 
       const perClipSpeeds = clipSettingsArray
-        .filter(cs => cs.speed !== 1.0)
+        .filter(cs => cs.speed !== 1.0 && !cs.isImage)
         .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
       
       const speedConfig = perClipSpeeds.length > 0 
@@ -673,7 +684,7 @@ export default function VideoEditor() {
         aspectRatio: enhancements.aspectRatio,
         speed: speedConfig,
         clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined || cs.isImage
         ),
       };
 
@@ -945,6 +956,31 @@ export default function VideoEditor() {
     enabled: isAuthenticated,
   });
 
+  // IMAGE GENERATIONS - for adding images as timeline clips
+  const {
+    data: imageData,
+    isLoading: imageLoading,
+    fetchNextPage: fetchNextImagePage,
+    hasNextPage: hasNextImagePage,
+    isFetchingNextPage: isFetchingNextImagePage,
+  } = useInfiniteQuery({
+    queryKey: ["/api/generations", { paginated: true, type: "image" }],
+    queryFn: async ({ pageParam }: { pageParam?: string }) => {
+      const cursor = pageParam || '';
+      const params = new URLSearchParams();
+      params.set('cursor', cursor);
+      params.set('type', 'image');
+      const url = `/api/generations?${params.toString()}`;
+      const response = await fetchWithAuth(url);
+      if (!response.ok) throw new Error("Failed to fetch images");
+      const result = await response.json() as { items: Generation[]; nextCursor: string | null };
+      return result;
+    },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: isAuthenticated,
+  });
+
   // Combine loading state for the main display
   const generationsLoading = videoLoading;
 
@@ -971,6 +1007,14 @@ export default function VideoEditor() {
       (g) => g.status === "completed" && g.resultUrl
     );
   }, [audioData]);
+  
+  // Flatten and filter images
+  const allImages = useMemo(() => {
+    const items = imageData?.pages.flatMap(page => page.items) ?? [];
+    return items.filter(
+      (g) => g.status === "completed" && g.resultUrl
+    );
+  }, [imageData]);
   
   // Avatar videos from video query (filter by model type)
   const avatarVideos = useMemo(() => {
@@ -1032,6 +1076,7 @@ export default function VideoEditor() {
             prompt: clip.prompt,
             thumbnailUrl: clip.thumbnailUrl || null,
             createdAt: new Date().toISOString(),
+            type: 'video' as const,
           }));
           
           setOrderedClips(prev => {
@@ -1129,9 +1174,10 @@ export default function VideoEditor() {
         })),
       };
 
-      // Serialize clip settings from local state (includes trim times for split clips and speed)
+      // Serialize clip settings from local state (includes trim times for split clips, speed, and image settings)
       const clipSettingsArray = clips.map((clip, index) => {
         const localSettings = clipSettings.get(clip.id);
+        const isImage = clip.type === 'image';
         return {
           clipId: clip.id,
           clipIndex: index,
@@ -1140,12 +1186,14 @@ export default function VideoEditor() {
           speed: localSettings?.speed ?? 1.0,
           trimStartSeconds: localSettings?.trimStartSeconds,
           trimEndSeconds: localSettings?.trimEndSeconds,
+          isImage,
+          displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
         };
       });
 
-      // Build speed config from clipSettings for per-clip speed adjustments
+      // Build speed config from clipSettings for per-clip speed adjustments (skip images)
       const perClipSpeeds = clipSettingsArray
-        .filter(cs => cs.speed !== 1.0)
+        .filter(cs => cs.speed !== 1.0 && !cs.isImage)
         .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
       
       const speedConfig = perClipSpeeds.length > 0 
@@ -1176,7 +1224,7 @@ export default function VideoEditor() {
           colorHex: to.colorHex,
         })),
         clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined || cs.isImage
         ),
         audioTrack: enhancements.audioTrack ? {
           audioUrl: enhancements.audioTrack.audioUrl,
@@ -1264,9 +1312,10 @@ export default function VideoEditor() {
         })),
       };
 
-      // Serialize clip settings for preview clips
+      // Serialize clip settings for preview clips (includes image settings)
       const clipSettingsArray = previewClips.map((clip, index) => {
         const localSettings = clipSettings.get(clip.id);
+        const isImage = clip.type === 'image';
         return {
           clipId: clip.id,
           clipIndex: index,
@@ -1275,12 +1324,14 @@ export default function VideoEditor() {
           speed: localSettings?.speed ?? 1.0,
           trimStartSeconds: localSettings?.trimStartSeconds,
           trimEndSeconds: localSettings?.trimEndSeconds,
+          isImage,
+          displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
         };
       });
 
-      // Build speed config from clipSettings for per-clip speed adjustments
+      // Build speed config from clipSettings for per-clip speed adjustments (skip images)
       const perClipSpeeds = clipSettingsArray
-        .filter(cs => cs.speed !== 1.0)
+        .filter(cs => cs.speed !== 1.0 && !cs.isImage)
         .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
       
       const speedConfig = perClipSpeeds.length > 0 
@@ -1298,7 +1349,7 @@ export default function VideoEditor() {
         aspectRatio: enhancements.aspectRatio,
         speed: speedConfig,
         clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined || cs.isImage
         ),
         watermark: enhancements.watermark ? {
           imageUrl: enhancements.watermark.imageUrl,
@@ -1581,6 +1632,7 @@ export default function VideoEditor() {
         thumbnailUrl: v.thumbnailUrl,
         prompt: v.prompt,
         createdAt: v.createdAt instanceof Date ? v.createdAt.toISOString() : String(v.createdAt),
+        type: 'video' as const,
       }));
 
     setOrderedClips(clips);
@@ -1670,7 +1722,7 @@ export default function VideoEditor() {
 
   // Handle adding clip to timeline from media panel
   // Uses unique instance IDs to allow the same video to be added multiple times
-  const addClipToTimeline = useCallback((video: Generation) => {
+  const addClipToTimeline = useCallback((video: Generation, mediaType: 'video' | 'image' = 'video') => {
     if (!video.resultUrl) return;
     
     // Generate unique instance ID to allow duplicates
@@ -1682,15 +1734,21 @@ export default function VideoEditor() {
       thumbnailUrl: video.thumbnailUrl || null,
       prompt: video.prompt || '',
       createdAt: video.createdAt.toString(),
+      type: mediaType,
     };
     
     setOrderedClips(prev => [...prev, clip]);
     
+    // For images, set a default display duration
+    if (mediaType === 'image') {
+      updateClipSettings(instanceId, { displayDuration: 5, originalDuration: 5 });
+    }
+    
     toast({
-      title: "Clip Added",
-      description: "Video added to timeline",
+      title: mediaType === 'image' ? "Image Added" : "Clip Added",
+      description: mediaType === 'image' ? "Image added to timeline (5s default)" : "Video added to timeline",
     });
-  }, [toast]);
+  }, [toast, updateClipSettings]);
 
   // Handle removing clip from timeline
   const removeClipFromTimeline = useCallback((clipId: string) => {
@@ -1859,6 +1917,72 @@ export default function VideoEditor() {
                           disabled={isFetchingNextPage}
                         >
                           {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Images Category Content */}
+                  {activeCategory === 'images' && (
+                    <div className="space-y-3">
+                      {!isAuthenticated ? (
+                        <div className="text-center py-8">
+                          <ImageIcon className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">Sign in to access your images</p>
+                          <Button size="sm" className="mt-2" onClick={() => setShowGuestModal(true)}>
+                            Sign In
+                          </Button>
+                        </div>
+                      ) : imageLoading ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {Array.from({ length: 4 }).map((_, i) => (
+                            <Skeleton key={i} className="aspect-square rounded-md" />
+                          ))}
+                        </div>
+                      ) : allImages.length === 0 ? (
+                        <div className="text-center py-8">
+                          <ImageIcon className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">No images yet</p>
+                          <p className="text-xs text-muted-foreground mt-1">Generate images to add them to your timeline</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {allImages.map((image) => (
+                            <div 
+                              key={image.id}
+                              className="group relative aspect-square rounded-md overflow-hidden border cursor-pointer hover:ring-2 hover:ring-primary"
+                              onClick={() => addClipToTimeline(image, 'image')}
+                              data-testid={`image-item-${image.id}`}
+                            >
+                              {image.resultUrl ? (
+                                <img src={image.resultUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-muted flex items-center justify-center">
+                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Plus className="h-6 w-6 text-white" />
+                              </div>
+                              <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
+                                5s
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Load More for Images */}
+                      {hasNextImagePage && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => fetchNextImagePage()}
+                          disabled={isFetchingNextImagePage}
+                          data-testid="button-load-more-images"
+                        >
+                          {isFetchingNextImagePage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
                         </Button>
                       )}
                     </div>
@@ -2309,90 +2433,131 @@ export default function VideoEditor() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Clip Settings
+              {editingClip?.clip.type === 'image' ? 'Image Settings' : 'Clip Settings'}
             </DialogTitle>
             <DialogDescription>
-              {editingClip && `Adjust settings for clip #${editingClip.index + 1}`}
+              {editingClip && `Adjust settings for ${editingClip.clip.type === 'image' ? 'image' : 'clip'} #${editingClip.index + 1}`}
             </DialogDescription>
           </DialogHeader>
           
           {editingClip && (
             <div className="space-y-6 py-4">
               <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                <video
-                  src={editingClip.clip.url}
-                  poster={editingClip.clip.thumbnailUrl || undefined}
-                  className="w-full h-full object-cover"
-                  controls
-                  muted
-                />
+                {editingClip.clip.type === 'image' ? (
+                  <img
+                    src={editingClip.clip.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <video
+                    src={editingClip.clip.url}
+                    poster={editingClip.clip.thumbnailUrl || undefined}
+                    className="w-full h-full object-cover"
+                    controls
+                    muted
+                  />
+                )}
               </div>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="clip-mute" className="flex items-center gap-2">
-                    {getClipSettings(editingClip.clip.id).muted ? (
-                      <VolumeX className="h-4 w-4" />
-                    ) : (
-                      <Volume2 className="h-4 w-4" />
-                    )}
-                    Mute Audio
-                  </Label>
-                  <Switch
-                    id="clip-mute"
-                    checked={getClipSettings(editingClip.clip.id).muted}
-                    onCheckedChange={(checked) => 
-                      updateClipSettings(editingClip.clip.id, { muted: checked })
-                    }
-                    data-testid="switch-clip-mute"
-                  />
-                </div>
-                
-                {!getClipSettings(editingClip.clip.id).muted && (
-                  <div className="space-y-2">
-                    <Label className="text-sm flex justify-between">
-                      Volume
-                      <span className="text-muted-foreground">
-                        {Math.round(getClipSettings(editingClip.clip.id).volume * 100)}%
-                      </span>
-                    </Label>
-                    <Slider
-                      value={[getClipSettings(editingClip.clip.id).volume]}
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      onValueChange={([v]) => 
-                        updateClipSettings(editingClip.clip.id, { volume: v })
-                      }
-                      data-testid="slider-clip-volume"
-                    />
+                {/* Image-specific controls */}
+                {editingClip.clip.type === 'image' ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm flex justify-between">
+                        <span className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Display Duration
+                        </span>
+                        <span className="text-muted-foreground">
+                          {getClipSettings(editingClip.clip.id).displayDuration ?? 5}s
+                        </span>
+                      </Label>
+                      <Slider
+                        value={[getClipSettings(editingClip.clip.id).displayDuration ?? 5]}
+                        min={1}
+                        max={30}
+                        step={1}
+                        onValueChange={([v]) => 
+                          updateClipSettings(editingClip.clip.id, { displayDuration: v, originalDuration: v })
+                        }
+                        data-testid="slider-image-duration"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        How long this image will be displayed in the video (1-30 seconds)
+                      </p>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    {/* Video-specific controls */}
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="clip-mute" className="flex items-center gap-2">
+                        {getClipSettings(editingClip.clip.id).muted ? (
+                          <VolumeX className="h-4 w-4" />
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
+                        Mute Audio
+                      </Label>
+                      <Switch
+                        id="clip-mute"
+                        checked={getClipSettings(editingClip.clip.id).muted}
+                        onCheckedChange={(checked) => 
+                          updateClipSettings(editingClip.clip.id, { muted: checked })
+                        }
+                        data-testid="switch-clip-mute"
+                      />
+                    </div>
+                    
+                    {!getClipSettings(editingClip.clip.id).muted && (
+                      <div className="space-y-2">
+                        <Label className="text-sm flex justify-between">
+                          Volume
+                          <span className="text-muted-foreground">
+                            {Math.round(getClipSettings(editingClip.clip.id).volume * 100)}%
+                          </span>
+                        </Label>
+                        <Slider
+                          value={[getClipSettings(editingClip.clip.id).volume]}
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          onValueChange={([v]) => 
+                            updateClipSettings(editingClip.clip.id, { volume: v })
+                          }
+                          data-testid="slider-clip-volume"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="pt-4 border-t space-y-2">
+                      <Label className="text-sm flex justify-between">
+                        <span className="flex items-center gap-2">
+                          <Play className="h-4 w-4" />
+                          Speed
+                        </span>
+                        <span className="text-muted-foreground">
+                          {getClipSettings(editingClip.clip.id).speed}x
+                        </span>
+                      </Label>
+                      <Slider
+                        value={[getClipSettings(editingClip.clip.id).speed]}
+                        min={0.5}
+                        max={2}
+                        step={0.25}
+                        onValueChange={([v]) => 
+                          updateClipSettings(editingClip.clip.id, { speed: v })
+                        }
+                        data-testid="slider-clip-speed"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        0.5x = slow motion, 2x = double speed
+                      </p>
+                    </div>
+                  </>
                 )}
-                
-                <div className="pt-4 border-t space-y-2">
-                  <Label className="text-sm flex justify-between">
-                    <span className="flex items-center gap-2">
-                      <Play className="h-4 w-4" />
-                      Speed
-                    </span>
-                    <span className="text-muted-foreground">
-                      {getClipSettings(editingClip.clip.id).speed}x
-                    </span>
-                  </Label>
-                  <Slider
-                    value={[getClipSettings(editingClip.clip.id).speed]}
-                    min={0.5}
-                    max={2}
-                    step={0.25}
-                    onValueChange={([v]) => 
-                      updateClipSettings(editingClip.clip.id, { speed: v })
-                    }
-                    data-testid="slider-clip-speed"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    0.5x = slow motion, 2x = double speed
-                  </p>
-                </div>
               </div>
             </div>
           )}

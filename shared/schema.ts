@@ -590,7 +590,7 @@ export const speedEnhancementSchema = z.object({
   })).optional(), // For perClip mode
 }).default({ mode: 'none' });
 
-// Per-clip settings (mute, trim/split)
+// Per-clip settings (mute, trim/split, image duration)
 export const clipSettingSchema = z.object({
   clipId: z.string(), // Reference to the clip
   clipIndex: z.number().int().min(0),
@@ -598,6 +598,8 @@ export const clipSettingSchema = z.object({
   volume: z.number().min(0).max(1).default(1), // Clip-specific volume
   trimStartSeconds: z.number().min(0).optional(), // For splitting/trimming
   trimEndSeconds: z.number().min(0).optional(),
+  isImage: z.boolean().optional(), // Whether this clip is an image
+  displayDuration: z.number().min(1).max(30).optional(), // For images: how long to display (1-30 seconds)
 });
 
 export const clipSettingsEnhancementSchema = z.array(clipSettingSchema).default([]);
