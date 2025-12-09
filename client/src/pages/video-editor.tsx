@@ -960,6 +960,15 @@ export default function VideoEditor() {
         };
       });
 
+      // Build speed config from clipSettings for per-clip speed adjustments
+      const perClipSpeeds = clipSettingsArray
+        .filter(cs => cs.speed !== 1.0)
+        .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
+      
+      const speedConfig = perClipSpeeds.length > 0 
+        ? { mode: 'perClip' as const, perClip: perClipSpeeds }
+        : { mode: 'none' as const };
+
       // Build enhancements payload with all enhancement state
       const enhancementsPayload = {
         transitions: enhancements.transitionMode === 'crossfade' ? {
@@ -970,6 +979,7 @@ export default function VideoEditor() {
         fadeOut: enhancements.fadeOut,
         fadeDuration: enhancements.fadeDuration,
         aspectRatio: enhancements.aspectRatio,
+        speed: speedConfig,
         backgroundMusic: enhancements.backgroundMusic ? {
           audioUrl: enhancements.backgroundMusic.audioUrl,
           volume: enhancements.backgroundMusic.volume,
@@ -983,7 +993,7 @@ export default function VideoEditor() {
           colorHex: to.colorHex,
         })),
         clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.speed !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
         ),
         audioTrack: enhancements.audioTrack ? {
           audioUrl: enhancements.audioTrack.audioUrl,
@@ -1085,6 +1095,15 @@ export default function VideoEditor() {
         };
       });
 
+      // Build speed config from clipSettings for per-clip speed adjustments
+      const perClipSpeeds = clipSettingsArray
+        .filter(cs => cs.speed !== 1.0)
+        .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
+      
+      const speedConfig = perClipSpeeds.length > 0 
+        ? { mode: 'perClip' as const, perClip: perClipSpeeds }
+        : { mode: 'none' as const };
+
       const enhancementsPayload = {
         transitions: enhancements.transitionMode === 'crossfade' ? {
           mode: 'crossfade' as const,
@@ -1094,8 +1113,9 @@ export default function VideoEditor() {
         fadeOut: enhancements.fadeOut,
         fadeDuration: enhancements.fadeDuration,
         aspectRatio: enhancements.aspectRatio,
+        speed: speedConfig,
         clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.speed !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
+          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined
         ),
         watermark: enhancements.watermark ? {
           imageUrl: enhancements.watermark.imageUrl,
