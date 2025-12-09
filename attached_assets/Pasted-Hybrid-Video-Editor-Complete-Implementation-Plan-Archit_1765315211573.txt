@@ -1,0 +1,1324 @@
+Hybrid Video Editor - Complete Implementation Plan
+Architecture Overview
+┌─────────────────────────────────────────────────────────────┐
+│                     CLIENT SIDE (Browser)                    │
+├─────────────────────────────────────────────────────────────┤
+│  Media Library (S3) → Load thumbnails/videos from existing  │
+│         ↓                                                    │
+│  Timeline Editor → Real-time preview with FFmpeg.wasm       │
+│         ↓                                                    │
+│  Export Button → Send timeline JSON to Lambda               │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    SERVER SIDE (AWS Lambda)                  │
+├─────────────────────────────────────────────────────────────┤
+│  Receive timeline JSON → Download videos from S3             │
+│         ↓                                                    │
+│  Render with FFmpeg → High-quality output                   │
+│         ↓                                                    │
+│  Upload to S3 → Return download URL                         │
+└─────────────────────────────────────────────────────────────┘
+Phase 1: Fix Media Library Issues
+Problem: Load More & Scroll Bar
+The scroll bar doesn't appear because the container needs explicit height constraints.
+Fix: Media Library Container CSS
+css/* MediaLibrary.css */
+.media-library-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* or calc(100vh - header-height) */
+  overflow: hidden;
+}
+
+.media-library-header {
+  flex-shrink: 0;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.media-grid-wrapper {
+  flex: 1;
+  overflow-y: auto; /* Critical: enables scrolling */
+  overflow-x: hidden;
+  padding: 20px;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+.load-more-trigger {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hide failed videos */
+.media-item.failed {
+  display: none;
+}
+MediaLibrary Component with Infinite Scroll
+jsx// MediaLibrary.jsx
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import './MediaLibrary.css';
+
+const MediaLibrary = ({ onSelectMedia }) => {
+  const [media, setMedia] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const observerRef = useRef();
+  const loadMoreRef = useRef();
+
+  const loadMedia = async (pageNum) => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/media?page=${pageNum}&limit=20`);
+      const data = await response.json();
+      
+      // Filter out failed items
+      const validMedia = data.items.filter(item => item.status !== 'failed');
+      
+      setMedia(prev => pageNum === 1 ? validMedia : [...prev, ...validMedia]);
+      setHasMore(data.hasMore);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading media:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMedia(page);
+  }, [page]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          setPage(prev => prev + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    observerRef.current = observer;
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, loading]);
+
+  return (
+    <div className="media-library-container">
+      <div className="media-library-header">
+        <h2>Media Library</h2>
+        <button onClick={() => {
+          setPage(1);
+          setMedia([]);
+          loadMedia(1);
+        }}>
+          Refresh
+        </button>
+      </div>
+
+      <div className="media-grid-wrapper">
+        <div className="media-grid">
+          {media.map((item) => (
+            <MediaItem
+              key={item.id}
+              item={item}
+              onSelect={() => onSelectMedia(item)}
+            />
+          ))}
+        </div>
+
+        {hasMore && (
+          <div ref={loadMoreRef} className="load-more-trigger">
+            {loading ? 'Loading...' : 'Load More'}
+          </div>
+        )}
+
+        {!hasMore && media.length > 0 && (
+          <div className="end-message">No more media</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MediaItem = ({ item, onSelect }) => {
+  const [thumbnailError, setThumbnailError] = useState(false);
+
+  return (
+    <div className="media-item" onClick={onSelect}>
+      {item.type === 'video' ? (
+        <video
+          src={thumbnailError ? item.url : item.thumbnailUrl || item.url}
+          onError={() => setThumbnailError(true)}
+          className="media-thumbnail"
+          muted
+        />
+      ) : (
+        <img
+          src={item.url}
+          alt={item.name}
+          className="media-thumbnail"
+          onError={(e) => {
+            e.target.src = '/placeholder.png'; // fallback image
+          }}
+        />
+      )}
+      <div className="media-info">
+        <span className="media-name">{item.name}</span>
+        <span className="media-duration">{item.duration}s</span>
+      </div>
+    </div>
+  );
+};
+
+export default MediaLibrary;
+Phase 2: Client-Side Video Editor with FFmpeg.wasm
+Installation
+bashnpm install @ffmpeg/ffmpeg @ffmpeg/util
+npm install react-beautiful-dnd
+npm install fabric # for canvas text overlays
+Timeline Data Structure
+typescript// types.ts
+export interface TimelineItem {
+  id: string;
+  type: 'video' | 'image' | 'text' | 'audio';
+  track: number; // 0 = main track, 1+ = overlay tracks
+  startTime: number; // in seconds
+  duration: number;
+  url: string;
+  
+  // Transformations
+  trim?: { start: number; end: number };
+  transition?: {
+    type: 'fade' | 'crossfade' | 'wipe';
+    duration: number;
+  };
+  
+  // Text specific
+  text?: {
+    content: string;
+    fontSize: number;
+    color: string;
+    position: { x: number; y: number };
+  };
+  
+  // Audio specific
+  volume?: number;
+}
+
+export interface Timeline {
+  items: TimelineItem[];
+  duration: number;
+  resolution: { width: number; height: number };
+  fps: number;
+}
+FFmpeg.wasm Integration
+jsx// hooks/useFFmpeg.js
+import { useRef, useState, useEffect } from 'react';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
+
+export const useFFmpeg = () => {
+  const ffmpegRef = useRef(new FFmpeg());
+  const [loaded, setLoaded] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const load = async () => {
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+      const ffmpeg = ffmpegRef.current;
+      
+      ffmpeg.on('log', ({ message }) => {
+        console.log(message);
+      });
+      
+      ffmpeg.on('progress', ({ progress: p }) => {
+        setProgress(Math.round(p * 100));
+      });
+
+      try {
+        await ffmpeg.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+        setLoaded(true);
+      } catch (error) {
+        console.error('Failed to load FFmpeg:', error);
+      }
+    };
+
+    load();
+  }, []);
+
+  const processTimeline = async (timeline, outputFormat = 'mp4') => {
+    const ffmpeg = ffmpegRef.current;
+    if (!loaded) throw new Error('FFmpeg not loaded');
+
+    try {
+      // Download all media files to FFmpeg's virtual file system
+      for (let i = 0; i < timeline.items.length; i++) {
+        const item = timeline.items[i];
+        const fileName = `input_${i}.${item.type === 'video' ? 'mp4' : 'png'}`;
+        const data = await fetchFile(item.url);
+        await ffmpeg.writeFile(fileName, data);
+      }
+
+      // Build filter complex based on timeline
+      const filterComplex = buildFilterComplex(timeline);
+      
+      // Execute FFmpeg command
+      const args = buildFFmpegArgs(timeline, filterComplex);
+      await ffmpeg.exec(args);
+
+      // Read output file
+      const data = await ffmpeg.readFile('output.mp4');
+      const blob = new Blob([data.buffer], { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+
+      return url;
+    } catch (error) {
+      console.error('FFmpeg processing error:', error);
+      throw error;
+    }
+  };
+
+  const generatePreview = async (timeline, startTime = 0, duration = 5) => {
+    // Similar to processTimeline but only for preview range
+    const previewTimeline = {
+      ...timeline,
+      items: timeline.items.map(item => ({
+        ...item,
+        startTime: Math.max(0, item.startTime - startTime),
+      })).filter(item => 
+        item.startTime < duration && 
+        item.startTime + item.duration > 0
+      ),
+    };
+
+    return processTimeline(previewTimeline);
+  };
+
+  return {
+    loaded,
+    progress,
+    processTimeline,
+    generatePreview,
+  };
+};
+
+function buildFilterComplex(timeline) {
+  const filters = [];
+  const videoItems = timeline.items.filter(item => item.type === 'video' || item.type === 'image');
+  
+  // Scale all videos to same resolution
+  videoItems.forEach((item, idx) => {
+    filters.push(
+      `[${idx}:v]scale=${timeline.resolution.width}:${timeline.resolution.height}:` +
+      `force_original_aspect_ratio=decrease,` +
+      `pad=${timeline.resolution.width}:${timeline.resolution.height}:(ow-iw)/2:(oh-ih)/2,` +
+      `setsar=1[v${idx}]`
+    );
+  });
+
+  // Apply transitions
+  let currentInput = 'v0';
+  for (let i = 1; i < videoItems.length; i++) {
+    const item = videoItems[i];
+    if (item.transition?.type === 'fade') {
+      const offset = videoItems[i - 1].duration - item.transition.duration;
+      filters.push(
+        `[${currentInput}][v${i}]xfade=transition=fade:duration=${item.transition.duration}:offset=${offset}[v${i}_fade]`
+      );
+      currentInput = `v${i}_fade`;
+    } else {
+      currentInput = `v${i}`;
+    }
+  }
+
+  // Add text overlays
+  const textItems = timeline.items.filter(item => item.type === 'text');
+  textItems.forEach((item, idx) => {
+    filters.push(
+      `[${currentInput}]drawtext=text='${item.text.content}':` +
+      `fontsize=${item.text.fontSize}:fontcolor=${item.text.color}:` +
+      `x=${item.text.position.x}:y=${item.text.position.y}:` +
+      `enable='between(t,${item.startTime},${item.startTime + item.duration})'[vtext${idx}]`
+    );
+    currentInput = `vtext${idx}`;
+  });
+
+  filters.push(`[${currentInput}]format=yuv420p[outv]`);
+
+  return filters.join(';');
+}
+
+function buildFFmpegArgs(timeline, filterComplex) {
+  const args = [];
+  
+  // Add all input files
+  timeline.items.forEach((item, idx) => {
+    if (item.type === 'video' || item.type === 'image') {
+      args.push('-i', `input_${idx}.${item.type === 'video' ? 'mp4' : 'png'}`);
+    }
+  });
+
+  // Add filter complex
+  args.push('-filter_complex', filterComplex);
+
+  // Map output
+  args.push('-map', '[outv]');
+  
+  // Handle audio
+  const audioItems = timeline.items.filter(item => item.type === 'audio' || item.type === 'video');
+  if (audioItems.length > 0) {
+    args.push('-map', '0:a?'); // Use first video's audio if available
+  }
+
+  // Output settings
+  args.push(
+    '-c:v', 'libx264',
+    '-preset', 'ultrafast', // Fast for preview
+    '-crf', '28',
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-movflags', '+faststart',
+    'output.mp4'
+  );
+
+  return args;
+}
+Timeline Editor Component
+jsx// components/TimelineEditor.jsx
+import React, { useState, useRef, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { useFFmpeg } from '../hooks/useFFmpeg';
+import './TimelineEditor.css';
+
+const TimelineEditor = ({ mediaLibrary }) => {
+  const [timeline, setTimeline] = useState({
+    items: [],
+    duration: 0,
+    resolution: { width: 1920, height: 1080 },
+    fps: 30,
+  });
+  
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  
+  const videoRef = useRef();
+  const { loaded, progress, processTimeline, generatePreview } = useFFmpeg();
+
+  const addToTimeline = (mediaItem) => {
+    const newItem = {
+      id: `item_${Date.now()}`,
+      type: mediaItem.type,
+      track: 0,
+      startTime: timeline.duration,
+      duration: mediaItem.duration || 5,
+      url: mediaItem.url,
+      transition: { type: 'fade', duration: 1 },
+    };
+
+    setTimeline(prev => ({
+      ...prev,
+      items: [...prev.items, newItem],
+      duration: prev.duration + newItem.duration,
+    }));
+  };
+
+  const updatePreview = async () => {
+    if (!loaded || timeline.items.length === 0) return;
+    
+    try {
+      const url = await generatePreview(timeline, currentTime);
+      setPreviewUrl(url);
+    } catch (error) {
+      console.error('Preview generation failed:', error);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!loaded) {
+      alert('FFmpeg not loaded yet');
+      return;
+    }
+
+    setExporting(true);
+    
+    try {
+      // For large exports, send to Lambda
+      if (timeline.duration > 60 || timeline.items.length > 10) {
+        await exportViaLambda();
+      } else {
+        // Small exports can be done client-side
+        const url = await processTimeline(timeline);
+        downloadVideo(url, 'export.mp4');
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed: ' + error.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportViaLambda = async () => {
+    // Send timeline JSON to Lambda, not actual video files
+    const response = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        timeline,
+        quality: 'high',
+      }),
+    });
+
+    const data = await response.json();
+    
+    // Poll for completion
+    const checkStatus = async () => {
+      const statusRes = await fetch(`/api/export/status/${data.jobId}`);
+      const status = await statusRes.json();
+      
+      if (status.status === 'completed') {
+        window.open(status.downloadUrl, '_blank');
+      } else if (status.status === 'failed') {
+        throw new Error(status.error);
+      } else {
+        setTimeout(checkStatus, 2000);
+      }
+    };
+
+    await checkStatus();
+  };
+
+  const downloadVideo = (url, filename) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(timeline.items);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Recalculate start times
+    let currentTime = 0;
+    items.forEach(item => {
+      item.startTime = currentTime;
+      currentTime += item.duration;
+    });
+
+    setTimeline(prev => ({
+      ...prev,
+      items,
+      duration: currentTime,
+    }));
+  };
+
+  const removeItem = (itemId) => {
+    setTimeline(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== itemId),
+    }));
+  };
+
+  const addTextOverlay = () => {
+    const textItem = {
+      id: `text_${Date.now()}`,
+      type: 'text',
+      track: 1,
+      startTime: currentTime,
+      duration: 5,
+      text: {
+        content: 'Enter text here',
+        fontSize: 48,
+        color: 'white',
+        position: { x: 100, y: 100 },
+      },
+    };
+
+    setTimeline(prev => ({
+      ...prev,
+      items: [...prev.items, textItem],
+    }));
+  };
+
+  return (
+    <div className="timeline-editor">
+      <div className="editor-header">
+        <button onClick={updatePreview} disabled={!loaded}>
+          Generate Preview
+        </button>
+        <button onClick={handleExport} disabled={!loaded || exporting}>
+          {exporting ? `Exporting... ${progress}%` : 'Export Video'}
+        </button>
+        <button onClick={addTextOverlay}>Add Text</button>
+        <span>{loaded ? 'FFmpeg Ready' : 'Loading FFmpeg...'}</span>
+      </div>
+
+      <div className="preview-section">
+        {previewUrl ? (
+          <video
+            ref={videoRef}
+            src={previewUrl}
+            controls
+            onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
+            className="video-preview"
+          />
+        ) : (
+          <div className="preview-placeholder">
+            Add media to timeline and click "Generate Preview"
+          </div>
+        )}
+      </div>
+
+      <div className="timeline-section">
+        <div className="timeline-controls">
+          <div className="playhead" style={{ left: `${(currentTime / timeline.duration) * 100}%` }} />
+        </div>
+
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="timeline" direction="horizontal">
+            {(provided) => (
+              <div
+                className="timeline-track"
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+              >
+                {timeline.items.filter(item => item.track === 0).map((item, index) => (
+                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                    {(provided) => (
+                      <div
+                        className="timeline-item"
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={{
+                          ...provided.draggableProps.style,
+                          width: `${(item.duration / timeline.duration) * 100}%`,
+                        }}
+                      >
+                        <div className="item-preview">
+                          {item.type === 'video' && (
+                            <video src={item.url} muted />
+                          )}
+                          {item.type === 'image' && (
+                            <img src={item.url} alt="" />
+                          )}
+                        </div>
+                        <div className="item-info">
+                          <span>{item.duration}s</span>
+                          {item.transition && (
+                            <span className="transition-indicator">
+                              {item.transition.type}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          className="remove-item"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+
+          {/* Text/Overlay Track */}
+          <Droppable droppableId="overlay-track">
+            {(provided) => (
+              <div
+                className="timeline-track overlay-track"
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+              >
+                {timeline.items.filter(item => item.track === 1).map((item, index) => (
+                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                    {(provided) => (
+                      <div
+                        className="timeline-item text-item"
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={{
+                          ...provided.draggableProps.style,
+                          left: `${(item.startTime / timeline.duration) * 100}%`,
+                          width: `${(item.duration / timeline.duration) * 100}%`,
+                        }}
+                      >
+                        <span>{item.text?.content}</span>
+                        <button onClick={() => removeItem(item.id)}>×</button>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </div>
+    </div>
+  );
+};
+
+export default TimelineEditor;
+Timeline CSS
+css/* TimelineEditor.css */
+.timeline-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #1a1a1a;
+  color: white;
+}
+
+.editor-header {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #444;
+}
+
+.editor-header button {
+  padding: 10px 20px;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.editor-header button:hover {
+  background: #0052a3;
+}
+
+.editor-header button:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+.preview-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  padding: 20px;
+}
+
+.video-preview {
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.preview-placeholder {
+  font-size: 18px;
+  color: #666;
+  text-align: center;
+}
+
+.timeline-section {
+  height: 250px;
+  background: #2a2a2a;
+  border-top: 1px solid #444;
+  padding: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.timeline-controls {
+  position: relative;
+  height: 30px;
+  background: #1a1a1a;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: red;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.timeline-track {
+  display: flex;
+  gap: 2px;
+  min-height: 80px;
+  background: #333;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.overlay-track {
+  background: #2a4a2a;
+  min-height: 60px;
+}
+
+.timeline-item {
+  position: relative;
+  background: #444;
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: move;
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+}
+
+.timeline-item:hover {
+  outline: 2px solid #0066cc;
+}
+
+.item-preview {
+  flex: 1;
+  overflow: hidden;
+}
+
+.item-preview video,
+.item-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-info {
+  padding: 5px;
+  background: rgba(0, 0, 0, 0.7);
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.transition-indicator {
+  background: #0066cc;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+.remove-item {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.text-item {
+  background: #2a4a2a;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+}
+Phase 3: Lambda Export Handler
+Lambda Function for High-Quality Export
+python# lambda_function.py
+import json
+import boto3
+import subprocess
+import os
+import uuid
+from urllib.parse import urlparse
+
+s3 = boto3.client('s3')
+dynamodb = boto3.resource('dynamodb')
+jobs_table = dynamodb.Table(os.environ['JOBS_TABLE'])
+
+def lambda_handler(event, context):
+    try:
+        body = json.loads(event['body'])
+        timeline = body['timeline']
+        quality = body.get('quality', 'medium')
+        
+        # Create job ID
+        job_id = str(uuid.uuid4())
+        
+        # Update job status
+        jobs_table.put_item(Item={
+            'jobId': job_id,
+            'status': 'processing',
+            'createdAt': str(datetime.now())
+        })
+        
+        # Download all media from S3
+        input_files = []
+        for idx, item in enumerate(timeline['items']):
+            if item['type'] in ['video', 'image', 'audio']:
+                local_path = f"/tmp/input_{idx}.{get_extension(item['url'])}"
+                download_from_s3_or_url(item['url'], local_path)
+                input_files.append(local_path)
+        
+        # Build FFmpeg command
+        output_path = f"/tmp/output_{job_id}.mp4"
+        ffmpeg_cmd = build_export_command(timeline, input_files, output_path, quality)
+        
+        # Execute FFmpeg
+        result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            raise Exception(f"FFmpeg failed: {result.stderr}")
+        
+        # Upload to S3
+        output_bucket = os.environ['OUTPUT_BUCKET']
+        output_key = f"exports/{job_id}.mp4"
+        
+        s3.upload_file(
+            output_path,
+            output_bucket,
+            output_key,
+            ExtraArgs={'ContentType': 'video/mp4'}
+        )
+        
+        # Generate presigned URL
+        download_url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': output_bucket, 'Key': output_key},
+            ExpiresIn=86400  # 24 hours
+        )
+        
+        # Update job status
+        jobs_table.update_item(
+            Key={'jobId': job_id},
+            UpdateExpression='SET #status = :status, downloadUrl = :url',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'completed',
+                ':url': download_url
+            }
+        )
+        
+        # Cleanup
+        os.remove(output_path)
+        for f in input_files:
+            os.remove(f)
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'jobId': job_id,
+                'message': 'Export completed',
+                'downloadUrl': download_url
+            })
+        }
+        
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        
+        # Update job status to failed
+        if 'job_id' in locals():
+            jobs_table.update_item(
+                Key={'jobId': job_id},
+                UpdateExpression='SET #status = :status, error = :error',
+                ExpressionAttributeNames={'#status': 'status'},
+                ExpressionAttributeValues={
+                    ':status': 'failed',
+                    ':error': str(e)
+                }
+            )
+        
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
+
+def download_from_s3_or_url(url, local_path):
+    """Download file from S3 URL or regular URL"""
+    if url.startswith('s3://'):
+        # Parse S3 URL: s3://bucket/key
+        parts = url.replace('s3://', '').split('/', 1)
+        bucket = parts[0]
+        key = parts[1]
+        s3.download_file(bucket, key, local_path)
+    elif 's3.amazonaws.com' in url or 's3-' in url:
+        # Parse HTTPS S3 URL
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        path_parts = parsed.path.lstrip('/').split('/', 1)
+        bucket = path_parts[0] if 's3.amazonaws.com' in parsed.netloc else parsed.netloc.split('.')[0]
+        key = path_parts[1] if len(path_parts) > 1 else path_parts[0]
+        s3.download_file(bucket, key, local_path)
+    else:
+        # Regular HTTP URL
+        import requests
+        response = requests.get(url)
+        with open(local_path, 'wb') as f:
+            f.write(response.content)
+
+def get_extension(url):
+    """Get file extension from URL"""
+    if url.endswith('.mp4'):
+        return 'mp4'
+    elif url.endswith('.png') or url.endswith('.jpg') or url.endswith('.jpeg'):
+        return 'png'
+    elif url.endswith('.mp3') or url.endswith('.wav'):
+        return 'mp3'
+    else:
+        return 'mp4'  # default
+
+def build_export_command(timeline, input_files, output_path, quality='medium'):
+    """Build FFmpeg command for high-quality export"""
+    cmd = ['/opt/bin/ffmpeg']
+    
+    # Add input files
+    for f in input_files:
+        cmd.extend(['-i', f])
+    
+    # Build filter complex
+    items = timeline['items']
+    video_items = [item for item in items if item['type'] in ['video', 'image']]
+    text_items = [item for item in items if item['type'] == 'text']
+    audio_items = [item for item in items if item['type'] == 'audio']
+    
+    filters = []
+    
+    # Scale all videos to target resolution
+    width = timeline['resolution']['width']
+    height = timeline['resolution']['height']
+    
+    for idx, item in enumerate(video_items):
+        filters.append(
+            f"[{idx}:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={timeline['fps']}[v{idx}]"
+        )
+    
+    # Apply transitions
+    current_video = 'v0'
+    for i in range(1, len(video_items)):
+        item = video_items[i]
+        if item.get('transition', {}).get('type') == 'fade':
+            prev_duration = video_items[i-1]['duration']
+            trans_duration = item['transition']['duration']
+            offset = prev_duration - trans_duration
+            
+            filters.append(
+                f"[{current_video}][v{i}]xfade=transition=fade:"
+                f"duration={trans_duration}:offset={offset}[v{i}fade]"
+            )
+            current_video = f"v{i}fade"
+        else:
+            # Concatenate without transition
+            filters.append(f"[{current_video}][v{i}]concat=n=2:v=1:a=0[v{i}concat]")
+            current_video = f"v{i}concat"
+    
+    # Add text overlays
+    for idx, item in enumerate(text_items):
+        text = item['text']
+        filters.append(
+            f"[{current_video}]drawtext=text='{text['content']}':'font=Arial':"
+            f"fontsize={text['fontSize']}:fontcolor={text['color']}:"
+            f"x={text['position']['x']}:y={text['position']['y']}:"
+            f"enable='between(t,{item['startTime']},{item['startTime'] + item['duration']})'[vtext{idx}]"
+        )
+        current_video = f"vtext{idx}"
+    
+    filters.append(f"[{current_video}]format=yuv420p[outv]")
+    
+    # Handle audio
+    if audio_items or video_items:
+        audio_inputs = []
+        for idx, item in enumerate(video_items):
+            audio_inputs.append(f"[{idx}:a]")
+        
+        if audio_items:
+            music_idx = len(video_items)
+            filters.append(f"[{music_idx}:a]volume=0.3[music]")
+            audio_inputs.append("[music]")
+        
+        if len(audio_inputs) > 1:
+            filters.append(f"{''.join(audio_inputs)}amix=inputs={len(audio_inputs)}:duration=longest[outa]")
+        else:
+            filters.append(f"{audio_inputs[0]}acopy[outa]")
+    
+    cmd.extend(['-filter_complex', ';'.join(filters)])
+    cmd.extend(['-map', '[outv]'])
+    cmd.extend(['-map', '[outa]'])
+    
+    # Quality settings
+    if quality == 'high':
+        cmd.extend([
+            '-c:v', 'libx264',
+            '-preset', 'slow',
+            '-crf', '18',
+            '-c:a', 'aac',
+            '-b:a', '192k'
+        ])
+    elif quality == 'medium':
+        cmd.extend([
+            '-c:v', 'libx264',
+            '-preset', 'medium',
+            '-crf', '23',
+            '-c:a', 'aac',
+            '-b:a', '128k'
+        ])
+    else:  # low
+        cmd.extend([
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-crf', '28',
+            '-c:a', 'aac',
+            '-b:a', '96k'
+        ])
+    
+    cmd.extend(['-movflags', '+faststart', '-y', output_path])
+    
+    return cmd
+Phase 4: Export Status API
+API Route for Checking Export Status
+javascript// pages/api/export/status/[jobId].js
+import AWS from 'aws-sdk';
+
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+
+export default async function handler(req, res) {
+  const { jobId } = req.query;
+  
+  try {
+    const result = await dynamodb.get({
+      TableName: process.env.JOBS_TABLE,
+      Key: { jobId }
+    }).promise();
+    
+    if (!result.Item) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    res.status(200).json(result.Item);
+  } catch (error) {
+    console.error('Error fetching job status:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+Key GitHub Repositories to Reference
+1. FFmpeg.wasm Implementation
+Repository: ffmpegwasm/react-app
+
+Official React example from FFmpeg.wasm team
+Shows proper loading and initialization
+Good error handling patterns
+
+Key Files to Study:
+
+src/App.js - FFmpeg loading and usage
+Configuration for CORS headers
+
+2. Timeline Component
+Repository: xzdarcy/react-timeline-editor
+
+Production-ready timeline component
+Drag and drop support
+Multi-track editing
+Snap-to-grid functionality
+
+Installation:
+bashnpm install @xzdarcy/react-timeline-editor
+Key Features:
+
+Row-based tracks
+Action items with start/end times
+Drag to move, resize handles
+Custom effects per action
+
+3. Video Editor with WASM
+Repository: imgly/video-editor-wasm-react
+
+Complete working example
+Trimming functionality
+GIF conversion
+Good UI patterns
+
+Key Files:
+
+src/components/VideoEditor.jsx
+src/hooks/useFFmpeg.js
+
+4. Drag and Drop Timeline
+Repository: faisalamin001/video-timeline-editor
+
+Simple timeline with drag/drop
+Synchronized playback
+Trim functionality
+Clean, minimal implementation
+
+5. Advanced Timeline (Twick)
+Repository: ncounterspecialist/twick
+
+Professional-grade timeline
+Canvas-based editing
+AI caption support
+Serverless export (Lambda + S3)
+
+This is closest to what you want!
+Complete File Structure
+your-video-editor/
+├── public/
+│   └── placeholder.png
+├── src/
+│   ├── components/
+│   │   ├── MediaLibrary.jsx
+│   │   ├── MediaLibrary.css
+│   │   ├── TimelineEditor.jsx
+│   │   ├── TimelineEditor.css
+│   │   └── VideoPreview.jsx
+│   ├── hooks/
+│   │   └── useFFmpeg.js
+│   ├── types/
+│   │   └── timeline.ts
+│   ├── utils/
+│   │   ├── ffmpegCommands.js
+│   │   └── timelineHelpers.js
+│   ├── App.jsx
+│   └── main.jsx
+├── lambda/
+│   ├── export/
+│   │   ├── lambda_function.py
+│   │   └── requirements.txt
+│   └── layer/
+│       └── ffmpeg/
+├── api/
+│   ├── media.js
+│   └── export/
+│       └── status/
+│           └── [jobId].js
+├── package.json
+├── vite.config.js (if using Vite)
+└── README.md
+Vite Configuration (Critical for FFmpeg.wasm)
+javascript// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  optimizeDeps: {
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util']
+  },
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
+    }
+  }
+});
+Implementation Checklist
+Week 1: Foundation
+
+ Fix media library scroll issues (CSS updates)
+ Install FFmpeg.wasm and test basic loading
+ Set up Vite configuration with CORS headers
+ Create basic timeline data structure
+
+Week 2: Client-Side Editor
+
+ Implement useFFmpeg hook
+ Build basic timeline component (study xzdarcy/react-timeline-editor)
+ Add drag-and-drop for media items
+ Implement preview generation (5-second clips)
+
+Week 3: Features
+
+ Add text overlay functionality
+ Implement transitions (fade, crossfade)
+ Add audio mixing
+ Build playback controls
+
+Week 4: Export & Polish
+
+ Implement Lambda export handler
+ Create export status API
+ Add progress indicators
+ Test with real videos from your S3 library
+ Optimize performance
+
+Testing Strategy
+
+Start Small: Test with 2-3 short videos (5-10 seconds each)
+Client-Side Only: Get preview working entirely in browser first
+Add Lambda: Once client works, add Lambda for longer exports
+Load Testing: Test with 10+ videos, longer durations
+Edge Cases: Test with different resolutions, formats, corrupt files
+
+Performance Tips
+
+Thumbnails: Generate video thumbnails server-side, store in S3
+Lazy Loading: Only load FFmpeg.wasm when user opens editor
+Web Workers: Consider running FFmpeg in a Web Worker
+Progress Feedback: Always show progress during long operations
+Caching: Cache processed previews in IndexedDB
+
+Cost Considerations
+Client-Side (FFmpeg.wasm):
+
+Zero server cost during editing
+User's CPU does the work
+Free previews and short exports
+
+Lambda Export:
+
+Only charged for final high-quality exports
+~$0.001 per second of execution
+Example: 60-second video = ~$0.06
+
+Summary
+Your hybrid approach will:
+
+✅ Use existing S3 media library (with fixed scroll)
+✅ Provide instant, responsive editing in browser
+✅ Generate real-time previews without server calls
+✅ Support drag-and-drop timeline editing
+✅ Add text, transitions, and effects client-side
+✅ Export high-quality final videos via Lambda
+✅ Keep costs low (no server usage during editing)
+
+The key GitHub repos above provide production-ready code you can reference or integrate directly. Start with the imgly/video-editor-wasm-react example to get FFmpeg.wasm working, then integrate xzdarcy/react-timeline-editor for the timeline UI.
+Would you like me to provide specific code for any of these components, or help you integrate one of the GitHub libraries?

@@ -1,0 +1,112 @@
+2025-12-09 15:09:40.09
+6f8ad538
+User
+}
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-09 15:09:40.09
+6f8ad538
+User
+hasUser: true,
+2025-12-09 15:09:40.09
+6f8ad538
+User
+isPaginated: true,
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[/api/generations] Request received {
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-09 15:09:40.09
+6f8ad538
+User
+typeFilter: 'video'
+2025-12-09 15:09:40.09
+6f8ad538
+User
+cursor: '',
+2025-12-09 15:09:40.09
+6f8ad538
+User
+typeFilter: 'audio'
+2025-12-09 15:09:40.09
+6f8ad538
+User
+userId: '49729939',
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-09 15:09:40.09
+6f8ad538
+User
+}
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[/api/generations] Request received {
+2025-12-09 15:09:40.09
+6f8ad538
+User
+isPaginated: true,
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-09 15:09:40.09
+6f8ad538
+User
+hasUser: true,
+2025-12-09 15:09:40.09
+6f8ad538
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-09 15:09:40.10
+6f8ad538
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-09 15:09:40.10
+6f8ad538
+User
+cursor: '',
+2025-12-09 15:09:40.10
+6f8ad538
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-09 15:09:40.10
+6f8ad538
+User
+typeFilter: 'image'
+2025-12-09 15:09:40.10
+6f8ad538
+User
+[/api/generations] Request received {
+2025-12-09 15:09:40.10
+6f8ad538
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-09 15:09:40.10
+6f8ad538
+User
+hasUser: true,
+2025-12-09 15:09:40.10
+6f8ad538
+User
+}
+2025-12-09 15:09:40.10
+6f8ad538
+User
+isPaginated: true,
+2025-12-09 15:09:40.10
+6f8ad538
+User
+userId: '49729939',

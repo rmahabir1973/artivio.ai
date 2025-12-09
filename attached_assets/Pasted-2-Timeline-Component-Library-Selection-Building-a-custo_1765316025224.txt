@@ -1,0 +1,285 @@
+2. Timeline Component Library Selection
+Building a custom timeline from scratch could take 3+ weeks and introduce bugs. I noticed you didn't specify which approach you'll take.
+My strong recommendation:
+Use @xzdarcy/react-timeline-editor because:
+
+✅ Production-tested with 1.3k+ GitHub stars
+✅ Built-in multi-track support
+✅ Native drag-and-drop (no need for react-beautiful-dnd)
+✅ Snap-to-grid functionality
+✅ Resize handles for trimming
+✅ MIT licensed
+✅ Active maintenance (last update 2 months ago)
+
+Alternative libraries to consider:
+
+react-timeline-range-slider - Simpler but fewer features
+Custom build - Only if timeline libraries don't meet our needs
+
+Questions:
+
+Will you use @xzdarcy/react-timeline-editor or another library?
+If building custom, what's the specific reason these libraries won't work?
+Can you share a quick mockup/screenshot of the planned timeline UI?
+
+
+3. Technical Architecture Clarifications
+3.1 FFmpeg.wasm CORS Headers
+FFmpeg.wasm requires specific headers. How will you configure this in Replit?
+Required configuration:
+javascriptserver: {
+  headers: {
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Embedder-Policy': 'require-corp'
+  }
+}
+Question: Can you confirm Replit supports these headers, or do we need a workaround?
+3.2 Video File Handling
+Large video files (>100MB) could crash the browser if loaded entirely into memory.
+Questions:
+
+Will videos stream from S3 URLs during editing, or download fully first?
+What's the memory management strategy for FFmpeg.wasm?
+What's the fallback if a user tries to edit a 500MB+ video?
+Maximum file size limit we should enforce?
+
+3.3 Text Overlay Implementation
+You mentioned using Fabric.js for text overlays. The original plan used native Canvas API.
+Questions:
+
+Are we using Fabric.js or native Canvas API?
+If Fabric.js, what specific features justify the extra ~200KB bundle size?
+Will text overlays be editable in real-time (drag, resize, change color)?
+
+
+4. Multi-Track Drag & Drop Requirements
+Please confirm these specific drag-and-drop behaviors will work:
+Required functionality:
+
+ Drag video from Media Library → Timeline Track 0 (main video)
+ Drag video from Media Library → Timeline Track 1+ (overlay/PIP)
+ Drag video clip within same track to reorder
+ Drag video clip between tracks (Track 0 → Track 1)
+ Drag text overlay to specific position on timeline
+ Drag to resize clip duration (trim start/end)
+ Drag audio track to specific start time
+ Visual snap-to-grid when dragging near other clips
+
+Question: Are all of these behaviors supported by your chosen timeline library? Any limitations?
+
+5. Phase 1 - Immediate Fixes (This Week)
+These are critical bugs that should be fixed before starting the larger refactor.
+5.1 Scroll Bar Fix
+Exact CSS needed:
+css.media-library-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* or calc(100vh - [header-height]px) */
+  overflow: hidden;
+}
+
+.media-grid-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+Question: Can you apply this fix today and push to staging for testing?
+5.2 Filter Failed Videos
+Implementation approach:
+javascript// At API level - before sending to frontend
+const validMedia = data.items.filter(item => item.status !== 'failed');
+
+// OR if client-side filtering is needed
+const [media, setMedia] = useState([]);
+
+useEffect(() => {
+  const filtered = rawMedia.filter(item => 
+    item.status === 'completed' || item.status === 'ready'
+  );
+  setMedia(filtered);
+}, [rawMedia]);
+Question: Will you filter at the API level or client-side? API level is preferred to save bandwidth.
+
+6. Phase 2 - FFmpeg.wasm Integration
+Key Implementation Details Needed:
+6.1 Preview Generation Strategy
+javascript// When user clicks "Preview" button:
+1. Load FFmpeg.wasm (if not already loaded)
+2. Download video segments from S3 URLs
+3. Process in browser using timeline JSON
+4. Generate 5-10 second preview
+5. Display in video player
+Questions:
+
+Will preview be generated automatically on timeline changes, or manual button click?
+Preview duration: 5 seconds? 10 seconds? Full video for short clips?
+Preview quality: Lower resolution/bitrate to speed up processing?
+
+6.2 Progress Indicators
+FFmpeg.wasm processing can take 10-30 seconds for a 30-second preview.
+Questions:
+
+Will you show a progress bar during preview generation?
+Loading spinner with estimated time remaining?
+Cancel button to abort long-running previews?
+
+
+7. Phase 3 - Timeline Data Structure
+Please confirm this data structure matches your implementation:
+typescriptinterface TimelineItem {
+  id: string;
+  type: 'video' | 'image' | 'text' | 'audio';
+  track: number;        // 0 = main, 1+ = overlays
+  startTime: number;    // seconds from timeline start
+  duration: number;     // clip duration in seconds
+  url: string;          // S3 URL to source file
+  
+  // Optional properties
+  trim?: { 
+    start: number;      // trim from original video
+    end: number; 
+  };
+  
+  transition?: {
+    type: 'fade' | 'crossfade' | 'wipe';
+    duration: number;   // transition length in seconds
+  };
+  
+  text?: {
+    content: string;
+    fontSize: number;
+    color: string;
+    position: { x: number; y: number };
+    fontFamily?: string;
+  };
+  
+  volume?: number;      // 0.0 to 1.0 for audio
+  
+  // Position for overlays (PIP)
+  position?: {
+    x: number;          // pixels from left
+    y: number;          // pixels from top
+    width: number;
+    height: number;
+  };
+}
+
+interface Timeline {
+  items: TimelineItem[];
+  duration: number;                        // total timeline duration
+  resolution: { width: number; height: number };
+  fps: number;
+}
+Question: Does this structure work for your implementation, or do you need to modify it?
+
+8. Phase 4 - Lambda Export Integration
+Critical Implementation Detail:
+DO NOT send video files to Lambda. Only send timeline JSON.
+Correct approach:
+javascript// Frontend sends this:
+POST /api/export
+{
+  timeline: {
+    items: [
+      { 
+        id: 'abc', 
+        type: 'video', 
+        url: 's3://artivio-bucket/video1.mp4',  // ← S3 URL, not blob
+        startTime: 0, 
+        duration: 10 
+      }
+    ],
+    resolution: { width: 1920, height: 1080 },
+    fps: 30
+  },
+  quality: 'high'
+}
+
+// Lambda does this:
+1. Receive timeline JSON
+2. Download videos from S3 URLs directly (using AWS SDK)
+3. Process with FFmpeg
+4. Upload result to S3
+5. Return presigned download URL
+Questions:
+
+Will Lambda download from S3 directly, or expect video data in request?
+Job status tracking: How will frontend poll for completion?
+Webhook or polling for export status updates?
+What happens if Lambda times out (15 min limit) on a long video?
+
+
+9. Success Criteria & Testing
+Phase 1 Completion Checklist:
+
+ Scroll bar appears in media library
+ Can scroll through 100+ videos without UI breaking
+ Load More button works correctly
+ Zero failed videos displayed
+ Video thumbnails load properly
+
+Testing: I'll test with my actual library (150+ videos) immediately after deployment.
+Phase 2 Completion Checklist:
+
+ FFmpeg.wasm loads successfully (check browser console)
+ Can add 2 videos from S3 to timeline
+ Click "Generate Preview" button
+ 5-second preview renders in under 30 seconds
+ Preview plays smoothly in video player
+ Can generate multiple previews without browser crash
+
+Phase 3 Completion Checklist:
+
+ Multi-track timeline visible (at least 2 tracks)
+ Drag video from library to Track 0
+ Drag video from library to Track 1 (overlay)
+ Reorder clips within same track
+ Add text overlay
+ Drag text to reposition on timeline
+ Click on clip to see properties panel
+ Delete clip from timeline
+ Undo/redo functionality (nice to have)
+
+Phase 4 Completion Checklist:
+
+ Export button visible and enabled
+ Clicking Export shows progress modal
+ Timeline JSON sent to Lambda (not video files)
+ Status updates every 2-3 seconds
+ Completion notification appears
+ Download link works
+ Downloaded video matches preview
+
+
+10. Risk Mitigation
+Potential Issues & Contingency Plans:
+Issue 1: FFmpeg.wasm doesn't work in Replit environment
+
+Test immediately: Can you create a simple test page that loads FFmpeg.wasm?
+Contingency: Use ffmpeg-wasm CDN if local build fails
+Worst case: Fall back to Lambda for all processing (but lose real-time preview)
+
+Issue 2: Browser memory crashes with large videos
+
+Prevention: Set hard limit of 200MB per video file
+Mitigation: Show clear error message: "Video too large, please use videos under 200MB"
+Enhancement: Offer to compress videos before editing
+
+Issue 3: Timeline library doesn't support all features
+
+Early validation: Create proof-of-concept with chosen library TODAY
+Test: Multi-track, drag-drop, text overlays, transitions
+Contingency: Switch libraries or build minimal custom version
+
+Issue 4: Lambda export takes >15 minutes
+
+Prevention: Limit total timeline duration to 10 minutes
+Alternative: Use AWS Fargate for longer videos (no time limit)
+User notification: Show estimated export time before starting
