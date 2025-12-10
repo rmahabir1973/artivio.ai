@@ -95,12 +95,31 @@ export function useFFmpeg(options: UseFFmpegOptions = {}) {
         options.onProgress?.(progressPercent);
       });
 
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+      // Use jsDelivr CDN for better CORS support
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
       
-      await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-      });
+      console.log('[FFmpeg] Loading from:', baseURL);
+      
+      try {
+        // Try to load with blob URLs first (better for CSP)
+        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+        
+        console.log('[FFmpeg] Blob URLs created, loading FFmpeg...');
+        
+        await ffmpeg.load({
+          coreURL,
+          wasmURL,
+        });
+      } catch (blobError) {
+        // Fallback: try direct URLs if blob creation fails
+        console.warn('[FFmpeg] Blob URL failed, trying direct URLs:', blobError);
+        
+        await ffmpeg.load({
+          coreURL: `${baseURL}/ffmpeg-core.js`,
+          wasmURL: `${baseURL}/ffmpeg-core.wasm`,
+        });
+      }
 
       setLoaded(true);
       console.log('[FFmpeg] Loaded successfully');

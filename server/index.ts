@@ -71,9 +71,9 @@ const CSP_REPORT_ONLY_ENABLED = true; // Set to false to disable CSP monitoring
 
 const cspDirectives = [
   "default-src 'self'",
-  // Scripts - includes Stripe, Google, FFmpeg.wasm (unpkg), and development servers
+  // Scripts - includes Stripe, Google, FFmpeg.wasm (jsdelivr/unpkg), and development servers
   // blob: required for FFmpeg.wasm toBlobURL() functionality
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://www.googletagmanager.com https://accounts.google.com https://www.google.com https://challenges.cloudflare.com https://unpkg.com${isDevelopment ? " http://localhost:* ws://localhost:*" : ""}`,
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://www.googletagmanager.com https://accounts.google.com https://www.google.com https://challenges.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net${isDevelopment ? " http://localhost:* ws://localhost:*" : ""}`,
   // Styles - includes Google Fonts
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com${isDevelopment ? " http://localhost:*" : ""}`,
   // Images - very permissive to allow AI-generated content from various sources
@@ -83,8 +83,8 @@ const cspDirectives = [
   // Media - permissive for AI-generated videos and PeerTube
   "media-src 'self' blob: data: https: http:",
   // API connections - all the services we use
-  // blob: and https://unpkg.com required for FFmpeg.wasm to load core and wasm files
-  `connect-src 'self' blob: wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com https://unpkg.com${isDevelopment ? " http://localhost:* ws://localhost:*" : ""}`,
+  // blob: and https://unpkg.com/jsdelivr required for FFmpeg.wasm to load core and wasm files
+  `connect-src 'self' blob: wss: ws: https://api.stripe.com https://www.googleapis.com https://accounts.google.com https://*.amazonaws.com https://api.openai.com https://api.deepseek.com https://api.fish.audio https://api.elevenlabs.io https://api.pexels.com https://pixabay.com https://api.loops.so https://api.kie.ai https://klingai.com https://api.getlate.dev https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com https://unpkg.com https://cdn.jsdelivr.net${isDevelopment ? " http://localhost:* ws://localhost:*" : ""}`,
   // Frames - Stripe, Google, video embeds
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://www.google.com https://www.youtube.com https://player.vimeo.com https://challenges.cloudflare.com https:",
   // No plugins
