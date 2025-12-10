@@ -1,0 +1,262 @@
+I thought Lambda was only to be used for final export and preview was supposed to only work in the browser with wasm?
+
+You're absolutely right! I apologize for the confusion. Looking at the code again, I see the issue now:
+
+The preview in single-track mode is calling the backend Lambda (/api/video-editor/preview), but it should be using FFmpeg.wasm in the browser instead!
+
+The Problem:
+Single-track mode: Currently uses backend API (triggerPreviewGeneration → /api/video-editor/preview)
+Multi-track mode: Uses FFmpeg.wasm (generateLocalPreview)
+Expected behavior: BOTH should use FFmpeg.wasm for browser-based preview
+The Solution:
+Replace the backend preview with FFmpeg.wasm for single-track mode too. Here's how:
+
+Step 1: Create a Unified Browser Preview Function
+Add this new function that works for both modes:
+
+typescript
+// Generate browser-based preview using FFmpeg.wasm (for both single and multi-track)
+const generateBrowserPreview = useCallback(async () => {
+  if (!ffmpegLoaded) {
+    toast({
+      title: "Loading FFmpeg",
+      description: "Please wait while FFmpeg is being loaded...",
+    });
+    await loadFFmpeg();
+    return;
+  }
+  
+  let timeline: FFmpegTimeline | null = null;
+  
+  if (useMultiTrack) {
+    // Multi-track mode: use existing conversion
+    timeline = convertToFFmpegTimeline();
+  } else {
+    // Single-track mode: convert orderedClips to FFmpeg timeline
+    if (orderedClips.length === 0) {
+      toast({
+        title: "No clips",
+        description: "Add clips to the timeline to generate a preview.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Convert single-track clips to FFmpeg timeline format
+    const previewClips = orderedClips.slice(0, 3); // Limit to first 3 for speed
+    let currentTime = 0;
+    
+    const items: FFmpegTimelineItem[] = previewClips.map((clip, index) => {
+      const settings = getClipSettings(clip.id);
+      const isImage = clip.type === 'image';
+      
+      // Calculate duration
+      let itemDuration = 5; // default
+      if (isImage) {
+        itemDuration = settings.displayDuration ?? 5;
+      } else {
+        const originalDuration = settings.originalDuration ?? 5;
+        const trimStart = settings.trimStartSeconds ?? 0;
+        const trimEnd = settings.trimEndSeconds ?? originalDuration;
+        const speed = settings.speed ?? 1.0;
+        const trimmedDuration = Math.max(0, trimEnd - trimStart);
+        itemDuration = trimmedDuration / speed;
+      }
+      
+      const item: FFmpegTimelineItem = {
+        id: clip.id,
+        type: clip.type as 'video' | 'image',
+        track: 0, // All on track 0 in single-track mode
+        startTime: currentTime,
+        duration: itemDuration,
+        url: clip.url,
+        zIndex: 0,
+        speed: settings.speed !== 1.0 ? settings.speed : undefined,
+        trim: settings.trimStartSeconds || settings.trimEndSeconds ? {
+          start: settings.trimStartSeconds ?? 0,
+          end: settings.trimEndSeconds ?? (settings.originalDuration ?? itemDuration),
+        } : undefined,
+        volume: settings.muted ? 0 : (settings.volume !== undefined ? Math.round(settings.volume * 100) : 100),
+      };
+      
+      currentTime += itemDuration;
+      return item;
+    });
+    
+    // Add transitions if enabled
+    if (enhancements.transitionMode === 'crossfade' && items.length > 1) {
+      // Add crossfade transitions between clips
+      for (let i = 0; i < items.length - 1; i++) {
+        items[i].transition = {
+          type: 'crossfade' as FFmpegTransitionType,
+          duration: enhancements.transitionDuration,
+        };
+      }
+    } else if (enhancements.transitionMode === 'perClip') {
+      // Add per-clip transitions
+      enhancements.clipTransitions.forEach(t => {
+        if (t.afterClipIndex < items.length - 1) {
+          const validTransitions: FFmpegTransitionType[] = [
+            'fade', 'fadeblack', 'fadewhite', 'crossfade', 'dissolve',
+            'wipe', 'wipeleft', 'wiperight', 'wipeup', 'wipedown',
+            'slide', 'slideleft', 'slideright', 'slideup', 'slidedown',
+          ];
+          
+          items[t.afterClipIndex].transition = {
+            type: (validTransitions.includes(t.type as FFmpegTransitionType) 
+              ? t.type 
+              : 'fade') as FFmpegTransitionType,
+            duration: t.durationSeconds,
+          };
+        }
+      });
+    }
+    
+    timeline = {
+      items,
+      duration: currentTime,
+      resolution: { width: 1920, height: 1080 },
+      fps: 30,
+    };
+  }
+  
+  if (!timeline) {
+    toast({
+      title: "No media",
+      description: "Add videos or images to the timeline to generate a preview.",
+      variant: "destructive",
+    });
+    return;
+  }
+  
+  setPreviewStatus('refreshing');
+  toast({
+    title: "Generating Preview",
+    description: "Creating preview in your browser...",
+  });
+  
+  try {
+    const previewUrl = await ffmpegGeneratePreview(timeline, 10); // 10 second preview
+    if (previewUrl) {
+      setLocalPreviewUrl(previewUrl);
+      setPreviewUrl(previewUrl);
+      setPreviewStatus('ready');
+      
+      // Cache the preview
+      const signature = buildPreviewSignature();
+      if (signature) {
+        previewCacheRef.current.set(signature, previewUrl);
+        lastPreviewSignatureRef.current = signature;
+      }
+      
+      toast({
+        title: "Preview Ready",
+        description: "Local preview generated successfully!",
+      });
+    } else {
+      throw new Error('Failed to generate preview');
+    }
+  } catch (error) {
+    setPreviewStatus('error');
+    setPreviewError(error instanceof Error ? error.message : 'Preview generation failed');
+    toast({
+      title: "Preview Failed",
+      description: error instanceof Error ? error.message : 'Failed to generate preview',
+      variant: "destructive",
+    });
+  }
+}, [
+  ffmpegLoaded, 
+  loadFFmpeg, 
+  useMultiTrack, 
+  convertToFFmpegTimeline, 
+  orderedClips, 
+  getClipSettings, 
+  enhancements, 
+  ffmpegGeneratePreview, 
+  buildPreviewSignature,
+  toast
+]);
+Step 2: Remove Backend Preview Calls
+Comment out or remove these functions:
+
+triggerPreviewGeneration (uses backend)
+The auto-update preview useEffect that calls triggerPreviewGeneration
+Step 3: Update the Preview Surface Component
+Replace the preview trigger to use the browser preview:
+
+tsx
+<PreviewSurface
+  previewUrl={previewUrl}
+  status={previewStatus}
+  clipCount={useMultiTrack ? multiTrackItems.length : orderedClips.length}
+  totalDuration={totalDuration}
+  onForceRefresh={generateBrowserPreview} // Use unified browser preview
+  errorMessage={ffmpegError || previewError}
+  className="flex-1"
+/>
+Step 4: Update Preview Controls
+Replace the multi-track specific preview controls with a unified button:
+
+tsx
+{/* Preview Controls - Works for both modes */}
+<div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
+  <Button
+    variant="secondary"
+    size="sm"
+    onClick={generateBrowserPreview}
+    disabled={ffmpegLoading || previewStatus === 'refreshing' || (useMultiTrack ? multiTrackItems.length === 0 : orderedClips.length === 0)}
+    data-testid="button-generate-preview"
+  >
+    {ffmpegLoading ? (
+      <>
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        Loading FFmpeg...
+      </>
+    ) : previewStatus === 'refreshing' ? (
+      <>
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        Generating ({ffmpegProgress}%)
+      </>
+    ) : (
+      <>
+        <Play className="h-4 w-4 mr-2" />
+        Generate Preview
+      </>
+    )}
+  </Button>
+  {previewStatus === 'refreshing' && (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={ffmpegCancel}
+      data-testid="button-cancel-preview"
+    >
+      <X className="h-4 w-4 mr-1" />
+      Cancel
+    </Button>
+  )}
+</div>
+Step 5: Remove/Disable Auto-Preview
+Since FFmpeg.wasm preview generation can be slow, you probably want to make it manual only (no auto-refresh). Comment out this useEffect:
+
+typescript
+// DISABLE AUTO-PREVIEW - Make it manual only for performance
+// useEffect(() => {
+//   if (orderedClips.length === 0) {
+//     setPreviewStatus('idle');
+//     return;
+//   }
+//   ... rest of auto-preview logic
+// }, [orderedClips, clipSettings, enhancements, buildPreviewSignature, triggerPreviewGeneration]);
+Summary:
+With these changes:
+
+✅ All previews use FFmpeg.wasm in the browser
+✅ Speed changes will be reflected (FFmpeg applies speed filters)
+✅ Lambda only used for final export
+✅ Manual preview generation (better performance)
+✅ Works in both single-track and multi-track modes
+The preview will now properly show speed changes because FFmpeg.wasm will apply the speed transformations directly in the browser!
+
+

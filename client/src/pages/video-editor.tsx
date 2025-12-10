@@ -659,159 +659,182 @@ export default function VideoEditor() {
     return JSON.stringify(signatureData);
   }, [orderedClips, getClipSettings, enhancements]);
 
-  // Trigger preview generation (used by debouncer and manual refresh)
-  const triggerPreviewGeneration = useCallback(async () => {
-    if (orderedClips.length === 0) return;
-    
-    const signature = buildPreviewSignature();
-    if (!signature) return;
-    
-    // Check cache first
-    const cachedUrl = previewCacheRef.current.get(signature);
-    if (cachedUrl) {
-      setPreviewUrl(cachedUrl);
-      setPreviewStatus('ready');
-      setPreviewError(undefined);
-      lastPreviewSignatureRef.current = signature;
+  // DEPRECATED: Backend preview generation - use generateBrowserPreview instead
+  // const triggerPreviewGeneration = useCallback(async () => {
+  //   // Commented out - using FFmpeg.wasm preview for all modes now
+  // }, [orderedClips, clipSettings, enhancements, buildPreviewSignature]);
+
+  // DISABLED: Auto-preview disabled for FFmpeg.wasm to optimize performance
+  // Preview is now manual-only using generateBrowserPreview
+  // useEffect(() => {
+  //   if (orderedClips.length === 0) {
+  //     setPreviewStatus('idle');
+  //     return;
+  //   }
+  //   // ... commented out for performance
+  // }, [orderedClips, clipSettings, enhancements, buildPreviewSignature, triggerPreviewGeneration]);
+
+  // Generate unified browser preview using FFmpeg.wasm (works for both single and multi-track)
+  const generateBrowserPreview = useCallback(async () => {
+    if (!ffmpegLoaded) {
+      toast({
+        title: "Loading FFmpeg",
+        description: "Please wait while FFmpeg is being loaded...",
+      });
+      await loadFFmpeg();
       return;
     }
     
-    // Generate new preview
+    let timeline: FFmpegTimeline | null = null;
+    
+    if (useMultiTrack) {
+      // Multi-track mode: use existing conversion
+      timeline = convertToFFmpegTimeline();
+    } else {
+      // Single-track mode: convert orderedClips to FFmpeg timeline
+      if (orderedClips.length === 0) {
+        toast({
+          title: "No clips",
+          description: "Add clips to the timeline to generate a preview.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Convert single-track clips to FFmpeg timeline format
+      const previewClips = orderedClips.slice(0, 3); // Limit to first 3 for speed
+      let currentTime = 0;
+      
+      const items: FFmpegTimelineItem[] = previewClips.map((clip, index) => {
+        const settings = getClipSettings(clip.id);
+        const isImage = clip.type === 'image';
+        
+        // Calculate duration
+        let itemDuration = 5; // default
+        if (isImage) {
+          itemDuration = settings.displayDuration ?? 5;
+        } else {
+          const originalDuration = settings.originalDuration ?? 5;
+          const trimStart = settings.trimStartSeconds ?? 0;
+          const trimEnd = settings.trimEndSeconds ?? originalDuration;
+          const speed = settings.speed ?? 1.0;
+          const trimmedDuration = Math.max(0, trimEnd - trimStart);
+          itemDuration = trimmedDuration / speed;
+        }
+        
+        const item: FFmpegTimelineItem = {
+          id: clip.id,
+          type: clip.type as 'video' | 'image',
+          track: 0, // All on track 0 in single-track mode
+          startTime: currentTime,
+          duration: itemDuration,
+          url: clip.url,
+          zIndex: 0,
+          trim: settings.trimStartSeconds || settings.trimEndSeconds ? {
+            start: settings.trimStartSeconds ?? 0,
+            end: settings.trimEndSeconds ?? (settings.originalDuration ?? itemDuration),
+          } : undefined,
+          volume: settings.muted ? 0 : (settings.volume !== undefined ? Math.round(settings.volume * 100) : 100),
+        };
+        
+        currentTime += itemDuration;
+        return item;
+      });
+      
+      // Add transitions if enabled
+      if (enhancements.transitionMode === 'crossfade' && items.length > 1) {
+        // Add crossfade transitions between clips
+        for (let i = 0; i < items.length - 1; i++) {
+          items[i].transition = {
+            type: 'crossfade' as FFmpegTransitionType,
+            duration: enhancements.transitionDuration,
+          };
+        }
+      } else if (enhancements.transitionMode === 'perClip') {
+        // Add per-clip transitions
+        enhancements.clipTransitions.forEach(t => {
+          if (t.afterClipIndex < items.length - 1) {
+            const validTransitions: FFmpegTransitionType[] = [
+              'fade', 'fadeblack', 'fadewhite', 'crossfade', 'dissolve',
+              'wipe', 'wipeleft', 'wiperight', 'wipeup', 'wipedown',
+              'slide', 'slideleft', 'slideright', 'slideup', 'slidedown',
+            ];
+            
+            items[t.afterClipIndex].transition = {
+              type: (validTransitions.includes(t.type as FFmpegTransitionType) 
+                ? t.type 
+                : 'fade') as FFmpegTransitionType,
+              duration: t.durationSeconds,
+            };
+          }
+        });
+      }
+      
+      timeline = {
+        items,
+        duration: currentTime,
+        resolution: { width: 1920, height: 1080 },
+        fps: 30,
+      };
+    }
+    
+    if (!timeline) {
+      toast({
+        title: "No media",
+        description: "Add videos or images to the timeline to generate a preview.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setPreviewStatus('refreshing');
-    setPreviewError(undefined);
+    toast({
+      title: "Generating Preview",
+      description: "Creating preview in your browser...",
+    });
     
     try {
-      const previewClips = orderedClips.slice(0, 3);
-      const project = {
-        clips: previewClips.map((clip, index) => ({
-          id: clip.id,
-          sourceUrl: clip.url,
-          order: index,
-        })),
-      };
-
-      const clipSettingsArray = previewClips.map((clip, index) => {
-        const localSettings = clipSettings.get(clip.id);
-        const isImage = clip.type === 'image';
-        return {
-          clipId: clip.id,
-          clipIndex: index,
-          muted: localSettings?.muted ?? false,
-          volume: localSettings?.volume ?? 1,
-          speed: localSettings?.speed ?? 1.0,
-          trimStartSeconds: localSettings?.trimStartSeconds,
-          trimEndSeconds: localSettings?.trimEndSeconds,
-          isImage,
-          displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
-        };
-      });
-
-      const perClipSpeeds = clipSettingsArray
-        .filter(cs => cs.speed !== 1.0 && !cs.isImage)
-        .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
-      
-      const speedConfig = perClipSpeeds.length > 0 
-        ? { mode: 'perClip' as const, perClip: perClipSpeeds }
-        : { mode: 'none' as const };
-
-      const enhancementsPayload = {
-        transitions: enhancements.transitionMode === 'perClip' ? {
-          mode: 'perClip' as const,
-          perClip: enhancements.clipTransitions.map(t => ({
-            afterClipIndex: t.afterClipIndex,
-            type: t.type,
-            durationSeconds: t.durationSeconds,
-          })),
-        } : enhancements.transitionMode === 'crossfade' ? {
-          mode: 'crossfade' as const,
-          durationSeconds: enhancements.transitionDuration,
-        } : { mode: 'none' as const },
-        fadeIn: enhancements.fadeIn,
-        fadeOut: enhancements.fadeOut,
-        fadeDuration: enhancements.fadeDuration,
-        aspectRatio: enhancements.aspectRatio,
-        speed: speedConfig,
-        clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined || cs.isImage
-        ),
-      };
-
-      const response = await apiRequest("POST", "/api/video-editor/preview", { 
-        project,
-        enhancements: enhancementsPayload,
-      });
-      const data = await response.json();
-      
-      if (data.status === 'completed' && data.previewUrl) {
-        // Cache the result
-        previewCacheRef.current.set(signature, data.previewUrl);
-        lastPreviewSignatureRef.current = signature;
-        setPreviewUrl(data.previewUrl);
+      const previewUrl = await ffmpegGeneratePreview(timeline, 10); // 10 second preview
+      if (previewUrl) {
+        setLocalPreviewUrl(previewUrl);
+        setPreviewUrl(previewUrl);
         setPreviewStatus('ready');
+        
+        // Cache the preview
+        const signature = buildPreviewSignature();
+        if (signature) {
+          previewCacheRef.current.set(signature, previewUrl);
+          lastPreviewSignatureRef.current = signature;
+        }
+        
+        toast({
+          title: "Preview Ready",
+          description: "Local preview generated successfully!",
+        });
       } else {
-        throw new Error(data.message || 'Preview generation failed');
+        throw new Error('Failed to generate preview');
       }
     } catch (error) {
-      console.error('Preview generation error:', error);
       setPreviewStatus('error');
       setPreviewError(error instanceof Error ? error.message : 'Preview generation failed');
+      toast({
+        title: "Preview Failed",
+        description: error instanceof Error ? error.message : 'Failed to generate preview',
+        variant: "destructive",
+      });
     }
-  }, [orderedClips, clipSettings, enhancements, buildPreviewSignature]);
-
-  // Auto-update preview with debouncing when state changes
-  useEffect(() => {
-    if (orderedClips.length === 0) {
-      setPreviewStatus('idle');
-      return;
-    }
-    
-    const currentSignature = buildPreviewSignature();
-    if (!currentSignature) return;
-    
-    // Check if signature changed
-    if (currentSignature === lastPreviewSignatureRef.current) {
-      return; // No change, don't regenerate
-    }
-    
-    // Check if we have this in cache
-    const cachedUrl = previewCacheRef.current.get(currentSignature);
-    if (cachedUrl) {
-      setPreviewUrl(cachedUrl);
-      setPreviewStatus('ready');
-      lastPreviewSignatureRef.current = currentSignature;
-      return;
-    }
-    
-    // Mark as stale and debounce regeneration
-    setPreviewStatus('stale');
-    
-    // Clear existing debounce timer
-    if (previewDebounceRef.current) {
-      clearTimeout(previewDebounceRef.current);
-    }
-    
-    // Debounce preview generation (750ms)
-    previewDebounceRef.current = setTimeout(() => {
-      triggerPreviewGeneration();
-    }, 750);
-    
-    return () => {
-      if (previewDebounceRef.current) {
-        clearTimeout(previewDebounceRef.current);
-      }
-    };
-  }, [orderedClips, clipSettings, enhancements, buildPreviewSignature, triggerPreviewGeneration]);
-
-  // Force refresh preview (bypasses cache)
-  const forceRefreshPreview = useCallback(() => {
-    const signature = buildPreviewSignature();
-    if (signature) {
-      // Remove from cache to force regeneration
-      previewCacheRef.current.delete(signature);
-      lastPreviewSignatureRef.current = null;
-    }
-    triggerPreviewGeneration();
-  }, [buildPreviewSignature, triggerPreviewGeneration]);
+  }, [
+    ffmpegLoaded, 
+    loadFFmpeg, 
+    useMultiTrack, 
+    convertToFFmpegTimeline, 
+    orderedClips, 
+    getClipSettings, 
+    enhancements, 
+    ffmpegGeneratePreview, 
+    buildPreviewSignature,
+    toast
+  ]);
   
   // Convert multi-track items to FFmpeg timeline format for local preview
   // Note: Client-side FFmpeg.wasm preview focuses on visual tracks (video/image) only.
@@ -3093,11 +3116,11 @@ export default function VideoEditor() {
           {/* Preview Surface - Always Visible with Auto-Update */}
           <div className="flex-1 flex flex-col min-w-0 relative">
             <PreviewSurface
-              previewUrl={useMultiTrack ? localPreviewUrl : previewUrl}
+              previewUrl={previewUrl}
               status={previewStatus}
               clipCount={useMultiTrack ? multiTrackItems.length : orderedClips.length}
               totalDuration={totalDuration}
-              onForceRefresh={useMultiTrack ? generateLocalPreview : forceRefreshPreview}
+              onForceRefresh={generateBrowserPreview}
               errorMessage={ffmpegError || previewError}
               className="flex-1"
             />
@@ -3111,46 +3134,44 @@ export default function VideoEditor() {
               />
             )}
             
-            {/* FFmpeg Preview Controls for Multi-Track Mode */}
-            {useMultiTrack && (
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={generateLocalPreview}
-                  disabled={ffmpegLoading || previewStatus === 'refreshing' || multiTrackItems.length === 0}
-                  data-testid="button-generate-local-preview"
-                >
-                  {ffmpegLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Loading FFmpeg...
-                    </>
-                  ) : previewStatus === 'refreshing' ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating ({ffmpegProgress}%)
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 mr-2" />
-                      Generate Preview
-                    </>
-                  )}
-                </Button>
-                {previewStatus === 'refreshing' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={ffmpegCancel}
-                    data-testid="button-cancel-preview"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Cancel
-                  </Button>
+            {/* Preview Controls - Works for both single and multi-track modes */}
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={generateBrowserPreview}
+                disabled={ffmpegLoading || previewStatus === 'refreshing' || (useMultiTrack ? multiTrackItems.length === 0 : orderedClips.length === 0)}
+                data-testid="button-generate-preview"
+              >
+                {ffmpegLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading FFmpeg...
+                  </>
+                ) : previewStatus === 'refreshing' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating ({ffmpegProgress}%)
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Generate Preview
+                  </>
                 )}
-              </div>
-            )}
+              </Button>
+              {previewStatus === 'refreshing' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={ffmpegCancel}
+                  data-testid="button-cancel-preview"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
+                </Button>
+              )}
+            </div>
           </div>
         </div>
         
