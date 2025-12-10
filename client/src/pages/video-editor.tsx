@@ -1855,25 +1855,27 @@ export default function VideoEditor() {
         
         if (useMultiTrack) {
           const getTrackNumberFromId = (id: string): number => {
-            switch (id) {
-              case 'video-0': return 0;
-              case 'video-1': return 1;
-              case 'text-0': return 2;
-              case 'audio-0': return 3;
-              case 'audio-1': return 4;
-              default: return 0;
-            }
+            const mapping: Record<string, number> = {
+              'video-0': 0,
+              'video-1': 1,
+              'text-0': 2,
+              'audio-0': 3,
+              'audio-1': 4,
+            };
+            return mapping[id] ?? 0;
           };
           
+          const trackNumber = getTrackNumberFromId(trackId);
           const currentMaxEnd = multiTrackItems
-            .filter(i => i.track === getTrackNumberFromId(trackId))
+            .filter(i => i.track === trackNumber)
             .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
           
           const itemDuration = item.duration || (mediaType === 'image' ? 5 : 10);
+          
           const newItem: MultiTrackTimelineItem = {
             id: instanceId,
             type: mediaType,
-            track: getTrackNumberFromId(trackId),
+            track: trackNumber,
             startTime: currentMaxEnd,
             duration: itemDuration,
             originalDuration: itemDuration,
@@ -1881,9 +1883,23 @@ export default function VideoEditor() {
             thumbnailUrl: item.thumbnailUrl,
             name: item.name,
             volume: mediaType === 'audio' ? 100 : undefined,
+            speed: 1,
           };
           
-          setMultiTrackItems(prev => [...prev, newItem]);
+          console.log('[DRAG] Adding to multi-track:', newItem);
+          
+          setMultiTrackItems(prev => {
+            const updated = [...prev, newItem];
+            console.log('[DRAG] Updated multi-track items:', updated);
+            return updated;
+          });
+          
+          setMultiTrackKey(prev => prev + 1);
+          
+          toast({
+            title: "Added to Timeline",
+            description: `${mediaType} added to ${trackId.replace('-', ' ').toUpperCase()} track`,
+          });
         } else {
           if (mediaType === 'audio') {
             const audioTrack = {
@@ -1905,12 +1921,12 @@ export default function VideoEditor() {
             };
             setOrderedClips(prev => [...prev, clip]);
           }
+          
+          toast({
+            title: "Added to timeline",
+            description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to timeline`,
+          });
         }
-        
-        toast({
-          title: "Added to timeline",
-          description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to timeline`,
-        });
       }
       return;
     }
@@ -2195,7 +2211,7 @@ export default function VideoEditor() {
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto min-h-0">
+              <ScrollArea className="flex-1 h-[calc(100vh-120px)]">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
@@ -2234,15 +2250,18 @@ export default function VideoEditor() {
                       
                       {/* Load More for Media */}
                       {hasNextPage && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full"
-                          onClick={() => fetchNextPage()}
-                          disabled={isFetchingNextPage}
-                        >
-                          {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
-                        </Button>
+                        <div className="pt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => fetchNextPage()}
+                            disabled={isFetchingNextPage}
+                            data-testid="button-load-more-videos"
+                          >
+                            {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
+                          </Button>
+                        </div>
                       )}
                     </div>
                   )}
@@ -2285,16 +2304,18 @@ export default function VideoEditor() {
                       
                       {/* Load More for Images */}
                       {hasNextImagePage && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full"
-                          onClick={() => fetchNextImagePage()}
-                          disabled={isFetchingNextImagePage}
-                          data-testid="button-load-more-images"
-                        >
-                          {isFetchingNextImagePage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
-                        </Button>
+                        <div className="pt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => fetchNextImagePage()}
+                            disabled={isFetchingNextImagePage}
+                            data-testid="button-load-more-images"
+                          >
+                            {isFetchingNextImagePage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Load More'}
+                          </Button>
+                        </div>
                       )}
                     </div>
                   )}
@@ -2461,6 +2482,7 @@ export default function VideoEditor() {
                                       transitionMode: 'perClip',
                                       clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
                                     }));
+                                    setPreviewStatus('stale');
                                     toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
                                   } else {
                                     toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
@@ -2496,6 +2518,7 @@ export default function VideoEditor() {
                                       transitionMode: 'perClip',
                                       clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
                                     }));
+                                    setPreviewStatus('stale');
                                     toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
                                   } else {
                                     toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
@@ -2531,6 +2554,7 @@ export default function VideoEditor() {
                                       transitionMode: 'perClip',
                                       clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
                                     }));
+                                    setPreviewStatus('stale');
                                     toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
                                   } else {
                                     toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
@@ -2566,6 +2590,7 @@ export default function VideoEditor() {
                                       transitionMode: 'perClip',
                                       clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
                                     }));
+                                    setPreviewStatus('stale');
                                     toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
                                   } else {
                                     toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
@@ -2601,6 +2626,7 @@ export default function VideoEditor() {
                                       transitionMode: 'perClip',
                                       clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
                                     }));
+                                    setPreviewStatus('stale');
                                     toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
                                   } else {
                                     toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
@@ -3023,7 +3049,7 @@ export default function VideoEditor() {
                     </div>
                   )}
                 </div>
-              </div>
+              </ScrollArea>
             </div>
           )}
           
@@ -3135,7 +3161,7 @@ export default function VideoEditor() {
                 }
               }}
               totalDuration={Math.max(totalDuration, 60)}
-              className="h-80"
+              className="h-[400px]"
             />
           ) : (
             <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
@@ -3632,4 +3658,4 @@ export default function VideoEditor() {
       </Dialog>
     </SidebarInset>
   );
-}
+}  

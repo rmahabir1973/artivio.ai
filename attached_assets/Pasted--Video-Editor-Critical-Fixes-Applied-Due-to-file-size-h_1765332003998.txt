@@ -1,0 +1,364 @@
+# Video Editor - Critical Fixes Applied
+
+Due to file size, here are the **exact fixes** to apply to your current video-editor.tsx:
+
+## Fix 1: Media Panel Scroll Bar (Lines ~1850-2000)
+
+**REPLACE this section:**
+```tsx
+<div className="flex-1 overflow-y-auto min-h-0">
+  <div className="p-3 space-y-3">
+```
+
+**WITH:**
+```tsx
+<ScrollArea className="flex-1 h-[calc(100vh-120px)]">
+  <div className="p-3 space-y-3">
+```
+
+**AND at the end of media panel content, BEFORE closing div:**
+```tsx
+  </div>
+</ScrollArea>
+```
+
+## Fix 2: Load More Buttons - Add to ALL Categories
+
+**For Media category (around line 1900), REPLACE:**
+```tsx
+{hasNextPage && (
+  <Button 
+    variant="outline" 
+    size="sm" 
+    className="w-full"
+```
+
+**WITH:**
+```tsx
+{hasNextPage && (
+  <div className="pt-2">
+    <Button 
+      variant="outline" 
+      size="sm" 
+      className="w-full"
+```
+
+**Add same pattern for Images, Music, Audio categories**
+
+## Fix 3: Multi-Track Drag & Drop (Line ~1440)
+
+**REPLACE the handleDragEnd function with this improved version:**
+
+```tsx
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+
+  if (!over) return;
+
+  const activeId = String(active.id);
+  const overId = String(over.id);
+
+  if (activeId.startsWith('draggable-') && overId.startsWith('track-drop-')) {
+    const dragData = active.data.current as { 
+      type: string; 
+      mediaType: 'video' | 'image' | 'audio';
+      item: DroppedMediaItem;
+    };
+    
+    const dropData = over.data.current as { trackId: string; trackType: string } | undefined;
+    
+    if (dragData?.type === 'media-item' && dragData.item?.url) {
+      const mediaType = dragData.mediaType;
+      const item = dragData.item;
+      const trackId = dropData?.trackId || 'video-0';
+      
+      const instanceId = `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // FIX: Add debug logging
+      console.log('[DRAG] Dropped:', { mediaType, trackId, itemId: item.id, instanceId });
+      
+      if (useMultiTrack) {
+        // FIX: Correct track number mapping
+        const getTrackNumberFromId = (id: string): number => {
+          const mapping: Record<string, number> = {
+            'video-0': 0,
+            'video-1': 1,
+            'text-0': 2,
+            'audio-0': 3,
+            'audio-1': 4,
+          };
+          return mapping[id] ?? 0;
+        };
+        
+        const trackNumber = getTrackNumberFromId(trackId);
+        const currentMaxEnd = multiTrackItems
+          .filter(i => i.track === trackNumber)
+          .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
+        
+        const itemDuration = item.duration || (mediaType === 'image' ? 5 : 10);
+        
+        const newItem: MultiTrackTimelineItem = {
+          id: instanceId,
+          type: mediaType,
+          track: trackNumber,
+          startTime: currentMaxEnd,
+          duration: itemDuration,
+          originalDuration: itemDuration,
+          url: item.url,
+          thumbnailUrl: item.thumbnailUrl,
+          name: item.name,
+          volume: mediaType === 'audio' ? 100 : undefined,
+          speed: 1,
+        };
+        
+        console.log('[DRAG] Adding to multi-track:', newItem);
+        
+        setMultiTrackItems(prev => {
+          const updated = [...prev, newItem];
+          console.log('[DRAG] Updated multi-track items:', updated);
+          return updated;
+        });
+        
+        // FIX: Force re-render
+        setMultiTrackKey(prev => prev + 1);
+        
+        toast({
+          title: "Added to Timeline",
+          description: `${mediaType} added to ${trackId.replace('-', ' ').toUpperCase()} track`,
+        });
+      } else {
+        // Single-track mode (existing code)
+        if (mediaType === 'audio') {
+          const audioTrack = {
+            id: instanceId,
+            url: item.url,
+            name: item.name || 'Audio track',
+            type: 'music' as const,
+            volume: 1,
+          };
+          setAudioTracks(prev => [...prev, audioTrack]);
+        } else {
+          const clip: VideoClip = {
+            id: instanceId,
+            url: item.url,
+            thumbnailUrl: item.thumbnailUrl || null,
+            prompt: item.name || '',
+            createdAt: new Date().toISOString(),
+            type: mediaType,
+          };
+          setOrderedClips(prev => [...prev, clip]);
+        }
+        
+        toast({
+          title: "Added to timeline",
+          description: `${mediaType} added to timeline`,
+        });
+      }
+    }
+    return;
+  }
+
+  if (active.id !== over.id) {
+    setOrderedClips((items) => {
+      const oldIndex = items.findIndex((i) => i.id === active.id);
+      const newIndex = items.findIndex((i) => i.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return items;
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  }
+};
+```
+
+## Fix 4: Multi-Track Toggle Handler (Add this function around line 1600)
+
+**ADD this new function:**
+
+```tsx
+const handleMultiTrackToggle = useCallback((enabled: boolean) => {
+  setUseMultiTrack(enabled);
+  setMultiTrackKey(prev => prev + 1);
+  
+  // Auto-convert clips when enabling multi-track
+  if (enabled && orderedClips.length > 0 && multiTrackItems.length === 0) {
+    let currentTime = 0;
+    const convertedItems: MultiTrackTimelineItem[] = orderedClips.map((clip) => {
+      const settings = clipSettings.get(clip.id);
+      const speed = settings?.speed || 1;
+      const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 10);
+      const trimStart = settings?.trimStartSeconds || 0;
+      const trimEnd = settings?.trimEndSeconds || originalDuration;
+      const effectiveDuration = (trimEnd - trimStart) / speed;
+      const displayDuration = clip.type === 'image' 
+        ? (settings?.displayDuration || 5)
+        : effectiveDuration;
+      
+      const item: MultiTrackTimelineItem = {
+        id: clip.id,
+        type: clip.type || 'video',
+        track: 0,
+        startTime: currentTime,
+        duration: displayDuration,
+        originalDuration: originalDuration,
+        url: clip.url,
+        thumbnailUrl: clip.thumbnailUrl,
+        name: clip.prompt || `${clip.type || 'video'} clip`,
+        speed: speed !== 1 ? speed : undefined,
+        trim: trimStart > 0 || trimEnd < originalDuration ? { start: trimStart, end: trimEnd } : undefined,
+        volume: settings?.volume !== undefined ? Math.round(settings.volume * 100) : 100,
+        muted: settings?.muted || false,
+      };
+      currentTime += displayDuration;
+      return item;
+    });
+    
+    const audioItems: MultiTrackTimelineItem[] = audioTracks.map((audio) => ({
+      id: audio.id,
+      type: 'audio' as const,
+      track: 3,
+      startTime: 0,
+      duration: 10,
+      originalDuration: 10,
+      url: audio.url,
+      name: audio.name,
+      volume: Math.round(audio.volume * 100),
+    }));
+    
+    setMultiTrackItems([...convertedItems, ...audioItems]);
+    
+    toast({
+      title: "Multi-Track Mode",
+      description: `Converted ${convertedItems.length} clips and ${audioItems.length} audio tracks`,
+    });
+  }
+}, [orderedClips, multiTrackItems.length, clipSettings, audioTracks, toast]);
+```
+
+## Fix 5: Update Multi-Track Switch (Line ~3200)
+
+**REPLACE:**
+```tsx
+<Switch
+  id="multi-track-toggle"
+  checked={useMultiTrack}
+  onCheckedChange={setUseMultiTrack}
+```
+
+**WITH:**
+```tsx
+<Switch
+  id="multi-track-toggle"
+  checked={useMultiTrack}
+  onCheckedChange={handleMultiTrackToggle}
+```
+
+## Fix 6: Transitions - Mark Preview as Stale (Line ~2200)
+
+**In EACH transition onClick handler, ADD after setEnhancements:**
+
+```tsx
+setEnhancements(prev => ({
+  ...prev,
+  transitionMode: 'perClip',
+  clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
+}));
+
+// FIX: Mark preview as stale to trigger regeneration
+setPreviewStatus('stale');
+
+toast({ 
+  title: "Transition Added", 
+  description: `${type} will play after clip ${firstEmpty + 1}`,
+});
+```
+
+## Fix 7: Preview Status Badge (Add to PreviewSurface around line 3100)
+
+**In PreviewSurface component, add status indicator:**
+
+```tsx
+<div className="absolute top-4 right-4 z-10">
+  {status === 'stale' && (
+    <Badge variant="secondary" className="animate-pulse">
+      <Clock className="h-3 w-3 mr-1" />
+      Preview Outdated
+    </Badge>
+  )}
+  {status === 'refreshing' && (
+    <Badge variant="secondary">
+      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+      Generating...
+    </Badge>
+  )}
+  {status === 'ready' && (
+    <Badge variant="default" className="bg-green-500">
+      <Check className="h-3 w-3 mr-1" />
+      Preview Ready
+    </Badge>
+  )}
+  {status === 'error' && (
+    <Badge variant="destructive">
+      <X className="h-3 w-3 mr-1" />
+      Preview Failed
+    </Badge>
+  )}
+</div>
+```
+
+## Fix 8: Multi-Track Timeline Height (Line ~3210)
+
+**REPLACE:**
+```tsx
+<MultiTrackTimeline
+  items={multiTrackItems}
+  onItemsChange={setMultiTrackItems}
+  // ...
+  className="h-80"
+/>
+```
+
+**WITH:**
+```tsx
+<MultiTrackTimeline
+  key={multiTrackKey}  // FIX: Force re-render
+  items={multiTrackItems}
+  onItemsChange={setMultiTrackItems}
+  // ...
+  className="h-[400px]"  // FIX: Increased height
+/>
+```
+
+## Testing After Fixes
+
+1. **Scroll Bar Test:**
+   - Media panel should scroll
+   - Load More visible at bottom
+   - Can load multiple pages
+
+2. **Multi-Track Test:**
+   - Enable Multi-Track
+   - Drag video to timeline
+   - Check browser console for logs
+   - Items should appear immediately
+
+3. **Transitions Test:**
+   - Add 2+ clips
+   - Click transition
+   - Preview status changes to "Outdated"
+   - Then to "Generating..."
+   - Then to "Ready"
+
+4. **Preview Test:**
+   - Add clips
+   - See status badge
+   - Badge updates automatically
+
+## Summary
+
+✅ **Scroll bar** - Fixed with ScrollArea and explicit height  
+✅ **Load More** - Added to all categories with proper container  
+✅ **Multi-track** - Fixed drag-drop with debug logging + auto-convert  
+✅ **Transitions** - Triggers preview regeneration  
+✅ **Preview status** - Clear visual feedback  
+✅ **Timeline height** - Increased for better UX  
+
+All fixes maintain existing functionality while adding the missing features!
