@@ -8322,12 +8322,18 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       // Extract video URLs from clips (handle both formats from frontend)
       const videoUrls = previewClips.map((clip: any) => clip.sourceUrl || clip.url);
       
-      // Build preview enhancements (simplified)
+      // Build preview enhancements (include speed, background music, audio)
       const previewEnhancements = enhancements ? {
         transitions: enhancements.transitions,
         clipSettings: enhancements.clipSettings?.filter((cs: any) => 
           previewClips.some((clip: any, index: number) => cs.clipIndex === index)
         ),
+        speed: enhancements.speed,
+        backgroundMusic: enhancements.backgroundMusic,
+        audioTrack: enhancements.audioTrack,
+        fadeIn: enhancements.fadeIn,
+        fadeOut: enhancements.fadeOut,
+        fadeDuration: enhancements.fadeDuration,
       } : undefined;
       
       // Use local FFmpeg processing with lower quality settings for speed

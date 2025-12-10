@@ -760,6 +760,16 @@ export default function VideoEditor() {
               cs.trimEndSeconds !== undefined || 
               cs.isImage
             ),
+            backgroundMusic: enhancements.backgroundMusic ? {
+              audioUrl: enhancements.backgroundMusic.audioUrl,
+              volume: enhancements.backgroundMusic.volume,
+            } : undefined,
+            audioTrack: enhancements.audioTrack ? {
+              audioUrl: enhancements.audioTrack.audioUrl,
+              type: enhancements.audioTrack.type,
+              volume: enhancements.audioTrack.volume,
+              startAtSeconds: 0,
+            } : undefined,
           },
           previewMode: true,
           maxDuration: 10,
@@ -1028,35 +1038,47 @@ export default function VideoEditor() {
   // Combine loading state for the main display
   const generationsLoading = videoLoading;
 
-  // Flatten video pages and filter for completed videos
+  // Flatten video pages and filter for completed videos with valid URLs
   const allVideos = useMemo(() => {
     const items = videoData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+      (g) => g.status === "completed" && 
+             g.resultUrl && 
+             g.resultUrl.trim() !== '' &&
+             !g.resultUrl.includes('undefined')
     );
   }, [videoData]);
   
-  // Flatten and filter music tracks (already filtered by server, just check status)
+  // Flatten and filter music tracks (completed with valid URLs)
   const musicTracks = useMemo(() => {
     const items = musicData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+      (g) => g.status === "completed" && 
+             g.resultUrl && 
+             g.resultUrl.trim() !== '' &&
+             !g.resultUrl.includes('undefined')
     );
   }, [musicData]);
   
-  // Flatten and filter audio tracks (TTS, voice, sound effects)
+  // Flatten and filter audio tracks (completed with valid URLs)
   const voiceTracks = useMemo(() => {
     const items = audioData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+      (g) => g.status === "completed" && 
+             g.resultUrl && 
+             g.resultUrl.trim() !== '' &&
+             !g.resultUrl.includes('undefined')
     );
   }, [audioData]);
   
-  // Flatten and filter images
+  // Flatten and filter images (completed with valid URLs)
   const allImages = useMemo(() => {
     const items = imageData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+      (g) => g.status === "completed" && 
+             g.resultUrl && 
+             g.resultUrl.trim() !== '' &&
+             !g.resultUrl.includes('undefined')
     );
   }, [imageData]);
   
@@ -3021,7 +3043,8 @@ export default function VideoEditor() {
         <div className="border-t">
           <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
             <span className="text-sm font-medium">Timeline</span>
-            <div className="flex items-center gap-2">
+            {/* Multi-track toggle disabled for now - will be re-enabled later */}
+            {/* <div className="flex items-center gap-2">
               <Label htmlFor="multi-track-toggle" className="text-xs text-muted-foreground">
                 Multi-Track
               </Label>
@@ -3031,7 +3054,7 @@ export default function VideoEditor() {
                 onCheckedChange={handleMultiTrackToggle}
                 data-testid="switch-multi-track-mode"
               />
-            </div>
+            </div> */}
           </div>
           
           {useMultiTrack ? (
