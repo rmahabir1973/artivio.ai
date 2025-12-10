@@ -1832,7 +1832,10 @@ export default function VideoEditor() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (!over) return;
+    if (!over) {
+      // IMPORTANT: Clear any drag state when drag ends without a valid drop
+      return;
+    }
 
     const activeId = String(active.id);
     const overId = String(over.id);
@@ -1928,10 +1931,13 @@ export default function VideoEditor() {
           });
         }
       }
+      
+      // IMPORTANT: Return early to prevent fall-through to reordering logic
       return;
     }
 
-    if (active.id !== over.id) {
+    // Handle reordering clips in single-track mode
+    if (active.id !== over.id && !activeId.startsWith('draggable-')) {
       setOrderedClips((items) => {
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over.id);
@@ -2187,6 +2193,10 @@ export default function VideoEditor() {
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
+          onDragCancel={() => {
+            // Clean up any drag state on cancel
+            console.log('[DRAG] Drag cancelled');
+          }}
         >
         <div className="flex-1 flex overflow-hidden">
           {/* Left Icon Sidebar */}

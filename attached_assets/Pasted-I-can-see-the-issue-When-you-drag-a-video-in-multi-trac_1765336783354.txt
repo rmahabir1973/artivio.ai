@@ -1,0 +1,147 @@
+I can see the issue! When you drag a video in multi-track mode, it's getting attached to the 3rd video because of the drag-and-drop logic. The problem is in how the handleDragEnd function handles the drag events.
+Looking at the code, I can identify several issues:
+The Main Problem:
+In the handleDragEnd function (around line 1150-1200), when dragging media items to tracks, the code creates items but doesn't properly handle the drag state cleanup. The dragged element is maintaining a reference to another item.
+Key Issues:
+
+No drag state reset: When dragging ends, there's no cleanup of the active drag state
+Event propagation: The drag events might be bubbling and attaching to wrong elements
+ID collision: The activeId might be matching multiple elements
+
+The Fix:
+Replace the handleDragEnd function with this corrected version:
+typescriptconst handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+
+  if (!over) {
+    // IMPORTANT: Clear any drag state when drag ends without a valid drop
+    return;
+  }
+
+  const activeId = String(active.id);
+  const overId = String(over.id);
+
+  // Handle dragging media items to multi-track timeline
+  if (activeId.startsWith('draggable-') && overId.startsWith('track-drop-')) {
+    const dragData = active.data.current as { 
+      type: string; 
+      mediaType: 'video' | 'image' | 'audio';
+      item: DroppedMediaItem;
+    };
+    
+    const dropData = over.data.current as { trackId: string; trackType: string } | undefined;
+    
+    if (dragData?.type === 'media-item' && dragData.item?.url) {
+      const mediaType = dragData.mediaType;
+      const item = dragData.item;
+      const trackId = dropData?.trackId || 'video-0';
+      
+      // Create unique instance ID with more entropy to prevent collisions
+      const instanceId = `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      if (useMultiTrack) {
+        const getTrackNumberFromId = (id: string): number => {
+          const mapping: Record<string, number> = {
+            'video-0': 0,
+            'video-1': 1,
+            'text-0': 2,
+            'audio-0': 3,
+            'audio-1': 4,
+          };
+          return mapping[id] ?? 0;
+        };
+        
+        const trackNumber = getTrackNumberFromId(trackId);
+        const currentMaxEnd = multiTrackItems
+          .filter(i => i.track === trackNumber)
+          .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
+        
+        const itemDuration = item.duration || (mediaType === 'image' ? 5 : 10);
+        
+        const newItem: MultiTrackTimelineItem = {
+          id: instanceId,
+          type: mediaType,
+          track: trackNumber,
+          startTime: currentMaxEnd,
+          duration: itemDuration,
+          originalDuration: itemDuration,
+          url: item.url,
+          thumbnailUrl: item.thumbnailUrl,
+          name: item.name,
+          volume: mediaType === 'audio' ? 100 : undefined,
+          speed: 1,
+        };
+        
+        console.log('[DRAG] Adding to multi-track:', newItem);
+        
+        setMultiTrackItems(prev => {
+          const updated = [...prev, newItem];
+          console.log('[DRAG] Updated multi-track items:', updated);
+          return updated;
+        });
+        
+        // Force remount of timeline to clear drag state
+        setMultiTrackKey(prev => prev + 1);
+        
+        toast({
+          title: "Added to Timeline",
+          description: `${mediaType} added to ${trackId.replace('-', ' ').toUpperCase()} track`,
+        });
+      } else {
+        if (mediaType === 'audio') {
+          const audioTrack = {
+            id: instanceId,
+            url: item.url,
+            name: item.name || 'Audio track',
+            type: 'music' as const,
+            volume: 1,
+          };
+          setAudioTracks(prev => [...prev, audioTrack]);
+        } else {
+          const clip: VideoClip = {
+            id: instanceId,
+            url: item.url,
+            thumbnailUrl: item.thumbnailUrl || null,
+            prompt: item.name || '',
+            createdAt: new Date().toISOString(),
+            type: mediaType,
+          };
+          setOrderedClips(prev => [...prev, clip]);
+        }
+        
+        toast({
+          title: "Added to timeline",
+          description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to timeline`,
+        });
+      }
+    }
+    
+    // IMPORTANT: Return early to prevent fall-through to reordering logic
+    return;
+  }
+
+  // Handle reordering clips in single-track mode
+  if (active.id !== over.id && !activeId.startsWith('draggable-')) {
+    setOrderedClips((items) => {
+      const oldIndex = items.findIndex((i) => i.id === active.id);
+      const newIndex = items.findIndex((i) => i.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return items;
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  }
+};
+Additional Fix Needed:
+The multiTrackKey state is being used to force remounts, but you also need to ensure the DraggableMediaItem components properly clean up their drag state. Check the DraggableMediaItem component in ./video-editor/components and make sure it has proper drag end handlers.
+Alternative Solution:
+If the above doesn't fully resolve it, you may need to add a drag overlay that prevents the visual "sticking":
+typescript// Add this to your DndContext
+<DndContext
+  sensors={sensors}
+  collisionDetection={closestCenter}
+  onDragEnd={handleDragEnd}
+  onDragCancel={() => {
+    // Clean up any drag state on cancel
+    console.log('[DRAG] Drag cancelled');
+  }}
+>
+The key issue is that when dragging ends, there's no cleanup happening, so the drag state persists and makes it seem like items are "stuck" together. The fixes above add proper cleanup and early returns to prevent the drag logic from executing incorrectly.
