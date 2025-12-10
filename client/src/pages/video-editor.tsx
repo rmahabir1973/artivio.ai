@@ -2027,8 +2027,38 @@ export default function VideoEditor() {
 
   // Handle removing audio track from timeline
   const removeAudioTrack = useCallback((trackId: string) => {
+    // Get the track being removed
+    const removedTrack = audioTracks.find(t => t.id === trackId);
+    
+    // Remove from audioTracks state
     setAudioTracks(prev => prev.filter(t => t.id !== trackId));
-  }, []);
+    
+    // CRITICAL: Also remove from enhancements if this was the background music or audio track
+    setEnhancements(prev => {
+      const updates: Partial<typeof prev> = {};
+      
+      // Check if removing background music
+      if (removedTrack && prev.backgroundMusic?.audioUrl === removedTrack.url) {
+        updates.backgroundMusic = undefined;
+      }
+      
+      // Check if removing audio track (voice)
+      if (removedTrack && prev.audioTrack?.audioUrl === removedTrack.url) {
+        updates.audioTrack = undefined;
+      }
+      
+      // Only update if there are changes
+      if (Object.keys(updates).length > 0) {
+        return { ...prev, ...updates };
+      }
+      return prev;
+    });
+    
+    toast({
+      title: "Audio Removed",
+      description: "Audio track removed from timeline",
+    });
+  }, [audioTracks, toast]);
 
   if (authLoading) {
     return (
