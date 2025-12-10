@@ -1,0 +1,235 @@
+I see the issue now! The problem is that when you're dragging items in multi-track mode, the MultiTrackTimeline component itself likely has its own drag-and-drop logic that's conflicting with the main DndContext. The items are getting "stuck" because there are competing drag contexts trying to control the same elements.
+The issue is that you have:
+
+A parent DndContext wrapping the entire editor
+The MultiTrackTimeline component (which likely has its own internal DndContext for moving items within tracks)
+
+This creates a nested DndContext conflict. When you drag, both contexts are trying to manage the drag state.
+Solution:
+You need to conditionally wrap the timeline in the DndContext only when NOT in multi-track mode. Here's the fix:
+tsx{/* Main Editor Layout: Sidebar + Media Panel + Preview */}
+{/* Conditionally wrap in DndContext based on multi-track mode */}
+{!useMultiTrack ? (
+  <DndContext
+    sensors={sensors}
+    collisionDetection={closestCenter}
+    onDragEnd={handleDragEnd}
+    onDragCancel={() => {
+      console.log('[DRAG] Drag cancelled');
+    }}
+  >
+    <div className="flex-1 flex overflow-hidden">
+      {/* Left Icon Sidebar */}
+      <EditorSidebar 
+        activeCategory={activeCategory} 
+        onCategoryChange={setActiveCategory} 
+      />
+      
+      {/* Media Panel */}
+      {mediaPanelOpen && (
+        <div className="w-72 border-r flex flex-col shrink-0 bg-background min-h-0 h-full" data-testid="media-panel">
+          {/* ... existing media panel content ... */}
+        </div>
+      )}
+      
+      {/* Media Panel Toggle */}
+      {!mediaPanelOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-full w-8 rounded-none border-r shrink-0"
+          onClick={() => setMediaPanelOpen(true)}
+          data-testid="button-open-media-panel"
+        >
+          <PanelLeft className="h-4 w-4" />
+        </Button>
+      )}
+      
+      {/* Preview Surface */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <PreviewSurface
+          previewUrl={useMultiTrack ? localPreviewUrl : previewUrl}
+          status={previewStatus}
+          clipCount={useMultiTrack ? multiTrackItems.length : orderedClips.length}
+          totalDuration={totalDuration}
+          onForceRefresh={useMultiTrack ? generateLocalPreview : forceRefreshPreview}
+          errorMessage={ffmpegError || previewError}
+          className="flex-1"
+        />
+        {textOverlays.length > 0 && (
+          <TextOverlayRenderer
+            overlays={textOverlays}
+            currentTime={0}
+            selectedOverlayId={selectedOverlayId}
+            onSelectOverlay={setSelectedOverlayId}
+            isPlaying={false}
+          />
+        )}
+      </div>
+    </div>
+    
+    {/* Timeline at Bottom - wrapped in DndContext for single-track */}
+    <div className="border-t">
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+        <span className="text-sm font-medium">Timeline</span>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="multi-track-toggle" className="text-xs text-muted-foreground">
+            Multi-Track
+          </Label>
+          <Switch
+            id="multi-track-toggle"
+            checked={useMultiTrack}
+            onCheckedChange={handleMultiTrackToggle}
+            data-testid="switch-multi-track-mode"
+          />
+        </div>
+      </div>
+      
+      <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
+        <TimelineTrack
+          clips={orderedClips}
+          audioTracks={audioTracks}
+          getClipSettings={getClipSettings}
+          onMuteToggle={toggleClipMute}
+          onRemoveClip={removeClipFromTimeline}
+          onRemoveAudioTrack={removeAudioTrack}
+          onOpenSettings={openClipSettings}
+          totalDuration={totalDuration}
+        />
+      </SortableContext>
+    </div>
+  </DndContext>
+) : (
+  // Multi-track mode WITHOUT parent DndContext - MultiTrackTimeline manages its own
+  <>
+    <div className="flex-1 flex overflow-hidden">
+      {/* Left Icon Sidebar */}
+      <EditorSidebar 
+        activeCategory={activeCategory} 
+        onCategoryChange={setActiveCategory} 
+      />
+      
+      {/* Media Panel */}
+      {mediaPanelOpen && (
+        <div className="w-72 border-r flex flex-col shrink-0 bg-background min-h-0 h-full" data-testid="media-panel">
+          {/* ... existing media panel content ... */}
+        </div>
+      )}
+      
+      {/* Media Panel Toggle */}
+      {!mediaPanelOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-full w-8 rounded-none border-r shrink-0"
+          onClick={() => setMediaPanelOpen(true)}
+          data-testid="button-open-media-panel"
+        >
+          <PanelLeft className="h-4 w-4" />
+        </Button>
+      )}
+      
+      {/* Preview Surface */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <PreviewSurface
+          previewUrl={localPreviewUrl}
+          status={previewStatus}
+          clipCount={multiTrackItems.length}
+          totalDuration={totalDuration}
+          onForceRefresh={generateLocalPreview}
+          errorMessage={ffmpegError || previewError}
+          className="flex-1"
+        />
+        {textOverlays.length > 0 && (
+          <TextOverlayRenderer
+            overlays={textOverlays}
+            currentTime={0}
+            selectedOverlayId={selectedOverlayId}
+            onSelectOverlay={setSelectedOverlayId}
+            isPlaying={false}
+          />
+        )}
+        
+        {/* FFmpeg Preview Controls */}
+        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={generateLocalPreview}
+            disabled={ffmpegLoading || previewStatus === 'refreshing' || multiTrackItems.length === 0}
+            data-testid="button-generate-local-preview"
+          >
+            {ffmpegLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading FFmpeg...
+              </>
+            ) : previewStatus === 'refreshing' ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating ({ffmpegProgress}%)
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-2" />
+                Generate Preview
+              </>
+            )}
+          </Button>
+          {previewStatus === 'refreshing' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={ffmpegCancel}
+              data-testid="button-cancel-preview"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+    
+    {/* Timeline at Bottom - MultiTrackTimeline has its own DndContext */}
+    <div className="border-t">
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+        <span className="text-sm font-medium">Timeline</span>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="multi-track-toggle" className="text-xs text-muted-foreground">
+            Multi-Track
+          </Label>
+          <Switch
+            id="multi-track-toggle"
+            checked={useMultiTrack}
+            onCheckedChange={handleMultiTrackToggle}
+            data-testid="switch-multi-track-mode"
+          />
+        </div>
+      </div>
+      
+      <MultiTrackTimeline
+        key={multiTrackKey}
+        items={multiTrackItems}
+        onItemsChange={setMultiTrackItems}
+        onItemSelect={(item) => {
+          if (item) {
+            toast({
+              title: "Clip selected",
+              description: `Selected: ${item.name || item.type} clip`,
+            });
+          }
+        }}
+        totalDuration={Math.max(totalDuration, 60)}
+        className="h-[400px]"
+      />
+    </div>
+  </>
+)}
+Why this fixes it:
+
+Eliminates nested DndContext conflict: The MultiTrackTimeline component has its own internal drag-and-drop context, so wrapping it in another DndContext causes conflicts
+Separate drag logic: Single-track mode uses the parent DndContext for simple reordering, while multi-track mode lets MultiTrackTimeline handle all drag operations internally
+Clean state separation: Each mode has its own isolated drag state that doesn't interfere with the other
+
+The drag-and-drop should now work smoothly in multi-track mode without items getting "stuck" to other videos!Claude is AI and can make mistakes. Please double-check responses. Sonnet 4.5

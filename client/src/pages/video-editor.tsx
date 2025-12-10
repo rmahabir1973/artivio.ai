@@ -1834,11 +1834,23 @@ export default function VideoEditor() {
 
     if (!over) {
       // IMPORTANT: Clear any drag state when drag ends without a valid drop
+      console.log('[DRAG] No drop target, ignoring');
       return;
     }
 
     const activeId = String(active.id);
     const overId = String(over.id);
+    
+    console.log('[DRAG] handleDragEnd:', { activeId, overId, useMultiTrack });
+
+    // In multi-track mode, ONLY handle media-to-track drops
+    // Let the timeline editor handle all internal drag operations
+    if (useMultiTrack) {
+      if (!(activeId.startsWith('draggable-') && overId.startsWith('track-drop-'))) {
+        console.log('[DRAG] Multi-track mode: ignoring non-media drag');
+        return;
+      }
+    }
 
     if (activeId.startsWith('draggable-') && overId.startsWith('track-drop-')) {
       const dragData = active.data.current as { 
@@ -2188,13 +2200,13 @@ export default function VideoEditor() {
           </div>
         </header>
 
-        {/* Main Editor Layout: Sidebar + Media Panel + Preview - wrapped in DndContext for cross-component drag */}
+        {/* Main Editor Layout: Sidebar + Media Panel + Preview */}
+        {/* Single-track mode uses DndContext for reordering, Multi-track mode has its own internal DndContext */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
           onDragCancel={() => {
-            // Clean up any drag state on cancel
             console.log('[DRAG] Drag cancelled');
           }}
         >
