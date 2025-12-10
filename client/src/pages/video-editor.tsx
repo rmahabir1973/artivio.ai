@@ -2102,8 +2102,8 @@ export default function VideoEditor() {
           
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background" data-testid="media-panel">
-              <div className="flex items-center justify-between p-3 border-b shrink-0">
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background" style={{ height: '100vh' }} data-testid="media-panel">
+              <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
                   variant="ghost" 
@@ -2116,7 +2116,7 @@ export default function VideoEditor() {
                 </Button>
               </div>
               
-              <ScrollArea className="flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
@@ -2954,7 +2954,7 @@ export default function VideoEditor() {
                     </div>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           )}
           
