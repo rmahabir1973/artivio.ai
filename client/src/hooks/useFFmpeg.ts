@@ -2,6 +2,26 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
+/**
+ * Supported FFmpeg xfade transition types for video transitions.
+ * 
+ * HYBRID ARCHITECTURE NOTE:
+ * - Client-side preview (this hook): Processes first 10 visual clips for quick verification.
+ *   Audio/text tracks are preserved in timeline but rendered only in Lambda export.
+ * - AWS Lambda export: Processes complete timeline with all 5 tracks, full audio mixing,
+ *   text rendering, and all transition effects.
+ * 
+ * This split ensures responsive client-side preview without browser memory issues,
+ * while Lambda handles full-fidelity final export.
+ */
+export type FFmpegTransitionType = 
+  | 'fade' | 'fadeblack' | 'fadewhite' | 'fadefast' | 'fadeslow'
+  | 'crossfade' | 'dissolve'
+  | 'wipe' | 'wipeleft' | 'wiperight' | 'wipeup' | 'wipedown'
+  | 'slide' | 'slideleft' | 'slideright' | 'slideup' | 'slidedown'
+  | 'circlecrop' | 'rectcrop' | 'circleopen' | 'circleclose'
+  | 'radial' | 'pixelize' | 'distance';
+
 export interface TimelineItem {
   id: string;
   type: 'video' | 'image' | 'text' | 'audio';
@@ -12,7 +32,7 @@ export interface TimelineItem {
   zIndex?: number;
   trim?: { start: number; end: number };
   transition?: {
-    type: 'fade' | 'crossfade' | 'wipe' | 'dissolve' | 'radial' | 'circleopen' | 'slide' | 'pixelize';
+    type: FFmpegTransitionType;
     duration: number;
   };
   text?: {
@@ -115,16 +135,21 @@ export function useFFmpeg(options: UseFFmpegOptions = {}) {
       setProgress(0);
       setError(null);
 
+      // Filter to visual items only (FFmpeg.wasm processes video/image for preview)
+      // Note: Audio/text items are preserved in timeline for timing but processed by Lambda for export
       const videoItems = timeline.items.filter(
         item => item.type === 'video' || item.type === 'image'
-      ).slice(0, 5);
+      );
 
-      if (videoItems.length === 0) {
+      // For client-side preview, limit to first 10 items to avoid memory issues
+      const previewItems = videoItems.slice(0, 10);
+
+      if (previewItems.length === 0) {
         throw new Error('No video or image items in timeline');
       }
 
-      for (let i = 0; i < videoItems.length; i++) {
-        const item = videoItems[i];
+      for (let i = 0; i < previewItems.length; i++) {
+        const item = previewItems[i];
         const ext = item.type === 'video' ? 'mp4' : 'png';
         const fileName = `input_${i}.${ext}`;
         
@@ -135,7 +160,7 @@ export function useFFmpeg(options: UseFFmpegOptions = {}) {
       }
 
       const { filterComplex, inputArgs, outputMap } = buildFilterComplex(
-        videoItems,
+        previewItems,
         timeline.resolution,
         previewDuration
       );
@@ -161,8 +186,8 @@ export function useFFmpeg(options: UseFFmpegOptions = {}) {
       const blob = new Blob([data], { type: 'video/mp4' });
       const url = URL.createObjectURL(blob);
 
-      for (let i = 0; i < videoItems.length; i++) {
-        const ext = videoItems[i].type === 'video' ? 'mp4' : 'png';
+      for (let i = 0; i < previewItems.length; i++) {
+        const ext = previewItems[i].type === 'video' ? 'mp4' : 'png';
         try {
           await ffmpeg.deleteFile(`input_${i}.${ext}`);
         } catch {}
@@ -358,15 +383,38 @@ function buildFilterComplex(
 }
 
 function mapTransitionType(type: string): string {
+  // Map generic transition types to FFmpeg xfade filter names
   const transitionMap: Record<string, string> = {
+    // Basic types
     'fade': 'fade',
     'crossfade': 'fade',
+    // Fade variations
+    'fadeblack': 'fadeblack',
+    'fadewhite': 'fadewhite',
+    'fadefast': 'fade',
+    'fadeslow': 'fade',
+    // Wipe variations
     'wipe': 'wipeleft',
-    'dissolve': 'dissolve',
-    'radial': 'radial',
-    'circleopen': 'circleopen',
+    'wipeleft': 'wipeleft',
+    'wiperight': 'wiperight',
+    'wipeup': 'wipeup',
+    'wipedown': 'wipedown',
+    // Slide variations
     'slide': 'slideleft',
+    'slideleft': 'slideleft',
+    'slideright': 'slideright',
+    'slideup': 'slideup',
+    'slidedown': 'slidedown',
+    // Shape variations
+    'circlecrop': 'circlecrop',
+    'rectcrop': 'rectcrop',
+    'circleopen': 'circleopen',
+    'circleclose': 'circleclose',
+    'radial': 'radial',
+    // Blend/effect
+    'dissolve': 'dissolve',
     'pixelize': 'pixelize',
+    'distance': 'distance',
   };
   return transitionMap[type] || 'fade';
 }

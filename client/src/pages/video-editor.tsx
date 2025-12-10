@@ -95,6 +95,7 @@ import type { VideoProject } from "@shared/schema";
 import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer } from "./video-editor/components";
 import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
+import { useFFmpeg, Timeline as FFmpegTimeline, TimelineItem as FFmpegTimelineItem, FFmpegTransitionType } from "@/hooks/useFFmpeg";
 
 type WizardStep = 1 | 2 | 3;
 
@@ -508,6 +509,22 @@ export default function VideoEditor() {
   const previewCacheRef = useRef<Map<string, string>>(new Map());
   const lastPreviewSignatureRef = useRef<string | null>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // FFmpeg.wasm for local preview (multi-track mode)
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const {
+    loaded: ffmpegLoaded,
+    loading: ffmpegLoading,
+    progress: ffmpegProgress,
+    error: ffmpegError,
+    loadFFmpeg,
+    generatePreview: ffmpegGeneratePreview,
+    cancel: ffmpegCancel,
+  } = useFFmpeg({
+    onProgress: (progress) => {
+      console.log(`[FFmpeg] Preview progress: ${progress}%`);
+    },
+  });
 
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
@@ -794,6 +811,117 @@ export default function VideoEditor() {
     }
     triggerPreviewGeneration();
   }, [buildPreviewSignature, triggerPreviewGeneration]);
+  
+  // Convert multi-track items to FFmpeg timeline format for local preview
+  // Note: Client-side FFmpeg.wasm preview focuses on visual tracks (video/image) only.
+  // Audio mixing and text rendering are handled by the Lambda export for final output.
+  const convertToFFmpegTimeline = useCallback((): FFmpegTimeline | null => {
+    if (multiTrackItems.length === 0) return null;
+    
+    // For client-side preview, include all item types for accurate timing
+    // FFmpeg.wasm will process video/image for visual output
+    const allItems = multiTrackItems;
+    
+    // Must have at least one visual item for preview generation
+    const hasVisualItems = allItems.some(
+      item => item.type === 'video' || item.type === 'image'
+    );
+    
+    if (!hasVisualItems) return null;
+    
+    // Calculate total duration from all items
+    const maxEnd = Math.max(...allItems.map(item => item.startTime + item.duration));
+    
+    // Valid FFmpeg xfade transition types
+    const validTransitions: FFmpegTransitionType[] = [
+      'fade', 'fadeblack', 'fadewhite', 'fadefast', 'fadeslow',
+      'crossfade', 'dissolve',
+      'wipe', 'wipeleft', 'wiperight', 'wipeup', 'wipedown',
+      'slide', 'slideleft', 'slideright', 'slideup', 'slidedown',
+      'circlecrop', 'rectcrop', 'circleopen', 'circleclose',
+      'radial', 'pixelize', 'distance'
+    ];
+    
+    // Convert all items to FFmpeg timeline format
+    const items: FFmpegTimelineItem[] = allItems.map(item => ({
+      id: item.id,
+      type: item.type as 'video' | 'image' | 'text' | 'audio',
+      track: item.track,
+      startTime: item.startTime,
+      duration: item.duration,
+      url: item.url,
+      zIndex: item.zIndex,
+      trim: item.trim,
+      transition: item.transition ? {
+        type: (validTransitions.includes(item.transition.type as FFmpegTransitionType) 
+          ? item.transition.type 
+          : 'fade') as FFmpegTransitionType,
+        duration: item.transition.duration,
+      } : undefined,
+      text: item.text,
+      volume: item.volume,
+      position: item.position,
+      opacity: item.opacity,
+    }));
+    
+    return {
+      items,
+      duration: maxEnd,
+      resolution: { width: 1920, height: 1080 },
+      fps: 30,
+    };
+  }, [multiTrackItems]);
+  
+  // Generate local preview using FFmpeg.wasm (for multi-track mode)
+  const generateLocalPreview = useCallback(async () => {
+    if (!ffmpegLoaded) {
+      toast({
+        title: "Loading FFmpeg",
+        description: "Please wait while FFmpeg is being loaded...",
+      });
+      await loadFFmpeg();
+      return;
+    }
+    
+    const timeline = convertToFFmpegTimeline();
+    if (!timeline) {
+      toast({
+        title: "No media",
+        description: "Add videos or images to the timeline to generate a preview.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setPreviewStatus('refreshing');
+    toast({
+      title: "Generating Preview",
+      description: "Creating local preview using your browser...",
+    });
+    
+    try {
+      const previewUrl = await ffmpegGeneratePreview(timeline, 10);
+      if (previewUrl) {
+        setLocalPreviewUrl(previewUrl);
+        setPreviewUrl(previewUrl);
+        setPreviewStatus('ready');
+        toast({
+          title: "Preview Ready",
+          description: "Local preview generated successfully!",
+        });
+      } else {
+        throw new Error('Failed to generate preview');
+      }
+    } catch (error) {
+      setPreviewStatus('error');
+      setPreviewError(error instanceof Error ? error.message : 'Preview generation failed');
+      toast({
+        title: "Preview Failed",
+        description: error instanceof Error ? error.message : 'Failed to generate preview',
+        variant: "destructive",
+      });
+    }
+  }, [ffmpegLoaded, loadFFmpeg, convertToFFmpegTimeline, ffmpegGeneratePreview, toast]);
   
   // Open clip settings modal
   const openClipSettings = useCallback((clip: VideoClip, index: number) => {
@@ -2854,12 +2982,12 @@ export default function VideoEditor() {
           {/* Preview Surface - Always Visible with Auto-Update */}
           <div className="flex-1 flex flex-col min-w-0 relative">
             <PreviewSurface
-              previewUrl={previewUrl}
+              previewUrl={useMultiTrack ? localPreviewUrl : previewUrl}
               status={previewStatus}
-              clipCount={orderedClips.length}
+              clipCount={useMultiTrack ? multiTrackItems.length : orderedClips.length}
               totalDuration={totalDuration}
-              onForceRefresh={forceRefreshPreview}
-              errorMessage={previewError}
+              onForceRefresh={useMultiTrack ? generateLocalPreview : forceRefreshPreview}
+              errorMessage={ffmpegError || previewError}
               className="flex-1"
             />
             {textOverlays.length > 0 && (
@@ -2870,6 +2998,47 @@ export default function VideoEditor() {
                 onSelectOverlay={setSelectedOverlayId}
                 isPlaying={false}
               />
+            )}
+            
+            {/* FFmpeg Preview Controls for Multi-Track Mode */}
+            {useMultiTrack && (
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={generateLocalPreview}
+                  disabled={ffmpegLoading || previewStatus === 'refreshing' || multiTrackItems.length === 0}
+                  data-testid="button-generate-local-preview"
+                >
+                  {ffmpegLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading FFmpeg...
+                    </>
+                  ) : previewStatus === 'refreshing' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating ({ffmpegProgress}%)
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Generate Preview
+                    </>
+                  )}
+                </Button>
+                {previewStatus === 'refreshing' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={ffmpegCancel}
+                    data-testid="button-cancel-preview"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </div>

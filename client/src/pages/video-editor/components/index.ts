@@ -9,3 +9,5 @@ export type { MultiTrackTimelineItem, DroppedMediaItem } from './multi-track-tim
 export { DraggableMediaItem } from './draggable-media-item';
 export { TextOverlayEditor } from './text-overlay-editor';
 export { TextOverlayRenderer } from './text-overlay-renderer';
+export { TransitionSelector, TransitionBadge, TRANSITION_OPTIONS } from './transition-selector';
+export type { TransitionConfig } from './transition-selector';

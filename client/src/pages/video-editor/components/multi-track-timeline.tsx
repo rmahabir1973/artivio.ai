@@ -3,6 +3,7 @@ import { Timeline, TimelineRow, TimelineAction, TimelineState, TimelineEffect } 
 import { useDroppable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { TransitionSelector, TransitionBadge, type TransitionConfig } from './transition-selector';
 import { 
   Play, 
   Pause, 
@@ -16,7 +17,8 @@ import {
   Music,
   Video,
   Image,
-  Layers
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -70,6 +72,7 @@ interface MultiTrackTimelineProps {
   onDropMedia?: (media: DroppedMediaItem, trackId: string, dropTime: number) => void;
   totalDuration?: number;
   className?: string;
+  onTransitionChange?: (itemId: string, transition: TransitionConfig | undefined) => void;
 }
 
 const TRACK_CONFIGS = [
@@ -134,6 +137,7 @@ export function MultiTrackTimeline({
   onTimeChange,
   totalDuration = 60,
   className,
+  onTransitionChange,
 }: MultiTrackTimelineProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -238,6 +242,25 @@ export function MultiTrackTimeline({
     onItemSelect?.(null);
   }, [selectedActionId, items, onItemsChange, onItemSelect]);
 
+  const handleTransitionChange = useCallback((transition: TransitionConfig | undefined) => {
+    if (!selectedActionId) return;
+    const updatedItems = items.map(item => {
+      if (item.id === selectedActionId) {
+        return {
+          ...item,
+          transition: transition ? { type: transition.type, duration: transition.duration } : undefined,
+        };
+      }
+      return item;
+    });
+    onItemsChange(updatedItems);
+    onTransitionChange?.(selectedActionId, transition);
+  }, [selectedActionId, items, onItemsChange, onTransitionChange]);
+
+  const selectedItem = useMemo(() => {
+    return selectedActionId ? items.find(i => i.id === selectedActionId) : null;
+  }, [selectedActionId, items]);
+
   const handlePlayPause = useCallback(() => {
     if (isPlaying) {
       timelineStateRef.current?.pause();
@@ -320,6 +343,15 @@ export function MultiTrackTimeline({
         </div>
 
         <div className="flex items-center gap-2">
+          {selectedItem && (selectedItem.type === 'video' || selectedItem.type === 'image') && (
+            <TransitionSelector
+              value={selectedItem.transition ? {
+                type: selectedItem.transition.type,
+                duration: selectedItem.transition.duration,
+              } : undefined}
+              onChange={handleTransitionChange}
+            />
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -395,6 +427,12 @@ export function MultiTrackTimeline({
                   <span className="relative z-10 px-1 truncate">
                     {item.name || item.text?.content || `${item.type} clip`}
                   </span>
+                  {item.transition && (
+                    <TransitionBadge
+                      type={item.transition.type}
+                      className="absolute top-0.5 right-0.5 z-20 text-[10px] px-1 py-0.5"
+                    />
+                  )}
                 </div>
               );
             }}
