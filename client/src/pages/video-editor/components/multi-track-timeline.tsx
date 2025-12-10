@@ -18,7 +18,8 @@ import {
   Video,
   Image,
   Layers,
-  Sparkles
+  Sparkles,
+  Scissors
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export interface MultiTrackTimelineItem {
   track: number;
   startTime: number;
   duration: number;
+  originalDuration?: number;
   url: string;
   thumbnailUrl?: string | null;
   name?: string;
@@ -45,6 +47,8 @@ export interface MultiTrackTimelineItem {
     fontFamily?: string;
   };
   volume?: number;
+  fadeIn?: number;
+  fadeOut?: number;
   position?: {
     x: number;
     y: number;
@@ -53,6 +57,7 @@ export interface MultiTrackTimelineItem {
   };
   opacity?: number;
   muted?: boolean;
+  speed?: number;
 }
 
 export interface DroppedMediaItem {
@@ -217,10 +222,42 @@ export function MultiTrackTimeline({
   }) => {
     const updatedItems = items.map(item => {
       if (item.id === params.action.id) {
+        const speed = item.speed || 1;
+        
+        const originalDuration = item.originalDuration || item.duration * speed;
+        
+        const prevTrim = item.trim || { start: 0, end: originalDuration };
+        let newTrimStart = prevTrim.start;
+        let newTrimEnd = prevTrim.end;
+        
+        if (params.dir === 'left') {
+          const timelineDelta = item.startTime - params.start;
+          const sourceDelta = timelineDelta * speed;
+          newTrimStart = Math.max(0, prevTrim.start - sourceDelta);
+        } else {
+          const requestedTimelineDelta = (params.end - params.start) - item.duration;
+          const sourceDelta = requestedTimelineDelta * speed;
+          newTrimEnd = prevTrim.end + sourceDelta;
+        }
+        
+        newTrimEnd = Math.min(newTrimEnd, originalDuration);
+        newTrimStart = Math.max(0, newTrimStart);
+        
+        const effectiveSourceSpan = newTrimEnd - newTrimStart;
+        const correctedDuration = effectiveSourceSpan / speed;
+        
+        let correctedStart = params.start;
+        if (params.dir === 'left') {
+          correctedStart = item.startTime + item.duration - correctedDuration;
+        }
+        correctedStart = Math.max(0, correctedStart);
+        
         return {
           ...item,
-          startTime: params.start,
-          duration: params.end - params.start,
+          startTime: correctedStart,
+          duration: correctedDuration,
+          originalDuration,
+          trim: { start: newTrimStart, end: newTrimEnd },
         };
       }
       return item;
@@ -256,6 +293,119 @@ export function MultiTrackTimeline({
     onItemsChange(updatedItems);
     onTransitionChange?.(selectedActionId, transition);
   }, [selectedActionId, items, onItemsChange, onTransitionChange]);
+
+  const handleVolumeChange = useCallback((volume: number) => {
+    if (!selectedActionId) return;
+    const updatedItems = items.map(item => {
+      if (item.id === selectedActionId) {
+        return {
+          ...item,
+          volume,
+          muted: volume === 0,
+        };
+      }
+      return item;
+    });
+    onItemsChange(updatedItems);
+  }, [selectedActionId, items, onItemsChange]);
+
+  const handleFadeChange = useCallback((type: 'in' | 'out', value: number) => {
+    if (!selectedActionId) return;
+    const updatedItems = items.map(item => {
+      if (item.id === selectedActionId) {
+        return {
+          ...item,
+          [type === 'in' ? 'fadeIn' : 'fadeOut']: value,
+        };
+      }
+      return item;
+    });
+    onItemsChange(updatedItems);
+  }, [selectedActionId, items, onItemsChange]);
+
+  const handleSpeedChange = useCallback((speed: number) => {
+    if (!selectedActionId) return;
+    const updatedItems = items.map(item => {
+      if (item.id === selectedActionId) {
+        const previousSpeed = item.speed || 1;
+        const effectiveMediaSpan = item.trim 
+          ? (item.trim.end - item.trim.start) 
+          : (item.originalDuration || item.duration * previousSpeed);
+        const newDuration = effectiveMediaSpan / speed;
+        return {
+          ...item,
+          speed,
+          duration: newDuration,
+          originalDuration: item.originalDuration || item.duration * previousSpeed,
+        };
+      }
+      return item;
+    });
+    onItemsChange(updatedItems);
+  }, [selectedActionId, items, onItemsChange]);
+
+  const handleSplitAtPlayhead = useCallback(() => {
+    if (!selectedActionId) return;
+    
+    const selectedItem = items.find(i => i.id === selectedActionId);
+    if (!selectedItem) return;
+    
+    const splitTime = currentTime;
+    const itemStart = selectedItem.startTime;
+    const itemEnd = selectedItem.startTime + selectedItem.duration;
+    
+    if (splitTime <= itemStart || splitTime >= itemEnd) {
+      return;
+    }
+    
+    const speed = selectedItem.speed || 1;
+    const firstDuration = splitTime - itemStart;
+    const secondDuration = itemEnd - splitTime;
+    
+    const firstSourceDuration = firstDuration * speed;
+    const secondSourceDuration = secondDuration * speed;
+    
+    const currentTrimStart = selectedItem.trim?.start ?? 0;
+    const currentTrimEnd = selectedItem.trim?.end ?? (selectedItem.originalDuration || selectedItem.duration * speed);
+    const originalDuration = selectedItem.originalDuration || selectedItem.duration * speed;
+    
+    const firstPart: MultiTrackTimelineItem = {
+      ...selectedItem,
+      id: `${selectedItem.id}-a`,
+      duration: firstDuration,
+      originalDuration,
+      trim: {
+        start: currentTrimStart,
+        end: currentTrimStart + firstSourceDuration,
+      },
+    };
+    
+    const secondPart: MultiTrackTimelineItem = {
+      ...selectedItem,
+      id: `${selectedItem.id}-b`,
+      startTime: splitTime,
+      duration: secondDuration,
+      originalDuration,
+      trim: {
+        start: currentTrimStart + firstSourceDuration,
+        end: currentTrimEnd,
+      },
+      transition: undefined,
+    };
+    
+    const updatedItems = items.filter(i => i.id !== selectedActionId);
+    updatedItems.push(firstPart, secondPart);
+    onItemsChange(updatedItems);
+    setSelectedActionId(null);
+    onItemSelect?.(null);
+  }, [selectedActionId, items, currentTime, onItemsChange, onItemSelect]);
+
+  const canSplit = useMemo(() => {
+    if (!selectedActionId) return false;
+    const item = items.find(i => i.id === selectedActionId);
+    if (!item) return false;
+    return currentTime > item.startTime && currentTime < item.startTime + item.duration;
+  }, [selectedActionId, items, currentTime]);
 
   const selectedItem = useMemo(() => {
     return selectedActionId ? items.find(i => i.id === selectedActionId) : null;
@@ -344,14 +494,103 @@ export function MultiTrackTimeline({
 
         <div className="flex items-center gap-2">
           {selectedItem && (selectedItem.type === 'video' || selectedItem.type === 'image') && (
-            <TransitionSelector
-              value={selectedItem.transition ? {
-                type: selectedItem.transition.type,
-                duration: selectedItem.transition.duration,
-              } : undefined}
-              onChange={handleTransitionChange}
-            />
+            <>
+              <TransitionSelector
+                value={selectedItem.transition ? {
+                  type: selectedItem.transition.type,
+                  duration: selectedItem.transition.duration,
+                } : undefined}
+                onChange={handleTransitionChange}
+              />
+              {selectedItem.type === 'video' && (
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded text-xs" data-testid="speed-controls">
+                  <span className="text-muted-foreground">Speed:</span>
+                  <select
+                    value={selectedItem.speed ?? 1}
+                    onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+                    className="bg-background border rounded px-1.5 py-0.5 text-xs"
+                    data-testid="speed-selector"
+                  >
+                    <option value={0.5}>0.5x</option>
+                    <option value={0.75}>0.75x</option>
+                    <option value={1}>1x</option>
+                    <option value={1.25}>1.25x</option>
+                    <option value={1.5}>1.5x</option>
+                    <option value={2}>2x</option>
+                  </select>
+                </div>
+              )}
+            </>
           )}
+          
+          {selectedItem && selectedItem.type === 'audio' && (
+            <div className="flex items-center gap-3 px-2 py-1 bg-muted/50 rounded" data-testid="audio-controls">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => handleVolumeChange(selectedItem.muted ? 100 : 0)}
+                  data-testid="audio-mute-toggle"
+                >
+                  {selectedItem.muted || selectedItem.volume === 0 ? (
+                    <VolumeX className="h-3 w-3" />
+                  ) : (
+                    <Volume2 className="h-3 w-3" />
+                  )}
+                </Button>
+                <Slider
+                  value={[selectedItem.volume ?? 100]}
+                  onValueChange={([v]) => handleVolumeChange(v)}
+                  min={0}
+                  max={100}
+                  step={1}
+                  className="w-16"
+                  data-testid="audio-volume-slider"
+                />
+                <span className="text-xs text-muted-foreground w-8">{selectedItem.volume ?? 100}%</span>
+              </div>
+              
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-muted-foreground">Fade In:</span>
+                <Slider
+                  value={[selectedItem.fadeIn ?? 0]}
+                  onValueChange={([v]) => handleFadeChange('in', v)}
+                  min={0}
+                  max={5}
+                  step={0.1}
+                  className="w-12"
+                  data-testid="audio-fade-in-slider"
+                />
+                <span className="text-muted-foreground w-6">{(selectedItem.fadeIn ?? 0).toFixed(1)}s</span>
+              </div>
+              
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-muted-foreground">Out:</span>
+                <Slider
+                  value={[selectedItem.fadeOut ?? 0]}
+                  onValueChange={([v]) => handleFadeChange('out', v)}
+                  min={0}
+                  max={5}
+                  step={0.1}
+                  className="w-12"
+                  data-testid="audio-fade-out-slider"
+                />
+                <span className="text-muted-foreground w-6">{(selectedItem.fadeOut ?? 0).toFixed(1)}s</span>
+              </div>
+            </div>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSplitAtPlayhead}
+            disabled={!canSplit}
+            title="Split clip at playhead"
+            data-testid="timeline-split"
+          >
+            <Scissors className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -404,10 +643,16 @@ export function MultiTrackTimeline({
                 return <div className="h-full bg-muted rounded-sm" />;
               }
               
+              const isTrimmed = item.trim && item.originalDuration && 
+                (item.trim.start > 0 || item.trim.end < item.originalDuration);
+              const trimPercent = item.originalDuration && item.duration < item.originalDuration
+                ? ((item.originalDuration - item.duration) / item.originalDuration * 100).toFixed(0)
+                : null;
+              
               return (
                 <div
                   className={cn(
-                    "h-full rounded-sm flex items-center justify-center text-xs font-medium overflow-hidden cursor-pointer transition-all relative",
+                    "h-full rounded-sm flex items-center justify-center text-xs font-medium overflow-hidden cursor-pointer transition-all relative group",
                     isSelected && "ring-2 ring-primary ring-offset-1",
                     item.type === 'video' && "bg-blue-500/80 text-white",
                     item.type === 'image' && "bg-green-500/80 text-white",
@@ -417,6 +662,15 @@ export function MultiTrackTimeline({
                   onClick={() => handleActionClick(action)}
                   data-testid={`timeline-action-${action.id}`}
                 >
+                  <div 
+                    className="absolute left-0 top-0 bottom-0 w-1 bg-white/30 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity z-30 hover:bg-white/60" 
+                    data-testid={`trim-handle-left-${action.id}`}
+                  />
+                  <div 
+                    className="absolute right-0 top-0 bottom-0 w-1 bg-white/30 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity z-30 hover:bg-white/60" 
+                    data-testid={`trim-handle-right-${action.id}`}
+                  />
+                  
                   {item.thumbnailUrl && (item.type === 'video' || item.type === 'image') && (
                     <img
                       src={item.thumbnailUrl}
@@ -424,6 +678,53 @@ export function MultiTrackTimeline({
                       className="absolute inset-0 w-full h-full object-cover opacity-60"
                     />
                   )}
+                  
+                  {isTrimmed && (
+                    <div 
+                      className="absolute bottom-0.5 left-0.5 z-20 bg-orange-500/90 text-white rounded px-1 py-0.5 text-[9px] flex items-center gap-0.5"
+                      title={`Trimmed ${trimPercent}% (${item.trim?.start.toFixed(1)}s - ${item.trim?.end.toFixed(1)}s)`}
+                    >
+                      {trimPercent}% trimmed
+                    </div>
+                  )}
+                  
+                  {item.type === 'audio' && (item.fadeIn || item.fadeOut) && (
+                    <>
+                      {item.fadeIn && item.fadeIn > 0 && (
+                        <div 
+                          className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-black/60 to-transparent pointer-events-none z-10"
+                          style={{ width: `${Math.min(30, item.fadeIn / item.duration * 100)}%` }}
+                          title={`Fade in: ${item.fadeIn.toFixed(1)}s`}
+                        />
+                      )}
+                      {item.fadeOut && item.fadeOut > 0 && (
+                        <div 
+                          className="absolute right-0 top-0 bottom-0 bg-gradient-to-l from-black/60 to-transparent pointer-events-none z-10"
+                          style={{ width: `${Math.min(30, item.fadeOut / item.duration * 100)}%` }}
+                          title={`Fade out: ${item.fadeOut.toFixed(1)}s`}
+                        />
+                      )}
+                    </>
+                  )}
+                  
+                  {item.type === 'audio' && item.volume !== undefined && item.volume < 100 && (
+                    <div 
+                      className="absolute top-0.5 left-0.5 z-20 bg-purple-700/90 text-white rounded px-1 py-0.5 text-[9px]"
+                      data-testid={`volume-badge-${item.id}`}
+                    >
+                      {item.volume}%
+                    </div>
+                  )}
+                  
+                  {(item.type === 'video') && item.speed && item.speed !== 1 && (
+                    <div 
+                      className="absolute bottom-0.5 right-0.5 z-20 bg-blue-700/90 text-white rounded px-1 py-0.5 text-[9px]"
+                      data-testid={`speed-badge-${item.id}`}
+                    >
+                      {item.speed}x
+                    </div>
+                  )}
+                  
                   <span className="relative z-10 px-1 truncate">
                     {item.name || item.text?.content || `${item.type} clip`}
                   </span>

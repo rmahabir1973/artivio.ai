@@ -1868,15 +1868,18 @@ export default function VideoEditor() {
             .filter(i => i.track === getTrackNumberFromId(trackId))
             .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
           
+          const itemDuration = item.duration || (mediaType === 'image' ? 5 : 10);
           const newItem: MultiTrackTimelineItem = {
             id: instanceId,
             type: mediaType,
             track: getTrackNumberFromId(trackId),
             startTime: currentMaxEnd,
-            duration: item.duration || (mediaType === 'image' ? 5 : 10),
+            duration: itemDuration,
+            originalDuration: itemDuration,
             url: item.url,
             thumbnailUrl: item.thumbnailUrl,
             name: item.name,
+            volume: mediaType === 'audio' ? 100 : undefined,
           };
           
           setMultiTrackItems(prev => [...prev, newItem]);
