@@ -674,6 +674,67 @@ export default function VideoEditor() {
   //   // ... commented out for performance
   // }, [orderedClips, clipSettings, enhancements, buildPreviewSignature, triggerPreviewGeneration]);
 
+  // Convert multi-track items to FFmpeg timeline format for local preview
+  // DECLARED FIRST before generateBrowserPreview so dependencies work correctly
+  // Note: Client-side FFmpeg.wasm preview focuses on visual tracks (video/image) only.
+  // Audio mixing and text rendering are handled by the Lambda export for final output.
+  const convertToFFmpegTimeline = useCallback((): FFmpegTimeline | null => {
+    if (multiTrackItems.length === 0) return null;
+    
+    // For client-side preview, include all item types for accurate timing
+    // FFmpeg.wasm will process video/image for visual output
+    const allItems = multiTrackItems;
+    
+    // Must have at least one visual item for preview generation
+    const hasVisualItems = allItems.some(
+      item => item.type === 'video' || item.type === 'image'
+    );
+    
+    if (!hasVisualItems) return null;
+    
+    // Calculate total duration from all items
+    const maxEnd = Math.max(...allItems.map(item => item.startTime + item.duration));
+    
+    // Valid FFmpeg xfade transition types
+    const validTransitions: FFmpegTransitionType[] = [
+      'fade', 'fadeblack', 'fadewhite', 'fadefast', 'fadeslow',
+      'crossfade', 'dissolve',
+      'wipe', 'wipeleft', 'wiperight', 'wipeup', 'wipedown',
+      'slide', 'slideleft', 'slideright', 'slideup', 'slidedown',
+      'circlecrop', 'rectcrop', 'circleopen', 'circleclose',
+      'radial', 'pixelize', 'distance'
+    ];
+    
+    // Convert all items to FFmpeg timeline format
+    const items: FFmpegTimelineItem[] = allItems.map(item => ({
+      id: item.id,
+      type: item.type as 'video' | 'image' | 'text' | 'audio',
+      track: item.track,
+      startTime: item.startTime,
+      duration: item.duration,
+      url: item.url,
+      zIndex: item.zIndex,
+      trim: item.trim,
+      transition: item.transition ? {
+        type: (validTransitions.includes(item.transition.type as FFmpegTransitionType) 
+          ? item.transition.type 
+          : 'fade') as FFmpegTransitionType,
+        duration: item.transition.duration,
+      } : undefined,
+      text: item.text,
+      volume: item.volume,
+      position: item.position,
+      opacity: item.opacity,
+    }));
+    
+    return {
+      items,
+      duration: maxEnd,
+      resolution: { width: 1920, height: 1080 },
+      fps: 30,
+    };
+  }, [multiTrackItems]);
+
   // Generate unified browser preview using FFmpeg.wasm (works for both single and multi-track)
   const generateBrowserPreview = useCallback(async () => {
     if (!ffmpegLoaded) {
@@ -730,6 +791,8 @@ export default function VideoEditor() {
           duration: itemDuration,
           url: clip.url,
           zIndex: 0,
+          // Only include speed if it's not 1.0
+          ...(settings.speed !== 1.0 && settings.speed !== undefined ? { speed: settings.speed } : {}),
           trim: settings.trimStartSeconds || settings.trimEndSeconds ? {
             start: settings.trimStartSeconds ?? 0,
             end: settings.trimEndSeconds ?? (settings.originalDuration ?? itemDuration),
@@ -836,116 +899,6 @@ export default function VideoEditor() {
     toast
   ]);
   
-  // Convert multi-track items to FFmpeg timeline format for local preview
-  // Note: Client-side FFmpeg.wasm preview focuses on visual tracks (video/image) only.
-  // Audio mixing and text rendering are handled by the Lambda export for final output.
-  const convertToFFmpegTimeline = useCallback((): FFmpegTimeline | null => {
-    if (multiTrackItems.length === 0) return null;
-    
-    // For client-side preview, include all item types for accurate timing
-    // FFmpeg.wasm will process video/image for visual output
-    const allItems = multiTrackItems;
-    
-    // Must have at least one visual item for preview generation
-    const hasVisualItems = allItems.some(
-      item => item.type === 'video' || item.type === 'image'
-    );
-    
-    if (!hasVisualItems) return null;
-    
-    // Calculate total duration from all items
-    const maxEnd = Math.max(...allItems.map(item => item.startTime + item.duration));
-    
-    // Valid FFmpeg xfade transition types
-    const validTransitions: FFmpegTransitionType[] = [
-      'fade', 'fadeblack', 'fadewhite', 'fadefast', 'fadeslow',
-      'crossfade', 'dissolve',
-      'wipe', 'wipeleft', 'wiperight', 'wipeup', 'wipedown',
-      'slide', 'slideleft', 'slideright', 'slideup', 'slidedown',
-      'circlecrop', 'rectcrop', 'circleopen', 'circleclose',
-      'radial', 'pixelize', 'distance'
-    ];
-    
-    // Convert all items to FFmpeg timeline format
-    const items: FFmpegTimelineItem[] = allItems.map(item => ({
-      id: item.id,
-      type: item.type as 'video' | 'image' | 'text' | 'audio',
-      track: item.track,
-      startTime: item.startTime,
-      duration: item.duration,
-      url: item.url,
-      zIndex: item.zIndex,
-      trim: item.trim,
-      transition: item.transition ? {
-        type: (validTransitions.includes(item.transition.type as FFmpegTransitionType) 
-          ? item.transition.type 
-          : 'fade') as FFmpegTransitionType,
-        duration: item.transition.duration,
-      } : undefined,
-      text: item.text,
-      volume: item.volume,
-      position: item.position,
-      opacity: item.opacity,
-    }));
-    
-    return {
-      items,
-      duration: maxEnd,
-      resolution: { width: 1920, height: 1080 },
-      fps: 30,
-    };
-  }, [multiTrackItems]);
-  
-  // Generate local preview using FFmpeg.wasm (for multi-track mode)
-  const generateLocalPreview = useCallback(async () => {
-    if (!ffmpegLoaded) {
-      toast({
-        title: "Loading FFmpeg",
-        description: "Please wait while FFmpeg is being loaded...",
-      });
-      await loadFFmpeg();
-      return;
-    }
-    
-    const timeline = convertToFFmpegTimeline();
-    if (!timeline) {
-      toast({
-        title: "No media",
-        description: "Add videos or images to the timeline to generate a preview.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setPreviewStatus('refreshing');
-    toast({
-      title: "Generating Preview",
-      description: "Creating local preview using your browser...",
-    });
-    
-    try {
-      const previewUrl = await ffmpegGeneratePreview(timeline, 10);
-      if (previewUrl) {
-        setLocalPreviewUrl(previewUrl);
-        setPreviewUrl(previewUrl);
-        setPreviewStatus('ready');
-        toast({
-          title: "Preview Ready",
-          description: "Local preview generated successfully!",
-        });
-      } else {
-        throw new Error('Failed to generate preview');
-      }
-    } catch (error) {
-      setPreviewStatus('error');
-      setPreviewError(error instanceof Error ? error.message : 'Preview generation failed');
-      toast({
-        title: "Preview Failed",
-        description: error instanceof Error ? error.message : 'Failed to generate preview',
-        variant: "destructive",
-      });
-    }
-  }, [ffmpegLoaded, loadFFmpeg, convertToFFmpegTimeline, ffmpegGeneratePreview, toast]);
   
   // Open clip settings modal
   const openClipSettings = useCallback((clip: VideoClip, index: number) => {
