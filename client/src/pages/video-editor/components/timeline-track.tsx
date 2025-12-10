@@ -279,7 +279,8 @@ export function TimelineTrack({
           <span className="text-sm font-medium">Timeline</span>
           <span className="text-xs text-muted-foreground">
             {clips.length} clip{clips.length !== 1 ? 's' : ''}
-            {audioTracks.length > 0 && `, ${audioTracks.length} audio`}
+            {audioTracks.filter(t => t.type === 'music').length > 0 && `, ${audioTracks.filter(t => t.type === 'music').length} music`}
+            {audioTracks.filter(t => t.type === 'voice' || t.type === 'sfx').length > 0 && `, ${audioTracks.filter(t => t.type === 'voice' || t.type === 'sfx').length} voice`}
           </span>
         </div>
         <span className="text-sm font-mono text-muted-foreground">
@@ -317,20 +318,46 @@ export function TimelineTrack({
         </ScrollArea>
       </div>
       
-      {/* Audio Track */}
+      {/* Background Music Track */}
       <div>
         <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground bg-muted/50">
           <Music className="h-3 w-3" />
-          <span>Audio</span>
+          <span>Background Music</span>
         </div>
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-2 p-3 min-h-[50px]">
-            {audioTracks.length === 0 ? (
+            {audioTracks.filter(t => t.type === 'music').length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
-                Add music or audio from the media panel
+                Add music from the Music category
               </div>
             ) : (
-              audioTracks.map((track) => (
+              audioTracks.filter(t => t.type === 'music').map((track) => (
+                <AudioTrackClip
+                  key={track.id}
+                  track={track}
+                  onRemove={() => onRemoveAudioTrack?.(track.id)}
+                />
+              ))
+            )}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
+      
+      {/* Voice / Audio Track */}
+      <div>
+        <div className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground bg-muted/50">
+          <Mic className="h-3 w-3" />
+          <span>Voice / Audio</span>
+        </div>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex gap-2 p-3 min-h-[50px]">
+            {audioTracks.filter(t => t.type === 'voice' || t.type === 'sfx').length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
+                Add voice or audio from the Audio category
+              </div>
+            ) : (
+              audioTracks.filter(t => t.type === 'voice' || t.type === 'sfx').map((track) => (
                 <AudioTrackClip
                   key={track.id}
                   track={track}

@@ -764,12 +764,14 @@ export default function VideoEditor() {
               audioUrl: enhancements.backgroundMusic.audioUrl,
               volume: enhancements.backgroundMusic.volume,
             } : undefined,
-            audioTrack: enhancements.audioTrack ? {
-              audioUrl: enhancements.audioTrack.audioUrl,
-              type: enhancements.audioTrack.type,
-              volume: enhancements.audioTrack.volume,
-              startAtSeconds: 0,
-            } : undefined,
+            // NOTE: audioTrack disabled for preview until backend supports mixing both audio types
+            // The backend Lambda needs to support amix filter to combine music + voice
+            // audioTrack: enhancements.audioTrack ? {
+            //   audioUrl: enhancements.audioTrack.audioUrl,
+            //   type: enhancements.audioTrack.type,
+            //   volume: enhancements.audioTrack.volume,
+            //   startAtSeconds: 0,
+            // } : undefined,
           },
           previewMode: true,
           maxDuration: 10,
