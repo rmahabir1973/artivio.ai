@@ -1,0 +1,615 @@
+# Video Editor - Complete Bug Fixes & Improvements
+
+## Issue 1: Media Panel Scroll Bar Not Showing ⚠️
+
+### Problem
+Media panel uses `overflow-y: auto` with `flex-1` but doesn't properly constrain height, causing infinite expansion instead of scrolling.
+
+### Root Cause
+```tsx
+// Current (BROKEN):
+<div className="w-72 border-r flex flex-col shrink-0 bg-background min-h-0 h-full">
+  <div className="flex-1 overflow-y-auto min-h-0">
+    <div className="p-3 space-y-3">
+      {/* Infinite content */}
+    </div>
+  </div>
+</div>
+```
+
+The `flex-1` with `min-h-0` should work, but the parent container needs explicit `h-full` and proper flex constraints.
+
+### Solution
+
+**Replace lines ~1850-1900 (Media Panel section):**
+
+```tsx
+{mediaPanelOpen && (
+  <div className="w-72 border-r flex flex-col shrink-0 bg-background h-full" data-testid="media-panel">
+    <div className="flex items-center justify-between p-3 border-b shrink-0">
+      <span className="text-sm font-medium capitalize">{activeCategory}</span>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-7 w-7"
+        onClick={() => setMediaPanelOpen(false)}
+        data-testid="button-close-media-panel"
+      >
+        <PanelLeftClose className="h-4 w-4" />
+      </Button>
+    </div>
+    
+    {/* KEY FIX: Use ScrollArea with explicit height calculation */}
+    <ScrollArea className="flex-1 h-[calc(100vh-120px)]">
+      <div className="p-3 space-y-3">
+        {/* Media Category Content */}
+        {activeCategory === 'media' && (
+          <div className="space-y-3">
+            {!isAuthenticated ? (
+              <div className="text-center py-8">
+                <Video className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Sign in to access your videos</p>
+                <Button size="sm" className="mt-2" onClick={() => setShowGuestModal(true)}>
+                  Sign In
+                </Button>
+              </div>
+            ) : generationsLoading ? (
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-video rounded-md" />
+                ))}
+              </div>
+            ) : videos.length === 0 ? (
+              <div className="text-center py-8">
+                <Video className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No videos yet</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  {videos.map((video) => (
+                    <DraggableMediaItem
+                      key={video.id}
+                      item={video}
+                      mediaType="video"
+                      onClick={() => addClipToTimeline(video)}
+                    />
+                  ))}
+                </div>
+                
+                {/* KEY FIX: Load More button at bottom of scrollable content */}
+                {hasNextPage && (
+                  <div className="pt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      data-testid="button-load-more-videos"
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More Videos'
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        
+        {/* Repeat same pattern for other categories... */}
+      </div>
+    </ScrollArea>
+  </div>
+)}
+```
+
+## Issue 2: Transitions Not Working ⚠️
+
+### Problem
+Clicking transitions adds them to state but doesn't:
+1. Show visual feedback on timeline
+2. Actually apply in preview/export
+3. Allow removal easily
+
+### Root Cause
+Transitions are stored in `enhancements.clipTransitions` but:
+- Timeline doesn't show transition indicators between clips
+- Preview generation doesn't visualize transitions
+- No way to see which clips have transitions
+
+### Solution A: Add Visual Transition Indicators
+
+**In TimelineTrack component, add transition indicators:**
+
+```tsx
+// Add this after each clip in the timeline:
+{clipIndex < clips.length - 1 && (
+  <>
+    {enhancements.clipTransitions.find(t => t.afterClipIndex === clipIndex) && (
+      <div className="flex flex-col items-center px-2 shrink-0" data-testid={`transition-indicator-${clipIndex}`}>
+        <div className="w-px h-4 bg-primary/50" />
+        <div className="bg-primary/20 border border-primary/50 rounded px-2 py-1">
+          <Layers className="h-3 w-3 text-primary" />
+        </div>
+        <div className="w-px h-4 bg-primary/50" />
+      </div>
+    )}
+  </>
+)}
+```
+
+### Solution B: Fix Transition Application
+
+**Update the transition click handler (around line 2200):**
+
+```tsx
+onClick={() => {
+  if (orderedClips.length < 2) {
+    toast({ 
+      title: "Add More Clips", 
+      description: "Add at least 2 clips to use transitions", 
+      variant: "destructive" 
+    });
+    return;
+  }
+  
+  // Find first clip without transition
+  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
+    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
+  
+  if (firstEmpty !== undefined) {
+    setEnhancements(prev => ({
+      ...prev,
+      transitionMode: 'perClip',
+      clipTransitions: [
+        ...prev.clipTransitions, 
+        { 
+          afterClipIndex: firstEmpty, 
+          type, 
+          durationSeconds: 1.0 
+        }
+      ],
+    }));
+    
+    // KEY FIX: Mark preview as stale to trigger regeneration
+    setPreviewStatus('stale');
+    
+    toast({ 
+      title: "Transition Added", 
+      description: `${type} will play after clip ${firstEmpty + 1}`,
+    });
+  } else {
+    toast({ 
+      title: "All Slots Filled", 
+      description: "Remove a transition first to add a new one" 
+    });
+  }
+}}
+```
+
+### Solution C: Transition Preview Badge
+
+**Add this to SortableClip component:**
+
+```tsx
+// After the clip content, add transition badge if exists:
+{enhancements.clipTransitions.find(t => t.afterClipIndex === clipIndex) && (
+  <div className="absolute bottom-1 right-1 bg-primary/90 text-primary-foreground rounded px-1.5 py-0.5 text-[10px] flex items-center gap-1">
+    <Layers className="h-2.5 w-2.5" />
+    {enhancements.clipTransitions.find(t => t.afterClipIndex === clipIndex)?.type}
+  </div>
+)}
+```
+
+## Issue 3: Multi-Track Items Not Appearing ⚠️
+
+### Problem
+When multi-track mode is enabled, dropped items are added to `multiTrackItems` state but don't appear on timeline.
+
+### Root Cause
+The `handleDragEnd` function adds items correctly, but:
+1. Track ID/number mapping might be wrong
+2. MultiTrackTimeline component not receiving props
+3. Timeline needs re-render trigger
+
+### Solution
+
+**Fix handleDragEnd function (around line 1450):**
+
+```tsx
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+
+  if (!over) return;
+
+  const activeId = String(active.id);
+  const overId = String(over.id);
+
+  // Handle media item dropped on track
+  if (activeId.startsWith('draggable-') && overId.startsWith('track-drop-')) {
+    const dragData = active.data.current as { 
+      type: string; 
+      mediaType: 'video' | 'image' | 'audio';
+      item: DroppedMediaItem;
+    };
+    
+    const dropData = over.data.current as { trackId: string; trackType: string } | undefined;
+    
+    if (dragData?.type === 'media-item' && dragData.item?.url) {
+      const mediaType = dragData.mediaType;
+      const item = dragData.item;
+      const trackId = dropData?.trackId || 'video-0';
+      
+      // Generate UNIQUE instance ID
+      const instanceId = `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      console.log('[DRAG] Dropped:', { mediaType, trackId, itemId: item.id, instanceId });
+      
+      if (useMultiTrack) {
+        // KEY FIX: Correct track number mapping
+        const getTrackNumberFromId = (id: string): number => {
+          const mapping: Record<string, number> = {
+            'video-0': 0,  // Main Video
+            'video-1': 1,  // Overlay
+            'text-0': 2,   // Text
+            'audio-0': 3,  // Music
+            'audio-1': 4,  // Voiceover
+          };
+          return mapping[id] ?? 0;
+        };
+        
+        // Calculate start time (append to end of track)
+        const trackNumber = getTrackNumberFromId(trackId);
+        const currentMaxEnd = multiTrackItems
+          .filter(i => i.track === trackNumber)
+          .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
+        
+        const itemDuration = item.duration || (mediaType === 'image' ? 5 : 10);
+        
+        const newItem: MultiTrackTimelineItem = {
+          id: instanceId,
+          type: mediaType,
+          track: trackNumber,
+          startTime: currentMaxEnd,
+          duration: itemDuration,
+          originalDuration: itemDuration,
+          url: item.url,
+          thumbnailUrl: item.thumbnailUrl,
+          name: item.name,
+          volume: mediaType === 'audio' ? 100 : undefined,
+          speed: 1,
+        };
+        
+        console.log('[DRAG] Adding to multi-track:', newItem);
+        
+        setMultiTrackItems(prev => {
+          const updated = [...prev, newItem];
+          console.log('[DRAG] Updated multi-track items:', updated);
+          return updated;
+        });
+        
+        // KEY FIX: Force multi-track timeline re-render
+        setMultiTrackKey(prev => prev + 1);
+        
+        toast({
+          title: "Added to Timeline",
+          description: `${mediaType} added to ${trackId.replace('-', ' ').toUpperCase()} track`,
+        });
+      } else {
+        // Single-track mode logic (existing code)
+        if (mediaType === 'audio') {
+          const audioTrack = {
+            id: instanceId,
+            url: item.url,
+            name: item.name || 'Audio track',
+            type: 'music' as const,
+            volume: 1,
+          };
+          setAudioTracks(prev => [...prev, audioTrack]);
+        } else {
+          const clip: VideoClip = {
+            id: instanceId,
+            url: item.url,
+            thumbnailUrl: item.thumbnailUrl || null,
+            prompt: item.name || '',
+            createdAt: new Date().toISOString(),
+            type: mediaType,
+          };
+          setOrderedClips(prev => [...prev, clip]);
+        }
+        
+        toast({
+          title: "Added to timeline",
+          description: `${mediaType} added to timeline`,
+        });
+      }
+    }
+    return;
+  }
+
+  // Handle clip reordering in single-track mode
+  if (active.id !== over.id) {
+    setOrderedClips((items) => {
+      const oldIndex = items.findIndex((i) => i.id === active.id);
+      const newIndex = items.findIndex((i) => i.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return items;
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  }
+};
+```
+
+**Add debug logging to MultiTrackTimeline render:**
+
+```tsx
+// In video-editor.tsx, before MultiTrackTimeline component:
+{useMultiTrack && (
+  <>
+    {/* Debug info */}
+    {process.env.NODE_ENV === 'development' && (
+      <div className="px-4 py-1 text-xs text-muted-foreground bg-muted/50">
+        Multi-Track Items: {multiTrackItems.length} | 
+        Key: {multiTrackKey}
+      </div>
+    )}
+    
+    <MultiTrackTimeline
+      key={multiTrackKey}  // Force re-render on key change
+      items={multiTrackItems}
+      onItemsChange={setMultiTrackItems}
+      onItemSelect={(item) => {
+        if (item) {
+          toast({
+            title: "Item selected",
+            description: `Selected: ${item.name || item.type} on track ${item.track}`,
+          });
+        }
+      }}
+      totalDuration={Math.max(totalDuration, 60)}
+      className="h-80"
+    />
+  </>
+)}
+```
+
+## Issue 4: Preview Status Unclear ⚠️
+
+### Problem
+Preview auto-updates but users don't know when it's:
+- Generating
+- Stale (needs refresh)
+- Ready
+- Failed
+
+### Solution
+
+**Add clear preview status indicator in PreviewSurface:**
+
+```tsx
+// Add status badge to PreviewSurface component
+<div className="absolute top-4 right-4 z-10">
+  {status === 'stale' && (
+    <Badge variant="secondary" className="animate-pulse">
+      <Clock className="h-3 w-3 mr-1" />
+      Preview Outdated
+    </Badge>
+  )}
+  {status === 'refreshing' && (
+    <Badge variant="secondary">
+      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+      Generating...
+    </Badge>
+  )}
+  {status === 'ready' && (
+    <Badge variant="default" className="bg-green-500">
+      <Check className="h-3 w-3 mr-1" />
+      Preview Ready
+    </Badge>
+  )}
+  {status === 'error' && (
+    <Badge variant="destructive">
+      <X className="h-3 w-3 mr-1" />
+      Preview Failed
+    </Badge>
+  )}
+</div>
+```
+
+## Issue 5: Load More Button Missing for Some Categories ⚠️
+
+### Problem
+Images, Music, and Audio categories don't have "Load More" buttons visible.
+
+### Solution
+
+**Ensure all category sections have Load More:**
+
+```tsx
+{/* Images Category - Add Load More */}
+{activeCategory === 'images' && (
+  <div className="space-y-3">
+    {/* ... existing content ... */}
+    
+    {hasNextImagePage && (
+      <div className="pt-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+          onClick={() => fetchNextImagePage()}
+          disabled={isFetchingNextImagePage}
+          data-testid="button-load-more-images"
+        >
+          {isFetchingNextImagePage ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            'Load More Images'
+          )}
+        </Button>
+      </div>
+    )}
+  </div>
+)}
+
+{/* Music Category - Add Load More */}
+{activeCategory === 'music' && (
+  <div className="space-y-2">
+    {/* ... existing content ... */}
+    
+    {hasNextMusicPage && (
+      <div className="pt-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+          onClick={() => fetchNextMusicPage()}
+          disabled={isFetchingNextMusicPage}
+          data-testid="button-load-more-music"
+        >
+          {isFetchingNextMusicPage ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            'Load More Music'
+          )}
+        </Button>
+      </div>
+    )}
+  </div>
+)}
+
+{/* Audio Category - Add Load More */}
+{activeCategory === 'audio' && (
+  <div className="space-y-2">
+    {/* ... existing content ... */}
+    
+    {hasNextAudioPage && (
+      <div className="pt-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+          onClick={() => fetchNextAudioPage()}
+          disabled={isFetchingNextAudioPage}
+          data-testid="button-load-more-audio"
+        >
+          {isFetchingNextAudioPage ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            'Load More Audio'
+          )}
+        </Button>
+      </div>
+    )}
+  </div>
+)}
+```
+
+## Issue 6: Timeline Height in Multi-Track Mode ⚠️
+
+### Problem
+Multi-track timeline shows `h-80` (320px) which might be too small for 5 tracks.
+
+### Solution
+
+**Increase timeline height for multi-track:**
+
+```tsx
+<MultiTrackTimeline
+  key={multiTrackKey}
+  items={multiTrackItems}
+  onItemsChange={setMultiTrackItems}
+  onItemSelect={(item) => {
+    if (item) {
+      toast({
+        title: "Item selected",
+        description: `Selected: ${item.name || item.type} on track ${item.track}`,
+      });
+    }
+  }}
+  totalDuration={Math.max(totalDuration, 60)}
+  className="h-[400px]"  // Increased from h-80 (320px) to 400px
+/>
+```
+
+## Testing Checklist
+
+After applying fixes, test:
+
+### Scroll Bar Test:
+- [ ] Open Media panel
+- [ ] Load 20+ videos
+- [ ] Scroll bar appears
+- [ ] Can scroll through all videos
+- [ ] Load More button at bottom
+- [ ] Clicking Load More loads next page
+- [ ] Repeat for Images, Music, Audio categories
+
+### Transitions Test:
+- [ ] Add 3 clips to timeline
+- [ ] Click Transitions category
+- [ ] Click "fade" transition
+- [ ] See transition indicator between clips 1 & 2
+- [ ] Preview shows fade effect
+- [ ] Export includes fade effect
+
+### Multi-Track Test:
+- [ ] Enable Multi-Track mode
+- [ ] Drag video to Main Video track
+- [ ] Drag video to Overlay track
+- [ ] Drag audio to Music track
+- [ ] Drag text to Text track
+- [ ] All items appear on timeline
+- [ ] Can rearrange items
+- [ ] Can trim items
+- [ ] Can delete items
+
+### Preview Test:
+- [ ] Add clips
+- [ ] See "Preview Outdated" badge
+- [ ] Wait 750ms
+- [ ] See "Generating..." badge
+- [ ] Preview completes
+- [ ] See "Preview Ready" badge
+- [ ] Make change
+- [ ] Badge changes to "Outdated"
+
+## Summary of Changes
+
+**Files to modify:**
+1. `video-editor.tsx` - Main component (multiple sections)
+2. `TimelineTrack.tsx` - Add transition indicators
+3. `PreviewSurface.tsx` - Add status badges
+4. `MultiTrackTimeline.tsx` - Verify track rendering
+
+**Key fixes:**
+1. ✅ ScrollArea with explicit height for media panel
+2. ✅ Load More buttons in all category sections
+3. ✅ Transition visual feedback on timeline
+4. ✅ Preview status badge in top-right
+5. ✅ Multi-track drag-and-drop with debug logging
+6. ✅ Force timeline re-render with key prop
+7. ✅ Increased multi-track timeline height
+
+**Expected result:**
+- Media panel scrolls with visible scrollbar
+- Load More works in all categories
+- Transitions show on timeline and in preview
+- Multi-track items appear immediately
+- Preview status is always clear

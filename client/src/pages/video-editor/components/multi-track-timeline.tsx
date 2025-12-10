@@ -96,7 +96,7 @@ const getTrackId = (item: MultiTrackTimelineItem): string => {
     return 'text-0';
   }
   if (item.type === 'audio') {
-    return item.track <= 3 ? 'audio-0' : 'audio-1';
+    return item.track === 3 ? 'audio-0' : 'audio-1';
   }
   return 'video-0';
 };

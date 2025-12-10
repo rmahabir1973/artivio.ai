@@ -455,6 +455,7 @@ export default function VideoEditor() {
   const [audioTracks, setAudioTracks] = useState<Array<{ id: string; url: string; name: string; type: 'music' | 'voice' | 'sfx'; volume: number }>>([]);
   const [multiTrackItems, setMultiTrackItems] = useState<MultiTrackTimelineItem[]>([]);
   const [useMultiTrack, setUseMultiTrack] = useState(false);
+  const [multiTrackKey, setMultiTrackKey] = useState(0);
   
   const {
     overlays: textOverlays,
@@ -1933,6 +1934,63 @@ export default function VideoEditor() {
     });
   };
 
+  const handleMultiTrackToggle = useCallback((enabled: boolean) => {
+    setUseMultiTrack(enabled);
+    setMultiTrackKey(prev => prev + 1);
+    
+    if (enabled && orderedClips.length > 0 && multiTrackItems.length === 0) {
+      let currentTime = 0;
+      const convertedItems: MultiTrackTimelineItem[] = orderedClips.map((clip) => {
+        const settings = clipSettings.get(clip.id);
+        const speed = settings?.speed || 1;
+        const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 10);
+        const trimStart = settings?.trimStartSeconds || 0;
+        const trimEnd = settings?.trimEndSeconds || originalDuration;
+        const effectiveDuration = (trimEnd - trimStart) / speed;
+        const displayDuration = clip.type === 'image' 
+          ? (settings?.displayDuration || 5)
+          : effectiveDuration;
+        
+        const item: MultiTrackTimelineItem = {
+          id: clip.id,
+          type: clip.type || 'video',
+          track: 0,
+          startTime: currentTime,
+          duration: displayDuration,
+          originalDuration: originalDuration,
+          url: clip.url,
+          thumbnailUrl: clip.thumbnailUrl,
+          name: clip.prompt || `${clip.type || 'video'} clip`,
+          speed: speed !== 1 ? speed : undefined,
+          trim: trimStart > 0 || trimEnd < originalDuration ? { start: trimStart, end: trimEnd } : undefined,
+          volume: settings?.volume !== undefined ? Math.round(settings.volume * 100) : 100,
+          muted: settings?.muted || false,
+        };
+        currentTime += displayDuration;
+        return item;
+      });
+      
+      const audioItems: MultiTrackTimelineItem[] = audioTracks.map((audio) => ({
+        id: audio.id,
+        type: 'audio' as const,
+        track: 3,
+        startTime: 0,
+        duration: 10,
+        originalDuration: 10,
+        url: audio.url,
+        name: audio.name,
+        volume: Math.round(audio.volume * 100),
+      }));
+      
+      setMultiTrackItems([...convertedItems, ...audioItems]);
+      
+      toast({
+        title: "Multi-Track Mode",
+        description: `Converted ${convertedItems.length} clips and ${audioItems.length} audio tracks to multi-track timeline`,
+      });
+    }
+  }, [orderedClips, multiTrackItems.length, clipSettings, audioTracks, toast]);
+
   const proceedToExport = () => {
     if (orderedClips.length === 0) {
       toast({
@@ -3057,7 +3115,7 @@ export default function VideoEditor() {
               <Switch
                 id="multi-track-toggle"
                 checked={useMultiTrack}
-                onCheckedChange={setUseMultiTrack}
+                onCheckedChange={handleMultiTrackToggle}
                 data-testid="switch-multi-track-mode"
               />
             </div>
@@ -3065,6 +3123,7 @@ export default function VideoEditor() {
           
           {useMultiTrack ? (
             <MultiTrackTimeline
+              key={multiTrackKey}
               items={multiTrackItems}
               onItemsChange={setMultiTrackItems}
               onItemSelect={(item) => {

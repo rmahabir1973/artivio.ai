@@ -1,0 +1,142 @@
+// Fix 1: Correct getTrackId function
+const getTrackId = (item: MultiTrackTimelineItem): string => {
+  if (item.type === 'video' || item.type === 'image') {
+    return item.track === 0 ? 'video-0' : 'video-1';
+  }
+  if (item.type === 'text') {
+    return 'text-0';
+  }
+  if (item.type === 'audio') {
+    // Fix: Check track number correctly
+    return item.track === 3 ? 'audio-0' : 'audio-1';
+  }
+  return 'video-0';
+};
+
+// Fix 2: Ensure timelineData is properly structured
+const timelineData: TimelineRow[] = useMemo(() => {
+  console.log('Building timeline data for items:', items); // Debug log
+  
+  return TRACK_CONFIGS.map(track => {
+    const trackItems = items.filter(item => {
+      const itemTrackId = getTrackId(item);
+      console.log(`Item ${item.id} (type: ${item.type}, track: ${item.track}) -> trackId: ${itemTrackId}, comparing to: ${track.id}`);
+      return itemTrackId === track.id;
+    });
+    
+    console.log(`Track ${track.id} has ${trackItems.length} items`);
+    
+    const actions: TimelineAction[] = trackItems.map(item => {
+      const action: TimelineAction = {
+        id: item.id,
+        start: item.startTime,
+        end: item.startTime + item.duration,
+        effectId: item.type,
+        data: item, // Ensure data is passed
+      };
+      console.log(`Created action for ${item.id}:`, action);
+      return action;
+    });
+
+    return {
+      id: track.id,
+      actions,
+    };
+  });
+}, [items]);
+
+// Fix 3: Add debug logging to see what's happening
+useEffect(() => {
+  console.log('Timeline items changed:', items);
+  console.log('Timeline data:', timelineData);
+}, [items, timelineData]);
+
+// Fix 4: Ensure Timeline component receives all required props
+// Add this to your Timeline component props:
+<Timeline
+  editorData={timelineData}
+  effects={effects}
+  scale={scale}
+  scaleWidth={50}
+  startLeft={20}
+  autoScroll={true}
+  dragLine={true}
+  maxScaleCount={100}  // Add this
+  minScaleCount={20}   // Add this
+  getActionRender={(action) => {
+    const item = items.find(i => i.id === action.id);
+    const isSelected = action.id === selectedActionId;
+    
+    // Add debug logging
+    if (!item) {
+      console.error(`No item found for action ${action.id}`);
+      return <div className="h-full bg-red-500/50 rounded-sm flex items-center justify-center text-xs">Missing Item</div>;
+    }
+    
+    console.log(`Rendering action for ${item.id} on track`, getTrackId(item));
+    
+    // ... rest of your render logic
+  }}
+  onActionMoveEnd={handleActionMoveEnd}
+  onActionResizeEnd={handleActionResizeEnd}
+  onCursorDragEnd={handleTimeChange}
+  ref={timelineStateRef}
+/>
+
+// Fix 5: Ensure items are created with correct track numbers
+// When adding items from media library:
+const addMediaToTimeline = (media: DroppedMediaItem, trackId: string, dropTime: number) => {
+  const trackNumber = getTrackNumber(trackId);
+  
+  const newItem: MultiTrackTimelineItem = {
+    id: generateId(),
+    type: media.type,
+    track: trackNumber,  // Use the correct track number
+    startTime: dropTime,
+    duration: media.duration || 5,
+    url: media.url,
+    thumbnailUrl: media.thumbnailUrl,
+    name: media.name,
+    volume: media.type === 'audio' ? 100 : undefined,
+    speed: 1,
+    originalDuration: media.duration || 5,
+  };
+  
+  console.log('Adding new item to timeline:', newItem);
+  onItemsChange([...items, newItem]);
+};
+
+// Fix 6: Force timeline to update when switching multi-track mode
+// Add this to parent component that controls multi-track toggle:
+const [isMultiTrack, setIsMultiTrack] = useState(false);
+const [timelineKey, setTimelineKey] = useState(0);
+
+const handleMultiTrackToggle = (enabled: boolean) => {
+  setIsMultiTrack(enabled);
+  setTimelineKey(prev => prev + 1); // Force re-render
+};
+
+// Then use key prop on MultiTrackTimeline:
+<MultiTrackTimeline
+  key={timelineKey}  // Force re-mount when toggled
+  items={items}
+  onItemsChange={onItemsChange}
+  // ... other props
+/>
+
+// Fix 7: Verify Timeline library version and configuration
+// Make sure you have the correct import:
+import { 
+  Timeline, 
+  TimelineRow, 
+  TimelineAction, 
+  TimelineState, 
+  TimelineEffect 
+} from '@xzdarcy/react-timeline-editor';
+
+// And the timeline has proper height:
+<div className="flex-1 overflow-x-auto min-h-0" style={{ height: '400px' }}>
+  <Timeline
+    // ... props
+  />
+</div>
