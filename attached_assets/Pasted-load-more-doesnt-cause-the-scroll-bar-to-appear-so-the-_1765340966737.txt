@@ -1,0 +1,183 @@
+load more doesnt cause the scroll bar to appear so the screen just goes further and further down as you click load more,  it also still shows failed generations
+
+I can see the issues in the screenshot:
+
+No scrollbar - The media panel keeps extending downward instead of showing a scrollable area
+Failed generations showing - You can see some broken image thumbnails (the BMW logo and other failed items)
+Let me check the current media panel implementation and fix both issues:
+
+
+Check the media panel ScrollArea implementation in the video editor
+
+Looking at the code you shared earlier, I can identify the problems:
+
+Issues:
+ScrollArea height issue: The ScrollArea has className="flex-1 h-[calc(100vh-120px)]" which calculates height based on viewport, but it's not constraining properly
+Failed generations not filtered: The query filters for status === "completed" but doesn't check if resultUrl is actually valid/accessible
+Fixes:
+Replace the media panel section in your code with this corrected version:
+
+tsx
+{/* Collapsible Media/Asset Panel */}
+{mediaPanelOpen && (
+  <div className="w-72 border-r flex flex-col shrink-0 bg-background" data-testid="media-panel">
+    <div className="flex items-center justify-between p-3 border-b shrink-0">
+      <span className="text-sm font-medium capitalize">{activeCategory}</span>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-7 w-7"
+        onClick={() => setMediaPanelOpen(false)}
+        data-testid="button-close-media-panel"
+      >
+        <PanelLeftClose className="h-4 w-4" />
+      </Button>
+    </div>
+    
+    {/* FIXED: Remove conflicting height classes and use proper flex constraints */}
+    <ScrollArea className="flex-1 min-h-0">
+      <div className="p-3 space-y-3">
+        {/* Media Category Content */}
+        {activeCategory === 'media' && (
+          <div className="space-y-3">
+            {!isAuthenticated ? (
+              <div className="text-center py-8">
+                <Video className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Sign in to access your videos</p>
+                <Button size="sm" className="mt-2" onClick={() => setShowGuestModal(true)}>
+                  Sign In
+                </Button>
+              </div>
+            ) : generationsLoading ? (
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-video rounded-md" />
+                ))}
+              </div>
+            ) : videos.length === 0 ? (
+              <div className="text-center py-8">
+                <Video className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No videos yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {videos.map((video) => (
+                  <DraggableMediaItem
+                    key={video.id}
+                    item={video}
+                    mediaType="video"
+                    onClick={() => addClipToTimeline(video)}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {/* Load More for Media */}
+            {hasNextPage && (
+              <div className="pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  data-testid="button-load-more-videos"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More'
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* ... rest of categories ... */}
+      </div>
+    </ScrollArea>
+  </div>
+)}
+Key Changes:
+1. Fix ScrollArea Height:
+tsx
+// BEFORE (broken):
+<div className="w-72 border-r flex flex-col shrink-0 bg-background min-h-0 h-full">
+  <ScrollArea className="flex-1 h-[calc(100vh-120px)]">
+
+// AFTER (fixed):
+<div className="w-72 border-r flex flex-col shrink-0 bg-background">
+  <ScrollArea className="flex-1 min-h-0">
+The key is:
+
+Remove h-full and min-h-0 from the parent div
+Remove h-[calc(100vh-120px)] from ScrollArea
+Add min-h-0 to ScrollArea to allow proper flex shrinking
+2. Filter Out Failed Generations:
+Update your video query filter to be more strict:
+
+tsx
+// In the allVideos useMemo:
+const allVideos = useMemo(() => {
+  const items = videoData?.pages.flatMap(page => page.items) ?? [];
+  return items.filter(
+    (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+  );
+}, [videoData]);
+
+// Do the same for all other media types:
+const allImages = useMemo(() => {
+  const items = imageData?.pages.flatMap(page => page.items) ?? [];
+  return items.filter(
+    (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+  );
+}, [imageData]);
+
+const musicTracks = useMemo(() => {
+  const items = musicData?.pages.flatMap(page => page.items) ?? [];
+  return items.filter(
+    (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+  );
+}, [musicData]);
+
+const voiceTracks = useMemo(() => {
+  const items = audioData?.pages.flatMap(page => page.items) ?? [];
+  return items.filter(
+    (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
+  );
+}, [audioData]);
+
+const avatarVideos = useMemo(() => {
+  const items = videoData?.pages.flatMap(page => page.items) ?? [];
+  return items.filter((g) => {
+    const model = (g.model ?? "").toLowerCase();
+    return (g.type === "talking-avatar" || g.type === "avatar" || 
+            model.includes("infinitetalk") || 
+            model.includes("infinite-talk")) && 
+           g.status === "completed" && 
+           g.resultUrl && 
+           g.resultUrl.trim() !== '';
+  });
+}, [videoData]);
+3. Additionally, Add Error Handling to DraggableMediaItem:
+If the DraggableMediaItem component doesn't already handle broken images, it should have fallback UI:
+
+tsx
+// In the DraggableMediaItem component, add onError handling:
+<img 
+  src={thumbnailUrl}
+  onError={(e) => {
+    e.currentTarget.style.display = 'none';
+    // Show fallback icon instead
+  }}
+/>
+These changes will:
+
+✅ Make the scrollbar appear and work properly
+✅ Hide failed/broken generations from showing
+✅ Provide better UX when loading more items
+Apply these fixes and the media panel should scroll properly without extending infinitely downward!

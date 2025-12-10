@@ -1151,7 +1151,7 @@ export default function VideoEditor() {
   const allVideos = useMemo(() => {
     const items = videoData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl
+      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
     );
   }, [videoData]);
   
@@ -1159,7 +1159,7 @@ export default function VideoEditor() {
   const musicTracks = useMemo(() => {
     const items = musicData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl
+      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
     );
   }, [musicData]);
   
@@ -1167,7 +1167,7 @@ export default function VideoEditor() {
   const voiceTracks = useMemo(() => {
     const items = audioData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl
+      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
     );
   }, [audioData]);
   
@@ -1175,7 +1175,7 @@ export default function VideoEditor() {
   const allImages = useMemo(() => {
     const items = imageData?.pages.flatMap(page => page.items) ?? [];
     return items.filter(
-      (g) => g.status === "completed" && g.resultUrl
+      (g) => g.status === "completed" && g.resultUrl && g.resultUrl.trim() !== ''
     );
   }, [imageData]);
   
@@ -1187,7 +1187,9 @@ export default function VideoEditor() {
       return (g.type === "talking-avatar" || g.type === "avatar" || 
               model.includes("infinitetalk") || 
               model.includes("infinite-talk")) && 
-             g.status === "completed" && g.resultUrl;
+             g.status === "completed" && 
+             g.resultUrl && 
+             g.resultUrl.trim() !== '';
     });
   }, [videoData]);
   
@@ -2219,7 +2221,7 @@ export default function VideoEditor() {
           
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background min-h-0 h-full" data-testid="media-panel">
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background" data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b shrink-0">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -2233,7 +2235,7 @@ export default function VideoEditor() {
                 </Button>
               </div>
               
-              <ScrollArea className="flex-1 h-[calc(100vh-120px)]">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
