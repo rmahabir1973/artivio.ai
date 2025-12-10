@@ -1,0 +1,58 @@
+Preview doesnt work at all.  In my browser i get this
+index-J4VpobSC.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-J4VpobSC.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-J4VpobSC.js:943 [AUTH] Initializing auth
+index-J4VpobSC.js:943 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-J4VpobSC.js:943 [AUTH] ✓ Bootstrap successful - auth state hydrated Object
+index-J4VpobSC.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-J4VpobSC.js:1406  Could not load duration for clip 2fec0877-e0d3-418e-850e-d20dc180c112_1765342119979_tx0yi6yao
+Ye.onerror @ index-J4VpobSC.js:1406
+index-J4VpobSC.js:1406  Could not load duration for clip fa9fa576-2e25-4e33-9cf1-ffd64dabb8ae_1765342120650_599woaedc
+Ye.onerror @ index-J4VpobSC.js:1406
+index-J4VpobSC.js:1406  Could not load duration for clip 6b4f0b59-f992-4e99-828a-7976bd35d45e_1765342122955_6izyljgsd
+Ye.onerror @ index-J4VpobSC.js:1406
+3index-J4VpobSC.js:1406  Uncaught TypeError: g is not a function
+    at me (index-J4VpobSC.js:1406:2259)
+    at ct (index-J4VpobSC.js:1352:1845)
+    at Object.se [as onend] (index-J4VpobSC.js:1246:17222)
+    at onend (index-J4VpobSC.js:1246:14134)
+    at li (index-J4VpobSC.js:1244:110154)
+    at N.value (index-J4VpobSC.js:1244:110430)
+    at Q.value (index-J4VpobSC.js:1244:122091)
+    at Le.value (index-J4VpobSC.js:1244:102624)
+    at Le.value (index-J4VpobSC.js:1244:103171)
+    at Le.value (index-J4VpobSC.js:1244:100176)
+12Connecting to '<URL>' violates the following Content Security Policy directive: "connect-src 'self' wss: ws: <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL> <URL>". The policy is report-only, so the violation has been logged but no further action has been taken.
+index-J4VpobSC.js:1406  [FFmpeg] Load error: Error: failed to import ffmpeg-core.js
+(anonymous) @ index-J4VpobSC.js:1406
+2index-J4VpobSC.js:1406  Uncaught TypeError: g is not a function
+    at me (index-J4VpobSC.js:1406:2259)
+    at ct (index-J4VpobSC.js:1352:1845)
+    at Object.se [as onend] (index-J4VpobSC.js:1246:17222)
+    at onend (index-J4VpobSC.js:1246:14134)
+    at li (index-J4VpobSC.js:1244:110154)
+    at N.value (index-J4VpobSC.js:1244:110430)
+    at Q.value (index-J4VpobSC.js:1244:122091)
+    at Le.value (index-J4VpobSC.js:1244:102624)
+    at Le.value (index-J4VpobSC.js:1244:103171)
+    at Le.value (index-J4VpobSC.js:1244:100176)
+index-J4VpobSC.js:1406  [FFmpeg] Load error: Error: failed to import ffmpeg-core.js
+(anonymous) @ index-J4VpobSC.js:1406
+3index-J4VpobSC.js:1406  Uncaught TypeError: g is not a function
+    at me (index-J4VpobSC.js:1406:2259)
+    at ct (index-J4VpobSC.js:1352:1845)
+    at Object.se [as onend] (index-J4VpobSC.js:1246:17222)
+    at onend (index-J4VpobSC.js:1246:14134)
+    at li (index-J4VpobSC.js:1244:110154)
+    at N.value (index-J4VpobSC.js:1244:110430)
+    at Q.value (index-J4VpobSC.js:1244:122091)
+    at Le.value (index-J4VpobSC.js:1244:102624)
+    at Le.value (index-J4VpobSC.js:1244:103171)
+    at Le.value (index-J4VpobSC.js:1244:100176)
+index-J4VpobSC.js:1406  [FFmpeg] Load error: Error: failed to import ffmpeg-core.jsShow moreThe issue is clear now! There are two major problems:
+
+FFmpeg.wasm is failing to load - Error: failed to import ffmpeg-core.js
+CSP (Content Security Policy) violation - FFmpeg.wasm is trying to load from a CDN that's not in your CSP allowlist
+
+The Core Problem:
+FFmpeg.wasm needs to load WebAssembly files from a CDN (usually unpkg.com or jsdelivr.com), but your Content Security Policy is blocking it.
