@@ -773,7 +773,7 @@ export default function VideoEditor() {
             } : undefined,
           },
           previewMode: true,
-          maxDuration: 10,
+          // Full preview - no duration limit, Lambda processes all clips
         };
       }
 
