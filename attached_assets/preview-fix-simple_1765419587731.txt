@@ -1,0 +1,31 @@
+// ============================================================================
+// PREVIEW DURATION FIX - Two Simple Changes
+// ============================================================================
+
+// CHANGE 1: Around line 749 in generatePreview function
+// Find this line in the single-track preview section:
+const previewClips = orderedClips.slice(0, 3);
+
+// Replace with:
+const previewClips = orderedClips; // Preview ALL clips, not just first 3
+
+
+// CHANGE 2: Around line 703 in generatePreview function
+// Find this line in the multi-track preview section:
+const previewItems = multiTrackItems.slice(0, 10);
+
+// Replace with:
+const previewItems = multiTrackItems; // Preview ALL items
+
+
+// OPTIONAL CHANGE 3: Remove duration cap if present
+// Find (might be around line 717):
+maxDuration: 15,
+
+// Either remove the line completely, or comment it out:
+// maxDuration: 15,
+
+
+// ============================================================================
+// That's it! Preview will now show all 4 clips (~40 seconds total)
+// ============================================================================

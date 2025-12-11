@@ -636,7 +636,7 @@ export default function VideoEditor() {
   const buildPreviewSignature = useCallback(() => {
     if (orderedClips.length === 0) return null;
     
-    const previewClips = orderedClips.slice(0, 3); // Preview limited to first 3 clips
+    const previewClips = orderedClips; // Preview ALL clips - no limit
     
     const signatureData = {
       clips: previewClips.map((clip, index) => ({
@@ -682,7 +682,7 @@ export default function VideoEditor() {
       
       if (useMultiTrack && multiTrackItems.length > 0) {
         // Multi-track mode: send timeline items to Lambda
-        const previewItems = multiTrackItems.slice(0, 10); // Limit for preview
+        const previewItems = multiTrackItems; // Preview ALL items - no limit
         
         payload = {
           multiTrackTimeline: {
@@ -715,7 +715,7 @@ export default function VideoEditor() {
         };
       } else {
         // Single-track mode: send ordered clips to Lambda
-        const previewClips = orderedClips.slice(0, 3);
+        const previewClips = orderedClips; // Preview ALL clips - no limit
         
         const project = {
           clips: previewClips.map((clip, index) => ({
