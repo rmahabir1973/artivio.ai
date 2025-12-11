@@ -747,8 +747,20 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     let musicPath: string | undefined;
     if (enhancements?.backgroundMusic?.audioUrl) {
       onProgress?.('download', 'Downloading background music...');
-      console.log('[VideoProcessor] Downloading background music from:', enhancements.backgroundMusic.audioUrl);
-      musicPath = await downloadAudio(enhancements.backgroundMusic.audioUrl, tempDir!);
+      let musicUrl = enhancements.backgroundMusic.audioUrl;
+      
+      // Refresh S3 signed URL if expired
+      if (s3.isS3SignedUrl(musicUrl)) {
+        try {
+          musicUrl = await s3.refreshSignedUrl(musicUrl);
+          console.log('[VideoProcessor] ✓ Refreshed background music S3 URL');
+        } catch (refreshError: any) {
+          console.error('[VideoProcessor] Failed to refresh music URL:', refreshError.message);
+        }
+      }
+      
+      console.log('[VideoProcessor] Downloading background music from:', musicUrl);
+      musicPath = await downloadAudio(musicUrl, tempDir!);
       tempFiles.push(musicPath);
       console.log('[VideoProcessor] ✓ Background music downloaded:', musicPath);
     }
@@ -757,15 +769,27 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     let voicePath: string | undefined;
     if (enhancements?.audioTrack?.audioUrl) {
       onProgress?.('download', 'Downloading voice track...');
-      console.log('[VideoProcessor] Downloading voice track from:', enhancements.audioTrack.audioUrl);
+      let voiceUrl = enhancements.audioTrack.audioUrl;
+      
+      // Refresh S3 signed URL if expired
+      if (s3.isS3SignedUrl(voiceUrl)) {
+        try {
+          voiceUrl = await s3.refreshSignedUrl(voiceUrl);
+          console.log('[VideoProcessor] ✓ Refreshed voice track S3 URL');
+        } catch (refreshError: any) {
+          console.error('[VideoProcessor] Failed to refresh voice URL:', refreshError.message);
+        }
+      }
+      
+      console.log('[VideoProcessor] Downloading voice track from:', voiceUrl);
       try {
-        const voiceExt = path.extname(new URL(enhancements.audioTrack.audioUrl).pathname) || '.mp3';
+        const voiceExt = path.extname(new URL(voiceUrl).pathname) || '.mp3';
         const voiceFilename = `voice_track${voiceExt}`;
         const voiceFilepath = path.join(tempDir!, voiceFilename);
         
         const response = await axios({
           method: 'GET',
-          url: enhancements.audioTrack.audioUrl,
+          url: voiceUrl,
           responseType: 'stream',
           timeout: 60000,
         });
