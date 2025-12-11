@@ -11,3 +11,7 @@ export { TextOverlayEditor } from './text-overlay-editor';
 export { TextOverlayRenderer } from './text-overlay-renderer';
 export { TransitionSelector, TransitionBadge, TRANSITION_OPTIONS } from './transition-selector';
 export type { TransitionConfig } from './transition-selector';
+export { DraggableTransition } from './draggable-transition';
+export { TransitionDropZone } from './transition-drop-zone';
+export type { ClipTransitionLocal } from './transition-drop-zone';
+export { TransitionEditDialog } from './transition-edit-dialog';

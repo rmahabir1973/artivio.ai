@@ -92,8 +92,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
-import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer } from "./video-editor/components";
-import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
+import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog } from "./video-editor/components";
+import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem, ClipTransitionLocal } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
 
 type WizardStep = 1 | 2 | 3;
@@ -517,6 +517,10 @@ export default function VideoEditor() {
   const [projectTitle, setProjectTitle] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [isSaveAs, setIsSaveAs] = useState(false);
+  
+  // Transition editing state
+  const [showTransitionEditModal, setShowTransitionEditModal] = useState(false);
+  const [editingTransition, setEditingTransition] = useState<{ position: number; transition: ClipTransitionLocal } | null>(null);
   
   // Get clip settings for a clip, with defaults
   const getClipSettings = useCallback((clipId: string): ClipSettingsLocal => {
@@ -1768,7 +1772,6 @@ export default function VideoEditor() {
     const { active, over } = event;
 
     if (!over) {
-      // IMPORTANT: Clear any drag state when drag ends without a valid drop
       console.log('[DRAG] No drop target, ignoring');
       return;
     }
@@ -1778,8 +1781,57 @@ export default function VideoEditor() {
     
     console.log('[DRAG] handleDragEnd:', { activeId, overId, useMultiTrack });
 
+    // ========================================================================
+    // Handle transition drag to drop zone (NEW)
+    // ========================================================================
+    const activeData = active.data.current;
+    const overData = over.data.current;
+    
+    if (
+      activeData?.type === 'transition' && 
+      overData?.type === 'transition-zone'
+    ) {
+      const transitionType = activeData.transitionType as TransitionType;
+      const position = overData.position as number;
+      
+      console.log('[DRAG] Transition drop:', { transitionType, position });
+      
+      setEnhancements(prev => {
+        const newTransitions = [...prev.clipTransitions];
+        const existingIndex = newTransitions.findIndex(t => t.afterClipIndex === position);
+        
+        const newTransition = {
+          afterClipIndex: position,
+          type: transitionType,
+          durationSeconds: 1.0,
+        };
+        
+        if (existingIndex >= 0) {
+          newTransitions[existingIndex] = newTransition;
+          toast({
+            title: "Transition Replaced",
+            description: `${transitionType} transition now between clips ${position + 1} and ${position + 2}`,
+          });
+        } else {
+          newTransitions.push(newTransition);
+          toast({
+            title: "Transition Added",
+            description: `${transitionType} transition added between clips ${position + 1} and ${position + 2}`,
+          });
+        }
+        
+        return {
+          ...prev,
+          transitionMode: 'perClip',
+          clipTransitions: newTransitions,
+        };
+      });
+      
+      setPreviewStatus('stale');
+      return;
+    }
+
     // In multi-track mode, ONLY handle media-to-track drops
-    // Let the timeline editor handle all internal drag operations
     if (useMultiTrack) {
       if (!(activeId.startsWith('draggable-') && overId.startsWith('track-drop-'))) {
         console.log('[DRAG] Multi-track mode: ignoring non-media drag');
@@ -1902,6 +1954,57 @@ export default function VideoEditor() {
       return next;
     });
   };
+
+  // Transition handlers for drag-and-drop system
+  const handleTransitionEdit = useCallback((position: number) => {
+    const transition = enhancements.clipTransitions.find(t => t.afterClipIndex === position);
+    if (!transition) return;
+    
+    setEditingTransition({ position, transition: transition as ClipTransitionLocal });
+    setShowTransitionEditModal(true);
+  }, [enhancements.clipTransitions]);
+
+  const handleTransitionRemove = useCallback((position: number) => {
+    setEnhancements(prev => {
+      const newTransitions = prev.clipTransitions.filter(t => t.afterClipIndex !== position);
+      return {
+        ...prev,
+        clipTransitions: newTransitions,
+        transitionMode: newTransitions.length === 0 ? 'none' : 'perClip',
+      };
+    });
+    setPreviewStatus('stale');
+    
+    toast({
+      title: "Transition Removed",
+      description: `Transition between clips ${position + 1} and ${position + 2} removed`,
+    });
+  }, [toast]);
+
+  const handleTransitionSave = useCallback((position: number, updates: Partial<ClipTransitionLocal>) => {
+    setEnhancements(prev => {
+      const newTransitions = prev.clipTransitions.map(t => 
+        t.afterClipIndex === position 
+          ? { ...t, ...updates }
+          : t
+      );
+      
+      return {
+        ...prev,
+        clipTransitions: newTransitions,
+      };
+    });
+    setPreviewStatus('stale');
+    
+    toast({
+      title: "Transition Updated",
+      description: `Transition between clips ${position + 1} and ${position + 2} updated`,
+    });
+  }, [toast]);
+
+  const getTransitionAtPosition = useCallback((position: number) => {
+    return enhancements.clipTransitions.find(t => t.afterClipIndex === position);
+  }, [enhancements.clipTransitions]);
 
   const handleMultiTrackToggle = useCallback((enabled: boolean) => {
     setUseMultiTrack(enabled);
