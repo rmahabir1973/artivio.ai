@@ -8388,32 +8388,43 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
   app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {
     try {
       const { jobId } = req.params;
-      const { status, downloadUrl, error, signature } = req.body;
-      
+
+      // Extract signature from header (Lambda sends it as x-callback-signature)
+      const receivedSignature = req.headers['x-callback-signature'] as string;
+
       // Verify callback authenticity using shared secret
       const callbackSecret = process.env.AWS_LAMBDA_CALLBACK_SECRET;
       if (callbackSecret) {
+        if (!receivedSignature) {
+          console.warn(`[Video Editor] No signature provided for callback ${jobId}`);
+          return res.status(401).json({ message: "Missing signature" });
+        }
+
         const crypto = await import('crypto');
-        const signatureData = jobId + status + (downloadUrl || '');
+        // Lambda signs the entire request body as JSON
+        const payload = JSON.stringify(req.body);
         const expectedSignature = crypto.createHmac('sha256', callbackSecret)
-          .update(signatureData)
+          .update(payload)
           .digest('hex');
-        
-        console.log(`[Video Editor] Signature verification for job ${jobId}:`);
-        console.log(`  - Data being signed: "${signatureData}"`);
-        console.log(`  - Expected signature: ${expectedSignature}`);
-        console.log(`  - Received signature: ${signature || 'NONE'}`);
-        console.log(`  - Secret length: ${callbackSecret.length}`);
-        
-        if (signature !== expectedSignature) {
+
+        if (receivedSignature !== expectedSignature) {
           console.warn(`[Video Editor] Invalid callback signature for job ${jobId}`);
+          console.warn(`[Video Editor] Expected: ${expectedSignature}, Received: ${receivedSignature}`);
           return res.status(401).json({ message: "Invalid signature" });
         }
+
+        console.log(`[Video Editor] ✅ Callback signature verified for job ${jobId}`);
       } else {
         // Security: Fail closed - reject callbacks without proper secret configuration
         console.error('[Video Editor] AWS_LAMBDA_CALLBACK_SECRET not configured - rejecting callback');
         return res.status(503).json({ message: "Service not configured" });
       }
+
+} else {
+        // Security: Fail closed - reject callbacks without proper secret configuration
+        console.error('[Video Editor] AWS_LAMBDA_CALLBACK_SECRET not configured - rejecting callback');
+        return res.status(503).json({ message: "Service not configured" });
+      }}
       
       console.log(`[Video Editor] Callback received for job ${jobId}:`, { status, downloadUrl, error });
       
