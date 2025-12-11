@@ -581,18 +581,39 @@ export default function VideoEditor() {
   
   // Load video metadata to get actual duration for a clip
   const loadClipDuration = useCallback((clipId: string, url: string) => {
+    if (!url || !url.startsWith('http')) {
+      console.warn(`[DURATION] Invalid URL for clip ${clipId}:`, url);
+      return;
+    }
+    
     const video = document.createElement('video');
     video.preload = 'metadata';
+    video.crossOrigin = 'anonymous';
     video.src = url;
+    
+    // Timeout after 10 seconds if metadata doesn't load
+    const timeoutId = setTimeout(() => {
+      console.warn(`[DURATION] Timeout loading metadata for clip ${clipId}`);
+      updateClipSettings(clipId, { originalDuration: 10 }); // Default on timeout
+      video.src = '';
+    }, 10000);
+    
     video.onloadedmetadata = () => {
+      clearTimeout(timeoutId);
       const duration = video.duration;
       if (duration && isFinite(duration)) {
         updateClipSettings(clipId, { originalDuration: duration });
+      } else {
+        updateClipSettings(clipId, { originalDuration: 10 }); // Default if invalid
       }
       video.src = ''; // Clean up
     };
-    video.onerror = () => {
-      console.warn(`Could not load duration for clip ${clipId}`);
+    
+    video.onerror = (e) => {
+      clearTimeout(timeoutId);
+      console.error(`[DURATION] Error loading clip ${clipId}:`, e);
+      updateClipSettings(clipId, { originalDuration: 10 }); // Default on error
+      video.src = '';
     };
   }, [updateClipSettings]);
   
