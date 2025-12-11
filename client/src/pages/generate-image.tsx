@@ -13,7 +13,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Image as ImageIcon, Upload, X, ChevronDown, Sparkles, Zap, Palette, Banana } from "lucide-react";
+import { Loader2, Image as ImageIcon, Upload, X, ChevronDown, Sparkles, Zap, Palette, Banana, Download } from "lucide-react";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
@@ -1253,12 +1253,116 @@ export default function GenerateImage() {
           </Card>
       }
       preview={
-        <PeerTubePreview
-          pageType="image"
-          title="Image Preview"
-          description="See what's possible with AI images"
-          showGeneratingMessage={isGenerating}
-        />
+        generatedImage ? (
+          <Card className="h-full flex flex-col">
+            <CardHeader>
+              <CardTitle>Generated Image{generatedImage.resultUrl?.includes(',') ? 's' : ''}</CardTitle>
+              <CardDescription className="line-clamp-2">
+                {generatedImage.prompt}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col overflow-auto">
+              <div className={`grid gap-4 mb-4 ${
+                generatedImage.resultUrl?.includes(',') 
+                  ? 'grid-cols-2' 
+                  : 'grid-cols-1'
+              }`}>
+                {generatedImage.resultUrl?.split(',').map((url: string, idx: number) => (
+                  <div key={idx} className="relative group">
+                    <img
+                      src={url.trim()}
+                      alt={`Generated ${idx + 1}`}
+                      className="w-full h-auto rounded-lg border-2 border-border object-contain"
+                      data-testid={`image-result-${idx}`}
+                    />
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = url.trim();
+                        link.download = `image-${generatedImage.id}-${idx + 1}.png`;
+                        link.click();
+                      }}
+                      data-testid={`button-download-${idx}`}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="space-y-2 text-sm mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Model:</span>
+                  <div className="flex items-center gap-2">
+                    <ImageModelIcon modelValue={generatedImage.model} />
+                    <span className="font-medium">{generatedImage.model}</span>
+                  </div>
+                </div>
+                {generatedImage.parameters?.aspectRatio && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Aspect Ratio:</span>
+                    <span>{generatedImage.parameters.aspectRatio}</span>
+                  </div>
+                )}
+                {generatedImage.seed && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Seed:</span>
+                    <span className="font-mono">{generatedImage.seed}</span>
+                  </div>
+                )}
+                {generatedImage.resultUrl?.includes(',') && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Count:</span>
+                    <span>{generatedImage.resultUrl.split(',').length} images</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2 mt-auto">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    const urls = generatedImage.resultUrl.split(',');
+                    urls.forEach((url: string, idx: number) => {
+                      setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.href = url.trim();
+                        link.download = `image-${generatedImage.id}-${idx + 1}.png`;
+                        link.click();
+                      }, idx * 200);
+                    });
+                  }}
+                  data-testid="button-download-all"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download {generatedImage.resultUrl?.includes(',') ? 'All' : ''}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGeneratedImage(null);
+                    setPrompt('');
+                    setReferenceImages([]);
+                  }}
+                  data-testid="button-generate-another"
+                >
+                  Generate Another
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <PeerTubePreview
+            pageType="image"
+            title="Image Preview"
+            description="See what's possible with AI images"
+            showGeneratingMessage={isGenerating}
+          />
+        )
       }
     />
 
