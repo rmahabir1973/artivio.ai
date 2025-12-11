@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { TransitionDropZone, ClipTransitionLocal } from "./transition-drop-zone";
 
 interface VideoClip {
   id: string;
@@ -40,9 +41,27 @@ interface TimelineClipProps {
   onMuteToggle: () => void;
   onRemove: () => void;
   onOpenSettings: () => void;
+  // Transition drop zone props (optional - only shown if not last clip)
+  showTransitionZone?: boolean;
+  transitionData?: ClipTransitionLocal;
+  onTransitionEdit?: (position: number) => void;
+  onTransitionRemove?: (position: number) => void;
+  clipCount?: number;
 }
 
-function TimelineClip({ clip, index, settings, onMuteToggle, onRemove, onOpenSettings }: TimelineClipProps) {
+function TimelineClip({ 
+  clip, 
+  index, 
+  settings, 
+  onMuteToggle, 
+  onRemove, 
+  onOpenSettings,
+  showTransitionZone,
+  transitionData,
+  onTransitionEdit,
+  onTransitionRemove,
+  clipCount = 0,
+}: TimelineClipProps) {
   const {
     attributes,
     listeners,
@@ -68,7 +87,7 @@ function TimelineClip({ clip, index, settings, onMuteToggle, onRemove, onOpenSet
     : (trimEnd - trimStart) / (settings.speed ?? 1);
 
   return (
-    <div
+    <div 
       ref={setNodeRef}
       style={style}
       className={cn(
@@ -179,6 +198,18 @@ function TimelineClip({ clip, index, settings, onMuteToggle, onRemove, onOpenSet
           </Tooltip>
         </div>
       </div>
+      
+      {/* Transition drop zone - positioned after the clip card */}
+      {showTransitionZone && onTransitionEdit && onTransitionRemove && (
+        <TransitionDropZone
+          position={index}
+          clipId={clip.id}
+          currentTransition={transitionData}
+          clipCount={clipCount}
+          onEdit={onTransitionEdit}
+          onRemove={onTransitionRemove}
+        />
+      )}
     </div>
   );
 }
@@ -253,6 +284,10 @@ interface TimelineTrackProps {
   onOpenSettings: (clip: VideoClip, index: number) => void;
   totalDuration: number;
   children?: React.ReactNode;
+  // Transition support
+  clipTransitions?: ClipTransitionLocal[];
+  onTransitionEdit?: (position: number) => void;
+  onTransitionRemove?: (position: number) => void;
 }
 
 export function TimelineTrack({
@@ -265,6 +300,9 @@ export function TimelineTrack({
   onOpenSettings,
   totalDuration,
   children,
+  clipTransitions = [],
+  onTransitionEdit,
+  onTransitionRemove,
 }: TimelineTrackProps) {
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -301,17 +339,29 @@ export function TimelineTrack({
                 Add clips from the media panel to get started
               </div>
             ) : (
-              children || clips.map((clip, index) => (
-                <TimelineClip
-                  key={clip.id}
-                  clip={clip}
-                  index={index}
-                  settings={getClipSettings(clip.id)}
-                  onMuteToggle={() => onMuteToggle(clip.id)}
-                  onRemove={() => onRemoveClip(clip.id)}
-                  onOpenSettings={() => onOpenSettings(clip, index)}
-                />
-              ))
+              children || clips.map((clip, index) => {
+                const existingTransition = clipTransitions.find(
+                  t => t.afterClipIndex === index
+                );
+                const isLastClip = index === clips.length - 1;
+                
+                return (
+                  <TimelineClip
+                    key={clip.id}
+                    clip={clip}
+                    index={index}
+                    settings={getClipSettings(clip.id)}
+                    onMuteToggle={() => onMuteToggle(clip.id)}
+                    onRemove={() => onRemoveClip(clip.id)}
+                    onOpenSettings={() => onOpenSettings(clip, index)}
+                    showTransitionZone={!isLastClip && !!onTransitionEdit && !!onTransitionRemove}
+                    transitionData={existingTransition}
+                    onTransitionEdit={onTransitionEdit}
+                    onTransitionRemove={onTransitionRemove}
+                    clipCount={clips.length}
+                  />
+                );
+              })
             )}
           </div>
           <ScrollBar orientation="horizontal" />

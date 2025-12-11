@@ -16,9 +16,10 @@ interface ClipTransitionLocal {
 interface TransitionEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  position: number;
-  transition: ClipTransitionLocal;
-  onSave: (position: number, updates: Partial<ClipTransitionLocal>) => void;
+  clipIndex: number;
+  transition: ClipTransitionLocal | null;
+  onSave: (clipIndex: number, updates: Partial<ClipTransitionLocal>) => void;
+  onRemove?: () => void;
 }
 
 const TRANSITION_OPTIONS: { value: TransitionType; label: string; category: string }[] = [
@@ -50,22 +51,28 @@ const TRANSITION_OPTIONS: { value: TransitionType; label: string; category: stri
 export function TransitionEditDialog({
   open,
   onOpenChange,
-  position,
+  clipIndex,
   transition,
   onSave,
+  onRemove,
 }: TransitionEditDialogProps) {
-  const [type, setType] = useState(transition.type);
-  const [duration, setDuration] = useState(transition.durationSeconds);
+  const [type, setType] = useState(transition?.type ?? 'fade');
+  const [duration, setDuration] = useState(transition?.durationSeconds ?? 1.0);
 
   useEffect(() => {
-    if (open) {
+    if (open && transition) {
       setType(transition.type);
       setDuration(transition.durationSeconds);
     }
   }, [open, transition]);
 
   const handleSave = () => {
-    onSave(position, { type, durationSeconds: duration });
+    onSave(clipIndex, { type, durationSeconds: duration });
+    onOpenChange(false);
+  };
+
+  const handleRemove = () => {
+    onRemove?.();
     onOpenChange(false);
   };
 
@@ -78,7 +85,7 @@ export function TransitionEditDialog({
             Edit Transition
           </DialogTitle>
           <DialogDescription>
-            Customize the transition between clips {position + 1} and {position + 2}
+            Customize the transition between clips {clipIndex + 1} and {clipIndex + 2}
           </DialogDescription>
         </DialogHeader>
         
@@ -115,13 +122,22 @@ export function TransitionEditDialog({
           </div>
         </div>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} data-testid="button-save-transition">
-            Save Changes
-          </Button>
+        <DialogFooter className="flex justify-between gap-2 sm:justify-between">
+          <div>
+            {onRemove && (
+              <Button variant="destructive" onClick={handleRemove} data-testid="button-remove-transition">
+                Remove
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} data-testid="button-save-transition">
+              Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

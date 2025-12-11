@@ -3,11 +3,14 @@ import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
+  pointerWithin,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  CollisionDetection,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -955,6 +958,26 @@ export default function VideoEditor() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Custom collision detection that prioritizes transition drop zones
+  const customCollisionDetection: CollisionDetection = useCallback((args) => {
+    // First check for transition-zone droppables using pointer intersection
+    const pointerCollisions = pointerWithin(args);
+    
+    // Filter for transition zones
+    const transitionZoneHits = pointerCollisions.filter(
+      collision => collision.data?.droppableContainer?.data?.current?.type === 'transition-zone'
+    );
+    
+    // If we have a transition zone hit, return it (prioritize transitions over clip sorting)
+    if (transitionZoneHits.length > 0) {
+      console.log('[COLLISION] Transition zone hit:', transitionZoneHits[0].id);
+      return transitionZoneHits;
+    }
+    
+    // Fall back to closestCenter for clip sorting
+    return closestCenter(args);
+  }, []);
 
   // Separate queries with server-side type filtering for each asset type needed
   // VIDEO GENERATIONS - cursor-based pagination with server-side filtering
@@ -2272,7 +2295,7 @@ export default function VideoEditor() {
         {/* Single-track mode uses DndContext for reordering, Multi-track mode has its own internal DndContext */}
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={customCollisionDetection}
           onDragEnd={handleDragEnd}
           onDragCancel={() => {
             console.log('[DRAG] Drag cancelled');
@@ -3241,6 +3264,9 @@ export default function VideoEditor() {
                 onRemoveAudioTrack={removeAudioTrack}
                 onOpenSettings={openClipSettings}
                 totalDuration={totalDuration}
+                clipTransitions={enhancements.clipTransitions}
+                onTransitionEdit={handleTransitionEdit}
+                onTransitionRemove={handleTransitionRemove}
               />
             </SortableContext>
           )}
@@ -3253,6 +3279,16 @@ export default function VideoEditor() {
         open={showGuestModal}
         onOpenChange={setShowGuestModal}
         featureName="videos"
+      />
+      
+      {/* Transition Edit Dialog */}
+      <TransitionEditDialog
+        open={!!editingTransition}
+        onOpenChange={(open) => !open && setEditingTransition(null)}
+        transition={editingTransition?.transition || null}
+        clipIndex={editingTransition?.clipIndex ?? 0}
+        onSave={handleTransitionSave}
+        onRemove={() => editingTransition && handleTransitionRemove(editingTransition.clipIndex)}
       />
 
       <Dialog open={showClipSettingsModal} onOpenChange={setShowClipSettingsModal}>

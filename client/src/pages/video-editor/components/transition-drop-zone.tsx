@@ -12,6 +12,7 @@ export interface ClipTransitionLocal {
 
 interface TransitionDropZoneProps {
   position: number;
+  clipId: string; // Stable identifier for the drop zone
   currentTransition?: ClipTransitionLocal;
   onEdit: (position: number) => void;
   onRemove: (position: number) => void;
@@ -20,16 +21,18 @@ interface TransitionDropZoneProps {
 
 export function TransitionDropZone({
   position,
+  clipId,
   currentTransition,
   onEdit,
   onRemove,
   clipCount,
 }: TransitionDropZoneProps) {
   const { setNodeRef, isOver } = useDroppable({
-    id: `transition-drop-${position}`,
+    id: `transition-drop-${clipId}`,
     data: {
       type: 'transition-zone',
       position,
+      clipId,
     },
   });
 
