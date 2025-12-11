@@ -8314,8 +8314,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         return res.status(400).json({ message: "Project with at least one clip is required" });
       }
       
-      // Limit preview to first 3 clips for speed
-      const previewClips = project.clips.slice(0, 3);
+      // Process all clips for full preview (no artificial limit)
+      const previewClips = project.clips;
       
       console.log(`[Video Editor] Starting preview generation for user ${userId} with ${previewClips.length} clips`);
       
