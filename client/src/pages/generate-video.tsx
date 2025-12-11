@@ -14,7 +14,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Video, Upload, X, Info, ChevronDown, Sparkles, Zap, Film, Wand2 } from "lucide-react";
+import { Loader2, Video, Upload, X, Info, ChevronDown, Sparkles, Zap, Film, Wand2, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { TemplateManager } from "@/components/template-manager";
@@ -1417,12 +1417,89 @@ export default function GenerateVideo() {
         </Card>
       }
       preview={
-        <PeerTubePreview
-          pageType="video"
-          title="Video Preview"
-          description="See what's possible with AI video"
-          showGeneratingMessage={isGenerating}
-        />
+        generatedVideo ? (
+          <Card className="h-full flex flex-col">
+            <CardHeader>
+              <CardTitle>Generated Video</CardTitle>
+              <CardDescription>
+                {generatedVideo.prompt?.substring(0, 100)}
+                {generatedVideo.prompt?.length > 100 ? '...' : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
+                <video
+                  src={generatedVideo.resultUrl}
+                  controls
+                  autoPlay
+                  loop
+                  className="w-full h-full object-contain"
+                  data-testid="video-result"
+                />
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Model:</span>
+                  <Badge variant="secondary">{generatedVideo.model}</Badge>
+                </div>
+                {generatedVideo.parameters?.duration && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Duration:</span>
+                    <span>{generatedVideo.parameters.duration}s</span>
+                  </div>
+                )}
+                {generatedVideo.parameters?.aspectRatio && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Aspect Ratio:</span>
+                    <span>{generatedVideo.parameters.aspectRatio}</span>
+                  </div>
+                )}
+                {generatedVideo.seed && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Seed:</span>
+                    <span className="font-mono">{generatedVideo.seed}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = generatedVideo.resultUrl;
+                    link.download = `video-${generatedVideo.id}.mp4`;
+                    link.click();
+                  }}
+                  data-testid="button-download-result"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGeneratedVideo(null);
+                    setPrompt('');
+                    setReferenceImages([]);
+                  }}
+                  data-testid="button-generate-another"
+                >
+                  Generate Another
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <PeerTubePreview
+            pageType="video"
+            title="Video Preview"
+            description="See what's possible with AI video"
+            showGeneratingMessage={isGenerating}
+          />
+        )
       }
     />
 
