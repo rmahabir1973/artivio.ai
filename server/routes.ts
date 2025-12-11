@@ -8401,15 +8401,21 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         }
         
         const crypto = await import('crypto');
-        // Lambda signs the entire request body as JSON
-        const payload = JSON.stringify(req.body);
+        // Use raw body for signature verification to avoid JSON serialization differences
+        // req.rawBody is captured by express.json verify function in index.ts
+        const payload = req.rawBody || JSON.stringify(req.body);
         const expectedSignature = crypto.createHmac('sha256', callbackSecret)
           .update(payload)
           .digest('hex');
         
+        console.log(`[Video Editor] Signature verification for job ${jobId}:`);
+        console.log(`  - Using raw body: ${!!req.rawBody}`);
+        console.log(`  - Payload length: ${payload.length}`);
+        console.log(`  - Expected: ${expectedSignature}`);
+        console.log(`  - Received: ${receivedSignature}`);
+        
         if (receivedSignature !== expectedSignature) {
           console.warn(`[Video Editor] Invalid callback signature for job ${jobId}`);
-          console.warn(`[Video Editor] Expected: ${expectedSignature}, Received: ${receivedSignature}`);
           return res.status(401).json({ message: "Invalid signature" });
         }
         

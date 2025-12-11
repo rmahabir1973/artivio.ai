@@ -1,0 +1,69 @@
+025-12-11 12:35:50.31
+7019d454
+User
+[Preview] normalize: Normalizing clip 1/2 (preview)...
+
+2025-12-11 12:35:51.54
+7019d454
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/oJo2LwIetx/normalized_1.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k)
+2025-12-11 12:35:51.60
+7019d454
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/oJo2LwIetx/normalized_0.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k)
+2025-12-11 12:35:51.60
+7019d454
+User
+[Preview] validate: Verifying normalized video durations...
+2025-12-11 12:35:51.64
+7019d454
+User
+✓ Clip 2 normalized duration: 8.011s
+2025-12-11 12:35:51.64
+7019d454
+User
+[Preview] download: Downloading voice track...
+2025-12-11 12:35:51.64
+7019d454
+User
+✓ Clip 1 normalized duration: 8.000s
+2025-12-11 12:35:51.68
+7019d454
+User
+[Preview] error: Video combination failed. Please check your videos and try again.
+2025-12-11 12:35:51.68
+7019d454
+User
+at async file:///home/runner/workspace/dist/index.js:25279:22
+2025-12-11 12:35:51.68
+7019d454
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-11 12:35:51.68
+7019d454
+User
+at combineVideos (file:///home/runner/workspace/dist/index.js:9891:11)
+2025-12-11 12:35:51.68
+7019d454
+User
+[Video Editor] Preview error: Error: Video combination failed. Please check your videos and try again.
+2025-12-11 12:35:51.68
+7019d454
+User
+5:35:51 PM [express] POST /api/video-editor/preview 500 in 1759ms :: {"message":"Video combination f…
+2025-12-11 12:35:51.68
+7019d454
+User
+5:35:51 PM [express] POST /api/video-editor/preview 500 in 1759ms :: {"message":"Video combination f…
+2025-12-11 12:36:02.66
+7019d454
+User
+[Video Editor] Invalid callback signature for job export-1765474493424-rlq9jnosm
+2025-12-11 12:36:02.66
+7019d454
+User
+[Video Editor] Expected: 7277822dd6ec5cb9e00f643d438708f92048e562f0906303fc926502f1e1853d, Received: dfd81bfccbcac55c6c63abe0be4a25c5132c3a6b75eb85be8f812f8ef8f3927b
+2025-12-11 12:36:02.66
+7019d454
+User
+5:36:02 PM [express] POST /api/video-editor/callback/export-1765474493424-rlq9jnosm 401 in 1ms :: {"…

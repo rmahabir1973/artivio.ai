@@ -223,8 +223,15 @@ app.post('/api/webhooks/stripe',
 );
 
 // Body parsers for all other routes (after webhook route is registered)
+// Use verify to capture raw body for Lambda callback signature verification
 app.use(express.json({
   limit: '50mb', // Allow large base64 payloads for image editing
+  verify: (req: any, res, buf) => {
+    // Save raw body for signature verification (Lambda callback routes)
+    if (req.url?.includes('/api/video-editor/callback/')) {
+      req.rawBody = buf.toString('utf8');
+    }
+  },
 }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
