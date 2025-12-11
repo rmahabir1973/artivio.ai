@@ -999,10 +999,26 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
     onProgress?.('process', 'Running FFmpeg...');
     
-    await execAsync(ffmpegCommand, {
-      timeout: FFMPEG_TIMEOUT,
-      maxBuffer: 50 * 1024 * 1024,
-    });
+    // Log the FFmpeg command for debugging (truncated for readability)
+    const cmdPreview = ffmpegCommand.length > 500 ? ffmpegCommand.substring(0, 500) + '...' : ffmpegCommand;
+    console.log('[FFmpeg] Executing command:', cmdPreview);
+    
+    try {
+      await execAsync(ffmpegCommand, {
+        timeout: FFMPEG_TIMEOUT,
+        maxBuffer: 50 * 1024 * 1024,
+      });
+    } catch (ffmpegError: any) {
+      // Log the actual FFmpeg error before re-throwing
+      console.error('[FFmpeg] Command failed with error:', ffmpegError.message);
+      if (ffmpegError.stderr) {
+        console.error('[FFmpeg] stderr:', ffmpegError.stderr);
+      }
+      if (ffmpegError.stdout) {
+        console.error('[FFmpeg] stdout:', ffmpegError.stdout);
+      }
+      throw ffmpegError;
+    }
 
     // CRITICAL FIX: Get actual duration from output file instead of calculating
     // This ensures the duration we report matches what the video player will show
