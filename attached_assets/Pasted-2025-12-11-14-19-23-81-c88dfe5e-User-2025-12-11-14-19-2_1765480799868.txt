@@ -1,0 +1,70 @@
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+},
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+},
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+"fadeDuration": 0.5,
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+"enhancements": {
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+"sourceUrl": "https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/3549897f-64ce-4518-b9f4-dcc559461afa-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251211%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251211T190959Z&X-Amz-Expires=604800&X-Amz-Signature=0804317823af813b926c3a807f61da47140fe0164ba01736355e5cb35b1fdc28&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+"userId": "49729939",
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-11 14:19:23.81
+c88dfe5e
+User
+"clips": [
+2025-12-11 14:19:24.28
+c88dfe5e
+User
+[Video Editor] Signature verification for job export-1765480763810-l896p3xxj:
+2025-12-11 14:19:24.28
+c88dfe5e
+User
+- Payload length: 5639
+2025-12-11 14:19:24.28
+c88dfe5e
+User
+- Received: f0abd8967c450ea6c1ea73a4b0723ab5e5d1a31d41fd96bcd81e2a168a253965
+2025-12-11 14:19:24.28
+c88dfe5e
+User
+- Expected: 48460bb66f0bb73c491f2b89b8cf63625c1b57777ae8195f34d606b85caff8a6
+2025-12-11 14:19:24.28
+c88dfe5e
+User
+[Video Editor] Invalid callback signature for job export-1765480763810-l896p3xxj
+2025-12-11 14:19:24.28
+c88dfe5e
+User
+- Using raw body: true
+2025-12-11 14:19:24.28
+c88dfe5e
+User
+7:19:24 PM [express] POST /api/video-editor/callback/export-1765480763810-l896p3xxj 401 in 1ms :: {"…
+2025-12-11 14:19:24.33
+c88dfe5e
+User
+[Video Editor] Lambda error for job export-1765480763810-l896p3xxj (status 500): {"status":"failed","jobId":"export-1765480763810-l896p3xxj","error":"FFmpeg exited with code 1\nffmpeg version 4.1.3-static https://johnvansickle.com/ffmpeg/ Copyright (c) 2000-2019 the FFmpeg developers\n built with gcc 6.3.0 (Debian 6.3.0-18+deb9u1) 20170516\n configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc-6 --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gmp --enable-gray --enable-libaom --enable-libfribidi --enable-libass --enable-libvmaf --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-librubberband --enable-libsoxr --enable-libspeex --enable-libvorbis --enable-libopus --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzvbi --enable-libzimg\n libavutil 56. 22.100 / 56. 22.100\n libavcodec 58. 35.100 / 58. 35.100\n libavformat 58. 20.100 / 58. 20.100\n libavdevice 58. 5.100 / 58. 5.100\n libavfilter 7. 40.101 / 7. 40.101\n libswscale 5. 3.100 / 5. 3.100\n libswresample 3. 3.100 / 3. 3.100\n libpostproc 55. 3.100 / 55. 3.100\nInput #0, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_0.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 8987 kb/s\n Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 8839 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\nInput #1, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_1.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 9574 kb/s\n Stream #1:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 9426 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #1:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\n[AVFilterGraph @ 0x4522f0c0] No such filter: 'xfade'\nError initializing complex filters.\nInvalid argument\n","errorType":"Error","errorStack":"Error: FFmpeg exited with code 1\nffmpeg version 4.1.3-static https://johnvansickle.com/ffmpeg/ Copyright (c) 2000-2019 the FFmpeg developers\n built with gcc 6.3.0 (Debian 6.3.0-18+deb9u1) 20170516\n configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc-6 --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gmp --enable-gray --enable-libaom --enable-libfribidi --enable-libass --enable-libvmaf --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-librubberband --enable-libsoxr --enable-libspeex --enable-libvorbis --enable-libopus --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzvbi --enable-libzimg\n libavutil 56. 22.100 / 56. 22.100\n libavcodec 58. 35.100 / 58. 35.100\n libavformat 58. 20.100 / 58. 20.100\n libavdevice 58. 5.100 / 58. 5.100\n libavfilter 7. 40.101 / 7. 40.101\n libswscale 5. 3.100 / 5. 3.100\n libswresample 3. 3.100 / 3. 3.100\n libpostproc 55. 3.100 / 55. 3.100\nInput #0, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_0.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 8987 kb/s\n Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 8839 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\nInput #1, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_1.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 9574 kb/s\n Stream #1:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 9426 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #1:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\n[AVFilterGraph @ 0x4522f0c0] No such filter: 'xfade'\nError initializing complex filters.\nInvalid argument\n\n at ChildProcess. (file:///var/task/index.mjs:172:24)\n at ChildProcess.emit (node:events:508:28)\n at maybeClose (node:internal/child_process:1101:16)\n at ChildProcess._handle.onexit (node:internal/child_process:305:5)"}
+2025-12-11 14:19:24.33
+c88dfe5e
+User
+[Video Editor] Lambda error for job export-1765480763810-l896p3xxj (status 500): {"status":"failed","jobId":"export-1765480763810-l896p3xxj","error":"FFmpeg exited with code 1\nffmpeg version 4.1.3-static https://johnvansickle.com/ffmpeg/ Copyright (c) 2000-2019 the FFmpeg developers\n built with gcc 6.3.0 (Debian 6.3.0-18+deb9u1) 20170516\n configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc-6 --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gmp --enable-gray --enable-libaom --enable-libfribidi --enable-libass --enable-libvmaf --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-librubberband --enable-libsoxr --enable-libspeex --enable-libvorbis --enable-libopus --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzvbi --enable-libzimg\n libavutil 56. 22.100 / 56. 22.100\n libavcodec 58. 35.100 / 58. 35.100\n libavformat 58. 20.100 / 58. 20.100\n libavdevice 58. 5.100 / 58. 5.100\n libavfilter 7. 40.101 / 7. 40.101\n libswscale 5. 3.100 / 5. 3.100\n libswresample 3. 3.100 / 3. 3.100\n libpostproc 55. 3.100 / 55. 3.100\nInput #0, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_0.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 8987 kb/s\n Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 8839 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\nInput #1, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_1.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 9574 kb/s\n Stream #1:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 9426 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #1:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\n[AVFilterGraph @ 0x4522f0c0] No such filter: 'xfade'\nError initializing complex filters.\nInvalid argument\n","errorType":"Error","errorStack":"Error: FFmpeg exited with code 1\nffmpeg version 4.1.3-static https://johnvansickle.com/ffmpeg/ Copyright (c) 2000-2019 the FFmpeg developers\n built with gcc 6.3.0 (Debian 6.3.0-18+deb9u1) 20170516\n configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc-6 --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gmp --enable-gray --enable-libaom --enable-libfribidi --enable-libass --enable-libvmaf --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-librubberband --enable-libsoxr --enable-libspeex --enable-libvorbis --enable-libopus --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzvbi --enable-libzimg\n libavutil 56. 22.100 / 56. 22.100\n libavcodec 58. 35.100 / 58. 35.100\n libavformat 58. 20.100 / 58. 20.100\n libavdevice 58. 5.100 / 58. 5.100\n libavfilter 7. 40.101 / 7. 40.101\n libswscale 5. 3.100 / 5. 3.100\n libswresample 3. 3.100 / 3. 3.100\n libpostproc 55. 3.100 / 55. 3.100\nInput #0, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_0.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 8987 kb/s\n Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 8839 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\nInput #1, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/videos/clip_export-1765480763810-l896p3xxj_1.mp4':\n Metadata:\n major_brand : isom\n minor_version : 512\n compatible_brands: isomiso2avc1mp41\n encoder : Google\n Duration: 00:00:08.00, start: 0.000000, bitrate: 9574 kb/s\n Stream #1:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p, 1280x720, 9426 kb/s, 24 fps, 24 tbr, 12288 tbn, 48 tbc (default)\n Metadata:\n handler_name : VideoHandler\n Stream #1:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)\n Metadata:\n handler_name : SoundHandler\n[AVFilterGraph @ 0x4522f0c0] No such filter: 'xfade'\nError initializing complex filters.\nInvalid argument\n\n at ChildProcess. (file:///var/task/index.mjs:172:24)\n at ChildProcess.emit (node:events:508:28)\n at maybeClose (node:internal/child_process:1101:16)\n at ChildProcess._handle.onexit (node:internal/child_process:305:5)"}
+
+Collapse

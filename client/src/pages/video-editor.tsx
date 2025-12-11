@@ -565,6 +565,10 @@ export default function VideoEditor() {
 
   // Load video metadata to get actual duration (defined after updateClipSettings)
   const loadClipDurationRef = useRef<((clipId: string, url: string) => void) | null>(null);
+  
+  // Track which clips have already attempted duration loading to prevent infinite loops
+  // Key is "clipId:url" to allow re-loading if URL changes
+  const attemptedDurationLoadsRef = useRef<Set<string>>(new Set());
 
   // Toggle mute for a clip
   const toggleClipMute = useCallback((clipId: string) => {
@@ -587,11 +591,20 @@ export default function VideoEditor() {
   }, [getClipSettings]);
 
   // Load media metadata to get actual duration for a clip (supports both video and audio)
+  // Uses attemptedDurationLoadsRef to prevent infinite loops on failed loads
   const loadClipDuration = useCallback((clipId: string, url: string, mediaType: 'video' | 'audio' | 'image' = 'video') => {
     if (!url || !url.startsWith('http')) {
-      console.warn(`[DURATION] Invalid URL for clip ${clipId}:`, url);
       return;
     }
+    
+    // Check if we've already attempted to load this clip+url combo to prevent infinite loops
+    const cacheKey = `${clipId}:${url}`;
+    if (attemptedDurationLoadsRef.current.has(cacheKey)) {
+      return; // Already attempted, don't retry
+    }
+    
+    // Mark as attempted before loading
+    attemptedDurationLoadsRef.current.add(cacheKey);
 
     // Images don't need duration loading - use default display duration
     if (mediaType === 'image') {
@@ -632,10 +645,9 @@ export default function VideoEditor() {
       element.load(); // Clean up
     };
 
-    element.onerror = (e) => {
+    element.onerror = () => {
       clearTimeout(timeoutId);
-      console.error(`[DURATION] Error loading ${mediaType} clip ${clipId}:`, e);
-      console.warn(`[DURATION] Using fallback duration: ${fallbackDuration}s`);
+      // Silently use fallback - don't spam console with errors
       updateClipSettings(clipId, { originalDuration: fallbackDuration });
       element.src = '';
       element.load();
