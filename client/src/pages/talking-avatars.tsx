@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useRef, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { usePricing } from "@/hooks/use-pricing";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Image as ImageIcon, Video, Upload, Mic, Square, Play, Pause, ChevronDown, Info, Clock } from "lucide-react";
+import { Loader2, Image as ImageIcon, Video, Upload, Mic, Square, Play, Pause, ChevronDown, Info, Clock, Download } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { SavedSeedsLibrary } from "@/components/SavedSeedsLibrary";
@@ -44,6 +44,10 @@ export default function TalkingAvatars() {
   const [seed, setSeed] = useState("");
   const [seedLocked, setSeedLocked] = useState(false);
 
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedAvatar, setGeneratedAvatar] = useState<any>(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -55,6 +59,51 @@ export default function TalkingAvatars() {
   const timerIntervalRef = useRef<number | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
+  // Poll for generation result
+  const { data: pollData } = useQuery<any>({
+    queryKey: ["/api/generations", generationId],
+    queryFn: async () => {
+      if (!generationId) return null;
+      const response = await apiRequest("GET", `/api/generations/${generationId}`);
+      const data = await response.json();
+      return data;
+    },
+    enabled: isAuthenticated && !!generationId,
+    refetchInterval: generationId ? 2000 : false,
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  // Update generatedAvatar when poll data arrives
+  useEffect(() => {
+    if (!pollData || !generationId) return;
+    
+    const isCompleted = pollData?.status === 'completed' || pollData?.status === 'success';
+    const isFailed = pollData?.status === 'failed' || pollData?.status === 'failure';
+    
+    if (isCompleted && pollData?.resultUrl) {
+      setGeneratedAvatar(pollData);
+      setIsGenerating(false);
+      setGenerationId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      toast({
+        title: "Avatar Generated!",
+        description: "Your talking avatar is ready to view and download.",
+      });
+    } else if (isFailed) {
+      setGeneratedAvatar(pollData);
+      setIsGenerating(false);
+      setGenerationId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
+      toast({
+        title: "Generation Failed",
+        description: pollData?.errorMessage || "Failed to generate avatar",
+        variant: "destructive",
+      });
+    }
+  }, [pollData, generationId, toast]);
+
   const generateMutation = useMutation({
     mutationFn: async (params: {
       sourceImage: string;
@@ -64,25 +113,18 @@ export default function TalkingAvatars() {
     }) => {
       return await apiRequest("POST", "/api/avatar/generate", params);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      setGenerationId(data.generationId);
+      setIsGenerating(true);
+      setGeneratedAvatar(null);
       toast({
-        title: "Success",
-        description: "Avatar generation started! Check your Library for updates.",
+        title: "Generation Started",
+        description: "Your talking avatar is being generated. Watch the preview panel for progress.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/avatar/generations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
-      setSourceImage("");
-      setImageFileName("");
-      setAudioUrl("");
-      setAudioFile("");
-      setAudioDuration(null);
-      setRecordedAudio(null);
-      setEmotion("");
-      setRecordingTime(0);
-      if (!seedLocked) {
-        setSeed("");
-      }
+      // Keep form data for now - only clear after successful generation
     },
     onError: (error: any) => {
       toast({
@@ -696,11 +738,11 @@ export default function TalkingAvatars() {
         <CardFooter>
           <Button
             onClick={handleGenerate}
-            disabled={generateMutation.isPending || !sourceImage || !audioUrl}
+            disabled={isGenerating || !sourceImage || !audioUrl}
             className="w-full"
             data-testid="button-generate"
           >
-            {generateMutation.isPending ? (
+            {isGenerating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating...
@@ -727,12 +769,100 @@ export default function TalkingAvatars() {
     <ThreeColumnLayout
       form={formContent}
       preview={
-        <PeerTubePreview
-          pageType="talking-avatar"
-          title="Talking Avatar Preview"
-          description="See AI avatars come to life"
-          showGeneratingMessage={generateMutation.isPending}
-        />
+        generatedAvatar ? (
+          <Card className="h-full flex flex-col">
+            <CardHeader>
+              <CardTitle>Generated Talking Avatar</CardTitle>
+              <CardDescription className="line-clamp-2">
+                {generatedAvatar.prompt || "Talking avatar video"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              {/* Video player */}
+              <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
+                <video
+                  src={generatedAvatar.resultUrl}
+                  controls
+                  autoPlay
+                  loop
+                  className="w-full h-full object-contain"
+                  data-testid="avatar-result"
+                />
+              </div>
+              
+              {/* Metadata */}
+              <div className="space-y-2 text-sm mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Provider:</span>
+                  <span className="font-medium">{generatedAvatar.model || provider}</span>
+                </div>
+                {generatedAvatar.parameters?.quality && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Quality:</span>
+                    <span>{generatedAvatar.parameters.quality}</span>
+                  </div>
+                )}
+                {generatedAvatar.parameters?.emotion && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Emotion:</span>
+                    <span>{generatedAvatar.parameters.emotion}</span>
+                  </div>
+                )}
+                {generatedAvatar.seed && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Seed:</span>
+                    <span className="font-mono">{generatedAvatar.seed}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Action buttons */}
+              <div className="flex gap-2 mt-auto">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = generatedAvatar.resultUrl;
+                    link.download = `avatar-${generatedAvatar.id}.mp4`;
+                    link.click();
+                  }}
+                  data-testid="button-download-avatar"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGeneratedAvatar(null);
+                    setSourceImage("");
+                    setImageFileName("");
+                    setAudioUrl("");
+                    setAudioFile("");
+                    setAudioDuration(null);
+                    setRecordedAudio(null);
+                    setEmotion("");
+                    setRecordingTime(0);
+                    if (!seedLocked) {
+                      setSeed("");
+                    }
+                  }}
+                  data-testid="button-generate-another"
+                >
+                  Generate Another
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <PeerTubePreview
+            pageType="talking-avatar"
+            title="Talking Avatar Preview"
+            description="See AI avatars come to life"
+            showGeneratingMessage={isGenerating}
+          />
+        )
       }
       showPreview={true}
     />
