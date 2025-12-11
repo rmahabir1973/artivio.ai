@@ -2204,7 +2204,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referenceImages,
         veoSubtype,
         finalParameters
-      );
+      ).catch(error => {
+        console.error('[Background] Video generation failed:', error);
+      });
 
       res.json({ generationId: generation.id, message: "Video generation started" });
     } catch (error: any) {
@@ -2268,7 +2270,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mode,
         mode === 'image-editing' ? referenceImages : undefined,
         finalParameters
-      );
+      ).catch(error => {
+        console.error('[Background] Image generation failed:', error);
+      });
 
       res.json({ generationId: generation.id, message: "Image generation started" });
     } catch (error: any) {
@@ -2844,7 +2848,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creditsCost: cost,
       });
 
-      generateMusicInBackground(generation.id, model, prompt, parameters || {});
+      generateMusicInBackground(generation.id, model, prompt, parameters || {}).catch(error => {
+        console.error('[Background] Music generation failed:', error);
+      });
 
       res.json({ generationId: generation.id, message: "Music generation started" });
     } catch (error: any) {
@@ -8106,6 +8112,22 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     createdAt: Date;
   }> = new Map();
   
+  // Cleanup expired export jobs to prevent memory leak (24-hour TTL)
+  const VIDEO_EXPORT_JOB_TTL = 24 * 60 * 60 * 1000; // 24 hours
+  setInterval(() => {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+    videoExportJobs.forEach((job, jobId) => {
+      if (now - job.createdAt.getTime() > VIDEO_EXPORT_JOB_TTL) {
+        keysToDelete.push(jobId);
+      }
+    });
+    keysToDelete.forEach(jobId => videoExportJobs.delete(jobId));
+    if (keysToDelete.length > 0) {
+      console.log(`[Cleanup] Removed ${keysToDelete.length} expired export jobs`);
+    }
+  }, 60 * 60 * 1000); // Cleanup every hour
+  
   // Export video via AWS Lambda
   app.post('/api/video-editor/export', requireJWT, async (req: any, res) => {
     try {
@@ -8381,8 +8403,9 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           return res.status(401).json({ message: "Invalid signature" });
         }
       } else {
-        // Log warning but allow in development
-        console.warn('[Video Editor] AWS_LAMBDA_CALLBACK_SECRET not set - callback verification disabled');
+        // Security: Fail closed - reject callbacks without proper secret configuration
+        console.error('[Video Editor] AWS_LAMBDA_CALLBACK_SECRET not configured - rejecting callback');
+        return res.status(503).json({ message: "Service not configured" });
       }
       
       console.log(`[Video Editor] Callback received for job ${jobId}:`, { status, downloadUrl, error });
