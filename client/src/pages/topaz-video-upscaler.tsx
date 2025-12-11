@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { usePricing } from "@/hooks/use-pricing";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, Upload, Download, Zap, Copy, Check } from "lucide-react";
+import { Loader2, Upload, Download, Zap, Copy, Check, Video as VideoIcon, Clock } from "lucide-react";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
 import { GuestGenerateModal } from "@/components/guest-generate-modal";
@@ -23,13 +23,6 @@ function getDurationTier(duration: number): '10s' | '15s' | '20s' {
   return '20s';
 }
 
-interface UpscaleResult {
-  id: string;
-  status: string;
-  resultUrl?: string;
-  error?: string;
-}
-
 export default function TopazVideoUpscaler() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -41,9 +34,13 @@ export default function TopazVideoUpscaler() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [pollAttempts, setPollAttempts] = useState(0);
+
+  const MAX_POLL_ATTEMPTS = 120; // 6 minutes (videos take longer than images)
 
   // Get pricing from database based on selected factor and duration tier
   const currentTier = videoDuration > 0 ? getDurationTier(videoDuration) : '10s';
@@ -94,6 +91,8 @@ export default function TopazVideoUpscaler() {
       return;
     }
 
+    setIsUploading(true);
+
     // Check video duration before processing
     const videoElement = document.createElement("video");
     videoElement.preload = "metadata";
@@ -103,6 +102,7 @@ export default function TopazVideoUpscaler() {
       const duration = videoElement.duration;
 
       if (duration > maxDuration) {
+        setIsUploading(false);
         toast({
           title: "Video Too Long",
           description: `Video is ${duration.toFixed(1)}s long. Maximum duration is ${maxDuration} seconds to avoid processing timeouts.`,
@@ -114,7 +114,7 @@ export default function TopazVideoUpscaler() {
       // Store duration for cost calculation (pricing comes from database via usePricing hook)
       setVideoDuration(duration);
       const tier = getDurationTier(duration);
-      
+
       // Show tier information to user
       toast({
         title: "Video Loaded",
@@ -130,11 +130,21 @@ export default function TopazVideoUpscaler() {
         setVideoUrl(base64);
         setResultUrl(null);
         setGenerationId(null);
+        setIsUploading(false);
+      };
+      reader.onerror = () => {
+        setIsUploading(false);
+        toast({
+          title: "Upload Failed",
+          description: "Could not read video file.",
+          variant: "destructive",
+        });
       };
       reader.readAsDataURL(file);
     };
 
     videoElement.onerror = () => {
+      setIsUploading(false);
       toast({
         title: "Invalid Video",
         description: "Could not read video file. Please try a different file.",
@@ -170,9 +180,10 @@ export default function TopazVideoUpscaler() {
     onSuccess: (data: any) => {
       setGenerationId(data.generationId);
       setIsPolling(true);
+      setPollAttempts(0);
       toast({
         title: "Upscaling Started",
-        description: `Your video is being upscaled ${selectedFactor}x. Please wait...`,
+        description: `Your video is being upscaled ${selectedFactor}x. This may take several minutes...`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/generations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -192,6 +203,18 @@ export default function TopazVideoUpscaler() {
     queryFn: async () => {
       if (!generationId) return null;
 
+      setPollAttempts(prev => prev + 1);
+
+      if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+        setIsPolling(false);
+        toast({
+          title: "Processing Timeout",
+          description: "Upscaling is taking longer than expected. Please check your library.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
       const response = await fetch(`/api/generations/${generationId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
@@ -210,6 +233,7 @@ export default function TopazVideoUpscaler() {
       if (data.status === "completed" && data.resultUrl) {
         setResultUrl(data.resultUrl);
         setIsPolling(false);
+        setPollAttempts(0);
         toast({
           title: "Upscaling Complete",
           description: "Your video has been successfully upscaled!",
@@ -218,6 +242,7 @@ export default function TopazVideoUpscaler() {
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       } else if (data.status === "failed") {
         setIsPolling(false);
+        setPollAttempts(0);
         toast({
           title: "Upscaling Failed",
           description: data.errorMessage || "An error occurred during upscaling",
@@ -227,7 +252,7 @@ export default function TopazVideoUpscaler() {
 
       return data;
     },
-    enabled: isPolling && !!generationId,
+    enabled: isPolling && !!generationId && pollAttempts < MAX_POLL_ATTEMPTS,
     refetchInterval: isPolling ? 3000 : undefined,
   });
 
@@ -245,7 +270,7 @@ export default function TopazVideoUpscaler() {
       });
       return;
     }
-    
+
     if (warningLevel === "insufficient") {
       toast({
         title: "Insufficient Credits",
@@ -257,14 +282,34 @@ export default function TopazVideoUpscaler() {
     upscaleMutation.mutate();
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!resultUrl) return;
-    const link = document.createElement("a");
-    link.href = resultUrl;
-    link.download = `upscaled-${selectedFactor}x-${Date.now()}.mp4`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    try {
+      const response = await fetch(resultUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `upscaled-${selectedFactor}x-${uploadedFileName || Date.now()}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download Started",
+        description: "Your upscaled video is downloading...",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not download video. Try copying the URL instead.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCopyUrl = () => {
@@ -276,6 +321,17 @@ export default function TopazVideoUpscaler() {
       title: "Copied",
       description: "Video URL copied to clipboard",
     });
+  };
+
+  const handleReset = () => {
+    setVideoUrl(null);
+    setBase64Video(null);
+    setResultUrl(null);
+    setGenerationId(null);
+    setUploadedFileName("");
+    setVideoDuration(0);
+    setIsPolling(false);
+    setPollAttempts(0);
   };
 
   if (authLoading) {
@@ -301,9 +357,13 @@ export default function TopazVideoUpscaler() {
             className="flex flex-col items-center justify-center w-full px-4 py-8 border-2 border-dashed rounded-lg cursor-pointer hover-elevate transition-colors"
           >
             <div className="flex flex-col items-center justify-center">
-              <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+              {isUploading ? (
+                <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+              ) : (
+                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+              )}
               <span className="text-sm font-medium">
-                {uploadedFileName || "Click to upload or drag and drop"}
+                {isUploading ? "Loading video..." : (uploadedFileName || "Click to upload or drag and drop")}
               </span>
               <span className="text-xs text-muted-foreground">
                 MP4, MOV, MKV • Max 20 seconds • Up to 500MB
@@ -314,6 +374,7 @@ export default function TopazVideoUpscaler() {
               accept="video/mp4,video/quicktime,video/x-matroska"
               onChange={handleVideoUpload}
               className="hidden"
+              disabled={isUploading || isPolling}
               data-testid="video-upscaler-file-input"
             />
           </label>
@@ -403,40 +464,174 @@ export default function TopazVideoUpscaler() {
         </div>
 
         {/* Action Buttons */}
-        <Button
-          onClick={handleUpscale}
-          disabled={!videoUrl || videoDuration <= 0 || upscaleMutation.isPending || isPolling}
-          className="w-full"
-          data-testid="button-start-video-upscale"
-        >
-          {upscaleMutation.isPending || isPolling ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              {isPolling ? "Processing..." : "Starting..."}
-            </>
-          ) : (
-            <>
-              <Zap className="h-4 w-4 mr-2" />
-              Upscale {selectedFactor}x
-            </>
+        <div className="space-y-2">
+          <Button
+            onClick={handleUpscale}
+            disabled={!videoUrl || videoDuration <= 0 || upscaleMutation.isPending || isPolling || resultUrl !== null}
+            className="w-full"
+            data-testid="button-start-video-upscale"
+          >
+            {upscaleMutation.isPending || isPolling ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {isPolling ? "Processing..." : "Starting..."}
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Upscale {selectedFactor}x
+              </>
+            )}
+          </Button>
+
+          {resultUrl && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleReset}
+              data-testid="button-new-video-upscale"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upscale Another Video
+            </Button>
           )}
-        </Button>
+        </div>
       </CardContent>
     </Card>
+  );
+
+  // CRITICAL FIX: Proper video preview logic instead of always showing PeerTube
+  const preview = (
+    <div className="relative w-full h-full flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden">
+      {/* State 1: No video uploaded - Show PeerTube ad */}
+      {!videoUrl && !resultUrl && (
+        <PeerTubePreview
+          pageType="video-upscaler"
+          title="Video Upscaler"
+          description="Enhance video resolution with AI"
+          showGeneratingMessage={false}
+        />
+      )}
+
+      {/* State 2: Video uploaded, processing - Show original with loader */}
+      {videoUrl && !resultUrl && isPolling && (
+        <div className="relative w-full h-full">
+          <video 
+            src={videoUrl} 
+            className="w-full h-full object-contain"
+            controls
+            muted
+          />
+          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center backdrop-blur-sm">
+            <Loader2 className="h-20 w-20 animate-spin text-white mb-6" />
+            <p className="text-white font-semibold text-xl mb-2">Upscaling {selectedFactor}x...</p>
+            <p className="text-white/80 text-base mb-4">
+              {videoDuration.toFixed(1)}s video • {currentTier} tier
+            </p>
+            <p className="text-white/70 text-sm">This may take 2-5 minutes</p>
+            <div className="mt-6 px-6 py-3 bg-white/10 rounded-full backdrop-blur">
+              <p className="text-white/90 text-sm flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Processing {pollAttempts}/{MAX_POLL_ATTEMPTS} checks
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* State 3: Video uploaded, not processing - Show original */}
+      {videoUrl && !resultUrl && !isPolling && (
+        <div className="w-full h-full flex flex-col">
+          <div className="flex-1 flex items-center justify-center p-8 bg-black">
+            <video 
+              src={videoUrl} 
+              className="max-w-full max-h-full rounded-lg shadow-2xl"
+              controls
+              muted
+            />
+          </div>
+          <div className="p-4 border-t bg-background/95 backdrop-blur">
+            <p className="text-sm text-muted-foreground text-center flex items-center justify-center gap-2">
+              <VideoIcon className="h-4 w-4" />
+              Original Video ({videoDuration.toFixed(1)}s) • Ready to upscale {selectedFactor}x
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* State 4: Result ready - Show upscaled video with actions */}
+      {resultUrl && (
+        <div className="w-full h-full flex flex-col">
+          {/* Result Video */}
+          <div className="flex-1 flex items-center justify-center p-8 bg-black">
+            <video 
+              src={resultUrl} 
+              className="max-w-full max-h-full rounded-lg shadow-2xl ring-2 ring-primary/30"
+              controls
+              autoPlay
+              muted
+            />
+          </div>
+
+          {/* Action Bar */}
+          <div className="p-6 border-t bg-background/95 backdrop-blur space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-base flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-500" />
+                  Upscaled {selectedFactor}x
+                </p>
+                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                  <Clock className="h-3 w-3" />
+                  {videoDuration.toFixed(1)}s • {uploadedFileName || "Enhanced Video"}
+                </p>
+              </div>
+              <Badge variant="secondary" className="bg-green-500/10 text-green-700 border-green-500/20">
+                ✓ Complete
+              </Badge>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleDownload}
+                className="flex-1"
+                size="lg"
+                data-testid="button-download-video-result"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+              <Button 
+                onClick={handleCopyUrl}
+                variant="outline"
+                className="flex-1"
+                size="lg"
+                data-testid="button-copy-video-url"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy URL
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 
   return (
     <SidebarInset>
       <ThreeColumnLayout 
         form={form} 
-        preview={
-          <PeerTubePreview
-            pageType="video-upscaler"
-            title="Video Upscaler"
-            description="Enhance video resolution with AI"
-            showGeneratingMessage={isPolling}
-          />
-        }
+        preview={preview}
       />
       <GuestGenerateModal
         open={showGuestModal}

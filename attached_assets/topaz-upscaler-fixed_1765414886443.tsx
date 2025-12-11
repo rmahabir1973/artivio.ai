@@ -90,7 +90,7 @@ export default function TopazUpscaler() {
 
     setIsUploading(true);
     setUploadedFileName(file.name);
-
+    
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
@@ -156,7 +156,7 @@ export default function TopazUpscaler() {
       if (!generationId) return null;
 
       setPollAttempts(prev => prev + 1);
-
+      
       if (pollAttempts >= MAX_POLL_ATTEMPTS) {
         setIsPolling(false);
         toast({
@@ -227,21 +227,21 @@ export default function TopazUpscaler() {
 
   const handleDownload = async () => {
     if (!resultUrl) return;
-
+    
     try {
       const response = await fetch(resultUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-
+      
       const link = document.createElement("a");
       link.href = url;
       link.download = `upscaled-${selectedFactor}x-${uploadedFileName || Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
+      
       window.URL.revokeObjectURL(url);
-
+      
       toast({
         title: "Download Started",
         description: "Your upscaled image is downloading...",
@@ -395,7 +395,7 @@ export default function TopazUpscaler() {
               </>
             )}
           </Button>
-
+          
           {resultUrl && (
             <Button
               variant="outline"
@@ -424,7 +424,7 @@ export default function TopazUpscaler() {
           showGeneratingMessage={false}
         />
       )}
-
+      
       {/* State 2: Image uploaded, processing - Show original with loader */}
       {imageUrl && !resultUrl && isPolling && (
         <div className="relative w-full h-full">
@@ -445,7 +445,7 @@ export default function TopazUpscaler() {
           </div>
         </div>
       )}
-
+      
       {/* State 3: Image uploaded, not processing - Show original */}
       {imageUrl && !resultUrl && !isPolling && (
         <div className="w-full h-full flex flex-col">
@@ -464,7 +464,7 @@ export default function TopazUpscaler() {
           </div>
         </div>
       )}
-
+      
       {/* State 4: Result ready - Show upscaled image with actions */}
       {resultUrl && (
         <div className="w-full h-full flex flex-col">
@@ -476,7 +476,7 @@ export default function TopazUpscaler() {
               className="max-w-full max-h-full object-contain rounded-lg shadow-2xl ring-1 ring-primary/20"
             />
           </div>
-
+          
           {/* Action Bar */}
           <div className="p-6 border-t bg-background/95 backdrop-blur space-y-4">
             <div className="flex items-center justify-between">
@@ -493,7 +493,7 @@ export default function TopazUpscaler() {
                 ✓ Complete
               </Badge>
             </div>
-
+            
             <div className="flex gap-3">
               <Button 
                 onClick={handleDownload}
