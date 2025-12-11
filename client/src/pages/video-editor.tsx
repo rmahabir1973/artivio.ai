@@ -656,6 +656,18 @@ export default function VideoEditor() {
     }
   }, [orderedClips, clipSettings, loadClipDuration]);
 
+  // Load durations for audio tracks
+  useEffect(() => {
+    for (const track of audioTracks) {
+      const settings = clipSettings.get(track.id);
+      // Only load duration if not already loaded
+      if (!settings?.originalDuration && track.url) {
+        // IMPORTANT: Pass 'audio' as the mediaType parameter
+        loadClipDuration(track.id, track.url, 'audio');
+      }
+    }
+  }, [audioTracks, clipSettings, loadClipDuration]);
+
   // Build a signature string that represents the current preview state
   // Used for caching and detecting changes
   const buildPreviewSignature = useCallback(() => {
@@ -2482,6 +2494,10 @@ const previewMutation = useMutation({
                                   type: 'music',
                                   volume: 0.5,
                                 }]);
+                                
+                                // Initialize audio settings for duration loading
+                                updateClipSettings(trackId, { originalDuration: 30 });
+                                
                                 setEnhancements(prev => ({
                                   ...prev,
                                   backgroundMusic: {
@@ -2548,6 +2564,10 @@ const previewMutation = useMutation({
                                   type: 'voice',
                                   volume: 1.0,
                                 }]);
+                                
+                                // Initialize audio settings for duration loading
+                                updateClipSettings(trackId, { originalDuration: 30 });
+                                
                                 setEnhancements(prev => ({
                                   ...prev,
                                   audioTrack: {
