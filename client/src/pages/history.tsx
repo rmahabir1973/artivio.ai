@@ -201,6 +201,10 @@ function GenerationListItem({
   });
 
   const getThumbnail = () => {
+    // For multiple images, show the first one from resultUrls
+    if (generation.resultUrls && generation.resultUrls.length > 0) {
+      return generation.resultUrls[0];
+    }
     if (generation.thumbnailUrl) return generation.thumbnailUrl;
     if (generation.resultUrl) {
       if (generation.type === 'image' || generation.type === 'background-remover' || generation.type === 'upscaling') return generation.resultUrl;
@@ -210,6 +214,7 @@ function GenerationListItem({
   };
 
   const thumbnail = getThumbnail();
+  const hasMultipleImages = generation.resultUrls && generation.resultUrls.length > 1;
 
   const handleClick = (e: React.MouseEvent) => {
     if (isSelectionMode) {
@@ -262,6 +267,11 @@ function GenerationListItem({
         {generation.type === 'video' && generation.status === 'completed' && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <Play className="h-4 w-4 text-white fill-white" />
+          </div>
+        )}
+        {hasMultipleImages && (
+          <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
+            {generation.resultUrls!.length}
           </div>
         )}
       </div>
