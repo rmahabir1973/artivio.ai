@@ -1,0 +1,97 @@
+2025-12-11 12:46:49.00
+a9330b7f
+User
+}
+2025-12-11 12:46:49.00
+a9330b7f
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-11 12:46:49.00
+a9330b7f
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-11 12:46:49.00
+a9330b7f
+User
+hasUser: true,
+2025-12-11 12:46:49.00
+a9330b7f
+User
+[/api/generations] Paginated query completed in 47ms, found 9 generations, hasMore: false
+2025-12-11 12:46:49.00
+a9330b7f
+User
+5:46:49 PM [express] GET /api/generations 200 in 157ms :: {"items":[{"id":"79304f40-4db3-48b1-b723-8…
+2025-12-11 12:46:49.02
+a9330b7f
+User
+5:46:49 PM [express] GET /api/video-projects 200 in 129ms :: [{"id":"e2247a38-2ebd-4cd3-a443-63e2ca0…
+2025-12-11 12:46:49.04
+a9330b7f
+User
+[/api/generations] Paginated query completed in 46ms, found 15 generations, hasMore: true
+2025-12-11 12:46:49.04
+a9330b7f
+User
+5:46:49 PM [express] GET /api/generations 200 in 150ms :: {"items":[{"id":"52578dce-64b4-4839-93e5-7…
+
+2025-12-11 12:46:49.04
+a9330b7f
+User
+5:46:49 PM [express] GET /api/generations 200 in 150ms :: {"items":[{"id":"52578dce-64b4-4839-93e5-7…
+2025-12-11 12:46:59.06
+a9330b7f
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-11 12:46:59.06
+a9330b7f
+User
+[Video Editor] Starting preview generation for user 49729939 with 2 clips
+2025-12-11 12:46:59.07
+a9330b7f
+User
+[Preview] download: Downloading 2 media files...
+2025-12-11 12:46:59.28
+a9330b7f
+User
+✓ Downloaded video 1: /home/runner/workspace/temp/video-processing/vlt9_GLdIC/input_1.mp4 (3.82MB)
+2025-12-11 12:46:59.42
+a9330b7f
+User
+✓ Downloaded video 0: /home/runner/workspace/temp/video-processing/vlt9_GLdIC/input_0.mp4 (1.13MB)
+2025-12-11 12:46:59.42
+a9330b7f
+User
+[Preview] validate: Validating and normalizing videos...
+2025-12-11 12:47:03.29
+a9330b7f
+User
+[Preview] validate: Verifying normalized video durations...
+2025-12-11 12:47:03.36
+a9330b7f
+User
+✓ Clip 1 normalized duration: 8.011s
+2025-12-11 12:47:03.36
+a9330b7f
+User
+✓ Clip 2 normalized duration: 8.000s
+2025-12-11 12:47:03.40
+a9330b7f
+User
+[Preview] error: Video combination failed. Please check your videos and try again.
+2025-12-11 12:47:03.41
+a9330b7f
+User
+at combineVideos (file:///home/runner/workspace/dist/index.js:9904:11)
+2025-12-11 12:47:03.41
+a9330b7f
+User
+5:47:03 PM [express] POST /api/video-editor/preview 500 in 4370ms :: {"message":"Video combination f…
+2025-12-11 12:47:03.41
+a9330b7f
+User
+5:47:03 PM [express] POST /api/video-editor/preview 500 in 4370ms :: {"message":"Video combination f…
+2025-12-11 12:47:03.41
+a9330b7f
+User
+5:47:03 PM [express] POST /api/video-editor/preview 500 in 4370ms :: {"message":"Video combination f…

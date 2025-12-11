@@ -747,34 +747,43 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
     let musicPath: string | undefined;
     if (enhancements?.backgroundMusic?.audioUrl) {
       onProgress?.('download', 'Downloading background music...');
+      console.log('[VideoProcessor] Downloading background music from:', enhancements.backgroundMusic.audioUrl);
       musicPath = await downloadAudio(enhancements.backgroundMusic.audioUrl, tempDir!);
       tempFiles.push(musicPath);
+      console.log('[VideoProcessor] ✓ Background music downloaded:', musicPath);
     }
 
     // Download voice/TTS audio track if specified
     let voicePath: string | undefined;
     if (enhancements?.audioTrack?.audioUrl) {
       onProgress?.('download', 'Downloading voice track...');
-      const voiceExt = path.extname(new URL(enhancements.audioTrack.audioUrl).pathname) || '.mp3';
-      const voiceFilename = `voice_track${voiceExt}`;
-      const voiceFilepath = path.join(tempDir!, voiceFilename);
-      
-      const response = await axios({
-        method: 'GET',
-        url: enhancements.audioTrack.audioUrl,
-        responseType: 'stream',
-        timeout: 60000,
-      });
-      
-      const writer = createWriteStream(voiceFilepath);
-      response.data.pipe(writer);
-      await new Promise<void>((resolve, reject) => {
-        writer.on('finish', () => resolve());
-        writer.on('error', reject);
-      });
-      
-      voicePath = voiceFilepath;
-      tempFiles.push(voicePath);
+      console.log('[VideoProcessor] Downloading voice track from:', enhancements.audioTrack.audioUrl);
+      try {
+        const voiceExt = path.extname(new URL(enhancements.audioTrack.audioUrl).pathname) || '.mp3';
+        const voiceFilename = `voice_track${voiceExt}`;
+        const voiceFilepath = path.join(tempDir!, voiceFilename);
+        
+        const response = await axios({
+          method: 'GET',
+          url: enhancements.audioTrack.audioUrl,
+          responseType: 'stream',
+          timeout: 60000,
+        });
+        
+        const writer = createWriteStream(voiceFilepath);
+        response.data.pipe(writer);
+        await new Promise<void>((resolve, reject) => {
+          writer.on('finish', () => resolve());
+          writer.on('error', reject);
+        });
+        
+        voicePath = voiceFilepath;
+        tempFiles.push(voicePath);
+        console.log('[VideoProcessor] ✓ Voice track downloaded:', voicePath);
+      } catch (voiceError: any) {
+        console.error('[VideoProcessor] Failed to download voice track:', voiceError.message);
+        throw new Error(`Failed to download voice track: ${voiceError.message}`);
+      }
     }
 
     // Download avatar overlay video if specified

@@ -8340,6 +8340,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       const previewClips = project.clips;
       
       console.log(`[Video Editor] Starting preview generation for user ${userId} with ${previewClips.length} clips`);
+      console.log(`[Video Editor] Received enhancements:`, JSON.stringify(enhancements, null, 2));
       
       // Extract video URLs from clips (handle both formats from frontend)
       const videoUrls = previewClips.map((clip: any) => clip.sourceUrl || clip.url);
