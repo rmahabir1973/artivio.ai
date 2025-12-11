@@ -1,0 +1,76 @@
+2025-12-11 12:53:22.48
+0042ce08
+User
+}
+2025-12-11 12:53:22.49
+0042ce08
+User
+[Preview] download: Downloading 3 media files...
+2025-12-11 12:53:22.88
+0042ce08
+User
+✓ Downloaded video 1: /home/runner/workspace/temp/video-processing/q2JVPQdJ7_/input_1.mp4 (3.24MB)
+2025-12-11 12:53:22.88
+0042ce08
+User
+✓ Downloaded video 2: /home/runner/workspace/temp/video-processing/q2JVPQdJ7_/input_2.mp4 (3.13MB)
+2025-12-11 12:53:22.89
+0042ce08
+User
+✓ Downloaded video 0: /home/runner/workspace/temp/video-processing/q2JVPQdJ7_/input_0.mp4 (3.82MB)
+2025-12-11 12:53:22.89
+0042ce08
+User
+[Preview] validate: Validating and normalizing videos...
+2025-12-11 12:53:22.89
+0042ce08
+User
+[Preview] validate: Validating and normalizing videos...
+2025-12-11 12:53:24.24
+0042ce08
+User
+[Preview] normalize: Normalizing clip 1/3 (preview)...
+2025-12-11 12:53:24.24
+0042ce08
+User
+[Preview] normalize: Normalizing clip 2/3 (preview)...
+2025-12-11 12:53:24.24
+0042ce08
+User
+[Preview] normalize: Normalizing clip 3/3 (preview)...
+2025-12-11 12:53:27.16
+0042ce08
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/q2JVPQdJ7_/normalized_1.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k)
+2025-12-11 12:53:27.29
+0042ce08
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/q2JVPQdJ7_/normalized_0.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k)
+2025-12-11 12:53:27.32
+0042ce08
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/q2JVPQdJ7_/normalized_2.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k)
+2025-12-11 12:53:27.32
+0042ce08
+User
+[Preview] validate: Verifying normalized video durations...
+2025-12-11 12:53:27.38
+0042ce08
+User
+✓ Clip 1 normalized duration: 8.000s
+2025-12-11 12:53:27.38
+0042ce08
+User
+✓ Clip 2 normalized duration: 8.000s
+2025-12-11 12:53:27.38
+0042ce08
+User
+✓ Clip 3 normalized duration: 8.000s
+2025-12-11 12:53:27.38
+0042ce08
+User
+[Preview] download: Downloading voice track...
+2025-12-11 12:53:27.38
+0042ce08
+User
+[VideoProcessor] Downloading voice track from: https://artivio-video-exports.s3.us-east-1.amazonaws.com/uploads/audio/tts-1764729382054-acc1lt.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251203%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251203T023622Z&X-Amz-Expires=604800&X-Amz-Signature=532258d08f941ab55dd16764b4e14ff50aa4d9b8cc4ef7a8a70e5d60c18d1ddb&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
