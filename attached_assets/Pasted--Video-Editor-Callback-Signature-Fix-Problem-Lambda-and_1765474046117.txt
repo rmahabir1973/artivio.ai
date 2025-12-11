@@ -1,0 +1,98 @@
+# Video Editor Callback Signature Fix
+
+## Problem
+Lambda and Replit are using different signature algorithms:
+- **Lambda:** Signs the entire JSON payload
+- **Replit:** Signs only `jobId + status + downloadUrl`
+
+Result: Signatures never match → callbacks rejected
+
+## The Fix
+
+In `server/routes.ts`, find the callback handler (around line 8670):
+
+### FIND THIS CODE:
+
+```typescript
+app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {
+  try {
+    const { jobId } = req.params;
+    const { status, downloadUrl, error, signature } = req.body;
+    
+    // Verify callback authenticity using shared secret
+    const callbackSecret = process.env.AWS_LAMBDA_CALLBACK_SECRET;
+    if (callbackSecret) {
+      const crypto = await import('crypto');
+      const expectedSignature = crypto.createHmac('sha256', callbackSecret)
+        .update(jobId + status + (downloadUrl || ''))
+        .digest('hex');
+      
+      if (signature !== expectedSignature) {
+        console.warn(`[Video Editor] Invalid callback signature for job ${jobId}`);
+        return res.status(401).json({ message: "Invalid signature" });
+      }
+    }
+```
+
+### REPLACE WITH THIS CODE:
+
+```typescript
+app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {
+  try {
+    const { jobId } = req.params;
+    
+    // Extract signature from header (Lambda sends it as x-callback-signature)
+    const receivedSignature = req.headers['x-callback-signature'] as string;
+    
+    // Verify callback authenticity using shared secret
+    const callbackSecret = process.env.AWS_LAMBDA_CALLBACK_SECRET;
+    if (callbackSecret) {
+      if (!receivedSignature) {
+        console.warn(`[Video Editor] No signature provided for callback ${jobId}`);
+        return res.status(401).json({ message: "Missing signature" });
+      }
+      
+      const crypto = await import('crypto');
+      // Lambda signs the entire request body as JSON
+      const payload = JSON.stringify(req.body);
+      const expectedSignature = crypto.createHmac('sha256', callbackSecret)
+        .update(payload)
+        .digest('hex');
+      
+      if (receivedSignature !== expectedSignature) {
+        console.warn(`[Video Editor] Invalid callback signature for job ${jobId}`);
+        console.warn(`[Video Editor] Expected: ${expectedSignature}, Received: ${receivedSignature}`);
+        return res.status(401).json({ message: "Invalid signature" });
+      }
+      
+      console.log(`[Video Editor] ✅ Callback signature verified for job ${jobId}`);
+    } else {
+      // Security: Fail closed - reject callbacks without proper secret configuration
+      console.error('[Video Editor] AWS_LAMBDA_CALLBACK_SECRET not configured - rejecting callback');
+      return res.status(503).json({ message: "Service not configured" });
+    }
+    
+    // Signature valid - process callback
+    const { status, downloadUrl, error } = req.body;
+```
+
+## What Changed
+
+1. **Signature location:** Now reads from `x-callback-signature` header (where Lambda sends it)
+2. **Signature algorithm:** Now signs the entire JSON payload (matches Lambda)
+3. **Better logging:** Added debug output to help troubleshoot signature issues
+
+## Testing
+
+After deploying:
+
+1. Try exporting a video with effects/transitions
+2. Check Replit logs - should see:
+   - ✅ `[Video Editor] ✅ Callback signature verified for job export-...`
+   - NOT: ❌ `[Video Editor] Invalid callback signature`
+
+3. Video should complete successfully with audio and effects
+
+## Why This Matters
+
+The signature verification is a security feature to ensure callbacks actually come from your Lambda function and haven't been tampered with. By signing the entire payload, we ensure data integrity for the complete response.
