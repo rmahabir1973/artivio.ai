@@ -179,6 +179,43 @@ function modelSupportsSeed(model: string): boolean {
          model === 'seedream-4';
 }
 
+// Helper to refresh expired S3 signed URLs in generation objects
+// This ensures user content is always accessible regardless of URL expiration
+async function refreshGenerationUrls<T extends { resultUrl?: string | null; thumbnailUrl?: string | null }>(
+  generation: T
+): Promise<T> {
+  const refreshed = { ...generation };
+  
+  // Refresh resultUrl if it's an expired S3 signed URL
+  if (refreshed.resultUrl && s3.isS3SignedUrl(refreshed.resultUrl)) {
+    try {
+      refreshed.resultUrl = await s3.refreshSignedUrl(refreshed.resultUrl);
+    } catch (err) {
+      // Keep original URL if refresh fails - might still work
+      console.warn(`[URL Refresh] Failed to refresh resultUrl for generation:`, err);
+    }
+  }
+  
+  // Refresh thumbnailUrl if it's an expired S3 signed URL
+  if (refreshed.thumbnailUrl && s3.isS3SignedUrl(refreshed.thumbnailUrl)) {
+    try {
+      refreshed.thumbnailUrl = await s3.refreshSignedUrl(refreshed.thumbnailUrl);
+    } catch (err) {
+      console.warn(`[URL Refresh] Failed to refresh thumbnailUrl for generation:`, err);
+    }
+  }
+  
+  return refreshed;
+}
+
+// Helper to batch refresh URLs for multiple generations
+async function refreshGenerationsUrls<T extends { resultUrl?: string | null; thumbnailUrl?: string | null }>(
+  generations: T[]
+): Promise<T[]> {
+  // Process in parallel for efficiency
+  return Promise.all(generations.map(gen => refreshGenerationUrls(gen)));
+}
+
 // Background generation functions
 async function generateVideoInBackground(
   generationId: string, 
@@ -3374,12 +3411,15 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         // Apply timeout check
         applyTimeoutCheck(items);
         
+        // Refresh expired S3 URLs to ensure user content is always accessible
+        const refreshedItems = await refreshGenerationsUrls(items);
+        
         // Encode nextCursor as base64 for frontend
         const encodedCursor = nextCursor 
           ? Buffer.from(JSON.stringify({ createdAt: nextCursor.createdAt.toISOString(), id: nextCursor.id })).toString('base64')
           : null;
         
-        return res.json({ items, nextCursor: encodedCursor });
+        return res.json({ items: refreshedItems, nextCursor: encodedCursor });
       } else {
         // Legacy array format for backward compatibility
         const startTime = Date.now();
@@ -3391,7 +3431,10 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         // Apply timeout check
         applyTimeoutCheck(generations);
         
-        return res.json(generations);
+        // Refresh expired S3 URLs to ensure user content is always accessible
+        const refreshedGenerations = await refreshGenerationsUrls(generations);
+        
+        return res.json(refreshedGenerations);
       }
     } catch (error) {
       console.error('[/api/generations] ERROR:', {
@@ -3456,7 +3499,10 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         return res.status(403).json({ message: "Access denied" });
       }
 
-      res.json(generation);
+      // Refresh expired S3 URLs to ensure content is always accessible
+      const refreshedGeneration = await refreshGenerationUrls(generation);
+      
+      res.json(refreshedGeneration);
     } catch (error) {
       console.error('Error fetching generation:', error);
       res.status(500).json({ message: "Failed to fetch generation" });
