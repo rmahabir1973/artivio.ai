@@ -268,11 +268,11 @@ function SortableClip({
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <Play className="h-6 w-6 text-white fill-white" />
           </div>
-          
+
           <Badge className="absolute top-1 left-1 text-[10px] h-5 px-1.5" variant="secondary">
             #{clipIndex + 1}
           </Badge>
-          
+
           <Button
             size="icon"
             variant="ghost"
@@ -288,7 +288,7 @@ function SortableClip({
           <p className="text-xs line-clamp-1 text-muted-foreground">
             {clip.prompt}
           </p>
-          
+
           <div className="flex items-center justify-between gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -310,7 +310,7 @@ function SortableClip({
                 {clipSettings.muted ? 'Unmute clip' : 'Mute clip'}
               </TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -327,7 +327,7 @@ function SortableClip({
                 Split clip
               </TooltipContent>
             </Tooltip>
-            
+
             <button
               {...attributes}
               {...listeners}
@@ -336,7 +336,7 @@ function SortableClip({
             >
               <GripVertical className="h-4 w-4 text-muted-foreground" />
             </button>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -354,7 +354,7 @@ function SortableClip({
               </TooltipContent>
             </Tooltip>
           </div>
-          
+
           {clipSettings.volume < 1 && !clipSettings.muted && (
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <Volume2 className="h-3 w-3" />
@@ -448,7 +448,7 @@ export default function VideoEditor() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { getModelCost } = usePricing();
   const isMobile = useIsMobile();
-  
+
   const baseCreditCost = getModelCost('video-combiner', 150);
 
   const [step, setStep] = useState<WizardStep>(1);
@@ -458,7 +458,7 @@ export default function VideoEditor() {
   const [multiTrackItems, setMultiTrackItems] = useState<MultiTrackTimelineItem[]>([]);
   const [useMultiTrack, setUseMultiTrack] = useState(false);
   const [multiTrackKey, setMultiTrackKey] = useState(0);
-  
+
   const {
     overlays: textOverlays,
     addOverlay: addTextOverlay,
@@ -469,17 +469,17 @@ export default function VideoEditor() {
     duplicateOverlay: duplicateTextOverlay,
     clearAllOverlays: clearTextOverlays,
   } = useTextOverlay();
-  
+
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // New OpenCut/CapCut-style layout state
   const [activeCategory, setActiveCategory] = useState<EditorCategory>('media');
   const [mediaPanelOpen, setMediaPanelOpen] = useState(true);
-  
+
   // Enhanced editor state
   const [clipSettings, setClipSettings] = useState<Map<string, ClipSettingsLocal>>(new Map());
   const [enhancements, setEnhancements] = useState<EnhancementsState>({
@@ -496,14 +496,14 @@ export default function VideoEditor() {
   const [showClipSettingsModal, setShowClipSettingsModal] = useState(false);
   const [editingClip, setEditingClip] = useState<{ clip: VideoClip; index: number } | null>(null);
   const [enhancementsPanelOpen, setEnhancementsPanelOpen] = useState(true);
-  
+
   // Split dialog state
   const [showSplitModal, setShowSplitModal] = useState(false);
   const [splittingClip, setSplittingClip] = useState<{ clip: VideoClip; index: number } | null>(null);
   const [splitTime, setSplitTime] = useState(0);
   const [clipDuration, setClipDuration] = useState(0);
   const splitVideoRef = useRef<HTMLVideoElement>(null);
-  
+
   // Preview state with auto-update support
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -512,7 +512,7 @@ export default function VideoEditor() {
   const previewCacheRef = useRef<Map<string, string>>(new Map());
   const lastPreviewSignatureRef = useRef<string | null>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -520,11 +520,11 @@ export default function VideoEditor() {
   const [projectTitle, setProjectTitle] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [isSaveAs, setIsSaveAs] = useState(false);
-  
+
   // Transition editing state
   const [showTransitionEditModal, setShowTransitionEditModal] = useState(false);
   const [editingTransition, setEditingTransition] = useState<{ position: number; transition: ClipTransitionLocal } | null>(null);
-  
+
   // Get clip settings for a clip, with defaults
   const getClipSettings = useCallback((clipId: string): ClipSettingsLocal => {
     return clipSettings.get(clipId) || {
@@ -534,14 +534,14 @@ export default function VideoEditor() {
       speed: 1.0,
     };
   }, [clipSettings]);
-  
+
   // Calculate total timeline duration based on actual clip durations, trim settings, and speed
   const calculateTotalDuration = useCallback((): number => {
     let totalDuration = 0;
-    
+
     for (const clip of orderedClips) {
       const settings = getClipSettings(clip.id);
-      
+
       // For images, use displayDuration; for videos, calculate from trim/speed
       if (clip.type === 'image') {
         totalDuration += settings.displayDuration ?? 5;
@@ -551,21 +551,21 @@ export default function VideoEditor() {
         const trimStart = settings.trimStartSeconds ?? 0;
         const trimEnd = settings.trimEndSeconds ?? originalDuration;
         const speed = settings.speed ?? 1.0;
-        
+
         // Calculate effective duration after trim and speed adjustment
         const trimmedDuration = Math.max(0, trimEnd - trimStart);
         const effectiveDuration = trimmedDuration / speed;
-        
+
         totalDuration += effectiveDuration;
       }
     }
-    
+
     return totalDuration;
   }, [orderedClips, getClipSettings]);
-  
+
   // Load video metadata to get actual duration (defined after updateClipSettings)
   const loadClipDurationRef = useRef<((clipId: string, url: string) => void) | null>(null);
-  
+
   // Toggle mute for a clip
   const toggleClipMute = useCallback((clipId: string) => {
     setClipSettings(prev => {
@@ -575,7 +575,7 @@ export default function VideoEditor() {
       return newMap;
     });
   }, [getClipSettings]);
-  
+
   // Update clip settings
   const updateClipSettings = useCallback((clipId: string, updates: Partial<ClipSettingsLocal>) => {
     setClipSettings(prev => {
@@ -585,31 +585,31 @@ export default function VideoEditor() {
       return newMap;
     });
   }, [getClipSettings]);
-  
+
   // Load media metadata to get actual duration for a clip (supports both video and audio)
   const loadClipDuration = useCallback((clipId: string, url: string, mediaType: 'video' | 'audio' | 'image' = 'video') => {
     if (!url || !url.startsWith('http')) {
       console.warn(`[DURATION] Invalid URL for clip ${clipId}:`, url);
       return;
     }
-    
+
     // Images don't need duration loading - use default display duration
     if (mediaType === 'image') {
       updateClipSettings(clipId, { originalDuration: 5 }); // Default image display duration
       return;
     }
-    
+
     // Use correct element type for media: video for video files, audio for audio/music files
     const element = mediaType === 'audio' 
       ? document.createElement('audio')
       : document.createElement('video');
-    
+
     element.preload = 'metadata';
     if ('crossOrigin' in element) {
       (element as HTMLVideoElement | HTMLAudioElement).crossOrigin = 'anonymous';
     }
     element.src = url;
-    
+
     // Timeout after 10 seconds if metadata doesn't load
     const fallbackDuration = mediaType === 'audio' ? 30 : 10;
     const timeoutId = setTimeout(() => {
@@ -618,7 +618,7 @@ export default function VideoEditor() {
       element.src = '';
       element.load();
     }, 10000);
-    
+
     element.onloadedmetadata = () => {
       clearTimeout(timeoutId);
       const duration = element.duration;
@@ -631,7 +631,7 @@ export default function VideoEditor() {
       element.src = '';
       element.load(); // Clean up
     };
-    
+
     element.onerror = (e) => {
       clearTimeout(timeoutId);
       console.error(`[DURATION] Error loading ${mediaType} clip ${clipId}:`, e);
@@ -641,10 +641,10 @@ export default function VideoEditor() {
       element.load();
     };
   }, [updateClipSettings]);
-  
+
   // Store ref for use in effects
   loadClipDurationRef.current = loadClipDuration;
-  
+
   // Load durations for newly added clips
   useEffect(() => {
     for (const clip of orderedClips) {
@@ -660,9 +660,9 @@ export default function VideoEditor() {
   // Used for caching and detecting changes
   const buildPreviewSignature = useCallback(() => {
     if (orderedClips.length === 0) return null;
-    
+
     const previewClips = orderedClips; // Preview ALL clips - no limit
-    
+
     const signatureData = {
       clips: previewClips.map((clip, index) => ({
         url: clip.url,
@@ -684,7 +684,7 @@ export default function VideoEditor() {
         aspectRatio: enhancements.aspectRatio,
       },
     };
-    
+
     return JSON.stringify(signatureData);
   }, [orderedClips, getClipSettings, enhancements]);
 
@@ -698,17 +698,17 @@ export default function VideoEditor() {
       });
       return;
     }
-    
+
     setPreviewStatus('refreshing');
     setPreviewError(undefined);
-    
+
     try {
       let payload: any;
-      
+
       if (useMultiTrack && multiTrackItems.length > 0) {
         // Multi-track mode: send timeline items to Lambda
         const previewItems = multiTrackItems; // Preview ALL items - no limit
-        
+
         payload = {
           multiTrackTimeline: {
             enabled: true,
@@ -744,7 +744,7 @@ export default function VideoEditor() {
       } else {
         // Single-track mode: send ordered clips to Lambda
         const previewClips = orderedClips; // Preview ALL clips - no limit
-        
+
         const project = {
           clips: previewClips.map((clip, index) => ({
             id: clip.id,
@@ -772,7 +772,7 @@ export default function VideoEditor() {
         const perClipSpeeds = clipSettingsArray
           .filter(cs => cs.speed !== 1.0 && !cs.isImage)
           .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
-        
+
         const speedConfig = perClipSpeeds.length > 0 
           ? { mode: 'perClip' as const, perClip: perClipSpeeds }
           : { mode: 'none' as const };
@@ -833,7 +833,7 @@ export default function VideoEditor() {
 
       const response = await apiRequest("POST", "/api/video-editor/preview", payload);
       const data = await response.json();
-      
+
       if (data.status === 'completed' && data.previewUrl) {
         setPreviewUrl(data.previewUrl);
         setPreviewStatus('ready');
@@ -863,14 +863,14 @@ export default function VideoEditor() {
       });
     }
   }, [orderedClips, multiTrackItems, useMultiTrack, getClipSettings, enhancements, toast]);
-  
-  
+
+
   // Open clip settings modal
   const openClipSettings = useCallback((clip: VideoClip, index: number) => {
     setEditingClip({ clip, index });
     setShowClipSettingsModal(true);
   }, []);
-  
+
   // Open split dialog
   const openSplitDialog = useCallback((clip: VideoClip, index: number) => {
     setSplittingClip({ clip, index });
@@ -878,7 +878,7 @@ export default function VideoEditor() {
     setClipDuration(0);
     setShowSplitModal(true);
   }, []);
-  
+
   // Handle video loaded metadata to get duration
   const handleSplitVideoLoaded = useCallback(() => {
     if (splitVideoRef.current) {
@@ -887,7 +887,7 @@ export default function VideoEditor() {
       setSplitTime(duration / 2); // Default to middle
     }
   }, []);
-  
+
   // Handle split time change from slider
   const handleSplitTimeChange = useCallback((value: number[]) => {
     const newTime = value[0];
@@ -896,14 +896,14 @@ export default function VideoEditor() {
       splitVideoRef.current.currentTime = newTime;
     }
   }, []);
-  
+
   // Format time as MM:SS.ms
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toFixed(2).padStart(5, '0')}`;
   };
-  
+
   // Confirm split operation
   const confirmSplit = useCallback(() => {
     if (!splittingClip || splitTime <= 0 || splitTime >= clipDuration) {
@@ -914,31 +914,31 @@ export default function VideoEditor() {
       });
       return;
     }
-    
+
     const { clip, index } = splittingClip;
-    
+
     // Create two clips from the original
     // First clip: original with trimEnd set to splitTime
     // Second clip: new clip with trimStart set to splitTime
     const firstClipId = clip.id;
     const secondClipId = `${clip.id}_split_${Date.now()}`;
-    
+
     // Create the second clip (the split-off portion)
     const secondClip: VideoClip = {
       ...clip,
       id: secondClipId,
     };
-    
+
     // Update clip settings for both clips
     const currentSettings = getClipSettings(firstClipId);
     const existingTrimStart = currentSettings.trimStartSeconds ?? 0;
     const existingTrimEnd = currentSettings.trimEndSeconds ?? clipDuration;
-    
+
     // First clip: from original start to split point
     updateClipSettings(firstClipId, {
       trimEndSeconds: existingTrimStart + splitTime,
     });
-    
+
     // Second clip: from split point to original end
     setClipSettings(prev => {
       const newMap = new Map(prev);
@@ -952,17 +952,17 @@ export default function VideoEditor() {
       });
       return newMap;
     });
-    
+
     // Insert the second clip right after the first one
     setOrderedClips(prev => {
       const newClips = [...prev];
       newClips.splice(index + 1, 0, secondClip);
       return newClips;
     });
-    
+
     setShowSplitModal(false);
     setSplittingClip(null);
-    
+
     toast({
       title: "Clip Split",
       description: `Clip has been split at ${formatTime(splitTime)}. You now have ${orderedClips.length + 1} clips.`,
@@ -984,18 +984,18 @@ export default function VideoEditor() {
   const customCollisionDetection: CollisionDetection = useCallback((args) => {
     // First check for transition-zone droppables using pointer intersection
     const pointerCollisions = pointerWithin(args);
-    
+
     // Filter for transition zones
     const transitionZoneHits = pointerCollisions.filter(
       collision => collision.data?.droppableContainer?.data?.current?.type === 'transition-zone'
     );
-    
+
     // If we have a transition zone hit, return it (prioritize transitions over clip sorting)
     if (transitionZoneHits.length > 0) {
       console.log('[COLLISION] Transition zone hit:', transitionZoneHits[0].id);
       return transitionZoneHits;
     }
-    
+
     // Fall back to closestCenter for clip sorting
     return closestCenter(args);
   }, []);
@@ -1113,18 +1113,18 @@ export default function VideoEditor() {
   const isValidGeneration = useCallback((g: Generation): boolean => {
     // Must have completed status
     if (g.status !== "completed") return false;
-    
+
     // CRITICAL: Must NOT have an error message
     // Failed generations sometimes have status="completed" but errorMessage set
     if (g.errorMessage && g.errorMessage.trim() !== '') return false;
-    
+
     // Must have a valid resultUrl
     if (!g.resultUrl || g.resultUrl.trim() === '') return false;
-    
+
     // Must not contain 'undefined' or 'null' as strings in URL
     // Catches backend string interpolation failures
     if (g.resultUrl.includes('undefined') || g.resultUrl.includes('null')) return false;
-    
+
     // Must have valid URL format (catches malformed URLs)
     try {
       new URL(g.resultUrl);
@@ -1168,15 +1168,15 @@ export default function VideoEditor() {
                        g.type === "avatar" || 
                        model.includes("infinitetalk") || 
                        model.includes("infinite-talk");
-      
+
       // Must also pass validation (no errors, valid URL)
       return isAvatar && isValidGeneration(g);
     });
   }, [videoData, isValidGeneration]);
-  
+
   // Derived loading states
   const avatarLoading = videoLoading;
-  
+
   // Pagination tracking
   const fetchNextPage = fetchNextVideoPage;
   const hasNextPage = hasNextVideoPage;
@@ -1188,7 +1188,7 @@ export default function VideoEditor() {
   // Handle quick action from Library - pre-load clips added via "Add to Video Editor"
   useEffect(() => {
     const storedClips = sessionStorage.getItem('videoEditor_clips');
-    
+
     if (storedClips) {
       try {
         const clips = JSON.parse(storedClips) as Array<{
@@ -1197,10 +1197,10 @@ export default function VideoEditor() {
           prompt: string;
           thumbnailUrl?: string | null;
         }>;
-        
+
         if (clips.length > 0) {
           console.log('[QUICK ACTION] Loading clips for video editor:', clips);
-          
+
           // Convert to VideoClip format and add to ordered clips
           const newClips: VideoClip[] = clips.map(clip => ({
             id: clip.id,
@@ -1210,26 +1210,26 @@ export default function VideoEditor() {
             createdAt: new Date().toISOString(),
             type: 'video' as const,
           }));
-          
+
           setOrderedClips(prev => {
             // Avoid duplicates
             const existingIds = new Set(prev.map(c => c.id));
             const uniqueNewClips = newClips.filter(c => !existingIds.has(c.id));
             return [...prev, ...uniqueNewClips];
           });
-          
+
           // Also add to selected IDs
           setSelectedIds(prev => {
             const newSet = new Set(prev);
             clips.forEach(c => newSet.add(c.id));
             return newSet;
           });
-          
+
           // Move to step 2 (arrange) if clips were added
           if (step === 1) {
             setStep(2);
           }
-          
+
           toast({
             title: `${clips.length} Clip${clips.length > 1 ? 's' : ''} Added`,
             description: "Your clips have been added to the video editor. Arrange and export!",
@@ -1238,7 +1238,7 @@ export default function VideoEditor() {
       } catch (e) {
         console.error('[QUICK ACTION] Failed to parse video editor clips:', e);
       }
-      
+
       // Clear the sessionStorage after consuming
       sessionStorage.removeItem('videoEditor_clips');
     }
@@ -1270,9 +1270,9 @@ export default function VideoEditor() {
         setExportProgress(100);
         setExportedUrl(status.downloadUrl);
         setActiveJobId(null);
-        
+
         queryClient.invalidateQueries({ queryKey: ['/api/generations'] });
-        
+
         toast({
           title: "Export Complete",
           description: "Your video has been successfully exported to cloud storage!",
@@ -1281,7 +1281,7 @@ export default function VideoEditor() {
         stopPolling();
         setExportProgress(0);
         setActiveJobId(null);
-        
+
         toast({
           title: "Export Failed",
           description: status.error || "Failed to export video",
@@ -1327,7 +1327,7 @@ export default function VideoEditor() {
       const perClipSpeeds = clipSettingsArray
         .filter(cs => cs.speed !== 1.0 && !cs.isImage)
         .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
-      
+
       const speedConfig = perClipSpeeds.length > 0 
         ? { mode: 'perClip' as const, perClip: perClipSpeeds }
         : { mode: 'none' as const };
@@ -1450,7 +1450,7 @@ export default function VideoEditor() {
       setActiveJobId(data.jobId);
 
       stopPolling();
-      
+
       pollingIntervalRef.current = setInterval(() => {
         pollExportStatus(data.jobId);
       }, 3000);
@@ -1465,19 +1465,18 @@ export default function VideoEditor() {
     },
   });
 
-  // Preview mutation for quick low-res preview
-  const previewMutation = useMutation({
-    mutationFn: async (clips: VideoClip[]) => {
-      // Build project payload (limit to first 3 clips for speed)
-      const previewClips = clips.slice(0, 3);
-      const project = {
-        clips: previewClips.map((clip, index) => ({
-          id: clip.id,
-          sourceUrl: clip.url,
-          order: index,
-        })),
-      };
-
+// Preview mutation for quick low-res preview
+const previewMutation = useMutation({
+  mutationFn: async (clips: VideoClip[]) => {
+    // Build project payload - PREVIEW ALL CLIPS (no limit)
+    const previewClips = clips; // Preview ALL clips, not just first 3
+    const project = {
+      clips: previewClips.map((clip, index) => ({
+        id: clip.id,
+        sourceUrl: clip.url,
+        order: index,
+      })),
+    };
       // Serialize clip settings for preview clips (includes image settings)
       const clipSettingsArray = previewClips.map((clip, index) => {
         const localSettings = clipSettings.get(clip.id);
@@ -1499,7 +1498,7 @@ export default function VideoEditor() {
       const perClipSpeeds = clipSettingsArray
         .filter(cs => cs.speed !== 1.0 && !cs.isImage)
         .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
-      
+
       const speedConfig = perClipSpeeds.length > 0 
         ? { mode: 'perClip' as const, perClip: perClipSpeeds }
         : { mode: 'none' as const };
@@ -1689,7 +1688,7 @@ export default function VideoEditor() {
   // Load a project into the editor
   const loadProject = useCallback((project: VideoProject) => {
     const timeline = project.timelineData as any;
-    
+
     if (!timeline || !timeline.clips) {
       toast({
         title: "Invalid Project",
@@ -1822,7 +1821,7 @@ export default function VideoEditor() {
 
     const activeId = String(active.id);
     const overId = String(over.id);
-    
+
     console.log('[DRAG] handleDragEnd:', { activeId, overId, useMultiTrack });
 
     // ========================================================================
@@ -1830,26 +1829,26 @@ export default function VideoEditor() {
     // ========================================================================
     const activeData = active.data.current;
     const overData = over.data.current;
-    
+
     if (
       activeData?.type === 'transition' && 
       overData?.type === 'transition-zone'
     ) {
       const transitionType = activeData.transitionType as TransitionType;
       const position = overData.position as number;
-      
+
       console.log('[DRAG] Transition drop:', { transitionType, position });
-      
+
       setEnhancements(prev => {
         const newTransitions = [...prev.clipTransitions];
         const existingIndex = newTransitions.findIndex(t => t.afterClipIndex === position);
-        
+
         const newTransition = {
           afterClipIndex: position,
           type: transitionType,
           durationSeconds: 1.0,
         };
-        
+
         if (existingIndex >= 0) {
           newTransitions[existingIndex] = newTransition;
           toast({
@@ -1863,14 +1862,14 @@ export default function VideoEditor() {
             description: `${transitionType} transition added between clips ${position + 1} and ${position + 2}`,
           });
         }
-        
+
         return {
           ...prev,
           transitionMode: 'perClip',
           clipTransitions: newTransitions,
         };
       });
-      
+
       setPreviewStatus('stale');
       return;
     }
@@ -1889,16 +1888,16 @@ export default function VideoEditor() {
         mediaType: 'video' | 'image' | 'audio';
         item: DroppedMediaItem;
       };
-      
+
       const dropData = over.data.current as { trackId: string; trackType: string } | undefined;
-      
+
       if (dragData?.type === 'media-item' && dragData.item?.url) {
         const mediaType = dragData.mediaType;
         const item = dragData.item;
         const trackId = dropData?.trackId || 'video-0';
-        
+
         const instanceId = `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         if (useMultiTrack) {
           const getTrackNumberFromId = (id: string): number => {
             const mapping: Record<string, number> = {
@@ -1910,14 +1909,14 @@ export default function VideoEditor() {
             };
             return mapping[id] ?? 0;
           };
-          
+
           const trackNumber = getTrackNumberFromId(trackId);
           const currentMaxEnd = multiTrackItems
             .filter(i => i.track === trackNumber)
             .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
-          
+
           const itemDuration = item.duration || (mediaType === 'image' ? 5 : 10);
-          
+
           const newItem: MultiTrackTimelineItem = {
             id: instanceId,
             type: mediaType,
@@ -1931,17 +1930,17 @@ export default function VideoEditor() {
             volume: mediaType === 'audio' ? 100 : undefined,
             speed: 1,
           };
-          
+
           console.log('[DRAG] Adding to multi-track:', newItem);
-          
+
           setMultiTrackItems(prev => {
             const updated = [...prev, newItem];
             console.log('[DRAG] Updated multi-track items:', updated);
             return updated;
           });
-          
+
           setMultiTrackKey(prev => prev + 1);
-          
+
           toast({
             title: "Added to Timeline",
             description: `${mediaType} added to ${trackId.replace('-', ' ').toUpperCase()} track`,
@@ -1967,14 +1966,14 @@ export default function VideoEditor() {
             };
             setOrderedClips(prev => [...prev, clip]);
           }
-          
+
           toast({
             title: "Added to timeline",
             description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to timeline`,
           });
         }
       }
-      
+
       // IMPORTANT: Return early to prevent fall-through to reordering logic
       return;
     }
@@ -2003,7 +2002,7 @@ export default function VideoEditor() {
   const handleTransitionEdit = useCallback((position: number) => {
     const transition = enhancements.clipTransitions.find(t => t.afterClipIndex === position);
     if (!transition) return;
-    
+
     setEditingTransition({ position, transition: transition as ClipTransitionLocal });
     setShowTransitionEditModal(true);
   }, [enhancements.clipTransitions]);
@@ -2018,7 +2017,7 @@ export default function VideoEditor() {
       };
     });
     setPreviewStatus('stale');
-    
+
     toast({
       title: "Transition Removed",
       description: `Transition between clips ${position + 1} and ${position + 2} removed`,
@@ -2032,14 +2031,14 @@ export default function VideoEditor() {
           ? { ...t, ...updates }
           : t
       );
-      
+
       return {
         ...prev,
         clipTransitions: newTransitions,
       };
     });
     setPreviewStatus('stale');
-    
+
     toast({
       title: "Transition Updated",
       description: `Transition between clips ${position + 1} and ${position + 2} updated`,
@@ -2053,7 +2052,7 @@ export default function VideoEditor() {
   const handleMultiTrackToggle = useCallback((enabled: boolean) => {
     setUseMultiTrack(enabled);
     setMultiTrackKey(prev => prev + 1);
-    
+
     if (enabled && orderedClips.length > 0 && multiTrackItems.length === 0) {
       let currentTime = 0;
       const convertedItems: MultiTrackTimelineItem[] = orderedClips.map((clip) => {
@@ -2066,7 +2065,7 @@ export default function VideoEditor() {
         const displayDuration = clip.type === 'image' 
           ? (settings?.displayDuration || 5)
           : effectiveDuration;
-        
+
         const item: MultiTrackTimelineItem = {
           id: clip.id,
           type: clip.type || 'video',
@@ -2085,7 +2084,7 @@ export default function VideoEditor() {
         currentTime += displayDuration;
         return item;
       });
-      
+
       const audioItems: MultiTrackTimelineItem[] = audioTracks.map((audio) => ({
         id: audio.id,
         type: 'audio' as const,
@@ -2097,9 +2096,9 @@ export default function VideoEditor() {
         name: audio.name,
         volume: Math.round(audio.volume * 100),
       }));
-      
+
       setMultiTrackItems([...convertedItems, ...audioItems]);
-      
+
       toast({
         title: "Multi-Track Mode",
         description: `Converted ${convertedItems.length} clips and ${audioItems.length} audio tracks to multi-track timeline`,
@@ -2171,10 +2170,10 @@ export default function VideoEditor() {
   // Uses unique instance IDs to allow the same video to be added multiple times
   const addClipToTimeline = useCallback((video: Generation, mediaType: 'video' | 'image' = 'video') => {
     if (!video.resultUrl) return;
-    
+
     // Generate unique instance ID to allow duplicates
     const instanceId = `${video.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const clip: VideoClip = {
       id: instanceId, // Unique instance ID
       url: video.resultUrl,
@@ -2183,14 +2182,14 @@ export default function VideoEditor() {
       createdAt: video.createdAt.toString(),
       type: mediaType,
     };
-    
+
     setOrderedClips(prev => [...prev, clip]);
-    
+
     // For images, set a default display duration
     if (mediaType === 'image') {
       updateClipSettings(instanceId, { displayDuration: 5, originalDuration: 5 });
     }
-    
+
     toast({
       title: mediaType === 'image' ? "Image Added" : "Clip Added",
       description: mediaType === 'image' ? "Image added to timeline (5s default)" : "Video added to timeline",
@@ -2206,31 +2205,31 @@ export default function VideoEditor() {
   const removeAudioTrack = useCallback((trackId: string) => {
     // Get the track being removed
     const removedTrack = audioTracks.find(t => t.id === trackId);
-    
+
     // Remove from audioTracks state
     setAudioTracks(prev => prev.filter(t => t.id !== trackId));
-    
+
     // CRITICAL: Also remove from enhancements if this was the background music or audio track
     setEnhancements(prev => {
       const updates: Partial<typeof prev> = {};
-      
+
       // Check if removing background music
       if (removedTrack && prev.backgroundMusic?.audioUrl === removedTrack.url) {
         updates.backgroundMusic = undefined;
       }
-      
+
       // Check if removing audio track (voice)
       if (removedTrack && prev.audioTrack?.audioUrl === removedTrack.url) {
         updates.audioTrack = undefined;
       }
-      
+
       // Only update if there are changes
       if (Object.keys(updates).length > 0) {
         return { ...prev, ...updates };
       }
       return prev;
     });
-    
+
     toast({
       title: "Audio Removed",
       description: "Audio track removed from timeline",
@@ -2266,13 +2265,13 @@ export default function VideoEditor() {
               </Badge>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-credit-cost">
               <Coins className="h-3 w-3" />
               <span className="text-xs">{baseCreditCost} credits</span>
             </Badge>
-            
+
             {isAuthenticated && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -2328,7 +2327,7 @@ export default function VideoEditor() {
             activeCategory={activeCategory} 
             onCategoryChange={setActiveCategory} 
           />
-          
+
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
             <div className="w-72 border-r flex flex-col shrink-0 bg-background" style={{ height: '100vh' }} data-testid="media-panel">
@@ -2344,7 +2343,7 @@ export default function VideoEditor() {
                   <PanelLeftClose className="h-4 w-4" />
                 </Button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
@@ -2381,7 +2380,7 @@ export default function VideoEditor() {
                           ))}
                         </div>
                       )}
-                      
+
                       {/* Load More for Media */}
                       {hasNextPage && (
                         <div className="pt-2">
@@ -2399,7 +2398,7 @@ export default function VideoEditor() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Images Category Content */}
                   {activeCategory === 'images' && (
                     <div className="space-y-3">
@@ -2435,7 +2434,7 @@ export default function VideoEditor() {
                           ))}
                         </div>
                       )}
-                      
+
                       {/* Load More for Images */}
                       {hasNextImagePage && (
                         <div className="pt-2">
@@ -2453,7 +2452,7 @@ export default function VideoEditor() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Music Category Content */}
                   {activeCategory === 'music' && (
                     <div className="space-y-2">
@@ -2501,7 +2500,7 @@ export default function VideoEditor() {
                               </div>
                             </div>
                           ))}
-                          
+
                           {/* Load More for Music */}
                           {hasNextMusicPage && (
                             <Button 
@@ -2519,7 +2518,7 @@ export default function VideoEditor() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Audio Category Content */}
                   {activeCategory === 'audio' && (
                     <div className="space-y-2">
@@ -2568,7 +2567,7 @@ export default function VideoEditor() {
                               </div>
                             </div>
                           ))}
-                          
+
                           {/* Load More for Audio */}
                           {hasNextAudioPage && (
                             <Button 
@@ -2586,7 +2585,7 @@ export default function VideoEditor() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Transitions Category Content - Drag & Drop */}
                   {activeCategory === 'transitions' && (
                     <div className="space-y-4">
@@ -2601,7 +2600,7 @@ export default function VideoEditor() {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Fade transitions */}
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2">Fade Effects</p>
@@ -2612,7 +2611,7 @@ export default function VideoEditor() {
                           <DraggableTransition type="fadewhite" icon={<Sparkles className="h-4 w-4 text-muted-foreground" />} label="Fade White" />
                         </div>
                       </div>
-                        
+
                       {/* Wipe transitions */}
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2">Wipe Effects</p>
@@ -2623,7 +2622,7 @@ export default function VideoEditor() {
                           <DraggableTransition type="wipedown" icon={<ArrowRight className="h-4 w-4 text-muted-foreground rotate-90" />} label="Wipe Down" />
                         </div>
                       </div>
-                      
+
                       {/* Slide transitions */}
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2">Slide Effects</p>
@@ -2634,7 +2633,7 @@ export default function VideoEditor() {
                           <DraggableTransition type="slidedown" icon={<Film className="h-4 w-4 text-muted-foreground" />} label="Slide Down" />
                         </div>
                       </div>
-                      
+
                       {/* Shape transitions */}
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2">Shape Effects</p>
@@ -2645,7 +2644,7 @@ export default function VideoEditor() {
                           <DraggableTransition type="pixelize" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Pixelize" />
                         </div>
                       </div>
-                        
+
                       {/* Diagonal transitions */}
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2">Other Effects</p>
@@ -2656,7 +2655,7 @@ export default function VideoEditor() {
                           <DraggableTransition type="diagbr" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal BR" />
                         </div>
                       </div>
-                      
+
                       {/* Active transitions list */}
                       {enhancements.clipTransitions.length > 0 && (
                         <div className="mt-4 space-y-2">
@@ -2698,7 +2697,7 @@ export default function VideoEditor() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Text Category Content */}
                   {activeCategory === 'text' && (
                     <TextOverlayEditor
@@ -2713,7 +2712,7 @@ export default function VideoEditor() {
                       onDuplicateOverlay={duplicateTextOverlay}
                     />
                   )}
-                  
+
                   {/* Overlays Category Content */}
                   {activeCategory === 'overlays' && (
                     <div className="space-y-3">
@@ -2770,12 +2769,12 @@ export default function VideoEditor() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Upload Category Content */}
                   {activeCategory === 'upload' && (
                     <div className="space-y-4">
                       <p className="text-sm text-muted-foreground">Import your own media to use in the editor</p>
-                      
+
                       {/* Video Upload */}
                       <div className="space-y-2">
                         <Label className="text-xs font-medium">Upload Video</Label>
@@ -2792,11 +2791,11 @@ export default function VideoEditor() {
                                 toast({ title: "File Too Large", description: "Maximum video size is 500MB", variant: "destructive" });
                                 return;
                               }
-                              
+
                               const formData = new FormData();
                               formData.append('file', file);
                               formData.append('type', 'video');
-                              
+
                               try {
                                 toast({ title: "Uploading...", description: "Uploading your video" });
                                 const response = await fetchWithAuth('/api/video-editor/upload', {
@@ -2830,7 +2829,7 @@ export default function VideoEditor() {
                           </label>
                         </div>
                       </div>
-                      
+
                       {/* Image Upload */}
                       <div className="space-y-2">
                         <Label className="text-xs font-medium">Upload Image</Label>
@@ -2847,11 +2846,11 @@ export default function VideoEditor() {
                                 toast({ title: "File Too Large", description: "Maximum image size is 50MB", variant: "destructive" });
                                 return;
                               }
-                              
+
                               const formData = new FormData();
                               formData.append('file', file);
                               formData.append('type', 'image');
-                              
+
                               try {
                                 toast({ title: "Uploading...", description: "Uploading your image" });
                                 const response = await fetchWithAuth('/api/video-editor/upload', {
@@ -2896,7 +2895,7 @@ export default function VideoEditor() {
                           </label>
                         </div>
                       </div>
-                      
+
                       {/* Audio Upload */}
                       <div className="space-y-2">
                         <Label className="text-xs font-medium">Upload Audio</Label>
@@ -2913,11 +2912,11 @@ export default function VideoEditor() {
                                 toast({ title: "File Too Large", description: "Maximum audio size is 100MB", variant: "destructive" });
                                 return;
                               }
-                              
+
                               const formData = new FormData();
                               formData.append('file', file);
                               formData.append('type', 'audio');
-                              
+
                               try {
                                 toast({ title: "Uploading...", description: "Uploading your audio" });
                                 const response = await fetchWithAuth('/api/video-editor/upload', {
@@ -2952,7 +2951,7 @@ export default function VideoEditor() {
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Export Category Content */}
                   {activeCategory === 'export' && (
                     <div className="space-y-4">
@@ -2974,7 +2973,7 @@ export default function VideoEditor() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <Label className="text-xs">Fade In</Label>
                         <Switch
@@ -2983,7 +2982,7 @@ export default function VideoEditor() {
                           data-testid="switch-fade-in"
                         />
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <Label className="text-xs">Fade Out</Label>
                         <Switch
@@ -2992,7 +2991,7 @@ export default function VideoEditor() {
                           data-testid="switch-fade-out"
                         />
                       </div>
-                      
+
                       {/* Background Music Controls */}
                       {enhancements.backgroundMusic && (
                         <div className="pt-4 border-t space-y-2">
@@ -3019,14 +3018,14 @@ export default function VideoEditor() {
                               <X className="h-3 w-3" />
                             </Button>
                           </div>
-                          
+
                           <div className="p-2 rounded-md bg-muted/50 text-xs truncate flex items-center gap-2">
                             <Music className="h-4 w-4 text-green-500 shrink-0" />
                             <span className="truncate flex-1">
                               {enhancements.backgroundMusic.name || 'Music Track'}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-1">
                             <Label className="text-xs flex justify-between">
                               Volume
@@ -3058,7 +3057,7 @@ export default function VideoEditor() {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Voice/Audio Track Controls */}
                       {enhancements.audioTrack && (
                         <div className="pt-4 border-t space-y-2">
@@ -3085,14 +3084,14 @@ export default function VideoEditor() {
                               <X className="h-3 w-3" />
                             </Button>
                           </div>
-                          
+
                           <div className="p-2 rounded-md bg-muted/50 text-xs truncate flex items-center gap-2">
                             <Mic className="h-4 w-4 text-purple-500 shrink-0" />
                             <span className="truncate flex-1">
                               {enhancements.audioTrack.name || 'Voice Track'}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-1">
                             <Label className="text-xs flex justify-between">
                               Volume
@@ -3124,7 +3123,7 @@ export default function VideoEditor() {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* AWS Lambda Timeout Warning */}
                       {totalDuration > 600 && (
                         <div className="p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-xs space-y-1">
@@ -3135,12 +3134,12 @@ export default function VideoEditor() {
                           <p>Videos longer than 10 minutes may take significant time to process. AWS Lambda has a maximum processing time of 15 minutes.</p>
                         </div>
                       )}
-                      
+
                       <div className="p-2 rounded-md bg-muted/50 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 inline mr-1" />
                         Max processing time: 15 minutes (AWS Lambda limit)
                       </div>
-                      
+
                       <div className="pt-2 space-y-2">
                         <Button 
                           className="w-full"
@@ -3160,7 +3159,7 @@ export default function VideoEditor() {
                             </>
                           )}
                         </Button>
-                        
+
                         {exportedUrl && (
                           <Button variant="outline" className="w-full" asChild>
                             <a href={exportedUrl} download data-testid="button-download">
@@ -3169,7 +3168,7 @@ export default function VideoEditor() {
                             </a>
                           </Button>
                         )}
-                        
+
                         {exportProgress > 0 && exportProgress < 100 && (
                           <Progress value={exportProgress} className="h-2" />
                         )}
@@ -3180,7 +3179,7 @@ export default function VideoEditor() {
               </div>
             </div>
           )}
-          
+
           {/* Media Panel Toggle (when closed) */}
           {!mediaPanelOpen && (
             <Button
@@ -3193,7 +3192,7 @@ export default function VideoEditor() {
               <PanelLeft className="h-4 w-4" />
             </Button>
           )}
-          
+
           {/* Preview Surface - Always Visible */}
           <div className="flex-1 flex flex-col min-w-0 relative">
             <PreviewSurface
@@ -3214,7 +3213,7 @@ export default function VideoEditor() {
                 isPlaying={false}
               />
             )}
-            
+
             {/* Preview Controls - Works for both single and multi-track modes */}
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
               <Button
@@ -3239,7 +3238,7 @@ export default function VideoEditor() {
             </div>
           </div>
         </div>
-        
+
         {/* Timeline at Bottom */}
         <div className="border-t">
           <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
@@ -3257,7 +3256,7 @@ export default function VideoEditor() {
               />
             </div> */}
           </div>
-          
+
           {useMultiTrack ? (
             <MultiTrackTimeline
               key={multiTrackKey}
@@ -3301,7 +3300,7 @@ export default function VideoEditor() {
         onOpenChange={setShowGuestModal}
         featureName="videos"
       />
-      
+
       {/* Transition Edit Dialog */}
       <TransitionEditDialog
         open={!!editingTransition}
@@ -3323,7 +3322,7 @@ export default function VideoEditor() {
               {editingClip && `Adjust settings for ${editingClip.clip.type === 'image' ? 'image' : 'clip'} #${editingClip.index + 1}`}
             </DialogDescription>
           </DialogHeader>
-          
+
           {editingClip && (
             <div className="space-y-6 py-4">
               <div className="aspect-video rounded-lg overflow-hidden bg-muted">
@@ -3343,7 +3342,7 @@ export default function VideoEditor() {
                   />
                 )}
               </div>
-              
+
               <div className="space-y-4">
                 {/* Image-specific controls */}
                 {editingClip.clip.type === 'image' ? (
@@ -3394,7 +3393,7 @@ export default function VideoEditor() {
                         data-testid="switch-clip-mute"
                       />
                     </div>
-                    
+
                     {!getClipSettings(editingClip.clip.id).muted && (
                       <div className="space-y-2">
                         <Label className="text-sm flex justify-between">
@@ -3415,7 +3414,7 @@ export default function VideoEditor() {
                         />
                       </div>
                     )}
-                    
+
                     <div className="pt-4 border-t space-y-2">
                       <Label className="text-sm flex justify-between">
                         <span className="flex items-center gap-2">
@@ -3445,7 +3444,7 @@ export default function VideoEditor() {
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
             <Button 
               onClick={() => setShowClipSettingsModal(false)}
@@ -3468,7 +3467,7 @@ export default function VideoEditor() {
               {splittingClip && `Select a split point for clip #${splittingClip.index + 1}`}
             </DialogDescription>
           </DialogHeader>
-          
+
           {splittingClip && (
             <div className="space-y-6 py-4">
               <div className="aspect-video rounded-lg overflow-hidden bg-muted relative">
@@ -3488,7 +3487,7 @@ export default function VideoEditor() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-sm flex items-center gap-2">
@@ -3508,7 +3507,7 @@ export default function VideoEditor() {
                     Drag the slider to select where to split the clip. The first part will be from the start to this point, and the second part will be from this point to the end.
                   </p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                   <div className="bg-muted/50 rounded-lg p-3">
                     <div className="text-xs font-medium text-muted-foreground mb-1">First Part</div>
@@ -3528,7 +3527,7 @@ export default function VideoEditor() {
               </div>
             </div>
           )}
-          
+
           <DialogFooter className="gap-2 sm:gap-0">
             <Button 
               variant="outline"
@@ -3560,7 +3559,7 @@ export default function VideoEditor() {
               This is a quick low-resolution preview of your combined video. The final export will be higher quality.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="aspect-video rounded-lg overflow-hidden bg-muted">
             {previewUrl ? (
               <video
@@ -3576,7 +3575,7 @@ export default function VideoEditor() {
               </div>
             )}
           </div>
-          
+
           <DialogFooter>
             <Button 
               variant="outline"
@@ -3617,7 +3616,7 @@ export default function VideoEditor() {
                 : 'Save your current timeline and settings for later.'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="project-title">Project Title</Label>
@@ -3629,7 +3628,7 @@ export default function VideoEditor() {
                 data-testid="input-project-title"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="project-description">Description (optional)</Label>
               <Input
@@ -3640,12 +3639,12 @@ export default function VideoEditor() {
                 data-testid="input-project-description"
               />
             </div>
-            
+
             <div className="text-sm text-muted-foreground">
               {orderedClips.length} clip{orderedClips.length !== 1 ? 's' : ''} will be saved
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSaveModal(false)} data-testid="button-cancel-save">
               Cancel
@@ -3677,7 +3676,7 @@ export default function VideoEditor() {
               Load a previously saved project to continue editing.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-4">
             {projectsLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -3725,7 +3724,7 @@ export default function VideoEditor() {
                           )}
                         </div>
                       </div>
-                      
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" data-testid={`project-menu-${project.id}`}>
@@ -3772,7 +3771,7 @@ export default function VideoEditor() {
               </ScrollArea>
             )}
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowLoadModal(false)} data-testid="button-close-load">
               Close
