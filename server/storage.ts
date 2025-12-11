@@ -616,6 +616,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(pricing)
       .where(eq(pricing.model, normalizedModel));
+    
+    // Debug: Log when model not found to help trace pricing issues
+    if (!price) {
+      console.log(`[PRICING LOOKUP] Model "${normalizedModel}" not found in pricing table`);
+    }
     return price;
   }
 
