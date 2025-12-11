@@ -96,7 +96,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
 import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog } from "./video-editor/components";
-import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem, ClipTransitionLocal } from "./video-editor/components";
+import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
 
 type WizardStep = 1 | 2 | 3;
@@ -137,7 +137,7 @@ interface ClipSettingsLocal {
 // Per-clip transition state (for the transition AFTER each clip)
 interface ClipTransitionLocal {
   afterClipIndex: number;
-  type: TransitionType;
+  type: TransitionType | string; // Allow string for component compatibility
   durationSeconds: number;
 }
 
@@ -586,41 +586,59 @@ export default function VideoEditor() {
     });
   }, [getClipSettings]);
   
-  // Load video metadata to get actual duration for a clip
-  const loadClipDuration = useCallback((clipId: string, url: string) => {
+  // Load media metadata to get actual duration for a clip (supports both video and audio)
+  const loadClipDuration = useCallback((clipId: string, url: string, mediaType: 'video' | 'audio' | 'image' = 'video') => {
     if (!url || !url.startsWith('http')) {
       console.warn(`[DURATION] Invalid URL for clip ${clipId}:`, url);
       return;
     }
     
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.crossOrigin = 'anonymous';
-    video.src = url;
+    // Images don't need duration loading - use default display duration
+    if (mediaType === 'image') {
+      updateClipSettings(clipId, { originalDuration: 5 }); // Default image display duration
+      return;
+    }
+    
+    // Use correct element type for media: video for video files, audio for audio/music files
+    const element = mediaType === 'audio' 
+      ? document.createElement('audio')
+      : document.createElement('video');
+    
+    element.preload = 'metadata';
+    if ('crossOrigin' in element) {
+      (element as HTMLVideoElement | HTMLAudioElement).crossOrigin = 'anonymous';
+    }
+    element.src = url;
     
     // Timeout after 10 seconds if metadata doesn't load
+    const fallbackDuration = mediaType === 'audio' ? 30 : 10;
     const timeoutId = setTimeout(() => {
-      console.warn(`[DURATION] Timeout loading metadata for clip ${clipId}`);
-      updateClipSettings(clipId, { originalDuration: 10 }); // Default on timeout
-      video.src = '';
+      console.warn(`[DURATION] Timeout loading ${mediaType} metadata for clip ${clipId}`);
+      updateClipSettings(clipId, { originalDuration: fallbackDuration });
+      element.src = '';
+      element.load();
     }, 10000);
     
-    video.onloadedmetadata = () => {
+    element.onloadedmetadata = () => {
       clearTimeout(timeoutId);
-      const duration = video.duration;
+      const duration = element.duration;
       if (duration && isFinite(duration)) {
+        console.log(`[DURATION] Loaded ${mediaType} clip ${clipId}: ${duration}s`);
         updateClipSettings(clipId, { originalDuration: duration });
       } else {
-        updateClipSettings(clipId, { originalDuration: 10 }); // Default if invalid
+        updateClipSettings(clipId, { originalDuration: fallbackDuration });
       }
-      video.src = ''; // Clean up
+      element.src = '';
+      element.load(); // Clean up
     };
     
-    video.onerror = (e) => {
+    element.onerror = (e) => {
       clearTimeout(timeoutId);
-      console.error(`[DURATION] Error loading clip ${clipId}:`, e);
-      updateClipSettings(clipId, { originalDuration: 10 }); // Default on error
-      video.src = '';
+      console.error(`[DURATION] Error loading ${mediaType} clip ${clipId}:`, e);
+      console.warn(`[DURATION] Using fallback duration: ${fallbackDuration}s`);
+      updateClipSettings(clipId, { originalDuration: fallbackDuration });
+      element.src = '';
+      element.load();
     };
   }, [updateClipSettings]);
   
@@ -633,7 +651,7 @@ export default function VideoEditor() {
       const settings = clipSettings.get(clip.id);
       // Only load duration if not already loaded
       if (!settings?.originalDuration && clip.url) {
-        loadClipDuration(clip.id, clip.url);
+        loadClipDuration(clip.id, clip.url, clip.type || 'video');
       }
     }
   }, [orderedClips, clipSettings, loadClipDuration]);
@@ -716,9 +734,12 @@ export default function VideoEditor() {
           },
           enhancements: {
             aspectRatio: enhancements.aspectRatio,
+            fadeIn: enhancements.fadeIn,
+            fadeOut: enhancements.fadeOut,
+            fadeDuration: enhancements.fadeDuration,
           },
           previewMode: true,
-          maxDuration: 15,
+          // Full preview - no duration limit for multi-track mode
         };
       } else {
         // Single-track mode: send ordered clips to Lambda
@@ -3286,9 +3307,9 @@ export default function VideoEditor() {
         open={!!editingTransition}
         onOpenChange={(open) => !open && setEditingTransition(null)}
         transition={editingTransition?.transition || null}
-        clipIndex={editingTransition?.clipIndex ?? 0}
+        clipIndex={editingTransition?.position ?? 0}
         onSave={handleTransitionSave}
-        onRemove={() => editingTransition && handleTransitionRemove(editingTransition.clipIndex)}
+        onRemove={() => editingTransition && handleTransitionRemove(editingTransition.position)}
       />
 
       <Dialog open={showClipSettingsModal} onOpenChange={setShowClipSettingsModal}>
