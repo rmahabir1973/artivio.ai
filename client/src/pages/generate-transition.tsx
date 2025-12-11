@@ -11,7 +11,7 @@ import { usePricing } from "@/hooks/use-pricing";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { fetchWithAuth } from "@/lib/authBridge";
-import { Loader2, Upload, X, Info, ArrowLeftRight } from "lucide-react";
+import { Loader2, Upload, X, Info, ArrowLeftRight, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
@@ -474,12 +474,78 @@ export default function GenerateTransition() {
         </Card>
       }
       preview={
-        <PeerTubePreview
-          pageType="transition"
-          title="Transition Preview"
-          description="See smooth video transitions"
-          showGeneratingMessage={isGenerating}
-        />
+        generatedVideo ? (
+          <Card className="h-full flex flex-col">
+            <CardHeader>
+              <CardTitle>Generated Transition</CardTitle>
+              <CardDescription>
+                {generatedVideo.prompt?.substring(0, 100)}
+                {generatedVideo.prompt?.length > 100 ? '...' : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
+                <video
+                  src={generatedVideo.resultUrl}
+                  controls
+                  autoPlay
+                  loop
+                  className="w-full h-full object-contain"
+                  data-testid="video-result"
+                />
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Model:</span>
+                  <Badge variant="secondary">{generatedVideo.model}</Badge>
+                </div>
+                {generatedVideo.parameters?.aspectRatio && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Aspect Ratio:</span>
+                    <span>{generatedVideo.parameters.aspectRatio}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = generatedVideo.resultUrl;
+                    link.download = `transition-${generatedVideo.id}.mp4`;
+                    link.click();
+                  }}
+                  data-testid="button-download-result"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGeneratedVideo(null);
+                    setPrompt('');
+                    setFirstFrame(null);
+                    setLastFrame(null);
+                  }}
+                  data-testid="button-generate-another"
+                >
+                  Generate Another
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <PeerTubePreview
+            pageType="transition"
+            title="Transition Preview"
+            description="See smooth video transitions"
+            showGeneratingMessage={isGenerating}
+          />
+        )
       }
     />
     <GuestGenerateModal

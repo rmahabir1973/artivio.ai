@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Sparkles, Upload, X, Info, Plus, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, Upload, X, Info, Plus, Trash2, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreditCostWarning } from "@/components/credit-cost-warning";
 import { ThreeColumnLayout } from "@/components/three-column-layout";
@@ -787,12 +787,83 @@ export default function GenerateSora() {
         </Card>
       }
       preview={
-        <PeerTubePreview
-          pageType="sora"
-          title="Sora 2 Pro Preview"
-          description="Advanced AI video generation"
-          showGeneratingMessage={isGenerating}
-        />
+        generatedVideo ? (
+          <Card className="h-full flex flex-col">
+            <CardHeader>
+              <CardTitle>Generated Video</CardTitle>
+              <CardDescription>
+                {generatedVideo.prompt?.substring(0, 100)}
+                {generatedVideo.prompt?.length > 100 ? '...' : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
+                <video
+                  src={generatedVideo.resultUrl}
+                  controls
+                  autoPlay
+                  loop
+                  className="w-full h-full object-contain"
+                  data-testid="video-result"
+                />
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Model:</span>
+                  <Badge variant="secondary">{generatedVideo.model}</Badge>
+                </div>
+                {generatedVideo.parameters?.duration && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Duration:</span>
+                    <span>{generatedVideo.parameters.duration}s</span>
+                  </div>
+                )}
+                {generatedVideo.parameters?.aspectRatio && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Aspect Ratio:</span>
+                    <span>{generatedVideo.parameters.aspectRatio}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = generatedVideo.resultUrl;
+                    link.download = `sora-${generatedVideo.id}.mp4`;
+                    link.click();
+                  }}
+                  data-testid="button-download-result"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGeneratedVideo(null);
+                    setPrompt('');
+                    setUploadedImages([]);
+                  }}
+                  data-testid="button-generate-another"
+                >
+                  Generate Another
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <PeerTubePreview
+            pageType="sora"
+            title="Sora 2 Pro Preview"
+            description="Advanced AI video generation"
+            showGeneratingMessage={isGenerating}
+          />
+        )
       }
     />
     <GuestGenerateModal
