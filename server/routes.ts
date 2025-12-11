@@ -8394,9 +8394,16 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       const callbackSecret = process.env.AWS_LAMBDA_CALLBACK_SECRET;
       if (callbackSecret) {
         const crypto = await import('crypto');
+        const signatureData = jobId + status + (downloadUrl || '');
         const expectedSignature = crypto.createHmac('sha256', callbackSecret)
-          .update(jobId + status + (downloadUrl || ''))
+          .update(signatureData)
           .digest('hex');
+        
+        console.log(`[Video Editor] Signature verification for job ${jobId}:`);
+        console.log(`  - Data being signed: "${signatureData}"`);
+        console.log(`  - Expected signature: ${expectedSignature}`);
+        console.log(`  - Received signature: ${signature || 'NONE'}`);
+        console.log(`  - Secret length: ${callbackSecret.length}`);
         
         if (signature !== expectedSignature) {
           console.warn(`[Video Editor] Invalid callback signature for job ${jobId}`);
