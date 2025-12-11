@@ -153,9 +153,11 @@ export function GenerationProgress({
 
       if (newProgress >= 100 && !hasCompleted) {
         setHasCompleted(true);
-        // Call onComplete callback - let the parent page decide what to do
-        // (e.g., show preview or navigate). No auto-redirect here.
+        // Call onComplete callback and redirect to library after brief delay
         onComplete?.();
+        setTimeout(() => {
+          setLocation("/history");
+        }, 1500);
       }
     }, 100);
 

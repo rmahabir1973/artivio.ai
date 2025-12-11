@@ -2012,12 +2012,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Determine generation type for S3 persistence
           const genType = (generation && 'type' in generation) ? generation.type : (isAvatarGeneration ? 'avatar' : 'unknown');
           
-          // Persist assets to S3 for non-video types (videos are handled by reencodeVideoForStreaming later)
-          // This ensures all user content is stored in our S3, not dependent on external Kie.ai domains
+          // Persist ALL assets to S3 immediately - videos, images, audio, everything
+          // This ensures all user content is stored in our S3, not dependent on external domains
           let persistedResultUrl = resultUrl;
           let persistedResultUrls = parsedResultUrls;
           
-          if (genType !== 'video' && resultUrl) {
+          if (resultUrl) {
             const contentType = getContentTypeForAsset(resultUrl, genType);
             const s3Prefix = getS3PrefixForType(genType);
             
