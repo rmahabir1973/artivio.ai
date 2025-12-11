@@ -5,11 +5,18 @@ const KIE_API_BASE = "https://api.kie.ai";
 
 // Helper function to generate a random seed for reproducible AI generation
 // Seeds are positive integers that models use to initialize their random number generators
-function generateRandomSeed(): number {
-  // Generate a random integer between 10000 and 99999 (Kie.ai Veo requirement)
+// Model-specific ranges are enforced here as a fallback (routes.ts also handles this)
+function generateRandomSeed(model?: string): number {
+  // Seedream-4 requires seed < 1,000,000 per Kie.ai API
+  if (model && (model === 'seedream-4' || model.startsWith('seedream-4-') || model.includes('seedream'))) {
+    return Math.floor(Math.random() * 999999) + 1;
+  }
   // Veo models require seeds in range 10000-99999 per API documentation
-  const raw = Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
-  return Math.max(10000, Math.min(99999, raw));
+  if (model && model.startsWith('veo-')) {
+    return Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
+  }
+  // Default: use safe range for most models (< 1M is safe for all known APIs)
+  return Math.floor(Math.random() * 999999) + 1;
 }
 
 // Safe JSON stringifier to prevent circular reference errors
@@ -631,8 +638,8 @@ export async function generateVideo(params: {
     const isImageToVideo = referenceImages.length > 0;
     const wanModel = isImageToVideo ? 'wan/2-5-image-to-video' : 'wan/2-5-text-to-video';
     
-    // Auto-generate seed if not provided
-    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
+    // Auto-generate seed if not provided (pass model for range validation)
+    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed(params.model);
     
     // Build input object
     const inputPayload: any = {
@@ -856,8 +863,8 @@ export async function generateImage(params: {
         maxImages = variantCount;
       }
     }
-    // Auto-generate seed if not provided
-    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed();
+    // Auto-generate seed if not provided (pass model for range validation)
+    const seed = parameters.seed !== undefined ? parameters.seed : generateRandomSeed(params.model);
     
     // Build input object
     const inputPayload: any = {

@@ -1,0 +1,129 @@
+025-12-11 13:19:28.61
+0042ce08
+User
+"input": {
+
+2025-12-11 13:19:28.61
+0042ce08
+User
+"seed": 1075585792
+2025-12-11 13:19:28.61
+0042ce08
+User
+"model": "bytedance/seedream-v4-text-to-image",
+2025-12-11 13:19:28.61
+0042ce08
+User
+}
+2025-12-11 13:19:28.61
+0042ce08
+User
+🔵 Kie.ai API Request to /api/v1/jobs/createTask: {
+2025-12-11 13:19:28.61
+0042ce08
+User
+"max_images": 1,
+2025-12-11 13:19:28.61
+0042ce08
+User
+}
+2025-12-11 13:19:28.61
+0042ce08
+User
+"image_size": "square",
+2025-12-11 13:19:28.61
+0042ce08
+User
+"prompt": "Award-winning photorealistic portrait of a playful Shih Tzu-Poodle mix puppy energetically chasing a majestic German Shepherd dog through a sun-dappled meadow at golden hour, captured with a shallow depth of field, showcasing intricate fur textures, expressive eyes, and dynamic motion blur, in the style of a National Geographic wildlife photograph, 8K resolution, highly detailed, masterpiece.",
+2025-12-11 13:19:28.61
+0042ce08
+User
+"callBackUrl": "https://artivio.ai/api/callback/kie/7cb36d0b-2b49-4c33-991e-b65cef128dc5",
+2025-12-11 13:19:28.61
+0042ce08
+User
+"image_resolution": "1K",
+2025-12-11 13:19:28.68
+0042ce08
+User
+🔑 Attempt 1/5 using key KIE_API_KEY_3
+2025-12-11 13:19:28.82
+0042ce08
+User
+"data": null
+2025-12-11 13:19:28.82
+0042ce08
+User
+✅ Kie.ai API Response from /api/v1/jobs/createTask: {
+2025-12-11 13:19:28.82
+0042ce08
+User
+}
+2025-12-11 13:19:28.82
+0042ce08
+User
+"data": {
+2025-12-11 13:19:28.82
+0042ce08
+User
+Full error details: {
+2025-12-11 13:19:28.82
+0042ce08
+User
+"code": 422,
+2025-12-11 13:19:28.82
+0042ce08
+User
+"message": "The seed must be less than 1000000"
+2025-12-11 13:19:28.82
+0042ce08
+User
+},
+2025-12-11 13:19:28.82
+0042ce08
+User
+"status": 422,
+2025-12-11 13:19:28.82
+0042ce08
+User
+}
+2025-12-11 13:19:28.82
+0042ce08
+User
+"code": 422,
+2025-12-11 13:19:28.82
+0042ce08
+User
+"msg": "The seed must be less than 1000000",
+2025-12-11 13:19:28.82
+0042ce08
+User
+"data": null
+2025-12-11 13:19:28.82
+0042ce08
+User
+❌ Kie.ai returned error code 422: The seed must be less than 1000000
+2025-12-11 13:19:28.82
+0042ce08
+User
+❌ Kie.ai API Error for /api/v1/jobs/createTask (key: KIE_API_KEY_3): { code: 422, msg: 'The seed must be less than 1000000', data: null }
+2025-12-11 13:19:28.82
+0042ce08
+User
+"msg": "The seed must be less than 1000000",
+2025-12-11 13:19:28.82
+0042ce08
+User
+"endpoint": "/api/v1/jobs/createTask",
+2025-12-11 13:19:28.82
+0042ce08
+User
+"status": 422,
+2025-12-11 13:19:28.82
+0042ce08
+User
+Background image generation failed: {
+2025-12-11 13:19:28.82
+0042ce08
+User
+},

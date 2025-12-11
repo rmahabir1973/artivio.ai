@@ -167,6 +167,10 @@ function generateRandomSeed(model?: string): number {
   if (model && model.startsWith('veo-')) {
     return Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
   }
+  // Seedream-4 requires seed < 1,000,000 per Kie.ai API
+  if (model && (model === 'seedream-4' || model.startsWith('seedream-4-'))) {
+    return Math.floor(Math.random() * 999999) + 1;
+  }
   // Other models can use larger seed ranges
   return Math.floor(Math.random() * 2147483647) + 1;
 }
@@ -179,9 +183,113 @@ function modelSupportsSeed(model: string): boolean {
          model === 'seedream-4';
 }
 
+// Helper to persist external URLs to S3
+// Downloads content from external URL and uploads to S3, returning the new S3 URL
+// This ensures all user content is stored in our S3 bucket, not dependent on external domains
+async function persistToS3(
+  externalUrl: string,
+  options: {
+    prefix: s3.S3Prefix;
+    contentType: string;
+    generationId: string;
+  }
+): Promise<string> {
+  if (!s3.isS3Enabled()) {
+    console.log(`[persistToS3] S3 not enabled, returning original URL`);
+    return externalUrl;
+  }
+  
+  // Skip if already an S3 URL
+  if (s3.isS3SignedUrl(externalUrl)) {
+    console.log(`[persistToS3] Already S3 URL, returning as-is`);
+    return externalUrl;
+  }
+  
+  try {
+    console.log(`[persistToS3] Uploading ${options.prefix} from: ${externalUrl.substring(0, 80)}...`);
+    const result = await s3.uploadFromUrl(externalUrl, {
+      prefix: options.prefix,
+      contentType: options.contentType,
+      filename: `${options.generationId}.${options.contentType.split('/')[1] || 'bin'}`,
+    });
+    console.log(`[persistToS3] ✓ Uploaded to S3: ${result.key}`);
+    return result.signedUrl;
+  } catch (error: any) {
+    console.error(`[persistToS3] ⚠️ Upload failed, using original URL:`, error.message);
+    return externalUrl; // Fallback to original URL
+  }
+}
+
+// Helper to determine content type from URL or generation type
+function getContentTypeForAsset(url: string, generationType: string): string {
+  // Check URL extension first
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('.mp4') || lowerUrl.includes('.webm') || lowerUrl.includes('.mov')) {
+    return 'video/mp4';
+  }
+  if (lowerUrl.includes('.mp3') || lowerUrl.includes('.mpeg')) {
+    return 'audio/mpeg';
+  }
+  if (lowerUrl.includes('.wav')) {
+    return 'audio/wav';
+  }
+  if (lowerUrl.includes('.webp')) {
+    return 'image/webp';
+  }
+  if (lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg')) {
+    return 'image/jpeg';
+  }
+  if (lowerUrl.includes('.png')) {
+    return 'image/png';
+  }
+  
+  // Fallback based on generation type
+  switch (generationType) {
+    case 'video':
+    case 'talking-avatar':
+    case 'avatar':
+      return 'video/mp4';
+    case 'music':
+    case 'audio':
+    case 'sound-effects':
+    case 'text-to-speech':
+      return 'audio/mpeg';
+    case 'image':
+    case 'upscaling':
+    case 'background-remover':
+      return 'image/png';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
+// Helper to get S3 prefix based on generation type
+function getS3PrefixForType(generationType: string): s3.S3Prefix {
+  switch (generationType) {
+    case 'video':
+    case 'talking-avatar':
+    case 'avatar':
+      return 'video-generations';
+    case 'music':
+      return 'music-generations';
+    case 'audio':
+    case 'sound-effects':
+    case 'text-to-speech':
+      return 'audio-generations';
+    case 'image':
+      return 'image-generations';
+    case 'upscaling':
+      return 'upscaled-images';
+    case 'background-remover':
+      return 'background-removed';
+    default:
+      return 'generations';
+  }
+}
+
 // Helper to refresh expired S3 signed URLs in generation objects
 // This ensures user content is always accessible regardless of URL expiration
-async function refreshGenerationUrls<T extends { resultUrl?: string | null; thumbnailUrl?: string | null }>(
+async function refreshGenerationUrls<T extends { resultUrl?: string | null; thumbnailUrl?: string | null; resultUrls?: string[] | null }>(
   generation: T
 ): Promise<T> {
   const refreshed = { ...generation };
@@ -205,11 +313,31 @@ async function refreshGenerationUrls<T extends { resultUrl?: string | null; thum
     }
   }
   
+  // Refresh resultUrls array for multi-image generations (Seedream, Midjourney, etc.)
+  if (refreshed.resultUrls && Array.isArray(refreshed.resultUrls) && refreshed.resultUrls.length > 0) {
+    try {
+      refreshed.resultUrls = await Promise.all(
+        refreshed.resultUrls.map(async (url) => {
+          if (url && s3.isS3SignedUrl(url)) {
+            try {
+              return await s3.refreshSignedUrl(url);
+            } catch {
+              return url; // Keep original if refresh fails
+            }
+          }
+          return url;
+        })
+      );
+    } catch (err) {
+      console.warn(`[URL Refresh] Failed to refresh resultUrls array:`, err);
+    }
+  }
+  
   return refreshed;
 }
 
 // Helper to batch refresh URLs for multiple generations
-async function refreshGenerationsUrls<T extends { resultUrl?: string | null; thumbnailUrl?: string | null }>(
+async function refreshGenerationsUrls<T extends { resultUrl?: string | null; thumbnailUrl?: string | null; resultUrls?: string[] | null }>(
   generations: T[]
 ): Promise<T[]> {
   // Process in parallel for efficiency
@@ -1881,12 +2009,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
             seedValue = toInt(callbackData.seed);
           }
           
-          // Prepare updates object with resultUrl, resultUrls (multi-image), and optional seed
-          const updates: any = { resultUrl, status: 'completed', completedAt: new Date() };
+          // Determine generation type for S3 persistence
+          const genType = (generation && 'type' in generation) ? generation.type : (isAvatarGeneration ? 'avatar' : 'unknown');
+          
+          // Persist assets to S3 for non-video types (videos are handled by reencodeVideoForStreaming later)
+          // This ensures all user content is stored in our S3, not dependent on external Kie.ai domains
+          let persistedResultUrl = resultUrl;
+          let persistedResultUrls = parsedResultUrls;
+          
+          if (genType !== 'video' && resultUrl) {
+            const contentType = getContentTypeForAsset(resultUrl, genType);
+            const s3Prefix = getS3PrefixForType(genType);
+            
+            // Persist primary result URL
+            persistedResultUrl = await persistToS3(resultUrl, {
+              prefix: s3Prefix,
+              contentType,
+              generationId,
+            });
+            
+            // Persist all URLs for multi-image generations (parallel upload)
+            if (parsedResultUrls.length > 0) {
+              console.log(`[S3 Persist] Uploading ${parsedResultUrls.length} multi-image URLs...`);
+              persistedResultUrls = await Promise.all(
+                parsedResultUrls.map((url, idx) => 
+                  persistToS3(url, {
+                    prefix: s3Prefix,
+                    contentType,
+                    generationId: `${generationId}-${idx}`,
+                  })
+                )
+              );
+              // Update primary URL to first persisted URL
+              persistedResultUrl = persistedResultUrls[0] || persistedResultUrl;
+            }
+          }
+          
+          // Prepare updates object with S3-persisted URLs (or original for videos)
+          const updates: any = { resultUrl: persistedResultUrl, status: 'completed', completedAt: new Date() };
           
           // Store all URLs for multi-image models (Midjourney, Seedream, 4o-Image, etc.)
-          if (parsedResultUrls.length > 0) {
-            updates.resultUrls = parsedResultUrls;
+          if (persistedResultUrls.length > 0) {
+            updates.resultUrls = persistedResultUrls;
           }
           
           if (seedValue !== undefined && seedValue !== null) {

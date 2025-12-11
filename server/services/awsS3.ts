@@ -39,7 +39,7 @@ export function isS3Enabled(): boolean {
   );
 }
 
-export type S3Prefix = 'uploads/images' | 'uploads/audio' | 'uploads/video' | 'generations' | 'video-exports' | 'social-hub-assets';
+export type S3Prefix = 'uploads/images' | 'uploads/audio' | 'uploads/video' | 'generations' | 'video-exports' | 'social-hub-assets' | 'video-generations' | 'music-generations' | 'audio-generations' | 'image-generations' | 'upscaled-images' | 'background-removed';
 
 export interface UploadResult {
   key: string;
