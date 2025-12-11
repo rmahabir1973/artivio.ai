@@ -2955,6 +2955,138 @@ export default function VideoEditor() {
                         />
                       </div>
                       
+                      {/* Background Music Controls */}
+                      {enhancements.backgroundMusic && (
+                        <div className="pt-4 border-t space-y-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-xs font-medium flex items-center gap-2">
+                              <Music className="h-3 w-3" />
+                              Background Music
+                            </Label>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                const musicUrl = enhancements.backgroundMusic?.audioUrl;
+                                setEnhancements(prev => ({ ...prev, backgroundMusic: undefined }));
+                                setAudioTracks(prev => prev.filter(t => t.url !== musicUrl));
+                                toast({ 
+                                  title: "Music Removed", 
+                                  description: "Background music removed from timeline" 
+                                });
+                              }}
+                              data-testid="button-remove-background-music"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          <div className="p-2 rounded-md bg-muted/50 text-xs truncate flex items-center gap-2">
+                            <Music className="h-4 w-4 text-green-500 shrink-0" />
+                            <span className="truncate flex-1">
+                              {enhancements.backgroundMusic.name || 'Music Track'}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label className="text-xs flex justify-between">
+                              Volume
+                              <span className="text-muted-foreground font-mono">
+                                {Math.round(enhancements.backgroundMusic.volume * 100)}%
+                              </span>
+                            </Label>
+                            <Slider
+                              value={[enhancements.backgroundMusic.volume]}
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              onValueChange={([v]) => 
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  backgroundMusic: prev.backgroundMusic ? {
+                                    ...prev.backgroundMusic,
+                                    volume: v,
+                                  } : undefined,
+                                }))
+                              }
+                              className="cursor-pointer"
+                              data-testid="slider-background-music-volume"
+                            />
+                            <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>Silent</span>
+                              <span>Loud</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Voice/Audio Track Controls */}
+                      {enhancements.audioTrack && (
+                        <div className="pt-4 border-t space-y-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-xs font-medium flex items-center gap-2">
+                              <Mic className="h-3 w-3" />
+                              Voice Track
+                            </Label>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                const voiceUrl = enhancements.audioTrack?.audioUrl;
+                                setEnhancements(prev => ({ ...prev, audioTrack: undefined }));
+                                setAudioTracks(prev => prev.filter(t => t.url !== voiceUrl));
+                                toast({ 
+                                  title: "Voice Removed", 
+                                  description: "Voice track removed from timeline" 
+                                });
+                              }}
+                              data-testid="button-remove-audio-track"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          <div className="p-2 rounded-md bg-muted/50 text-xs truncate flex items-center gap-2">
+                            <Mic className="h-4 w-4 text-purple-500 shrink-0" />
+                            <span className="truncate flex-1">
+                              {enhancements.audioTrack.name || 'Voice Track'}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label className="text-xs flex justify-between">
+                              Volume
+                              <span className="text-muted-foreground font-mono">
+                                {Math.round(enhancements.audioTrack.volume * 100)}%
+                              </span>
+                            </Label>
+                            <Slider
+                              value={[enhancements.audioTrack.volume]}
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              onValueChange={([v]) => 
+                                setEnhancements(prev => ({
+                                  ...prev,
+                                  audioTrack: prev.audioTrack ? {
+                                    ...prev.audioTrack,
+                                    volume: v,
+                                  } : undefined,
+                                }))
+                              }
+                              className="cursor-pointer"
+                              data-testid="slider-audio-track-volume"
+                            />
+                            <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>Silent</span>
+                              <span>Loud</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* AWS Lambda Timeout Warning */}
                       {totalDuration > 600 && (
                         <div className="p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-xs space-y-1">
