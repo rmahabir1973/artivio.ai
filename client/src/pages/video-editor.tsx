@@ -2543,192 +2543,73 @@ export default function VideoEditor() {
                     </div>
                   )}
                   
-                  {/* Transitions Category Content */}
+                  {/* Transitions Category Content - Drag & Drop */}
                   {activeCategory === 'transitions' && (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">Click a transition to add it between clips on the timeline</p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          Drag transitions to the timeline between clips
+                        </p>
+                        {orderedClips.length < 2 && (
+                          <div className="p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 text-xs">
+                            <p className="font-medium mb-1">Add more clips</p>
+                            <p>You need at least 2 clips to add transitions between them.</p>
+                          </div>
+                        )}
+                      </div>
                       
-                      {/* Transition type groups */}
-                      <div className="space-y-4">
-                        {/* Fade transitions */}
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Fade Effects</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(['fade', 'dissolve', 'fadeblack', 'fadewhite', 'fadegrays'] as TransitionType[]).map((type) => (
-                              <div
-                                key={type}
-                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
-                                onClick={() => {
-                                  if (orderedClips.length < 2) {
-                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
-                                    return;
-                                  }
-                                  // Add transition after the first clip that doesn't have one
-                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
-                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
-                                  if (firstEmpty !== undefined) {
-                                    setEnhancements(prev => ({
-                                      ...prev,
-                                      transitionMode: 'perClip',
-                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
-                                    }));
-                                    setPreviewStatus('stale');
-                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
-                                  } else {
-                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
-                                  }
-                                }}
-                                data-testid={`transition-${type}`}
-                              >
-                                <Shuffle className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                <span className="text-xs capitalize">{type}</span>
-                              </div>
-                            ))}
-                          </div>
+                      {/* Fade transitions */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Fade Effects</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <DraggableTransition type="fade" icon={<Sparkles className="h-4 w-4 text-muted-foreground" />} label="Fade" />
+                          <DraggableTransition type="dissolve" icon={<Sparkles className="h-4 w-4 text-muted-foreground" />} label="Dissolve" />
+                          <DraggableTransition type="fadeblack" icon={<Sparkles className="h-4 w-4 text-muted-foreground" />} label="Fade Black" />
+                          <DraggableTransition type="fadewhite" icon={<Sparkles className="h-4 w-4 text-muted-foreground" />} label="Fade White" />
                         </div>
+                      </div>
                         
-                        {/* Wipe transitions */}
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Wipe Effects</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(['wipeleft', 'wiperight', 'wipeup', 'wipedown'] as TransitionType[]).map((type) => (
-                              <div
-                                key={type}
-                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
-                                onClick={() => {
-                                  if (orderedClips.length < 2) {
-                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
-                                    return;
-                                  }
-                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
-                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
-                                  if (firstEmpty !== undefined) {
-                                    setEnhancements(prev => ({
-                                      ...prev,
-                                      transitionMode: 'perClip',
-                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
-                                    }));
-                                    setPreviewStatus('stale');
-                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
-                                  } else {
-                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
-                                  }
-                                }}
-                                data-testid={`transition-${type}`}
-                              >
-                                <ArrowRight className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                <span className="text-xs capitalize">{type.replace('wipe', '')}</span>
-                              </div>
-                            ))}
-                          </div>
+                      {/* Wipe transitions */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Wipe Effects</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <DraggableTransition type="wipeleft" icon={<ArrowLeft className="h-4 w-4 text-muted-foreground" />} label="Wipe Left" />
+                          <DraggableTransition type="wiperight" icon={<ArrowRight className="h-4 w-4 text-muted-foreground" />} label="Wipe Right" />
+                          <DraggableTransition type="wipeup" icon={<ArrowRight className="h-4 w-4 text-muted-foreground -rotate-90" />} label="Wipe Up" />
+                          <DraggableTransition type="wipedown" icon={<ArrowRight className="h-4 w-4 text-muted-foreground rotate-90" />} label="Wipe Down" />
                         </div>
-                        
-                        {/* Slide transitions */}
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Slide Effects</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(['slideleft', 'slideright', 'slideup', 'slidedown'] as TransitionType[]).map((type) => (
-                              <div
-                                key={type}
-                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
-                                onClick={() => {
-                                  if (orderedClips.length < 2) {
-                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
-                                    return;
-                                  }
-                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
-                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
-                                  if (firstEmpty !== undefined) {
-                                    setEnhancements(prev => ({
-                                      ...prev,
-                                      transitionMode: 'perClip',
-                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
-                                    }));
-                                    setPreviewStatus('stale');
-                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
-                                  } else {
-                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
-                                  }
-                                }}
-                                data-testid={`transition-${type}`}
-                              >
-                                <Film className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                <span className="text-xs capitalize">{type.replace('slide', '')}</span>
-                              </div>
-                            ))}
-                          </div>
+                      </div>
+                      
+                      {/* Slide transitions */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Slide Effects</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <DraggableTransition type="slideleft" icon={<Film className="h-4 w-4 text-muted-foreground" />} label="Slide Left" />
+                          <DraggableTransition type="slideright" icon={<Film className="h-4 w-4 text-muted-foreground" />} label="Slide Right" />
+                          <DraggableTransition type="slideup" icon={<Film className="h-4 w-4 text-muted-foreground" />} label="Slide Up" />
+                          <DraggableTransition type="slidedown" icon={<Film className="h-4 w-4 text-muted-foreground" />} label="Slide Down" />
                         </div>
-                        
-                        {/* Circle/Shape transitions */}
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Shape Effects</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(['circleopen', 'circleclose', 'circlecrop', 'rectcrop', 'radial', 'pixelize'] as TransitionType[]).map((type) => (
-                              <div
-                                key={type}
-                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
-                                onClick={() => {
-                                  if (orderedClips.length < 2) {
-                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
-                                    return;
-                                  }
-                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
-                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
-                                  if (firstEmpty !== undefined) {
-                                    setEnhancements(prev => ({
-                                      ...prev,
-                                      transitionMode: 'perClip',
-                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
-                                    }));
-                                    setPreviewStatus('stale');
-                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
-                                  } else {
-                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
-                                  }
-                                }}
-                                data-testid={`transition-${type}`}
-                              >
-                                <Layers className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                <span className="text-xs capitalize">{type}</span>
-                              </div>
-                            ))}
-                          </div>
+                      </div>
+                      
+                      {/* Shape transitions */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Shape Effects</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <DraggableTransition type="circleopen" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Circle Open" />
+                          <DraggableTransition type="circleclose" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Circle Close" />
+                          <DraggableTransition type="radial" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Radial" />
+                          <DraggableTransition type="pixelize" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Pixelize" />
                         </div>
+                      </div>
                         
-                        {/* Diagonal & Other transitions */}
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Other Effects</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(['diagtl', 'diagtr', 'diagbl', 'diagbr', 'distance', 'hblur'] as TransitionType[]).map((type) => (
-                              <div
-                                key={type}
-                                className="p-2 border rounded-md cursor-pointer hover:bg-muted/50 text-center"
-                                onClick={() => {
-                                  if (orderedClips.length < 2) {
-                                    toast({ title: "Add More Clips", description: "Add at least 2 clips to use transitions", variant: "destructive" });
-                                    return;
-                                  }
-                                  const firstEmpty = Array.from({ length: orderedClips.length - 1 }, (_, i) => i)
-                                    .find(i => !enhancements.clipTransitions.some(t => t.afterClipIndex === i));
-                                  if (firstEmpty !== undefined) {
-                                    setEnhancements(prev => ({
-                                      ...prev,
-                                      transitionMode: 'perClip',
-                                      clipTransitions: [...prev.clipTransitions, { afterClipIndex: firstEmpty, type, durationSeconds: 1.0 }],
-                                    }));
-                                    setPreviewStatus('stale');
-                                    toast({ title: "Transition Added", description: `${type} transition added after clip ${firstEmpty + 1}` });
-                                  } else {
-                                    toast({ title: "All Slots Filled", description: "Remove a transition to add a new one" });
-                                  }
-                                }}
-                                data-testid={`transition-${type}`}
-                              >
-                                <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                <span className="text-xs capitalize">{type}</span>
-                              </div>
-                            ))}
-                          </div>
+                      {/* Diagonal transitions */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Other Effects</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <DraggableTransition type="diagtl" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal TL" />
+                          <DraggableTransition type="diagtr" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal TR" />
+                          <DraggableTransition type="diagbl" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal BL" />
+                          <DraggableTransition type="diagbr" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal BR" />
                         </div>
                       </div>
                       
@@ -2748,40 +2629,21 @@ export default function VideoEditor() {
                                   <Badge variant="secondary" className="text-[10px]">{transition.type}</Badge>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <Select
-                                    value={transition.durationSeconds.toString()}
-                                    onValueChange={(val) => {
-                                      setEnhancements(prev => ({
-                                        ...prev,
-                                        clipTransitions: prev.clipTransitions.map(t =>
-                                          t.afterClipIndex === transition.afterClipIndex
-                                            ? { ...t, durationSeconds: parseFloat(val) }
-                                            : t
-                                        ),
-                                      }));
-                                    }}
-                                  >
-                                    <SelectTrigger className="h-6 w-14 text-xs">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="0.5">0.5s</SelectItem>
-                                      <SelectItem value="1">1s</SelectItem>
-                                      <SelectItem value="1.5">1.5s</SelectItem>
-                                      <SelectItem value="2">2s</SelectItem>
-                                    </SelectContent>
-                                  </Select>
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6"
-                                    onClick={() => {
-                                      setEnhancements(prev => ({
-                                        ...prev,
-                                        clipTransitions: prev.clipTransitions.filter(t => t.afterClipIndex !== transition.afterClipIndex),
-                                        transitionMode: prev.clipTransitions.length <= 1 ? 'none' : 'perClip',
-                                      }));
-                                    }}
+                                    onClick={() => handleTransitionEdit(transition.afterClipIndex)}
+                                    data-testid={`edit-transition-${transition.afterClipIndex}`}
+                                  >
+                                    <Settings className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-destructive"
+                                    onClick={() => handleTransitionRemove(transition.afterClipIndex)}
+                                    data-testid={`remove-transition-${transition.afterClipIndex}`}
                                   >
                                     <X className="h-3 w-3" />
                                   </Button>
