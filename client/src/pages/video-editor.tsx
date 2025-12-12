@@ -443,6 +443,78 @@ function VideoCardSkeleton() {
   );
 }
 
+// Volume slider with local state to prevent video stuttering during drag
+function ClipVolumeSlider({ 
+  clipId, 
+  initialVolume, 
+  onCommit 
+}: { 
+  clipId: string; 
+  initialVolume: number; 
+  onCommit: (v: number) => void;
+}) {
+  const [localVolume, setLocalVolume] = useState(initialVolume);
+  
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm flex justify-between">
+        Volume
+        <span className="text-muted-foreground">
+          {Math.round(localVolume * 100)}%
+        </span>
+      </Label>
+      <Slider
+        value={[localVolume]}
+        min={0}
+        max={1}
+        step={0.05}
+        onValueChange={([v]) => setLocalVolume(v)}
+        onValueCommit={([v]) => onCommit(v)}
+        data-testid="slider-clip-volume"
+      />
+    </div>
+  );
+}
+
+// Speed slider with local state to prevent video stuttering during drag
+function ClipSpeedSlider({ 
+  clipId, 
+  initialSpeed, 
+  onCommit 
+}: { 
+  clipId: string; 
+  initialSpeed: number; 
+  onCommit: (v: number) => void;
+}) {
+  const [localSpeed, setLocalSpeed] = useState(initialSpeed);
+  
+  return (
+    <div className="pt-4 border-t space-y-2">
+      <Label className="text-sm flex justify-between">
+        <span className="flex items-center gap-2">
+          <Play className="h-4 w-4" />
+          Speed
+        </span>
+        <span className="text-muted-foreground">
+          {localSpeed}x
+        </span>
+      </Label>
+      <Slider
+        value={[localSpeed]}
+        min={0.5}
+        max={2}
+        step={0.25}
+        onValueChange={([v]) => setLocalSpeed(v)}
+        onValueCommit={([v]) => onCommit(v)}
+        data-testid="slider-clip-speed"
+      />
+      <p className="text-xs text-muted-foreground">
+        0.5x = slow motion, 2x = double speed
+      </p>
+    </div>
+  );
+}
+
 export default function VideoEditor() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -3556,50 +3628,20 @@ const previewMutation = useMutation({
                     </div>
 
                     {!getClipSettings(editingClip.clip.id).muted && (
-                      <div className="space-y-2">
-                        <Label className="text-sm flex justify-between">
-                          Volume
-                          <span className="text-muted-foreground">
-                            {Math.round(getClipSettings(editingClip.clip.id).volume * 100)}%
-                          </span>
-                        </Label>
-                        <Slider
-                          value={[getClipSettings(editingClip.clip.id).volume]}
-                          min={0}
-                          max={1}
-                          step={0.05}
-                          onValueChange={([v]) => 
-                            updateClipSettings(editingClip.clip.id, { volume: v })
-                          }
-                          data-testid="slider-clip-volume"
-                        />
-                      </div>
+                      <ClipVolumeSlider
+                        key={`volume-${editingClip.clip.id}`}
+                        clipId={editingClip.clip.id}
+                        initialVolume={getClipSettings(editingClip.clip.id).volume}
+                        onCommit={(v) => updateClipSettings(editingClip.clip.id, { volume: v })}
+                      />
                     )}
 
-                    <div className="pt-4 border-t space-y-2">
-                      <Label className="text-sm flex justify-between">
-                        <span className="flex items-center gap-2">
-                          <Play className="h-4 w-4" />
-                          Speed
-                        </span>
-                        <span className="text-muted-foreground">
-                          {getClipSettings(editingClip.clip.id).speed}x
-                        </span>
-                      </Label>
-                      <Slider
-                        value={[getClipSettings(editingClip.clip.id).speed]}
-                        min={0.5}
-                        max={2}
-                        step={0.25}
-                        onValueChange={([v]) => 
-                          updateClipSettings(editingClip.clip.id, { speed: v })
-                        }
-                        data-testid="slider-clip-speed"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        0.5x = slow motion, 2x = double speed
-                      </p>
-                    </div>
+                    <ClipSpeedSlider
+                      key={`speed-${editingClip.clip.id}`}
+                      clipId={editingClip.clip.id}
+                      initialSpeed={getClipSettings(editingClip.clip.id).speed}
+                      onCommit={(v) => updateClipSettings(editingClip.clip.id, { speed: v })}
+                    />
                   </>
                 )}
               </div>
