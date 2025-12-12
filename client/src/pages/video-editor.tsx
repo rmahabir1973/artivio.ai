@@ -535,6 +535,118 @@ export default function VideoEditor() {
     };
   }, [clipSettings]);
 
+  // ==========================================
+  // Auto-save to localStorage for session persistence
+  // ==========================================
+  const LOCAL_STORAGE_KEY = 'artivio-video-editor-session';
+  const autoSaveDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const isRestoringRef = useRef(false);
+
+  // Save editor state to localStorage (debounced)
+  useEffect(() => {
+    // Don't save while restoring to prevent overwriting restored data
+    if (isRestoringRef.current) return;
+    
+    // Skip saving if there's nothing to save
+    if (orderedClips.length === 0 && audioTracks.length === 0 && multiTrackItems.length === 0) {
+      return;
+    }
+
+    if (autoSaveDebounceRef.current) {
+      clearTimeout(autoSaveDebounceRef.current);
+    }
+
+    autoSaveDebounceRef.current = setTimeout(() => {
+      try {
+        const sessionData = {
+          version: 1,
+          savedAt: new Date().toISOString(),
+          orderedClips,
+          audioTracks,
+          multiTrackItems,
+          useMultiTrack,
+          clipSettings: Array.from(clipSettings.entries()),
+          enhancements,
+          step,
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sessionData));
+        console.log('[VIDEO-EDITOR] Session auto-saved to localStorage');
+      } catch (error) {
+        console.error('[VIDEO-EDITOR] Failed to auto-save session:', error);
+      }
+    }, 1000); // Debounce 1 second
+
+    return () => {
+      if (autoSaveDebounceRef.current) {
+        clearTimeout(autoSaveDebounceRef.current);
+      }
+    };
+  }, [orderedClips, audioTracks, multiTrackItems, useMultiTrack, clipSettings, enhancements, step]);
+
+  // Restore editor state from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedSession = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!savedSession) return;
+
+      const sessionData = JSON.parse(savedSession);
+      
+      // Validate session data
+      if (!sessionData.version || !sessionData.savedAt) return;
+      
+      // Check if session is less than 24 hours old
+      const savedAt = new Date(sessionData.savedAt);
+      const hoursSinceSave = (Date.now() - savedAt.getTime()) / (1000 * 60 * 60);
+      if (hoursSinceSave > 24) {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        console.log('[VIDEO-EDITOR] Session expired, cleared localStorage');
+        return;
+      }
+
+      // Mark as restoring to prevent immediate re-save
+      isRestoringRef.current = true;
+
+      // Restore state
+      if (sessionData.orderedClips?.length > 0) {
+        setOrderedClips(sessionData.orderedClips);
+      }
+      if (sessionData.audioTracks?.length > 0) {
+        setAudioTracks(sessionData.audioTracks);
+      }
+      if (sessionData.multiTrackItems?.length > 0) {
+        setMultiTrackItems(sessionData.multiTrackItems);
+      }
+      if (sessionData.useMultiTrack !== undefined) {
+        setUseMultiTrack(sessionData.useMultiTrack);
+      }
+      if (sessionData.clipSettings?.length > 0) {
+        setClipSettings(new Map(sessionData.clipSettings));
+      }
+      if (sessionData.enhancements) {
+        setEnhancements(sessionData.enhancements);
+      }
+      if (sessionData.step) {
+        setStep(sessionData.step);
+      }
+
+      console.log('[VIDEO-EDITOR] Session restored from localStorage');
+
+      // Reset restoring flag after a short delay
+      setTimeout(() => {
+        isRestoringRef.current = false;
+      }, 500);
+    } catch (error) {
+      console.error('[VIDEO-EDITOR] Failed to restore session:', error);
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+  }, []);
+
+  // Clear session when user starts a new project or clears the editor
+  const clearLocalSession = useCallback(() => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    console.log('[VIDEO-EDITOR] Session cleared from localStorage');
+  }, []);
+
   // Calculate total timeline duration based on actual clip durations, trim settings, and speed
   const calculateTotalDuration = useCallback((): number => {
     let totalDuration = 0;
@@ -2170,9 +2282,26 @@ const previewMutation = useMutation({
     setStep(1);
     setSelectedIds(new Set());
     setOrderedClips([]);
+    setAudioTracks([]);
+    setMultiTrackItems([]);
+    setUseMultiTrack(false);
+    setClipSettings(new Map());
+    setEnhancements({
+      transitionMode: 'none',
+      transitionDuration: 1.0,
+      clipTransitions: [],
+      fadeIn: false,
+      fadeOut: false,
+      fadeDuration: 0.5,
+      aspectRatio: '16:9',
+      textOverlays: [],
+      captions: [],
+    });
+    setCurrentProject(null);
     setExportProgress(0);
     setExportedUrl(null);
     setActiveJobId(null);
+    clearLocalSession(); // Clear saved session from localStorage
   };
 
   const stepTitles: Record<WizardStep, string> = {
