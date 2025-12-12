@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (token: string) => void;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<string | null>;
+  refetchUser: () => Promise<void>; // Refresh user data (e.g., after credits change)
   isAuthenticated: boolean;
   user: any | null;
   isLoading: boolean;
@@ -108,6 +109,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error("[AUTH] Error refreshing token:", error);
       return null;
+    }
+  }, []);
+
+  // Refetch user data (useful after credits change from generations)
+  const refetchUser = useCallback(async (): Promise<void> => {
+    try {
+      const token = bridgeGetAccessToken();
+      if (!token) {
+        console.log("[AUTH] Cannot refetch user - no access token");
+        return;
+      }
+
+      const userResponse = await fetch("/api/auth/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUser(userData);
+        console.log("[AUTH] ✓ User data refreshed (credits updated)");
+      } else {
+        console.log("[AUTH] Failed to refetch user data:", userResponse.status);
+      }
+    } catch (error) {
+      console.error("[AUTH] Error refetching user:", error);
     }
   }, []);
   
@@ -273,12 +302,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth();
   }, []);
 
+  // Periodically refresh user data to keep credits in sync (every 30 seconds when authenticated)
+  useEffect(() => {
+    if (!accessToken || !user) return;
+    
+    const intervalId = setInterval(() => {
+      refetchUser();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [accessToken, user, refetchUser]);
+
   const value: AuthContextType = {
     accessToken,
     setAccessToken,
     login,
     logout,
     refreshAccessToken,
+    refetchUser,
     isAuthenticated: !!accessToken && !!user,
     user,
     isLoading,
