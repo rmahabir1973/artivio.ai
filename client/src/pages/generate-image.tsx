@@ -960,7 +960,7 @@ export default function GenerateImage() {
                 </div>
               )}
 
-              {/* Max Images - Only for Seedream-4 */}
+              {/* Max Images - Only for Seedream-4 (max 4 per Kie.ai API limit) */}
               {model === 'seedream-4' && (
                 <div className="space-y-2">
                   <Label htmlFor="maxImages">Number of Images</Label>
@@ -969,11 +969,11 @@ export default function GenerateImage() {
                       id="maxImages"
                       type="number"
                       min="1"
-                      max="6"
+                      max="4"
                       value={maxImages}
                       onChange={(e) => {
                         const val = parseInt(e.target.value, 10);
-                        if (!isNaN(val) && val >= 1 && val <= 6) {
+                        if (!isNaN(val) && val >= 1 && val <= 4) {
                           setMaxImages(val);
                         }
                       }}
@@ -987,7 +987,7 @@ export default function GenerateImage() {
                   <input
                     type="range"
                     min="1"
-                    max="6"
+                    max="4"
                     value={maxImages}
                     onChange={(e) => setMaxImages(parseInt(e.target.value, 10))}
                     className="w-full"
