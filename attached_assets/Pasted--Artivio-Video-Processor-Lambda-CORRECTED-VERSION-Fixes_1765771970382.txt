@@ -1,0 +1,661 @@
+// Artivio Video Processor Lambda - CORRECTED VERSION
+// Fixes: FFmpeg audio index offset, fadeOut start time, callback signatures
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { writeFile, readFile, unlink, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
+import { spawn } from 'child_process';
+import { createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
+import https from 'https';
+import http from 'http';
+import crypto from 'crypto';
+
+const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
+const FFMPEG_PATH = '/opt/bin/ffmpeg';
+const FFPROBE_PATH = '/opt/bin/ffprobe';
+const TMP_DIR = '/tmp/videos';
+const CALLBACK_SECRET = process.env.CALLBACK_SECRET;
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+async function downloadFile(url, filepath) {
+    const protocol = url.startsWith('https') ? https : http;
+    return new Promise((resolve, reject) => {
+        const file = createWriteStream(filepath);
+        protocol.get(url, (response) => {
+            if (response.statusCode === 301 || response.statusCode === 302) {
+                downloadFile(response.headers.location, filepath).then(resolve).catch(reject);
+                return;
+            }
+            if (response.statusCode !== 200) {
+                reject(new Error(`Failed to download: ${response.statusCode} from ${url}`));
+                return;
+            }
+            pipeline(response, file).then(resolve).catch(reject);
+        }).on('error', reject);
+    });
+}
+
+async function uploadToS3(filepath, bucket, key) {
+    const fileContent = await readFile(filepath);
+    await s3Client.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: fileContent,
+        ContentType: 'video/mp4',
+    }));
+    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+    return await getSignedUrl(s3Client, command, { expiresIn: 604800 });
+}
+
+async function notifyCallback(callbackUrl, data) {
+    if (!callbackUrl) return;
+    
+    return new Promise((resolve, reject) => {
+        try {
+            const payload = JSON.stringify(data);
+            const url = new URL(callbackUrl);
+            
+            const options = {
+                hostname: url.hostname,
+                port: url.port || (url.protocol === 'https:' ? 443 : 80),
+                path: url.pathname + url.search,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload),
+                }
+            };
+            
+            if (CALLBACK_SECRET) {
+                const signature = crypto
+                    .createHmac('sha256', CALLBACK_SECRET)
+                    .update(payload)
+                    .digest('hex');
+                options.headers['x-callback-signature'] = signature;
+                console.log('Added callback signature');
+            } else {
+                console.warn('CALLBACK_SECRET not set - callback will be unsigned!');
+            }
+            
+            const protocol = url.protocol === 'https:' ? https : http;
+            const req = protocol.request(options, (res) => {
+                let responseData = '';
+                res.on('data', (chunk) => responseData += chunk);
+                res.on('end', () => {
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        console.log(`Callback sent successfully: ${res.statusCode}`);
+                        resolve(responseData);
+                    } else {
+                        console.error(`Callback failed: ${res.statusCode} - ${responseData}`);
+                        reject(new Error(`Callback returned ${res.statusCode}: ${responseData}`));
+                    }
+                });
+            });
+            
+            req.on('error', reject);
+            req.write(payload);
+            req.end();
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+async function cleanupFiles(files) {
+    for (const file of files) {
+        try { await unlink(file); } catch (e) { /* ignore */ }
+    }
+}
+
+async function execFFmpeg(args) {
+    return new Promise((resolve, reject) => {
+        console.log('FFmpeg command:', FFMPEG_PATH, args.join(' '));
+        
+        const ffmpeg = spawn(FFMPEG_PATH, args, {
+            stdio: ['ignore', 'pipe', 'pipe']
+        });
+        
+        let stdout = '';
+        let stderr = '';
+        
+        ffmpeg.stdout.on('data', (data) => stdout += data.toString());
+        ffmpeg.stderr.on('data', (data) => stderr += data.toString());
+        
+        ffmpeg.on('close', (code) => {
+            if (code === 0) {
+                console.log('FFmpeg completed successfully');
+                resolve({ stdout, stderr });
+            } else {
+                console.error('FFmpeg failed with code:', code);
+                console.error('FFmpeg stderr:', stderr);
+                reject(new Error(`FFmpeg exited with code ${code}\n${stderr}`));
+            }
+        });
+        
+        ffmpeg.on('error', reject);
+    });
+}
+
+// ============================================
+// AUDIO MIXING FUNCTIONS - FIXED VERSION
+// ============================================
+
+async function downloadAudioFile(url, tmpDir) {
+    const hash = crypto.createHash('md5').update(url).digest('hex');
+    const ext = url.split('.').pop()?.split('?')[0] || 'mp3';
+    const filepath = `${tmpDir}/audio_${hash}.${ext}`;
+    
+    if (existsSync(filepath)) return filepath;
+    
+    console.log(`Downloading audio from: ${url}`);
+    await downloadFile(url, filepath);
+    return filepath;
+}
+
+/**
+ * FIXED: Build FFmpeg filter complex for audio mixing
+ * @param {Object} audioConfig - Audio configuration
+ * @param {boolean} hasVideoAudio - Whether video has audio
+ * @param {number} videoInputOffset - Index offset where audio inputs start (e.g., 3 if there are 3 video inputs)
+ */
+function buildAudioMixFilter(audioConfig, hasVideoAudio = true, videoInputOffset = 1) {
+    const { backgroundMusic, audioTrack } = audioConfig;
+    const filters = [];
+    const inputs = [];
+    
+    // FIXED: Start from videoInputOffset (number of video inputs)
+    let inputIndex = videoInputOffset;
+    
+    const musicIndex = backgroundMusic ? inputIndex++ : null;
+    const voiceIndex = audioTrack ? inputIndex++ : null;
+    
+    if (backgroundMusic) {
+        inputs.push('-i', backgroundMusic.filepath);
+    }
+    if (audioTrack) {
+        inputs.push('-i', audioTrack.filepath);
+    }
+    
+    // Build filter based on what audio sources we have
+    if (backgroundMusic && audioTrack) {
+        if (hasVideoAudio) {
+            filters.push(
+                `[0:a]volume=0.5,aresample=48000[videoaudio]`,
+                `[${musicIndex}:a]volume=${backgroundMusic.volume},aresample=48000[music]`,
+                `[${voiceIndex}:a]volume=${audioTrack.volume},aresample=48000[voice]`,
+                `[videoaudio][music][voice]amix=inputs=3:duration=longest:dropout_transition=0,dynaudnorm[audio]`
+            );
+        } else {
+            filters.push(
+                `[${musicIndex}:a]volume=${backgroundMusic.volume},aresample=48000[music]`,
+                `[${voiceIndex}:a]volume=${audioTrack.volume},aresample=48000[voice]`,
+                `[music][voice]amix=inputs=2:duration=longest:dropout_transition=0,dynaudnorm[audio]`
+            );
+        }
+        return { inputs, filterComplex: filters.join(';'), audioMap: '[audio]' };
+    }
+    
+    if (backgroundMusic && !audioTrack) {
+        if (hasVideoAudio) {
+            filters.push(
+                `[0:a]volume=0.5,aresample=48000[videoaudio]`,
+                `[${musicIndex}:a]volume=${backgroundMusic.volume},aresample=48000[music]`,
+                `[videoaudio][music]amix=inputs=2:duration=longest:dropout_transition=0,dynaudnorm[audio]`
+            );
+        } else {
+            filters.push(`[${musicIndex}:a]volume=${backgroundMusic.volume}[audio]`);
+        }
+        return { inputs, filterComplex: filters.join(';'), audioMap: '[audio]' };
+    }
+    
+    if (audioTrack && !backgroundMusic) {
+        if (hasVideoAudio) {
+            filters.push(
+                `[0:a]volume=0.5,aresample=48000[videoaudio]`,
+                `[${voiceIndex}:a]volume=${audioTrack.volume},aresample=48000[voice]`,
+                `[videoaudio][voice]amix=inputs=2:duration=longest:dropout_transition=0,dynaudnorm[audio]`
+            );
+        } else {
+            filters.push(`[${voiceIndex}:a]volume=${audioTrack.volume}[audio]`);
+        }
+        return { inputs, filterComplex: filters.join(';'), audioMap: '[audio]' };
+    }
+    
+    if (hasVideoAudio) {
+        return { inputs: [], filterComplex: '', audioMap: '0:a' };
+    }
+    
+    return { inputs: [], filterComplex: '', audioMap: '' };
+}
+
+// ============================================
+// VIDEO PROCESSING FUNCTIONS
+// ============================================
+
+async function getVideoDuration(filepath) {
+    return new Promise((resolve) => {
+        const ffprobe = spawn(FFPROBE_PATH, [
+            '-v', 'error',
+            '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1',
+            filepath
+        ], { stdio: ['ignore', 'pipe', 'pipe'] });
+        
+        let stdout = '';
+        ffprobe.stdout.on('data', (data) => stdout += data.toString());
+        ffprobe.on('close', (code) => {
+            if (code === 0) {
+                resolve(parseFloat(stdout.trim()) || 10);
+            } else {
+                resolve(10);
+            }
+        });
+        ffprobe.on('error', () => resolve(10));
+    });
+}
+
+async function hasAudioStream(filepath) {
+    return new Promise((resolve) => {
+        const ffprobe = spawn(FFPROBE_PATH, [
+            '-v', 'error',
+            '-select_streams', 'a:0',
+            '-show_entries', 'stream=codec_type',
+            '-of', 'default=noprint_wrappers=1:nokey=1',
+            filepath
+        ], { stdio: ['ignore', 'pipe', 'pipe'] });
+        
+        let stdout = '';
+        ffprobe.stdout.on('data', (data) => stdout += data.toString());
+        ffprobe.on('close', () => resolve(stdout.trim() === 'audio'));
+        ffprobe.on('error', () => resolve(false));
+    });
+}
+
+function buildAspectRatioFilter(aspectRatio) {
+    const ratios = {
+        '16:9': { width: 1920, height: 1080 },
+        '9:16': { width: 1080, height: 1920 },
+        '1:1': { width: 1080, height: 1080 },
+        '4:5': { width: 1080, height: 1350 },
+    };
+    
+    const { width, height } = ratios[aspectRatio] || ratios['16:9'];
+    
+    return `scale=${width}:${height}:force_original_aspect_ratio=decrease,` +
+           `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1`;
+}
+
+function buildTransitionsFilterChain(transitions, clipDurations) {
+    if (!transitions || transitions.mode === 'none') {
+        return { filterChain: '', usesTransitions: false };
+    }
+    
+    if (transitions.mode === 'crossfade') {
+        const duration = transitions.durationSeconds || 1.0;
+        const filters = [];
+        let currentLabel = '0:v';
+        
+        for (let i = 1; i < clipDurations.length; i++) {
+            const offset = clipDurations.slice(0, i).reduce((sum, d) => sum + d, 0) - (duration / 2);
+            const nextLabel = i === clipDurations.length - 1 ? 'vout' : `v${i}`;
+            filters.push(`[${currentLabel}][${i}:v]xfade=transition=fade:duration=${duration}:offset=${Math.max(0, offset)}[${nextLabel}]`);
+            currentLabel = nextLabel;
+        }
+        
+        return { filterChain: filters.join(';'), usesTransitions: true, outputLabel: 'vout' };
+    }
+    
+    if (transitions.mode === 'perClip' && transitions.perClip?.length > 0) {
+        const filters = [];
+        let currentLabel = '0:v';
+        const sortedTransitions = [...transitions.perClip].sort((a, b) => a.afterClipIndex - b.afterClipIndex);
+        
+        for (let i = 0; i < clipDurations.length - 1; i++) {
+            const transition = sortedTransitions.find(t => t.afterClipIndex === i);
+            const nextClipIndex = i + 1;
+            const isLastClip = nextClipIndex === clipDurations.length - 1;
+            const nextLabel = isLastClip ? 'vout' : `v${i + 1}`;
+            
+            if (transition) {
+                const offset = clipDurations.slice(0, i + 1).reduce((sum, d) => sum + d, 0) - (transition.durationSeconds / 2);
+                const transitionType = transition.type || 'fade';
+                filters.push(`[${currentLabel}][${nextClipIndex}:v]xfade=transition=${transitionType}:duration=${transition.durationSeconds}:offset=${Math.max(0, offset)}[${nextLabel}]`);
+            } else {
+                filters.push(`[${currentLabel}][${nextClipIndex}:v]concat=n=2:v=1:a=0[${nextLabel}]`);
+            }
+            currentLabel = nextLabel;
+        }
+        
+        return { filterChain: filters.join(';'), usesTransitions: true, outputLabel: 'vout' };
+    }
+    
+    return { filterChain: '', usesTransitions: false };
+}
+
+// ============================================
+// MAIN HANDLER
+// ============================================
+
+export const handler = async (event) => {
+    console.log('='.repeat(60));
+    console.log('Lambda started:', new Date().toISOString());
+    console.log('Event:', JSON.stringify(event, null, 2));
+    console.log('='.repeat(60));
+    
+    let body = event;
+    if (typeof event.body === 'string') body = JSON.parse(event.body);
+    else if (event.body) body = event.body;
+    
+    const { 
+        jobId, 
+        userId, 
+        outputBucket, 
+        videoSettings = {}, 
+        project, 
+        enhancements = {},
+        previewMode = false,
+        maxDuration,
+        callbackUrl 
+    } = body;
+    
+    if (!jobId || !project?.clips?.length) {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Missing required fields: jobId or project.clips' })
+        };
+    }
+    
+    const filesToCleanup = [];
+    
+    try {
+        if (!existsSync(TMP_DIR)) {
+            await mkdir(TMP_DIR, { recursive: true });
+        }
+        
+        console.log(`\n📊 JOB DETAILS:`);
+        console.log(`   Job ID: ${jobId}`);
+        console.log(`   Clips: ${project.clips.length}`);
+        console.log(`   Preview mode: ${previewMode}`);
+        console.log(`   Callback URL: ${callbackUrl || 'none'}`);
+        
+        // STEP 1: Download all video clips
+        console.log(`\n🎬 STEP 1: Downloading ${project.clips.length} video clips...`);
+        const localFiles = [];
+        
+        for (let i = 0; i < project.clips.length; i++) {
+            const clip = project.clips[i];
+            const localPath = `${TMP_DIR}/clip_${jobId}_${i}.mp4`;
+            console.log(`   [${i + 1}/${project.clips.length}] ${clip.sourceUrl}`);
+            
+            await downloadFile(clip.sourceUrl, localPath);
+            localFiles.push(localPath);
+            filesToCleanup.push(localPath);
+        }
+        console.log(`   ✅ All clips downloaded`);
+        
+        // STEP 2: Download audio files
+        console.log(`\n🎵 STEP 2: Processing audio...`);
+        const audioConfig = {};
+        
+        if (enhancements.backgroundMusic?.audioUrl) {
+            console.log(`   Downloading background music...`);
+            const musicPath = await downloadAudioFile(enhancements.backgroundMusic.audioUrl, TMP_DIR);
+            audioConfig.backgroundMusic = {
+                filepath: musicPath,
+                volume: enhancements.backgroundMusic.volume || 0.3,
+            };
+            filesToCleanup.push(musicPath);
+        }
+        
+        if (enhancements.audioTrack?.audioUrl) {
+            console.log(`   Downloading voice track...`);
+            const voicePath = await downloadAudioFile(enhancements.audioTrack.audioUrl, TMP_DIR);
+            audioConfig.audioTrack = {
+                filepath: voicePath,
+                volume: enhancements.audioTrack.volume || 1.0,
+            };
+            filesToCleanup.push(voicePath);
+        }
+        
+        // STEP 3: Get clip durations
+        console.log(`\n⏱️  STEP 3: Analyzing clip durations...`);
+        const clipDurations = [];
+        for (let i = 0; i < localFiles.length; i++) {
+            const duration = await getVideoDuration(localFiles[i]);
+            clipDurations.push(duration);
+            console.log(`   Clip ${i + 1}: ${duration.toFixed(2)}s`);
+        }
+        
+        const totalDuration = clipDurations.reduce((sum, d) => sum + d, 0);
+        console.log(`   Total duration: ${totalDuration.toFixed(2)}s`);
+        
+        const hasVideoAudio = await hasAudioStream(localFiles[0]);
+        console.log(`   Video has audio: ${hasVideoAudio}`);
+        
+        // STEP 4: Build FFmpeg command
+        console.log(`\n🔧 STEP 4: Building FFmpeg command...`);
+        const outputPath = `${TMP_DIR}/output_${jobId}.mp4`;
+        filesToCleanup.push(outputPath);
+        
+        const hasTransitions = enhancements.transitions && 
+                               enhancements.transitions.mode !== 'none' && 
+                               (enhancements.transitions.mode === 'crossfade' || 
+                                (enhancements.transitions.perClip?.length > 0));
+        
+        console.log(`   Transitions: ${hasTransitions ? enhancements.transitions.mode : 'none'}`);
+        
+        let ffmpegArgs;
+        
+        if (hasTransitions && localFiles.length > 1) {
+            console.log(`   Building WITH transitions...`);
+            
+            const transitionResult = buildTransitionsFilterChain(enhancements.transitions, clipDurations);
+            
+            ffmpegArgs = ['-y'];
+            
+            // Add each video clip as separate input
+            for (const clipPath of localFiles) {
+                ffmpegArgs.push('-i', clipPath);
+            }
+            
+            // FIXED: Pass correct audio input offset (number of video inputs)
+            const audioMix = buildAudioMixFilter(audioConfig, hasVideoAudio, localFiles.length);
+            ffmpegArgs.push(...audioMix.inputs);
+            console.log(`   Audio input offset: ${localFiles.length}`);
+            console.log(`   Audio filter: ${audioMix.filterComplex || 'none'}`);
+            
+            // Build complete filter complex
+            const complexFilters = [];
+            
+            if (transitionResult.filterChain) {
+                complexFilters.push(transitionResult.filterChain);
+            }
+            
+            // Video post-processing filters
+            const videoFilters = [];
+            if (enhancements.aspectRatio) {
+                videoFilters.push(buildAspectRatioFilter(enhancements.aspectRatio));
+            }
+            if (videoSettings.resolution) {
+                const [w, h] = videoSettings.resolution.split('x');
+                videoFilters.push(`scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2`);
+            }
+            if (enhancements.fadeIn) {
+                const duration = enhancements.fadeDuration || 0.5;
+                videoFilters.push(`fade=t=in:st=0:d=${duration}`);
+            }
+            // FIXED: fadeOut needs start time!
+            if (enhancements.fadeOut) {
+                const duration = enhancements.fadeDuration || 0.5;
+                const startTime = Math.max(0, totalDuration - duration);
+                videoFilters.push(`fade=t=out:st=${startTime}:d=${duration}`);
+            }
+            
+            if (videoFilters.length > 0) {
+                complexFilters.push(`[vout]${videoFilters.join(',')}[vfinal]`);
+            }
+            
+            if (audioMix.filterComplex) {
+                complexFilters.push(audioMix.filterComplex);
+            }
+            
+            if (complexFilters.length > 0) {
+                ffmpegArgs.push('-filter_complex', complexFilters.join(';'));
+            }
+            
+            // Map outputs
+            ffmpegArgs.push('-map', videoFilters.length > 0 ? '[vfinal]' : '[vout]');
+            
+            if (audioMix.audioMap) {
+                ffmpegArgs.push('-map', audioMix.audioMap);
+            } else if (hasVideoAudio) {
+                ffmpegArgs.push('-map', '0:a?');
+            }
+            
+        } else {
+            console.log(`   Building WITHOUT transitions (concat)...`);
+            
+            const concatListPath = `${TMP_DIR}/concat_list_${jobId}.txt`;
+            await writeFile(concatListPath, localFiles.map(f => `file '${f}'`).join('\n'));
+            filesToCleanup.push(concatListPath);
+            
+            ffmpegArgs = ['-y', '-f', 'concat', '-safe', '0', '-i', concatListPath];
+            
+            // For concat mode, audio inputs start at index 1
+            const audioMix = buildAudioMixFilter(audioConfig, hasVideoAudio, 1);
+            ffmpegArgs.push(...audioMix.inputs);
+            console.log(`   Audio filter: ${audioMix.filterComplex || 'none'}`);
+            
+            const videoFilters = [];
+            if (enhancements.aspectRatio) {
+                videoFilters.push(buildAspectRatioFilter(enhancements.aspectRatio));
+            }
+            if (videoSettings.resolution) {
+                const [w, h] = videoSettings.resolution.split('x');
+                videoFilters.push(`scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2`);
+            }
+            if (enhancements.fadeIn) {
+                const duration = enhancements.fadeDuration || 0.5;
+                videoFilters.push(`fade=t=in:st=0:d=${duration}`);
+            }
+            // FIXED: fadeOut needs start time!
+            if (enhancements.fadeOut) {
+                const duration = enhancements.fadeDuration || 0.5;
+                const startTime = Math.max(0, totalDuration - duration);
+                videoFilters.push(`fade=t=out:st=${startTime}:d=${duration}`);
+            }
+            
+            if (audioMix.filterComplex || videoFilters.length > 0) {
+                const complexFilters = [];
+                
+                if (videoFilters.length > 0) {
+                    complexFilters.push(`[0:v]${videoFilters.join(',')}[v]`);
+                }
+                
+                if (audioMix.filterComplex) {
+                    complexFilters.push(audioMix.filterComplex);
+                }
+                
+                ffmpegArgs.push('-filter_complex', complexFilters.join(';'));
+                ffmpegArgs.push('-map', videoFilters.length > 0 ? '[v]' : '0:v');
+                
+                if (audioMix.audioMap) {
+                    ffmpegArgs.push('-map', audioMix.audioMap);
+                } else if (hasVideoAudio) {
+                    ffmpegArgs.push('-map', '0:a?');
+                }
+            } else {
+                ffmpegArgs.push('-map', '0');
+            }
+        }
+        
+        // Encoding settings
+        if (previewMode) {
+            ffmpegArgs.push('-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28');
+        } else {
+            const quality = videoSettings.quality || 'high';
+            if (quality === 'high') {
+                ffmpegArgs.push('-c:v', 'libx264', '-preset', 'slow', '-crf', '18');
+            } else if (quality === 'medium') {
+                ffmpegArgs.push('-c:v', 'libx264', '-preset', 'medium', '-crf', '23');
+            } else {
+                ffmpegArgs.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '28');
+            }
+        }
+        
+        ffmpegArgs.push('-c:a', 'aac', '-b:a', previewMode ? '128k' : '192k', '-movflags', '+faststart', outputPath);
+        
+        // STEP 5: Execute FFmpeg
+        console.log(`\n▶️  STEP 5: Running FFmpeg...`);
+        console.log(`   Command: ${FFMPEG_PATH} ${ffmpegArgs.join(' ')}`);
+        
+        await execFFmpeg(ffmpegArgs);
+        console.log(`   ✅ FFmpeg completed`);
+        
+        // STEP 6: Upload to S3
+        console.log(`\n☁️  STEP 6: Uploading to S3...`);
+        const s3Key = previewMode 
+            ? `previews/${userId || 'guest'}/${jobId}.mp4`
+            : `exports/${userId || 'guest'}/${jobId}.mp4`;
+        
+        const downloadUrl = await uploadToS3(outputPath, outputBucket, s3Key);
+        console.log(`   ✅ Upload complete`);
+        
+        // STEP 7: Cleanup and callback
+        await cleanupFiles(filesToCleanup);
+        
+        const result = {
+            status: 'completed',
+            jobId,
+            [previewMode ? 'previewUrl' : 'downloadUrl']: downloadUrl,
+            metadata: {
+                clipsProcessed: project.clips.length,
+                hasBackgroundMusic: !!audioConfig.backgroundMusic,
+                hasVoiceTrack: !!audioConfig.audioTrack,
+                hasVideoAudio,
+                hasTransitions,
+                aspectRatio: enhancements.aspectRatio || '16:9',
+                previewMode,
+                totalDuration,
+            }
+        };
+        
+        if (callbackUrl) {
+            try {
+                await notifyCallback(callbackUrl, result);
+                console.log(`   ✅ Callback sent`);
+            } catch (e) {
+                console.error(`   ⚠️ Callback failed:`, e.message);
+            }
+        }
+        
+        console.log(`\n✅ JOB COMPLETED: ${jobId}\n`);
+        
+        return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify(result)
+        };
+        
+    } catch (error) {
+        console.error(`\n❌ PROCESSING ERROR:`, error);
+        await cleanupFiles(filesToCleanup);
+        
+        const errorResult = { status: 'failed', jobId, error: error.message };
+        
+        if (callbackUrl) {
+            try { await notifyCallback(callbackUrl, errorResult); } catch (e) { /* ignore */ }
+        }
+        
+        return {
+            statusCode: 500,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify(errorResult)
+        };
+    }
+};
