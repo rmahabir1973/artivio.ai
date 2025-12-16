@@ -754,25 +754,33 @@ export default function VideoEditor() {
   // Key is "clipId:url" to allow re-loading if URL changes
   const attemptedDurationLoadsRef = useRef<Set<string>>(new Set());
 
+  // Default clip settings
+  const defaultClipSettings: ClipSettingsLocal = {
+    clipId: '',
+    muted: false,
+    volume: 1,
+    speed: 1.0,
+  };
+
   // Toggle mute for a clip
   const toggleClipMute = useCallback((clipId: string) => {
     setClipSettings(prev => {
       const newMap = new Map(prev);
-      const current = getClipSettings(clipId);
+      const current = prev.get(clipId) || { ...defaultClipSettings, clipId };
       newMap.set(clipId, { ...current, muted: !current.muted });
       return newMap;
     });
-  }, [getClipSettings]);
+  }, []);
 
   // Update clip settings
   const updateClipSettings = useCallback((clipId: string, updates: Partial<ClipSettingsLocal>) => {
     setClipSettings(prev => {
       const newMap = new Map(prev);
-      const current = getClipSettings(clipId);
+      const current = prev.get(clipId) || { ...defaultClipSettings, clipId };
       newMap.set(clipId, { ...current, ...updates });
       return newMap;
     });
-  }, [getClipSettings]);
+  }, []);
 
   // Load media metadata to get actual duration for a clip (supports both video and audio)
   // Uses attemptedDurationLoadsRef to prevent infinite loops on failed loads
