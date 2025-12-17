@@ -1,0 +1,124 @@
+2025-12-16 22:08:00.14
+be7da751
+User
+}
+2025-12-16 22:08:00.14
+be7da751
+User
+hasTransitions: false,
+2025-12-16 22:08:00.14
+be7da751
+User
+clipsProcessed: 4,
+2025-12-16 22:08:00.14
+be7da751
+User
+jobId: 'export-1765940664851-iwz8dwt46',
+2025-12-16 22:08:00.14
+be7da751
+User
+hasBackgroundMusic: true,
+2025-12-16 22:08:00.14
+be7da751
+User
+metadata: {
+2025-12-16 22:08:00.14
+be7da751
+User
+aspectRatio: '16:9',
+2025-12-16 22:08:00.17
+be7da751
+User
+3:08:00 AM [express] POST /api/video-editor/export 200 in 215342ms :: {"status":"completed","jobId":…
+2025-12-16 22:08:00.25
+be7da751
+User
+isPaginated: true,
+2025-12-16 22:08:00.25
+be7da751
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-16 22:08:00.25
+be7da751
+User
+}
+2025-12-16 22:08:00.25
+be7da751
+User
+typeFilter: 'music'
+2025-12-16 22:08:00.25
+be7da751
+User
+[/api/generations] Request received {
+2025-12-16 22:08:00.25
+be7da751
+User
+userId: '49729939',
+2025-12-16 22:08:00.25
+be7da751
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-16 22:08:00.25
+be7da751
+User
+hasUser: true,
+2025-12-16 22:08:00.25
+be7da751
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-16 22:08:00.25
+be7da751
+User
+cursor: '',
+2025-12-16 22:08:00.29
+be7da751
+User
+[/api/generations] Paginated query completed in 40ms, found 11 generations, hasMore: false
+2025-12-16 22:08:00.30
+be7da751
+User
+3:08:00 AM [express] GET /api/generations 200 in 74ms :: {"items":[{"id":"2457cbf5-d444-4419-99e4-64…
+2025-12-16 22:08:00.33
+be7da751
+User
+[/api/generations] Request received {
+2025-12-16 22:08:00.33
+be7da751
+User
+}
+2025-12-16 22:08:00.33
+be7da751
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-16 22:08:00.33
+be7da751
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-16 22:08:00.33
+be7da751
+User
+isPaginated: true,
+2025-12-16 22:08:00.33
+be7da751
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-16 22:08:00.33
+be7da751
+User
+userId: '49729939',
+2025-12-16 22:08:00.33
+be7da751
+User
+typeFilter: 'video'
+2025-12-16 22:08:00.33
+be7da751
+User
+hasUser: true,
+2025-12-16 22:08:00.33
+be7da751
+User
+cursor: '',
+2025-12-16 22:08:00.34
+be7da751
+User
+userId: '49729939',

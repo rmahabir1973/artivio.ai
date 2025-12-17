@@ -1,0 +1,116 @@
+2025-12-16 22:00:37.70
+be7da751
+User
+},
+2025-12-16 22:00:37.70
+be7da751
+User
+]
+2025-12-16 22:00:37.70
+be7da751
+User
+"id": "ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1765940329435_g9f2jdks6",
+2025-12-16 22:00:37.70
+be7da751
+User
+"format": "mp4",
+2025-12-16 22:00:37.70
+be7da751
+User
+},
+2025-12-16 22:00:37.70
+be7da751
+User
+"transitions": {
+2025-12-16 22:00:37.70
+be7da751
+User
+"mode": "perClip",
+2025-12-16 22:00:37.70
+be7da751
+User
+"quality": "high"
+2025-12-16 22:00:37.70
+be7da751
+User
+"enhancements": {
+2025-12-16 22:00:37.70
+be7da751
+User
+"id": "fa9fa576-2e25-4e33-9cf1-ffd64dabb8ae_1765940390539_5ax5mhdg9",
+2025-12-16 22:00:37.70
+be7da751
+User
+"videoSettings": {
+2025-12-16 22:00:37.70
+be7da751
+User
+},
+2025-12-16 22:00:37.70
+be7da751
+User
+"order": 1
+2025-12-16 22:00:37.70
+be7da751
+User
+"sourceUrl": "https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-ff55d5ae-9d1e-4421-b334-adaaaf79c3bf.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20251217%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20251217T025839Z&X-Amz-Expires=604800&X-Amz-Signature=afb4efc78566cc610d07c3ca2e2ab8b8d1b7b082d3f531d789d3f45bfa20313a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+2025-12-16 22:00:37.70
+be7da751
+User
+{
+2025-12-16 22:00:37.70
+be7da751
+User
+"project": {
+2025-12-16 22:00:37.70
+be7da751
+User
+"clips": [
+2025-12-16 22:00:37.70
+be7da751
+User
+"order": 4
+2025-12-16 22:00:37.70
+be7da751
+User
+{
+2025-12-16 22:00:37.70
+be7da751
+User
+},
+2025-12-16 22:00:37.70
+be7da751
+User
+},
+2025-12-16 22:00:37.70
+be7da751
+User
+{
+2025-12-16 22:00:37.70
+be7da751
+User
+"order": 2
+2025-12-16 22:00:37.70
+be7da751
+User
+"jobId": "export-1765940437706-9lav14ls7",
+2025-12-16 22:00:37.70
+be7da751
+User
+"durationSeconds": 1
+2025-12-16 22:00:37.70
+be7da751
+User
+"sourceUrl": "https://tempfile.aiquickdraw.com/v/425a5fca0c8ef77bff86959f8a8dbb30_1765479274.mp4",
+2025-12-16 22:00:37.70
+be7da751
+User
+"order": 0
+2025-12-16 22:00:37.70
+be7da751
+User
+"userId": "49729939",
+2025-12-16 22:00:37.70
+be7da751
+User
+},
