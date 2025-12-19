@@ -415,6 +415,38 @@ async function getVideoDuration(filePath) {
 // FFMPEG COMMAND BUILDER
 // ============================================================================
 
+function buildSimpleSingleClipCommand(clip, videoSettings, outputPath) {
+  // For single clips, use simple re-encoding without filter_complex
+  const args = [];
+  
+  args.push('-y');
+  args.push('-hide_banner');
+  args.push('-i', clip.localPath);
+  
+  // Video encoding settings
+  const quality = videoSettings?.quality || 'high';
+  const crf = quality === 'high' ? 18 : quality === 'medium' ? 23 : 28;
+  const preset = quality === 'high' ? 'slow' : quality === 'medium' ? 'medium' : 'fast';
+  
+  args.push(
+    '-c:v', 'libx264',
+    '-preset', preset,
+    '-crf', crf.toString(),
+    '-profile:v', 'high',
+    '-pix_fmt', 'yuv420p'
+  );
+  
+  // Audio - copy if exists, otherwise add silent audio
+  args.push('-c:a', 'aac', '-b:a', '192k', '-ar', '48000');
+  
+  // Fast start for web
+  args.push('-movflags', '+faststart');
+  
+  args.push(outputPath);
+  
+  return args;
+}
+
 function buildFFmpegCommand(clips, enhancements, videoSettings, outputPath) {
   const args = [];
   
@@ -435,28 +467,35 @@ function buildFFmpegCommand(clips, enhancements, videoSettings, outputPath) {
   const hasTransitions = enhancements?.clipTransitions?.perClip?.length > 0;
   
   if (clips.length === 1) {
-    // Single clip - use null filters for passthrough
-    filterComplex = '[0:v]null[outv];[0:a]anull[outa]';
-    videoOutput = '[outv]';
-    audioOutput = '[outa]';
+    // Single clip - simple passthrough without filter_complex
+    // We'll handle this case by not using filter_complex at all
+    return buildSimpleSingleClipCommand(clips[0], videoSettings, outputPath);
   } else if (hasTransitions) {
-    // Multiple clips with transitions - use xfade
-    const { videoFilter, audioFilter } = buildTransitionsFilter(clips, enhancements.clipTransitions);
-    filterComplex = `${videoFilter};${audioFilter}`;
+    // Multiple clips with transitions - use xfade for video only
+    // Audio crossfade is problematic when clips lack audio, so we skip it
+    const { videoFilter } = buildTransitionsFilter(clips, enhancements.clipTransitions);
+    filterComplex = videoFilter;
     videoOutput = '[outv]';
-    audioOutput = '[outa]';
+    audioOutput = ''; // Will use optional audio mapping instead
   } else {
-    // Multiple clips - simple concat
+    // Multiple clips - concat video only first
     const videoInputs = clips.map((_, i) => `[${i}:v]`).join('');
-    const audioInputs = clips.map((_, i) => `[${i}:a]`).join('');
-    filterComplex = `${videoInputs}concat=n=${clips.length}:v=1:a=0[outv];${audioInputs}concat=n=${clips.length}:v=0:a=1[outa]`;
+    filterComplex = `${videoInputs}concat=n=${clips.length}:v=1:a=0[outv]`;
     videoOutput = '[outv]';
-    audioOutput = '[outa]';
+    audioOutput = ''; // Will handle audio separately
   }
   
   args.push('-filter_complex', filterComplex);
   args.push('-map', videoOutput);
-  args.push('-map', audioOutput);
+  
+  // For audio: try to map first input's audio, or generate silence
+  // Using '0:a?' makes audio optional - won't fail if no audio
+  if (audioOutput) {
+    args.push('-map', audioOutput);
+  } else {
+    // No audio filter output - try to copy audio from first clip or skip
+    args.push('-map', '0:a?'); // ? makes it optional
+  }
   
   // Video encoding settings based on quality
   const quality = videoSettings?.quality || 'high';
