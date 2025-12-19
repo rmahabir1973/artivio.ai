@@ -70,6 +70,7 @@ interface ClipTransitionLocal {
   afterClipIndex: number;
   type: string;
   durationSeconds: number;
+  trackId?: string; // Layer/track the transition belongs to (defaults to 'layer-1')
 }
 
 interface AudioTrack {
@@ -181,16 +182,18 @@ function DroppableTransitionZone({
   left,
   hasTransition,
   transitionType,
+  trackId = 'layer-1',
 }: {
   position: number;
   clipId: string;
   left: number;
   hasTransition: boolean;
   transitionType?: string;
+  trackId?: string;
 }) {
   const { setNodeRef, isOver } = useDroppable({
-    id: `transition-drop-${position}`, // Use stable position index as ID
-    data: { type: 'transition-zone', position, clipId },
+    id: `transition-drop-${trackId}-${position}`, // Include trackId for unique identification
+    data: { type: 'transition-zone', position, clipId, trackId },
   });
 
   return (
@@ -714,8 +717,11 @@ export function AdvancedTimeline({
         duration = (trimEnd - trimStart) / speed;
       }
       
-      // Only apply transitions for clips on the same layer (layer-1 for backward compatibility)
-      const transition = trackId === 'layer-1' ? clipTransitions.find(t => t.afterClipIndex === index - 1) : undefined;
+      // Apply transitions per-layer - find transition for this clip's layer
+      const transitionTrackId = trackId || 'layer-1';
+      const transition = clipTransitions.find(t => 
+        t.afterClipIndex === index - 1 && (t.trackId || 'layer-1') === transitionTrackId
+      );
       const overlap = transition ? transition.durationSeconds : 0;
       
       const layerRunningTime = runningTimeByLayer[trackId] || 0;
@@ -1092,12 +1098,14 @@ export function AdvancedTimeline({
                     />
                   ))}
                   
-                  {/* Transition drop zones for layer-1 clips */}
-                  {trackVisibility['layer-1'] !== false && clipPositions
-                    .filter(p => (!p.clip.trackId || p.clip.trackId === 'layer-1') && p.index < clips.length - 1)
-                    .map((position) => {
-                      const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
-                      const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                  {/* Transition drop zones for layer-1 clips - between consecutive layer-1 clips only */}
+                  {trackVisibility['layer-1'] !== false && (() => {
+                    // Get ordered layer-1 clips
+                    const layer1Clips = clipPositions.filter(p => !p.clip.trackId || p.clip.trackId === 'layer-1');
+                    // Show transition zones between consecutive layer-1 clips (not the last one)
+                    return layer1Clips.slice(0, -1).map((position) => {
+                      const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-1');
+                      const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-1')?.type;
                       return (
                         <DroppableTransitionZone
                           key={`trans-zone-l1-${position.index}`}
@@ -1106,41 +1114,49 @@ export function AdvancedTimeline({
                           left={position.left + position.width}
                           hasTransition={hasTransition}
                           transitionType={transitionType}
+                          trackId="layer-1"
                         />
                       );
-                    })
-                  }
+                    });
+                  })()}
                   
-                  {clipTransitions.map((transition, idx) => {
-                    const afterClip = clipPositions[transition.afterClipIndex];
-                    const nextClip = clipPositions[transition.afterClipIndex + 1];
-                    if (!afterClip || !nextClip) return null;
-                    
-                    const transitionCenter = afterClip.left + afterClip.width;
-                    const transitionWidth = transition.durationSeconds * pixelsPerSecond;
-                    
-                    return (
-                      <div
-                        key={`transition-${idx}`}
-                        className="absolute h-6 flex items-center justify-center cursor-pointer hover:opacity-80 z-30"
-                        style={{
-                          left: `${transitionCenter - transitionWidth / 2}px`,
-                          width: `${transitionWidth}px`,
-                          top: `${TRACK_HEIGHT / 2 - 12}px`,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onTransitionEdit(transition.afterClipIndex);
-                        }}
-                        data-testid={`transition-${transition.afterClipIndex}`}
-                      >
-                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
-                          <Sparkles className="h-2.5 w-2.5" />
-                          {transition.type}
-                        </Badge>
-                      </div>
-                    );
-                  })}
+                  {/* Render layer-1 transition badges */}
+                  {(() => {
+                    const layer1Clips = clipPositions.filter(p => !p.clip.trackId || p.clip.trackId === 'layer-1');
+                    return clipTransitions
+                      .filter(t => (t.trackId || 'layer-1') === 'layer-1')
+                      .map((transition, idx) => {
+                        // Find the clip in this layer's ordered clips by global index
+                        const afterClipIdx = layer1Clips.findIndex(p => p.index === transition.afterClipIndex);
+                        if (afterClipIdx < 0 || afterClipIdx >= layer1Clips.length - 1) return null;
+                        
+                        const afterClip = layer1Clips[afterClipIdx];
+                        const transitionCenter = afterClip.left + afterClip.width;
+                        const transitionWidth = transition.durationSeconds * pixelsPerSecond;
+                        
+                        return (
+                          <div
+                            key={`transition-l1-${idx}`}
+                            className="absolute h-6 flex items-center justify-center cursor-pointer hover:opacity-80 z-30"
+                            style={{
+                              left: `${transitionCenter - transitionWidth / 2}px`,
+                              width: `${transitionWidth}px`,
+                              top: `${TRACK_HEIGHT / 2 - 12}px`,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTransitionEdit(transition.afterClipIndex);
+                            }}
+                            data-testid={`transition-l1-${transition.afterClipIndex}`}
+                          >
+                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                              <Sparkles className="h-2.5 w-2.5" />
+                              {transition.type}
+                            </Badge>
+                          </div>
+                        );
+                      });
+                  })()}
                 </DroppableTrack>
                 
                 <DroppableTrack trackId="layer-2" style={{ height: TRACK_HEIGHT }}>
@@ -1161,12 +1177,12 @@ export function AdvancedTimeline({
                       currentTime={currentTime}
                     />
                   ))}
-                  {/* Transition drop zones for layer-2 clips */}
-                  {trackVisibility['layer-2'] !== false && clipPositions
-                    .filter(p => p.clip.trackId === 'layer-2' && p.index < clips.length - 1)
-                    .map((position) => {
-                      const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
-                      const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                  {/* Transition drop zones for layer-2 clips - between consecutive layer-2 clips only */}
+                  {trackVisibility['layer-2'] !== false && (() => {
+                    const layer2Clips = clipPositions.filter(p => p.clip.trackId === 'layer-2');
+                    return layer2Clips.slice(0, -1).map((position) => {
+                      const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-2');
+                      const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-2')?.type;
                       return (
                         <DroppableTransitionZone
                           key={`trans-zone-l2-${position.index}`}
@@ -1175,10 +1191,47 @@ export function AdvancedTimeline({
                           left={position.left + position.width}
                           hasTransition={hasTransition}
                           transitionType={transitionType}
+                          trackId="layer-2"
                         />
                       );
-                    })
-                  }
+                    });
+                  })()}
+                  {/* Render layer-2 transition badges */}
+                  {(() => {
+                    const layer2Clips = clipPositions.filter(p => p.clip.trackId === 'layer-2');
+                    return clipTransitions
+                      .filter(t => (t.trackId || 'layer-1') === 'layer-2')
+                      .map((transition, idx) => {
+                        const afterClipIdx = layer2Clips.findIndex(p => p.index === transition.afterClipIndex);
+                        if (afterClipIdx < 0 || afterClipIdx >= layer2Clips.length - 1) return null;
+                        
+                        const afterClip = layer2Clips[afterClipIdx];
+                        const transitionCenter = afterClip.left + afterClip.width;
+                        const transitionWidth = transition.durationSeconds * pixelsPerSecond;
+                        
+                        return (
+                          <div
+                            key={`transition-l2-${idx}`}
+                            className="absolute h-6 flex items-center justify-center cursor-pointer hover:opacity-80 z-30"
+                            style={{
+                              left: `${transitionCenter - transitionWidth / 2}px`,
+                              width: `${transitionWidth}px`,
+                              top: `${TRACK_HEIGHT / 2 - 12}px`,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTransitionEdit(transition.afterClipIndex);
+                            }}
+                            data-testid={`transition-l2-${transition.afterClipIndex}`}
+                          >
+                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                              <Sparkles className="h-2.5 w-2.5" />
+                              {transition.type}
+                            </Badge>
+                          </div>
+                        );
+                      });
+                  })()}
                 </DroppableTrack>
                 
                 <DroppableTrack trackId="layer-3" style={{ height: TRACK_HEIGHT }}>
@@ -1201,12 +1254,12 @@ export function AdvancedTimeline({
                           currentTime={currentTime}
                         />
                       ))}
-                      {/* Transition drop zones for layer-3 clips */}
-                      {clipPositions
-                        .filter(p => p.clip.trackId === 'layer-3' && p.index < clips.length - 1)
-                        .map((position) => {
-                          const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
-                          const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                      {/* Transition drop zones for layer-3 clips - between consecutive layer-3 clips only */}
+                      {(() => {
+                        const layer3Clips = clipPositions.filter(p => p.clip.trackId === 'layer-3');
+                        return layer3Clips.slice(0, -1).map((position) => {
+                          const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-3');
+                          const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-3')?.type;
                           return (
                             <DroppableTransitionZone
                               key={`trans-zone-l3-${position.index}`}
@@ -1215,10 +1268,47 @@ export function AdvancedTimeline({
                               left={position.left + position.width}
                               hasTransition={hasTransition}
                               transitionType={transitionType}
+                              trackId="layer-3"
                             />
                           );
-                        })
-                      }
+                        });
+                      })()}
+                      {/* Render layer-3 transition badges */}
+                      {(() => {
+                        const layer3Clips = clipPositions.filter(p => p.clip.trackId === 'layer-3');
+                        return clipTransitions
+                          .filter(t => (t.trackId || 'layer-1') === 'layer-3')
+                          .map((transition, idx) => {
+                            const afterClipIdx = layer3Clips.findIndex(p => p.index === transition.afterClipIndex);
+                            if (afterClipIdx < 0 || afterClipIdx >= layer3Clips.length - 1) return null;
+                            
+                            const afterClip = layer3Clips[afterClipIdx];
+                            const transitionCenter = afterClip.left + afterClip.width;
+                            const transitionWidth = transition.durationSeconds * pixelsPerSecond;
+                            
+                            return (
+                              <div
+                                key={`transition-l3-${idx}`}
+                                className="absolute h-6 flex items-center justify-center cursor-pointer hover:opacity-80 z-30"
+                                style={{
+                                  left: `${transitionCenter - transitionWidth / 2}px`,
+                                  width: `${transitionWidth}px`,
+                                  top: `${TRACK_HEIGHT / 2 - 12}px`,
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onTransitionEdit(transition.afterClipIndex);
+                                }}
+                                data-testid={`transition-l3-${transition.afterClipIndex}`}
+                              >
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  {transition.type}
+                                </Badge>
+                              </div>
+                            );
+                          });
+                      })()}
                       {musicTracks.map((track) => (
                         <AudioTrackItem
                           key={track.id}
@@ -1252,12 +1342,12 @@ export function AdvancedTimeline({
                           currentTime={currentTime}
                         />
                       ))}
-                      {/* Transition drop zones for layer-4 clips */}
-                      {clipPositions
-                        .filter(p => p.clip.trackId === 'layer-4' && p.index < clips.length - 1)
-                        .map((position) => {
-                          const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
-                          const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                      {/* Transition drop zones for layer-4 clips - between consecutive layer-4 clips only */}
+                      {(() => {
+                        const layer4Clips = clipPositions.filter(p => p.clip.trackId === 'layer-4');
+                        return layer4Clips.slice(0, -1).map((position) => {
+                          const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-4');
+                          const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index && (t.trackId || 'layer-1') === 'layer-4')?.type;
                           return (
                             <DroppableTransitionZone
                               key={`trans-zone-l4-${position.index}`}
@@ -1266,10 +1356,47 @@ export function AdvancedTimeline({
                               left={position.left + position.width}
                               hasTransition={hasTransition}
                               transitionType={transitionType}
+                              trackId="layer-4"
                             />
                           );
-                        })
-                      }
+                        });
+                      })()}
+                      {/* Render layer-4 transition badges */}
+                      {(() => {
+                        const layer4Clips = clipPositions.filter(p => p.clip.trackId === 'layer-4');
+                        return clipTransitions
+                          .filter(t => (t.trackId || 'layer-1') === 'layer-4')
+                          .map((transition, idx) => {
+                            const afterClipIdx = layer4Clips.findIndex(p => p.index === transition.afterClipIndex);
+                            if (afterClipIdx < 0 || afterClipIdx >= layer4Clips.length - 1) return null;
+                            
+                            const afterClip = layer4Clips[afterClipIdx];
+                            const transitionCenter = afterClip.left + afterClip.width;
+                            const transitionWidth = transition.durationSeconds * pixelsPerSecond;
+                            
+                            return (
+                              <div
+                                key={`transition-l4-${idx}`}
+                                className="absolute h-6 flex items-center justify-center cursor-pointer hover:opacity-80 z-30"
+                                style={{
+                                  left: `${transitionCenter - transitionWidth / 2}px`,
+                                  width: `${transitionWidth}px`,
+                                  top: `${TRACK_HEIGHT / 2 - 12}px`,
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onTransitionEdit(transition.afterClipIndex);
+                                }}
+                                data-testid={`transition-l4-${transition.afterClipIndex}`}
+                              >
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  {transition.type}
+                                </Badge>
+                              </div>
+                            );
+                          });
+                      })()}
                       {voiceTracks.map((track) => (
                         <AudioTrackItem
                           key={track.id}

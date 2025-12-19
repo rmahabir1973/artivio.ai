@@ -2107,30 +2107,35 @@ const previewMutation = useMutation({
     ) {
       const transitionType = activeData.transitionType as TransitionType;
       const position = overData.position as number;
+      const trackId = (overData.trackId as string) || 'layer-1';
 
-      console.log('[DRAG] Transition drop:', { transitionType, position });
+      console.log('[DRAG] Transition drop:', { transitionType, position, trackId });
 
       setEnhancements(prev => {
         const newTransitions = [...prev.clipTransitions];
-        const existingIndex = newTransitions.findIndex(t => t.afterClipIndex === position);
+        // Find existing transition at same position AND same track
+        const existingIndex = newTransitions.findIndex(
+          t => t.afterClipIndex === position && (t.trackId || 'layer-1') === trackId
+        );
 
         const newTransition = {
           afterClipIndex: position,
           type: transitionType,
           durationSeconds: 1.0,
+          trackId: trackId,
         };
 
         if (existingIndex >= 0) {
           newTransitions[existingIndex] = newTransition;
           toast({
             title: "Transition Replaced",
-            description: `${transitionType} transition now between clips ${position + 1} and ${position + 2}`,
+            description: `${transitionType} transition now on ${trackId}`,
           });
         } else {
           newTransitions.push(newTransition);
           toast({
             title: "Transition Added",
-            description: `${transitionType} transition added between clips ${position + 1} and ${position + 2}`,
+            description: `${transitionType} transition added on ${trackId}`,
           });
         }
 
