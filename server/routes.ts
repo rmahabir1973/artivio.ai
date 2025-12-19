@@ -8338,7 +8338,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   }, 60 * 60 * 1000); // Cleanup every hour
   
-  // Export video via AWS Lambda
+  // Export video via VPS video processor (FFmpeg 8.0.1)
   app.post('/api/video-editor/export', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -8348,18 +8348,18 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         return res.status(400).json({ message: "Project with at least one clip is required" });
       }
       
-      const lambdaApiUrl = process.env.AWS_LAMBDA_API_URL;
-      const s3Bucket = process.env.AWS_S3_BUCKET;
+      const vpsUrl = process.env.VPS_VIDEO_PROCESSOR_URL;
+      const s3Bucket = process.env.S3_BUCKET || 'artivio-video-exports';
       
-      if (!lambdaApiUrl || !s3Bucket) {
-        console.error('AWS configuration missing:', { lambdaApiUrl: !!lambdaApiUrl, s3Bucket: !!s3Bucket });
+      if (!vpsUrl) {
+        console.error('[Video Editor] VPS_VIDEO_PROCESSOR_URL not configured');
         return res.status(500).json({ message: "Video export service not configured" });
       }
       
       // Generate unique job ID
       const jobId = `export-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      console.log(`[Video Editor] Starting export job ${jobId} for user ${userId} with ${project.clips.length} clips`);
+      console.log(`[Video Editor] Starting VPS export job ${jobId} for user ${userId} with ${project.clips.length} clips`);
       
       // Store job in tracking map
       videoExportJobs.set(jobId, {
@@ -8367,7 +8367,6 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         createdAt: new Date(),
       });
       
-      // Build standardized Lambda payload
       // Normalize clips to ensure they have sourceUrl (handle both url and sourceUrl from frontend)
       const normalizedClips = project.clips.map((clip: any, index: number) => {
         const sourceUrl = clip.sourceUrl || clip.url;
@@ -8380,6 +8379,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           order: clip.order ?? index,
           startTime: clip.startTime,
           endTime: clip.endTime,
+          duration: clip.duration,
+          type: clip.type || 'video',
           transitionAfter: clip.transitionAfter,
         };
       });
@@ -8387,7 +8388,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       // Sort clips by order to ensure correct concatenation sequence
       normalizedClips.sort((a: any, b: any) => a.order - b.order);
       
-      const lambdaPayload = {
+      // Build VPS payload
+      const vpsPayload = {
         jobId,
         userId,
         outputBucket: s3Bucket,
@@ -8397,72 +8399,52 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           frameRate: videoSettings?.frameRate,
           resolution: videoSettings?.resolution,
         },
-        project: {
-          clips: normalizedClips,
-          audioTracks: project.audioTracks,
-          watermark: project.watermark,
-        },
-        // Include enhancements (transitions, music, text overlays, voice track, avatar)
+        clips: normalizedClips,
         enhancements: enhancements || undefined,
-        // Include multi-track timeline if enabled (new editor feature)
         multiTrackTimeline: req.body.multiTrackTimeline || undefined,
-        // Include callback URL for async completion notification
         callbackUrl: `${getBaseUrl()}/api/video-editor/callback/${jobId}`,
       };
       
-      // Send to AWS Lambda
-      // Lambda Function URLs don't need path suffixes - just call the root URL directly
-      const fullLambdaUrl = lambdaApiUrl.replace(/\/+$/, '');
+      console.log(`[Video Editor] Calling VPS at: ${vpsUrl}`);
+      console.log(`[Video Editor] Payload:`, JSON.stringify(vpsPayload, null, 2));
       
-      const lambdaHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      // Add API key if configured for API Gateway authentication
-      const awsApiKey = process.env.AWS_API_KEY;
-      if (awsApiKey) {
-        lambdaHeaders['x-api-key'] = awsApiKey;
-      }
-      
-      console.log(`[Video Editor] Calling Lambda at: ${fullLambdaUrl}`);
-      console.log(`[Video Editor] Payload:`, JSON.stringify(lambdaPayload, null, 2));
-      
-      const lambdaResponse = await fetch(fullLambdaUrl, {
+      const vpsResponse = await fetch(vpsUrl, {
         method: 'POST',
-        headers: lambdaHeaders,
-        body: JSON.stringify(lambdaPayload),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vpsPayload),
       });
       
-      if (!lambdaResponse.ok) {
-        const errorText = await lambdaResponse.text();
-        console.error(`[Video Editor] Lambda error for job ${jobId} (status ${lambdaResponse.status}):`, errorText);
+      if (!vpsResponse.ok) {
+        const errorText = await vpsResponse.text();
+        console.error(`[Video Editor] VPS error for job ${jobId} (status ${vpsResponse.status}):`, errorText);
         videoExportJobs.set(jobId, {
           status: 'failed',
-          error: `Export service error: ${lambdaResponse.status}`,
+          error: `Export service error: ${vpsResponse.status}`,
           createdAt: new Date(),
         });
         
-        // Provide more specific error messages
         let userMessage = "Failed to start video export";
-        if (lambdaResponse.status === 403) {
+        if (vpsResponse.status === 403) {
           userMessage = "Export service authentication failed. Please contact support.";
-        } else if (lambdaResponse.status === 404) {
+        } else if (vpsResponse.status === 404) {
           userMessage = "Export service not found. Please contact support.";
-        } else if (lambdaResponse.status >= 500) {
+        } else if (vpsResponse.status >= 500) {
           userMessage = "Export service is temporarily unavailable. Please try again later.";
         }
         
         return res.status(500).json({ message: userMessage });
       }
       
-      const lambdaResult = await lambdaResponse.json();
-      console.log(`[Video Editor] Lambda response for job ${jobId}:`, lambdaResult);
+      const vpsResult = await vpsResponse.json();
+      console.log(`[Video Editor] VPS response for job ${jobId}:`, vpsResult);
       
-      // If Lambda returns immediate result (synchronous processing)
-      if (lambdaResult.downloadUrl) {
+      // If VPS returns immediate result (synchronous processing)
+      if (vpsResult.downloadUrl) {
         videoExportJobs.set(jobId, {
           status: 'completed',
-          downloadUrl: lambdaResult.downloadUrl,
+          downloadUrl: vpsResult.downloadUrl,
           createdAt: new Date(),
         });
         
@@ -8471,18 +8453,18 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           userId,
           type: 'video-editor',
           status: 'completed',
-          resultUrl: lambdaResult.downloadUrl,
-          model: 'Video Editor',
+          resultUrl: vpsResult.downloadUrl,
+          model: 'Video Editor (VPS)',
           prompt: 'Video Editor Export',
           parameters: videoSettings || {},
-          creditsCost: 0, // Free for now, can add pricing later
+          creditsCost: 0,
           processingStage: 'completed',
         });
         
         // Generate thumbnail for the exported video (non-blocking)
         if (generation?.id) {
           generateThumbnail({
-            videoUrl: lambdaResult.downloadUrl,
+            videoUrl: vpsResult.downloadUrl,
             generationId: generation.id,
             timestampSeconds: 2,
           }).then(async (thumbResult) => {
@@ -8496,11 +8478,11 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         return res.json({
           status: 'completed',
           jobId,
-          downloadUrl: lambdaResult.downloadUrl,
+          downloadUrl: vpsResult.downloadUrl,
         });
       }
       
-      // Otherwise, return processing status for polling
+      // Otherwise, return processing status for polling (async mode)
       res.json({
         status: 'processing',
         jobId,
@@ -8594,17 +8576,17 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
   
-  // Lambda callback for async export completion
-  // Security: Validate callback with shared secret from AWS Lambda
+  // VPS callback for async export completion
+  // Security: Validate callback with shared secret from VPS
   app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {
     try {
       const { jobId } = req.params;
       
-      // Extract signature from header (Lambda sends it as x-callback-signature)
+      // Extract signature from header (VPS sends it as x-callback-signature)
       const receivedSignature = req.headers['x-callback-signature'] as string;
       
       // Verify callback authenticity using shared secret
-      const callbackSecret = process.env.AWS_LAMBDA_CALLBACK_SECRET;
+      const callbackSecret = process.env.VPS_CALLBACK_SECRET;
       if (callbackSecret) {
         if (!receivedSignature) {
           console.warn(`[Video Editor] No signature provided for callback ${jobId}`);
@@ -8613,7 +8595,6 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         
         const crypto = await import('crypto');
         // Use raw body for signature verification to avoid JSON serialization differences
-        // req.rawBody is captured by express.json verify function in index.ts
         const payload = req.rawBody || JSON.stringify(req.body);
         const expectedSignature = crypto.createHmac('sha256', callbackSecret)
           .update(payload)
@@ -8633,7 +8614,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         console.log(`[Video Editor] ✅ Callback signature verified for job ${jobId}`);
       } else {
         // Security: Fail closed - reject callbacks without proper secret configuration
-        console.error('[Video Editor] AWS_LAMBDA_CALLBACK_SECRET not configured - rejecting callback');
+        console.error('[Video Editor] VPS_CALLBACK_SECRET not configured - rejecting callback');
         return res.status(503).json({ message: "Service not configured" });
       }
       
