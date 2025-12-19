@@ -1,0 +1,97 @@
+^C
+root@vmi1198360:~/video-processor# npm install dotenv
+
+added 1 package, and audited 205 packages in 2s
+
+30 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+root@vmi1198360:~/video-processor# sudo nano server.js
+root@vmi1198360:~/video-processor# pm2 restart video-processor
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [video-processor](ids: [ 0 ])
+[PM2] [video-processor](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ video-processor    │ fork     │ 16   │ online    │ 0%       │ 25.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@vmi1198360:~/video-processor# pm2 logs video-processor
+[TAILING] Tailing last 15 lines for [video-processor] process (change the value with --lines option)
+/root/.pm2/logs/video-processor-out.log last 15 lines:
+0|video-pr |   S3 Bucket:   artivio-video-exports
+0|video-pr |   AWS Region:  us-east-1
+0|video-pr |   Callback:    Configured ✓
+0|video-pr | ═══════════════════════════════════════════════════════
+0|video-pr | [dotenv@17.2.3] injecting env (7) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+0|video-pr | ═══════════════════════════════════════════════════════
+0|video-pr |   VPS Video Processor - FFmpeg 8.0.1
+0|video-pr | ═══════════════════════════════════════════════════════
+0|video-pr |   Port:        3001
+0|video-pr |   FFmpeg:      /home/ubuntu/bin/ffmpeg
+0|video-pr |   FFprobe:     /root/bin/ffprobe
+0|video-pr |   S3 Bucket:   artivio-video-exports
+0|video-pr |   AWS Region:  us-east-1
+0|video-pr |   Callback:    Configured ✓
+0|video-pr | ═══════════════════════════════════════════════════════
+
+/root/.pm2/logs/video-processor-error.log last 15 lines:
+0|video-pr |   code: 'ENOENT',
+0|video-pr |   syscall: 'spawn /home/ubuntu/bin/ffmpeg',
+0|video-pr |   path: '/home/ubuntu/bin/ffmpeg',
+0|video-pr |   spawnargs: [ '-version' ]
+0|video-pr | }
+0|video-pr | Error: spawn /home/ubuntu/bin/ffmpeg ENOENT
+0|video-pr |     at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+0|video-pr |     at onErrorNT (node:internal/child_process:483:16)
+0|video-pr |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+0|video-pr |   errno: -2,
+0|video-pr |   code: 'ENOENT',
+0|video-pr |   syscall: 'spawn /home/ubuntu/bin/ffmpeg',
+0|video-pr |   path: '/home/ubuntu/bin/ffmpeg',
+0|video-pr |   spawnargs: [ '-version' ]
+0|video-pr | }
+
+0|video-processor  | [dotenv@17.2.3] injecting env (7) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+0|video-processor  | ═══════════════════════════════════════════════════════
+0|video-processor  |   VPS Video Processor - FFmpeg 8.0.1
+0|video-processor  | ═══════════════════════════════════════════════════════
+0|video-processor  |   Port:        3001
+0|video-processor  |   FFmpeg:      /home/ubuntu/bin/ffmpeg
+0|video-processor  |   FFprobe:     /root/bin/ffprobe
+0|video-processor  |   S3 Bucket:   artivio-video-exports
+0|video-processor  |   AWS Region:  us-east-1
+0|video-processor  |   Callback:    Configured ✓
+0|video-processor  | ═══════════════════════════════════════════════════════
+0|video-processor  | Error: spawn /home/ubuntu/bin/ffmpeg ENOENT
+0|video-processor  |     at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+0|video-processor  |     at onErrorNT (node:internal/child_process:483:16)
+0|video-processor  |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+0|video-processor  |   errno: -2,
+0|video-processor  |   code: 'ENOENT',
+0|video-processor  |   syscall: 'spawn /home/ubuntu/bin/ffmpeg',
+0|video-processor  |   path: '/home/ubuntu/bin/ffmpeg',
+0|video-processor  |   spawnargs: [ '-version' ]
+0|video-processor  | }
+0|video-processor  | [dotenv@17.2.3] injecting env (7) from .env -- tip: ⚙️  override existing env vars with { override: true }
+0|video-processor  | ═══════════════════════════════════════════════════════
+0|video-processor  |   VPS Video Processor - FFmpeg 8.0.1
+0|video-processor  | ═══════════════════════════════════════════════════════
+0|video-processor  |   Port:        3001
+0|video-processor  |   FFmpeg:      /home/ubuntu/bin/ffmpeg
+0|video-processor  |   FFprobe:     /root/bin/ffprobe
+0|video-processor  |   S3 Bucket:   artivio-video-exports
+0|video-processor  |   AWS Region:  us-east-1
+0|video-processor  |   Callback:    Configured ✓
+0|video-processor  | ═══════════════════════════════════════════════════════
+0|video-processor  | Error: spawn /home/ubuntu/bin/ffmpeg ENOENT
+0|video-processor  |     at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+0|video-processor  |     at onErrorNT (node:internal/child_process:483:16)
+0|video-processor  |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+0|video-processor  |   errno: -2,
+0|video-processor  |   code: 'ENOENT',
+0|video-processor  |   syscall: 'spawn /home/ubuntu/bin/ffmpeg',
+0|video-processor  |   path: '/home/ubuntu/bin/ffmpeg',
+0|video-processor  |   spawnargs: [ '-version' ]
+0|video-processor  | }
