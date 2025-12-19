@@ -602,6 +602,16 @@ export default function VideoEditor() {
   const [timelineCurrentTime, setTimelineCurrentTime] = useState(0);
   const [isTimelinePlaying, setIsTimelinePlaying] = useState(false);
   const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(true);
+  const timelinePlayIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timelineDurationRef = useRef(0);
+  
+  useEffect(() => {
+    return () => {
+      if (timelinePlayIntervalRef.current) {
+        clearInterval(timelinePlayIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Get clip settings for a clip, with defaults
   const getClipSettings = useCallback((clipId: string): ClipSettingsLocal => {
@@ -2404,6 +2414,34 @@ const previewMutation = useMutation({
 
   // Calculate total timeline duration
   const totalDuration = calculateTotalDuration();
+  
+  // Update ref for timeline playback
+  timelineDurationRef.current = totalDuration;
+  
+  // Handle timeline play/pause
+  const handleTimelinePlayPause = useCallback(() => {
+    setIsTimelinePlaying(prev => {
+      if (!prev) {
+        timelinePlayIntervalRef.current = setInterval(() => {
+          setTimelineCurrentTime(t => {
+            if (t >= timelineDurationRef.current) {
+              setIsTimelinePlaying(false);
+              if (timelinePlayIntervalRef.current) {
+                clearInterval(timelinePlayIntervalRef.current);
+              }
+              return 0;
+            }
+            return t + 1/30;
+          });
+        }, 1000/30);
+      } else {
+        if (timelinePlayIntervalRef.current) {
+          clearInterval(timelinePlayIntervalRef.current);
+        }
+      }
+      return !prev;
+    });
+  }, []);
 
   // Handle adding clip to timeline from media panel
   // Uses unique instance IDs to allow the same video to be added multiple times
@@ -3529,39 +3567,39 @@ const previewMutation = useMutation({
           )}
           </div>
 
-          {/* Bottom Section: Functional Timeline (40% of remaining height) */}
+          {/* Bottom Section: Advanced Timeline (40% of remaining height) */}
           <div className="flex-[4] border-t min-h-0 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 shrink-0">
-              <span className="text-sm font-medium">Timeline</span>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
-                  {orderedClips.length} clips
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {Math.floor(totalDuration / 60)}:{String(Math.floor(totalDuration % 60)).padStart(2, '0')}
-                </span>
-              </div>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
-                <TimelineTrack
-                  clips={orderedClips}
-                  audioTracks={audioTracks}
-                  getClipSettings={getClipSettings}
-                  onMuteToggle={toggleClipMute}
-                  onRemoveClip={removeClipFromTimeline}
-                  onRemoveAudioTrack={removeAudioTrack}
-                  onOpenSettings={(clip, index) => {
-                    setSelectedClip({ clip, index });
-                    openClipSettings(clip, index);
-                  }}
-                  totalDuration={totalDuration}
-                  clipTransitions={enhancements.clipTransitions}
-                  onTransitionEdit={handleTransitionEdit}
-                  onTransitionRemove={handleTransitionRemove}
-                />
-              </SortableContext>
-            </div>
+            <AdvancedTimeline
+              clips={orderedClips}
+              audioTracks={audioTracks}
+              getClipSettings={getClipSettings}
+              clipTransitions={enhancements.clipTransitions}
+              onClipSelect={(clip, index) => {
+                setSelectedClip({ clip, index });
+              }}
+              onClipRemove={removeClipFromTimeline}
+              onClipReorder={(fromIndex, toIndex) => {
+                setOrderedClips(items => {
+                  const newItems = [...items];
+                  const [movedItem] = newItems.splice(fromIndex, 1);
+                  newItems.splice(toIndex, 0, movedItem);
+                  return newItems;
+                });
+              }}
+              onTransitionEdit={handleTransitionEdit}
+              onTransitionRemove={handleTransitionRemove}
+              onAudioRemove={removeAudioTrack}
+              onClipSettingsChange={(clipId, settings) => {
+                updateClipSettings(clipId, settings);
+              }}
+              selectedClipId={selectedClip?.clip.id ?? null}
+              totalDuration={totalDuration}
+              currentTime={timelineCurrentTime}
+              onTimeChange={setTimelineCurrentTime}
+              onPlayPause={handleTimelinePlayPause}
+              isPlaying={isTimelinePlaying}
+              className="flex-1"
+            />
           </div>
         </div>
         </DndContext>

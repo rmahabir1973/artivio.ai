@@ -1,0 +1,108 @@
+Once again the media area when load more, keeps expanding without limits as the scroll bar is gone.   The area should only display 10 videos/images/effects etc max in order to maintain proportions for the interface.   The preview window is still way too big.  The Timeline should be more visible with advanced timeline.  Also, the timeline area is not the drag and drop interface, its the same as before.  See 3rd picture.  I want to have the capcut like timeline where we can drag any type of media too, trim the media, add effects etc. 
+
+Can you let me know if this is possible before proceeding?
+
+Key Features Needed
+Multi-track Timeline: Support for unlimited tracks with different media types
+Drag & Drop: Intuitive item manipulation with magnetic snapping
+Multiselect & Marquee Selection: Select multiple items with click+drag marquee
+Zoom Controls: Smooth zooming with mouse wheel and keyboard shortcuts
+Playback Controls: Play/pause with customizable playback rates
+Keyboard Shortcuts: Comprehensive hotkey support for efficient editing
+Undo/Redo: Built-in history management with external integration support
+Context Menus: Right-click actions for timeline operations
+Mobile Support: Responsive design with mobile-optimized interactions
+Splitting: Advanced item splitting with visual feedback
+Guidelines: Visual alignment helpers during drag operations
+
+Usage Example
+import React from 'react';
+import Timeline from '@/components/editor/components/advanced-timeline/timeline';
+import { TimelineTrack } from '@/components/editor/components/advanced-timeline/types';
+
+const VideoEditor = () => {
+  const [tracks, setTracks] = React.useState<TimelineTrack[]>([
+    {
+      id: 'track-1',
+      name: 'Video Track',
+      items: [
+        {
+          id: 'item-1',
+          trackId: 'track-1',
+          start: 0,
+          end: 10,
+          type: 'video',
+          label: 'Video Clip 1',
+          color: '#3b82f6'
+        }
+      ]
+    }
+  ]);
+
+  const [currentFrame, setCurrentFrame] = React.useState(0);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [selectedItems, setSelectedItems] = React.useState<string[]>([]);
+
+  return (
+    <Timeline
+      tracks={tracks}
+      totalDuration={30} // 30 seconds
+      currentFrame={currentFrame}
+      fps={30}
+      onFrameChange={setCurrentFrame}
+      onTracksChange={setTracks}
+      selectedItemIds={selectedItems}
+      onSelectedItemsChange={setSelectedItems}
+
+      // Playback controls
+      isPlaying={isPlaying}
+      onPlay={() => setIsPlaying(true)}
+      onPause={() => setIsPlaying(false)}
+      showPlaybackControls={true}
+
+      // UI features
+      showZoomControls={true}
+      showTimelineGuidelines={true}
+      enableTrackDrag={true}
+      enableMagneticTrack={true}
+
+      // Event handlers
+      onItemMove={(itemId, newStart, newEnd, newTrackId) => {
+        console.log('Item moved:', { itemId, newStart, newEnd, newTrackId });
+      }}
+      onItemResize={(itemId, newStart, newEnd) => {
+        console.log('Item resized:', { itemId, newStart, newEnd });
+      }}
+      onDeleteItems={(itemIds) => {
+        console.log('Delete items:', itemIds);
+      }}
+    />
+  );
+};
+
+Component Structure
+Timeline/
+├── components/
+│   ├── timeline-header/          # Header with controls
+│   ├── timeline-content.tsx      # Main timeline area
+│   ├── timeline-track.tsx        # Individual track component
+│   ├── timeline-item/            # Timeline item components
+│   ├── timeline-markers.tsx      # Time markers
+│   ├── timeline-guidelines.tsx   # Drag guidelines
+│   └── timeline-track-handles.tsx # Track control handles
+├── hooks/
+│   ├── use-timeline-zoom.ts      # Zoom functionality
+│   ├── use-timeline-tracks.ts    # Track management
+│   ├── use-timeline-shortcuts.ts # Keyboard shortcuts
+│   ├── use-timeline-history.ts   # Undo/redo
+│   └── use-timeline-*.ts         # Other specialized hooks
+├── stores/
+│   ├── use-timeline-store.ts     # Main timeline state
+│   └── use-zoom-store.ts         # Zoom state persistence
+├── utils/
+│   └── gap-utils.ts              # Gap calculation utilities
+├── types.ts                      # TypeScript definitions
+└── constants.ts                  # Configuration constants
+
+
+
