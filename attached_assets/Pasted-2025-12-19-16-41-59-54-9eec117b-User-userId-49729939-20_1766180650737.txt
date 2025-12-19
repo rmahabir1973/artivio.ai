@@ -1,0 +1,144 @@
+2025-12-19 16:41:59.54
+9eec117b
+User
+userId: '49729939',
+2025-12-19 16:41:59.54
+9eec117b
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 16:41:59.54
+9eec117b
+User
+typeFilter: 'music'
+2025-12-19 16:41:59.54
+9eec117b
+User
+cursor: '',
+2025-12-19 16:41:59.54
+9eec117b
+User
+isPaginated: true,
+2025-12-19 16:41:59.54
+9eec117b
+User
+hasUser: true,
+2025-12-19 16:41:59.54
+9eec117b
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 16:41:59.54
+9eec117b
+User
+userId: '49729939',
+2025-12-19 16:41:59.54
+9eec117b
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-19 16:41:59.54
+9eec117b
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 16:41:59.54
+9eec117b
+User
+hasUser: true,
+2025-12-19 16:41:59.54
+9eec117b
+User
+}
+2025-12-19 16:41:59.54
+9eec117b
+User
+[/api/generations] Request received {
+2025-12-19 16:41:59.54
+9eec117b
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-19 16:41:59.54
+9eec117b
+User
+isPaginated: true,
+2025-12-19 16:41:59.54
+9eec117b
+User
+typeFilter: 'audio'
+2025-12-19 16:41:59.54
+9eec117b
+User
+cursor: '',
+2025-12-19 16:41:59.55
+9eec117b
+User
+[/api/generations] Querying database for userId: 49729939
+2025-12-19 16:41:59.55
+9eec117b
+User
+typeFilter: 'image'
+2025-12-19 16:41:59.55
+9eec117b
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 16:41:59.55
+9eec117b
+User
+[/api/generations] Request received {
+2025-12-19 16:41:59.55
+9eec117b
+User
+[/api/generations] completedOnly parameter: true, parsed: true
+2025-12-19 16:41:59.55
+9eec117b
+User
+}
+2025-12-19 16:41:59.55
+9eec117b
+User
+cursor: '',
+2025-12-19 16:41:59.55
+9eec117b
+User
+isPaginated: true,
+2025-12-19 16:41:59.55
+9eec117b
+User
+userId: '49729939',
+2025-12-19 16:41:59.55
+9eec117b
+User
+hasUser: true,
+2025-12-19 16:41:59.56
+9eec117b
+User
+9:41:59 PM [express] GET /api/video-projects 304 in 46ms :: [{"id":"e2247a38-2ebd-4cd3-a443-63e2ca08…
+2025-12-19 16:41:59.58
+9eec117b
+User
+[/api/generations] Paginated query completed in 41ms, found 11 generations, hasMore: false
+2025-12-19 16:41:59.58
+9eec117b
+User
+9:41:59 PM [express] GET /api/generations 200 in 71ms :: {"items":[{"id":"2457cbf5-d444-4419-99e4-64…
+2025-12-19 16:41:59.59
+9eec117b
+User
+[/api/generations] Paginated query completed in 55ms, found 15 generations, hasMore: true
+2025-12-19 16:41:59.61
+9eec117b
+User
+9:41:59 PM [express] GET /api/generations 200 in 99ms :: {"items":[{"id":"ff55d5ae-9d1e-4421-b334-ad…
+2025-12-19 16:41:59.61
+9eec117b
+User
+[/api/generations] Paginated query completed in 69ms, found 15 generations, hasMore: true
+2025-12-19 16:41:59.63
+9eec117b
+User
+9:41:59 PM [express] GET /api/generations 200 in 113ms :: {"items":[{"id":"412a70f6-6a39-421d-86c3-8…
+2025-12-19 16:41:59.64
+9eec117b
+User
+[/api/generations] Paginated query completed in 90ms, found 15 generations, hasMore: true
+2025-12-19 16:41:59.67
+9eec117b
+User
+9:41:59 PM [express] GET /api/generations 200 in 150ms :: {"items":[{"id":"1c8512c3-8207-4e4a-a4d4-9…

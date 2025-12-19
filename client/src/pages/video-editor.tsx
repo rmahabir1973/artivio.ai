@@ -1215,21 +1215,59 @@ export default function VideoEditor() {
 
   // Custom collision detection that prioritizes transition drop zones
   const customCollisionDetection: CollisionDetection = useCallback((args) => {
-    // First check for transition-zone droppables using pointer intersection
+    // Use both pointer and rect intersection for comprehensive collision detection
     const pointerCollisions = pointerWithin(args);
-
-    // Filter for transition zones
-    const transitionZoneHits = pointerCollisions.filter(
-      collision => collision.data?.droppableContainer?.data?.current?.type === 'transition-zone'
-    );
-
-    // If we have a transition zone hit, return it (prioritize transitions over clip sorting)
-    if (transitionZoneHits.length > 0) {
-      console.log('[COLLISION] Transition zone hit:', transitionZoneHits[0].id);
-      return transitionZoneHits;
+    const rectCollisions = rectIntersection(args);
+    const allCollisions = [...pointerCollisions, ...rectCollisions];
+    
+    // Check what type of item is being dragged
+    const activeData = args.active.data.current;
+    const isMediaDrag = activeData?.type === 'media-item';
+    const isTransitionDrag = activeData?.type === 'transition';
+    const isClipReorder = activeData?.type === 'clip' || (!isMediaDrag && !isTransitionDrag && args.active.id);
+    
+    // For TRANSITION drags ONLY: prioritize transition-zone targets
+    if (isTransitionDrag) {
+      const transitionZoneHits = allCollisions.filter(
+        collision => collision.data?.droppableContainer?.data?.current?.type === 'transition-zone'
+      );
+      
+      if (transitionZoneHits.length > 0) {
+        console.log('[COLLISION] Transition zone hit for transition drag:', transitionZoneHits[0].id);
+        return [transitionZoneHits[0]];
+      }
+    }
+    
+    // For MEDIA drags: prioritize track-drop zones, IGNORE transition zones
+    if (isMediaDrag) {
+      const trackDropHits = allCollisions.filter(
+        collision => collision.data?.droppableContainer?.data?.current?.type === 'track-drop-zone'
+      );
+      
+      if (trackDropHits.length > 0) {
+        console.log('[COLLISION] Track drop zone hit:', trackDropHits[0].id);
+        return [trackDropHits[0]];
+      }
     }
 
-    // Fall back to closestCenter for clip sorting
+    // For CLIP REORDER drags: exclude transition zones from closestCenter
+    // Filter out transition zones and get closestCenter from remaining targets
+    const filteredDroppableContainers = args.droppableContainers.filter(
+      container => container.data?.current?.type !== 'transition-zone'
+    );
+    
+    if (filteredDroppableContainers.length > 0) {
+      // Run closestCenter on filtered containers only
+      const filteredResult = closestCenter({
+        ...args,
+        droppableContainers: filteredDroppableContainers,
+      });
+      if (filteredResult.length > 0) {
+        return filteredResult;
+      }
+    }
+
+    // Final fallback to closestCenter with all containers
     return closestCenter(args);
   }, []);
 
@@ -3609,10 +3647,11 @@ const previewMutation = useMutation({
                 });
                 const originalSettings = getClipSettings(clip.id);
                 if (originalSettings) {
-                  setClipSettings(prev => ({
-                    ...prev,
-                    [duplicatedClip.id]: { ...originalSettings, clipId: duplicatedClip.id }
-                  }));
+                  setClipSettings(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(duplicatedClip.id, { ...originalSettings, clipId: duplicatedClip.id });
+                    return newMap;
+                  });
                 }
               }}
               onClipSplit={(clipId, splitTimeInClip) => {
@@ -3641,11 +3680,12 @@ const previewMutation = useMutation({
                   return newItems;
                 });
                 
-                setClipSettings(prev => ({
-                  ...prev,
-                  [clip1Id]: { ...originalSettings, clipId: clip1Id, trimEndSeconds: splitTimeInClip },
-                  [clip2Id]: { ...originalSettings, clipId: clip2Id, trimStartSeconds: splitTimeInClip },
-                }));
+                setClipSettings(prev => {
+                  const newMap = new Map(prev);
+                  newMap.set(clip1Id, { ...originalSettings, clipId: clip1Id, trimEndSeconds: splitTimeInClip });
+                  newMap.set(clip2Id, { ...originalSettings, clipId: clip2Id, trimStartSeconds: splitTimeInClip });
+                  return newMap;
+                });
                 
                 toast({ title: "Clip Split", description: "Clip has been split at playhead position" });
               }}

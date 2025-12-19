@@ -174,6 +174,54 @@ function DroppableTrack({
   );
 }
 
+// Droppable zone between clips for adding transitions
+function DroppableTransitionZone({
+  position,
+  clipId,
+  left,
+  hasTransition,
+  transitionType,
+}: {
+  position: number;
+  clipId: string;
+  left: number;
+  hasTransition: boolean;
+  transitionType?: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `transition-drop-${position}`, // Use stable position index as ID
+    data: { type: 'transition-zone', position, clipId },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "absolute top-0 bottom-0 z-40 flex items-center justify-center cursor-pointer transition-all",
+        isOver && "bg-primary/25 scale-105"
+      )}
+      style={{ 
+        left: `${left - 30}px`, // Wider zone for easier targeting
+        width: '60px',
+      }}
+      data-testid={`transition-zone-${position}`}
+    >
+      <div className={cn(
+        "w-1.5 h-10 rounded-full transition-colors",
+        hasTransition ? "bg-primary" : "bg-border/60 hover:bg-primary/60",
+        isOver && "bg-primary scale-125"
+      )} />
+      {isOver && (
+        <div className="absolute -bottom-6 whitespace-nowrap z-50">
+          <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded font-medium">
+            Drop transition
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -432,34 +480,57 @@ function AudioTrackItem({ track, pixelsPerSecond, totalDuration, onRemove }: Aud
   const color = track.type === 'music' ? 'bg-green-500/20 border-green-500/50' : 'bg-purple-500/20 border-purple-500/50';
   
   return (
-    <div
-      className={cn(
-        "absolute top-1 rounded border-2 h-10 flex items-center px-2 gap-2 group",
-        color
-      )}
-      style={{ left: 0, width: `${width}px` }}
-      data-testid={`audio-track-${track.id}`}
-    >
-      {track.type === 'music' ? (
-        <Music className="h-3 w-3 text-green-500 shrink-0" />
-      ) : (
-        <Mic className="h-3 w-3 text-purple-500 shrink-0" />
-      )}
-      <span className="text-xs truncate text-foreground/80">{track.name}</span>
-      <span className="text-[9px] text-muted-foreground ml-auto">
-        {Math.round(track.volume * 100)}%
-      </span>
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-5 w-5 opacity-0 group-hover:opacity-100 bg-black/50 hover:bg-red-500/80 shrink-0"
-        onClick={() => onRemove(track.id)}
-        data-testid={`delete-audio-${track.id}`}
-      >
-        <Trash2 className="h-2.5 w-2.5 text-white" />
-      </Button>
-    </div>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          className={cn(
+            "absolute top-1 rounded border-2 h-10 flex items-center px-2 gap-2 group",
+            color
+          )}
+          style={{ left: 0, width: `${width}px` }}
+          data-testid={`audio-track-${track.id}`}
+        >
+          {track.type === 'music' ? (
+            <Music className="h-3 w-3 text-green-500 shrink-0" />
+          ) : (
+            <Mic className="h-3 w-3 text-purple-500 shrink-0" />
+          )}
+          <span className="text-xs truncate text-foreground/80">{track.name}</span>
+          <span className="text-[9px] text-muted-foreground ml-auto mr-1">
+            {Math.round(track.volume * 100)}%
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0 bg-red-500/20 hover:bg-red-500/40 text-red-500"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(track.id);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ' || e.key === 'Delete') {
+                e.stopPropagation();
+                onRemove(track.id);
+              }
+            }}
+            aria-label={`Delete ${track.name}`}
+            data-testid={`delete-audio-${track.id}`}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem 
+          onClick={() => onRemove(track.id)} 
+          className="text-red-500"
+          data-testid="context-audio-delete"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete Audio
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
@@ -620,9 +691,17 @@ export function AdvancedTimeline({
   const totalWidth = (effectiveDuration + 10) * pixelsPerSecond;
   
   const clipPositions = useMemo((): ClipPosition[] => {
-    let runningTime = 0;
+    // Track running time per layer to allow clips on different layers to overlap
+    const runningTimeByLayer: Record<string, number> = {
+      'layer-1': 0,
+      'layer-2': 0,
+      'layer-3': 0,
+      'layer-4': 0,
+    };
+    
     return clips.map((clip, index) => {
       const settings = getClipSettings(clip.id);
+      const trackId = clip.trackId || 'layer-1';
       let duration: number;
       
       if (clip.type === 'image') {
@@ -635,14 +714,16 @@ export function AdvancedTimeline({
         duration = (trimEnd - trimStart) / speed;
       }
       
-      const transition = clipTransitions.find(t => t.afterClipIndex === index - 1);
+      // Only apply transitions for clips on the same layer (layer-1 for backward compatibility)
+      const transition = trackId === 'layer-1' ? clipTransitions.find(t => t.afterClipIndex === index - 1) : undefined;
       const overlap = transition ? transition.durationSeconds : 0;
       
-      const startTime = Math.max(0, runningTime - overlap);
+      const layerRunningTime = runningTimeByLayer[trackId] || 0;
+      const startTime = Math.max(0, layerRunningTime - overlap);
       const left = startTime * pixelsPerSecond;
       const width = duration * pixelsPerSecond;
       
-      runningTime += duration;
+      runningTimeByLayer[trackId] = layerRunningTime + duration;
       
       return { clip, index, startTime, duration, left, width, settings };
     });
@@ -1011,6 +1092,25 @@ export function AdvancedTimeline({
                     />
                   ))}
                   
+                  {/* Transition drop zones for layer-1 clips */}
+                  {trackVisibility['layer-1'] !== false && clipPositions
+                    .filter(p => (!p.clip.trackId || p.clip.trackId === 'layer-1') && p.index < clips.length - 1)
+                    .map((position) => {
+                      const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
+                      const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                      return (
+                        <DroppableTransitionZone
+                          key={`trans-zone-l1-${position.index}`}
+                          position={position.index}
+                          clipId={position.clip.id}
+                          left={position.left + position.width}
+                          hasTransition={hasTransition}
+                          transitionType={transitionType}
+                        />
+                      );
+                    })
+                  }
+                  
                   {clipTransitions.map((transition, idx) => {
                     const afterClip = clipPositions[transition.afterClipIndex];
                     const nextClip = clipPositions[transition.afterClipIndex + 1];
@@ -1061,6 +1161,24 @@ export function AdvancedTimeline({
                       currentTime={currentTime}
                     />
                   ))}
+                  {/* Transition drop zones for layer-2 clips */}
+                  {trackVisibility['layer-2'] !== false && clipPositions
+                    .filter(p => p.clip.trackId === 'layer-2' && p.index < clips.length - 1)
+                    .map((position) => {
+                      const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
+                      const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                      return (
+                        <DroppableTransitionZone
+                          key={`trans-zone-l2-${position.index}`}
+                          position={position.index}
+                          clipId={position.clip.id}
+                          left={position.left + position.width}
+                          hasTransition={hasTransition}
+                          transitionType={transitionType}
+                        />
+                      );
+                    })
+                  }
                 </DroppableTrack>
                 
                 <DroppableTrack trackId="layer-3" style={{ height: TRACK_HEIGHT }}>
@@ -1083,6 +1201,24 @@ export function AdvancedTimeline({
                           currentTime={currentTime}
                         />
                       ))}
+                      {/* Transition drop zones for layer-3 clips */}
+                      {clipPositions
+                        .filter(p => p.clip.trackId === 'layer-3' && p.index < clips.length - 1)
+                        .map((position) => {
+                          const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
+                          const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                          return (
+                            <DroppableTransitionZone
+                              key={`trans-zone-l3-${position.index}`}
+                              position={position.index}
+                              clipId={position.clip.id}
+                              left={position.left + position.width}
+                              hasTransition={hasTransition}
+                              transitionType={transitionType}
+                            />
+                          );
+                        })
+                      }
                       {musicTracks.map((track) => (
                         <AudioTrackItem
                           key={track.id}
@@ -1116,6 +1252,24 @@ export function AdvancedTimeline({
                           currentTime={currentTime}
                         />
                       ))}
+                      {/* Transition drop zones for layer-4 clips */}
+                      {clipPositions
+                        .filter(p => p.clip.trackId === 'layer-4' && p.index < clips.length - 1)
+                        .map((position) => {
+                          const hasTransition = clipTransitions.some(t => t.afterClipIndex === position.index);
+                          const transitionType = clipTransitions.find(t => t.afterClipIndex === position.index)?.type;
+                          return (
+                            <DroppableTransitionZone
+                              key={`trans-zone-l4-${position.index}`}
+                              position={position.index}
+                              clipId={position.clip.id}
+                              left={position.left + position.width}
+                              hasTransition={hasTransition}
+                              transitionType={transitionType}
+                            />
+                          );
+                        })
+                      }
                       {voiceTracks.map((track) => (
                         <AudioTrackItem
                           key={track.id}
