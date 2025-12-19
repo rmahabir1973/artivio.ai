@@ -14,6 +14,9 @@ interface PreviewSurfaceProps {
   onForceRefresh?: () => void;
   errorMessage?: string;
   className?: string;
+  timelineTime?: number;
+  isTimelinePlaying?: boolean;
+  onTimelineTimeChange?: (time: number) => void;
 }
 
 export function PreviewSurface({ 
@@ -23,27 +26,59 @@ export function PreviewSurface({
   totalDuration,
   onForceRefresh,
   errorMessage,
-  className 
+  className,
+  timelineTime,
+  isTimelinePlaying,
+  onTimelineTimeChange,
 }: PreviewSurfaceProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
   
   // Preserve playback position when preview URL changes
   useEffect(() => {
     if (videoRef.current && previewUrl) {
       const video = videoRef.current;
-      // Try to restore playback position on new preview
       if (currentTime > 0 && currentTime < video.duration) {
         video.currentTime = currentTime;
       }
     }
   }, [previewUrl]);
   
+  // Sync preview video to timeline time (when timeline scrubbing)
+  useEffect(() => {
+    if (videoRef.current && timelineTime !== undefined && !isSeeking) {
+      const video = videoRef.current;
+      if (Math.abs(video.currentTime - timelineTime) > 0.1) {
+        video.currentTime = timelineTime;
+      }
+    }
+  }, [timelineTime, isSeeking]);
+  
+  // Sync play/pause with timeline
+  useEffect(() => {
+    if (videoRef.current && isTimelinePlaying !== undefined) {
+      const video = videoRef.current;
+      if (isTimelinePlaying && video.paused) {
+        video.play().catch(() => {});
+      } else if (!isTimelinePlaying && !video.paused) {
+        video.pause();
+      }
+    }
+  }, [isTimelinePlaying]);
+  
   const handleTimeUpdate = () => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+      const time = videoRef.current.currentTime;
+      setCurrentTime(time);
+      if (onTimelineTimeChange && !isSeeking) {
+        onTimelineTimeChange(time);
+      }
     }
   };
+  
+  const handleSeeking = () => setIsSeeking(true);
+  const handleSeeked = () => setIsSeeking(false);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -124,6 +159,8 @@ export function PreviewSurface({
                 status === 'refreshing' && "opacity-70"
               )}
               onTimeUpdate={handleTimeUpdate}
+              onSeeking={handleSeeking}
+              onSeeked={handleSeeked}
               data-testid="preview-video"
             />
             {status === 'refreshing' && (

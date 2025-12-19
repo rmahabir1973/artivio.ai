@@ -88,6 +88,7 @@ interface AdvancedTimelineProps {
   onClipRemove: (clipId: string) => void;
   onClipReorder: (fromIndex: number, toIndex: number) => void;
   onClipDuplicate?: (clip: VideoClip, afterIndex: number) => void;
+  onClipSplit?: (clipId: string, splitTimeInClip: number) => void;
   onTransitionEdit: (index: number) => void;
   onTransitionRemove: (index: number) => void;
   onAudioRemove: (trackId: string) => void;
@@ -97,6 +98,7 @@ interface AdvancedTimelineProps {
   currentTime: number;
   onTimeChange: (time: number) => void;
   onPlayPause: () => void;
+  onSeekPreview?: (time: number) => void;
   isPlaying: boolean;
   className?: string;
 }
@@ -107,16 +109,17 @@ const PIXELS_PER_SECOND_BASE = 100;
 
 interface TrackConfig {
   id: string;
-  type: 'video' | 'audio';
+  type: 'media';
   label: string;
   icon: React.FC<{ className?: string }>;
   color: string;
 }
 
 const TRACK_CONFIG: TrackConfig[] = [
-  { id: 'video-1', type: 'video', label: 'Video 1', icon: Video, color: 'bg-blue-500/20 border-blue-500/50' },
-  { id: 'audio-music', type: 'audio', label: 'Music', icon: Music, color: 'bg-green-500/20 border-green-500/50' },
-  { id: 'audio-voice', type: 'audio', label: 'Voice', icon: Mic, color: 'bg-purple-500/20 border-purple-500/50' },
+  { id: 'layer-1', type: 'media', label: 'Layer 1', icon: Layers, color: 'bg-blue-500/20 border-blue-500/50' },
+  { id: 'layer-2', type: 'media', label: 'Layer 2', icon: Layers, color: 'bg-indigo-500/20 border-indigo-500/50' },
+  { id: 'layer-3', type: 'media', label: 'Layer 3', icon: Layers, color: 'bg-green-500/20 border-green-500/50' },
+  { id: 'layer-4', type: 'media', label: 'Layer 4', icon: Layers, color: 'bg-purple-500/20 border-purple-500/50' },
 ];
 
 function formatTime(seconds: number): string {
@@ -150,6 +153,8 @@ interface TimelineClipProps {
   onRemove: (clipId: string) => void;
   onDuplicate: (clip: VideoClip, index: number) => void;
   onTrimChange: (clipId: string, trimStart: number, trimEnd: number) => void;
+  onSplit?: (clip: VideoClip, index: number, splitTimeInClip: number) => void;
+  currentTime: number;
 }
 
 function TimelineClipItem({
@@ -160,9 +165,12 @@ function TimelineClipItem({
   onRemove,
   onDuplicate,
   onTrimChange,
+  onSplit,
+  currentTime,
 }: TimelineClipProps) {
-  const { clip, index, left, width, settings } = position;
+  const { clip, index, left, width, settings, startTime, duration } = position;
   const [isTrimming, setIsTrimming] = useState<'left' | 'right' | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const trimStartRef = useRef({ x: 0, trimStart: 0, trimEnd: 0 });
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -244,6 +252,8 @@ function TimelineClipItem({
             isSelected && "border-primary ring-2 ring-primary/30"
           )}
           onClick={handleClick}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           {...(isTrimming === null ? { ...listeners, ...attributes } : {})}
           data-testid={`timeline-clip-${clip.id}`}
         >
@@ -280,21 +290,21 @@ function TimelineClipItem({
             </div>
           </div>
           
-          {isSelected && clip.type === 'video' && (
+          {(isSelected || isHovered) && (
             <>
               <div
-                className="absolute left-0 top-0 bottom-0 w-2 bg-primary/80 cursor-ew-resize hover:bg-primary flex items-center justify-center"
+                className="absolute left-0 top-0 bottom-0 w-3 bg-primary/80 cursor-ew-resize hover:bg-primary flex items-center justify-center z-30"
                 onMouseDown={(e) => handleTrimMouseDown(e, 'left')}
                 data-testid={`trim-left-${clip.id}`}
               >
-                <div className="w-0.5 h-3 bg-white/60 rounded-full" />
+                <div className="w-0.5 h-4 bg-white/80 rounded-full" />
               </div>
               <div
-                className="absolute right-0 top-0 bottom-0 w-2 bg-primary/80 cursor-ew-resize hover:bg-primary flex items-center justify-center"
+                className="absolute right-0 top-0 bottom-0 w-3 bg-primary/80 cursor-ew-resize hover:bg-primary flex items-center justify-center z-30"
                 onMouseDown={(e) => handleTrimMouseDown(e, 'right')}
                 data-testid={`trim-right-${clip.id}`}
               >
-                <div className="w-0.5 h-3 bg-white/60 rounded-full" />
+                <div className="w-0.5 h-4 bg-white/80 rounded-full" />
               </div>
             </>
           )}
@@ -319,6 +329,18 @@ function TimelineClipItem({
           <Copy className="h-4 w-4 mr-2" />
           Duplicate
         </ContextMenuItem>
+        {onSplit && currentTime >= startTime && currentTime < startTime + duration && (
+          <ContextMenuItem 
+            onClick={() => {
+              const splitTimeInClip = currentTime - startTime + (settings.trimStartSeconds ?? 0);
+              onSplit(clip, index, splitTimeInClip);
+            }} 
+            data-testid="context-split"
+          >
+            <Scissors className="h-4 w-4 mr-2" />
+            Split at Playhead
+          </ContextMenuItem>
+        )}
         <ContextMenuSeparator />
         <ContextMenuItem onClick={() => onRemove(clip.id)} className="text-red-500" data-testid="context-delete">
           <Trash2 className="h-4 w-4 mr-2" />
@@ -478,6 +500,7 @@ export function AdvancedTimeline({
   onClipRemove,
   onClipReorder,
   onClipDuplicate,
+  onClipSplit,
   onTransitionEdit,
   onTransitionRemove,
   onAudioRemove,
@@ -487,6 +510,7 @@ export function AdvancedTimeline({
   currentTime,
   onTimeChange,
   onPlayPause,
+  onSeekPreview,
   isPlaying,
   className,
 }: AdvancedTimelineProps) {
@@ -494,9 +518,10 @@ export function AdvancedTimeline({
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set());
   const [trackVisibility, setTrackVisibility] = useState<Record<string, boolean>>({
-    'video-1': true,
-    'audio-music': true,
-    'audio-voice': true,
+    'layer-1': true,
+    'layer-2': true,
+    'layer-3': true,
+    'layer-4': true,
   });
   const [trackLocked, setTrackLocked] = useState<Record<string, boolean>>({});
   
@@ -583,6 +608,12 @@ export function AdvancedTimeline({
       });
     }
   }, [onClipSettingsChange]);
+  
+  const handleSplit = useCallback((clip: VideoClip, index: number, splitTimeInClip: number) => {
+    if (onClipSplit) {
+      onClipSplit(clip.id, splitTimeInClip);
+    }
+  }, [onClipSplit]);
   
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveClipId(event.active.id as string);
@@ -875,9 +906,9 @@ export function AdvancedTimeline({
                 <div
                   className="relative border-b border-border/30"
                   style={{ height: TRACK_HEIGHT }}
-                  data-testid="track-video-1"
+                  data-testid="track-layer-1"
                 >
-                  {trackVisibility['video-1'] !== false && clipPositions.map((position) => (
+                  {trackVisibility['layer-1'] !== false && clipPositions.map((position) => (
                     <TimelineClipItem
                       key={position.clip.id}
                       position={position}
@@ -887,6 +918,8 @@ export function AdvancedTimeline({
                       onRemove={onClipRemove}
                       onDuplicate={handleDuplicate}
                       onTrimChange={handleTrimChange}
+                      onSplit={handleSplit}
+                      currentTime={currentTime}
                     />
                   ))}
                   
@@ -925,9 +958,17 @@ export function AdvancedTimeline({
                 <div
                   className="relative border-b border-border/30"
                   style={{ height: TRACK_HEIGHT }}
-                  data-testid="track-audio-music"
+                  data-testid="track-layer-2"
                 >
-                  {trackVisibility['audio-music'] !== false && musicTracks.map((track) => (
+                  {/* Layer 2 - Drag any media here */}
+                </div>
+                
+                <div
+                  className="relative border-b border-border/30"
+                  style={{ height: TRACK_HEIGHT }}
+                  data-testid="track-layer-3"
+                >
+                  {trackVisibility['layer-3'] !== false && musicTracks.map((track) => (
                     <AudioTrackItem
                       key={track.id}
                       track={track}
@@ -941,9 +982,9 @@ export function AdvancedTimeline({
                 <div
                   className="relative border-b border-border/30"
                   style={{ height: TRACK_HEIGHT }}
-                  data-testid="track-audio-voice"
+                  data-testid="track-layer-4"
                 >
-                  {trackVisibility['audio-voice'] !== false && voiceTracks.map((track) => (
+                  {trackVisibility['layer-4'] !== false && voiceTracks.map((track) => (
                     <AudioTrackItem
                       key={track.id}
                       track={track}

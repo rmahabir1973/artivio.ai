@@ -2625,7 +2625,7 @@ const previewMutation = useMutation({
 
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background h-full overflow-hidden" data-testid="media-panel">
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -2639,7 +2639,7 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <ScrollArea className="flex-1">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
@@ -3479,7 +3479,7 @@ const previewMutation = useMutation({
                     </div>
                   )}
                 </div>
-              </div>
+              </ScrollArea>
             </div>
           )}
 
@@ -3506,6 +3506,9 @@ const previewMutation = useMutation({
               onForceRefresh={generatePreview}
               errorMessage={previewError}
               className="flex-1"
+              timelineTime={timelineCurrentTime}
+              isTimelinePlaying={isTimelinePlaying}
+              onTimelineTimeChange={setTimelineCurrentTime}
             />
             {textOverlays.length > 0 && (
               <TextOverlayRenderer
@@ -3600,6 +3603,40 @@ const previewMutation = useMutation({
                     [duplicatedClip.id]: { ...originalSettings, clipId: duplicatedClip.id }
                   }));
                 }
+              }}
+              onClipSplit={(clipId, splitTimeInClip) => {
+                const clipIndex = orderedClips.findIndex(c => c.id === clipId);
+                if (clipIndex === -1) return;
+                
+                const originalClip = orderedClips[clipIndex];
+                const originalSettings = getClipSettings(clipId);
+                const originalDuration = originalSettings.originalDuration ?? 5;
+                const trimStart = originalSettings.trimStartSeconds ?? 0;
+                const trimEnd = originalSettings.trimEndSeconds ?? originalDuration;
+                
+                if (splitTimeInClip <= trimStart || splitTimeInClip >= trimEnd) {
+                  toast({ title: "Cannot Split", description: "Playhead must be inside the clip", variant: "destructive" });
+                  return;
+                }
+                
+                const clip1Id = `${clipId}-split-a-${Date.now()}`;
+                const clip2Id = `${clipId}-split-b-${Date.now()}`;
+                const clip1 = { ...originalClip, id: clip1Id };
+                const clip2 = { ...originalClip, id: clip2Id };
+                
+                setOrderedClips(items => {
+                  const newItems = [...items];
+                  newItems.splice(clipIndex, 1, clip1, clip2);
+                  return newItems;
+                });
+                
+                setClipSettings(prev => ({
+                  ...prev,
+                  [clip1Id]: { ...originalSettings, clipId: clip1Id, trimEndSeconds: splitTimeInClip },
+                  [clip2Id]: { ...originalSettings, clipId: clip2Id, trimStartSeconds: splitTimeInClip },
+                }));
+                
+                toast({ title: "Clip Split", description: "Clip has been split at playhead position" });
               }}
               onTransitionEdit={handleTransitionEdit}
               onTransitionRemove={handleTransitionRemove}
