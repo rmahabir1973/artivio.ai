@@ -3586,6 +3586,21 @@ const previewMutation = useMutation({
                   return newItems;
                 });
               }}
+              onClipDuplicate={(clip, afterIndex) => {
+                const duplicatedClip = { ...clip, id: `${clip.id}-dup-${Date.now()}` };
+                setOrderedClips(items => {
+                  const newItems = [...items];
+                  newItems.splice(afterIndex + 1, 0, duplicatedClip);
+                  return newItems;
+                });
+                const originalSettings = getClipSettings(clip.id);
+                if (originalSettings) {
+                  setClipSettings(prev => ({
+                    ...prev,
+                    [duplicatedClip.id]: { ...originalSettings, clipId: duplicatedClip.id }
+                  }));
+                }
+              }}
               onTransitionEdit={handleTransitionEdit}
               onTransitionRemove={handleTransitionRemove}
               onAudioRemove={removeAudioTrack}

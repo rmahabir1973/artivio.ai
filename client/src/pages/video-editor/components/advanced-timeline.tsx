@@ -87,6 +87,7 @@ interface AdvancedTimelineProps {
   onClipSelect: (clip: VideoClip, index: number) => void;
   onClipRemove: (clipId: string) => void;
   onClipReorder: (fromIndex: number, toIndex: number) => void;
+  onClipDuplicate?: (clip: VideoClip, afterIndex: number) => void;
   onTransitionEdit: (index: number) => void;
   onTransitionRemove: (index: number) => void;
   onAudioRemove: (trackId: string) => void;
@@ -476,6 +477,7 @@ export function AdvancedTimeline({
   onClipSelect,
   onClipRemove,
   onClipReorder,
+  onClipDuplicate,
   onTransitionEdit,
   onTransitionRemove,
   onAudioRemove,
@@ -568,7 +570,10 @@ export function AdvancedTimeline({
   }, [onClipSelect]);
   
   const handleDuplicate = useCallback((clip: VideoClip, index: number) => {
-  }, []);
+    if (onClipDuplicate) {
+      onClipDuplicate(clip, index);
+    }
+  }, [onClipDuplicate]);
   
   const handleTrimChange = useCallback((clipId: string, trimStart: number, trimEnd: number) => {
     if (onClipSettingsChange) {
