@@ -121,6 +121,7 @@ interface VideoClip {
   prompt: string;
   createdAt: string;
   type: 'video' | 'image'; // Type of media
+  trackId?: string; // Track/layer the clip belongs to (default: 'layer-1')
 }
 
 interface ClipSettingsLocal {
@@ -2121,18 +2122,22 @@ const previewMutation = useMutation({
         item: DroppedMediaItem;
       };
 
-      const dropData = over.data.current as { trackId: string; trackType: string } | undefined;
+      const dropData = over.data.current as { trackId: string; type?: string } | undefined;
 
       if (dragData?.type === 'media-item' && dragData.item?.url) {
         const mediaType = dragData.mediaType;
         const item = dragData.item;
-        const trackId = dropData?.trackId || 'video-0';
+        const trackId = dropData?.trackId || 'layer-1';
 
         const instanceId = `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         if (useMultiTrack) {
           const getTrackNumberFromId = (id: string): number => {
             const mapping: Record<string, number> = {
+              'layer-1': 0,
+              'layer-2': 1,
+              'layer-3': 2,
+              'layer-4': 3,
               'video-0': 0,
               'video-1': 1,
               'text-0': 2,
@@ -2173,11 +2178,13 @@ const previewMutation = useMutation({
 
           setMultiTrackKey(prev => prev + 1);
 
+          const layerLabel = trackId.startsWith('layer-') ? `Layer ${trackId.split('-')[1]}` : trackId.replace('-', ' ').toUpperCase();
           toast({
             title: "Added to Timeline",
-            description: `${mediaType} added to ${trackId.replace('-', ' ').toUpperCase()} track`,
+            description: `${mediaType} added to ${layerLabel}`,
           });
         } else {
+          // Single-track mode - add to orderedClips or audioTracks
           if (mediaType === 'audio') {
             const audioTrack = {
               id: instanceId,
@@ -2195,13 +2202,15 @@ const previewMutation = useMutation({
               prompt: item.name || '',
               createdAt: new Date().toISOString(),
               type: mediaType,
+              trackId: trackId.startsWith('layer-') ? trackId : 'layer-1',
             };
             setOrderedClips(prev => [...prev, clip]);
           }
 
+          const layerLabel = trackId.startsWith('layer-') ? `Layer ${trackId.split('-')[1]}` : 'timeline';
           toast({
             title: "Added to timeline",
-            description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to timeline`,
+            description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to ${layerLabel}`,
           });
         }
       }
@@ -2625,7 +2634,7 @@ const previewMutation = useMutation({
 
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" data-testid="media-panel">
+            <div className="w-72 h-full border-r flex flex-col shrink-0 bg-background" data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -2639,7 +2648,8 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1">
+              <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
@@ -3480,6 +3490,7 @@ const previewMutation = useMutation({
                   )}
                 </div>
               </ScrollArea>
+              </div>
             </div>
           )}
 
@@ -3637,6 +3648,12 @@ const previewMutation = useMutation({
                 }));
                 
                 toast({ title: "Clip Split", description: "Clip has been split at playhead position" });
+              }}
+              onClipTrackChange={(clipId, newTrackId) => {
+                setOrderedClips(items => items.map(clip => 
+                  clip.id === clipId ? { ...clip, trackId: newTrackId } : clip
+                ));
+                toast({ title: "Clip Moved", description: `Clip moved to ${newTrackId.replace('-', ' ').replace('layer', 'Layer')}` });
               }}
               onTransitionEdit={handleTransitionEdit}
               onTransitionRemove={handleTransitionRemove}

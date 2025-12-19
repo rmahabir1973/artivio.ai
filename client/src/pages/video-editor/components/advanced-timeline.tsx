@@ -52,6 +52,7 @@ interface VideoClip {
   prompt: string;
   createdAt: string;
   type: 'video' | 'image';
+  trackId?: string;
 }
 
 interface ClipSettingsLocal {
@@ -79,6 +80,15 @@ interface AudioTrack {
   volume: number;
 }
 
+interface DroppedMediaData {
+  id: string;
+  type: 'video' | 'image' | 'audio';
+  url: string;
+  thumbnailUrl?: string | null;
+  name?: string;
+  duration?: number;
+}
+
 interface AdvancedTimelineProps {
   clips: VideoClip[];
   audioTracks: AudioTrack[];
@@ -89,6 +99,8 @@ interface AdvancedTimelineProps {
   onClipReorder: (fromIndex: number, toIndex: number) => void;
   onClipDuplicate?: (clip: VideoClip, afterIndex: number) => void;
   onClipSplit?: (clipId: string, splitTimeInClip: number) => void;
+  onClipTrackChange?: (clipId: string, newTrackId: string) => void;
+  onMediaDrop?: (trackId: string, media: DroppedMediaData, dropTimeSeconds: number) => void;
   onTransitionEdit: (index: number) => void;
   onTransitionRemove: (index: number) => void;
   onAudioRemove: (trackId: string) => void;
@@ -122,6 +134,46 @@ const TRACK_CONFIG: TrackConfig[] = [
   { id: 'layer-4', type: 'media', label: 'Layer 4', icon: Layers, color: 'bg-purple-500/20 border-purple-500/50' },
 ];
 
+// Droppable track zone for receiving media from library or other tracks
+function DroppableTrack({ 
+  trackId, 
+  children, 
+  className,
+  style,
+}: { 
+  trackId: string; 
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `track-drop-${trackId}`,
+    data: { type: 'track-drop-zone', trackId },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "relative border-b border-border/30 transition-colors",
+        isOver && "bg-primary/10 ring-1 ring-primary/30",
+        className
+      )}
+      style={style}
+      data-testid={`track-${trackId}`}
+    >
+      {children}
+      {isOver && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-1 rounded">
+            Drop here
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -154,6 +206,7 @@ interface TimelineClipProps {
   onDuplicate: (clip: VideoClip, index: number) => void;
   onTrimChange: (clipId: string, trimStart: number, trimEnd: number) => void;
   onSplit?: (clip: VideoClip, index: number, splitTimeInClip: number) => void;
+  onTrackChange?: (clipId: string, newTrackId: string) => void;
   currentTime: number;
 }
 
@@ -161,6 +214,7 @@ function TimelineClipItem({
   position,
   pixelsPerSecond,
   isSelected,
+  onTrackChange,
   onSelect,
   onRemove,
   onDuplicate,
@@ -341,6 +395,21 @@ function TimelineClipItem({
             Split at Playhead
           </ContextMenuItem>
         )}
+        {onTrackChange && (
+          <>
+            <ContextMenuSeparator />
+            {['layer-1', 'layer-2', 'layer-3', 'layer-4'].filter(t => t !== (clip.trackId || 'layer-1')).map(trackId => (
+              <ContextMenuItem 
+                key={trackId}
+                onClick={() => onTrackChange(clip.id, trackId)}
+                data-testid={`context-move-${trackId}`}
+              >
+                <Layers className="h-4 w-4 mr-2" />
+                Move to {trackId.replace('layer-', 'Layer ')}
+              </ContextMenuItem>
+            ))}
+          </>
+        )}
         <ContextMenuSeparator />
         <ContextMenuItem onClick={() => onRemove(clip.id)} className="text-red-500" data-testid="context-delete">
           <Trash2 className="h-4 w-4 mr-2" />
@@ -501,6 +570,8 @@ export function AdvancedTimeline({
   onClipReorder,
   onClipDuplicate,
   onClipSplit,
+  onClipTrackChange,
+  onMediaDrop,
   onTransitionEdit,
   onTransitionRemove,
   onAudioRemove,
@@ -620,14 +691,32 @@ export function AdvancedTimeline({
   }, []);
   
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, delta } = event;
+    const { active, delta, over } = event;
     setActiveClipId(null);
     
-    if (Math.abs(delta.x) < 5) return;
-    
     const clipId = active.id as string;
+    const clip = clips.find(c => c.id === clipId);
+    if (!clip) return;
+    
     const clipIndex = clips.findIndex(c => c.id === clipId);
     if (clipIndex === -1) return;
+    
+    // Check for vertical track change (y delta > track height threshold)
+    if (Math.abs(delta.y) >= TRACK_HEIGHT / 2 && onClipTrackChange) {
+      const trackIndex = Math.floor(delta.y / TRACK_HEIGHT);
+      const currentTrackId = clip.trackId || 'layer-1';
+      const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
+      const newTrackNum = Math.max(1, Math.min(4, currentTrackNum + trackIndex));
+      const newTrackId = `layer-${newTrackNum}`;
+      
+      if (newTrackId !== currentTrackId) {
+        onClipTrackChange(clipId, newTrackId);
+        return;
+      }
+    }
+    
+    // Handle horizontal reordering
+    if (Math.abs(delta.x) < 5) return;
     
     const currentPosition = clipPositions[clipIndex];
     if (!currentPosition) return;
@@ -651,7 +740,7 @@ export function AdvancedTimeline({
     if (targetIndex !== clipIndex) {
       onClipReorder(clipIndex, targetIndex);
     }
-  }, [clips, clipPositions, pixelsPerSecond, onClipReorder]);
+  }, [clips, clipPositions, pixelsPerSecond, onClipReorder, onClipTrackChange]);
   
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
@@ -903,12 +992,10 @@ export function AdvancedTimeline({
               />
               
               <div className="relative">
-                <div
-                  className="relative border-b border-border/30"
-                  style={{ height: TRACK_HEIGHT }}
-                  data-testid="track-layer-1"
-                >
-                  {trackVisibility['layer-1'] !== false && clipPositions.map((position) => (
+                <DroppableTrack trackId="layer-1" style={{ height: TRACK_HEIGHT }}>
+                  {trackVisibility['layer-1'] !== false && clipPositions
+                    .filter(p => !p.clip.trackId || p.clip.trackId === 'layer-1')
+                    .map((position) => (
                     <TimelineClipItem
                       key={position.clip.id}
                       position={position}
@@ -919,6 +1006,7 @@ export function AdvancedTimeline({
                       onDuplicate={handleDuplicate}
                       onTrimChange={handleTrimChange}
                       onSplit={handleSplit}
+                      onTrackChange={onClipTrackChange}
                       currentTime={currentTime}
                     />
                   ))}
@@ -953,47 +1041,93 @@ export function AdvancedTimeline({
                       </div>
                     );
                   })}
-                </div>
+                </DroppableTrack>
                 
-                <div
-                  className="relative border-b border-border/30"
-                  style={{ height: TRACK_HEIGHT }}
-                  data-testid="track-layer-2"
-                >
-                  {/* Layer 2 - Drag any media here */}
-                </div>
-                
-                <div
-                  className="relative border-b border-border/30"
-                  style={{ height: TRACK_HEIGHT }}
-                  data-testid="track-layer-3"
-                >
-                  {trackVisibility['layer-3'] !== false && musicTracks.map((track) => (
-                    <AudioTrackItem
-                      key={track.id}
-                      track={track}
+                <DroppableTrack trackId="layer-2" style={{ height: TRACK_HEIGHT }}>
+                  {trackVisibility['layer-2'] !== false && clipPositions
+                    .filter(p => p.clip.trackId === 'layer-2')
+                    .map((position) => (
+                    <TimelineClipItem
+                      key={position.clip.id}
+                      position={position}
                       pixelsPerSecond={pixelsPerSecond}
-                      totalDuration={effectiveDuration}
-                      onRemove={onAudioRemove}
+                      isSelected={selectedClipIds.has(position.clip.id)}
+                      onSelect={handleClipSelect}
+                      onRemove={onClipRemove}
+                      onDuplicate={handleDuplicate}
+                      onTrimChange={handleTrimChange}
+                      onSplit={handleSplit}
+                      onTrackChange={onClipTrackChange}
+                      currentTime={currentTime}
                     />
                   ))}
-                </div>
+                </DroppableTrack>
                 
-                <div
-                  className="relative border-b border-border/30"
-                  style={{ height: TRACK_HEIGHT }}
-                  data-testid="track-layer-4"
-                >
-                  {trackVisibility['layer-4'] !== false && voiceTracks.map((track) => (
-                    <AudioTrackItem
-                      key={track.id}
-                      track={track}
-                      pixelsPerSecond={pixelsPerSecond}
-                      totalDuration={effectiveDuration}
-                      onRemove={onAudioRemove}
-                    />
-                  ))}
-                </div>
+                <DroppableTrack trackId="layer-3" style={{ height: TRACK_HEIGHT }}>
+                  {trackVisibility['layer-3'] !== false && (
+                    <>
+                      {clipPositions
+                        .filter(p => p.clip.trackId === 'layer-3')
+                        .map((position) => (
+                        <TimelineClipItem
+                          key={position.clip.id}
+                          position={position}
+                          pixelsPerSecond={pixelsPerSecond}
+                          isSelected={selectedClipIds.has(position.clip.id)}
+                          onSelect={handleClipSelect}
+                          onRemove={onClipRemove}
+                          onDuplicate={handleDuplicate}
+                          onTrimChange={handleTrimChange}
+                          onSplit={handleSplit}
+                          onTrackChange={onClipTrackChange}
+                          currentTime={currentTime}
+                        />
+                      ))}
+                      {musicTracks.map((track) => (
+                        <AudioTrackItem
+                          key={track.id}
+                          track={track}
+                          pixelsPerSecond={pixelsPerSecond}
+                          totalDuration={effectiveDuration}
+                          onRemove={onAudioRemove}
+                        />
+                      ))}
+                    </>
+                  )}
+                </DroppableTrack>
+                
+                <DroppableTrack trackId="layer-4" style={{ height: TRACK_HEIGHT }}>
+                  {trackVisibility['layer-4'] !== false && (
+                    <>
+                      {clipPositions
+                        .filter(p => p.clip.trackId === 'layer-4')
+                        .map((position) => (
+                        <TimelineClipItem
+                          key={position.clip.id}
+                          position={position}
+                          pixelsPerSecond={pixelsPerSecond}
+                          isSelected={selectedClipIds.has(position.clip.id)}
+                          onSelect={handleClipSelect}
+                          onRemove={onClipRemove}
+                          onDuplicate={handleDuplicate}
+                          onTrimChange={handleTrimChange}
+                          onSplit={handleSplit}
+                          onTrackChange={onClipTrackChange}
+                          currentTime={currentTime}
+                        />
+                      ))}
+                      {voiceTracks.map((track) => (
+                        <AudioTrackItem
+                          key={track.id}
+                          track={track}
+                          pixelsPerSecond={pixelsPerSecond}
+                          totalDuration={effectiveDuration}
+                          onRemove={onAudioRemove}
+                        />
+                      ))}
+                    </>
+                  )}
+                </DroppableTrack>
                 
                 <Playhead
                   currentTime={currentTime}
