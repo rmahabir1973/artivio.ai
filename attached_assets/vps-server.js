@@ -17,6 +17,8 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { GetObjectCommand } = require('@aws-sdk/client-s3');
 
 const app = express();
 app.use(cors());
@@ -649,7 +651,7 @@ async function uploadToS3(filePath, key, jobId) {
   const fileStream = fs.createReadStream(filePath);
   const fileStats = fs.statSync(filePath);
   
-  const command = new PutObjectCommand({
+  const putCommand = new PutObjectCommand({
     Bucket: S3_BUCKET,
     Key: key,
     Body: fileStream,
@@ -657,10 +659,17 @@ async function uploadToS3(filePath, key, jobId) {
     ContentType: 'video/mp4',
   });
   
-  await s3Client.send(command);
+  await s3Client.send(putCommand);
   
-  // Return public URL
-  const downloadUrl = `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  // Generate pre-signed URL for download (valid for 7 days)
+  const getCommand = new GetObjectCommand({
+    Bucket: S3_BUCKET,
+    Key: key,
+  });
+  
+  const downloadUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 604800 }); // 7 days
+  console.log(`[${jobId}] Generated pre-signed URL (7 day expiry)`);
+  
   return downloadUrl;
 }
 
