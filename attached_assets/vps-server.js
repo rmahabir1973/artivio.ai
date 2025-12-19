@@ -6,6 +6,9 @@
  * Run with: pm2 start server.js --name video-processor
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
