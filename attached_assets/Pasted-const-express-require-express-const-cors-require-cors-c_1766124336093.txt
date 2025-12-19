@@ -1,0 +1,513 @@
+const express = require('express');
+const cors = require('cors');
+const { exec, spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+
+const PORT = process.env.PORT || 3001;
+const TEMP_DIR = '/tmp/video-processing';
+const FFMPEG_PATH = process.env.FFMPEG_PATH || '/root/bin/ffmpeg';
+const CALLBACK_SECRET = process.env.CALLBACK_SECRET;
+
+// Validate required environment variables
+const requiredEnvVars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'S3_BUCKET', 'AWS_REGION'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingVars.length > 0) {
+  console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
+}
+
+// S3 Configuration
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
+});
+
+// Job status tracking
+const jobs = new Map();
+
+// Ensure temp directory exists
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+}
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  exec(`${FFMPEG_PATH} -version`, (error, stdout) => {
+    if (error) {
+      res.status(500).json({ 
+        status: 'error', 
+        ffmpeg: FFMPEG_PATH,
+        error: 'FFmpeg not accessible'
+      });
+    } else {
+      const version = stdout.split('\n')[0];
+      res.json({ 
+        status: 'ok', 
+        ffmpeg: FFMPEG_PATH,
+        version: version,
+        activeJobs: jobs.size
+      });
+    }
+  });
+});
+
+// Job status endpoint
+app.get('/status/:jobId', (req, res) => {
+  const status = jobs.get(req.params.jobId);
+  if (!status) {
+    res.status(404).json({ error: 'Job not found' });
+  } else {
+    res.json(status);
+  }
+});
+
+// Main video processing endpoint
+app.post('/process', async (req, res) => {
+  const jobId = uuidv4();
+  const jobDir = path.join(TEMP_DIR, jobId);
+  
+  try {
+    fs.mkdirSync(jobDir, { recursive: true });
+    
+    const { 
+      clips, 
+      enhancements, 
+      outputFormat = 'mp4',
+      callbackUrl 
+    } = req.body;
+    
+    // Validate input
+    if (!clips || !Array.isArray(clips) || clips.length === 0) {
+      return res.status(400).json({ error: 'Invalid or missing clips array' });
+    }
+    
+    // Initialize job status
+    jobs.set(jobId, {
+      status: 'processing',
+      startedAt: new Date().toISOString(),
+      progress: 0
+    });
+    
+    // Acknowledge receipt immediately
+    res.json({ 
+      status: 'processing', 
+      jobId,
+      message: 'Video processing started' 
+    });
+    
+    // Process video asynchronously
+    processVideo(jobId, jobDir, clips, enhancements, outputFormat, callbackUrl);
+    
+  } catch (error) {
+    console.error('Process error:', error);
+    jobs.set(jobId, {
+      status: 'failed',
+      error: error.message,
+      completedAt: new Date().toISOString()
+    });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+async function processVideo(jobId, jobDir, clips, enhancements, outputFormat, callbackUrl) {
+  try {
+    console.log(`[${jobId}] Starting video processing with ${clips.length} clips`);
+    
+    // Update status
+    jobs.set(jobId, { ...jobs.get(jobId), status: 'downloading', progress: 10 });
+    
+    // Download all clips
+    const localClips = await downloadClips(clips, jobDir);
+    console.log(`[${jobId}] Downloaded ${localClips.length} clips`);
+    
+    // Update status
+    jobs.set(jobId, { ...jobs.get(jobId), status: 'processing', progress: 30 });
+    
+    // Get actual durations for each clip
+    for (let clip of localClips) {
+      clip.actualDuration = await getVideoDuration(clip.localPath);
+    }
+    
+    // Build FFmpeg command based on enhancements
+    const outputPath = path.join(jobDir, `output.${outputFormat}`);
+    const ffmpegArgs = buildFFmpegCommand(localClips, enhancements, outputPath);
+    
+    console.log(`[${jobId}] Running FFmpeg with args:`, ffmpegArgs.join(' '));
+    
+    // Update status
+    jobs.set(jobId, { ...jobs.get(jobId), status: 'encoding', progress: 40 });
+    
+    // Execute FFmpeg
+    await executeFFmpeg(ffmpegArgs, jobId);
+    
+    // Update status
+    jobs.set(jobId, { ...jobs.get(jobId), status: 'uploading', progress: 80 });
+    
+    // Upload to S3
+    const s3Key = `exports/${jobId}/video.${outputFormat}`;
+    const downloadUrl = await uploadToS3(outputPath, s3Key);
+    
+    console.log(`[${jobId}] Uploaded to S3:`, downloadUrl);
+    
+    // Update status
+    jobs.set(jobId, {
+      status: 'completed',
+      downloadUrl: downloadUrl,
+      completedAt: new Date().toISOString(),
+      progress: 100
+    });
+    
+    // Cleanup
+    fs.rmSync(jobDir, { recursive: true, force: true });
+    
+    // Callback to origin server
+    if (callbackUrl) {
+      await sendCallback(callbackUrl, {
+        jobId,
+        status: 'completed',
+        downloadUrl
+      });
+    }
+    
+    console.log(`[${jobId}] Completed successfully`);
+    
+    // Clean up job status after 1 hour
+    setTimeout(() => jobs.delete(jobId), 3600000);
+    
+  } catch (error) {
+    console.error(`[${jobId}] Error:`, error);
+    
+    // Update status
+    jobs.set(jobId, {
+      status: 'failed',
+      error: error.message,
+      completedAt: new Date().toISOString(),
+      progress: 0
+    });
+    
+    // Cleanup on error
+    if (fs.existsSync(jobDir)) {
+      fs.rmSync(jobDir, { recursive: true, force: true });
+    }
+    
+    // Callback with error
+    if (callbackUrl) {
+      await sendCallback(callbackUrl, {
+        jobId,
+        status: 'failed',
+        error: error.message
+      });
+    }
+    
+    // Clean up job status after 1 hour
+    setTimeout(() => jobs.delete(jobId), 3600000);
+  }
+}
+
+async function downloadClips(clips, jobDir) {
+  const localClips = [];
+  
+  for (let i = 0; i < clips.length; i++) {
+    const clip = clips[i];
+    
+    try {
+      const ext = clip.url.split('.').pop().split('?')[0] || 'mp4';
+      const localPath = path.join(jobDir, `clip_${i}.${ext}`);
+      
+      console.log(`Downloading clip ${i} from ${clip.url}`);
+      
+      // Download file with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      
+      const response = await fetch(clip.url, { signal: controller.signal });
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const buffer = await response.arrayBuffer();
+      fs.writeFileSync(localPath, Buffer.from(buffer));
+      
+      localClips.push({
+        ...clip,
+        localPath,
+        index: i
+      });
+      
+      console.log(`Downloaded clip ${i}: ${localPath} (${buffer.byteLength} bytes)`);
+      
+    } catch (error) {
+      throw new Error(`Failed to download clip ${i}: ${error.message}`);
+    }
+  }
+  
+  return localClips;
+}
+
+async function getVideoDuration(filePath) {
+  return new Promise((resolve, reject) => {
+    const args = ['-i', filePath];
+    const ffprobe = spawn(FFMPEG_PATH, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    
+    let stderr = '';
+    ffprobe.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+    
+    ffprobe.on('close', () => {
+      const match = stderr.match(/Duration: (\d{2}):(\d{2}):(\d{2}\.\d{2})/);
+      if (match) {
+        const duration = parseInt(match[1]) * 3600 + 
+                        parseInt(match[2]) * 60 + 
+                        parseFloat(match[3]);
+        resolve(duration);
+      } else {
+        console.warn(`Could not determine duration for ${filePath}, using fallback`);
+        resolve(5); // fallback duration
+      }
+    });
+    
+    ffprobe.on('error', (error) => {
+      console.warn(`Error probing ${filePath}:`, error.message);
+      resolve(5); // fallback duration
+    });
+  });
+}
+
+function buildFFmpegCommand(clips, enhancements, outputPath) {
+  const args = [];
+  
+  // Add all input files
+  clips.forEach(clip => {
+    args.push('-i', clip.localPath);
+  });
+  
+  // Build filter complex
+  let filterComplex = '';
+  
+  // Build video filter chain with transitions if present
+  if (enhancements?.clipTransitions?.perClip?.length > 0) {
+    filterComplex = buildTransitionsFilter(clips, enhancements.clipTransitions);
+  } else {
+    // Simple concat
+    const videoInputs = clips.map((_, i) => `[${i}:v]`).join('');
+    filterComplex = `${videoInputs}concat=n=${clips.length}:v=1:a=0[outv]`;
+  }
+  
+  // Handle audio - concat all audio streams
+  const audioInputs = clips.map((_, i) => `[${i}:a]`).join('');
+  filterComplex += `;${audioInputs}concat=n=${clips.length}:v=0:a=1[outa]`;
+  
+  // Calculate total duration
+  const totalDuration = calculateTotalDuration(clips, enhancements);
+  
+  // Add filter complex
+  args.push('-filter_complex', filterComplex);
+  
+  // Map outputs
+  args.push('-map', '[outv]', '-map', '[outa]');
+  
+  // Set duration
+  args.push('-t', totalDuration.toString());
+  
+  // Video encoding settings
+  args.push(
+    '-c:v', 'libx264',
+    '-preset', 'medium',
+    '-crf', '23',
+    '-profile:v', 'high',
+    '-pix_fmt', 'yuv420p'
+  );
+  
+  // Audio encoding settings
+  args.push(
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-ar', '44100'
+  );
+  
+  // Fast start for web playback
+  args.push('-movflags', '+faststart');
+  
+  // Overwrite output
+  args.push('-y');
+  
+  // Output path
+  args.push(outputPath);
+  
+  return args;
+}
+
+function buildTransitionsFilter(clips, transitions) {
+  // xfade transitions for FFmpeg 8
+  let filter = '';
+  let lastOutput = '[0:v]';
+  let offset = 0;
+  
+  for (let i = 0; i < clips.length - 1; i++) {
+    const transition = transitions.perClip?.find(t => t.afterClipIndex === i);
+    const duration = transition?.durationSeconds || 0.5;
+    const type = transition?.type || 'fade';
+    
+    offset += (clips[i].actualDuration || clips[i].duration || 5) - duration;
+    const nextInput = `[${i + 1}:v]`;
+    const outputLabel = i === clips.length - 2 ? '[outv]' : `[v${i}]`;
+    
+    filter += `${lastOutput}${nextInput}xfade=transition=${type}:duration=${duration}:offset=${offset}${outputLabel};`;
+    lastOutput = outputLabel;
+  }
+  
+  return filter.slice(0, -1); // Remove trailing semicolon
+}
+
+function calculateTotalDuration(clips, enhancements) {
+  let total = 0;
+  
+  clips.forEach(clip => {
+    total += clip.actualDuration || clip.duration || 5;
+  });
+  
+  // Subtract transition overlaps
+  const transitions = enhancements?.clipTransitions?.perClip || [];
+  transitions.forEach(t => {
+    total -= t.durationSeconds || 0.5;
+  });
+  
+  return Math.max(1, total); // Ensure at least 1 second
+}
+
+function executeFFmpeg(args, jobId) {
+  return new Promise((resolve, reject) => {
+    const ffmpeg = spawn(FFMPEG_PATH, args);
+    
+    let stderr = '';
+    
+    ffmpeg.stderr.on('data', (data) => {
+      const output = data.toString();
+      stderr += output;
+      
+      // Parse progress from FFmpeg output
+      const timeMatch = output.match(/time=(\d{2}):(\d{2}):(\d{2}\.\d{2})/);
+      if (timeMatch && jobId) {
+        const currentTime = parseInt(timeMatch[1]) * 3600 + 
+                           parseInt(timeMatch[2]) * 60 + 
+                           parseFloat(timeMatch[3]);
+        // Update progress (rough estimate)
+        const currentJob = jobs.get(jobId);
+        if (currentJob && currentJob.status === 'encoding') {
+          const estimatedProgress = 40 + Math.min(35, Math.floor(currentTime * 3.5));
+          jobs.set(jobId, { ...currentJob, progress: estimatedProgress });
+        }
+      }
+    });
+    
+    ffmpeg.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        const errorLines = stderr.split('\n').filter(line => 
+          line.includes('Error') || line.includes('Invalid')
+        ).join('\n');
+        reject(new Error(`FFmpeg failed with code ${code}: ${errorLines || stderr.slice(-500)}`));
+      }
+    });
+    
+    ffmpeg.on('error', (error) => {
+      reject(new Error(`FFmpeg process error: ${error.message}`));
+    });
+  });
+}
+
+async function uploadToS3(filePath, key) {
+  try {
+    const fileStream = fs.createReadStream(filePath);
+    const stats = fs.statSync(filePath);
+    
+    console.log(`Uploading to S3: ${key} (${stats.size} bytes)`);
+    
+    await s3Client.send(new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      Body: fileStream,
+      ContentType: 'video/mp4',
+      ContentLength: stats.size
+    }));
+    
+    const url = `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    console.log(`Upload complete: ${url}`);
+    
+    return url;
+  } catch (error) {
+    throw new Error(`S3 upload failed: ${error.message}`);
+  }
+}
+
+async function sendCallback(callbackUrl, payload) {
+  try {
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    // Add secret if configured
+    if (CALLBACK_SECRET) {
+      headers['X-Callback-Secret'] = CALLBACK_SECRET;
+    }
+    
+    const response = await fetch(callbackUrl, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      console.error(`Callback failed: ${response.status} ${response.statusText}`);
+    } else {
+      console.log(`Callback sent successfully to ${callbackUrl}`);
+    }
+  } catch (error) {
+    console.error(`Callback error: ${error.message}`);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, closing server...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log('='.repeat(50));
+  console.log(`Video Processor Server Started`);
+  console.log('='.repeat(50));
+  console.log(`Port: ${PORT}`);
+  console.log(`FFmpeg: ${FFMPEG_PATH}`);
+  console.log(`S3 Bucket: ${process.env.S3_BUCKET}`);
+  console.log(`AWS Region: ${process.env.AWS_REGION}`);
+  console.log(`Temp Directory: ${TEMP_DIR}`);
+  console.log('='.repeat(50));
+  
+  // Verify FFmpeg is accessible
+  exec(`${FFMPEG_PATH} -version`, (error, stdout) => {
+    if (error) {
+      console.error('⚠️  WARNING: FFmpeg not accessible at', FFMPEG_PATH);
+      console.error('Error:', error.message);
+    } else {
+      console.log('✓ FFmpeg verified:', stdout.split('\n')[0]);
+    }
+  });
+});
