@@ -459,43 +459,44 @@ function buildFFmpegCommand(clips, enhancements, videoSettings, outputPath) {
     args.push('-i', clip.localPath);
   });
   
-  // Build filter complex
-  let filterComplex = '';
-  let videoOutput = '';
-  let audioOutput = '';
-  
   const hasTransitions = enhancements?.clipTransitions?.perClip?.length > 0;
   
   if (clips.length === 1) {
     // Single clip - simple passthrough without filter_complex
-    // We'll handle this case by not using filter_complex at all
     return buildSimpleSingleClipCommand(clips[0], videoSettings, outputPath);
-  } else if (hasTransitions) {
-    // Multiple clips with transitions - use xfade for video only
-    // Audio crossfade is problematic when clips lack audio, so we skip it
-    const { videoFilter } = buildTransitionsFilter(clips, enhancements.clipTransitions);
-    filterComplex = videoFilter;
-    videoOutput = '[outv]';
-    audioOutput = ''; // Will use optional audio mapping instead
+  }
+  
+  // For multiple clips, build a simple concat without complex audio handling
+  // This approach is more reliable across different video types
+  
+  // Calculate total duration for concat
+  const totalDuration = clips.reduce((sum, clip) => sum + (clip.actualDuration || 5), 0);
+  
+  let filterComplex = '';
+  
+  if (hasTransitions && clips.length === 2) {
+    // Simple 2-clip transition case
+    const transition = enhancements.clipTransitions.perClip?.[0];
+    const transitionDuration = transition?.durationSeconds || 0.5;
+    const transitionType = mapTransitionType(transition?.type || 'fade');
+    const clip1Duration = clips[0].actualDuration || 5;
+    const offset = clip1Duration - transitionDuration;
+    
+    filterComplex = `[0:v][1:v]xfade=transition=${transitionType}:duration=${transitionDuration}:offset=${offset}[outv]`;
+  } else if (hasTransitions && clips.length > 2) {
+    // Multiple clips with transitions - chain xfade
+    filterComplex = buildChainedXfade(clips, enhancements.clipTransitions);
   } else {
-    // Multiple clips - concat video only first
+    // Simple concat without transitions
     const videoInputs = clips.map((_, i) => `[${i}:v]`).join('');
     filterComplex = `${videoInputs}concat=n=${clips.length}:v=1:a=0[outv]`;
-    videoOutput = '[outv]';
-    audioOutput = ''; // Will handle audio separately
   }
   
   args.push('-filter_complex', filterComplex);
-  args.push('-map', videoOutput);
+  args.push('-map', '[outv]');
   
-  // For audio: try to map first input's audio, or generate silence
-  // Using '0:a?' makes audio optional - won't fail if no audio
-  if (audioOutput) {
-    args.push('-map', audioOutput);
-  } else {
-    // No audio filter output - try to copy audio from first clip or skip
-    args.push('-map', '0:a?'); // ? makes it optional
-  }
+  // For audio: use first clip's audio if available (optional)
+  args.push('-map', '0:a?');
   
   // Video encoding settings based on quality
   const quality = videoSettings?.quality || 'high';
@@ -510,20 +511,15 @@ function buildFFmpegCommand(clips, enhancements, videoSettings, outputPath) {
     '-pix_fmt', 'yuv420p'
   );
   
-  // Resolution if specified
-  if (videoSettings?.resolution) {
-    const [width, height] = videoSettings.resolution.split('x');
-    if (width && height) {
-      args.push('-vf', `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2`);
-    }
-  }
-  
-  // Audio encoding
+  // Audio encoding (only if audio exists due to ?)
   args.push(
     '-c:a', 'aac',
     '-b:a', '192k',
     '-ar', '48000'
   );
+  
+  // Limit duration to prevent issues
+  args.push('-t', Math.ceil(totalDuration).toString());
   
   // Fast start for web playback
   args.push('-movflags', '+faststart');
@@ -532,6 +528,41 @@ function buildFFmpegCommand(clips, enhancements, videoSettings, outputPath) {
   args.push(outputPath);
   
   return args;
+}
+
+function buildChainedXfade(clips, transitions) {
+  // Build chained xfade for 3+ clips
+  const perClip = transitions.perClip || [];
+  let filter = '';
+  let lastOutput = '[0:v]';
+  let runningOffset = 0;
+  
+  for (let i = 0; i < clips.length - 1; i++) {
+    const clipDuration = clips[i].actualDuration || 5;
+    const transition = perClip.find(t => t.afterClipIndex === i);
+    const transitionDuration = transition?.durationSeconds || 0.5;
+    const transitionType = mapTransitionType(transition?.type || 'fade');
+    
+    // Calculate offset from start of output
+    if (i === 0) {
+      runningOffset = clipDuration - transitionDuration;
+    } else {
+      runningOffset += clipDuration - transitionDuration;
+    }
+    
+    const nextInput = `[${i + 1}:v]`;
+    const outputLabel = i === clips.length - 2 ? '[outv]' : `[v${i}]`;
+    
+    filter += `${lastOutput}${nextInput}xfade=transition=${transitionType}:duration=${transitionDuration}:offset=${runningOffset}${outputLabel}`;
+    
+    if (i < clips.length - 2) {
+      filter += ';';
+    }
+    
+    lastOutput = outputLabel;
+  }
+  
+  return filter;
 }
 
 function buildTransitionsFilter(clips, transitions) {
