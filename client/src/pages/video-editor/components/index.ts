@@ -15,3 +15,7 @@ export { DraggableTransition } from './draggable-transition';
 export { TransitionDropZone } from './transition-drop-zone';
 export type { ClipTransitionLocal } from './transition-drop-zone';
 export { TransitionEditDialog } from './transition-edit-dialog';
+export { PropertiesPanel } from './properties-panel';
+export type { PropertiesPanelProps } from './properties-panel';
+export { AdvancedTimeline } from './advanced-timeline';
+export type { AdvancedTimelineProps } from './advanced-timeline';

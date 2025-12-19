@@ -95,7 +95,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
-import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog } from "./video-editor/components";
+import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline } from "./video-editor/components";
 import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
 
@@ -596,6 +596,12 @@ export default function VideoEditor() {
   // Transition editing state
   const [showTransitionEditModal, setShowTransitionEditModal] = useState(false);
   const [editingTransition, setEditingTransition] = useState<{ position: number; transition: ClipTransitionLocal } | null>(null);
+
+  // CapCut-style layout state
+  const [selectedClip, setSelectedClip] = useState<{ clip: VideoClip; index: number } | null>(null);
+  const [timelineCurrentTime, setTimelineCurrentTime] = useState(0);
+  const [isTimelinePlaying, setIsTimelinePlaying] = useState(false);
+  const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(true);
 
   // Get clip settings for a clip, with defaults
   const getClipSettings = useCallback((clipId: string): ClipSettingsLocal => {
@@ -2500,6 +2506,23 @@ const previewMutation = useMutation({
           </div>
 
           <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={propertiesPanelOpen ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setPropertiesPanelOpen(prev => !prev)}
+                  data-testid="button-toggle-properties"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {propertiesPanelOpen ? "Hide Properties" : "Show Properties"}
+              </TooltipContent>
+            </Tooltip>
+
             <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-credit-cost">
               <Coins className="h-3 w-3" />
               <span className="text-xs">{baseCreditCost} credits</span>
@@ -2544,8 +2567,7 @@ const previewMutation = useMutation({
           </div>
         </header>
 
-        {/* Main Editor Layout: Sidebar + Media Panel + Preview */}
-        {/* Single-track mode uses DndContext for reordering, Multi-track mode has its own internal DndContext */}
+        {/* CapCut-style Layout: Top (Editor) 60% + Bottom (Timeline) 40% */}
         <DndContext
           sensors={sensors}
           collisionDetection={customCollisionDetection}
@@ -2554,16 +2576,18 @@ const previewMutation = useMutation({
             console.log('[DRAG] Drag cancelled');
           }}
         >
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Icon Sidebar */}
-          <EditorSidebar 
-            activeCategory={activeCategory} 
-            onCategoryChange={setActiveCategory} 
-          />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Section: Editor Area (60% of remaining height) */}
+          <div className="flex-[6] flex overflow-hidden min-h-0">
+            {/* Left Icon Sidebar */}
+            <EditorSidebar 
+              activeCategory={activeCategory} 
+              onCategoryChange={setActiveCategory} 
+            />
 
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background" style={{ height: '100vh' }} data-testid="media-panel">
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background h-full overflow-hidden" data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -3434,7 +3458,7 @@ const previewMutation = useMutation({
             </Button>
           )}
 
-          {/* Preview Surface - Always Visible */}
+          {/* Center: Preview Surface (flex-1 to take remaining space) */}
           <div className="flex-1 flex flex-col min-w-0 relative">
             <PreviewSurface
               previewUrl={previewUrl}
@@ -3448,14 +3472,14 @@ const previewMutation = useMutation({
             {textOverlays.length > 0 && (
               <TextOverlayRenderer
                 overlays={textOverlays}
-                currentTime={0}
+                currentTime={timelineCurrentTime}
                 selectedOverlayId={selectedOverlayId}
                 onSelectOverlay={setSelectedOverlayId}
-                isPlaying={false}
+                isPlaying={isTimelinePlaying}
               />
             )}
 
-            {/* Preview Controls - Works for both single and multi-track modes */}
+            {/* Preview Controls */}
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
               <Button
                 variant="secondary"
@@ -3478,59 +3502,67 @@ const previewMutation = useMutation({
               </Button>
             </div>
           </div>
-        </div>
 
-        {/* Timeline at Bottom */}
-        <div className="border-t">
-          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-            <span className="text-sm font-medium">Timeline</span>
-            {/* Multi-track toggle disabled for now - will be re-enabled later */}
-            {/* <div className="flex items-center gap-2">
-              <Label htmlFor="multi-track-toggle" className="text-xs text-muted-foreground">
-                Multi-Track
-              </Label>
-              <Switch
-                id="multi-track-toggle"
-                checked={useMultiTrack}
-                onCheckedChange={handleMultiTrackToggle}
-                data-testid="switch-multi-track-mode"
+          {/* Right: Properties Panel (w-72, ~25% of typical screen) */}
+          {propertiesPanelOpen && (
+            <div className="w-72 border-l bg-background shrink-0" data-testid="properties-panel-container">
+              <PropertiesPanel
+                selectedClip={selectedClip}
+                clipSettings={selectedClip ? getClipSettings(selectedClip.clip.id) : null}
+                enhancements={enhancements}
+                onClipSettingsChange={(updates) => {
+                  if (selectedClip) {
+                    updateClipSettings(selectedClip.clip.id, updates);
+                  }
+                }}
+                onEnhancementsChange={(updates) => setEnhancements(prev => ({ ...prev, ...updates }))}
+                onMuteToggle={() => {
+                  if (selectedClip) {
+                    toggleClipMute(selectedClip.clip.id);
+                  }
+                }}
+                totalDuration={totalDuration}
+                clipCount={orderedClips.length}
+                className="h-full"
               />
-            </div> */}
+            </div>
+          )}
           </div>
 
-          {useMultiTrack ? (
-            <MultiTrackTimeline
-              key={multiTrackKey}
-              items={multiTrackItems}
-              onItemsChange={setMultiTrackItems}
-              onItemSelect={(item) => {
-                if (item) {
-                  toast({
-                    title: "Clip selected",
-                    description: `Selected: ${item.name || item.type} clip`,
-                  });
-                }
-              }}
-              totalDuration={Math.max(totalDuration, 60)}
-              className="h-[400px]"
-            />
-          ) : (
-            <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
-              <TimelineTrack
-                clips={orderedClips}
-                audioTracks={audioTracks}
-                getClipSettings={getClipSettings}
-                onMuteToggle={toggleClipMute}
-                onRemoveClip={removeClipFromTimeline}
-                onRemoveAudioTrack={removeAudioTrack}
-                onOpenSettings={openClipSettings}
-                totalDuration={totalDuration}
-                clipTransitions={enhancements.clipTransitions}
-                onTransitionEdit={handleTransitionEdit}
-                onTransitionRemove={handleTransitionRemove}
-              />
-            </SortableContext>
-          )}
+          {/* Bottom Section: Functional Timeline (40% of remaining height) */}
+          <div className="flex-[4] border-t min-h-0 flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 shrink-0">
+              <span className="text-sm font-medium">Timeline</span>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">
+                  {orderedClips.length} clips
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {Math.floor(totalDuration / 60)}:{String(Math.floor(totalDuration % 60)).padStart(2, '0')}
+                </span>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <SortableContext items={orderedClips.map(c => c.id)} strategy={horizontalListSortingStrategy}>
+                <TimelineTrack
+                  clips={orderedClips}
+                  audioTracks={audioTracks}
+                  getClipSettings={getClipSettings}
+                  onMuteToggle={toggleClipMute}
+                  onRemoveClip={removeClipFromTimeline}
+                  onRemoveAudioTrack={removeAudioTrack}
+                  onOpenSettings={(clip, index) => {
+                    setSelectedClip({ clip, index });
+                    openClipSettings(clip, index);
+                  }}
+                  totalDuration={totalDuration}
+                  clipTransitions={enhancements.clipTransitions}
+                  onTransitionEdit={handleTransitionEdit}
+                  onTransitionRemove={handleTransitionRemove}
+                />
+              </SortableContext>
+            </div>
+          </div>
         </div>
         </DndContext>
       </div>
