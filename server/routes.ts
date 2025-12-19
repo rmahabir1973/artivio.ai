@@ -8320,6 +8320,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     downloadUrl?: string;
     error?: string;
     createdAt: Date;
+    userId?: number;
+    videoSettings?: any;
   }> = new Map();
   
   // Cleanup expired export jobs to prevent memory leak (24-hour TTL)
@@ -8361,10 +8363,12 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       
       console.log(`[Video Editor] Starting VPS export job ${jobId} for user ${userId} with ${project.clips.length} clips`);
       
-      // Store job in tracking map
+      // Store job in tracking map (include userId for callback)
       videoExportJobs.set(jobId, {
         status: 'processing',
         createdAt: new Date(),
+        userId,
+        videoSettings,
       });
       
       // Normalize clips to ensure they have sourceUrl (handle both url and sourceUrl from frontend)
@@ -8623,17 +8627,54 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       
       console.log(`[Video Editor] Callback received for job ${jobId}:`, { status, downloadUrl, error });
       
-      if (!videoExportJobs.has(jobId)) {
+      const existingJob = videoExportJobs.get(jobId);
+      if (!existingJob) {
         console.warn(`[Video Editor] Unknown job ${jobId} in callback`);
         return res.status(404).json({ message: "Job not found" });
       }
       
+      // Update job status
       videoExportJobs.set(jobId, {
+        ...existingJob,
         status: status === 'completed' ? 'completed' : 'failed',
         downloadUrl,
         error,
-        createdAt: videoExportJobs.get(jobId)!.createdAt,
       });
+      
+      // Create generation record for library if completed
+      if (status === 'completed' && downloadUrl && existingJob.userId) {
+        try {
+          const generation = await storage.createGeneration({
+            userId: existingJob.userId,
+            type: 'video-editor',
+            status: 'completed',
+            resultUrl: downloadUrl,
+            model: 'Video Editor (VPS)',
+            prompt: 'Video Editor Export',
+            parameters: existingJob.videoSettings || {},
+            creditsCost: 0,
+            processingStage: 'completed',
+          });
+          
+          console.log(`[Video Editor] ✅ Created generation record ${generation.id} for job ${jobId}`);
+          
+          // Generate thumbnail (non-blocking)
+          if (generation?.id) {
+            generateThumbnail({
+              videoUrl: downloadUrl,
+              generationId: generation.id,
+              timestampSeconds: 2,
+            }).then(async (thumbResult) => {
+              await storage.updateGeneration(generation.id, { thumbnailUrl: thumbResult.thumbnailUrl });
+              console.log(`✓ Thumbnail generated for video editor export ${generation.id}`);
+            }).catch((error) => {
+              console.error(`⚠️  Thumbnail generation failed for video editor export:`, error.message);
+            });
+          }
+        } catch (genError: any) {
+          console.error(`[Video Editor] Failed to create generation record:`, genError.message);
+        }
+      }
       
       res.json({ received: true });
       
