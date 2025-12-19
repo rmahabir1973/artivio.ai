@@ -17,8 +17,6 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { GetObjectCommand } = require('@aws-sdk/client-s3');
 
 const app = express();
 app.use(cors());
@@ -661,14 +659,9 @@ async function uploadToS3(filePath, key, jobId) {
   
   await s3Client.send(putCommand);
   
-  // Generate pre-signed URL for download (valid for 7 days)
-  const getCommand = new GetObjectCommand({
-    Bucket: S3_BUCKET,
-    Key: key,
-  });
-  
-  const downloadUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 604800 }); // 7 days
-  console.log(`[${jobId}] Generated pre-signed URL (7 day expiry)`);
+  // Return public URL (bucket policy allows public read on exports/*)
+  const downloadUrl = `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  console.log(`[${jobId}] Upload complete: ${downloadUrl}`);
   
   return downloadUrl;
 }
