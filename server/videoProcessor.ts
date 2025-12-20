@@ -564,11 +564,33 @@ function buildFilterGraph(
     resampledLabels.push(resampledLabel);
   }
 
-  if (videoCount > 1 && enhancements?.transitions?.mode === 'crossfade') {
-    const duration = transitionDuration;
+  // Apply audio crossfade for both 'crossfade' mode and 'perClip' mode
+  if (videoCount > 1 && (enhancements?.transitions?.mode === 'crossfade' || hasPerClipTransitions)) {
     let currentAudioStream = resampledLabels[0];
+    let totalAudioPadDuration = 0;
+    
+    // For perClip mode, build a map of transitions by afterClipIndex
+    const perClipTransitions = new Map<number, { type: string; durationSeconds: number }>();
+    if (hasPerClipTransitions && enhancements?.transitions?.perClip) {
+      for (const t of enhancements.transitions.perClip) {
+        perClipTransitions.set(t.afterClipIndex, { type: t.type, durationSeconds: t.durationSeconds });
+      }
+    }
     
     for (let i = 1; i < videoCount; i++) {
+      // Get transition settings for this gap
+      const transition = hasPerClipTransitions 
+        ? perClipTransitions.get(i - 1) 
+        : { type: 'fade', durationSeconds: transitionDuration };
+      
+      if (!transition) {
+        // No transition for this gap - skip audio crossfade
+        continue;
+      }
+      
+      const duration = transition.durationSeconds;
+      totalAudioPadDuration += duration;
+      
       const isLast = i === videoCount - 1;
       // Use intermediate label for crossfade, then add apad to final
       const nextLabel = isLast ? '[axfout]' : `[a${i}xf]`;
@@ -578,8 +600,6 @@ function buildFilterGraph(
     }
     
     // CRITICAL: Add apad to preserve audio duration matching video tpad
-    // Scale padding to (n-1)*transitionDuration to match video tpad
-    const totalAudioPadDuration = (videoCount - 1) * duration;
     audioFilterSteps.push(`[axfout]apad=pad_dur=${totalAudioPadDuration.toFixed(3)}[aout]`);
   } else if (videoCount > 1) {
     audioFilterSteps.push(`${resampledLabels.join('')}concat=n=${videoCount}:v=0:a=1[aout]`);
@@ -826,6 +846,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
     const hasEnhancements = !!(
       enhancements?.transitions?.mode === 'crossfade' ||
+      (enhancements?.transitions?.mode === 'perClip' && enhancements.transitions.perClip && enhancements.transitions.perClip.length > 0) ||
       enhancements?.backgroundMusic ||
       enhancements?.audioTrack ||
       enhancements?.avatarOverlay ||
