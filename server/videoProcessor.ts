@@ -830,6 +830,83 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       }
     }
 
+    // Download audio tracks (from timeline editor) with position, trim, and fade settings
+    interface AudioTrackInfo {
+      path: string;
+      positionSeconds: number;
+      trimStartSeconds: number;
+      trimEndSeconds: number;
+      fadeOutSeconds: number;
+      volume: number;
+      duration: number;
+    }
+    const audioTrackInfos: AudioTrackInfo[] = [];
+    
+    // audioTracks is a new property passed from the video editor for timeline audio editing
+    const enhancementsAny = enhancements as Record<string, unknown> | undefined;
+    const audioTracksArray = enhancementsAny?.audioTracks;
+    
+    if (audioTracksArray && Array.isArray(audioTracksArray)) {
+      onProgress?.('download', 'Downloading audio tracks...');
+      
+      for (let i = 0; i < audioTracksArray.length; i++) {
+        const track = audioTracksArray[i] as {
+          id: string;
+          url: string;
+          duration?: number;
+          positionSeconds?: number;
+          trimStartSeconds?: number;
+          trimEndSeconds?: number;
+          fadeOutSeconds?: number;
+          volume?: number;
+        };
+        
+        if (!track.url) continue;
+        
+        try {
+          let audioUrl = track.url;
+          
+          // Refresh S3 signed URL if expired
+          if (s3.isS3SignedUrl(audioUrl)) {
+            try {
+              audioUrl = await s3.refreshSignedUrl(audioUrl);
+              console.log(`[VideoProcessor] ✓ Refreshed audio track ${i + 1} S3 URL`);
+            } catch (refreshError: any) {
+              console.error(`[VideoProcessor] Failed to refresh audio track ${i + 1} URL:`, refreshError.message);
+            }
+          }
+          
+          console.log(`[VideoProcessor] Downloading audio track ${i + 1} from:`, audioUrl);
+          const trackPath = await downloadAudio(audioUrl, tempDir!);
+          tempFiles.push(trackPath);
+          
+          const trackDuration = await getAudioDuration(trackPath);
+          
+          audioTrackInfos.push({
+            path: trackPath,
+            positionSeconds: track.positionSeconds ?? 0,
+            trimStartSeconds: track.trimStartSeconds ?? 0,
+            trimEndSeconds: track.trimEndSeconds ?? trackDuration,
+            fadeOutSeconds: track.fadeOutSeconds ?? 0,
+            volume: track.volume ?? 1.0,
+            duration: trackDuration,
+          });
+          
+          console.log(`[VideoProcessor] ✓ Audio track ${i + 1} downloaded:`, {
+            path: trackPath,
+            duration: trackDuration,
+            position: track.positionSeconds ?? 0,
+            trimStart: track.trimStartSeconds ?? 0,
+            trimEnd: track.trimEndSeconds ?? trackDuration,
+            fadeOut: track.fadeOutSeconds ?? 0,
+          });
+        } catch (trackError: any) {
+          console.error(`[VideoProcessor] Failed to download audio track ${i + 1}:`, trackError.message);
+          // Continue with other tracks instead of failing completely
+        }
+      }
+    }
+
     // Download avatar overlay video if specified
     let avatarPath: string | undefined;
     if (enhancements?.avatarOverlay?.videoUrl) {
@@ -849,6 +926,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       (enhancements?.transitions?.mode === 'perClip' && enhancements.transitions.perClip && enhancements.transitions.perClip.length > 0) ||
       enhancements?.backgroundMusic ||
       enhancements?.audioTrack ||
+      audioTrackInfos.length > 0 ||
       enhancements?.avatarOverlay ||
       (enhancements?.textOverlays && enhancements.textOverlays.length > 0) ||
       (enhancements?.speed && enhancements.speed.mode !== 'none') ||
@@ -889,6 +967,14 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       
       const avatarInputFlag = avatarPath ? `-i "${avatarPath}"` : '';
       const avatarStreamIdx = avatarPath ? inputIdx++ : -1;
+      
+      // Build input flags for audio tracks
+      const audioTrackInputFlags: string[] = [];
+      const audioTrackStreamIndices: number[] = [];
+      for (const trackInfo of audioTrackInfos) {
+        audioTrackInputFlags.push(`-i "${trackInfo.path}"`);
+        audioTrackStreamIndices.push(inputIdx++);
+      }
 
       const { videoFilters, audioFilters, adjustedDurations, transitionDuration } = buildFilterGraph(
         normalizedPaths.length,
@@ -1039,6 +1125,47 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
         completeAudioFilter += `;${avatarAudioFilter};${finalAudioLabel}[avatar_audio]amix=inputs=2:duration=first:dropout_transition=0[amix_avatar]`;
         finalAudioLabel = '[amix_avatar]';
       }
+      
+      // Add audio tracks from timeline editor (with position, trim, and fade support)
+      for (let i = 0; i < audioTrackInfos.length; i++) {
+        const trackInfo = audioTrackInfos[i];
+        const streamIdx = audioTrackStreamIndices[i];
+        
+        const { positionSeconds, trimStartSeconds, trimEndSeconds, fadeOutSeconds, volume, duration } = trackInfo;
+        
+        // Calculate effective duration after trimming
+        const effectiveDuration = Math.max(0.1, trimEndSeconds - trimStartSeconds);
+        
+        // Build filter for this audio track
+        // Step 1: Trim the audio to the user-specified range
+        let audioFilter = `[${streamIdx}:a]atrim=${trimStartSeconds.toFixed(3)}:${trimEndSeconds.toFixed(3)},asetpts=PTS-STARTPTS`;
+        
+        // Step 2: Apply volume
+        audioFilter += `,volume=${volume.toFixed(2)}`;
+        
+        // Step 3: Apply fade out if specified
+        if (fadeOutSeconds > 0) {
+          const effectiveFadeOut = Math.min(fadeOutSeconds, effectiveDuration * 0.8);
+          const fadeOutStart = Math.max(0, effectiveDuration - effectiveFadeOut);
+          audioFilter += `,afade=t=out:st=${fadeOutStart.toFixed(3)}:d=${effectiveFadeOut.toFixed(3)}`;
+        }
+        
+        // Step 4: Delay the audio to start at the specified position
+        if (positionSeconds > 0) {
+          const delayMs = Math.round(positionSeconds * 1000);
+          audioFilter += `,adelay=${delayMs}|${delayMs}`;
+        }
+        
+        const trackLabel = `atrack${i}`;
+        audioFilter += `[${trackLabel}]`;
+        
+        // Mix this track with the current audio output
+        const mixLabel = `amix_track${i}`;
+        completeAudioFilter += `;${audioFilter};${finalAudioLabel}[${trackLabel}]amix=inputs=2:duration=first:dropout_transition=0[${mixLabel}]`;
+        finalAudioLabel = `[${mixLabel}]`;
+        
+        console.log(`[VideoProcessor] Audio track ${i + 1} filter: position=${positionSeconds}s, trim=${trimStartSeconds}-${trimEndSeconds}s, fadeOut=${fadeOutSeconds}s`);
+      }
 
       const fullFilterComplex = completeVideoFilter + ';' + completeAudioFilter;
 
@@ -1047,7 +1174,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       // CRITICAL: Videos are already normalized to 720p in normalizeVideo() step
       // DO NOT add -vf here - it conflicts with filter_complex outputs and causes artifacts
       // The normalized inputs already have consistent 720p, 30fps, 44100Hz audio
-      const allInputFlags = [inputFlags, musicInputFlag, voiceInputFlag, avatarInputFlag].filter(Boolean).join(' ');
+      const allInputFlags = [inputFlags, musicInputFlag, voiceInputFlag, avatarInputFlag, ...audioTrackInputFlags].filter(Boolean).join(' ');
       ffmpegCommand = `ffmpeg ${allInputFlags} -filter_complex "${fullFilterComplex}" -map "${finalVideoLabel}" -map "${finalAudioLabel}" -c:v libx264 -b:v 2500k -profile:v high -level 4.1 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 24 -c:a aac -b:a 128k -ar 44100 "${outputPath}"`;
     }
 

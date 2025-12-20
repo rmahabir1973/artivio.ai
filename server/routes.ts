@@ -8541,7 +8541,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       // Extract video URLs from clips (handle both formats from frontend)
       const videoUrls = previewClips.map((clip: any) => clip.sourceUrl || clip.url);
       
-      // Build preview enhancements (include speed, background music, audio)
+      // Build preview enhancements (include speed, background music, audio tracks)
       const previewEnhancements = enhancements ? {
         transitions: enhancements.transitions,
         clipSettings: enhancements.clipSettings?.filter((cs: any) => 
@@ -8550,6 +8550,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         speed: enhancements.speed,
         backgroundMusic: enhancements.backgroundMusic,
         audioTrack: enhancements.audioTrack,
+        // Include audio tracks with position, trim, and fade settings
+        audioTracks: enhancements.audioTracks,
         fadeIn: enhancements.fadeIn,
         fadeOut: enhancements.fadeOut,
         fadeDuration: enhancements.fadeDuration,
