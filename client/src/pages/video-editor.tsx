@@ -140,6 +140,7 @@ interface ClipTransitionLocal {
   afterClipIndex: number;
   type: TransitionType | string; // Allow string for component compatibility
   durationSeconds: number;
+  trackId?: string; // Which layer this transition belongs to
 }
 
 interface EnhancementsState {
@@ -2677,7 +2678,7 @@ const previewMutation = useMutation({
 
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 h-full border-r flex flex-col shrink-0 bg-background" data-testid="media-panel">
+            <div className="w-72 h-full border-r flex flex-col shrink-0 bg-background" style={{ minHeight: 0 }} data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -2691,8 +2692,8 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
+              <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+              <ScrollArea className="h-full" style={{ maxHeight: '100%' }}>
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
