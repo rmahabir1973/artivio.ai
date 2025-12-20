@@ -10,6 +10,9 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
+  DragMoveEvent,
+  DragOverlay,
   CollisionDetection,
 } from "@dnd-kit/core";
 import {
@@ -133,6 +136,7 @@ interface ClipSettingsLocal {
   trimEndSeconds?: number;
   originalDuration?: number; // Actual video duration in seconds (loaded from video metadata)
   displayDuration?: number; // For images: how long to display (default 5 seconds)
+  positionSeconds?: number; // Manual position for free positioning mode (when snap is disabled)
 }
 
 // Per-clip transition state (for the transition AFTER each clip)
@@ -151,6 +155,7 @@ interface EnhancementsState {
   fadeOut: boolean;
   fadeDuration: number; // seconds
   aspectRatio: '16:9' | '9:16' | '1:1';
+  snapEnabled: boolean; // Free positioning vs. auto-sequencing
   backgroundMusic?: {
     audioUrl: string;
     volume: number;
@@ -553,6 +558,10 @@ export default function VideoEditor() {
   // New OpenCut/CapCut-style layout state
   const [activeCategory, setActiveCategory] = useState<EditorCategory>('media');
   const [mediaPanelOpen, setMediaPanelOpen] = useState(true);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [activeDragData, setActiveDragData] = useState<any>(null);
+  const [dragDelta, setDragDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [dragInitialPosition, setDragInitialPosition] = useState<number>(0);
 
   // Enhanced editor state
   const [clipSettings, setClipSettings] = useState<Map<string, ClipSettingsLocal>>(new Map());
@@ -564,6 +573,7 @@ export default function VideoEditor() {
     fadeOut: false,
     fadeDuration: 0.5,
     aspectRatio: '16:9',
+    snapEnabled: false, // Default to free positioning mode
     textOverlays: [],
     captions: [],
   });
@@ -2151,6 +2161,51 @@ const previewMutation = useMutation({
       return;
     }
 
+    // ========================================================================
+    // Handle clip drag (reordering/repositioning within timeline)
+    // ========================================================================
+    if (activeData?.type === 'clip') {
+      const clipId = activeData.clip?.id || activeId;
+      
+      console.log('[DRAG] Clip drag:', { clipId, dragDelta, dragInitialPosition });
+      
+      // If significant horizontal movement, update position (only in free mode)
+      if (!enhancements.snapEnabled && Math.abs(dragDelta.x) >= 5) {
+        // Calculate new position using initial position + delta
+        // Use 100 pixels per second as base (matches PIXELS_PER_SECOND_BASE in timeline)
+        const pixelsPerSecond = 100; // Base rate - zoom is already factored into the drag delta
+        const deltaSeconds = dragDelta.x / pixelsPerSecond;
+        
+        // Calculate new position from initial, not current (avoids compounding)
+        const newPosition = Math.max(0, dragInitialPosition + deltaSeconds);
+        
+        updateClipSettings(clipId, { positionSeconds: newPosition });
+        
+        console.log('[DRAG] Updated clip position:', { clipId, newPosition, deltaSeconds, initial: dragInitialPosition });
+      }
+      
+      // If significant vertical movement, change track
+      if (Math.abs(dragDelta.y) >= 30 && dragDelta.y !== 0) {
+        const clip = orderedClips.find(c => c.id === clipId);
+        if (clip) {
+          const currentTrackId = clip.trackId || 'layer-1';
+          const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
+          const trackDelta = Math.round(dragDelta.y / 60); // ~60px per track
+          const newTrackNum = Math.max(1, Math.min(4, currentTrackNum + trackDelta));
+          const newTrackId = `layer-${newTrackNum}`;
+          
+          if (newTrackId !== currentTrackId) {
+            setOrderedClips(items => items.map(c => 
+              c.id === clipId ? { ...c, trackId: newTrackId } : c
+            ));
+            toast({ title: "Clip Moved", description: `Moved to ${newTrackId.replace('-', ' ').replace('layer', 'Layer')}` });
+          }
+        }
+      }
+      
+      return;
+    }
+
     // In multi-track mode, ONLY handle media-to-track drops
     if (useMultiTrack) {
       if (!(activeId.startsWith('draggable-') && overId.startsWith('track-drop-'))) {
@@ -2662,9 +2717,33 @@ const previewMutation = useMutation({
         <DndContext
           sensors={sensors}
           collisionDetection={customCollisionDetection}
-          onDragEnd={handleDragEnd}
+          onDragStart={(event: DragStartEvent) => {
+            console.log('[DRAG START]', event.active.id, event.active.data.current);
+            setActiveDragId(String(event.active.id));
+            setActiveDragData(event.active.data.current);
+            setDragDelta({ x: 0, y: 0 });
+            // Capture initial position for clips
+            const data = event.active.data.current;
+            if (data?.type === 'clip' && data?.clip?.id) {
+              const settings = getClipSettings(data.clip.id);
+              setDragInitialPosition(settings.positionSeconds ?? 0);
+            }
+          }}
+          onDragMove={(event: DragMoveEvent) => {
+            // Track cumulative delta during drag
+            setDragDelta({ x: event.delta.x, y: event.delta.y });
+          }}
+          onDragEnd={(event: DragEndEvent) => {
+            handleDragEnd(event);
+            setActiveDragId(null);
+            setActiveDragData(null);
+            setDragDelta({ x: 0, y: 0 });
+          }}
           onDragCancel={() => {
             console.log('[DRAG] Drag cancelled');
+            setActiveDragId(null);
+            setActiveDragData(null);
+            setDragDelta({ x: 0, y: 0 });
           }}
         >
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -3707,6 +3786,8 @@ const previewMutation = useMutation({
               onClipSettingsChange={(clipId, settings) => {
                 updateClipSettings(clipId, settings);
               }}
+              snapEnabled={enhancements.snapEnabled}
+              onSnapChange={(enabled) => setEnhancements(prev => ({ ...prev, snapEnabled: enabled }))}
               selectedClipId={selectedClip?.clip.id ?? null}
               totalDuration={totalDuration}
               currentTime={timelineCurrentTime}
@@ -3717,6 +3798,35 @@ const previewMutation = useMutation({
             />
           </div>
         </div>
+        
+        {/* Drag Overlay - shows what's being dragged */}
+        <DragOverlay>
+          {activeDragId && activeDragData && (
+            <div className="p-2 bg-primary/20 rounded border-2 border-primary backdrop-blur-sm shadow-lg pointer-events-none">
+              <div className="flex items-center gap-2">
+                {activeDragData.type === 'media-item' && (
+                  <>
+                    <Video className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-medium text-foreground">
+                      {activeDragData.mediaType || 'Media'}
+                    </span>
+                  </>
+                )}
+                {activeDragData.type === 'transition' && (
+                  <>
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-medium text-foreground">
+                      {activeDragData.transitionType || 'Transition'}
+                    </span>
+                  </>
+                )}
+                {!activeDragData.type && (
+                  <span className="text-xs font-medium text-foreground">Dragging...</span>
+                )}
+              </div>
+            </div>
+          )}
+        </DragOverlay>
         </DndContext>
       </div>
 

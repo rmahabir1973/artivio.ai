@@ -1,16 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
-  DndContext,
-  DragEndEvent,
-  DragStartEvent,
-  DragMoveEvent,
   useDraggable,
   useDroppable,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
 } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -64,6 +55,7 @@ interface ClipSettingsLocal {
   trimEndSeconds?: number;
   originalDuration?: number;
   displayDuration?: number;
+  positionSeconds?: number; // Manual position for free positioning mode
 }
 
 interface ClipTransitionLocal {
@@ -106,6 +98,8 @@ interface AdvancedTimelineProps {
   onTransitionRemove: (index: number) => void;
   onAudioRemove: (trackId: string) => void;
   onClipSettingsChange?: (clipId: string, settings: Partial<ClipSettingsLocal>) => void;
+  snapEnabled?: boolean;
+  onSnapChange?: (enabled: boolean) => void;
   selectedClipId: string | null;
   totalDuration: number;
   currentTime: number;
@@ -650,6 +644,8 @@ export function AdvancedTimeline({
   onTransitionRemove,
   onAudioRemove,
   onClipSettingsChange,
+  snapEnabled = false,
+  onSnapChange,
   selectedClipId,
   totalDuration,
   currentTime,
@@ -660,7 +656,6 @@ export function AdvancedTimeline({
   className,
 }: AdvancedTimelineProps) {
   const [zoom, setZoom] = useState(1);
-  const [snapEnabled, setSnapEnabled] = useState(true);
   const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set());
   const [trackVisibility, setTrackVisibility] = useState<Record<string, boolean>>({
     'layer-1': true,
@@ -671,15 +666,6 @@ export function AdvancedTimeline({
   const [trackLocked, setTrackLocked] = useState<Record<string, boolean>>({});
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [activeClipId, setActiveClipId] = useState<string | null>(null);
-  
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
   
   useEffect(() => {
     if (selectedClipId) {
@@ -694,7 +680,7 @@ export function AdvancedTimeline({
   const totalWidth = (effectiveDuration + 10) * pixelsPerSecond;
   
   const clipPositions = useMemo((): ClipPosition[] => {
-    // Track running time per layer to allow clips on different layers to overlap
+    // First, compute auto-sequenced positions for all clips (needed for both modes)
     const runningTimeByLayer: Record<string, number> = {
       'layer-1': 0,
       'layer-2': 0,
@@ -702,7 +688,7 @@ export function AdvancedTimeline({
       'layer-4': 0,
     };
     
-    return clips.map((clip, index) => {
+    const autoSequencedPositions: number[] = clips.map((clip, index) => {
       const settings = getClipSettings(clip.id);
       const trackId = clip.trackId || 'layer-1';
       let duration: number;
@@ -717,7 +703,6 @@ export function AdvancedTimeline({
         duration = (trimEnd - trimStart) / speed;
       }
       
-      // Apply transitions per-layer - find transition for this clip's layer
       const transitionTrackId = trackId || 'layer-1';
       const transition = clipTransitions.find(t => 
         t.afterClipIndex === index - 1 && (t.trackId || 'layer-1') === transitionTrackId
@@ -726,14 +711,61 @@ export function AdvancedTimeline({
       
       const layerRunningTime = runningTimeByLayer[trackId] || 0;
       const startTime = Math.max(0, layerRunningTime - overlap);
+      
+      runningTimeByLayer[trackId] = startTime + duration;
+      
+      return startTime;
+    });
+    
+    // Free positioning mode - use stored positionSeconds, fall back to auto-sequence
+    if (!snapEnabled) {
+      return clips.map((clip, index) => {
+        const settings = getClipSettings(clip.id);
+        let duration: number;
+        
+        if (clip.type === 'image') {
+          duration = settings.displayDuration ?? 5;
+        } else {
+          const originalDuration = settings.originalDuration ?? 5;
+          const trimStart = settings.trimStartSeconds ?? 0;
+          const trimEnd = settings.trimEndSeconds ?? originalDuration;
+          const speed = settings.speed ?? 1;
+          duration = (trimEnd - trimStart) / speed;
+        }
+        
+        // Use manual position if set, otherwise use auto-sequenced position
+        const startTime = settings.positionSeconds !== undefined 
+          ? settings.positionSeconds 
+          : autoSequencedPositions[index];
+        const left = startTime * pixelsPerSecond;
+        const width = duration * pixelsPerSecond;
+        
+        return { clip, index, startTime, duration, left, width, settings };
+      });
+    }
+    
+    // Snap mode - use the already computed auto-sequenced positions
+    return clips.map((clip, index) => {
+      const settings = getClipSettings(clip.id);
+      let duration: number;
+      
+      if (clip.type === 'image') {
+        duration = settings.displayDuration ?? 5;
+      } else {
+        const originalDuration = settings.originalDuration ?? 5;
+        const trimStart = settings.trimStartSeconds ?? 0;
+        const trimEnd = settings.trimEndSeconds ?? originalDuration;
+        const speed = settings.speed ?? 1;
+        duration = (trimEnd - trimStart) / speed;
+      }
+      
+      const startTime = autoSequencedPositions[index];
       const left = startTime * pixelsPerSecond;
       const width = duration * pixelsPerSecond;
       
-      runningTimeByLayer[trackId] = layerRunningTime + duration;
-      
       return { clip, index, startTime, duration, left, width, settings };
     });
-  }, [clips, getClipSettings, clipTransitions, pixelsPerSecond]);
+  }, [clips, getClipSettings, clipTransitions, pixelsPerSecond, snapEnabled]);
   
   const handleClipSelect = useCallback((clip: VideoClip, index: number, addToSelection: boolean) => {
     if (addToSelection) {
@@ -772,62 +804,6 @@ export function AdvancedTimeline({
       onClipSplit(clip.id, splitTimeInClip);
     }
   }, [onClipSplit]);
-  
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveClipId(event.active.id as string);
-  }, []);
-  
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, delta, over } = event;
-    setActiveClipId(null);
-    
-    const clipId = active.id as string;
-    const clip = clips.find(c => c.id === clipId);
-    if (!clip) return;
-    
-    const clipIndex = clips.findIndex(c => c.id === clipId);
-    if (clipIndex === -1) return;
-    
-    // Check for vertical track change (y delta > track height threshold)
-    if (Math.abs(delta.y) >= TRACK_HEIGHT / 2 && onClipTrackChange) {
-      const trackIndex = Math.floor(delta.y / TRACK_HEIGHT);
-      const currentTrackId = clip.trackId || 'layer-1';
-      const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
-      const newTrackNum = Math.max(1, Math.min(4, currentTrackNum + trackIndex));
-      const newTrackId = `layer-${newTrackNum}`;
-      
-      if (newTrackId !== currentTrackId) {
-        onClipTrackChange(clipId, newTrackId);
-        return;
-      }
-    }
-    
-    // Handle horizontal reordering
-    if (Math.abs(delta.x) < 5) return;
-    
-    const currentPosition = clipPositions[clipIndex];
-    if (!currentPosition) return;
-    
-    const deltaSeconds = delta.x / pixelsPerSecond;
-    const newStartTime = Math.max(0, currentPosition.startTime + deltaSeconds);
-    
-    let targetIndex = clipIndex;
-    for (let i = 0; i < clipPositions.length; i++) {
-      if (i === clipIndex) continue;
-      const pos = clipPositions[i];
-      if (newStartTime < pos.startTime + pos.duration / 2) {
-        targetIndex = i < clipIndex ? i : i;
-        break;
-      }
-      targetIndex = i + 1;
-    }
-    
-    if (targetIndex > clipIndex) targetIndex--;
-    
-    if (targetIndex !== clipIndex) {
-      onClipReorder(clipIndex, targetIndex);
-    }
-  }, [clips, clipPositions, pixelsPerSecond, onClipReorder, onClipTrackChange]);
   
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
@@ -889,9 +865,6 @@ export function AdvancedTimeline({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onPlayPause, onTimeChange, currentTime, effectiveDuration, selectedClipIds, onClipRemove, clips]);
-  
-  const activeClip = activeClipId ? clips.find(c => c.id === activeClipId) : null;
-  const activeClipPosition = activeClipId ? clipPositions.find(p => p.clip.id === activeClipId) : null;
   
   const musicTracks = audioTracks.filter(t => t.type === 'music');
   const voiceTracks = audioTracks.filter(t => t.type === 'voice' || t.type === 'sfx');
@@ -955,7 +928,7 @@ export function AdvancedTimeline({
               variant={snapEnabled ? 'secondary' : 'ghost'}
               size="sm"
               className="h-7 text-xs gap-1"
-              onClick={() => setSnapEnabled(!snapEnabled)}
+              onClick={() => onSnapChange?.(!snapEnabled)}
               data-testid="button-snap"
             >
               <Magnet className="h-3 w-3" />
@@ -1055,12 +1028,6 @@ export function AdvancedTimeline({
           })}
         </div>
         
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
           <div
             ref={scrollContainerRef}
             className="flex-1 overflow-auto"
@@ -1421,24 +1388,6 @@ export function AdvancedTimeline({
             </div>
           </div>
           
-          <DragOverlay>
-            {activeClip && activeClipPosition && (
-              <div
-                className="rounded overflow-hidden border-2 border-primary bg-primary/20 backdrop-blur-sm"
-                style={{
-                  width: `${activeClipPosition.width}px`,
-                  height: `${TRACK_HEIGHT - 8}px`,
-                }}
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-medium text-foreground">
-                    #{activeClipPosition.index + 1}
-                  </span>
-                </div>
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
       </div>
     </div>
   );
