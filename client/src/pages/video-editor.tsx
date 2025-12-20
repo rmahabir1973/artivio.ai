@@ -2498,6 +2498,7 @@ const previewMutation = useMutation({
       fadeOut: false,
       fadeDuration: 0.5,
       aspectRatio: '16:9',
+      snapEnabled: false,
       textOverlays: [],
       captions: [],
     });
@@ -2757,7 +2758,7 @@ const previewMutation = useMutation({
 
           {/* Collapsible Media/Asset Panel */}
           {mediaPanelOpen && (
-            <div className="w-72 h-full border-r flex flex-col shrink-0 bg-background" style={{ minHeight: 0 }} data-testid="media-panel">
+            <div className="w-72 border-r flex flex-col shrink-0 bg-background" style={{ height: '100%', maxHeight: '100%' }} data-testid="media-panel">
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -2771,8 +2772,8 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
-              <ScrollArea className="h-full" style={{ maxHeight: '100%' }}>
+              <div className="flex-1 overflow-hidden min-h-0">
+              <ScrollArea className="h-full">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
@@ -3748,6 +3749,7 @@ const previewMutation = useMutation({
                 const originalDuration = originalSettings.originalDuration ?? 5;
                 const trimStart = originalSettings.trimStartSeconds ?? 0;
                 const trimEnd = originalSettings.trimEndSeconds ?? originalDuration;
+                const speed = originalSettings.speed ?? 1;
                 
                 if (splitTimeInClip <= trimStart || splitTimeInClip >= trimEnd) {
                   toast({ title: "Cannot Split", description: "Playhead must be inside the clip", variant: "destructive" });
@@ -3759,6 +3761,11 @@ const previewMutation = useMutation({
                 const clip1 = { ...originalClip, id: clip1Id };
                 const clip2 = { ...originalClip, id: clip2Id };
                 
+                // Calculate positions for split clips to maintain their timeline positions
+                const originalPosition = originalSettings.positionSeconds ?? 0;
+                const clip1Duration = (splitTimeInClip - trimStart) / speed;
+                const clip2Position = originalPosition + clip1Duration;
+                
                 setOrderedClips(items => {
                   const newItems = [...items];
                   newItems.splice(clipIndex, 1, clip1, clip2);
@@ -3767,8 +3774,20 @@ const previewMutation = useMutation({
                 
                 setClipSettings(prev => {
                   const newMap = new Map(prev);
-                  newMap.set(clip1Id, { ...originalSettings, clipId: clip1Id, trimEndSeconds: splitTimeInClip });
-                  newMap.set(clip2Id, { ...originalSettings, clipId: clip2Id, trimStartSeconds: splitTimeInClip });
+                  // Clip 1 keeps original position
+                  newMap.set(clip1Id, { 
+                    ...originalSettings, 
+                    clipId: clip1Id, 
+                    trimEndSeconds: splitTimeInClip,
+                    positionSeconds: originalPosition 
+                  });
+                  // Clip 2 starts where clip 1 ends
+                  newMap.set(clip2Id, { 
+                    ...originalSettings, 
+                    clipId: clip2Id, 
+                    trimStartSeconds: splitTimeInClip,
+                    positionSeconds: clip2Position 
+                  });
                   return newMap;
                 });
                 

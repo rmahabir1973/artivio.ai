@@ -1116,7 +1116,7 @@ export function AdvancedTimeline({
                             }}
                             data-testid={`transition-l1-${transition.afterClipIndex}`}
                           >
-                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                            <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
                               <Sparkles className="h-2.5 w-2.5" />
                               {transition.type}
                             </Badge>
@@ -1191,7 +1191,7 @@ export function AdvancedTimeline({
                             }}
                             data-testid={`transition-l2-${transition.afterClipIndex}`}
                           >
-                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                            <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
                               <Sparkles className="h-2.5 w-2.5" />
                               {transition.type}
                             </Badge>
@@ -1268,7 +1268,7 @@ export function AdvancedTimeline({
                                 }}
                                 data-testid={`transition-l3-${transition.afterClipIndex}`}
                               >
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                                <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
                                   <Sparkles className="h-2.5 w-2.5" />
                                   {transition.type}
                                 </Badge>
@@ -1356,7 +1356,7 @@ export function AdvancedTimeline({
                                 }}
                                 data-testid={`transition-l4-${transition.afterClipIndex}`}
                               >
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0.5 gap-0.5">
+                                <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
                                   <Sparkles className="h-2.5 w-2.5" />
                                   {transition.type}
                                 </Badge>

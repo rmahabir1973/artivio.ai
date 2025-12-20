@@ -1,0 +1,136 @@
+2025-12-19 20:57:26.76
+5eabb873
+User
+"afterClipIndex": 3,
+2025-12-19 20:57:26.76
+5eabb873
+User
+"speed": {
+2025-12-19 20:57:26.76
+5eabb873
+User
+"afterClipIndex": 2,
+2025-12-19 20:57:26.76
+5eabb873
+User
+"clipId": "890ac690-4dec-4e82-9ca5-8765a33994b9_1766194834074_pel298cc3-split-a-1766195349764-split-a-1766195410976-split-a-1766195523030",
+2025-12-19 20:57:26.76
+5eabb873
+User
+"clipId": "890ac690-4dec-4e82-9ca5-8765a33994b9_1766194834074_pel298cc3-split-a-1766195349764-split-a-1766195410976-split-b-1766195523030-split-a-1766195551027",
+2025-12-19 20:57:26.76
+5eabb873
+User
+{
+2025-12-19 20:57:26.76
+5eabb873
+User
+"trimEndSeconds": 4.704958862304688,
+2025-12-19 20:57:26.76
+5eabb873
+User
+"isImage": false
+2025-12-19 20:57:26.76
+5eabb873
+User
+"isImage": false
+2025-12-19 20:57:26.76
+5eabb873
+User
+"muted": false,
+2025-12-19 20:57:26.76
+5eabb873
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 20:57:26.76
+5eabb873
+User
+"transitions": {
+2025-12-19 20:57:26.76
+5eabb873
+User
+{
+2025-12-19 20:57:26.76
+5eabb873
+User
+"type": "pixelize",
+2025-12-19 20:57:26.76
+5eabb873
+User
+"aspectRatio": "16:9",
+2025-12-19 20:57:26.76
+5eabb873
+User
+"mode": "none"
+2025-12-19 20:57:26.76
+5eabb873
+User
+{
+2025-12-19 20:57:31.70
+5eabb873
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/T2oUtqUNkq/normalized_2.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k, trim: 4.704958862304688s - 7.16214599609375)
+2025-12-19 20:57:32.10
+5eabb873
+User
+✓ Normalized video: /home/runner/workspace/temp/video-processing/T2oUtqUNkq/normalized_6.mp4 (audio: yes, resolution: 720p, fps: 30, bitrate: 2500k)
+2025-12-19 20:57:32.10
+5eabb873
+User
+[Preview] validate: Verifying normalized video durations...
+2025-12-19 20:57:32.18
+5eabb873
+User
+[Preview] error: Video combination failed. Please check your videos and try again.
+2025-12-19 20:57:32.19
+5eabb873
+User
+at async file:///home/runner/workspace/dist/index.js:25471:22
+2025-12-19 20:57:32.19
+5eabb873
+User
+at combineVideos (file:///home/runner/workspace/dist/index.js:9939:11)
+2025-12-19 20:57:32.19
+5eabb873
+User
+[Video Editor] Preview error: Error: Video combination failed. Please check your videos and try again.
+2025-12-19 20:57:32.19
+5eabb873
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-19 20:57:32.19
+5eabb873
+User
+1:57:32 AM [express] POST /api/video-editor/preview 500 in 5455ms :: {"message":"Video combination f…
+2025-12-19 20:57:40.02
+5eabb873
+User
+1:57:40 AM [express] GET /api/announcements/active 304 in 24ms :: []
+2025-12-19 20:58:45.12
+5eabb873
+User
+1:58:45 AM [express] GET /api/subscription 304 in 4ms
+2025-12-19 20:58:45.24
+5eabb873
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 20:58:45.25
+5eabb873
+User
+1:58:45 AM [express] GET /api/pricing 304 in 135ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2025-12-19 20:58:45.28
+5eabb873
+User
+1:58:45 AM [express] GET /api/boost-settings 304 in 171ms :: {"enabled":false}
+2025-12-19 20:58:50.80
+5eabb873
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-19 20:58:50.80
+5eabb873
+User
+1:58:50 AM [express] GET /api/auth/user 200 in 44ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-12-19 20:59:02.59
+5eabb873
+User
+"afterClipIndex": 3,
