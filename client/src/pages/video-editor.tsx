@@ -2758,9 +2758,13 @@ const previewMutation = useMutation({
               onCategoryChange={setActiveCategory} 
             />
 
-          {/* Collapsible Media/Asset Panel */}
+          {/* Collapsible Media/Asset Panel - Hard height constraint to prevent overflow */}
           {mediaPanelOpen && (
-            <div className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" data-testid="media-panel">
+            <div 
+              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" 
+              style={{ maxHeight: 'calc(60vh - 48px)' }}
+              data-testid="media-panel"
+            >
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
@@ -2774,7 +2778,7 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
