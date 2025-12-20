@@ -1698,6 +1698,19 @@ export default function VideoEditor() {
           text: c.text,
           style: c.style,
         })),
+        // Include edited audio tracks with position, trim, and fade settings
+        audioTracks: audioTracks.length > 0 ? audioTracks.map(track => ({
+          id: track.id,
+          name: track.name,
+          url: track.url,
+          duration: track.duration,
+          trackId: track.trackId || 'layer-1',
+          positionSeconds: track.positionSeconds ?? 0,
+          trimStartSeconds: track.trimStartSeconds ?? 0,
+          trimEndSeconds: track.trimEndSeconds ?? (track.duration ?? 60),
+          fadeOutSeconds: track.fadeOutSeconds ?? 0,
+          volume: 1.0,
+        })) : undefined,
       };
 
       const response = await apiRequest("POST", "/api/video-editor/export", { 
@@ -1830,6 +1843,19 @@ const previewMutation = useMutation({
           text: c.text,
           style: c.style,
         })),
+        // Include edited audio tracks with position, trim, and fade settings
+        audioTracks: audioTracks.length > 0 ? audioTracks.map(track => ({
+          id: track.id,
+          name: track.name,
+          url: track.url,
+          duration: track.duration,
+          trackId: track.trackId || 'layer-1',
+          positionSeconds: track.positionSeconds ?? 0,
+          trimStartSeconds: track.trimStartSeconds ?? 0,
+          trimEndSeconds: track.trimEndSeconds ?? (track.duration ?? 60),
+          fadeOutSeconds: track.fadeOutSeconds ?? 0,
+          volume: 1.0,
+        })) : undefined,
       };
 
       const response = await apiRequest("POST", "/api/video-editor/preview", { 
