@@ -2715,6 +2715,8 @@ const previewMutation = useMutation({
         </header>
 
         {/* CapCut-style Layout: Top (Editor) 60% + Bottom (Timeline) 40% */}
+        {/* Main Editor Container - Fixed viewport height to prevent content from pushing timeline off screen */}
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 48px)', maxHeight: 'calc(100vh - 48px)' }}>
         <DndContext
           sensors={sensors}
           collisionDetection={customCollisionDetection}
@@ -2747,7 +2749,7 @@ const previewMutation = useMutation({
             setDragDelta({ x: 0, y: 0 });
           }}
         >
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           {/* Top Section: Editor Area (60% of remaining height) */}
           <div className="flex-[6] flex overflow-hidden min-h-0">
             {/* Left Icon Sidebar */}
@@ -3847,6 +3849,7 @@ const previewMutation = useMutation({
           )}
         </DragOverlay>
         </DndContext>
+        </div>
       </div>
 
       {/* Dialogs and Modals */}

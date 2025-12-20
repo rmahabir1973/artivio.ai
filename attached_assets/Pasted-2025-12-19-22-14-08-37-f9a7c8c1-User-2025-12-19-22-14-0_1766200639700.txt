@@ -1,0 +1,138 @@
+2025-12-19 22:14:08.37
+f9a7c8c1
+User
+}
+2025-12-19 22:14:08.37
+f9a7c8c1
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-19 22:14:08.37
+f9a7c8c1
+User
+isAdmin: true
+2025-12-19 22:14:08.37
+f9a7c8c1
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-19 22:14:08.38
+f9a7c8c1
+User
+3:14:08 AM [express] GET /api/auth/user 200 in 44ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-12-19 22:14:38.60
+f9a7c8c1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 22:14:38.60
+f9a7c8c1
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-12-19 22:14:38.62
+f9a7c8c1
+User
+isAdmin: true
+2025-12-19 22:14:38.62
+f9a7c8c1
+User
+userId: '49729939',
+2025-12-19 22:14:38.62
+f9a7c8c1
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-19 22:14:38.62
+f9a7c8c1
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-19 22:14:38.62
+f9a7c8c1
+User
+}
+2025-12-19 22:14:38.62
+f9a7c8c1
+User
+3:14:38 AM [express] GET /api/auth/user 200 in 155ms :: {"id":"49729939","email":"ryan.mahabir@outlo…
+2025-12-19 22:14:39.14
+f9a7c8c1
+User
+3:14:39 AM [express] GET /api/announcements/active 304 in 25ms :: []
+2025-12-19 22:15:08.90
+f9a7c8c1
+User
+📊 [RATE LIMIT MONITOR] Would block ip:65.95.165.16 (16/15) - auth - /user
+2025-12-19 22:15:08.92
+f9a7c8c1
+User
+3:15:08 AM [express] GET /api/pricing 304 in 50ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6","…
+2025-12-19 22:15:09.00
+f9a7c8c1
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-12-19 22:15:09.00
+f9a7c8c1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 22:15:09.02
+f9a7c8c1
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-19 22:15:09.02
+f9a7c8c1
+User
+userId: '49729939',
+2025-12-19 22:15:09.02
+f9a7c8c1
+User
+}
+2025-12-19 22:15:09.02
+f9a7c8c1
+User
+isAdmin: true
+2025-12-19 22:15:09.02
+f9a7c8c1
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-19 22:15:09.03
+f9a7c8c1
+User
+3:15:09 AM [express] GET /api/auth/user 200 in 121ms :: {"id":"49729939","email":"ryan.mahabir@outlo…
+2025-12-19 22:15:39.13
+f9a7c8c1
+User
+📊 [RATE LIMIT MONITOR] Would block ip:65.95.165.16 (17/15) - auth - /user
+2025-12-19 22:15:39.24
+f9a7c8c1
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-12-19 22:15:39.24
+f9a7c8c1
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-19 22:15:39.26
+f9a7c8c1
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-19 22:15:39.26
+f9a7c8c1
+User
+isAdmin: true
+2025-12-19 22:15:39.26
+f9a7c8c1
+User
+}
+2025-12-19 22:15:39.26
+f9a7c8c1
+User
+userId: '49729939',
+2025-12-19 22:15:39.26
+f9a7c8c1
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-19 22:15:39.26
+f9a7c8c1
+User
+3:15:39 AM [express] GET /api/auth/user 200 in 131ms :: {"id":"49729939","email":"ryan.mahabir@outlo…
+2025-12-19 22:15:39.29
+f9a7c8c1
+User
+3:15:39 AM [express] GET /api/announcements/active 304 in 92ms :: []
+Wrap
+Colors
