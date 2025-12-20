@@ -533,7 +533,19 @@ export default function VideoEditor() {
   const [step, setStep] = useState<WizardStep>(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [orderedClips, setOrderedClips] = useState<VideoClip[]>([]);
-  const [audioTracks, setAudioTracks] = useState<Array<{ id: string; url: string; name: string; type: 'music' | 'voice' | 'sfx'; volume: number }>>([]);
+  const [audioTracks, setAudioTracks] = useState<Array<{ 
+    id: string; 
+    url: string; 
+    name: string; 
+    type: 'music' | 'voice' | 'sfx'; 
+    volume: number;
+    trackId?: string; // Which layer it's on
+    positionSeconds?: number; // Horizontal position in timeline
+    duration?: number; // Original duration of audio file
+    trimStartSeconds?: number; // Trim start point
+    trimEndSeconds?: number; // Trim end point
+    fadeOutSeconds?: number; // Fade out duration (0-10 seconds)
+  }>>([]);
   const [multiTrackItems, setMultiTrackItems] = useState<MultiTrackTimelineItem[]>([]);
   const [useMultiTrack, setUseMultiTrack] = useState(false);
   const [multiTrackKey, setMultiTrackKey] = useState(0);
@@ -2191,7 +2203,7 @@ const previewMutation = useMutation({
           const currentTrackId = clip.trackId || 'layer-1';
           const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
           const trackDelta = Math.round(dragDelta.y / 60); // ~60px per track
-          const newTrackNum = Math.max(1, Math.min(4, currentTrackNum + trackDelta));
+          const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
           const newTrackId = `layer-${newTrackNum}`;
           
           if (newTrackId !== currentTrackId) {
@@ -2199,6 +2211,49 @@ const previewMutation = useMutation({
               c.id === clipId ? { ...c, trackId: newTrackId } : c
             ));
             toast({ title: "Clip Moved", description: `Moved to ${newTrackId.replace('-', ' ').replace('layer', 'Layer')}` });
+          }
+        }
+      }
+      
+      return;
+    }
+
+    // ========================================================================
+    // Handle audio track drag (repositioning/layer change within timeline)
+    // ========================================================================
+    if (activeData?.type === 'audio') {
+      const trackId = activeData.track?.id;
+      
+      console.log('[DRAG] Audio drag:', { trackId, dragDelta, dragInitialPosition });
+      
+      // If significant horizontal movement, update position
+      if (Math.abs(dragDelta.x) >= 5) {
+        const pixelsPerSecond = 100; // Base rate
+        const deltaSeconds = dragDelta.x / pixelsPerSecond;
+        const newPosition = Math.max(0, dragInitialPosition + deltaSeconds);
+        
+        setAudioTracks(prev => prev.map(t => 
+          t.id === trackId ? { ...t, positionSeconds: newPosition } : t
+        ));
+        
+        console.log('[DRAG] Updated audio position:', { trackId, newPosition, deltaSeconds });
+      }
+      
+      // If significant vertical movement, change layer
+      if (Math.abs(dragDelta.y) >= 30 && dragDelta.y !== 0) {
+        const track = audioTracks.find(t => t.id === trackId);
+        if (track) {
+          const currentTrackId = track.trackId || 'layer-1';
+          const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
+          const trackDelta = Math.round(dragDelta.y / 60); // ~60px per track
+          const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
+          const newLayerId = `layer-${newTrackNum}`;
+          
+          if (newLayerId !== currentTrackId) {
+            setAudioTracks(prev => prev.map(t => 
+              t.id === trackId ? { ...t, trackId: newLayerId } : t
+            ));
+            toast({ title: "Audio Moved", description: `Moved to ${newLayerId.replace('-', ' ').replace('layer', 'Layer')}` });
           }
         }
       }
@@ -2730,6 +2785,11 @@ const previewMutation = useMutation({
             if (data?.type === 'clip' && data?.clip?.id) {
               const settings = getClipSettings(data.clip.id);
               setDragInitialPosition(settings.positionSeconds ?? 0);
+            }
+            // Capture initial position for audio tracks
+            if (data?.type === 'audio' && data?.track?.id) {
+              const track = audioTracks.find(t => t.id === data.track.id);
+              setDragInitialPosition(track?.positionSeconds ?? 0);
             }
           }}
           onDragMove={(event: DragMoveEvent) => {
@@ -3806,6 +3866,57 @@ const previewMutation = useMutation({
               onTransitionEdit={handleTransitionEdit}
               onTransitionRemove={handleTransitionRemove}
               onAudioRemove={removeAudioTrack}
+              onAudioUpdate={(trackId, updates) => {
+                setAudioTracks(prev => prev.map(t => 
+                  t.id === trackId ? { ...t, ...updates } : t
+                ));
+              }}
+              onAudioSplit={(trackId, splitTimeInTrack) => {
+                const trackIndex = audioTracks.findIndex(t => t.id === trackId);
+                if (trackIndex === -1) return;
+                
+                const originalTrack = audioTracks[trackIndex];
+                const originalDuration = originalTrack.duration ?? 60;
+                const trimStart = originalTrack.trimStartSeconds ?? 0;
+                const trimEnd = originalTrack.trimEndSeconds ?? originalDuration;
+                const positionSeconds = originalTrack.positionSeconds ?? 0;
+                
+                // Minimum segment length validation (0.5 seconds minimum on each side)
+                const MIN_SEGMENT_LENGTH = 0.5;
+                if (splitTimeInTrack <= trimStart + MIN_SEGMENT_LENGTH || 
+                    splitTimeInTrack >= trimEnd - MIN_SEGMENT_LENGTH) {
+                  toast({ title: "Cannot Split", description: "Playhead must be at least 0.5 seconds from either edge", variant: "destructive" });
+                  return;
+                }
+                
+                const track1Id = `${trackId}-split-a-${Date.now()}`;
+                const track2Id = `${trackId}-split-b-${Date.now()}`;
+                
+                const track1Duration = splitTimeInTrack - trimStart;
+                const track2Position = positionSeconds + track1Duration;
+                
+                const track1 = { 
+                  ...originalTrack, 
+                  id: track1Id, 
+                  trimEndSeconds: splitTimeInTrack,
+                  positionSeconds: positionSeconds
+                };
+                const track2 = { 
+                  ...originalTrack, 
+                  id: track2Id, 
+                  trimStartSeconds: splitTimeInTrack,
+                  positionSeconds: track2Position,
+                  fadeOutSeconds: originalTrack.fadeOutSeconds // Keep fade out on second part
+                };
+                
+                setAudioTracks(prev => {
+                  const newTracks = [...prev];
+                  newTracks.splice(trackIndex, 1, track1, track2);
+                  return newTracks;
+                });
+                
+                toast({ title: "Audio Split", description: "Audio track has been split at playhead position" });
+              }}
               onClipSettingsChange={(clipId, settings) => {
                 updateClipSettings(clipId, settings);
               }}

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger, ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent } from '@/components/ui/context-menu';
 import {
   ZoomIn,
   ZoomOut,
@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Plus,
   Minus,
+  GripVertical,
 } from 'lucide-react';
 
 interface VideoClip {
@@ -73,6 +74,13 @@ interface AudioTrack {
   name: string;
   type: 'music' | 'voice' | 'sfx';
   volume: number;
+  // New properties for flexible audio editing
+  trackId?: string; // Which layer it's on (defaults to 'layer-1')
+  positionSeconds?: number; // Horizontal position in timeline (defaults to 0)
+  duration?: number; // Original duration of audio file
+  trimStartSeconds?: number; // Trim start point
+  trimEndSeconds?: number; // Trim end point
+  fadeOutSeconds?: number; // Fade out duration (0-10 seconds before end)
 }
 
 interface DroppedMediaData {
@@ -99,6 +107,8 @@ interface AdvancedTimelineProps {
   onTransitionEdit: (index: number) => void;
   onTransitionRemove: (index: number) => void;
   onAudioRemove: (trackId: string) => void;
+  onAudioUpdate?: (trackId: string, updates: Partial<AudioTrack>) => void;
+  onAudioSplit?: (trackId: string, splitTimeInTrack: number) => void;
   onClipSettingsChange?: (clipId: string, settings: Partial<ClipSettingsLocal>) => void;
   snapEnabled?: boolean;
   onSnapChange?: (enabled: boolean) => void;
@@ -491,56 +501,266 @@ function TimelineClipItem({
 interface AudioTrackItemProps {
   track: AudioTrack;
   pixelsPerSecond: number;
-  totalDuration: number;
+  currentTime: number;
   onRemove: (trackId: string) => void;
+  onUpdate?: (trackId: string, updates: Partial<AudioTrack>) => void;
+  onSplit?: (trackId: string, splitTimeInTrack: number) => void;
+  availableTrackIds: string[];
+  isSelected?: boolean;
+  onSelect?: (trackId: string) => void;
 }
 
-function AudioTrackItem({ track, pixelsPerSecond, totalDuration, onRemove }: AudioTrackItemProps) {
-  const width = Math.max(MIN_CLIP_WIDTH, totalDuration * pixelsPerSecond);
-  const color = track.type === 'music' ? 'bg-green-500/20 border-green-500/50' : 'bg-purple-500/20 border-purple-500/50';
+function AudioTrackItem({ 
+  track, 
+  pixelsPerSecond, 
+  currentTime,
+  onRemove,
+  onUpdate,
+  onSplit,
+  availableTrackIds,
+  isSelected,
+  onSelect
+}: AudioTrackItemProps) {
+  const [isTrimming, setIsTrimming] = useState<'left' | 'right' | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const trimStartRef = useRef({ x: 0, trimStart: 0, trimEnd: 0 });
+  
+  // Calculate dimensions based on track properties
+  const originalDuration = track.duration ?? 60; // Default to 60 seconds if unknown
+  const trimStart = track.trimStartSeconds ?? 0;
+  const trimEnd = track.trimEndSeconds ?? originalDuration;
+  const effectiveDuration = trimEnd - trimStart;
+  const positionSeconds = track.positionSeconds ?? 0;
+  const fadeOutSeconds = track.fadeOutSeconds ?? 0;
+  
+  const left = positionSeconds * pixelsPerSecond;
+  const width = Math.max(MIN_CLIP_WIDTH, effectiveDuration * pixelsPerSecond);
+  
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `audio-${track.id}`,
+    data: { track, type: 'audio' },
+    disabled: isTrimming !== null,
+  });
+  
+  const color = track.type === 'music' 
+    ? 'bg-green-500/20 border-green-500/50' 
+    : track.type === 'voice' 
+      ? 'bg-purple-500/20 border-purple-500/50'
+      : 'bg-orange-500/20 border-orange-500/50';
+  
+  const iconColor = track.type === 'music' 
+    ? 'text-green-500' 
+    : track.type === 'voice' 
+      ? 'text-purple-500'
+      : 'text-orange-500';
+  
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: `${left}px`,
+    width: `${width}px`,
+    height: `${TRACK_HEIGHT - 8}px`,
+    top: '4px',
+    transform: transform ? `translate3d(${transform.x}px, 0, 0)` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isSelected ? 20 : isDragging ? 30 : 10,
+    cursor: isTrimming ? 'ew-resize' : 'grab',
+  };
+  
+  // Handle trimming
+  const handleTrimMouseDown = (e: React.MouseEvent, side: 'left' | 'right') => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsTrimming(side);
+    
+    trimStartRef.current = {
+      x: e.clientX,
+      trimStart: trimStart,
+      trimEnd: trimEnd,
+    };
+    
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - trimStartRef.current.x;
+      const deltaSeconds = deltaX / pixelsPerSecond;
+      
+      if (side === 'left') {
+        const newTrimStart = Math.max(0, Math.min(
+          trimStartRef.current.trimStart + deltaSeconds,
+          trimStartRef.current.trimEnd - 0.5
+        ));
+        onUpdate?.(track.id, { trimStartSeconds: newTrimStart });
+      } else {
+        const newTrimEnd = Math.max(
+          trimStartRef.current.trimStart + 0.5,
+          Math.min(originalDuration, trimStartRef.current.trimEnd + deltaSeconds)
+        );
+        onUpdate?.(track.id, { trimEndSeconds: newTrimEnd });
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsTrimming(null);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+  
+  // Calculate if playhead is over this audio track
+  const trackStartTime = positionSeconds;
+  const trackEndTime = positionSeconds + effectiveDuration;
+  const isPlayheadOver = currentTime >= trackStartTime && currentTime <= trackEndTime;
+  const splitTimeInTrack = currentTime - trackStartTime + trimStart;
+  
+  // Fade out indicator width
+  const fadeOutWidth = fadeOutSeconds > 0 ? (fadeOutSeconds / effectiveDuration) * width : 0;
   
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
+          ref={setNodeRef}
+          {...attributes}
+          {...listeners}
           className={cn(
-            "absolute top-1 rounded border-2 h-10 flex items-center px-2 gap-2 group",
-            color
+            "rounded border-2 flex items-center px-2 gap-1 group select-none",
+            color,
+            isSelected && "ring-2 ring-primary ring-offset-1",
+            isDragging && "shadow-lg"
           )}
-          style={{ left: 0, width: `${width}px` }}
+          style={style}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect?.(track.id);
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           data-testid={`audio-track-${track.id}`}
         >
-          {track.type === 'music' ? (
-            <Music className="h-3 w-3 text-green-500 shrink-0" />
-          ) : (
-            <Mic className="h-3 w-3 text-purple-500 shrink-0" />
-          )}
-          <span className="text-xs truncate text-foreground/80">{track.name}</span>
-          <span className="text-[9px] text-muted-foreground ml-auto mr-1">
-            {Math.round(track.volume * 100)}%
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0 bg-red-500/20 hover:bg-red-500/40 text-red-500"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(track.id);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ' || e.key === 'Delete') {
-                e.stopPropagation();
-                onRemove(track.id);
-              }
-            }}
-            aria-label={`Delete ${track.name}`}
-            data-testid={`delete-audio-${track.id}`}
+          {/* Left trim handle */}
+          <div
+            className={cn(
+              "absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 flex items-center justify-center",
+              "bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-l"
+            )}
+            onMouseDown={(e) => handleTrimMouseDown(e, 'left')}
+            data-testid={`audio-trim-left-${track.id}`}
           >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+            <GripVertical className="h-3 w-3 text-white/60" />
+          </div>
+          
+          {/* Fade out indicator */}
+          {fadeOutSeconds > 0 && (
+            <div 
+              className="absolute right-0 top-0 bottom-0 pointer-events-none"
+              style={{ 
+                width: `${fadeOutWidth}px`,
+                background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.4))'
+              }}
+            />
+          )}
+          
+          {/* Content */}
+          <div className="flex items-center gap-1 overflow-hidden flex-1 ml-2">
+            {track.type === 'music' ? (
+              <Music className={cn("h-3 w-3 shrink-0", iconColor)} />
+            ) : track.type === 'voice' ? (
+              <Mic className={cn("h-3 w-3 shrink-0", iconColor)} />
+            ) : (
+              <Volume2 className={cn("h-3 w-3 shrink-0", iconColor)} />
+            )}
+            <span className="text-xs truncate text-foreground/80">{track.name}</span>
+            {fadeOutSeconds > 0 && (
+              <span className="text-[9px] text-yellow-400 ml-1 whitespace-nowrap">
+                ↘{fadeOutSeconds}s
+              </span>
+            )}
+          </div>
+          
+          <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+            {formatTimeShort(effectiveDuration)}
+          </span>
+          
+          {/* Right trim handle */}
+          <div
+            className={cn(
+              "absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 flex items-center justify-center",
+              "bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-r"
+            )}
+            onMouseDown={(e) => handleTrimMouseDown(e, 'right')}
+            data-testid={`audio-trim-right-${track.id}`}
+          >
+            <GripVertical className="h-3 w-3 text-white/60" />
+          </div>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
+        {onSplit && isPlayheadOver && (
+          <>
+            <ContextMenuItem 
+              onClick={() => onSplit(track.id, splitTimeInTrack)}
+              data-testid="context-audio-split"
+            >
+              <Scissors className="h-4 w-4 mr-2" />
+              Split at Playhead
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+          </>
+        )}
+        
+        {/* Fade out options */}
+        <ContextMenuSub>
+          <ContextMenuSubTrigger data-testid="context-audio-fade">
+            <Volume2 className="h-4 w-4 mr-2" />
+            Fade Out
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem 
+              onClick={() => onUpdate?.(track.id, { fadeOutSeconds: 0 })}
+              className={fadeOutSeconds === 0 ? 'bg-accent' : ''}
+              data-testid="context-fade-none"
+            >
+              None
+            </ContextMenuItem>
+            {[3, 5, 7, 10].map(seconds => (
+              <ContextMenuItem 
+                key={seconds}
+                onClick={() => onUpdate?.(track.id, { fadeOutSeconds: seconds })}
+                className={fadeOutSeconds === seconds ? 'bg-accent' : ''}
+                data-testid={`context-fade-${seconds}s`}
+              >
+                {seconds} seconds
+              </ContextMenuItem>
+            ))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+        
+        {/* Move to layer options */}
+        {onUpdate && availableTrackIds.length > 1 && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuSub>
+              <ContextMenuSubTrigger data-testid="context-audio-move">
+                <Layers className="h-4 w-4 mr-2" />
+                Move to Layer
+              </ContextMenuSubTrigger>
+              <ContextMenuSubContent>
+                {availableTrackIds.filter(t => t !== (track.trackId || 'layer-1')).map(layerId => (
+                  <ContextMenuItem 
+                    key={layerId}
+                    onClick={() => onUpdate(track.id, { trackId: layerId })}
+                    data-testid={`context-audio-move-${layerId}`}
+                  >
+                    {layerId.replace('layer-', 'Layer ')}
+                  </ContextMenuItem>
+                ))}
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+          </>
+        )}
+        
+        <ContextMenuSeparator />
         <ContextMenuItem 
           onClick={() => onRemove(track.id)} 
           className="text-red-500"
@@ -666,6 +886,8 @@ export function AdvancedTimeline({
   onTransitionEdit,
   onTransitionRemove,
   onAudioRemove,
+  onAudioUpdate,
+  onAudioSplit,
   onClipSettingsChange,
   snapEnabled = false,
   onSnapChange,
@@ -921,9 +1143,6 @@ export function AdvancedTimeline({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onPlayPause, onTimeChange, currentTime, effectiveDuration, selectedClipIds, onClipRemove, clips]);
-  
-  const musicTracks = audioTracks.filter(t => t.type === 'music');
-  const voiceTracks = audioTracks.filter(t => t.type === 'voice' || t.type === 'sfx');
   
   return (
     <div className={cn("flex flex-col bg-background h-full", className)} data-testid="advanced-timeline">
@@ -1217,25 +1436,21 @@ export function AdvancedTimeline({
                               );
                             })}
                           
-                          {/* Audio tracks - music on first layer, voice on last layer */}
-                          {layerId === 'layer-1' && musicTracks.map((track) => (
-                            <AudioTrackItem
-                              key={track.id}
-                              track={track}
-                              pixelsPerSecond={pixelsPerSecond}
-                              totalDuration={effectiveDuration}
-                              onRemove={onAudioRemove}
-                            />
-                          ))}
-                          {layerId === `layer-${layerCount}` && voiceTracks.map((track) => (
-                            <AudioTrackItem
-                              key={track.id}
-                              track={track}
-                              pixelsPerSecond={pixelsPerSecond}
-                              totalDuration={effectiveDuration}
-                              onRemove={onAudioRemove}
-                            />
-                          ))}
+                          {/* Audio tracks - rendered on their assigned layer */}
+                          {audioTracks
+                            .filter(t => (t.trackId || 'layer-1') === layerId)
+                            .map((track) => (
+                              <AudioTrackItem
+                                key={track.id}
+                                track={track}
+                                pixelsPerSecond={pixelsPerSecond}
+                                currentTime={currentTime}
+                                onRemove={onAudioRemove}
+                                onUpdate={onAudioUpdate}
+                                onSplit={onAudioSplit}
+                                availableTrackIds={trackConfig.map(c => c.id)}
+                              />
+                            ))}
                         </>
                       )}
                     </DroppableTrack>
