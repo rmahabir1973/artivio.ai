@@ -2990,9 +2990,10 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {musicTracks.map((track) => (
-                            <div
+                            <DraggableMediaItem
                               key={track.id}
-                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                              item={track}
+                              mediaType="audio"
                               onClick={() => {
                                 const trackId = `music_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
@@ -3016,13 +3017,7 @@ const previewMutation = useMutation({
                                 }));
                                 toast({ title: "Music Added", description: "Music track added to timeline" });
                               }}
-                              data-testid={`music-item-${track.id}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="text-sm truncate">{track.prompt || 'Music Track'}</span>
-                              </div>
-                            </div>
+                            />
                           ))}
 
                           {/* Load More for Music */}
@@ -3060,9 +3055,10 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {voiceTracks.map((track) => (
-                            <div
+                            <DraggableMediaItem
                               key={track.id}
-                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                              item={track}
+                              mediaType="audio"
                               onClick={() => {
                                 const trackId = `voice_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
@@ -3087,13 +3083,7 @@ const previewMutation = useMutation({
                                 }));
                                 toast({ title: "Audio Added", description: "Audio track added to timeline" });
                               }}
-                              data-testid={`audio-item-${track.id}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="text-sm truncate">{track.prompt || 'Audio Track'}</span>
-                              </div>
-                            </div>
+                            />
                           ))}
 
                           {/* Load More for Audio */}
