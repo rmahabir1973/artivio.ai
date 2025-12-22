@@ -137,6 +137,8 @@ interface ClipSettingsLocal {
   originalDuration?: number; // Actual video duration in seconds (loaded from video metadata)
   displayDuration?: number; // For images: how long to display (default 5 seconds)
   positionSeconds?: number; // Manual position for free positioning mode (when snap is disabled)
+  fadeInSeconds?: number; // Fade in duration (0-3 seconds) - Camtasia-style per-clip effect
+  fadeOutSeconds?: number; // Fade out duration (0-3 seconds) - Camtasia-style per-clip effect
 }
 
 // Per-clip transition state (for the transition AFTER each clip)
@@ -1022,6 +1024,8 @@ export default function VideoEditor() {
             trimEndSeconds: localSettings?.trimEndSeconds,
             isImage,
             displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
+            fadeInSeconds: localSettings?.fadeInSeconds, // Per-clip fade in (Camtasia-style)
+            fadeOutSeconds: localSettings?.fadeOutSeconds, // Per-clip fade out (Camtasia-style)
           };
         });
 
@@ -1063,7 +1067,9 @@ export default function VideoEditor() {
               cs.speed !== 1.0 ||
               cs.trimStartSeconds !== undefined || 
               cs.trimEndSeconds !== undefined || 
-              cs.isImage
+              cs.isImage ||
+              (cs.fadeInSeconds && cs.fadeInSeconds > 0) ||
+              (cs.fadeOutSeconds && cs.fadeOutSeconds > 0)
             ),
             backgroundMusic: enhancements.backgroundMusic ? {
               audioUrl: enhancements.backgroundMusic.audioUrl,
@@ -4102,6 +4108,62 @@ const previewMutation = useMutation({
                     />
                   </>
                 )}
+                
+                {/* Per-clip Fade In/Out - Works on any layer (Camtasia-style) */}
+                <div className="pt-4 border-t space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Clip Transitions
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="fade-in" className="text-sm flex items-center gap-2">
+                      Fade In (seconds)
+                    </Label>
+                    <Slider
+                      id="fade-in"
+                      value={[getClipSettings(editingClip.clip.id).fadeInSeconds ?? 0]}
+                      min={0}
+                      max={3}
+                      step={0.1}
+                      onValueChange={([v]) => 
+                        updateClipSettings(editingClip.clip.id, { fadeInSeconds: v })
+                      }
+                      data-testid="slider-fade-in"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>None</span>
+                      <span>{(getClipSettings(editingClip.clip.id).fadeInSeconds ?? 0).toFixed(1)}s</span>
+                      <span>3s</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="fade-out" className="text-sm flex items-center gap-2">
+                      Fade Out (seconds)
+                    </Label>
+                    <Slider
+                      id="fade-out"
+                      value={[getClipSettings(editingClip.clip.id).fadeOutSeconds ?? 0]}
+                      min={0}
+                      max={3}
+                      step={0.1}
+                      onValueChange={([v]) => 
+                        updateClipSettings(editingClip.clip.id, { fadeOutSeconds: v })
+                      }
+                      data-testid="slider-fade-out"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>None</span>
+                      <span>{(getClipSettings(editingClip.clip.id).fadeOutSeconds ?? 0).toFixed(1)}s</span>
+                      <span>3s</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground">
+                    Add smooth fade-in/fade-out effects to this clip. Works independently on any layer.
+                  </p>
+                </div>
               </div>
             </div>
           )}

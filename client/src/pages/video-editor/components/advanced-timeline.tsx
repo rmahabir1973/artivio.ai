@@ -1270,8 +1270,8 @@ export function AdvancedTimeline({
         </div>
       </div>
       
-      <div className="flex-1 flex overflow-hidden" data-testid="timeline-content">
-        <div className="w-28 bg-muted/20 border-r shrink-0 flex flex-col" data-testid="track-headers">
+      <div className="flex-1 flex overflow-hidden min-h-0" data-testid="timeline-content">
+        <div className="w-28 bg-muted/20 border-r shrink-0 flex flex-col overflow-y-auto" data-testid="track-headers">
           <div className="h-6 border-b bg-muted/10 flex items-center px-2">
             <span className="text-[10px] text-muted-foreground">Tracks</span>
           </div>

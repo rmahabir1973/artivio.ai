@@ -389,12 +389,14 @@ function buildFilterGraph(
     ? (enhancements.transitions.durationSeconds || 1.0) 
     : 0;
   
-  // Helper to get clip settings (mute, volume) for a specific clip
+  // Helper to get clip settings (mute, volume, fade) for a specific clip
   const getClipSettings = (clipIndex: number) => {
     const clipSetting = enhancements?.clipSettings?.find(cs => cs.clipIndex === clipIndex);
     return {
       muted: clipSetting?.muted ?? false,
       volume: clipSetting?.volume ?? 1.0,
+      fadeInSeconds: clipSetting?.fadeInSeconds ?? 0,
+      fadeOutSeconds: clipSetting?.fadeOutSeconds ?? 0,
     };
   };
   
@@ -402,43 +404,82 @@ function buildFilterGraph(
     const speedFactor = getSpeedFactorForClip(i, enhancements?.speed);
     const originalDuration = metadataList[i].duration;
     const hasAudio = metadataList[i].hasAudio;
-    const { muted, volume } = getClipSettings(i);
+    const { muted, volume, fadeInSeconds, fadeOutSeconds } = getClipSettings(i);
     
     const adjustedDuration = originalDuration / speedFactor;
     adjustedDurations.push(adjustedDuration);
     
+    // Build video filter chain - each filter is comma-separated within one filter step
+    let videoFilters: string[] = [];
+    
+    // Speed adjustment
     if (speedFactor !== 1.0) {
-      videoFilterSteps.push(`[${i}:v]setpts=${(1.0 / speedFactor).toFixed(3)}*PTS[v${i}s]`);
-      videoStreams.push(`[v${i}s]`);
-      
-      if (hasAudio && !muted) {
-        // Apply volume and speed adjustment
-        const volumeFilter = volume !== 1.0 ? `,volume=${volume.toFixed(2)}` : '';
-        const aSpeed = speedFactor <= 2.0
-          ? `[${i}:a]atempo=${speedFactor.toFixed(3)}${volumeFilter}[a${i}s]`
-          : `[${i}:a]atempo=2.0,atempo=${(speedFactor / 2.0).toFixed(3)}${volumeFilter}[a${i}s]`;
-        audioFilterSteps.push(aSpeed);
-        audioStreamLabels.push(`[a${i}s]`);
+      videoFilters.push(`setpts=${(1.0 / speedFactor).toFixed(3)}*PTS`);
+    }
+    
+    // Video fade filters (Camtasia-style per-clip effects)
+    if (fadeInSeconds > 0) {
+      const effectiveFadeIn = Math.min(fadeInSeconds, adjustedDuration / 2);
+      videoFilters.push(`fade=t=in:st=0:d=${effectiveFadeIn.toFixed(3)}`);
+    }
+    if (fadeOutSeconds > 0) {
+      const effectiveFadeOut = Math.min(fadeOutSeconds, adjustedDuration / 2);
+      const fadeOutStart = Math.max(0, adjustedDuration - effectiveFadeOut);
+      videoFilters.push(`fade=t=out:st=${fadeOutStart.toFixed(3)}:d=${effectiveFadeOut.toFixed(3)}`);
+    }
+    
+    // Build audio filter chain
+    let audioFilters: string[] = [];
+    
+    // Speed adjustment for audio
+    if (speedFactor !== 1.0) {
+      if (speedFactor <= 2.0) {
+        audioFilters.push(`atempo=${speedFactor.toFixed(3)}`);
       } else {
-        // Muted or no audio - use silent audio
-        audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${adjustedDuration.toFixed(3)}[a${i}s]`);
-        audioStreamLabels.push(`[a${i}s]`);
+        audioFilters.push(`atempo=2.0`);
+        audioFilters.push(`atempo=${(speedFactor / 2.0).toFixed(3)}`);
       }
+    }
+    
+    // Volume adjustment
+    if (volume !== 1.0) {
+      audioFilters.push(`volume=${volume.toFixed(2)}`);
+    }
+    
+    // Audio fade filters
+    if (fadeInSeconds > 0) {
+      const effectiveFadeIn = Math.min(fadeInSeconds, adjustedDuration / 2);
+      audioFilters.push(`afade=t=in:st=0:d=${effectiveFadeIn.toFixed(3)}`);
+    }
+    if (fadeOutSeconds > 0) {
+      const effectiveFadeOut = Math.min(fadeOutSeconds, adjustedDuration / 2);
+      const fadeOutStart = Math.max(0, adjustedDuration - effectiveFadeOut);
+      audioFilters.push(`afade=t=out:st=${fadeOutStart.toFixed(3)}:d=${effectiveFadeOut.toFixed(3)}`);
+    }
+    
+    // Generate video stream
+    if (videoFilters.length > 0) {
+      const label = `v${i}p`;
+      videoFilterSteps.push(`[${i}:v]${videoFilters.join(',')}[${label}]`);
+      videoStreams.push(`[${label}]`);
     } else {
       videoStreams.push(`[${i}:v]`);
-      if (hasAudio && !muted) {
-        if (volume !== 1.0) {
-          // Apply volume adjustment without speed change
-          audioFilterSteps.push(`[${i}:a]volume=${volume.toFixed(2)}[a${i}v]`);
-          audioStreamLabels.push(`[a${i}v]`);
-        } else {
-          audioStreamLabels.push(`[${i}:a]`);
-        }
+    }
+    
+    // Generate audio stream
+    if (hasAudio && !muted) {
+      if (audioFilters.length > 0) {
+        const label = `a${i}p`;
+        audioFilterSteps.push(`[${i}:a]${audioFilters.join(',')}[${label}]`);
+        audioStreamLabels.push(`[${label}]`);
       } else {
-        // Muted or no audio - use silent audio
-        audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${originalDuration.toFixed(3)}[a${i}s]`);
-        audioStreamLabels.push(`[a${i}s]`);
+        audioStreamLabels.push(`[${i}:a]`);
       }
+    } else {
+      // Muted or no audio - use silent audio
+      const silentDuration = speedFactor !== 1.0 ? adjustedDuration : originalDuration;
+      audioFilterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=44100:duration=${silentDuration.toFixed(3)}[a${i}s]`);
+      audioStreamLabels.push(`[a${i}s]`);
     }
   }
 
