@@ -479,33 +479,62 @@ function buildFilterGraph(
       startTimes.push(startTimes[i - 1] + adjustedDurations[i - 1] - (transition ? duration : 0));
     }
     
+    // MIXED TRANSITION SUPPORT: Handle sequences with both transitions and straight cuts
+    // Strategy: After each xfade, normalize timestamps. For concat, join directly.
+    
+    // Track running duration for xfade offsets (recalculate for each clip)
+    let runningDuration = adjustedDurations[0];
+    
     for (let i = 1; i < videoCount; i++) {
-      // Get transition settings for this gap
       const transition = hasPerClipTransitions 
         ? perClipTransitions.get(i - 1) 
         : { type: 'fade', durationSeconds: transitionDuration };
       
-      if (!transition) {
-        // No transition for this gap - use concat instead
-        continue;
-      }
-      
-      const duration = transition.durationSeconds;
-      const transitionType = transition.type || 'fade';
-      
-      // Offset is the start time of clip i (clamped to >= 0)
-      const offset = Math.max(0, startTimes[i]);
       const isLast = i === videoCount - 1;
-      // Use intermediate label for the xfade output, then apply tpad to final
-      const nextLabel = isLast ? 'vxfout' : `v${i}xf`;
-      videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=${transitionType}:duration=${duration.toFixed(3)}:offset=${offset.toFixed(3)}[${nextLabel}]`);
-      currentStream = `[${nextLabel}]`;
+      const nextLabel = isLast ? 'vxfout' : `v${i}step`;
+      
+      if (!transition) {
+        // No transition: normalize current stream then concat
+        // Normalize current stream timestamps and ensure consistent format
+        const normalizedCurrent = `vnorm${i}a`;
+        const normalizedNext = `vnorm${i}b`;
+        videoFilterSteps.push(`${currentStream}setpts=PTS-STARTPTS[${normalizedCurrent}]`);
+        videoFilterSteps.push(`${videoStreams[i]}setpts=PTS-STARTPTS[${normalizedNext}]`);
+        
+        // Concat the two normalized streams
+        videoFilterSteps.push(`[${normalizedCurrent}][${normalizedNext}]concat=n=2:v=1:a=0[${nextLabel}]`);
+        currentStream = `[${nextLabel}]`;
+        
+        // Update running duration (no overlap for straight cut)
+        runningDuration += adjustedDurations[i];
+        
+        console.log(`[VIDEO PROCESSOR] Straight cut at gap ${i-1}`);
+      } else {
+        // Has transition: apply xfade
+        const duration = transition.durationSeconds;
+        const transitionType = transition.type || 'fade';
+        
+        // Calculate offset based on running duration
+        const offset = Math.max(0, runningDuration - duration);
+        
+        videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=${transitionType}:duration=${duration.toFixed(3)}:offset=${offset.toFixed(3)}[${nextLabel}]`);
+        currentStream = `[${nextLabel}]`;
+        
+        // Update running duration (minus transition overlap)
+        runningDuration += adjustedDurations[i] - duration;
+        
+        console.log(`[VIDEO PROCESSOR] Xfade ${transitionType} at gap ${i-1}, offset=${offset.toFixed(3)}`);
+      }
     }
     
-    // CRITICAL: Add tpad to preserve full original duration
-    // Crossfade consumes total transition duration, so we pad that much back
-    const totalPadDuration = totalTransitionDuration || (videoCount - 1) * transitionDuration;
-    videoFilterSteps.push(`[vxfout]tpad=stop_duration=${totalPadDuration.toFixed(3)}[vout]`);
+    // Final output: add tpad if we have any transitions to preserve duration
+    if (totalTransitionDuration > 0) {
+      videoFilterSteps.push(`[vxfout]tpad=stop_duration=${totalTransitionDuration.toFixed(3)}[vout]`);
+    } else {
+      // Pure concat mode (no transitions at all)
+      const inputLabel = currentStream.replace('[', '').replace(']', '');
+      videoFilterSteps.push(`[${inputLabel}]null[vout]`);
+    }
   } else if (videoCount > 1) {
     videoFilterSteps.push(`${videoStreams.join('')}concat=n=${videoCount}:v=1:a=0[vout]`);
   } else {
@@ -565,6 +594,7 @@ function buildFilterGraph(
   }
 
   // Apply audio crossfade for both 'crossfade' mode and 'perClip' mode
+  // This now handles MIXED transitions (some with crossfade, some with straight cut)
   if (videoCount > 1 && (enhancements?.transitions?.mode === 'crossfade' || hasPerClipTransitions)) {
     let currentAudioStream = resampledLabels[0];
     let totalAudioPadDuration = 0;
@@ -583,24 +613,37 @@ function buildFilterGraph(
         ? perClipTransitions.get(i - 1) 
         : { type: 'fade', durationSeconds: transitionDuration };
       
-      if (!transition) {
-        // No transition for this gap - skip audio crossfade
-        continue;
-      }
-      
-      const duration = transition.durationSeconds;
-      totalAudioPadDuration += duration;
-      
       const isLast = i === videoCount - 1;
-      // Use intermediate label for crossfade, then add apad to final
       const nextLabel = isLast ? '[axfout]' : `[a${i}xf]`;
-      // Use curve=tri for smoother triangular crossfade (less abrupt than default)
-      audioFilterSteps.push(`${currentAudioStream}${resampledLabels[i]}acrossfade=d=${duration.toFixed(3)}:c1=tri:c2=tri${nextLabel}`);
-      currentAudioStream = nextLabel;
+      
+      if (!transition) {
+        // No transition for this gap - use concat instead of crossfade
+        // Normalize both streams and concat them
+        const normA = `[anorm${i}a]`;
+        const normB = `[anorm${i}b]`;
+        audioFilterSteps.push(`${currentAudioStream}asetpts=PTS-STARTPTS${normA}`);
+        audioFilterSteps.push(`${resampledLabels[i]}asetpts=PTS-STARTPTS${normB}`);
+        audioFilterSteps.push(`${normA}${normB}concat=n=2:v=0:a=1${nextLabel}`);
+        currentAudioStream = nextLabel;
+        console.log(`[VIDEO PROCESSOR] Audio concat at gap ${i-1}`);
+      } else {
+        const duration = transition.durationSeconds;
+        totalAudioPadDuration += duration;
+        
+        // Use curve=tri for smoother triangular crossfade (less abrupt than default)
+        audioFilterSteps.push(`${currentAudioStream}${resampledLabels[i]}acrossfade=d=${duration.toFixed(3)}:c1=tri:c2=tri${nextLabel}`);
+        currentAudioStream = nextLabel;
+        console.log(`[VIDEO PROCESSOR] Audio crossfade at gap ${i-1}`);
+      }
     }
     
     // CRITICAL: Add apad to preserve audio duration matching video tpad
-    audioFilterSteps.push(`[axfout]apad=pad_dur=${totalAudioPadDuration.toFixed(3)}[aout]`);
+    if (totalAudioPadDuration > 0) {
+      audioFilterSteps.push(`[axfout]apad=pad_dur=${totalAudioPadDuration.toFixed(3)}[aout]`);
+    } else {
+      // No crossfades applied, just pass through
+      audioFilterSteps.push(`[axfout]anull[aout]`);
+    }
   } else if (videoCount > 1) {
     audioFilterSteps.push(`${resampledLabels.join('')}concat=n=${videoCount}:v=0:a=1[aout]`);
   } else {

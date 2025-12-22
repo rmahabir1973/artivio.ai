@@ -2801,6 +2801,11 @@ const previewMutation = useMutation({
         <DndContext
           sensors={sensors}
           collisionDetection={customCollisionDetection}
+          autoScroll={{
+            enabled: true,
+            acceleration: 5,
+            threshold: { x: 0.2, y: 0.2 },
+          }}
           onDragStart={(event: DragStartEvent) => {
             console.log('[DRAG START]', event.active.id, event.active.data.current);
             setActiveDragId(String(event.active.id));
@@ -2847,8 +2852,7 @@ const previewMutation = useMutation({
           {/* Collapsible Media/Asset Panel - Hard height constraint to prevent overflow */}
           {mediaPanelOpen && (
             <div 
-              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" 
-              style={{ maxHeight: 'calc(60vh - 48px)' }}
+              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden h-full" 
               data-testid="media-panel"
             >
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">

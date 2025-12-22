@@ -166,33 +166,51 @@ function DroppableTrack({
   children, 
   className,
   style,
+  showDropHint = false,
 }: { 
   trackId: string; 
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  showDropHint?: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef, isOver, active } = useDroppable({
     id: `track-drop-${trackId}`,
     data: { type: 'track-drop-zone', trackId },
   });
+
+  // Show highlight when ANY media item is being dragged (even when not directly over)
+  const isMediaDragging = active?.data?.current?.type === 'media-item';
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
         "relative border-b border-border/30 transition-colors",
-        isOver && "bg-primary/10 ring-1 ring-primary/30",
+        isOver && "bg-primary/20 ring-2 ring-primary/50",
+        isMediaDragging && !isOver && "bg-muted/20 border-dashed border-border/50",
         className
       )}
-      style={style}
+      style={{
+        ...style,
+        minHeight: TRACK_HEIGHT,
+      }}
       data-testid={`track-${trackId}`}
     >
       {children}
+      {/* Visual drop indicator when hovering over this track */}
       {isOver && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-          <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-1 rounded">
+          <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-1 rounded shadow-lg">
             Drop here
+          </span>
+        </div>
+      )}
+      {/* Subtle hint when dragging but not over this track */}
+      {isMediaDragging && !isOver && (
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+          <span className="text-[10px] text-muted-foreground">
+            Drop media here
           </span>
         </div>
       )}
