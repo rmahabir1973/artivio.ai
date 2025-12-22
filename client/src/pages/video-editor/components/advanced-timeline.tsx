@@ -1271,10 +1271,12 @@ export function AdvancedTimeline({
       </div>
       
       <div className="flex-1 flex overflow-hidden min-h-0" data-testid="timeline-content">
-        <div className="w-28 bg-muted/20 border-r shrink-0 flex flex-col overflow-y-auto" data-testid="track-headers">
-          <div className="h-6 border-b bg-muted/10 flex items-center px-2">
+        {/* Track headers - synchronized scroll with timeline canvas */}
+        <div className="w-28 bg-muted/20 border-r shrink-0 flex flex-col min-h-0" data-testid="track-headers">
+          <div className="h-6 border-b bg-muted/10 flex items-center px-2 shrink-0">
             <span className="text-[10px] text-muted-foreground">Tracks</span>
           </div>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden" data-testid="track-headers-scroll">
           
           {trackConfig.map((config, index) => {
             const Icon = config.icon;
@@ -1339,7 +1341,7 @@ export function AdvancedTimeline({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-full rounded-none border-b text-xs text-muted-foreground hover:text-foreground"
+              className="h-8 w-full rounded-none border-b text-xs text-muted-foreground hover:text-foreground shrink-0"
               onClick={addLayer}
               data-testid="button-add-layer"
             >
@@ -1347,6 +1349,7 @@ export function AdvancedTimeline({
               Add Layer
             </Button>
           )}
+          </div>
         </div>
         
           <div
