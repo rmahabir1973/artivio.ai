@@ -2862,7 +2862,8 @@ const previewMutation = useMutation({
               style={{ height: '100%' }}
               data-testid="media-panel"
             >
-              <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
+              {/* Header - FIXED HEIGHT */}
+              <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background h-[52px]">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
                   variant="ghost" 
@@ -2875,8 +2876,10 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1">
-                <div className="p-3 space-y-3">
+              {/* ScrollArea wrapper - flex-1 min-h-0 is CRITICAL */}
+              <div className="flex-1 min-h-0">
+                <ScrollArea className="h-full">
+                  <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
                     <div className="space-y-3">
@@ -3704,8 +3707,9 @@ const previewMutation = useMutation({
                       </div>
                     </div>
                   )}
-                </div>
-              </ScrollArea>
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
           )}
 
