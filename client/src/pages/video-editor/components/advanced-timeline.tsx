@@ -1278,8 +1278,7 @@ export function AdvancedTimeline({
             <span className="text-[10px] text-muted-foreground">Tracks</span>
           </div>
 
-          <div className="flex-1 min-h-0">
-            <ScrollArea className="h-full" data-testid="track-headers-scroll">
+          <div className="flex-1 min-h-0 overflow-y-scroll" data-testid="track-headers-scroll">
 
           {trackConfig.map((config, index) => {
             const Icon = config.icon;
@@ -1354,9 +1353,7 @@ export function AdvancedTimeline({
           )}
           {/* 50px spacer under Add Layer button */}
           <div className="h-[50px] shrink-0" />
-
-            </ScrollArea>
-          </div>
+                     </div>
         </div>
           <div
             ref={scrollContainerRef}
