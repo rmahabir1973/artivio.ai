@@ -3665,7 +3665,7 @@ const previewMutation = useMutation({
 
                       <div className="p-2 rounded-md bg-muted/50 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 inline mr-1" />
-                        Max processing time: 15 minutes (AWS Lambda limit)
+                        Max processing time: 5 min for 2 mins of video.
                       </div>
 
                       <div className="pt-2 space-y-2">

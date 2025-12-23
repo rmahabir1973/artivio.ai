@@ -8499,7 +8499,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
   
-  // Check export status
+  // Check export status (with VPS fallback polling if callback failed)
   app.get('/api/video-editor/export/:jobId', requireJWT, async (req: any, res) => {
     try {
       const { jobId } = req.params;
@@ -8507,6 +8507,77 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       
       if (!job) {
         return res.status(404).json({ message: "Export job not found" });
+      }
+      
+      // If still processing, poll VPS directly as fallback (in case callback failed)
+      if (job.status === 'processing') {
+        const vpsUrl = process.env.VPS_VIDEO_PROCESSOR_URL;
+        if (vpsUrl) {
+          try {
+            const vpsBaseUrl = vpsUrl.replace('/process', '');
+            const vpsStatusResponse = await fetch(`${vpsBaseUrl}/status/${jobId}`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(5000), // 5 second timeout
+            });
+            
+            if (vpsStatusResponse.ok) {
+              const vpsStatus = await vpsStatusResponse.json();
+              console.log(`[Video Editor] VPS status poll for ${jobId}:`, vpsStatus);
+              
+              // Update local job status from VPS if completed or failed
+              if (vpsStatus.status === 'completed' && vpsStatus.downloadUrl) {
+                videoExportJobs.set(jobId, {
+                  ...job,
+                  status: 'completed',
+                  downloadUrl: vpsStatus.downloadUrl,
+                });
+                
+                // Create generation record (callback didn't make it)
+                try {
+                  const generation = await storage.createGeneration({
+                    userId: String(job.userId),
+                    type: 'video-editor',
+                    status: 'completed',
+                    resultUrl: vpsStatus.downloadUrl,
+                    model: 'Video Editor (VPS)',
+                    prompt: 'Video Editor Export',
+                    parameters: job.videoSettings || {},
+                    creditsCost: 0,
+                    processingStage: 'completed',
+                  });
+                  console.log(`[Video Editor] Created generation record ${generation?.id} from VPS poll`);
+                } catch (genError) {
+                  console.error('[Video Editor] Failed to create generation from VPS poll:', genError);
+                }
+                
+                return res.json({
+                  status: 'completed',
+                  downloadUrl: vpsStatus.downloadUrl,
+                });
+              } else if (vpsStatus.status === 'failed') {
+                videoExportJobs.set(jobId, {
+                  ...job,
+                  status: 'failed',
+                  error: vpsStatus.error || 'Export failed on VPS',
+                });
+                return res.json({
+                  status: 'failed',
+                  error: vpsStatus.error || 'Export failed',
+                });
+              }
+              // VPS still processing, return current status with progress if available
+              return res.json({
+                status: 'processing',
+                progress: vpsStatus.progress,
+                stage: vpsStatus.stage,
+              });
+            }
+          } catch (pollError: any) {
+            // VPS poll failed, continue with local status
+            console.warn(`[Video Editor] VPS status poll failed for ${jobId}:`, pollError.message);
+          }
+        }
       }
       
       res.json({
@@ -8647,7 +8718,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       if (status === 'completed' && downloadUrl && existingJob.userId) {
         try {
           const generation = await storage.createGeneration({
-            userId: existingJob.userId,
+            userId: String(existingJob.userId),
             type: 'video-editor',
             status: 'completed',
             resultUrl: downloadUrl,

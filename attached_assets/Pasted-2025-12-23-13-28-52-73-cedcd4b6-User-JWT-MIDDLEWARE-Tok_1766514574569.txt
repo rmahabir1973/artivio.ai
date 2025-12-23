@@ -1,0 +1,152 @@
+2025-12-23 13:28:52.73
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:28:52.73
+cedcd4b6
+User
+6:28:52 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 24ms :: {"st…
+2025-12-23 13:28:58.70
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (107/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:28:58.73
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:28:58.73
+cedcd4b6
+User
+6:28:58 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 26ms :: {"st…
+2025-12-23 13:29:01.70
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (108/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:01.73
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:01.73
+cedcd4b6
+User
+6:29:01 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 23ms :: {"st…
+2025-12-23 13:29:04.69
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (109/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:04.72
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:04.72
+cedcd4b6
+User
+6:29:04 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 24ms :: {"st…
+2025-12-23 13:29:07.69
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (110/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:07.72
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:07.72
+cedcd4b6
+User
+6:29:07 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 24ms :: {"st…
+2025-12-23 13:29:10.73
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (111/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:10.75
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:10.75
+cedcd4b6
+User
+6:29:10 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 23ms :: {"st…
+2025-12-23 13:29:13.70
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (112/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:13.73
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:13.73
+cedcd4b6
+User
+6:29:13 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 24ms :: {"st…
+2025-12-23 13:29:16.72
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (113/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:16.74
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:16.75
+cedcd4b6
+User
+6:29:16 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 23ms :: {"st…
+2025-12-23 13:29:19.70
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (114/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:19.72
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:19.72
+cedcd4b6
+User
+6:29:19 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 26ms :: {"st…
+2025-12-23 13:29:21.78
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (115/100) - global - /auth/user
+2025-12-23 13:29:21.80
+cedcd4b6
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-12-23 13:29:21.80
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:21.83
+cedcd4b6
+User
+}
+2025-12-23 13:29:21.83
+cedcd4b6
+User
+userId: '49729939',
+2025-12-23 13:29:21.83
+cedcd4b6
+User
+isAdmin: true
+2025-12-23 13:29:21.83
+cedcd4b6
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-23 13:29:21.83
+cedcd4b6
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-23 13:29:21.83
+cedcd4b6
+User
+6:29:21 PM [express] GET /api/auth/user 200 in 47ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-12-23 13:29:22.70
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (116/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:22.73
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:22.73
+cedcd4b6
+User
+6:29:22 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 24ms :: {"st…

@@ -1,0 +1,152 @@
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+at /home/runner/workspace/node_modules/jsonwebtoken/verify.js:190:21
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+expiredAt: 2025-12-23T18:29:49.000Z
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+[JWT MIDDLEWARE] Invalid or expired access token
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+at verifyAccessToken (file:///home/runner/workspace/dist/index.js:12326:25)
+2025-12-23 13:29:49.70
+cedcd4b6
+User
+6:29:49 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 401 in 2ms :: {"mes…
+2025-12-23 13:29:49.76
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (126/100) - global - /auth/refresh
+2025-12-23 13:29:49.76
+cedcd4b6
+User
+[AUTH] Refresh token request { hasRefreshToken: true, hasTokenId: true, tokenIdPreview: '8e5439b5' }
+2025-12-23 13:29:49.81
+cedcd4b6
+User
+[JWT] Refresh token validated successfully { userId: '49729939', tokenId: '8e5439b5-535b-4a2d-9cde-bd5e410efd01' }
+2025-12-23 13:29:49.86
+cedcd4b6
+User
+[JWT] Refresh token revoked { tokenId: '8e5439b5-535b-4a2d-9cde-bd5e410efd01' }
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+}
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+newTokenId: '1d69af6a-5d85-4901-892c-5a8cb916f729'
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+userId: '49729939',
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+[JWT] Refresh token rotated {
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+[JWT] Refresh token stored in database { userId: '49729939', tokenId: '1d69af6a-5d85-4901-892c-5a8cb916f729' }
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+oldTokenId: '8e5439b5-535b-4a2d-9cde-bd5e410efd01',
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+isAdmin: true
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+newTokenId: '1d69af6a',
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+}
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+userId: '49729939',
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+[AUTH] ✓ Token refresh successful {
+2025-12-23 13:29:49.93
+cedcd4b6
+User
+6:29:49 PM [express] POST /api/auth/refresh 200 in 168ms :: {"message":"Token refreshed successfully…
+2025-12-23 13:29:50.00
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (127/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:50.02
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:50.02
+cedcd4b6
+User
+6:29:50 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 24ms :: {"st…
+2025-12-23 13:29:50.48
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (128/100) - global - /announcements/active
+2025-12-23 13:29:50.50
+cedcd4b6
+User
+6:29:50 PM [express] GET /api/announcements/active 304 in 23ms :: []
+2025-12-23 13:29:52.70
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (129/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:52.72
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:55.70
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (130/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:55.73
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:55.73
+cedcd4b6
+User
+6:29:55 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 23ms :: {"st…
+2025-12-23 13:29:58.69
+cedcd4b6
+User
+📊 [RATE LIMIT MONITOR] Would block ip:72.38.143.146 (131/100) - global - /video-editor/export/export-1766514517546-cbv9jty8w
+2025-12-23 13:29:58.72
+cedcd4b6
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-23 13:29:58.72
+cedcd4b6
+User
+6:29:58 PM [express] GET /api/video-editor/export/export-1766514517546-cbv9jty8w 304 in 26ms :: {"st…
