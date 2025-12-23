@@ -2874,7 +2874,7 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 min-h-0">
+              <ScrollArea className="flex-1 min-h-0 h-0">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
