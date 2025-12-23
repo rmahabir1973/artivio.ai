@@ -137,8 +137,6 @@ interface ClipSettingsLocal {
   originalDuration?: number; // Actual video duration in seconds (loaded from video metadata)
   displayDuration?: number; // For images: how long to display (default 5 seconds)
   positionSeconds?: number; // Manual position for free positioning mode (when snap is disabled)
-  fadeInSeconds?: number; // Fade in duration (0-3 seconds) - Camtasia-style per-clip effect
-  fadeOutSeconds?: number; // Fade out duration (0-3 seconds) - Camtasia-style per-clip effect
 }
 
 // Per-clip transition state (for the transition AFTER each clip)
@@ -463,7 +461,7 @@ function ClipVolumeSlider({
   onCommit: (v: number) => void;
 }) {
   const [localVolume, setLocalVolume] = useState(initialVolume);
-  
+
   return (
     <div className="space-y-2">
       <Label className="text-sm flex justify-between">
@@ -496,7 +494,7 @@ function ClipSpeedSlider({
   onCommit: (v: number) => void;
 }) {
   const [localSpeed, setLocalSpeed] = useState(initialSpeed);
-  
+
   return (
     <div className="pt-4 border-t space-y-2">
       <Label className="text-sm flex justify-between">
@@ -630,7 +628,7 @@ export default function VideoEditor() {
   const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(true);
   const timelinePlayIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timelineDurationRef = useRef(0);
-  
+
   useEffect(() => {
     return () => {
       if (timelinePlayIntervalRef.current) {
@@ -660,7 +658,7 @@ export default function VideoEditor() {
   useEffect(() => {
     // Don't save while restoring to prevent overwriting restored data
     if (isRestoringRef.current) return;
-    
+
     // Skip saving if there's nothing to save
     if (orderedClips.length === 0 && audioTracks.length === 0 && multiTrackItems.length === 0) {
       return;
@@ -704,10 +702,10 @@ export default function VideoEditor() {
       if (!savedSession) return;
 
       const sessionData = JSON.parse(savedSession);
-      
+
       // Validate session data
       if (!sessionData.version || !sessionData.savedAt) return;
-      
+
       // Check if session is less than 24 hours old
       const savedAt = new Date(sessionData.savedAt);
       const hoursSinceSave = (Date.now() - savedAt.getTime()) / (1000 * 60 * 60);
@@ -791,7 +789,7 @@ export default function VideoEditor() {
 
   // Load video metadata to get actual duration (defined after updateClipSettings)
   const loadClipDurationRef = useRef<((clipId: string, url: string) => void) | null>(null);
-  
+
   // Track which clips have already attempted duration loading to prevent infinite loops
   // Key is "clipId:url" to allow re-loading if URL changes
   const attemptedDurationLoadsRef = useRef<Set<string>>(new Set());
@@ -830,13 +828,13 @@ export default function VideoEditor() {
     if (!url || !url.startsWith('http')) {
       return;
     }
-    
+
     // Check if we've already attempted to load this clip+url combo to prevent infinite loops
     const cacheKey = `${clipId}:${url}`;
     if (attemptedDurationLoadsRef.current.has(cacheKey)) {
       return; // Already attempted, don't retry
     }
-    
+
     // Mark as attempted before loading
     attemptedDurationLoadsRef.current.add(cacheKey);
 
@@ -1024,8 +1022,6 @@ export default function VideoEditor() {
             trimEndSeconds: localSettings?.trimEndSeconds,
             isImage,
             displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
-            fadeInSeconds: localSettings?.fadeInSeconds, // Per-clip fade in (Camtasia-style)
-            fadeOutSeconds: localSettings?.fadeOutSeconds, // Per-clip fade out (Camtasia-style)
           };
         });
 
@@ -1067,9 +1063,7 @@ export default function VideoEditor() {
               cs.speed !== 1.0 ||
               cs.trimStartSeconds !== undefined || 
               cs.trimEndSeconds !== undefined || 
-              cs.isImage ||
-              (cs.fadeInSeconds && cs.fadeInSeconds > 0) ||
-              (cs.fadeOutSeconds && cs.fadeOutSeconds > 0)
+              cs.isImage
             ),
             backgroundMusic: enhancements.backgroundMusic ? {
               audioUrl: enhancements.backgroundMusic.audioUrl,
@@ -1248,31 +1242,31 @@ export default function VideoEditor() {
     const pointerCollisions = pointerWithin(args);
     const rectCollisions = rectIntersection(args);
     const allCollisions = [...pointerCollisions, ...rectCollisions];
-    
+
     // Check what type of item is being dragged
     const activeData = args.active.data.current;
     const isMediaDrag = activeData?.type === 'media-item';
     const isTransitionDrag = activeData?.type === 'transition';
     const isClipReorder = activeData?.type === 'clip' || (!isMediaDrag && !isTransitionDrag && args.active.id);
-    
+
     // For TRANSITION drags ONLY: prioritize transition-zone targets
     if (isTransitionDrag) {
       const transitionZoneHits = allCollisions.filter(
         collision => collision.data?.droppableContainer?.data?.current?.type === 'transition-zone'
       );
-      
+
       if (transitionZoneHits.length > 0) {
         console.log('[COLLISION] Transition zone hit for transition drag:', transitionZoneHits[0].id);
         return [transitionZoneHits[0]];
       }
     }
-    
+
     // For MEDIA drags: prioritize track-drop zones, IGNORE transition zones
     if (isMediaDrag) {
       const trackDropHits = allCollisions.filter(
         collision => collision.data?.droppableContainer?.data?.current?.type === 'track-drop-zone'
       );
-      
+
       if (trackDropHits.length > 0) {
         console.log('[COLLISION] Track drop zone hit:', trackDropHits[0].id);
         return [trackDropHits[0]];
@@ -1284,7 +1278,7 @@ export default function VideoEditor() {
     const filteredDroppableContainers = args.droppableContainers.filter(
       container => container.data?.current?.type !== 'transition-zone'
     );
-    
+
     if (filteredDroppableContainers.length > 0) {
       // Run closestCenter on filtered containers only
       const filteredResult = closestCenter({
@@ -2210,24 +2204,24 @@ const previewMutation = useMutation({
     // ========================================================================
     if (activeData?.type === 'clip') {
       const clipId = activeData.clip?.id || activeId;
-      
+
       console.log('[DRAG] Clip drag:', { clipId, dragDelta, dragInitialPosition });
-      
+
       // If significant horizontal movement, update position (only in free mode)
       if (!enhancements.snapEnabled && Math.abs(dragDelta.x) >= 5) {
         // Calculate new position using initial position + delta
         // Use 100 pixels per second as base (matches PIXELS_PER_SECOND_BASE in timeline)
         const pixelsPerSecond = 100; // Base rate - zoom is already factored into the drag delta
         const deltaSeconds = dragDelta.x / pixelsPerSecond;
-        
+
         // Calculate new position from initial, not current (avoids compounding)
         const newPosition = Math.max(0, dragInitialPosition + deltaSeconds);
-        
+
         updateClipSettings(clipId, { positionSeconds: newPosition });
-        
+
         console.log('[DRAG] Updated clip position:', { clipId, newPosition, deltaSeconds, initial: dragInitialPosition });
       }
-      
+
       // If significant vertical movement, change track
       if (Math.abs(dragDelta.y) >= 30 && dragDelta.y !== 0) {
         const clip = orderedClips.find(c => c.id === clipId);
@@ -2237,7 +2231,7 @@ const previewMutation = useMutation({
           const trackDelta = Math.round(dragDelta.y / 60); // ~60px per track
           const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
           const newTrackId = `layer-${newTrackNum}`;
-          
+
           if (newTrackId !== currentTrackId) {
             setOrderedClips(items => items.map(c => 
               c.id === clipId ? { ...c, trackId: newTrackId } : c
@@ -2246,7 +2240,7 @@ const previewMutation = useMutation({
           }
         }
       }
-      
+
       return;
     }
 
@@ -2255,22 +2249,22 @@ const previewMutation = useMutation({
     // ========================================================================
     if (activeData?.type === 'audio') {
       const trackId = activeData.track?.id;
-      
+
       console.log('[DRAG] Audio drag:', { trackId, dragDelta, dragInitialPosition });
-      
+
       // If significant horizontal movement, update position
       if (Math.abs(dragDelta.x) >= 5) {
         const pixelsPerSecond = 100; // Base rate
         const deltaSeconds = dragDelta.x / pixelsPerSecond;
         const newPosition = Math.max(0, dragInitialPosition + deltaSeconds);
-        
+
         setAudioTracks(prev => prev.map(t => 
           t.id === trackId ? { ...t, positionSeconds: newPosition } : t
         ));
-        
+
         console.log('[DRAG] Updated audio position:', { trackId, newPosition, deltaSeconds });
       }
-      
+
       // If significant vertical movement, change layer
       if (Math.abs(dragDelta.y) >= 30 && dragDelta.y !== 0) {
         const track = audioTracks.find(t => t.id === trackId);
@@ -2280,7 +2274,7 @@ const previewMutation = useMutation({
           const trackDelta = Math.round(dragDelta.y / 60); // ~60px per track
           const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
           const newLayerId = `layer-${newTrackNum}`;
-          
+
           if (newLayerId !== currentTrackId) {
             setAudioTracks(prev => prev.map(t => 
               t.id === trackId ? { ...t, trackId: newLayerId } : t
@@ -2289,7 +2283,7 @@ const previewMutation = useMutation({
           }
         }
       }
-      
+
       return;
     }
 
@@ -2610,10 +2604,10 @@ const previewMutation = useMutation({
 
   // Calculate total timeline duration
   const totalDuration = calculateTotalDuration();
-  
+
   // Update ref for timeline playback
   timelineDurationRef.current = totalDuration;
-  
+
   // Handle timeline play/pause
   const handleTimelinePlayPause = useCallback(() => {
     setIsTimelinePlaying(prev => {
@@ -2807,11 +2801,6 @@ const previewMutation = useMutation({
         <DndContext
           sensors={sensors}
           collisionDetection={customCollisionDetection}
-          autoScroll={{
-            enabled: true,
-            acceleration: 5,
-            threshold: { x: 0.2, y: 0.2 },
-          }}
           onDragStart={(event: DragStartEvent) => {
             console.log('[DRAG START]', event.active.id, event.active.data.current);
             setActiveDragId(String(event.active.id));
@@ -2858,7 +2847,8 @@ const previewMutation = useMutation({
           {/* Collapsible Media/Asset Panel - Hard height constraint to prevent overflow */}
           {mediaPanelOpen && (
             <div 
-              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden h-full" 
+              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" 
+              style={{ maxHeight: 'calc(60vh - 48px)' }}
               data-testid="media-panel"
             >
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
@@ -3000,10 +2990,9 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {musicTracks.map((track) => (
-                            <DraggableMediaItem
+                            <div
                               key={track.id}
-                              item={track}
-                              mediaType="audio"
+                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
                               onClick={() => {
                                 const trackId = `music_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
@@ -3013,10 +3002,10 @@ const previewMutation = useMutation({
                                   type: 'music',
                                   volume: 0.5,
                                 }]);
-                                
+
                                 // Initialize audio settings for duration loading
                                 updateClipSettings(trackId, { originalDuration: 30 });
-                                
+
                                 setEnhancements(prev => ({
                                   ...prev,
                                   backgroundMusic: {
@@ -3027,7 +3016,13 @@ const previewMutation = useMutation({
                                 }));
                                 toast({ title: "Music Added", description: "Music track added to timeline" });
                               }}
-                            />
+                              data-testid={`music-item-${track.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm truncate">{track.prompt || 'Music Track'}</span>
+                              </div>
+                            </div>
                           ))}
 
                           {/* Load More for Music */}
@@ -3065,10 +3060,9 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {voiceTracks.map((track) => (
-                            <DraggableMediaItem
+                            <div
                               key={track.id}
-                              item={track}
-                              mediaType="audio"
+                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
                               onClick={() => {
                                 const trackId = `voice_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
@@ -3078,10 +3072,10 @@ const previewMutation = useMutation({
                                   type: 'voice',
                                   volume: 1.0,
                                 }]);
-                                
+
                                 // Initialize audio settings for duration loading
                                 updateClipSettings(trackId, { originalDuration: 30 });
-                                
+
                                 setEnhancements(prev => ({
                                   ...prev,
                                   audioTrack: {
@@ -3093,7 +3087,13 @@ const previewMutation = useMutation({
                                 }));
                                 toast({ title: "Audio Added", description: "Audio track added to timeline" });
                               }}
-                            />
+                              data-testid={`audio-item-${track.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm truncate">{track.prompt || 'Audio Track'}</span>
+                              </div>
+                            </div>
                           ))}
 
                           {/* Load More for Audio */}
@@ -3796,9 +3796,8 @@ const previewMutation = useMutation({
           </div>
 
           {/* Bottom Section: Advanced Timeline (40% of remaining height) */}
-          <div className="flex-[4] border-t min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-[4] border-t min-h-0 flex flex-col">
             <AdvancedTimeline
-              className="flex-1 h-full overflow-hidden"
               clips={orderedClips}
               audioTracks={audioTracks}
               getClipSettings={getClipSettings}
@@ -3834,35 +3833,35 @@ const previewMutation = useMutation({
               onClipSplit={(clipId, splitTimeInClip) => {
                 const clipIndex = orderedClips.findIndex(c => c.id === clipId);
                 if (clipIndex === -1) return;
-                
+
                 const originalClip = orderedClips[clipIndex];
                 const originalSettings = getClipSettings(clipId);
                 const originalDuration = originalSettings.originalDuration ?? 5;
                 const trimStart = originalSettings.trimStartSeconds ?? 0;
                 const trimEnd = originalSettings.trimEndSeconds ?? originalDuration;
                 const speed = originalSettings.speed ?? 1;
-                
+
                 if (splitTimeInClip <= trimStart || splitTimeInClip >= trimEnd) {
                   toast({ title: "Cannot Split", description: "Playhead must be inside the clip", variant: "destructive" });
                   return;
                 }
-                
+
                 const clip1Id = `${clipId}-split-a-${Date.now()}`;
                 const clip2Id = `${clipId}-split-b-${Date.now()}`;
                 const clip1 = { ...originalClip, id: clip1Id };
                 const clip2 = { ...originalClip, id: clip2Id };
-                
+
                 // Calculate positions for split clips to maintain their timeline positions
                 const originalPosition = originalSettings.positionSeconds ?? 0;
                 const clip1Duration = (splitTimeInClip - trimStart) / speed;
                 const clip2Position = originalPosition + clip1Duration;
-                
+
                 setOrderedClips(items => {
                   const newItems = [...items];
                   newItems.splice(clipIndex, 1, clip1, clip2);
                   return newItems;
                 });
-                
+
                 setClipSettings(prev => {
                   const newMap = new Map(prev);
                   // Clip 1 keeps original position
@@ -3881,7 +3880,7 @@ const previewMutation = useMutation({
                   });
                   return newMap;
                 });
-                
+
                 toast({ title: "Clip Split", description: "Clip has been split at playhead position" });
               }}
               onClipTrackChange={(clipId, newTrackId) => {
@@ -3901,13 +3900,13 @@ const previewMutation = useMutation({
               onAudioSplit={(trackId, splitTimeInTrack) => {
                 const trackIndex = audioTracks.findIndex(t => t.id === trackId);
                 if (trackIndex === -1) return;
-                
+
                 const originalTrack = audioTracks[trackIndex];
                 const originalDuration = originalTrack.duration ?? 60;
                 const trimStart = originalTrack.trimStartSeconds ?? 0;
                 const trimEnd = originalTrack.trimEndSeconds ?? originalDuration;
                 const positionSeconds = originalTrack.positionSeconds ?? 0;
-                
+
                 // Minimum segment length validation (0.5 seconds minimum on each side)
                 const MIN_SEGMENT_LENGTH = 0.5;
                 if (splitTimeInTrack <= trimStart + MIN_SEGMENT_LENGTH || 
@@ -3915,13 +3914,13 @@ const previewMutation = useMutation({
                   toast({ title: "Cannot Split", description: "Playhead must be at least 0.5 seconds from either edge", variant: "destructive" });
                   return;
                 }
-                
+
                 const track1Id = `${trackId}-split-a-${Date.now()}`;
                 const track2Id = `${trackId}-split-b-${Date.now()}`;
-                
+
                 const track1Duration = splitTimeInTrack - trimStart;
                 const track2Position = positionSeconds + track1Duration;
-                
+
                 const track1 = { 
                   ...originalTrack, 
                   id: track1Id, 
@@ -3935,13 +3934,13 @@ const previewMutation = useMutation({
                   positionSeconds: track2Position,
                   fadeOutSeconds: originalTrack.fadeOutSeconds // Keep fade out on second part
                 };
-                
+
                 setAudioTracks(prev => {
                   const newTracks = [...prev];
                   newTracks.splice(trackIndex, 1, track1, track2);
                   return newTracks;
                 });
-                
+
                 toast({ title: "Audio Split", description: "Audio track has been split at playhead position" });
               }}
               onClipSettingsChange={(clipId, settings) => {
@@ -3955,10 +3954,11 @@ const previewMutation = useMutation({
               onTimeChange={setTimelineCurrentTime}
               onPlayPause={handleTimelinePlayPause}
               isPlaying={isTimelinePlaying}
+              className="flex-1"
             />
           </div>
         </div>
-        
+
         {/* Drag Overlay - shows what's being dragged */}
         <DragOverlay>
           {activeDragId && activeDragData && (
@@ -4108,62 +4108,6 @@ const previewMutation = useMutation({
                     />
                   </>
                 )}
-                
-                {/* Per-clip Fade In/Out - Works on any layer (Camtasia-style) */}
-                <div className="pt-4 border-t space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    Clip Transitions
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="fade-in" className="text-sm flex items-center gap-2">
-                      Fade In (seconds)
-                    </Label>
-                    <Slider
-                      id="fade-in"
-                      value={[getClipSettings(editingClip.clip.id).fadeInSeconds ?? 0]}
-                      min={0}
-                      max={3}
-                      step={0.1}
-                      onValueChange={([v]) => 
-                        updateClipSettings(editingClip.clip.id, { fadeInSeconds: v })
-                      }
-                      data-testid="slider-fade-in"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>None</span>
-                      <span>{(getClipSettings(editingClip.clip.id).fadeInSeconds ?? 0).toFixed(1)}s</span>
-                      <span>3s</span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="fade-out" className="text-sm flex items-center gap-2">
-                      Fade Out (seconds)
-                    </Label>
-                    <Slider
-                      id="fade-out"
-                      value={[getClipSettings(editingClip.clip.id).fadeOutSeconds ?? 0]}
-                      min={0}
-                      max={3}
-                      step={0.1}
-                      onValueChange={([v]) => 
-                        updateClipSettings(editingClip.clip.id, { fadeOutSeconds: v })
-                      }
-                      data-testid="slider-fade-out"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>None</span>
-                      <span>{(getClipSettings(editingClip.clip.id).fadeOutSeconds ?? 0).toFixed(1)}s</span>
-                      <span>3s</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground">
-                    Add smooth fade-in/fade-out effects to this clip. Works independently on any layer.
-                  </p>
-                </div>
               </div>
             </div>
           )}
