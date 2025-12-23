@@ -1272,31 +1272,92 @@ export function AdvancedTimeline({
       </div>
 
       <div className="flex-1 flex overflow-hidden min-h-0" data-testid="timeline-content">
-        {/* Track headers - synchronized scroll with timeline canvas */}
-
+  {/* Track headers - synchronized scroll with timeline canvas */}
         <div className="w-36 bg-muted/20 border-r shrink-0 flex flex-col overflow-hidden h-full" data-testid="track-headers">
-  <div className="h-6 border-b bg-muted/10 flex items-center px-2 shrink-0">
-    <span className="text-[10px] text-muted-foreground">Tracks</span>
-  </div>
+          <div className="h-6 border-b bg-muted/10 flex items-center px-2 shrink-0">
+            <span className="text-[10px] text-muted-foreground">Tracks</span>
+          </div>
 
-  {/* KEY FIX: Wrapper with flex-1 min-h-0 */}
-  <div className="flex-1 min-h-0">
-    <ScrollArea className="h-full" data-testid="track-headers-scroll">
-      <div>
-        {trackConfig.map((config, index) => {
-          // ... layer items ...
-        })}
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full" data-testid="track-headers-scroll">
 
-        {/* Add Layer button */}
-        {layerCount < MAX_LAYERS && (
-          <Button>Add Layer</Button>
-        )}
+          {trackConfig.map((config, index) => {
+            const Icon = config.icon;
+            const isVisible = trackVisibility[config.id] !== false;
+            const isLocked = trackLocked[config.id] === true;
+            const isLastLayer = index === trackConfig.length - 1;
+            const hasClips = clips.some(c => c.trackId === config.id || (!c.trackId && config.id === 'layer-1'));
 
-        <div className="h-[50px] shrink-0" />
-      </div>
-    </ScrollArea>
-  </div>
-</div>
+            return (
+              <div
+                key={config.id}
+                className={cn(
+                  "flex items-center justify-between px-2 border-b group hover:bg-muted/50 transition-colors",
+                  !isVisible && "opacity-50"
+                )}
+                style={{ height: TRACK_HEIGHT }}
+                data-testid={`track-header-${config.id}`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-xs font-medium truncate">{config.label}</span>
+                </div>
+
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Remove layer button (only on last layer if it's empty and not the only layer) */}
+                  {isLastLayer && layerCount > 1 && !hasClips && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => removeLayer(config.id)}
+                      data-testid={`button-remove-${config.id}`}
+                    >
+                      <Minus className="h-3 w-3 text-destructive" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => setTrackLocked(prev => ({ ...prev, [config.id]: !prev[config.id] }))}
+                    data-testid={`button-lock-${config.id}`}
+                  >
+                    {isLocked ? <Lock className="h-3 w-3 text-primary" /> : <Unlock className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => setTrackVisibility(prev => ({ ...prev, [config.id]: !prev[config.id] }))}
+                    data-testid={`button-visibility-${config.id}`}
+                  >
+                    {isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Add Layer button */}
+          {layerCount < MAX_LAYERS && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-full rounded-none border-b text-xs text-muted-foreground hover:text-foreground shrink-0"
+              onClick={addLayer}
+              data-testid="button-add-layer"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add Layer
+            </Button>
+          )}
+          {/* 50px spacer under Add Layer button */}
+          <div className="h-[50px] shrink-0" />
+
+            </ScrollArea>
+          </div>
+        </div>
           <div
             ref={scrollContainerRef}
             className="flex-1 overflow-auto"
