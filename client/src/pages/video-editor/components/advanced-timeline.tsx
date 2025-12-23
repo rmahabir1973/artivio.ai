@@ -323,13 +323,13 @@ function TimelineClipItem({
   const [isTrimming, setIsTrimming] = useState<'left' | 'right' | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const trimStartRef = useRef({ x: 0, trimStart: 0, trimEnd: 0 });
-  
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: clip.id,
     data: { clip, index, type: 'clip' },
     disabled: isTrimming !== null,
   });
-  
+
   const style: React.CSSProperties = {
     position: 'absolute',
     left: `${left}px`,
@@ -341,24 +341,24 @@ function TimelineClipItem({
     zIndex: isSelected ? 20 : isDragging ? 30 : 10,
     cursor: isTrimming ? 'ew-resize' : 'grab',
   };
-  
+
   const handleTrimMouseDown = (e: React.MouseEvent, side: 'left' | 'right') => {
     e.stopPropagation();
     e.preventDefault();
     setIsTrimming(side);
-    
+
     const originalDuration = settings.originalDuration ?? 5;
     trimStartRef.current = {
       x: e.clientX,
       trimStart: settings.trimStartSeconds ?? 0,
       trimEnd: settings.trimEndSeconds ?? originalDuration,
     };
-    
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - trimStartRef.current.x;
       const deltaSeconds = deltaX / pixelsPerSecond;
       const originalDur = settings.originalDuration ?? 5;
-      
+
       if (side === 'left') {
         const newTrimStart = Math.max(0, Math.min(
           trimStartRef.current.trimStart + deltaSeconds,
@@ -373,24 +373,24 @@ function TimelineClipItem({
         onTrimChange(clip.id, trimStartRef.current.trimStart, newTrimEnd);
       }
     };
-    
+
     const handleMouseUp = () => {
       setIsTrimming(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
-  
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect(clip, index, e.shiftKey);
   };
-  
+
   const thumbnailCount = Math.max(1, Math.ceil(width / 60));
-  
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -421,9 +421,9 @@ function TimelineClipItem({
               ))}
             </div>
           )}
-          
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          
+
           <div className="absolute bottom-1 left-1.5 right-1.5 flex items-center justify-between gap-1">
             <Badge variant="outline" className="text-[9px] h-4 px-1 bg-background/80">
               #{index + 1}
@@ -440,7 +440,7 @@ function TimelineClipItem({
               </span>
             </div>
           </div>
-          
+
           {(isSelected || isHovered) && (
             <>
               <div
@@ -459,7 +459,7 @@ function TimelineClipItem({
               </div>
             </>
           )}
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -474,7 +474,7 @@ function TimelineClipItem({
           </Button>
         </div>
       </ContextMenuTrigger>
-      
+
       <ContextMenuContent data-testid={`context-menu-${clip.id}`}>
         <ContextMenuItem onClick={() => onDuplicate(clip, index)} data-testid="context-duplicate">
           <Copy className="h-4 w-4 mr-2" />
@@ -543,7 +543,7 @@ function AudioTrackItem({
   const [isTrimming, setIsTrimming] = useState<'left' | 'right' | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const trimStartRef = useRef({ x: 0, trimStart: 0, trimEnd: 0 });
-  
+
   // Calculate dimensions based on track properties
   const originalDuration = track.duration ?? 60; // Default to 60 seconds if unknown
   const trimStart = track.trimStartSeconds ?? 0;
@@ -551,28 +551,28 @@ function AudioTrackItem({
   const effectiveDuration = trimEnd - trimStart;
   const positionSeconds = track.positionSeconds ?? 0;
   const fadeOutSeconds = track.fadeOutSeconds ?? 0;
-  
+
   const left = positionSeconds * pixelsPerSecond;
   const width = Math.max(MIN_CLIP_WIDTH, effectiveDuration * pixelsPerSecond);
-  
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `audio-${track.id}`,
     data: { track, type: 'audio' },
     disabled: isTrimming !== null,
   });
-  
+
   const color = track.type === 'music' 
     ? 'bg-green-500/20 border-green-500/50' 
     : track.type === 'voice' 
       ? 'bg-purple-500/20 border-purple-500/50'
       : 'bg-orange-500/20 border-orange-500/50';
-  
+
   const iconColor = track.type === 'music' 
     ? 'text-green-500' 
     : track.type === 'voice' 
       ? 'text-purple-500'
       : 'text-orange-500';
-  
+
   const style: React.CSSProperties = {
     position: 'absolute',
     left: `${left}px`,
@@ -584,23 +584,23 @@ function AudioTrackItem({
     zIndex: isSelected ? 20 : isDragging ? 30 : 10,
     cursor: isTrimming ? 'ew-resize' : 'grab',
   };
-  
+
   // Handle trimming
   const handleTrimMouseDown = (e: React.MouseEvent, side: 'left' | 'right') => {
     e.stopPropagation();
     e.preventDefault();
     setIsTrimming(side);
-    
+
     trimStartRef.current = {
       x: e.clientX,
       trimStart: trimStart,
       trimEnd: trimEnd,
     };
-    
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - trimStartRef.current.x;
       const deltaSeconds = deltaX / pixelsPerSecond;
-      
+
       if (side === 'left') {
         const newTrimStart = Math.max(0, Math.min(
           trimStartRef.current.trimStart + deltaSeconds,
@@ -615,26 +615,26 @@ function AudioTrackItem({
         onUpdate?.(track.id, { trimEndSeconds: newTrimEnd });
       }
     };
-    
+
     const handleMouseUp = () => {
       setIsTrimming(null);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
   };
-  
+
   // Calculate if playhead is over this audio track
   const trackStartTime = positionSeconds;
   const trackEndTime = positionSeconds + effectiveDuration;
   const isPlayheadOver = currentTime >= trackStartTime && currentTime <= trackEndTime;
   const splitTimeInTrack = currentTime - trackStartTime + trimStart;
-  
+
   // Fade out indicator width
   const fadeOutWidth = fadeOutSeconds > 0 ? (fadeOutSeconds / effectiveDuration) * width : 0;
-  
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -668,7 +668,7 @@ function AudioTrackItem({
           >
             <GripVertical className="h-3 w-3 text-white/60" />
           </div>
-          
+
           {/* Fade out indicator */}
           {fadeOutSeconds > 0 && (
             <div 
@@ -679,7 +679,7 @@ function AudioTrackItem({
               }}
             />
           )}
-          
+
           {/* Content */}
           <div className="flex items-center gap-1 overflow-hidden flex-1 ml-2">
             {track.type === 'music' ? (
@@ -696,11 +696,11 @@ function AudioTrackItem({
               </span>
             )}
           </div>
-          
+
           <span className="text-[9px] text-muted-foreground whitespace-nowrap">
             {formatTimeShort(effectiveDuration)}
           </span>
-          
+
           {/* Right trim handle */}
           <div
             className={cn(
@@ -727,7 +727,7 @@ function AudioTrackItem({
             <ContextMenuSeparator />
           </>
         )}
-        
+
         {/* Fade out options */}
         <ContextMenuSub>
           <ContextMenuSubTrigger data-testid="context-audio-fade">
@@ -754,7 +754,7 @@ function AudioTrackItem({
             ))}
           </ContextMenuSubContent>
         </ContextMenuSub>
-        
+
         {/* Move to layer options */}
         {onUpdate && availableTrackIds.length > 1 && (
           <>
@@ -778,7 +778,7 @@ function AudioTrackItem({
             </ContextMenuSub>
           </>
         )}
-        
+
         <ContextMenuSeparator />
         <ContextMenuItem 
           onClick={() => onRemove(track.id)} 
@@ -804,7 +804,7 @@ function TimelineRuler({ duration, pixelsPerSecond, zoom }: TimelineRulerProps) 
   const minorInterval = majorInterval / 4;
   const markers: JSX.Element[] = [];
   const totalWidth = Math.max(duration + 10, 60) * pixelsPerSecond;
-  
+
   for (let time = 0; time <= duration + majorInterval; time += minorInterval) {
     const isMajor = Math.abs(time % majorInterval) < 0.01;
     markers.push(
@@ -824,7 +824,7 @@ function TimelineRuler({ duration, pixelsPerSecond, zoom }: TimelineRulerProps) 
       </div>
     );
   }
-  
+
   return (
     <div
       className="h-6 bg-muted/20 border-b relative shrink-0"
@@ -846,12 +846,12 @@ interface PlayheadProps {
 
 function Playhead({ currentTime, pixelsPerSecond, onTimeChange, containerRef, totalDuration }: PlayheadProps) {
   const [isDragging, setIsDragging] = useState(false);
-  
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setIsDragging(true);
-    
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
@@ -860,17 +860,17 @@ function Playhead({ currentTime, pixelsPerSecond, onTimeChange, containerRef, to
       const newTime = Math.max(0, Math.min(x / pixelsPerSecond, totalDuration));
       onTimeChange(newTime);
     };
-    
+
     const handleMouseUp = () => {
       setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
-  
+
   return (
     <div
       className="absolute top-0 bottom-0 z-50 pointer-events-none"
@@ -924,17 +924,17 @@ export function AdvancedTimeline({
   const [layerCount, setLayerCount] = useState(1); // Start with 1 layer
   const [trackVisibility, setTrackVisibility] = useState<Record<string, boolean>>({});
   const [trackLocked, setTrackLocked] = useState<Record<string, boolean>>({});
-  
+
   // Generate dynamic track config based on layer count
   const trackConfig = useMemo(() => generateTrackConfig(layerCount), [layerCount]);
-  
+
   // Add a new layer
   const addLayer = useCallback(() => {
     if (layerCount < MAX_LAYERS) {
       setLayerCount(prev => prev + 1);
     }
   }, [layerCount]);
-  
+
   // Remove a layer (only if no clips on it)
   const removeLayer = useCallback((layerId: string) => {
     const hasClips = clips.some(c => c.trackId === layerId);
@@ -946,7 +946,7 @@ export function AdvancedTimeline({
       setLayerCount(prev => prev - 1);
     }
   }, [clips, layerCount]);
-  
+
   // Auto-extend layerCount based on existing clips (for legacy projects)
   useEffect(() => {
     let maxLayer = 1;
@@ -962,9 +962,9 @@ export function AdvancedTimeline({
       setLayerCount(Math.min(maxLayer, MAX_LAYERS));
     }
   }, [clips, layerCount]);
-  
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     if (selectedClipId) {
       setSelectedClipIds(new Set([selectedClipId]));
@@ -972,11 +972,11 @@ export function AdvancedTimeline({
       setSelectedClipIds(new Set());
     }
   }, [selectedClipId]);
-  
+
   const pixelsPerSecond = PIXELS_PER_SECOND_BASE * zoom;
   const effectiveDuration = Math.max(totalDuration, 10);
   const totalWidth = (effectiveDuration + 10) * pixelsPerSecond;
-  
+
   const clipPositions = useMemo((): ClipPosition[] => {
     // First, compute auto-sequenced positions for all clips (needed for both modes)
     // Initialize running time for all dynamic layers
@@ -984,12 +984,12 @@ export function AdvancedTimeline({
     for (let i = 1; i <= layerCount; i++) {
       runningTimeByLayer[`layer-${i}`] = 0;
     }
-    
+
     const autoSequencedPositions: number[] = clips.map((clip, index) => {
       const settings = getClipSettings(clip.id);
       const trackId = clip.trackId || 'layer-1';
       let duration: number;
-      
+
       if (clip.type === 'image') {
         duration = settings.displayDuration ?? 5;
       } else {
@@ -999,27 +999,27 @@ export function AdvancedTimeline({
         const speed = settings.speed ?? 1;
         duration = (trimEnd - trimStart) / speed;
       }
-      
+
       const transitionTrackId = trackId || 'layer-1';
       const transition = clipTransitions.find(t => 
         t.afterClipIndex === index - 1 && (t.trackId || 'layer-1') === transitionTrackId
       );
       const overlap = transition ? transition.durationSeconds : 0;
-      
+
       const layerRunningTime = runningTimeByLayer[trackId] || 0;
       const startTime = Math.max(0, layerRunningTime - overlap);
-      
+
       runningTimeByLayer[trackId] = startTime + duration;
-      
+
       return startTime;
     });
-    
+
     // Free positioning mode - use stored positionSeconds, fall back to auto-sequence
     if (!snapEnabled) {
       return clips.map((clip, index) => {
         const settings = getClipSettings(clip.id);
         let duration: number;
-        
+
         if (clip.type === 'image') {
           duration = settings.displayDuration ?? 5;
         } else {
@@ -1029,23 +1029,23 @@ export function AdvancedTimeline({
           const speed = settings.speed ?? 1;
           duration = (trimEnd - trimStart) / speed;
         }
-        
+
         // Use manual position if set, otherwise use auto-sequenced position
         const startTime = settings.positionSeconds !== undefined 
           ? settings.positionSeconds 
           : autoSequencedPositions[index];
         const left = startTime * pixelsPerSecond;
         const width = duration * pixelsPerSecond;
-        
+
         return { clip, index, startTime, duration, left, width, settings };
       });
     }
-    
+
     // Snap mode - use the already computed auto-sequenced positions
     return clips.map((clip, index) => {
       const settings = getClipSettings(clip.id);
       let duration: number;
-      
+
       if (clip.type === 'image') {
         duration = settings.displayDuration ?? 5;
       } else {
@@ -1055,15 +1055,15 @@ export function AdvancedTimeline({
         const speed = settings.speed ?? 1;
         duration = (trimEnd - trimStart) / speed;
       }
-      
+
       const startTime = autoSequencedPositions[index];
       const left = startTime * pixelsPerSecond;
       const width = duration * pixelsPerSecond;
-      
+
       return { clip, index, startTime, duration, left, width, settings };
     });
   }, [clips, getClipSettings, clipTransitions, pixelsPerSecond, snapEnabled, layerCount]);
-  
+
   const handleClipSelect = useCallback((clip: VideoClip, index: number, addToSelection: boolean) => {
     if (addToSelection) {
       setSelectedClipIds(prev => {
@@ -1080,13 +1080,13 @@ export function AdvancedTimeline({
     }
     onClipSelect(clip, index);
   }, [onClipSelect]);
-  
+
   const handleDuplicate = useCallback((clip: VideoClip, index: number) => {
     if (onClipDuplicate) {
       onClipDuplicate(clip, index);
     }
   }, [onClipDuplicate]);
-  
+
   const handleTrimChange = useCallback((clipId: string, trimStart: number, trimEnd: number) => {
     if (onClipSettingsChange) {
       onClipSettingsChange(clipId, {
@@ -1095,39 +1095,39 @@ export function AdvancedTimeline({
       });
     }
   }, [onClipSettingsChange]);
-  
+
   const handleSplit = useCallback((clip: VideoClip, index: number, splitTimeInClip: number) => {
     if (onClipSplit) {
       onClipSplit(clip.id, splitTimeInClip);
     }
   }, [onClipSplit]);
-  
+
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
-    
+
     const target = e.target as HTMLElement;
     if (target.closest('[data-testid^="timeline-clip-"]') || 
         target.closest('[data-testid^="audio-track-"]')) {
       return;
     }
-    
+
     const rect = scrollContainerRef.current.getBoundingClientRect();
     const scrollLeft = scrollContainerRef.current.scrollLeft;
     const x = e.clientX - rect.left + scrollLeft;
-    
+
     const newTime = Math.max(0, Math.min(x / pixelsPerSecond, effectiveDuration));
     onTimeChange(newTime);
-    
+
     setSelectedClipIds(new Set());
   }, [pixelsPerSecond, effectiveDuration, onTimeChange]);
-  
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
         return;
       }
-      
+
       switch (e.key) {
         case ' ':
           e.preventDefault();
@@ -1158,11 +1158,11 @@ export function AdvancedTimeline({
           break;
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onPlayPause, onTimeChange, currentTime, effectiveDuration, selectedClipIds, onClipRemove, clips]);
-  
+
   return (
     <div className={cn("flex flex-col bg-background h-full", className)} data-testid="advanced-timeline">
       <div className="h-10 bg-muted/30 border-b flex items-center px-3 gap-2 shrink-0" data-testid="timeline-toolbar">
@@ -1181,7 +1181,7 @@ export function AdvancedTimeline({
             </TooltipTrigger>
             <TooltipContent>Zoom Out</TooltipContent>
           </Tooltip>
-          
+
           <div className="w-20">
             <Slider
               value={[zoom]}
@@ -1193,7 +1193,7 @@ export function AdvancedTimeline({
               data-testid="slider-zoom"
             />
           </div>
-          
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -1208,14 +1208,14 @@ export function AdvancedTimeline({
             </TooltipTrigger>
             <TooltipContent>Zoom In</TooltipContent>
           </Tooltip>
-          
+
           <span className="text-xs text-muted-foreground w-10 text-center">
             {Math.round(zoom * 100)}%
           </span>
         </div>
-        
+
         <div className="h-5 w-px bg-border" />
-        
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -1231,9 +1231,9 @@ export function AdvancedTimeline({
           </TooltipTrigger>
           <TooltipContent>Magnetic Snapping</TooltipContent>
         </Tooltip>
-        
+
         <div className="flex-1" />
-        
+
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onTimeChange(0)} data-testid="button-skip-back">
             <SkipBack className="h-4 w-4" />
@@ -1256,105 +1256,47 @@ export function AdvancedTimeline({
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onTimeChange(effectiveDuration)} data-testid="button-skip-forward">
             <SkipForward className="h-4 w-4" />
           </Button>
-          
+
           <div className="h-5 w-px bg-border" />
-          
+
           <span className="text-xs font-mono text-muted-foreground min-w-[100px] text-center">
             {formatTime(currentTime)} / {formatTime(effectiveDuration)}
           </span>
-          
+
           <div className="h-5 w-px bg-border" />
-          
+
           <Badge variant="secondary" className="text-xs">
             {clips.length} clips
           </Badge>
         </div>
       </div>
-      
+
       <div className="flex-1 flex overflow-hidden min-h-0" data-testid="timeline-content">
         {/* Track headers - synchronized scroll with timeline canvas */}
+
         <div className="w-36 bg-muted/20 border-r shrink-0 flex flex-col overflow-hidden h-full" data-testid="track-headers">
-          <div className="h-6 border-b bg-muted/10 flex items-center px-2 shrink-0">
-            <span className="text-[10px] text-muted-foreground">Tracks</span>
-          </div>
-          <ScrollArea className="flex-1 min-h-0" data-testid="track-headers-scroll">
-          
-          {trackConfig.map((config, index) => {
-            const Icon = config.icon;
-            const isVisible = trackVisibility[config.id] !== false;
-            const isLocked = trackLocked[config.id] === true;
-            const isLastLayer = index === trackConfig.length - 1;
-            const hasClips = clips.some(c => c.trackId === config.id || (!c.trackId && config.id === 'layer-1'));
-            
-            return (
-              <div
-                key={config.id}
-                className={cn(
-                  "flex items-center justify-between px-2 border-b group hover:bg-muted/50 transition-colors",
-                  !isVisible && "opacity-50"
-                )}
-                style={{ height: TRACK_HEIGHT }}
-                data-testid={`track-header-${config.id}`}
-              >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-xs font-medium truncate">{config.label}</span>
-                </div>
-                
-                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {/* Remove layer button (only on last layer if it's empty and not the only layer) */}
-                  {isLastLayer && layerCount > 1 && !hasClips && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5"
-                      onClick={() => removeLayer(config.id)}
-                      data-testid={`button-remove-${config.id}`}
-                    >
-                      <Minus className="h-3 w-3 text-destructive" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => setTrackLocked(prev => ({ ...prev, [config.id]: !prev[config.id] }))}
-                    data-testid={`button-lock-${config.id}`}
-                  >
-                    {isLocked ? <Lock className="h-3 w-3 text-primary" /> : <Unlock className="h-3 w-3" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => setTrackVisibility(prev => ({ ...prev, [config.id]: !prev[config.id] }))}
-                    data-testid={`button-visibility-${config.id}`}
-                  >
-                    {isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-          
-          {/* Add Layer button */}
-          {layerCount < MAX_LAYERS && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-full rounded-none border-b text-xs text-muted-foreground hover:text-foreground shrink-0"
-              onClick={addLayer}
-              data-testid="button-add-layer"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add Layer
-            </Button>
-          )}
-          {/* 50px spacer under Add Layer button */}
-          <div className="h-[50px] shrink-0" />
-          </ScrollArea>
-        </div>
-        
+  <div className="h-6 border-b bg-muted/10 flex items-center px-2 shrink-0">
+    <span className="text-[10px] text-muted-foreground">Tracks</span>
+  </div>
+
+  {/* KEY FIX: Wrapper with flex-1 min-h-0 */}
+  <div className="flex-1 min-h-0">
+    <ScrollArea className="h-full" data-testid="track-headers-scroll">
+      <div>
+        {trackConfig.map((config, index) => {
+          // ... layer items ...
+        })}
+
+        {/* Add Layer button */}
+        {layerCount < MAX_LAYERS && (
+          <Button>Add Layer</Button>
+        )}
+
+        <div className="h-[50px] shrink-0" />
+      </div>
+    </ScrollArea>
+  </div>
+</div>
           <div
             ref={scrollContainerRef}
             className="flex-1 overflow-auto"
@@ -1371,7 +1313,7 @@ export function AdvancedTimeline({
                 pixelsPerSecond={pixelsPerSecond}
                 zoom={zoom}
               />
-              
+
               <div className="relative">
                 {/* Dynamic layers rendered from trackConfig */}
                 {trackConfig.map((config) => {
@@ -1382,7 +1324,7 @@ export function AdvancedTimeline({
                       ? (!p.clip.trackId || p.clip.trackId === 'layer-1')
                       : p.clip.trackId === layerId
                   );
-                  
+
                   return (
                     <DroppableTrack key={layerId} trackId={layerId} style={{ height: TRACK_HEIGHT }}>
                       {isVisible && (
@@ -1404,7 +1346,7 @@ export function AdvancedTimeline({
                               currentTime={currentTime}
                             />
                           ))}
-                          
+
                           {/* Transition drop zones between consecutive clips */}
                           {layerClips.slice(0, -1).map((position) => {
                             const hasTransition = clipTransitions.some(t => 
@@ -1425,18 +1367,18 @@ export function AdvancedTimeline({
                               />
                             );
                           })}
-                          
+
                           {/* Transition badges */}
                           {clipTransitions
                             .filter(t => (t.trackId || 'layer-1') === layerId)
                             .map((transition, idx) => {
                               const afterClipIdx = layerClips.findIndex(p => p.index === transition.afterClipIndex);
                               if (afterClipIdx < 0 || afterClipIdx >= layerClips.length - 1) return null;
-                              
+
                               const afterClip = layerClips[afterClipIdx];
                               const transitionCenter = afterClip.left + afterClip.width;
                               const transitionWidth = transition.durationSeconds * pixelsPerSecond;
-                              
+
                               return (
                                 <div
                                   key={`transition-${layerId}-${idx}`}
@@ -1459,7 +1401,7 @@ export function AdvancedTimeline({
                                 </div>
                               );
                             })}
-                          
+
                           {/* Audio tracks - rendered on their assigned layer */}
                           {audioTracks
                             .filter(t => (t.trackId || 'layer-1') === layerId)
@@ -1480,7 +1422,7 @@ export function AdvancedTimeline({
                     </DroppableTrack>
                   );
                 })}
-                
+
                 <Playhead
                   currentTime={currentTime}
                   pixelsPerSecond={pixelsPerSecond}
@@ -1491,7 +1433,7 @@ export function AdvancedTimeline({
               </div>
             </div>
           </div>
-          
+
       </div>
     </div>
   );
