@@ -60,7 +60,6 @@ import {
   FileText,
   Bot,
   HelpCircle,
-  Merge,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useAuth } from "@/hooks/useAuth";
@@ -136,8 +135,7 @@ const menuSections: MenuSection[] = [
     category: "video",
     items: [
       { title: "Video Generation", url: "/generate/video", icon: Video },
-      { title: "Video Editor PRO", url: "/video-editor", icon: Film },
-      { title: "Video Joiner Express", url: "/video-joiner-express", icon: Merge },
+      { title: "Video Editor", url: "/video-editor", icon: Film },
       { title: "Transition", url: "/generate/transition", icon: ArrowLeftRight },
       { title: "Sora 2 Pro", url: "/generate/sora", icon: Sparkles },
       { title: "Talking Avatars", url: "/talking-avatars", icon: UserCircle },

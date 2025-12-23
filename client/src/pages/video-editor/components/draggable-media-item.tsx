@@ -17,9 +17,6 @@ export function DraggableMediaItem({
   onClick,
   className 
 }: DraggableMediaItemProps) {
-  // Default duration based on media type
-  const defaultDuration = mediaType === 'image' ? 5 : mediaType === 'audio' ? 30 : 10;
-  
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `draggable-${item.id}`,
     data: {
@@ -31,7 +28,6 @@ export function DraggableMediaItem({
         url: item.resultUrl,
         thumbnailUrl: item.thumbnailUrl,
         name: item.prompt || `${mediaType} clip`,
-        duration: defaultDuration, // Include default duration for proper timeline placement
       }
     }
   });

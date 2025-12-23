@@ -623,8 +623,6 @@ export const clipSettingSchema = z.object({
   trimEndSeconds: z.number().min(0).optional(),
   isImage: z.boolean().optional(), // Whether this clip is an image
   displayDuration: z.number().min(1).max(30).optional(), // For images: how long to display (1-30 seconds)
-  fadeInSeconds: z.number().min(0).max(3).optional(), // Per-clip fade in (Camtasia-style)
-  fadeOutSeconds: z.number().min(0).max(3).optional(), // Per-clip fade out (Camtasia-style)
 });
 
 export const clipSettingsEnhancementSchema = z.array(clipSettingSchema).default([]);

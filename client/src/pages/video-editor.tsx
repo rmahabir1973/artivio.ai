@@ -137,8 +137,6 @@ interface ClipSettingsLocal {
   originalDuration?: number; // Actual video duration in seconds (loaded from video metadata)
   displayDuration?: number; // For images: how long to display (default 5 seconds)
   positionSeconds?: number; // Manual position for free positioning mode (when snap is disabled)
-  fadeInSeconds?: number; // Fade in duration (0-3 seconds) - Camtasia-style per-clip effect
-  fadeOutSeconds?: number; // Fade out duration (0-3 seconds) - Camtasia-style per-clip effect
 }
 
 // Per-clip transition state (for the transition AFTER each clip)
@@ -1024,8 +1022,6 @@ export default function VideoEditor() {
             trimEndSeconds: localSettings?.trimEndSeconds,
             isImage,
             displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
-            fadeInSeconds: localSettings?.fadeInSeconds, // Per-clip fade in (Camtasia-style)
-            fadeOutSeconds: localSettings?.fadeOutSeconds, // Per-clip fade out (Camtasia-style)
           };
         });
 
@@ -1067,9 +1063,7 @@ export default function VideoEditor() {
               cs.speed !== 1.0 ||
               cs.trimStartSeconds !== undefined || 
               cs.trimEndSeconds !== undefined || 
-              cs.isImage ||
-              (cs.fadeInSeconds && cs.fadeInSeconds > 0) ||
-              (cs.fadeOutSeconds && cs.fadeOutSeconds > 0)
+              cs.isImage
             ),
             backgroundMusic: enhancements.backgroundMusic ? {
               audioUrl: enhancements.backgroundMusic.audioUrl,
@@ -2807,11 +2801,6 @@ const previewMutation = useMutation({
         <DndContext
           sensors={sensors}
           collisionDetection={customCollisionDetection}
-          autoScroll={{
-            enabled: true,
-            acceleration: 5,
-            threshold: { x: 0.2, y: 0.2 },
-          }}
           onDragStart={(event: DragStartEvent) => {
             console.log('[DRAG START]', event.active.id, event.active.data.current);
             setActiveDragId(String(event.active.id));
@@ -2858,7 +2847,8 @@ const previewMutation = useMutation({
           {/* Collapsible Media/Asset Panel - Hard height constraint to prevent overflow */}
           {mediaPanelOpen && (
             <div 
-              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden h-full" 
+              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" 
+              style={{ maxHeight: 'calc(60vh - 48px)' }}
               data-testid="media-panel"
             >
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
@@ -3000,10 +2990,9 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {musicTracks.map((track) => (
-                            <DraggableMediaItem
+                            <div
                               key={track.id}
-                              item={track}
-                              mediaType="audio"
+                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
                               onClick={() => {
                                 const trackId = `music_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
@@ -3027,7 +3016,13 @@ const previewMutation = useMutation({
                                 }));
                                 toast({ title: "Music Added", description: "Music track added to timeline" });
                               }}
-                            />
+                              data-testid={`music-item-${track.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm truncate">{track.prompt || 'Music Track'}</span>
+                              </div>
+                            </div>
                           ))}
 
                           {/* Load More for Music */}
@@ -3065,10 +3060,9 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {voiceTracks.map((track) => (
-                            <DraggableMediaItem
+                            <div
                               key={track.id}
-                              item={track}
-                              mediaType="audio"
+                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
                               onClick={() => {
                                 const trackId = `voice_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
@@ -3093,7 +3087,13 @@ const previewMutation = useMutation({
                                 }));
                                 toast({ title: "Audio Added", description: "Audio track added to timeline" });
                               }}
-                            />
+                              data-testid={`audio-item-${track.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm truncate">{track.prompt || 'Audio Track'}</span>
+                              </div>
+                            </div>
                           ))}
 
                           {/* Load More for Audio */}
@@ -3796,9 +3796,8 @@ const previewMutation = useMutation({
           </div>
 
           {/* Bottom Section: Advanced Timeline (40% of remaining height) */}
-          <div className="flex-[4] border-t min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-[4] border-t min-h-0 flex flex-col">
             <AdvancedTimeline
-              className="flex-1 h-full overflow-hidden"
               clips={orderedClips}
               audioTracks={audioTracks}
               getClipSettings={getClipSettings}
@@ -3955,6 +3954,7 @@ const previewMutation = useMutation({
               onTimeChange={setTimelineCurrentTime}
               onPlayPause={handleTimelinePlayPause}
               isPlaying={isTimelinePlaying}
+              className="flex-1"
             />
           </div>
         </div>
@@ -4108,62 +4108,6 @@ const previewMutation = useMutation({
                     />
                   </>
                 )}
-                
-                {/* Per-clip Fade In/Out - Works on any layer (Camtasia-style) */}
-                <div className="pt-4 border-t space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    Clip Transitions
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="fade-in" className="text-sm flex items-center gap-2">
-                      Fade In (seconds)
-                    </Label>
-                    <Slider
-                      id="fade-in"
-                      value={[getClipSettings(editingClip.clip.id).fadeInSeconds ?? 0]}
-                      min={0}
-                      max={3}
-                      step={0.1}
-                      onValueChange={([v]) => 
-                        updateClipSettings(editingClip.clip.id, { fadeInSeconds: v })
-                      }
-                      data-testid="slider-fade-in"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>None</span>
-                      <span>{(getClipSettings(editingClip.clip.id).fadeInSeconds ?? 0).toFixed(1)}s</span>
-                      <span>3s</span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="fade-out" className="text-sm flex items-center gap-2">
-                      Fade Out (seconds)
-                    </Label>
-                    <Slider
-                      id="fade-out"
-                      value={[getClipSettings(editingClip.clip.id).fadeOutSeconds ?? 0]}
-                      min={0}
-                      max={3}
-                      step={0.1}
-                      onValueChange={([v]) => 
-                        updateClipSettings(editingClip.clip.id, { fadeOutSeconds: v })
-                      }
-                      data-testid="slider-fade-out"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>None</span>
-                      <span>{(getClipSettings(editingClip.clip.id).fadeOutSeconds ?? 0).toFixed(1)}s</span>
-                      <span>3s</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground">
-                    Add smooth fade-in/fade-out effects to this clip. Works independently on any layer.
-                  </p>
-                </div>
               </div>
             </div>
           )}
