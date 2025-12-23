@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger, ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent } from '@/components/ui/context-menu';
 import {
   ZoomIn,
@@ -1272,11 +1273,11 @@ export function AdvancedTimeline({
       
       <div className="flex-1 flex overflow-hidden min-h-0" data-testid="timeline-content">
         {/* Track headers - synchronized scroll with timeline canvas */}
-        <div className="w-28 bg-muted/20 border-r shrink-0 flex flex-col min-h-0" data-testid="track-headers">
+        <div className="w-36 bg-muted/20 border-r shrink-0 flex flex-col overflow-hidden h-full" data-testid="track-headers">
           <div className="h-6 border-b bg-muted/10 flex items-center px-2 shrink-0">
             <span className="text-[10px] text-muted-foreground">Tracks</span>
           </div>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden" data-testid="track-headers-scroll">
+          <ScrollArea className="flex-1 min-h-0" data-testid="track-headers-scroll">
           
           {trackConfig.map((config, index) => {
             const Icon = config.icon;
@@ -1349,7 +1350,9 @@ export function AdvancedTimeline({
               Add Layer
             </Button>
           )}
-          </div>
+          {/* 50px spacer under Add Layer button */}
+          <div className="h-[50px] shrink-0" />
+          </ScrollArea>
         </div>
         
           <div
