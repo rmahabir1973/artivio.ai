@@ -1353,8 +1353,9 @@ export function AdvancedTimeline({
           )}
           {/* 50px spacer under Add Layer button */}
           <div className="h-[50px] shrink-0" />
-                     </div>
+          </div>
         </div>
+        
           <div
             ref={scrollContainerRef}
             className="flex-1 overflow-auto"
