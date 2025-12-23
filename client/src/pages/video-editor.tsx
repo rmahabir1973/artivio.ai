@@ -2855,13 +2855,15 @@ const previewMutation = useMutation({
               onCategoryChange={setActiveCategory} 
             />
 
-          {/* Collapsible Media/Asset Panel - Hard height constraint to prevent overflow */}
+          {/* Collapsible Media/Asset Panel - Fixed scroll implementation */}
           {mediaPanelOpen && (
             <div 
-              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden h-full" 
+              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden" 
+              style={{ height: '100%' }}
               data-testid="media-panel"
             >
-              <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
+              {/* Header - FIXED HEIGHT */}
+              <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background h-[52px]">
                 <span className="text-sm font-medium capitalize">{activeCategory}</span>
                 <Button 
                   variant="ghost" 
@@ -2874,8 +2876,10 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 min-h-0">
-                <div className="p-3 space-y-3">
+              {/* ScrollArea wrapper - flex-1 min-h-0 is CRITICAL */}
+              <div className="flex-1 min-h-0">
+                <ScrollArea className="h-full">
+                  <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
                     <div className="space-y-3">
@@ -3703,8 +3707,9 @@ const previewMutation = useMutation({
                       </div>
                     </div>
                   )}
-                </div>
-              </ScrollArea>
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
           )}
 
@@ -3796,8 +3801,9 @@ const previewMutation = useMutation({
           </div>
 
           {/* Bottom Section: Advanced Timeline (40% of remaining height) */}
-          <div className="flex-[4] border-t min-h-0 flex flex-col">
+          <div className="flex-[4] border-t min-h-0 flex flex-col overflow-hidden">
             <AdvancedTimeline
+              className="flex-1 h-full overflow-hidden"
               clips={orderedClips}
               audioTracks={audioTracks}
               getClipSettings={getClipSettings}
@@ -3954,7 +3960,6 @@ const previewMutation = useMutation({
               onTimeChange={setTimelineCurrentTime}
               onPlayPause={handleTimelinePlayPause}
               isPlaying={isTimelinePlaying}
-              className="flex-1"
             />
           </div>
         </div>

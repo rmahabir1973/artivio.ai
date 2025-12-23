@@ -41,7 +41,8 @@ import {
   Wand2,
   Mail,
   CheckCircle,
-  Loader2
+  Loader2,
+  Merge
 } from "lucide-react";
 
 interface FeatureCard {
@@ -262,12 +263,22 @@ export default function Home() {
     },
     {
       id: 'video-editor',
-      title: 'Video Editor',
+      title: 'Video Editor PRO',
       description: 'Professional video editing with timeline, effects, and export to AWS',
       icon: Film,
       route: '/video-editor',
       category: 'video',
+      featured: true,
       badge: 'New'
+    },
+    {
+      id: 'video-joiner-express',
+      title: 'Video Joiner Express',
+      description: 'Quick & easy video combining with mobile-friendly 3-step wizard',
+      icon: Merge,
+      route: '/video-joiner-express',
+      category: 'video',
+      featured: true
     },
     {
       id: 'image-analysis',
