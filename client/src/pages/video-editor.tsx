@@ -2858,7 +2858,8 @@ const previewMutation = useMutation({
           {/* Collapsible Media/Asset Panel - Hard height constraint to prevent overflow */}
           {mediaPanelOpen && (
             <div 
-              className="w-72 border-r flex flex-col shrink-0 bg-background overflow-hidden h-full" 
+              className="w-72 border-r flex flex-col shrink-0 bg-background h-full" 
+              style={{ maxHeight: '100%' }}
               data-testid="media-panel"
             >
               <div className="flex items-center justify-between p-3 border-b shrink-0 bg-background">
@@ -2874,7 +2875,8 @@ const previewMutation = useMutation({
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 min-h-0 h-0">
+              <div className="flex-1 overflow-hidden relative">
+                <ScrollArea className="absolute inset-0">
                 <div className="p-3 space-y-3">
                   {/* Media Category Content */}
                   {activeCategory === 'media' && (
@@ -3705,6 +3707,7 @@ const previewMutation = useMutation({
                   )}
                 </div>
               </ScrollArea>
+              </div>
             </div>
           )}
 
