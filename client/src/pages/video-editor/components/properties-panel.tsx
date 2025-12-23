@@ -367,25 +367,6 @@ export function PropertiesPanel({
               </>
             )}
 
-            <PropertySection title="Preview" icon={Eye}>
-              <div className="aspect-video rounded-md overflow-hidden bg-muted">
-                {clip.type === 'image' ? (
-                  <img
-                    src={clip.url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <video
-                    src={clip.url}
-                    poster={clip.thumbnailUrl || undefined}
-                    className="w-full h-full object-cover"
-                    controls
-                    muted
-                  />
-                )}
-              </div>
-            </PropertySection>
           </TabsContent>
 
           <TabsContent value="audio" className="m-0 space-y-3">
