@@ -3796,8 +3796,9 @@ const previewMutation = useMutation({
           </div>
 
           {/* Bottom Section: Advanced Timeline (40% of remaining height) */}
-          <div className="flex-[4] border-t min-h-0 flex flex-col">
+          <div className="flex-[4] border-t min-h-0 flex flex-col overflow-hidden">
             <AdvancedTimeline
+              className="flex-1 h-full overflow-hidden"
               clips={orderedClips}
               audioTracks={audioTracks}
               getClipSettings={getClipSettings}
@@ -3954,7 +3955,6 @@ const previewMutation = useMutation({
               onTimeChange={setTimelineCurrentTime}
               onPlayPause={handleTimelinePlayPause}
               isPlaying={isTimelinePlaying}
-              className="flex-1"
             />
           </div>
         </div>
