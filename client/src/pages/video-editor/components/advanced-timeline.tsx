@@ -1273,7 +1273,7 @@ export function AdvancedTimeline({
 
       <div className="flex-1 flex overflow-hidden min-h-0" data-testid="timeline-content">
   {/* Track headers - synchronized scroll with timeline canvas */}
-        <div className="w-36 bg-muted/20 border-r shrink-0 flex flex-col overflow-hidden h-full" data-testid="track-headers">
+        <div className="w-36 bg-muted/20 border-r shrink-0 flex flex-col overflow-x-hidden min-h-0 h-full" data-testid="track-headers">
           <div className="h-6 border-b bg-muted/10 flex items-center px-2 shrink-0">
             <span className="text-[10px] text-muted-foreground">Tracks</span>
           </div>
