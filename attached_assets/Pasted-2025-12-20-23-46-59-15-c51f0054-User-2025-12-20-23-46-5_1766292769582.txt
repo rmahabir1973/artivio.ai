@@ -1,0 +1,120 @@
+2025-12-20 23:46:59.15
+c51f0054
+User
+}
+2025-12-20 23:46:59.15
+c51f0054
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-20 23:46:59.15
+c51f0054
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-20 23:46:59.15
+c51f0054
+User
+userId: '49729939',
+2025-12-20 23:46:59.15
+c51f0054
+User
+4:46:59 AM [express] GET /api/auth/user 200 in 44ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-12-20 23:47:29.28
+c51f0054
+User
+📊 [RATE LIMIT MONITOR] Would block ip:65.95.165.16 (31/15) - auth - /user
+2025-12-20 23:47:29.39
+c51f0054
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-12-20 23:47:29.39
+c51f0054
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-20 23:47:29.41
+c51f0054
+User
+userId: '49729939',
+2025-12-20 23:47:29.41
+c51f0054
+User
+isAdmin: true
+2025-12-20 23:47:29.41
+c51f0054
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-20 23:47:29.41
+c51f0054
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-20 23:47:29.41
+c51f0054
+User
+}
+2025-12-20 23:47:29.41
+c51f0054
+User
+4:47:29 AM [express] GET /api/auth/user 200 in 124ms :: {"id":"49729939","email":"ryan.mahabir@outlo…
+2025-12-20 23:47:47.02
+c51f0054
+User
+4:47:47 AM [express] GET /api/announcements/active 304 in 22ms :: []
+2025-12-20 23:48:01.89
+c51f0054
+User
+📊 [RATE LIMIT MONITOR] Would block ip:65.95.165.16 (32/15) - auth - /user
+2025-12-20 23:48:01.91
+c51f0054
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-20 23:48:01.91
+c51f0054
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-12-20 23:48:01.93
+c51f0054
+User
+userId: '49729939',
+2025-12-20 23:48:01.93
+c51f0054
+User
+}
+2025-12-20 23:48:01.93
+c51f0054
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-20 23:48:01.93
+c51f0054
+User
+isAdmin: true
+2025-12-20 23:48:01.93
+c51f0054
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-20 23:48:01.94
+c51f0054
+User
+4:48:01 AM [express] GET /api/auth/user 200 in 45ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2025-12-20 23:48:32.21
+c51f0054
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2025-12-20 23:48:32.21
+c51f0054
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2025-12-20 23:48:32.23
+c51f0054
+User
+isAdmin: true
+2025-12-20 23:48:32.23
+c51f0054
+User
+[AUTH] ✓ User data fetched successfully {
+2025-12-20 23:48:32.23
+c51f0054
+User
+email: 'ryan.mahabir@outlook.com',
+2025-12-20 23:48:32.23
+c51f0054
+User
+}
