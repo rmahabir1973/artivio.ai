@@ -1,0 +1,630 @@
+Build a beautiful slide deck for Artivio AI using the following information
+Create a beautiful, interactive web-based pitch deck for Artivio AI using React and Tailwind CSS. The deck should be mobile-responsive, have smooth scroll animations, and match Artivio's brand colors.
+
+## BRAND COLORS & DESIGN SYSTEM
+
+Primary Colors:
+- Primary Purple: #7C3AED (rgb(124, 58, 237))
+- Secondary Blue: #3B82F6 (rgb(59, 130, 246))
+- Accent Cyan: #06B6D4 (rgb(6, 182, 212))
+- Success Green: #10B981 (rgb(16, 185, 129))
+
+Background Colors:
+- Dark: #0F172A (slate-900)
+- Light: #F8FAFC (slate-50)
+- Card: #FFFFFF with subtle shadows
+
+Gradients:
+- Hero gradient: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%)
+- Accent gradient: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)
+
+Typography:
+- Font Family: 'Inter', system-ui, sans-serif
+- Headings: Bold, large sizes (48px-72px)
+- Body: Regular, 16-20px
+- Use proper hierarchy
+
+## TECHNICAL REQUIREMENTS
+
+Framework: React with Vite
+Styling: Tailwind CSS
+Animations: Framer Motion for smooth transitions
+Navigation: Smooth scroll with progress indicator
+Layout: Full-screen slides with snap scrolling
+Responsive: Mobile, tablet, desktop breakpoints
+Icons: Lucide React or similar
+
+## SLIDE STRUCTURE (15 SLIDES)
+
+### Slide 1: Cover
+- Large Artivio AI logo/title
+- Tagline: "The Complete AI Content Creation Ecosystem"
+- Subtitle: "From Idea → Video → Published. All in One Platform."
+- Call-to-action: "Scroll to explore"
+- Background: Purple-blue gradient with subtle animations
+
+### Slide 2: The Problem
+Title: "The Content Creation Bottleneck"
+Subtitle: "Creators are trapped between quality and quantity"
+
+3 Stat Cards (centered, side-by-side):
+- 4-8 hours per professional video
+- $2,000-$5,000 agency cost per video
+- 5+ tools needed for one video
+
+Pain Points (bullet list):
+- Small businesses can't afford consistent video content
+- Creators spend more time editing than creating
+- Fragmented tools create workflow friction and errors
+- Technical barriers prevent talented people from monetizing expertise
+
+Background: White with subtle gradient accents
+
+### Slide 3: The Solution
+Title: "Artivio AI: Complete Content Ecosystem"
+Subtitle: "The only platform creators need from concept to publication"
+
+4 Feature Cards in 2x2 grid:
+1. 🎬 AI Video Generation
+   - Veo 3.1, Runway, Sora 2 Pro
+   - Budget to premium models
+   
+2. ✂️ Pro Video Editor
+   - Browser-based CapCut alternative
+   - Timeline editing with effects
+   
+3. 📱 Social Media Hub
+   - AI-powered Hootsuite alternative
+   - Auto-post to 9 platforms
+   
+4. 🎨 Brand Builder
+   - Viral content templates
+   - Workflow automation
+
+Bottom: "10x faster content creation. One platform. Zero friction."
+Background: Gradient with white cards
+
+### Slide 4: Five Key Differentiators
+Title: "Not Another AI Video Tool"
+Subtitle: "What makes Artivio the category leader"
+
+5 Differentiator Cards (vertical stack with icons):
+1. ✅ Complete Ecosystem
+   - Generate, edit, and publish in one platform
+   - No tool-switching, seamless workflow
+   
+2. 🎯 Viral Content Templates
+   - Brand Builder with pre-built workflows
+   - Proven content formats for quick creation
+   
+3. 💰 Budget to Premium AI
+   - Free models to Sora 2 Pro
+   - Serve solo creators AND agencies
+   
+4. 🎬 Custom Video Editor
+   - CapCut-like editor built from scratch
+   - Mobile Video Joiner for quick edits
+   
+5. 🤖 AI Social Media Automation
+   - Auto-generate 30-day content calendars
+   - Schedule posts to 9 platforms at optimal times
+
+Background: White with purple accents
+
+### Slide 5: All 21 Tools
+Title: "21 Tools. One Platform."
+Subtitle: "Everything creators need to build their brand"
+
+4 Categories in grid layout:
+
+CORE CREATION (6 tools):
+- Video Generation (Veo 3.1, Runway, Sora)
+- Image Generation (4o, Flux, Midjourney)
+- Music Generation (Suno V3.5-V5)
+- Video Editor PRO
+- Video Joiner Express
+- Brand Builder Templates
+
+VOICE & AUDIO (5 tools):
+- Text-to-Speech (Multiple voices)
+- Voice Cloning (Fish Audio)
+- Talking Avatars
+- Lip Sync (InfiniteTalk)
+- Sound Effects (ElevenLabs)
+
+ENHANCEMENT (6 tools):
+- Image Upscaler (2x-8x Topaz)
+- Video Upscaler (2x-4x Topaz)
+- Background Remover (Recraft)
+- Audio Converter
+- Speech-to-Text
+- Video Enhancement Suite
+
+PUBLISHING & MORE (4 tools):
+- Social Media Hub (9 platforms)
+- AI Chat (GPT-4o, Deepseek, Claude)
+- Image Analysis (GPT-4o Vision)
+- QR Code Generator
+- My Library (Asset management)
+
+Background: Gradient with white cards
+
+### Slide 6: Competition Comparison
+Title: "Artivio vs. The Competition"
+Subtitle: "Why creators choose us over fragmented solutions"
+
+Two-column comparison:
+
+LEFT COLUMN - Current Solutions ❌:
+- Runway: Video generation only
+- CapCut: Video editing only
+- Hootsuite: Social media only ($99/mo)
+- Midjourney: Image generation only
+- Requires 5+ separate subscriptions
+- Manual workflow between tools
+- Data doesn't transfer between platforms
+- Steep learning curve for each tool
+- Total cost: $200-500/month
+
+RIGHT COLUMN - Artivio AI ✅ (highlighted):
+- Video generation + editing + publishing
+- Image generation + enhancement
+- Music generation + audio tools
+- Social media automation
+- One integrated platform
+- Seamless workflow, all tools connected
+- Single library for all assets
+- One interface to master
+- Total cost: $29-$99/month
+
+Background: White with comparison cards
+
+### Slide 7: Massive Market Opportunity
+Title: "The Creator Economy Is Exploding"
+Subtitle: "Multi-billion dollar market with explosive growth"
+
+3 Large Stat Cards:
+- $250B - Creator economy by 2026
+- 200M+ - Content creators globally
+- $20B - Video editing software market
+
+Target Markets (4 cards):
+1. Solo Creators
+   - YouTubers, TikTokers, Instagram influencers
+   - 2M+ in US/Canada alone
+   - Need: Affordable, fast content creation
+
+2. Small Businesses
+   - Local businesses needing video content
+   - 30M+ globally
+   - Need: Professional content without agencies
+
+3. Marketing Agencies
+   - Producing content for multiple clients
+   - 500K+ agencies worldwide
+   - Need: Scalable, efficient workflows
+
+4. Enterprise Brands
+   - Large companies with content teams
+   - Need: Team collaboration, white-label
+
+Background: Gradient with white cards
+
+### Slide 8: Why Gemini & Veo Are Game-Changing
+Title: "Powered by Google's Cutting-Edge AI"
+Subtitle: "Early access to Veo and Gemini unlocks unprecedented capabilities"
+
+4 Integration Benefits:
+
+1. 🎥 Veo 2 Video Generation
+   - Generate professional B-roll footage instantly
+   - Create complete videos from text prompts
+   - Transform Artivio from "AI-assisted" to "AI-native"
+   - Category-defining competitive advantage
+
+2. 🧠 Gemini 2.0 Flash
+   - Generate platform-optimized scripts
+   - TikTok, YouTube, Instagram specific content
+   - Analyze trending topics for timely content
+   - Real-time content strategy suggestions
+
+3. 🎨 Imagen 3
+   - Auto-generate eye-catching thumbnails
+   - Create branded graphics with optimal CTR
+   - Platform-specific visual assets
+   - Consistent brand identity across content
+
+Highlighted Box:
+"Early Veo 2 access = category-defining competitive advantage"
+"We're not building another chatbot wrapper—we're tackling one of AI's hardest problems: making professional video creation accessible to everyone."
+
+Background: White with gradient accents
+
+### Slide 9: Business Model
+Title: "Scalable SaaS with Strong Unit Economics"
+Subtitle: "Freemium model with clear upgrade path and high retention"
+
+3 Pricing Tiers (horizontal cards):
+
+FREE TIER:
+- $0/month
+- 1000 AI credits/month
+- 7 Day Access
+- No Credit Card Required
+- All AI Models
+- All tools and features
+- Community support
+Goal: Viral acquisition & product validation
+
+STARTER TIER ⭐ (highlighted with border):
+- $19/month 
+•	4,000 credits/month
+•	Credits reset monthly
+•	Priority generation
+FEATURES
+•	All AI video models
+•	All AI image models
+•	Suno music generation
+•	Voice cloning & TTS
+Target: 40% of paid users
+
+PRO TIER ⭐ (highlighted with border):
+- $49/month 
+•	10,000 credits/month
+•	Credits reset monthly
+•	Priority generation
+FEATURES
+•	All AI video models
+•	All AI image models
+•	Suno music generation
+•	Voice cloning & TTS
+Target: 40% of paid users
+
+BUSINESS TIER:
+- $99/month
+•	20,000 credits/month
+•	Credits reset monthly
+•	Priority generation
+FEATURES
+•	All AI video models
+•	All AI image models
+•	Suno music generation
+•	Voice cloning & TTS
+
+Target: Agencies & brands
+Unit Economics (bottom section):
+- Average Revenue Per User (ARPU): $45/month
+- Customer Acquisition Cost (CAC): $50-75
+- Lifetime Value (LTV): $810 (18-month retention)
+- LTV/CAC Ratio: 10.8x - 16.2x
+- Gross Margin: 75-80% (with Google Cloud credits)
+- Payback Period: 1.7 months
+
+Background: Gradient with pricing cards
+
+### Slide 10: Financial Projections
+Title: "Path to Profitability & Scale"
+Subtitle: "Conservative projections with strong margins"
+
+Create an interactive table/chart showing growth trajectory:
+
+USER MILESTONES:
+100 users | 500 users | 1,000 users | 5,000 users | 10,000 users | 50,000 users | 100,000 users
+
+For each milestone, calculate and display:
+
+REVENUE (Monthly):
+- Free users: 40% (0 revenue)
+- Pro users ($50/mo): 40%
+- Business users ($100/mo): 20%
+
+Example for 1,000 users:
+- 400 free users: $0
+- 400 Pro users: $20,000/mo ($240k/yr)
+- 200 Business users: $20,000/mo ($240k/yr)
+- Total Monthly Revenue: $40,000
+- Total Annual Revenue: $480,000
+
+EXPENSES (Monthly - scales with users):
+Fixed Costs: (Moderate Projections)
+- Hosting: $300
+- Development: $2,000
+- PR: $500
+
+Variable Costs (per 1,000 users):
+-.AI credits: $1,875 (scales 50% per 1k users after 2k)
+- Social Media API  $500 (scales with usage)
+- OpenAI API: $200
+- Deepseek API: $200
+- Google Gemini: $300
+- Claude AI: $300
+- PeerTube hosting: $15/1k users
+- Advertising: $5,000/1k users (decreases to $2,500/1k after 5k users due to word-of-mouth)
+
+PROFIT MARGINS:
+- 100 users: -$7,200/mo (Early stage investment)
+- 500 users: $2,500/mo, 15% margin
+- 1,000 users: $17,300/mo, 43% margin
+- 5,000 users: $123,500/mo, 62% margin
+- 10,000 users: $287,000/mo, 68% margin
+- 50,000 users: $1,615,000/mo, 73% margin
+- 100,000 users: $3,380,000/mo, 75% margin
+
+Display as:
+1. Interactive chart showing revenue vs. expenses
+2. Table with all numbers
+3. Highlight profitability milestones
+4. Show margin improvement over scale
+
+Key Metrics Box:
+- Break-even: ~600 users (~$30k MRR)
+- Path to $1M ARR: 1,700 users
+- Path to $10M ARR: 18,500 users
+- Conservative 18-month projection: 5,000-10,000 users
+
+Background: White with data visualizations
+
+### Slide 11: Go-to-Market Strategy
+Title: "Customer Acquisition & Growth"
+Subtitle: "Multi-channel strategy targeting creator communities"
+
+4 Growth Pillars:
+
+1. 🎯 Viral Product Features
+   - Free tier with social sharing incentives
+   - Watermarked exports = free marketing
+   - "Made with Artivio" branding
+   - Referral program: Get 2 months free
+
+2. 📱 Content Marketing
+   - YouTube tutorials & demos
+   - TikTok creator partnerships
+   - Instagram reels showing results
+   - Twitter threads on AI video creation
+   - Target: 100k followers in 12 months
+
+3. 💰 Paid Acquisition
+   - Meta ads targeting creators
+   - YouTube pre-roll ads
+   - TikTok ads
+   - Google Search ads
+   - Budget: $10k/mo → $25k/mo by month 6
+
+4. 🤝 Strategic Partnerships
+   - Creator education platforms
+   - Marketing agencies
+   - Social media consultants
+   - Influencer programs
+
+12-Month Milestones:
+- Month 1-3: Beta with 100 users
+- Month 4-6: 1,000 paying users
+- Month 7-9: 5,000 users, $200k MRR
+- Month 10-12: 10,000 users, $400k MRR
+
+Background: Gradient with strategy cards
+
+### Slide 12: Current Progress & Roadmap
+Title: "Momentum & Execution"
+Subtitle: "Proven team building at velocity"
+
+Two-column layout:
+
+LEFT - Already Built (Q4 2025):
+✅ Custom Video editor (90% complete)
+✅ Drag-and-drop interface working
+✅ FFmpeg integration successful
+✅ AWS Lambda video processing
+✅ 21 AI tools integrated
+✅ Custom Social Media Poster (9 Platforms) (80% Complete)
+✅ Video Joiner functional (Mobile Video Editor)
+✅ Infrastructure deployed
+✅ Brand Builder templates created
+✅ User authentication & billing ready
+
+RIGHT - Next 6 Months:
+🚀 Q1 2026:
+- Beta launch with 50-100 users
+- Gemini/Veo integration complete
+- Social Media Hub v1
+- iOS/Android apps (MVP)
+
+🚀 Q2 2026:
+- 1,000 paying users milestone
+- Mobile full responsiveness
+- Advanced video editor features
+- Team collaboration features
+
+🚀 Q3 2026:
+- 5,000 users, $200k MRR
+- White-label capabilities
+- API access for developers
+- Enterprise features
+
+Background: Split design - left darker, right lighter
+
+### Slide 13: Meet the Founding Team
+Title: "Proven Entrepreneurs & Technologists"
+Subtitle: "40+ combined years building tech products"
+
+Two Founder Cards (side-by-side):
+
+RYAN MAHABIR - Co-Founder & CEO:
+Photo placeholder with professional headshot
+- 20+ years software engineering & IT leadership
+- Full-stack developer (React, Node.js, Python, AWS)
+- Several years as IT Director / IT Manager / Leadership Roles
+- Managed IT Budgets exceeding $20 million
+- Network Engineer and Project Manager
+- Built multiple software products
+- Experience with various AI Models.
+Key Strength: Technical execution & product vision
+
+WENDY MAHABIR - Co-Founder & COO:
+Photo placeholder with professional headshot
+- Service Delivery Manager (15 years)
+-  Social Media Influencer + Brand Builder Expertise.
+- Led go-to-market strategies for tech products
+- Expert in creator economy and social media marketing
+- Built and managed high-performing teams
+- Deep understanding of customer acquisition
+- AI-powered marketing and content strategy
+Key Strength: Growth, sales & customer success
+
+Why We'll Win:
+✅ Technical depth to build complex AI products
+✅ Marketing expertise to acquire and retain customers
+✅ Domain knowledge - we ARE the target customer
+✅ Bootstrap discipline - maximize every dollar
+✅ Proven track record of shipping products
+✅ Complementary skill sets
+
+"We're not just building a tool. We're solving problems we experience every day as content creators."
+
+Background: Gradient with white founder cards
+
+### Slide 14: The Ask
+Title: "Partner With Us to Democratize Content Creation"
+Subtitle: "Strategic funding to accelerate growth and market dominance"
+
+4 Funding Components (2x2 grid):
+
+1. 💰 Equity Funding: $150,000 - $300,000
+Use of Funds:
+- Marketing & User Acquisition: 50% ($75k-150k)
+  • Paid advertising across platforms
+  • Influencer partnerships
+  • Content marketing
+  • Target: Acquire 5,000 users
+
+- Product Development: 30% ($45k-90k)
+  • Gemini/Veo integration
+  • Mobile app development (iOS/Android)
+  • Advanced AI features
+  • Team expansion (2 developers)
+
+- Infrastructure & Operations: 20% ($30k-60k)
+  • Server capacity scaling
+  • Customer support tools
+  • Legal & compliance
+  • Working capital
+
+2. ☁️ Google Cloud Credits: $350,000
+Impact:
+- Covers video processing compute costs
+- AI model inference at scale
+- Frees $350k cash for marketing
+- Extends runway by 6-8 months
+- Enables aggressive user growth
+
+3. 🚀 Early Model Access
+What We Need:
+- Veo 2 video generation (game-changer)
+- Gemini 2.0 Flash for content
+- Imagen 3 for graphics
+- Pre-release API access
+Value: Category-defining competitive moat
+
+4. 🤝 Technical Partnership
+Collaboration:
+- Google DeepMind integration support
+- Best practices for Veo/Gemini
+- Go-to-market guidance
+- Co-marketing opportunities
+- Showcase as Gemini success story
+
+Total Package Value: $500k-650k
+Target Milestones:
+- Month 6: 1,000 paying users
+- Month 12: 5,000 users, $200k MRR
+- Month 18: 10,000 users, $400k MRR, profitable
+
+Background: Purple gradient with white cards
+
+### Slide 15: Vision & Closing
+Title: "Let's Build the Future of Content Creation"
+Subtitle: "From impossible to inevitable"
+
+Center large text:
+"In 5 years, we'll look back and wonder how anyone created content without Artivio AI."
+
+3 Vision Statements:
+
+🌍 DEMOCRATIZE CREATION
+"Every person with a story deserves professional tools to share it. No technical barriers. No expensive agencies. Just ideas brought to life."
+
+🚀 EMPOWER THE CREATOR ECONOMY
+"200M+ creators globally are building businesses. We're giving them the tools to compete with billion-dollar brands."
+
+⚡ DEFINE THE CATEGORY
+"We're not building a video tool. We're building the operating system for the creator economy."
+
+Contact Information:
+Ryan Mahabir & Wendy Mahabir
+Founders, Artivio AI
+
+Email: ryan@artivio.ai
+Website: artivio.ai
+Demo: Available upon request
+
+
+Background: Full gradient with centered content
+
+## INTERACTIVE FEATURES
+
+1. Smooth scroll between slides with snap
+2. Progress indicator showing current slide
+3. Keyboard navigation (arrow keys)
+4. Mouse wheel navigation
+5. Touch/swipe navigation on mobile
+6. Animated slide transitions
+7. Fade-in animations for content
+8. Hover effects on cards
+9. Click-to-expand charts on financial slide
+10. Mobile hamburger menu for slide navigation
+
+## RESPONSIVE DESIGN
+
+Mobile (<768px):
+- Stack cards vertically
+- Reduce font sizes appropriately
+- Single column layouts
+- Touch-friendly buttons
+
+Tablet (768px-1024px):
+- 2-column grids where appropriate
+- Medium font sizes
+- Adjusted spacing
+
+Desktop (>1024px):
+- Full multi-column layouts
+- Large fonts for presentations
+- Optimal spacing and whitespace
+
+## CODE STRUCTURE
+src/
+components/
+Slide.jsx - Reusable slide component
+SlideProgress.jsx - Progress indicator
+Navigation.jsx - Slide navigation
+FeatureCard.jsx - Reusable feature card
+StatCard.jsx - Reusable stat card
+ComparisonTable.jsx - Competition comparison
+FinancialChart.jsx - Interactive financial projections
+PricingCard.jsx - Pricing tier cards
+FounderCard.jsx - Team member cards
+App.jsx - Main app with all slides
+index.css - Tailwind configuration
+
+## EXPORT & SHARING
+
+- Generate PDF export button
+- Share link generator
+- Embed code for website
+- Download as HTML
+
+Create a production-ready, beautiful pitch deck that looks professional enough for investor presentations while being interactive and engaging. Use best practices for React, Tailwind, and modern web development.
+
+IMPORTANT: All calculations must be accurate and based on the expense/revenue model provided. Show clear, transparent financial projections with realistic assumptions.
+
+

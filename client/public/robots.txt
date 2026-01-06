@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Disallow: /investor-deck
+Disallow: /investor-deck/
+
+User-agent: Googlebot
+Disallow: /investor-deck
+Disallow: /investor-deck/
+
+User-agent: Bingbot
+Disallow: /investor-deck
+Disallow: /investor-deck/

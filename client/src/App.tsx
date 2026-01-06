@@ -122,6 +122,7 @@ import SocialContentPlan from "@/pages/social/content-plan";
 import SocialUpgrade from "@/pages/social/upgrade";
 import SocialOAuthRedirect from "@/pages/social/oauth-redirect";
 import SocialOAuthCallback from "@/pages/social/oauth-callback";
+import InvestorDeck from "@/pages/investor-deck";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -129,6 +130,9 @@ function Router() {
 
   return (
     <Switch>
+      {/* Private investor deck - unlisted, not in navigation */}
+      <Route path="/investor-deck" component={InvestorDeck} />
+
       {/* Public routes available to all users */}
       <Route path="/support" component={Support} />
       <Route path="/affiliates" component={Affiliates} />

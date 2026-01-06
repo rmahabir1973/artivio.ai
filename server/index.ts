@@ -115,6 +115,14 @@ app.use((_req, res, next) => {
   next();
 });
 
+// X-Robots-Tag for private investor deck (applied globally for SPA coverage)
+app.use((req, res, next) => {
+  if (req.path === '/investor-deck' || req.path.startsWith('/investor-deck/')) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  }
+  next();
+});
+
 // Global rate limiting - protects against API abuse
 import { globalRateLimit, rateLimitGeneration, rateLimitAuth } from './services/rateLimiter';
 app.use('/api', globalRateLimit);

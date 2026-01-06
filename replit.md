@@ -42,6 +42,7 @@ Artivio AI supports a wide array of AI generation capabilities:
 -   **Content Execution Agent**: A background scheduler for automated social media posting with retry logic.
 -   **AI Support System**: 24/7 automated customer support using GPT-4o for ticket classification, response generation, and escalation.
 -   **Content Pipeline Quick Actions**: Context-aware buttons for one-click transformations (e.g., "Create Video" from image, "Add to Video Editor" from video).
+-   **Private Investor Deck**: A 15-slide VC pitch deck at `/investor-deck` with scroll snap navigation, Framer Motion animations, and financial projections. Privacy protected via: global X-Robots-Tag middleware (before serveStatic), robots.txt exclusion, and client-side noindex meta tag. IntersectionObserver with slideIndex data attributes ensures accurate progress tracking across viewports. Not exposed in sidebar navigation for unlisted access.
 
 ### System Design Choices
 The project adopts a modular architecture with a database schema for users, generations, conversations, and API keys. Video processing is handled by server-side FFmpeg with asynchronous job processing. Landing page content is dynamically managed via a database singleton with JSONB. A generation queue provides real-time monitoring and smart retry mechanisms.
