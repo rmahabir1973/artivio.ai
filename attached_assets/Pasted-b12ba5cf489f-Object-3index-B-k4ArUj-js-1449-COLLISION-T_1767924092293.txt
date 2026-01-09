@@ -1,0 +1,105 @@
+b12ba5cf489f Object
+3index-B_k4ArUj.js:1449 [COLLISION] Track drop zone hit: track-drop-layer-2
+153index-B_k4ArUj.js:1449 [COLLISION] Track drop zone hit: track-drop-layer-3
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+video-editor:1 Access to video at 'https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-7e64ea60-1fa4-41d9-b582-b12ba5cf489f.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260109%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260109T015814Z&X-Amz-Expires=604800&X-Amz-Signature=5db14efd88bccb058071a6da31574961c412756760467d94b36b39df45e547c2&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject' from origin 'https://artivio.ai' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
+artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-7e64ea60-1fa4-41d9-b582-b12ba5cf489f.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260109%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260109T015814Z&X-Amz-Expires=604800&X-Amz-Signature=5db14efd88bccb058071a6da31574961c412756760467d94b36b39df45e547c2&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject:1  Failed to load resource: net::ERR_FAILEDUnderstand this error
+index-B_k4ArUj.js:1449 [DRAG START] 7e64ea60-1fa4-41d9-b582-b12ba5cf489f_1767923900910_4k7ik4mkw Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 7e64ea60-1fa4-41d9-b582-b12ba5cf489f_1767923900910_4k7ik4mkw Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 7e64ea60-1fa4-41d9-b582-b12ba5cf489f_1767923900910_4k7ik4mkw Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 7e64ea60-1fa4-41d9-b582-b12ba5cf489f_1767923900910_4k7ik4mkw Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 7e64ea60-1fa4-41d9-b582-b12ba5cf489f_1767923900910_4k7ik4mkw Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 7e64ea60-1fa4-41d9-b582-b12ba5cf489f_1767923900910_4k7ik4mkw Object
+index-B_k4ArUj.js:988 [AUTH] ✓ User data refreshed (credits updated)
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+api/video-editor/preview:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-B_k4ArUj.js:1449 Preview generation error: Error: Video combination failed. Please check your videos and try again.
+    at WV (index-B_k4ArUj.js:48:45724)
+    at async He (index-B_k4ArUj.js:48:45964)
+    at async index-B_k4ArUj.js:1449:66537
+(anonymous) @ index-B_k4ArUj.js:1449Understand this error
+index-B_k4ArUj.js:1472 [HISTORY] Fetching generations with cursor: first page type: all
+index-B_k4ArUj.js:1472 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-B_k4ArUj.js:988 [AUTH] ✓ User data refreshed (credits updated)
+3index-B_k4ArUj.js:992 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-B_k4ArUj.js:992Understand this warning
+index-B_k4ArUj.js:1472 [HISTORY] Fetching generations with cursor: eyJjcmVhdGVkQXQiOiIyMDI1LTEyLTIwVDA0OjQyOjI4LjYwOFoiLCJpZCI6ImUzYjYwMjExLWYyNzMtNDJjZS04Nzk1LTNjZTNmYzgyZTA0YyJ9 type: all
+index-B_k4ArUj.js:1472 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-B_k4ArUj.js:988 [AUTH] ✓ User data refreshed (credits updated)
+index-B_k4ArUj.js:1472 [HISTORY] Fetching generations with cursor: eyJjcmVhdGVkQXQiOiIyMDI1LTEyLTEyVDA0OjAwOjQ0LjYxOVoiLCJpZCI6ImFkNzU1YmE1LWM4NDAtNDE2OC05NTUzLWNiNTNhZTIyMzAwZiJ9 type: all
+index-B_k4ArUj.js:1472 [HISTORY] Fetched generations: 15 items, hasMore: true
+index-B_k4ArUj.js:992 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-B_k4ArUj.js:992Understand this warning
+index-B_k4ArUj.js:988 [AUTH] ✓ User data refreshed (credits updated)
+index-B_k4ArUj.js:1449 [VIDEO-EDITOR] Session restored from localStorage
+index-B_k4ArUj.js:1449 [DRAG START] draggable-76cad099-28f3-400f-a9c5-cb35740f0a01 Object
+10index-B_k4ArUj.js:1449 [COLLISION] Track drop zone hit: track-drop-layer-1
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+tempfile.aiquickdraw.com/v/6b846d0ccfbce516224f41f5f17f4168_1764795189.mp4:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:988 [AUTH] ✓ User data refreshed (credits updated)
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+index-B_k4ArUj.js:1449 [DRAG START] 76cad099-28f3-400f-a9c5-cb35740f0a01_1767924016268_t1a56g925 Object
+index-B_k4ArUj.js:1449 [DRAG] handleDragEnd: Object
+index-B_k4ArUj.js:1449 [DRAG] Clip drag: Object
+index-B_k4ArUj.js:1449 [DRAG] Updated clip position: Object
+api/video-editor/preview:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-B_k4ArUj.js:1449 Preview generation error: Error: Video combination failed. Please check your videos and try again.
+    at WV (index-B_k4ArUj.js:48:45724)
+    at async He (index-B_k4ArUj.js:48:45964)
+    at async index-B_k4ArUj.js:1449:66537
+(anonymous) @ index-B_k4ArUj.js:1449Understand this error
+index-B_k4ArUj.js:988 [AUTH] ✓ User data refreshed (credits updated)

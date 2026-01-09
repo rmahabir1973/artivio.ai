@@ -574,6 +574,7 @@ export default function VideoEditor() {
   const [activeDragData, setActiveDragData] = useState<any>(null);
   const [dragDelta, setDragDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dragInitialPosition, setDragInitialPosition] = useState<number>(0);
+  const [lastPointerPosition, setLastPointerPosition] = useState<{ x: number; y: number } | null>(null);
 
   // Enhanced editor state
   const [clipSettings, setClipSettings] = useState<Map<string, ClipSettingsLocal>>(new Map());
@@ -2311,6 +2312,30 @@ const previewMutation = useMutation({
 
         const instanceId = `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+        // Calculate drop position based on pointer location on timeline
+        let dropTimeSeconds = 0;
+        const PIXELS_PER_SECOND = 100; // Base timeline pixels per second
+        
+        if (lastPointerPosition) {
+          // Find the timeline scroll container by data-testid
+          const scrollContainer = document.querySelector('[data-testid="timeline-scroll-container"]');
+          if (scrollContainer) {
+            const rect = scrollContainer.getBoundingClientRect();
+            const scrollLeft = scrollContainer.scrollLeft;
+            // Calculate X position relative to timeline content
+            const relativeX = lastPointerPosition.x - rect.left + scrollLeft;
+            // Convert to seconds
+            dropTimeSeconds = Math.max(0, relativeX / PIXELS_PER_SECOND);
+            console.log('[DRAG] Calculated drop time from pointer:', { 
+              pointerX: lastPointerPosition.x, 
+              rectLeft: rect.left, 
+              scrollLeft, 
+              relativeX, 
+              dropTimeSeconds 
+            });
+          }
+        }
+
         if (useMultiTrack) {
           const getTrackNumberFromId = (id: string): number => {
             const mapping: Record<string, number> = {
@@ -2328,17 +2353,13 @@ const previewMutation = useMutation({
           };
 
           const trackNumber = getTrackNumberFromId(trackId);
-          const currentMaxEnd = multiTrackItems
-            .filter(i => i.track === trackNumber)
-            .reduce((max, i) => Math.max(max, i.startTime + i.duration), 0);
-
           const itemDuration = item.duration || (mediaType === 'image' ? 5 : 10);
 
           const newItem: MultiTrackTimelineItem = {
             id: instanceId,
             type: mediaType,
             track: trackNumber,
-            startTime: currentMaxEnd,
+            startTime: dropTimeSeconds, // Use calculated drop position
             duration: itemDuration,
             originalDuration: itemDuration,
             url: item.url,
@@ -2348,7 +2369,7 @@ const previewMutation = useMutation({
             speed: 1,
           };
 
-          console.log('[DRAG] Adding to multi-track:', newItem);
+          console.log('[DRAG] Adding to multi-track at drop position:', newItem);
 
           setMultiTrackItems(prev => {
             const updated = [...prev, newItem];
@@ -2361,10 +2382,10 @@ const previewMutation = useMutation({
           const layerLabel = trackId.startsWith('layer-') ? `Layer ${trackId.split('-')[1]}` : trackId.replace('-', ' ').toUpperCase();
           toast({
             title: "Added to Timeline",
-            description: `${mediaType} added to ${layerLabel}`,
+            description: `${mediaType} added to ${layerLabel} at ${dropTimeSeconds.toFixed(1)}s`,
           });
         } else {
-          // Single-track mode - add to orderedClips or audioTracks
+          // Single-track mode - add to orderedClips or audioTracks with position
           if (mediaType === 'audio') {
             const audioTrack = {
               id: instanceId,
@@ -2372,6 +2393,8 @@ const previewMutation = useMutation({
               name: item.name || 'Audio track',
               type: 'music' as const,
               volume: 1,
+              positionSeconds: dropTimeSeconds, // Use calculated drop position
+              trackId: trackId.startsWith('layer-') ? trackId : 'layer-1',
             };
             setAudioTracks(prev => [...prev, audioTrack]);
           } else {
@@ -2385,12 +2408,14 @@ const previewMutation = useMutation({
               trackId: trackId.startsWith('layer-') ? trackId : 'layer-1',
             };
             setOrderedClips(prev => [...prev, clip]);
+            // Set the position for the new clip
+            updateClipSettings(instanceId, { positionSeconds: dropTimeSeconds });
           }
 
           const layerLabel = trackId.startsWith('layer-') ? `Layer ${trackId.split('-')[1]}` : 'timeline';
           toast({
             title: "Added to timeline",
-            description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to ${layerLabel}`,
+            description: `${mediaType === 'video' ? 'Video' : mediaType === 'image' ? 'Image' : 'Audio'} added to ${layerLabel} at ${dropTimeSeconds.toFixed(1)}s`,
           });
         }
       }
@@ -2821,18 +2846,33 @@ const previewMutation = useMutation({
           onDragMove={(event: DragMoveEvent) => {
             // Track cumulative delta during drag
             setDragDelta({ x: event.delta.x, y: event.delta.y });
+            // Track absolute pointer position for precise drop placement
+            const activatorEvent = event.activatorEvent as PointerEvent | MouseEvent | TouchEvent;
+            if (activatorEvent) {
+              let clientX = 0, clientY = 0;
+              if ('touches' in activatorEvent && activatorEvent.touches.length > 0) {
+                clientX = activatorEvent.touches[0].clientX + event.delta.x;
+                clientY = activatorEvent.touches[0].clientY + event.delta.y;
+              } else if ('clientX' in activatorEvent) {
+                clientX = activatorEvent.clientX + event.delta.x;
+                clientY = activatorEvent.clientY + event.delta.y;
+              }
+              setLastPointerPosition({ x: clientX, y: clientY });
+            }
           }}
           onDragEnd={(event: DragEndEvent) => {
             handleDragEnd(event);
             setActiveDragId(null);
             setActiveDragData(null);
             setDragDelta({ x: 0, y: 0 });
+            setLastPointerPosition(null);
           }}
           onDragCancel={() => {
             console.log('[DRAG] Drag cancelled');
             setActiveDragId(null);
             setActiveDragData(null);
             setDragDelta({ x: 0, y: 0 });
+            setLastPointerPosition(null);
           }}
         >
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
