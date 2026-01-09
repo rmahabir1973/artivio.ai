@@ -1228,7 +1228,7 @@ export default function VideoEditor() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 3, // Reduced from 8 for snappier drag initiation
       },
     }),
     useSensor(KeyboardSensor, {
@@ -2222,13 +2222,13 @@ const previewMutation = useMutation({
         console.log('[DRAG] Updated clip position:', { clipId, newPosition, deltaSeconds, initial: dragInitialPosition });
       }
 
-      // If significant vertical movement, change track
-      if (Math.abs(dragDelta.y) >= 30 && dragDelta.y !== 0) {
+      // If significant vertical movement, change track (reduced threshold for better responsiveness)
+      if (Math.abs(dragDelta.y) >= 20 && dragDelta.y !== 0) {
         const clip = orderedClips.find(c => c.id === clipId);
         if (clip) {
           const currentTrackId = clip.trackId || 'layer-1';
           const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
-          const trackDelta = Math.round(dragDelta.y / 60); // ~60px per track
+          const trackDelta = Math.round(dragDelta.y / 48); // ~48px per track (matches TRACK_HEIGHT)
           const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
           const newTrackId = `layer-${newTrackNum}`;
 
@@ -2265,13 +2265,13 @@ const previewMutation = useMutation({
         console.log('[DRAG] Updated audio position:', { trackId, newPosition, deltaSeconds });
       }
 
-      // If significant vertical movement, change layer
-      if (Math.abs(dragDelta.y) >= 30 && dragDelta.y !== 0) {
+      // If significant vertical movement, change layer (reduced threshold for better responsiveness)
+      if (Math.abs(dragDelta.y) >= 20 && dragDelta.y !== 0) {
         const track = audioTracks.find(t => t.id === trackId);
         if (track) {
           const currentTrackId = track.trackId || 'layer-1';
           const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
-          const trackDelta = Math.round(dragDelta.y / 60); // ~60px per track
+          const trackDelta = Math.round(dragDelta.y / 48); // ~48px per track (matches TRACK_HEIGHT)
           const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
           const newLayerId = `layer-${newTrackNum}`;
 

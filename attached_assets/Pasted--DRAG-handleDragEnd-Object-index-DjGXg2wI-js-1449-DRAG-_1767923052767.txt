@@ -1,0 +1,36 @@
+[DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG] Clip drag: Object
+index-DjGXg2wI.js:1449 [DRAG] Updated clip position: Object
+api/video-editor/preview:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-DjGXg2wI.js:1449 Preview generation error: Error: Video combination failed. Please check your videos and try again.
+    at WV (index-DjGXg2wI.js:48:45724)
+    at async He (index-DjGXg2wI.js:48:45964)
+    at async index-DjGXg2wI.js:1449:66537
+(anonymous) @ index-DjGXg2wI.js:1449Understand this error
+api/video-editor/preview:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-DjGXg2wI.js:1449 Preview generation error: Error: Video combination failed. Please check your videos and try again.
+    at WV (index-DjGXg2wI.js:48:45724)
+    at async He (index-DjGXg2wI.js:48:45964)
+    at async index-DjGXg2wI.js:1449:66537
+(anonymous) @ index-DjGXg2wI.js:1449Understand this error
+index-DjGXg2wI.js:1449 [DRAG START] 4334c4f2-c147-44af-9f55-5813878f8569_1767922969068_be1gt1e6a Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG] Clip drag: Object
+index-DjGXg2wI.js:1449 [DRAG] Updated clip position: Object
+api/video-editor/preview:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-DjGXg2wI.js:1449 Preview generation error: Error: Video combination failed. Please check your videos and try again.
+    at WV (index-DjGXg2wI.js:48:45724)
+    at async He (index-DjGXg2wI.js:48:45964)
+    at async index-DjGXg2wI.js:1449:66537
+(anonymous) @ index-DjGXg2wI.js:1449Understand this error
+index-DjGXg2wI.js:1449 [DRAG START] draggable-1c86f0f4-4880-4e1a-8dce-3405f37cd676 Object
+99index-DjGXg2wI.js:1449 [COLLISION] Track drop zone hit: track-drop-layer-1
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+tempfile.aiquickdraw.com/v/1c08c20fc7d49dbb832b0c048b5dcdad_1765477984.mp4:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+api/video-editor/preview:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-DjGXg2wI.js:1449 Preview generation error: Error: Video combination failed. Please check your videos and try again.
+    at WV (index-DjGXg2wI.js:48:45724)
+    at async He (index-DjGXg2wI.js:48:45964)
+    at async index-DjGXg2wI.js:1449:66537
+(anonymous) @ index-DjGXg2wI.js:1449Understand this error
+2index-DjGXg2wI.js:988 [AUTH] ✓ User data refreshed (credits updated)
