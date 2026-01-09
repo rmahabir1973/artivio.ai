@@ -239,8 +239,11 @@ export default function VideoJoinerExpress() {
       return response.json();
     },
     getNextPageParam: (lastPage, allPages) => {
-      const totalFetched = allPages.reduce((sum, page) => sum + page.generations.length, 0);
-      return totalFetched < lastPage.total ? totalFetched : undefined;
+      if (!lastPage?.generations || !Array.isArray(lastPage.generations)) {
+        return undefined;
+      }
+      const totalFetched = allPages.reduce((sum, page) => sum + (page?.generations?.length ?? 0), 0);
+      return totalFetched < (lastPage.total ?? 0) ? totalFetched : undefined;
     },
     initialPageParam: 0,
     enabled: isAuthenticated,

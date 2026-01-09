@@ -1,0 +1,67 @@
+[AUTH] Access token refreshed successfully
+index-DjGXg2wI.js:1449 [DRAG START] draggable-a2b0507d-a5ca-4f9a-ba18-055fd7aacaec Object
+68index-DjGXg2wI.js:1449 [COLLISION] Track drop zone hit: track-drop-layer-1
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1767922193668_ctgoucoqr: 8s
+index-DjGXg2wI.js:1449 [DRAG START] draggable-a5a658b7-1c89-4b75-99d4-a926455786ef Object
+106index-DjGXg2wI.js:1449 [COLLISION] Track drop zone hit: track-drop-layer-1
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DURATION] Loaded video clip a5a658b7-1c89-4b75-99d4-a926455786ef_1767922198243_y7qs40mo9: 8s
+index-DjGXg2wI.js:1449 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1767922198243_y7qs40mo9 Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG] Clip drag: Object
+index-DjGXg2wI.js:1449 [DRAG] Updated clip position: Object
+index-DjGXg2wI.js:1449 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1767922198243_y7qs40mo9 Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG] Clip drag: Object
+index-DjGXg2wI.js:1449 [DRAG] Updated clip position: Object
+index-DjGXg2wI.js:1449 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1767922198243_y7qs40mo9 Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG] Clip drag: Object
+index-DjGXg2wI.js:1449 [DRAG] Updated clip position: Object
+index-DjGXg2wI.js:988 [AUTH] ✓ User data refreshed (credits updated)
+index-DjGXg2wI.js:1449 [DRAG START] transition-fade Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG START] transition-fade Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG START] transition-fade Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG START] transition-fade Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:988 [AUTH] ✓ User data refreshed (credits updated)
+index-DjGXg2wI.js:1449 [DRAG START] transition-wipeleft Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1767922198243_y7qs40mo9 Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG] Clip drag: Object
+index-DjGXg2wI.js:1449 [DRAG] Updated clip position: Object
+index-DjGXg2wI.js:1449 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1767922198243_y7qs40mo9 Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG] Clip drag: Object
+index-DjGXg2wI.js:1449 [DRAG] Updated clip position: Object
+index-DjGXg2wI.js:1449 [DRAG START] transition-wipedown Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:1449 [DRAG START] transition-wipedown Object
+index-DjGXg2wI.js:1449 [DRAG] handleDragEnd: Object
+index-DjGXg2wI.js:40 TypeError: Cannot read properties of undefined (reading 'length')
+    at index-DjGXg2wI.js:1449:133099
+    at Array.reduce (<anonymous>)
+    at Object.getNextPageParam (index-DjGXg2wI.js:1449:133067)
+    at oA (index-DjGXg2wI.js:48:25318)
+    at ace (index-DjGXg2wI.js:48:25517)
+    at dce.createResult (index-DjGXg2wI.js:48:39417)
+    at dce.updateResult (index-DjGXg2wI.js:48:35613)
+    at dce.setOptions (index-DjGXg2wI.js:48:32135)
+    at dce.setOptions (index-DjGXg2wI.js:48:38762)
+    at new nB (index-DjGXg2wI.js:48:30886)
+z4 @ index-DjGXg2wI.js:40Understand this error
+index-DjGXg2wI.js:38 Uncaught TypeError: Cannot read properties of undefined (reading 'length')
+    at index-DjGXg2wI.js:1449:133099
+    at Array.reduce (<anonymous>)
+    at Object.getNextPageParam (index-DjGXg2wI.js:1449:133067)
+    at oA (index-DjGXg2wI.js:48:25318)
+    at ace (index-DjGXg2wI.js:48:25517)
+    at dce.createResult (index-DjGXg2wI.js:48:39417)
+    at dce.updateResult (index-DjGXg2wI.js:48:35613)
+    at dce.setOptions (index-DjGXg2wI.js:48:32135)
+    at dce.setOptions (index-DjGXg2wI.js:48:38762)
