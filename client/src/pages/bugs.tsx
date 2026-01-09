@@ -11,8 +11,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Bug, Send, Clock, AlertTriangle, AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthProvider';
+import { Bug, Send, Clock, AlertTriangle, AlertCircle, CheckCircle2, XCircle, Loader2, Edit, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const bugReportSchema = z.object({
@@ -63,7 +65,13 @@ const statusConfig = {
 
 export default function BugsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  const [editingBug, setEditingBug] = useState<BugReport | null>(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  
+  const isAdmin = user?.isAdmin === true;
 
   const form = useForm<BugReportForm>({
     resolver: zodResolver(bugReportSchema),
@@ -121,6 +129,42 @@ export default function BugsPage() {
 
   const onSubmit = (data: BugReportForm) => {
     submitMutation.mutate(data);
+  };
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes: string }) => {
+      const response = await fetch(`/api/admin/bugs/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status, adminNotes }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update bug');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Bug Updated', description: 'Bug status and notes saved successfully.' });
+      setEditingBug(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/bugs'] });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const openEditDialog = (bug: BugReport) => {
+    setEditingBug(bug);
+    setEditStatus(bug.status);
+    setEditNotes(bug.adminNotes || '');
+  };
+
+  const handleSaveEdit = () => {
+    if (editingBug) {
+      updateMutation.mutate({ id: editingBug.id, status: editStatus, adminNotes: editNotes });
+    }
   };
 
   return (
@@ -366,6 +410,17 @@ export default function BugsPage() {
                             </div>
                           )}
                         </div>
+                        {isAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(bug)}
+                            data-testid={`button-edit-bug-${bug.id}`}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Respond
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -380,6 +435,79 @@ export default function BugsPage() {
           <p>For urgent issues, please contact us directly.</p>
         </div>
       </div>
+
+      <Dialog open={!!editingBug} onOpenChange={(open) => !open && setEditingBug(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Respond to Bug Report
+            </DialogTitle>
+            <DialogDescription>
+              {editingBug?.title}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger data-testid="select-edit-status">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="wont_fix">Won't Fix</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Admin Notes / Response</label>
+              <Textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Add notes, response, or resolution details..."
+                className="min-h-[100px]"
+                data-testid="input-edit-notes"
+              />
+            </div>
+
+            {editingBug && (
+              <div className="p-3 bg-muted rounded-md text-sm space-y-1">
+                <p><span className="font-medium">Reporter:</span> {editingBug.reporterName || 'Anonymous'}</p>
+                {editingBug.reporterEmail && (
+                  <p><span className="font-medium">Email:</span> {editingBug.reporterEmail}</p>
+                )}
+                <p><span className="font-medium">Severity:</span> {editingBug.severity}</p>
+                <p><span className="font-medium">Description:</span> {editingBug.description}</p>
+                {editingBug.stepsToReproduce && (
+                  <p><span className="font-medium">Steps:</span> {editingBug.stepsToReproduce}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingBug(null)} data-testid="button-cancel-edit">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={updateMutation.isPending} data-testid="button-save-edit">
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
