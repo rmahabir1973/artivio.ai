@@ -116,6 +116,9 @@ import {
   savedStockImages,
   type SavedStockImage,
   type InsertSavedStockImage,
+  bugReports,
+  type BugReport,
+  type InsertBugReport,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql, inArray, ilike, or, asc, isNotNull } from "drizzle-orm";
@@ -418,6 +421,11 @@ export interface IStorage {
   countSavedStockImages(userId: string): Promise<number>;
   deleteSavedStockImage(id: string, userId: string): Promise<boolean>;
   checkSavedStockImages(userId: string, images: Array<{ source: string; externalId: string }>): Promise<string[]>;
+
+  // Bug Reports (Internal Testing)
+  listBugReports(): Promise<BugReport[]>;
+  createBugReport(report: InsertBugReport): Promise<BugReport>;
+  updateBugReportStatus(id: string, status: string, adminNotes?: string): Promise<BugReport | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3080,6 +3088,35 @@ export class DatabaseStorage implements IStorage {
     return images
       .filter(img => savedSet.has(`${img.source}-${img.externalId}`))
       .map(img => `${img.source}-${img.externalId}`);
+  }
+
+  // Bug Reports (Internal Testing)
+  async listBugReports(): Promise<BugReport[]> {
+    return await db
+      .select()
+      .from(bugReports)
+      .orderBy(desc(bugReports.createdAt));
+  }
+
+  async createBugReport(report: InsertBugReport): Promise<BugReport> {
+    const [created] = await db
+      .insert(bugReports)
+      .values(report)
+      .returning();
+    return created;
+  }
+
+  async updateBugReportStatus(id: string, status: string, adminNotes?: string): Promise<BugReport | undefined> {
+    const updates: Partial<BugReport> = { status, updatedAt: new Date() };
+    if (adminNotes !== undefined) {
+      updates.adminNotes = adminNotes;
+    }
+    const [updated] = await db
+      .update(bugReports)
+      .set(updates)
+      .where(eq(bugReports.id, id))
+      .returning();
+    return updated;
   }
 }
 

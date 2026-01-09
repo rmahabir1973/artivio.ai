@@ -108,6 +108,7 @@ import {
   promptRefineRequestSchema,
   assistantChatRequestSchema,
   insertSavedStockImageSchema,
+  insertBugReportSchema,
   supportTickets,
   supportMessages,
   users,
@@ -11299,6 +11300,72 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     } catch (error: any) {
       console.error('[SUPPORT ADMIN] Error fetching stats:', error);
       res.status(500).json({ message: 'Failed to fetch support stats' });
+    }
+  });
+
+  // ========== BUG REPORTS (Internal Testing) ==========
+  
+  // List all bug reports (public read)
+  app.get('/api/bugs', async (req, res) => {
+    try {
+      const reports = await storage.listBugReports();
+      res.json(reports);
+    } catch (error: any) {
+      console.error('[BUG REPORTS] Error listing bug reports:', error);
+      res.status(500).json({ message: 'Failed to fetch bug reports' });
+    }
+  });
+
+  // Submit a bug report (public create - no auth required for testers)
+  app.post('/api/bugs', async (req, res) => {
+    try {
+      const parseResult = insertBugReportSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          message: 'Invalid bug report data', 
+          errors: parseResult.error.flatten() 
+        });
+      }
+      
+      const report = await storage.createBugReport(parseResult.data);
+      
+      console.log('[BUG REPORTS] New bug report submitted:', report.id, '-', report.title);
+      
+      res.status(201).json(report);
+    } catch (error: any) {
+      console.error('[BUG REPORTS] Error creating bug report:', error);
+      res.status(500).json({ message: 'Failed to submit bug report' });
+    }
+  });
+
+  // Admin: Update bug report status
+  app.patch('/api/admin/bugs/:id', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!isUserAdmin(user)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      
+      const { id } = req.params;
+      const { status, adminNotes } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: 'Status is required' });
+      }
+      
+      const updated = await storage.updateBugReportStatus(id, status, adminNotes);
+      
+      if (!updated) {
+        return res.status(404).json({ message: 'Bug report not found' });
+      }
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('[BUG REPORTS] Error updating bug report:', error);
+      res.status(500).json({ message: 'Failed to update bug report' });
     }
   });
 

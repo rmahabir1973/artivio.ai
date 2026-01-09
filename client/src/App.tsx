@@ -123,6 +123,7 @@ import SocialUpgrade from "@/pages/social/upgrade";
 import SocialOAuthRedirect from "@/pages/social/oauth-redirect";
 import SocialOAuthCallback from "@/pages/social/oauth-callback";
 import InvestorDeck from "@/pages/investor-deck";
+import Bugs from "@/pages/bugs";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -132,6 +133,7 @@ function Router() {
     <Switch>
       {/* Private investor deck - unlisted, not in navigation */}
       <Route path="/investor-deck" component={InvestorDeck} />
+      <Route path="/bugs" component={Bugs} />
 
       {/* Public routes available to all users */}
       <Route path="/support" component={Support} />

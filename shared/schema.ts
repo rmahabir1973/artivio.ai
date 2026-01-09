@@ -2877,3 +2877,34 @@ export const projectCollaboratorsRelations = relations(projectCollaborators, ({ 
     references: [users.id],
   }),
 }));
+
+// ============================================================================
+// Bug Reports (Internal Testing)
+// ============================================================================
+export const bugReports = pgTable("bug_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description").notNull(),
+  stepsToReproduce: text("steps_to_reproduce"),
+  severity: varchar("severity", { length: 20 }).notNull().default('medium'), // low, medium, high, critical
+  browserInfo: varchar("browser_info", { length: 500 }),
+  deviceInfo: varchar("device_info", { length: 200 }),
+  reporterName: varchar("reporter_name", { length: 100 }),
+  reporterEmail: varchar("reporter_email", { length: 255 }),
+  pageUrl: varchar("page_url", { length: 500 }),
+  status: varchar("status", { length: 20 }).notNull().default('open'), // open, in_progress, resolved, closed, wont_fix
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertBugReportSchema = createInsertSchema(bugReports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+  adminNotes: true,
+});
+
+export type InsertBugReport = z.infer<typeof insertBugReportSchema>;
+export type BugReport = typeof bugReports.$inferSelect;
