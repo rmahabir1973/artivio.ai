@@ -133,16 +133,7 @@ export default function BugsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes: string }) => {
-      const response = await fetch(`/api/admin/bugs/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ status, adminNotes }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update bug');
-      }
+      const response = await apiRequest('PATCH', `/api/admin/bugs/${id}`, { status, adminNotes });
       return response.json();
     },
     onSuccess: () => {
