@@ -1,0 +1,267 @@
+/**
+ * Cross-Layer Transitions Module for FFmpeg Video Processing
+ * Handles transitions between clips on different timeline layers
+ */
+
+// FFmpeg xfade transition type mapping (all are 1:1 with FFmpeg)
+const TRANSITION_MAP = {
+  'fade': 'fade',
+  'dissolve': 'dissolve',
+  'fadeblack': 'fadeblack',
+  'fadewhite': 'fadewhite',
+  'wipeleft': 'wipeleft',
+  'wiperight': 'wiperight',
+  'wipeup': 'wipeup',
+  'wipedown': 'wipedown',
+  'slideleft': 'slideleft',
+  'slideright': 'slideright',
+  'circleopen': 'circleopen',
+  'circleclose': 'circleclose',
+  'pixelize': 'pixelize',
+  'radial': 'radial',
+  'diagtl': 'diagtl',
+  'diagtr': 'diagtr',
+  'diagbl': 'diagbl',
+  'diagbr': 'diagbr'
+};
+
+/**
+ * Get FFmpeg-compatible transition type
+ * @param {string} type - Transition type from client
+ * @returns {string} FFmpeg xfade transition name
+ */
+function getFFmpegTransitionType(type) {
+  return TRANSITION_MAP[type] || 'fade';
+}
+
+/**
+ * Calculate overlap windows for cross-layer transitions
+ * @param {Object} multiTrackTimeline - Timeline with items array
+ * @param {Array} crossLayerTransitions - Array of transition definitions
+ * @returns {Array} Array of overlap objects with timing info
+ */
+function calculateCrossLayerOverlaps(multiTrackTimeline, crossLayerTransitions) {
+  if (!crossLayerTransitions || crossLayerTransitions.length === 0) {
+    console.log('[CrossLayer] No cross-layer transitions to process');
+    return [];
+  }
+
+  if (!multiTrackTimeline || !multiTrackTimeline.items) {
+    console.warn('[CrossLayer] No multiTrackTimeline items found');
+    return [];
+  }
+
+  const items = multiTrackTimeline.items;
+  const overlaps = [];
+
+  console.log(`[CrossLayer] Processing ${crossLayerTransitions.length} transition(s)`);
+  console.log(`[CrossLayer] Timeline has ${items.length} items`);
+
+  for (const transition of crossLayerTransitions) {
+    console.log(`[CrossLayer] Processing transition ${transition.id}: ${transition.fromClipId} -> ${transition.toClipId}`);
+    
+    // Find the clips by ID
+    const fromClip = items.find(item => item.id === transition.fromClipId);
+    const toClip = items.find(item => item.id === transition.toClipId);
+
+    if (!fromClip) {
+      console.warn(`[CrossLayer] Transition ${transition.id}: fromClip ${transition.fromClipId} not found`);
+      continue;
+    }
+
+    if (!toClip) {
+      console.warn(`[CrossLayer] Transition ${transition.id}: toClip ${transition.toClipId} not found`);
+      continue;
+    }
+
+    // Calculate time ranges for each clip
+    const fromStart = fromClip.startTime || 0;
+    const fromEnd = fromStart + (fromClip.duration || 0);
+    const toStart = toClip.startTime || 0;
+    const toEnd = toStart + (toClip.duration || 0);
+
+    console.log(`[CrossLayer] fromClip: ${fromStart}s - ${fromEnd}s (track: ${fromClip.track})`);
+    console.log(`[CrossLayer] toClip: ${toStart}s - ${toEnd}s (track: ${toClip.track})`);
+
+    // Find the overlap window (where both clips exist at the same time)
+    const overlapStart = Math.max(fromStart, toStart);
+    const overlapEnd = Math.min(fromEnd, toEnd);
+
+    if (overlapStart >= overlapEnd) {
+      console.warn(`[CrossLayer] Transition ${transition.id}: No overlap found (${overlapStart} >= ${overlapEnd})`);
+      continue;
+    }
+
+    const overlapDuration = overlapEnd - overlapStart;
+    const transitionDuration = Math.min(transition.durationSeconds || 1.0, overlapDuration);
+
+    console.log(`[CrossLayer] Overlap window: ${overlapStart}s - ${overlapEnd}s (${overlapDuration}s)`);
+    console.log(`[CrossLayer] Transition: ${transition.type} for ${transitionDuration}s`);
+
+    overlaps.push({
+      transitionId: transition.id,
+      fromClip: {
+        id: fromClip.id,
+        url: fromClip.url,
+        track: fromClip.track,
+        startTime: fromStart,
+        endTime: fromEnd,
+        duration: fromClip.duration
+      },
+      toClip: {
+        id: toClip.id,
+        url: toClip.url,
+        track: toClip.track,
+        startTime: toStart,
+        endTime: toEnd,
+        duration: toClip.duration
+      },
+      overlapStart,
+      overlapEnd,
+      overlapDuration,
+      transitionType: transition.type,
+      transitionDuration,
+      ffmpegType: getFFmpegTransitionType(transition.type)
+    });
+  }
+
+  console.log(`[CrossLayer] Found ${overlaps.length} valid overlap(s)`);
+  return overlaps;
+}
+
+/**
+ * Build FFmpeg filter for a single cross-layer transition
+ * @param {Object} overlap - Overlap object from calculateCrossLayerOverlaps
+ * @param {number} fromInputIndex - FFmpeg input index for fromClip
+ * @param {number} toInputIndex - FFmpeg input index for toClip
+ * @returns {Object} Filter string and output label
+ */
+function buildCrossLayerXfadeFilter(overlap, fromInputIndex, toInputIndex) {
+  const { 
+    overlapStart, 
+    overlapEnd, 
+    overlapDuration, 
+    transitionDuration, 
+    ffmpegType,
+    fromClip,
+    toClip,
+    transitionId 
+  } = overlap;
+
+  // Calculate trim points relative to each clip's own timeline
+  const fromTrimStart = overlapStart - fromClip.startTime;
+  const fromTrimEnd = fromTrimStart + overlapDuration;
+  const toTrimStart = overlapStart - toClip.startTime;
+  const toTrimEnd = toTrimStart + overlapDuration;
+
+  // Calculate xfade offset (when within the overlap segment the transition starts)
+  // For a smooth blend at the end, offset = segment_duration - transition_duration
+  const xfadeOffset = Math.max(0, overlapDuration - transitionDuration);
+
+  console.log(`[CrossLayer] Building filter for ${transitionId}:`);
+  console.log(`  fromClip trim: ${fromTrimStart.toFixed(3)}s - ${fromTrimEnd.toFixed(3)}s`);
+  console.log(`  toClip trim: ${toTrimStart.toFixed(3)}s - ${toTrimEnd.toFixed(3)}s`);
+  console.log(`  xfade: ${ffmpegType}, duration=${transitionDuration.toFixed(3)}s, offset=${xfadeOffset.toFixed(3)}s`);
+
+  // Build the filter complex segment
+  const filterParts = [
+    // Trim the fromClip to the overlap portion
+    `[${fromInputIndex}:v]trim=start=${fromTrimStart.toFixed(3)}:end=${fromTrimEnd.toFixed(3)},setpts=PTS-STARTPTS,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black,fps=30[v${fromInputIndex}_overlap]`,
+    
+    // Trim the toClip to the overlap portion
+    `[${toInputIndex}:v]trim=start=${toTrimStart.toFixed(3)}:end=${toTrimEnd.toFixed(3)},setpts=PTS-STARTPTS,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:-1:-1:color=black,fps=30[v${toInputIndex}_overlap]`,
+    
+    // Apply xfade between the two overlapping segments
+    `[v${fromInputIndex}_overlap][v${toInputIndex}_overlap]xfade=transition=${ffmpegType}:duration=${transitionDuration.toFixed(3)}:offset=${xfadeOffset.toFixed(3)}[xfade_${transitionId}]`
+  ];
+
+  return {
+    filter: filterParts.join(';'),
+    outputLabel: `xfade_${transitionId}`,
+    overlapStart,
+    overlapEnd
+  };
+}
+
+/**
+ * Build audio crossfade filter for the transition
+ * @param {Object} overlap - Overlap object
+ * @param {number} fromInputIndex - FFmpeg input index for fromClip
+ * @param {number} toInputIndex - FFmpeg input index for toClip
+ * @returns {Object} Audio filter string and output label
+ */
+function buildCrossLayerAudioFilter(overlap, fromInputIndex, toInputIndex) {
+  const { transitionDuration, transitionId } = overlap;
+
+  const filter = `[${fromInputIndex}:a][${toInputIndex}:a]acrossfade=d=${transitionDuration.toFixed(3)}:c1=tri:c2=tri[a_xfade_${transitionId}]`;
+
+  return {
+    filter,
+    outputLabel: `a_xfade_${transitionId}`
+  };
+}
+
+/**
+ * Process payload and generate FFmpeg command for cross-layer transitions
+ * @param {Object} payload - The export request payload
+ * @param {Array} downloadedClips - Array of {id, localPath} for downloaded clips
+ * @returns {Object} FFmpeg command components or null if no transitions
+ */
+function processCrossLayerTransitions(payload, downloadedClips) {
+  const { multiTrackTimeline, crossLayerTransitions } = payload;
+
+  // Calculate overlaps
+  const overlaps = calculateCrossLayerOverlaps(multiTrackTimeline, crossLayerTransitions);
+
+  if (overlaps.length === 0) {
+    return null;
+  }
+
+  const filterParts = [];
+  const audioFilterParts = [];
+  const outputLabels = [];
+  const audioOutputLabels = [];
+
+  for (const overlap of overlaps) {
+    // Find input indices for the clips
+    const fromIndex = downloadedClips.findIndex(c => c.id === overlap.fromClip.id);
+    const toIndex = downloadedClips.findIndex(c => c.id === overlap.toClip.id);
+
+    if (fromIndex === -1 || toIndex === -1) {
+      console.warn(`[CrossLayer] Could not find input indices for transition ${overlap.transitionId}`);
+      continue;
+    }
+
+    // Build video filter
+    const videoFilter = buildCrossLayerXfadeFilter(overlap, fromIndex, toIndex);
+    filterParts.push(videoFilter.filter);
+    outputLabels.push({
+      label: videoFilter.outputLabel,
+      overlapStart: videoFilter.overlapStart,
+      overlapEnd: videoFilter.overlapEnd
+    });
+
+    // Build audio filter
+    const audioFilter = buildCrossLayerAudioFilter(overlap, fromIndex, toIndex);
+    audioFilterParts.push(audioFilter.filter);
+    audioOutputLabels.push(audioFilter.outputLabel);
+  }
+
+  return {
+    videoFilters: filterParts,
+    audioFilters: audioFilterParts,
+    videoOutputLabels: outputLabels,
+    audioOutputLabels: audioOutputLabels,
+    overlaps
+  };
+}
+
+// Export all functions
+module.exports = {
+  getFFmpegTransitionType,
+  calculateCrossLayerOverlaps,
+  buildCrossLayerXfadeFilter,
+  buildCrossLayerAudioFilter,
+  processCrossLayerTransitions,
+  TRANSITION_MAP
+};

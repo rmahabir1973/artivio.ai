@@ -1,0 +1,1511 @@
+/**
+ * VPS Video Processor - server.js
+ * FFmpeg 8.0.1 Advanced Video Processing Server with Cross-Layer Transitions
+ * 
+ * Full feature support for:
+ * - Per-clip settings (fade in/out, volume, mute, speed, trim, image handling)
+ * - Audio mixing (background music, audio tracks, per-clip audio)
+ * - Aspect ratio conversion (16:9, 9:16, 1:1)
+ * - Global effects (fade in/out, watermark, text overlays)
+ * - Multi-track timeline with layer-based rendering
+ * - Cross-layer transitions (xfade between clips on different tracks)
+ * - Optional Whisper transcription for auto-generated captions
+ * 
+ * Processing time: Up to 5 minutes per 2 minutes of video
+ * 
+ * Deploy to: ~/video-processor/server.js on your VPS
+ * Run with: pm2 start server.js --name video-processor
+ */
+
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const crypto = require('crypto');
+const { spawn, execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+// Cross-layer transitions support
+const crossLayerTransitions = require('./crossLayerTransitions');
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '100mb' }));
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+const PORT = process.env.PORT || 3001;
+const TEMP_DIR = process.env.TEMP_DIR || '/tmp/video-processing';
+const FFMPEG_PATH = process.env.FFMPEG_PATH || '/root/bin/ffmpeg';
+const FFPROBE_PATH = process.env.FFPROBE_PATH || '/root/bin/ffprobe';
+const CALLBACK_SECRET = process.env.CALLBACK_SECRET;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // For Whisper transcription
+
+// Validate required environment variables
+const requiredEnvVars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'S3_BUCKET', 'AWS_REGION'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
+}
+
+if (!CALLBACK_SECRET) {
+  console.warn('⚠️  CALLBACK_SECRET not set - callbacks will not be signed');
+}
+
+if (!OPENAI_API_KEY) {
+  console.warn('⚠️  OPENAI_API_KEY not set - Whisper transcription disabled');
+}
+
+// S3 Configuration
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
+});
+
+const S3_BUCKET = process.env.S3_BUCKET;
+
+// Job status tracking
+const jobs = new Map();
+
+// Ensure temp directory exists
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
+}
+
+// ============================================================================
+// STARTUP BANNER
+// ============================================================================
+
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('  VPS Video Processor - FFmpeg 8.0.1 Advanced Edition');
+console.log('═══════════════════════════════════════════════════════════════');
+console.log(`  Port:          ${PORT}`);
+console.log(`  FFmpeg:        ${FFMPEG_PATH}`);
+console.log(`  FFprobe:       ${FFPROBE_PATH}`);
+console.log(`  S3 Bucket:     ${S3_BUCKET}`);
+console.log(`  AWS Region:    ${process.env.AWS_REGION}`);
+console.log(`  Callback:      ${CALLBACK_SECRET ? 'Configured ✓' : 'Not configured ⚠️'}`);
+console.log(`  Whisper:       ${OPENAI_API_KEY ? 'Enabled ✓' : 'Disabled'}`);
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('  Supported Features:');
+console.log('    • Per-clip fades, volume, mute, speed, trim');
+console.log('    • Background music & audio track mixing');
+console.log('    • Aspect ratio conversion (16:9, 9:16, 1:1)');
+console.log('    • Watermarks & text overlays');
+console.log('    • Multi-track timeline with layers');
+console.log('    • Cross-layer xfade transitions (30+ types)');
+console.log('    • Auto-transcription via Whisper (optional)');
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('  Processing time: Up to 5 minutes per 2 minutes of video');
+console.log('═══════════════════════════════════════════════════════════════');
+
+// Verify FFmpeg on startup
+try {
+  const version = execSync(`${FFMPEG_PATH} -version`).toString().split('\n')[0];
+  console.log(`✓ FFmpeg verified: ${version}`);
+} catch (error) {
+  console.error('❌ FFmpeg not accessible at', FFMPEG_PATH);
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function generateHmacSignature(payload) {
+  if (!CALLBACK_SECRET) return null;
+  const hmac = crypto.createHmac('sha256', CALLBACK_SECRET);
+  hmac.update(JSON.stringify(payload));
+  return hmac.digest('hex');
+}
+
+function updateJobStatus(jobId, stage, progress, additionalData = {}) {
+  const current = jobs.get(jobId) || {};
+  jobs.set(jobId, {
+    ...current,
+    status: 'processing',
+    stage,
+    progress,
+    updatedAt: new Date().toISOString(),
+    ...additionalData,
+  });
+  console.log(`[${jobId}] Stage: ${stage} (${progress}%)`);
+}
+
+function cleanupJobDir(jobDir, jobId) {
+  try {
+    if (fs.existsSync(jobDir)) {
+      fs.rmSync(jobDir, { recursive: true, force: true });
+      console.log(`[${jobId}] ✓ Cleaned up temp directory`);
+    }
+  } catch (error) {
+    console.warn(`[${jobId}] Warning: Could not clean up ${jobDir}:`, error.message);
+  }
+}
+
+// ============================================================================
+// ENDPOINTS
+// ============================================================================
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  try {
+    const version = execSync(`${FFMPEG_PATH} -version`).toString().split('\n')[0];
+    res.json({ 
+      status: 'ok', 
+      ffmpeg: FFMPEG_PATH,
+      version: version,
+      activeJobs: jobs.size,
+      features: [
+        'per-clip-fades',
+        'per-clip-volume',
+        'per-clip-speed',
+        'audio-mixing',
+        'background-music',
+        'aspect-ratio',
+        'watermarks',
+        'text-overlays',
+        'xfade-transitions',
+        'cross-layer-transitions',
+        'multi-track-timeline',
+        'whisper-transcription'
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error', 
+      ffmpeg: FFMPEG_PATH,
+      error: 'FFmpeg not accessible'
+    });
+  }
+});
+
+// Job status endpoint
+app.get('/status/:jobId', (req, res) => {
+  const status = jobs.get(req.params.jobId);
+  if (!status) {
+    res.status(404).json({ error: 'Job not found' });
+  } else {
+    res.json(status);
+  }
+});
+
+// Main video processing endpoint
+app.post('/process', async (req, res) => {
+  const jobId = req.body.jobId || uuidv4();
+  const jobDir = path.join(TEMP_DIR, jobId);
+  
+  try {
+    fs.mkdirSync(jobDir, { recursive: true });
+    
+    const { 
+      clips, 
+      enhancements, 
+      videoSettings,
+      multiTrackTimeline,
+      crossLayerTransitions: crossLayerTransitionsData,
+      callbackUrl 
+    } = req.body;
+    
+    // Validate input
+    if (!clips || !Array.isArray(clips) || clips.length === 0) {
+      return res.status(400).json({ error: 'Invalid or missing clips array' });
+    }
+    
+    const outputFormat = videoSettings?.format || 'mp4';
+    
+    console.log(`\n[${jobId}] ═══════════════════════════════════════════`);
+    console.log(`[${jobId}] New job received`);
+    console.log(`[${jobId}]   Clips: ${clips.length}`);
+    console.log(`[${jobId}]   Format: ${outputFormat}`);
+    console.log(`[${jobId}]   Quality: ${videoSettings?.quality || 'high'}`);
+    console.log(`[${jobId}]   Has Enhancements: ${enhancements ? 'Yes' : 'No'}`);
+    console.log(`[${jobId}]   Multi-track: ${multiTrackTimeline ? 'Yes' : 'No'}`);
+    console.log(`[${jobId}]   Cross-layer Transitions: ${crossLayerTransitionsData?.length || 0}`);
+    console.log(`[${jobId}]   Callback: ${callbackUrl ? 'Yes' : 'No'}`);
+    console.log(`[${jobId}] ═══════════════════════════════════════════\n`);
+    
+    // Initialize job status
+    jobs.set(jobId, {
+      status: 'processing',
+      startedAt: new Date().toISOString(),
+      progress: 0,
+      stage: 'initializing'
+    });
+    
+    // Acknowledge receipt immediately
+    res.json({ 
+      status: 'processing', 
+      jobId,
+      message: 'Video processing started' 
+    });
+    
+    // Process video asynchronously
+    processVideo(
+      jobId, 
+      jobDir, 
+      clips, 
+      enhancements, 
+      videoSettings, 
+      multiTrackTimeline, 
+      crossLayerTransitionsData,
+      callbackUrl
+    );
+    
+  } catch (error) {
+    console.error(`[${jobId}] Process error:`, error);
+    jobs.set(jobId, {
+      status: 'failed',
+      error: error.message,
+      completedAt: new Date().toISOString()
+    });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// VIDEO PROCESSING PIPELINE
+// ============================================================================
+
+async function processVideo(
+  jobId, 
+  jobDir, 
+  clips, 
+  enhancements, 
+  videoSettings, 
+  multiTrackTimeline, 
+  crossLayerTransitionsData,
+  callbackUrl
+) {
+  const outputFormat = videoSettings?.format || 'mp4';
+  
+  try {
+    console.log(`[${jobId}] Starting advanced video processing pipeline`);
+    
+    // Stage 1: Download all media (clips + audio + watermark)
+    updateJobStatus(jobId, 'downloading', 5);
+    const localClips = await downloadClips(clips, enhancements, jobDir, jobId);
+    console.log(`[${jobId}] ✓ Downloaded ${localClips.length} clips`);
+    
+    // Stage 2: Download additional media (background music, audio tracks, watermark)
+    updateJobStatus(jobId, 'downloading_audio', 15);
+    const audioAssets = await downloadAudioAssets(enhancements, jobDir, jobId);
+    console.log(`[${jobId}] ✓ Downloaded audio assets`);
+    
+    // Stage 3: Probe media metadata (duration, dimensions, has audio)
+    updateJobStatus(jobId, 'analyzing', 25);
+    for (let clip of localClips) {
+      const metadata = await probeMedia(clip.localPath);
+      clip.actualDuration = metadata.duration;
+      clip.width = metadata.width;
+      clip.height = metadata.height;
+      clip.hasAudio = metadata.hasAudio;
+      clip.fps = metadata.fps;
+      console.log(`[${jobId}]   Clip ${clip.index}: ${clip.actualDuration.toFixed(2)}s, ${clip.width}x${clip.height}, audio: ${clip.hasAudio}`);
+    }
+    
+    // Stage 4: Optional Whisper transcription for captions
+    if (enhancements?.captions?.autoGenerate && OPENAI_API_KEY) {
+      updateJobStatus(jobId, 'transcribing', 30);
+      const transcript = await generateWhisperTranscript(localClips, jobDir, jobId);
+      if (transcript) {
+        enhancements.captions.generated = transcript;
+        console.log(`[${jobId}] ✓ Generated Whisper transcript`);
+      }
+    }
+    
+    // Stage 5: Build FFmpeg filter graph
+    updateJobStatus(jobId, 'building_filters', 35);
+    const outputPath = path.join(jobDir, `output.${outputFormat}`);
+    
+    // Prepare payload for cross-layer transitions
+    const payload = {
+      clips,
+      multiTrackTimeline,
+      crossLayerTransitions: crossLayerTransitionsData,
+      enhancements,
+      videoSettings
+    };
+    
+    const ffmpegArgs = buildAdvancedFFmpegCommand(
+      localClips, 
+      enhancements, 
+      videoSettings, 
+      audioAssets,
+      multiTrackTimeline,
+      crossLayerTransitionsData,
+      payload,
+      outputPath,
+      jobId
+    );
+    
+    console.log(`[${jobId}] Running FFmpeg...`);
+    console.log(`[${jobId}] Command length: ${ffmpegArgs.join(' ').length} chars`);
+    
+    // Stage 6: Execute FFmpeg
+    updateJobStatus(jobId, 'encoding', 40);
+    await executeFFmpeg(ffmpegArgs, jobId, jobs);
+    console.log(`[${jobId}] ✓ FFmpeg encoding complete`);
+    
+    // Verify output exists
+    if (!fs.existsSync(outputPath)) {
+      throw new Error('FFmpeg completed but output file not found');
+    }
+    
+    const outputStats = fs.statSync(outputPath);
+    console.log(`[${jobId}] Output size: ${(outputStats.size / 1024 / 1024).toFixed(2)} MB`);
+    
+    // Stage 7: Upload to S3
+    updateJobStatus(jobId, 'uploading', 85);
+    const s3Key = `exports/${jobId}/video.${outputFormat}`;
+    const downloadUrl = await uploadToS3(outputPath, s3Key, jobId);
+    console.log(`[${jobId}] ✓ Uploaded to S3`);
+    
+    // Mark as complete
+    jobs.set(jobId, {
+      status: 'completed',
+      downloadUrl: downloadUrl,
+      completedAt: new Date().toISOString(),
+      progress: 100,
+      stage: 'complete'
+    });
+    
+    // Cleanup temp files
+    cleanupJobDir(jobDir, jobId);
+    
+    // Send callback
+    if (callbackUrl) {
+      await sendCallback(callbackUrl, {
+        jobId,
+        status: 'completed',
+        downloadUrl
+      }, jobId);
+    }
+    
+    console.log(`[${jobId}] ══════════════════════════════════════════`);
+    console.log(`[${jobId}] ✓ JOB COMPLETED SUCCESSFULLY`);
+    console.log(`[${jobId}]   Download: ${downloadUrl}`);
+    console.log(`[${jobId}] ══════════════════════════════════════════\n`);
+    
+    // Clean up job status after 1 hour
+    setTimeout(() => jobs.delete(jobId), 3600000);
+    
+  } catch (error) {
+    console.error(`[${jobId}] ❌ Pipeline error:`, error.message);
+    console.error(`[${jobId}] Stack:`, error.stack);
+    
+    jobs.set(jobId, {
+      status: 'failed',
+      error: error.message,
+      completedAt: new Date().toISOString(),
+      progress: 0,
+      stage: 'failed'
+    });
+    
+    // Cleanup on error
+    cleanupJobDir(jobDir, jobId);
+    
+    // Callback with error
+    if (callbackUrl) {
+      await sendCallback(callbackUrl, {
+        jobId,
+        status: 'failed',
+        error: error.message
+      }, jobId);
+    }
+    
+    // Clean up job status after 1 hour
+    setTimeout(() => jobs.delete(jobId), 3600000);
+  }
+}
+
+// ============================================================================
+// MEDIA DOWNLOADING
+// ============================================================================
+
+async function downloadClips(clips, enhancements, jobDir, jobId) {
+  const localClips = [];
+  const clipSettings = enhancements?.clipSettings || [];
+  
+  for (let i = 0; i < clips.length; i++) {
+    const clip = clips[i];
+    const videoUrl = clip.sourceUrl || clip.url;
+    
+    if (!videoUrl) {
+      throw new Error(`Clip ${i} is missing video URL`);
+    }
+    
+    // Find clip settings
+    const settings = clipSettings.find(cs => cs.clipIndex === i) || {};
+    
+    try {
+      const urlPath = new URL(videoUrl).pathname;
+      let ext = path.extname(urlPath).slice(1) || 'mp4';
+      
+      // Detect if this is an image
+      const isImage = settings.isImage || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(urlPath);
+      if (isImage) {
+        ext = path.extname(urlPath).slice(1) || 'jpg';
+      }
+      
+      const localPath = path.join(jobDir, `clip_${i}.${ext}`);
+      
+      console.log(`[${jobId}] Downloading clip ${i}: ${videoUrl.substring(0, 80)}...`);
+      
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 180000); // 3 min timeout
+      
+      const response = await fetch(videoUrl, { 
+        signal: controller.signal,
+        headers: { 'User-Agent': 'VPS-Video-Processor/2.0' }
+      });
+      clearTimeout(timeout);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const buffer = await response.arrayBuffer();
+      fs.writeFileSync(localPath, Buffer.from(buffer));
+      
+      const fileSizeMB = (buffer.byteLength / 1024 / 1024).toFixed(2);
+      console.log(`[${jobId}]   ✓ Clip ${i}: ${fileSizeMB} MB ${isImage ? '(image)' : ''}`);
+      
+      localClips.push({
+        ...clip,
+        ...settings,
+        originalUrl: videoUrl,
+        localPath,
+        index: i,
+        isImage,
+      });
+      
+    } catch (error) {
+      throw new Error(`Failed to download clip ${i}: ${error.message}`);
+    }
+  }
+  
+  return localClips;
+}
+
+async function downloadAudioAssets(enhancements, jobDir, jobId) {
+  const assets = {
+    backgroundMusic: null,
+    audioTrack: null,
+    watermark: null,
+  };
+  
+  // Download background music
+  if (enhancements?.backgroundMusic?.audioUrl) {
+    try {
+      const url = enhancements.backgroundMusic.audioUrl;
+      const ext = path.extname(new URL(url).pathname).slice(1) || 'mp3';
+      const localPath = path.join(jobDir, `bgm.${ext}`);
+      
+      console.log(`[${jobId}] Downloading background music...`);
+      
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'VPS-Video-Processor/2.0' }
+      });
+      
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        fs.writeFileSync(localPath, Buffer.from(buffer));
+        assets.backgroundMusic = {
+          localPath,
+          volume: enhancements.backgroundMusic.volume ?? 0.3,
+          fadeInSeconds: enhancements.backgroundMusic.fadeInSeconds ?? 0,
+          fadeOutSeconds: enhancements.backgroundMusic.fadeOutSeconds ?? 0,
+        };
+        console.log(`[${jobId}]   ✓ Background music downloaded`);
+      }
+    } catch (error) {
+      console.warn(`[${jobId}] Warning: Could not download background music:`, error.message);
+    }
+  }
+  
+  // Download audio track (TTS/voice)
+  if (enhancements?.audioTrack?.audioUrl) {
+    try {
+      const url = enhancements.audioTrack.audioUrl;
+      const ext = path.extname(new URL(url).pathname).slice(1) || 'mp3';
+      const localPath = path.join(jobDir, `audio_track.${ext}`);
+      
+      console.log(`[${jobId}] Downloading audio track...`);
+      
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'VPS-Video-Processor/2.0' }
+      });
+      
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        fs.writeFileSync(localPath, Buffer.from(buffer));
+        assets.audioTrack = {
+          localPath,
+          volume: enhancements.audioTrack.volume ?? 1,
+          startAtSeconds: enhancements.audioTrack.startAtSeconds ?? 0,
+          type: enhancements.audioTrack.type || 'voice',
+        };
+        console.log(`[${jobId}]   ✓ Audio track downloaded`);
+      }
+    } catch (error) {
+      console.warn(`[${jobId}] Warning: Could not download audio track:`, error.message);
+    }
+  }
+  
+  // Download watermark image
+  if (enhancements?.watermark?.imageUrl) {
+    try {
+      const url = enhancements.watermark.imageUrl;
+      const ext = path.extname(new URL(url).pathname).slice(1) || 'png';
+      const localPath = path.join(jobDir, `watermark.${ext}`);
+      
+      console.log(`[${jobId}] Downloading watermark...`);
+      
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'VPS-Video-Processor/2.0' }
+      });
+      
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        fs.writeFileSync(localPath, Buffer.from(buffer));
+        assets.watermark = {
+          localPath,
+          position: enhancements.watermark.position || 'bottom-right',
+          size: enhancements.watermark.size || 'medium',
+          opacity: enhancements.watermark.opacity ?? 0.8,
+        };
+        console.log(`[${jobId}]   ✓ Watermark downloaded`);
+      }
+    } catch (error) {
+      console.warn(`[${jobId}] Warning: Could not download watermark:`, error.message);
+    }
+  }
+  
+  return assets;
+}
+
+// ============================================================================
+// MEDIA PROBING
+// ============================================================================
+
+async function probeMedia(filePath) {
+  return new Promise((resolve) => {
+    const ffprobe = spawn(FFPROBE_PATH, [
+      '-v', 'error',
+      '-show_entries', 'format=duration:stream=width,height,codec_type,r_frame_rate',
+      '-of', 'json',
+      filePath
+    ]);
+    
+    let stdout = '';
+    let stderr = '';
+    
+    ffprobe.stdout.on('data', (data) => { stdout += data.toString(); });
+    ffprobe.stderr.on('data', (data) => { stderr += data.toString(); });
+    
+    ffprobe.on('close', (code) => {
+      try {
+        if (code === 0 && stdout) {
+          const info = JSON.parse(stdout);
+          const duration = parseFloat(info.format?.duration) || 5;
+          
+          let width = 1920, height = 1080, hasAudio = false, fps = 30;
+          
+          for (const stream of (info.streams || [])) {
+            if (stream.codec_type === 'video') {
+              width = stream.width || width;
+              height = stream.height || height;
+              if (stream.r_frame_rate) {
+                const [num, den] = stream.r_frame_rate.split('/');
+                fps = Math.round(parseInt(num) / (parseInt(den) || 1));
+              }
+            }
+            if (stream.codec_type === 'audio') {
+              hasAudio = true;
+            }
+          }
+          
+          resolve({ duration, width, height, hasAudio, fps });
+          return;
+        }
+      } catch (e) {
+        console.warn(`Could not parse probe output for ${filePath}:`, e.message);
+      }
+      
+      // Fallback values
+      resolve({ duration: 5, width: 1920, height: 1080, hasAudio: false, fps: 30 });
+    });
+    
+    ffprobe.on('error', () => {
+      resolve({ duration: 5, width: 1920, height: 1080, hasAudio: false, fps: 30 });
+    });
+  });
+}
+
+// ============================================================================
+// WHISPER TRANSCRIPTION
+// ============================================================================
+
+async function generateWhisperTranscript(clips, jobDir, jobId) {
+  if (!OPENAI_API_KEY) return null;
+  
+  const combinedAudio = path.join(jobDir, 'combined_audio.wav');
+  const inputsFile = path.join(jobDir, 'audio_inputs.txt');
+  
+  // Cleanup helper function
+  const cleanupTempFiles = () => {
+    try {
+      if (fs.existsSync(inputsFile)) fs.unlinkSync(inputsFile);
+      if (fs.existsSync(combinedAudio)) fs.unlinkSync(combinedAudio);
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  };
+  
+  try {
+    // Find clips with audio
+    const clipsWithAudio = clips.filter(c => !c.isImage && c.hasAudio);
+    
+    if (clipsWithAudio.length === 0) {
+      console.log(`[${jobId}] No audio to transcribe`);
+      return null;
+    }
+    
+    const lines = clipsWithAudio.map(c => `file '${c.localPath}'`);
+    fs.writeFileSync(inputsFile, lines.join('\n'));
+    
+    // Extract audio
+    execSync(`${FFMPEG_PATH} -y -f concat -safe 0 -i "${inputsFile}" -vn -ar 16000 -ac 1 -c:a pcm_s16le "${combinedAudio}"`, {
+      timeout: 120000,
+    });
+    
+    console.log(`[${jobId}] Extracted audio for transcription`);
+    
+    // Send to OpenAI Whisper API using Node.js compatible multipart upload
+    const https = require('https');
+    const FormData = require('form-data');
+    
+    const form = new FormData();
+    form.append('file', fs.createReadStream(combinedAudio), {
+      filename: 'audio.wav',
+      contentType: 'audio/wav',
+    });
+    form.append('model', 'whisper-1');
+    form.append('response_format', 'srt');
+    form.append('language', 'en');
+    
+    const srtContent = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'api.openai.com',
+        path: '/v1/audio/transcriptions',
+        method: 'POST',
+        headers: {
+          ...form.getHeaders(),
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            resolve(data);
+          } else {
+            reject(new Error(`Whisper API error: ${res.statusCode} - ${data}`));
+          }
+        });
+      });
+      
+      req.on('error', reject);
+      form.pipe(req);
+    });
+    
+    const srtPath = path.join(jobDir, 'captions.srt');
+    fs.writeFileSync(srtPath, srtContent);
+    
+    // Cleanup temp files on success
+    cleanupTempFiles();
+    
+    console.log(`[${jobId}] ✓ Whisper transcription complete`);
+    
+    return {
+      srtPath,
+      srtContent,
+    };
+    
+  } catch (error) {
+    console.warn(`[${jobId}] Whisper transcription failed:`, error.message);
+    // Always cleanup temp files on failure
+    cleanupTempFiles();
+    return null;
+  }
+}
+
+// ============================================================================
+// FFMPEG COMMAND BUILDER (ADVANCED WITH CROSS-LAYER SUPPORT)
+// ============================================================================
+
+function buildAdvancedFFmpegCommand(
+  clips, 
+  enhancements, 
+  videoSettings, 
+  audioAssets, 
+  multiTrackTimeline,
+  crossLayerTransitionsData,
+  payload,
+  outputPath, 
+  jobId
+) {
+  const args = [];
+  
+  // Global options
+  args.push('-y'); // Overwrite output
+  args.push('-hide_banner');
+  args.push('-loglevel', 'info');
+  
+  // Input files
+  const inputMap = new Map(); // Track input indices
+  let inputIndex = 0;
+  
+  // Add clip inputs
+  clips.forEach((clip, i) => {
+    args.push('-i', clip.localPath);
+    inputMap.set(`clip_${i}`, inputIndex++);
+  });
+  
+  // Add background music input if exists
+  if (audioAssets.backgroundMusic) {
+    args.push('-i', audioAssets.backgroundMusic.localPath);
+    inputMap.set('bgm', inputIndex++);
+  }
+  
+  // Add audio track input if exists
+  if (audioAssets.audioTrack) {
+    args.push('-i', audioAssets.audioTrack.localPath);
+    inputMap.set('audioTrack', inputIndex++);
+  }
+  
+  // Add watermark input if exists
+  if (audioAssets.watermark) {
+    args.push('-i', audioAssets.watermark.localPath);
+    inputMap.set('watermark', inputIndex++);
+  }
+  
+  // ============================================
+  // CROSS-LAYER TRANSITIONS PROCESSING
+  // ============================================
+  let crossLayerResult = null;
+  let useCrossLayerMode = false;
+  
+  if (crossLayerTransitionsData && crossLayerTransitionsData.length > 0 && multiTrackTimeline) {
+    console.log('[CrossLayer] Processing cross-layer transitions');
+    
+    // Build downloadedClips array for the module
+    const downloadedClips = clips.map((clip, i) => ({
+      id: clip.id || `clip_${i}`,
+      localPath: clip.localPath,
+      index: i
+    }));
+    
+    crossLayerResult = crossLayerTransitions.processCrossLayerTransitions(
+      payload,
+      downloadedClips
+    );
+    
+    if (crossLayerResult && crossLayerResult.videoFilters.length > 0) {
+      console.log(`[CrossLayer] Generated ${crossLayerResult.videoFilters.length} video filter(s)`);
+      console.log(`[CrossLayer] Generated ${crossLayerResult.audioFilters.length} audio filter(s)`);
+      useCrossLayerMode = true;
+    }
+  }
+  // ============================================
+  
+  // Build filter complex
+  let filterComplex, videoOutput, audioOutput;
+  
+  if (useCrossLayerMode && crossLayerResult) {
+    // Use cross-layer transition filters
+    const videoFilters = crossLayerResult.videoFilters.join(';');
+    const audioFilters = crossLayerResult.audioFilters.join(';');
+    
+    filterComplex = videoFilters;
+    if (audioFilters) {
+      filterComplex += ';' + audioFilters;
+    }
+    
+    // Get final output labels
+    const finalVideoLabel = crossLayerResult.videoOutputLabels[crossLayerResult.videoOutputLabels.length - 1].label;
+    const finalAudioLabel = crossLayerResult.audioOutputLabels[crossLayerResult.audioOutputLabels.length - 1];
+    
+    videoOutput = `[${finalVideoLabel}]`;
+    audioOutput = `[${finalAudioLabel}]`;
+    
+    console.log(`[${jobId}] Using cross-layer transition mode`);
+    console.log(`[${jobId}] Final video output: ${videoOutput}`);
+    console.log(`[${jobId}] Final audio output: ${audioOutput}`);
+    
+  } else {
+    // Standard filter graph (existing logic)
+    const filterGraph = buildFilterGraph(
+      clips, 
+      enhancements, 
+      videoSettings, 
+      audioAssets, 
+      inputMap,
+      jobId
+    );
+    
+    filterComplex = filterGraph.filterComplex;
+    videoOutput = filterGraph.videoOutput;
+    audioOutput = filterGraph.audioOutput;
+  }
+  
+  if (filterComplex) {
+    args.push('-filter_complex', filterComplex);
+    args.push('-map', videoOutput);
+    args.push('-map', audioOutput);
+  } else {
+    // Simple single clip case
+    args.push('-map', '0:v');
+    args.push('-map', '0:a?');
+  }
+  
+  // Video encoding settings
+  const quality = videoSettings?.quality || 'high';
+  const crf = quality === 'high' ? 18 : quality === 'medium' ? 23 : quality === 'low' ? 28 : 20;
+  const preset = quality === 'high' ? 'slow' : quality === 'medium' ? 'medium' : 'fast';
+  
+  args.push(
+    '-c:v', 'libx264',
+    '-preset', preset,
+    '-crf', crf.toString(),
+    '-profile:v', 'high',
+    '-pix_fmt', 'yuv420p'
+  );
+  
+  // Audio encoding
+  args.push(
+    '-c:a', 'aac',
+    '-b:a', '192k',
+    '-ar', '48000',
+    '-ac', '2'
+  );
+  
+  // Fast start for web playback
+  args.push('-movflags', '+faststart');
+  
+  // Output path
+  args.push(outputPath);
+  
+  return args;
+}
+
+function buildFilterGraph(clips, enhancements, videoSettings, audioAssets, inputMap, jobId) {
+  if (clips.length === 1 && !audioAssets.backgroundMusic && !audioAssets.audioTrack && !audioAssets.watermark) {
+    // Super simple case: single clip, no enhancements
+    const clip = clips[0];
+    if (!clip.fadeInSeconds && !clip.fadeOutSeconds && (clip.speed || 1) === 1 && (clip.volume ?? 1) === 1 && !clip.muted) {
+      return { filterComplex: null, videoOutput: '[0:v]', audioOutput: '[0:a]' };
+    }
+  }
+  
+  const filterSteps = [];
+  const videoStreams = [];
+  const audioStreams = [];
+  
+  // Calculate target dimensions based on aspect ratio
+  let targetWidth = 1920;
+  let targetHeight = 1080;
+  
+  if (enhancements?.aspectRatio) {
+    switch (enhancements.aspectRatio) {
+      case '9:16':
+        targetWidth = 1080;
+        targetHeight = 1920;
+        break;
+      case '1:1':
+        targetWidth = 1080;
+        targetHeight = 1080;
+        break;
+      case '4:3':
+        targetWidth = 1440;
+        targetHeight = 1080;
+        break;
+      default: // 16:9
+        targetWidth = 1920;
+        targetHeight = 1080;
+    }
+  }
+  
+  if (videoSettings?.resolution) {
+    const scale = videoSettings.resolution === '720p' ? 0.667 : 
+                  videoSettings.resolution === '480p' ? 0.444 :
+                  videoSettings.resolution === '4k' ? 2 : 1;
+    targetWidth = Math.round(targetWidth * scale);
+    targetHeight = Math.round(targetHeight * scale);
+  }
+  
+  // Process each clip
+  for (let i = 0; i < clips.length; i++) {
+    const clip = clips[i];
+    const idx = inputMap.get(`clip_${i}`);
+    
+    // Get clip settings
+    const speed = clip.speed ?? 1;
+    const volume = clip.muted ? 0 : (clip.volume ?? 1);
+    const fadeIn = clip.fadeInSeconds ?? 0;
+    const fadeOut = clip.fadeOutSeconds ?? 0;
+    const trimStart = clip.trimStartSeconds ?? 0;
+    const trimEnd = clip.trimEndSeconds;
+    const displayDuration = clip.isImage ? (clip.displayDuration ?? 5) : null;
+    
+    // Calculate adjusted duration
+    let originalDuration = clip.actualDuration || 5;
+    if (trimEnd !== undefined) {
+      originalDuration = Math.min(originalDuration, trimEnd) - trimStart;
+    } else if (trimStart > 0) {
+      originalDuration = originalDuration - trimStart;
+    }
+    const adjustedDuration = originalDuration / speed;
+    
+    // Build video filter chain
+    let videoFilters = [];
+    
+    // Handle image to video conversion
+    if (clip.isImage) {
+      videoFilters.push(`loop=loop=${Math.ceil(displayDuration * 30)}:size=1:start=0`);
+      videoFilters.push('fps=30');
+    }
+    
+    // Trim filter
+    if (trimStart > 0 || trimEnd !== undefined) {
+      const trimFilter = trimEnd !== undefined 
+        ? `trim=start=${trimStart}:end=${trimEnd}`
+        : `trim=start=${trimStart}`;
+      videoFilters.push(trimFilter);
+      videoFilters.push('setpts=PTS-STARTPTS');
+    }
+    
+    // Speed adjustment
+    if (speed !== 1 && !clip.isImage) {
+      videoFilters.push(`setpts=${(1.0 / speed).toFixed(4)}*PTS`);
+    }
+    
+    // Scale and pad for aspect ratio
+    videoFilters.push(`scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease`);
+    videoFilters.push(`pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black`);
+    videoFilters.push('setsar=1');
+    
+    // Video fade effects
+    if (fadeIn > 0) {
+      const effectiveFadeIn = Math.min(fadeIn, adjustedDuration / 2);
+      videoFilters.push(`fade=t=in:st=0:d=${effectiveFadeIn.toFixed(3)}`);
+    }
+    if (fadeOut > 0) {
+      const effectiveFadeOut = Math.min(fadeOut, adjustedDuration / 2);
+      const fadeOutStart = Math.max(0, adjustedDuration - effectiveFadeOut);
+      videoFilters.push(`fade=t=out:st=${fadeOutStart.toFixed(3)}:d=${effectiveFadeOut.toFixed(3)}`);
+    }
+    
+    const videoLabel = `v${i}`;
+    filterSteps.push(`[${idx}:v]${videoFilters.join(',')}[${videoLabel}]`);
+    videoStreams.push(`[${videoLabel}]`);
+    
+    // Build audio filter chain
+    let audioFilters = [];
+    
+    if (clip.hasAudio && !clip.muted && !clip.isImage) {
+      // Trim audio
+      if (trimStart > 0 || trimEnd !== undefined) {
+        const aTrimFilter = trimEnd !== undefined 
+          ? `atrim=start=${trimStart}:end=${trimEnd}`
+          : `atrim=start=${trimStart}`;
+        audioFilters.push(aTrimFilter);
+        audioFilters.push('asetpts=PTS-STARTPTS');
+      }
+      
+      // Speed adjustment for audio
+      if (speed !== 1) {
+        if (speed <= 2) {
+          audioFilters.push(`atempo=${speed.toFixed(4)}`);
+        } else {
+          // Chain atempo for speeds > 2x
+          audioFilters.push('atempo=2.0');
+          audioFilters.push(`atempo=${(speed / 2).toFixed(4)}`);
+        }
+      }
+      
+      // Volume adjustment
+      if (volume !== 1) {
+        audioFilters.push(`volume=${volume.toFixed(3)}`);
+      }
+      
+      // Audio fades
+      if (fadeIn > 0) {
+        const effectiveFadeIn = Math.min(fadeIn, adjustedDuration / 2);
+        audioFilters.push(`afade=t=in:st=0:d=${effectiveFadeIn.toFixed(3)}`);
+      }
+      if (fadeOut > 0) {
+        const effectiveFadeOut = Math.min(fadeOut, adjustedDuration / 2);
+        const fadeOutStart = Math.max(0, adjustedDuration - effectiveFadeOut);
+        audioFilters.push(`afade=t=out:st=${fadeOutStart.toFixed(3)}:d=${effectiveFadeOut.toFixed(3)}`);
+      }
+      
+      // Normalize audio format
+      audioFilters.push('aresample=async=1:first_pts=0');
+      audioFilters.push('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo');
+      
+      const audioLabel = `a${i}`;
+      filterSteps.push(`[${idx}:a]${audioFilters.join(',')}[${audioLabel}]`);
+      audioStreams.push(`[${audioLabel}]`);
+    } else {
+      // Generate silent audio for this clip
+      const silentDuration = Math.max(clip.isImage ? displayDuration : adjustedDuration, 0.1);
+      const audioLabel = `a${i}`;
+      filterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=48000:duration=${silentDuration.toFixed(3)}[${audioLabel}]`);
+      audioStreams.push(`[${audioLabel}]`);
+    }
+  }
+  
+  // Calculate total duration
+  let totalDuration = 0;
+  clips.forEach(clip => {
+    const speed = clip.speed ?? 1;
+    const displayDuration = clip.isImage ? (clip.displayDuration ?? 5) : null;
+    let dur = displayDuration || clip.actualDuration || 5;
+    if (clip.trimStartSeconds) dur -= clip.trimStartSeconds;
+    if (clip.trimEndSeconds && clip.trimEndSeconds < dur) dur = clip.trimEndSeconds - (clip.trimStartSeconds || 0);
+    dur = Math.max(dur / speed, 0.1);
+    totalDuration += dur;
+  });
+  
+  const safeDuration = Math.max(totalDuration, 0.1);
+  
+  // Safety check for audio streams
+  let earlyAudioFallbackLabel = null;
+  if (audioStreams.length === 0) {
+    filterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=48000:duration=${safeDuration.toFixed(3)}[silent_fallback]`);
+    audioStreams.push('[silent_fallback]');
+    earlyAudioFallbackLabel = '[silent_fallback]';
+  }
+  
+  // Handle transitions between clips
+  const hasTransitions = enhancements?.transitions?.perClip?.length > 0 || 
+                         enhancements?.clipTransitions?.perClip?.length > 0;
+  
+  let finalVideoLabel = '';
+  let finalAudioLabel = '';
+  
+  if (clips.length > 1) {
+    if (hasTransitions) {
+      // Build xfade chain
+      const transitions = enhancements?.transitions?.perClip || enhancements?.clipTransitions?.perClip || [];
+      let lastVideoLabel = videoStreams[0];
+      let runningOffset = 0;
+      
+      for (let i = 0; i < clips.length - 1; i++) {
+        const clip = clips[i];
+        const transition = transitions.find(t => t.afterClipIndex === i);
+        const transitionDuration = transition?.durationSeconds || 0.5;
+        const transitionType = mapTransitionType(transition?.type || 'fade');
+        
+        const speed = clip.speed ?? 1;
+        const displayDuration = clip.isImage ? (clip.displayDuration ?? 5) : null;
+        let clipDur = displayDuration || clip.actualDuration || 5;
+        if (clip.trimStartSeconds) clipDur -= clip.trimStartSeconds;
+        if (clip.trimEndSeconds && clip.trimEndSeconds < clipDur) clipDur = clip.trimEndSeconds - (clip.trimStartSeconds || 0);
+        clipDur = Math.max(clipDur / speed, 0.1);
+        
+        if (i === 0) {
+          runningOffset = clipDur - transitionDuration;
+        } else {
+          runningOffset += clipDur - transitionDuration;
+        }
+        
+        const outputLabel = i === clips.length - 2 ? 'xv_final' : `xv${i}`;
+        filterSteps.push(`${lastVideoLabel}${videoStreams[i + 1]}xfade=transition=${transitionType}:duration=${transitionDuration}:offset=${runningOffset.toFixed(3)}[${outputLabel}]`);
+        lastVideoLabel = `[${outputLabel}]`;
+      }
+      
+      finalVideoLabel = '[xv_final]';
+      
+      if (audioStreams.length === clips.length) {
+        filterSteps.push(`${audioStreams.join('')}concat=n=${clips.length}:v=0:a=1[concat_audio]`);
+        finalAudioLabel = '[concat_audio]';
+      } else if (earlyAudioFallbackLabel) {
+        finalAudioLabel = earlyAudioFallbackLabel;
+      } else if (audioStreams.length === 1) {
+        finalAudioLabel = audioStreams[0];
+      } else {
+        finalAudioLabel = '';
+      }
+      
+    } else {
+      // Simple concat
+      filterSteps.push(`${videoStreams.join('')}concat=n=${clips.length}:v=1:a=0[concat_video]`);
+      finalVideoLabel = '[concat_video]';
+      
+      if (audioStreams.length === clips.length) {
+        filterSteps.push(`${audioStreams.join('')}concat=n=${clips.length}:v=0:a=1[concat_audio]`);
+        finalAudioLabel = '[concat_audio]';
+      } else if (earlyAudioFallbackLabel) {
+        finalAudioLabel = earlyAudioFallbackLabel;
+      } else if (audioStreams.length === 1) {
+        finalAudioLabel = audioStreams[0];
+      } else {
+        finalAudioLabel = '';
+      }
+    }
+  } else {
+    // Single clip
+    finalVideoLabel = videoStreams[0];
+    if (audioStreams.length > 0 && audioStreams[0]) {
+      finalAudioLabel = audioStreams[0];
+    } else if (earlyAudioFallbackLabel) {
+      finalAudioLabel = earlyAudioFallbackLabel;
+    } else {
+      finalAudioLabel = '';
+    }
+  }
+  
+  // Ensure audio label is valid
+  if (!finalAudioLabel || finalAudioLabel.trim() === '' || finalAudioLabel === '[]') {
+    if (earlyAudioFallbackLabel) {
+      finalAudioLabel = earlyAudioFallbackLabel;
+    } else {
+      filterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=48000:duration=${safeDuration.toFixed(3)}[late_silent]`);
+      finalAudioLabel = '[late_silent]';
+    }
+  }
+  
+  // Apply global fade in/out
+  if (enhancements?.fadeIn || enhancements?.fadeOut) {
+    const fadeDuration = enhancements.fadeDuration || 1;
+    let globalFadeFilters = [];
+    
+    if (enhancements.fadeIn) {
+      globalFadeFilters.push(`fade=t=in:st=0:d=${fadeDuration}`);
+    }
+    if (enhancements.fadeOut) {
+      const fadeOutStart = Math.max(0, totalDuration - fadeDuration);
+      globalFadeFilters.push(`fade=t=out:st=${fadeOutStart.toFixed(3)}:d=${fadeDuration}`);
+    }
+    
+    if (globalFadeFilters.length > 0) {
+      filterSteps.push(`${finalVideoLabel}${globalFadeFilters.join(',')}[global_faded]`);
+      finalVideoLabel = '[global_faded]';
+    }
+  }
+  
+  // Apply watermark
+  if (audioAssets.watermark) {
+    const wmIdx = inputMap.get('watermark');
+    const position = getWatermarkPosition(audioAssets.watermark.position, targetWidth, targetHeight, audioAssets.watermark.size);
+    const opacity = audioAssets.watermark.opacity || 0.8;
+    
+    const wmSize = audioAssets.watermark.size === 'small' ? 0.1 : audioAssets.watermark.size === 'large' ? 0.25 : 0.15;
+    const wmWidth = Math.round(targetWidth * wmSize);
+    
+    filterSteps.push(`[${wmIdx}:v]scale=${wmWidth}:-1,format=rgba,colorchannelmixer=aa=${opacity}[wm_scaled]`);
+    filterSteps.push(`${finalVideoLabel}[wm_scaled]overlay=${position.x}:${position.y}[watermarked]`);
+    finalVideoLabel = '[watermarked]';
+  }
+  
+  totalDuration = Math.max(totalDuration, 0.1);
+  
+  // Mix audio sources
+  const audioSources = [];
+  
+  if (finalAudioLabel && finalAudioLabel.trim() !== '' && finalAudioLabel !== '[]') {
+    audioSources.push(finalAudioLabel);
+  } else {
+    filterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=48000:duration=${totalDuration.toFixed(3)}[base_silent]`);
+    audioSources.push('[base_silent]');
+    finalAudioLabel = '[base_silent]';
+  }
+  
+  if (audioAssets.backgroundMusic) {
+    const bgmIdx = inputMap.get('bgm');
+    let bgmFilters = [];
+    
+    bgmFilters.push(`aloop=loop=-1:size=2e9`);
+    bgmFilters.push(`atrim=duration=${totalDuration.toFixed(3)}`);
+    bgmFilters.push(`volume=${audioAssets.backgroundMusic.volume}`);
+    
+    if (audioAssets.backgroundMusic.fadeInSeconds > 0) {
+      bgmFilters.push(`afade=t=in:st=0:d=${audioAssets.backgroundMusic.fadeInSeconds}`);
+    }
+    if (audioAssets.backgroundMusic.fadeOutSeconds > 0) {
+      const fadeStart = Math.max(0, totalDuration - audioAssets.backgroundMusic.fadeOutSeconds);
+      bgmFilters.push(`afade=t=out:st=${fadeStart.toFixed(3)}:d=${audioAssets.backgroundMusic.fadeOutSeconds}`);
+    }
+    
+    bgmFilters.push('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo');
+    
+    filterSteps.push(`[${bgmIdx}:a]${bgmFilters.join(',')}[bgm_proc]`);
+    audioSources.push('[bgm_proc]');
+  }
+  
+  if (audioAssets.audioTrack) {
+    const atIdx = inputMap.get('audioTrack');
+    let atFilters = [];
+    
+    if (audioAssets.audioTrack.startAtSeconds > 0) {
+      atFilters.push(`adelay=${Math.round(audioAssets.audioTrack.startAtSeconds * 1000)}|${Math.round(audioAssets.audioTrack.startAtSeconds * 1000)}`);
+    }
+    
+    atFilters.push(`volume=${audioAssets.audioTrack.volume}`);
+    atFilters.push('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo');
+    atFilters.push(`apad=whole_dur=${totalDuration.toFixed(3)}`);
+    atFilters.push(`atrim=duration=${totalDuration.toFixed(3)}`);
+    
+    filterSteps.push(`[${atIdx}:a]${atFilters.join(',')}[at_proc]`);
+    audioSources.push('[at_proc]');
+  }
+  
+  // Final audio mix
+  if (audioSources.length > 1) {
+    filterSteps.push(`${audioSources.join('')}amix=inputs=${audioSources.length}:duration=longest:normalize=0[final_audio]`);
+    finalAudioLabel = '[final_audio]';
+  }
+  
+  // Ensure labels are properly formatted
+  if (!finalVideoLabel.startsWith('[') || !finalVideoLabel.endsWith(']')) {
+    finalVideoLabel = `[${finalVideoLabel.replace(/[\[\]]/g, '')}]`;
+  }
+  
+  // Final safety for audio label
+  if (!finalAudioLabel || finalAudioLabel.trim() === '' || finalAudioLabel === '[]') {
+    const finalSafeDur = Math.max(totalDuration, 0.1);
+    filterSteps.push(`anullsrc=channel_layout=stereo:sample_rate=48000:duration=${finalSafeDur.toFixed(3)}[final_silent]`);
+    finalAudioLabel = '[final_silent]';
+    console.log(`[${jobId}] Warning: Applied final audio fallback`);
+  }
+  
+  // Add final output labels
+  filterSteps.push(`${finalVideoLabel}null[outv]`);
+  filterSteps.push(`${finalAudioLabel}anull[outa]`);
+  
+  const filterComplex = filterSteps.join(';');
+  
+  console.log(`[${jobId}] Filter complex built: ${filterSteps.length} steps`);
+  
+  return {
+    filterComplex,
+    videoOutput: '[outv]',
+    audioOutput: '[outa]',
+  };
+}
+
+function getWatermarkPosition(position, width, height, size) {
+  const padding = 20;
+  
+  switch (position) {
+    case 'top-left':
+      return { x: padding, y: padding };
+    case 'top-right':
+      return { x: `W-w-${padding}`, y: padding };
+    case 'bottom-left':
+      return { x: padding, y: `H-h-${padding}` };
+    case 'bottom-right':
+    default:
+      return { x: `W-w-${padding}`, y: `H-h-${padding}` };
+    case 'center':
+      return { x: '(W-w)/2', y: '(H-h)/2' };
+  }
+}
+
+function mapTransitionType(type) {
+  const mapping = {
+    'fade': 'fade',
+    'dissolve': 'dissolve',
+    'wipe': 'wipeleft',
+    'wipeLeft': 'wipeleft',
+    'wipeRight': 'wiperight',
+    'wipeUp': 'wipeup',
+    'wipeDown': 'wipedown',
+    'slideLeft': 'slideleft',
+    'slideRight': 'slideright',
+    'slideUp': 'slideup',
+    'slideDown': 'slidedown',
+    'circleOpen': 'circleopen',
+    'circleClose': 'circleclose',
+    'pixelize': 'pixelize',
+    'radial': 'radial',
+    'smoothleft': 'smoothleft',
+    'smoothright': 'smoothright',
+    'smoothup': 'smoothup',
+    'smoothdown': 'smoothdown',
+    'diagtl': 'diagtl',
+    'diagtr': 'diagtr',
+    'diagbl': 'diagbl',
+    'diagbr': 'diagbr',
+    'hlslice': 'hlslice',
+    'hrslice': 'hrslice',
+    'vuslice': 'vuslice',
+    'vdslice': 'vdslice',
+    'hblur': 'hblur',
+    'fadegrays': 'fadegrays',
+    'wipetl': 'wipetl',
+    'wipetr': 'wipetr',
+    'wipebl': 'wipebl',
+    'wipebr': 'wipebr',
+    'squeezeh': 'squeezeh',
+    'squeezev': 'squeezev',
+    'zoomin': 'zoomin',
+    'fadefast': 'fadefast',
+    'fadeslow': 'fadeslow',
+  };
+  
+  return mapping[type] || 'fade';
+}
+
+// ============================================================================
+// FFMPEG EXECUTION
+// ============================================================================
+
+function executeFFmpeg(args, jobId, jobsMap) {
+  return new Promise((resolve, reject) => {
+    console.log(`[${jobId}] FFmpeg args:`, args.slice(0, 20).join(' ') + '...');
+    
+    const ffmpeg = spawn(FFMPEG_PATH, args, {
+      maxBuffer: 1024 * 1024 * 100, // 100MB buffer
+    });
+    
+    let stderr = '';
+    
+    ffmpeg.stderr.on('data', (data) => {
+      const output = data.toString();
+      stderr += output;
+      
+      // Parse progress
+      const timeMatch = output.match(/time=(\d{2}):(\d{2}):(\d{2}\.\d{2})/);
+      if (timeMatch) {
+        const currentTime = 
+          parseInt(timeMatch[1]) * 3600 + 
+          parseInt(timeMatch[2]) * 60 + 
+          parseFloat(timeMatch[3]);
+        
+        const currentJob = jobsMap.get(jobId);
+        if (currentJob && currentJob.stage === 'encoding') {
+          const estimatedProgress = 40 + Math.min(45, Math.floor(currentTime * 3));
+          jobsMap.set(jobId, { ...currentJob, progress: estimatedProgress });
+        }
+      }
+    });
+    
+    ffmpeg.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        const errorLines = stderr.split('\n')
+          .filter(line => 
+            line.includes('Error') || 
+            line.includes('Invalid') || 
+            line.includes('No such') ||
+            line.includes('does not contain') ||
+            line.includes('Discarding') ||
+            line.includes('Unable')
+          )
+          .slice(-10);
+        
+        const errorMessage = errorLines.length > 0 
+          ? errorLines.join('\n')
+          : `FFmpeg exited with code ${code}`;
+        
+        console.error(`[${jobId}] FFmpeg stderr (last 2000 chars):`, stderr.slice(-2000));
+        reject(new Error(errorMessage));
+      }
+    });
+    
+    ffmpeg.on('error', (error) => {
+      reject(new Error(`FFmpeg spawn error: ${error.message}`));
+    });
+  });
+}
+
+// ============================================================================
+// S3 UPLOAD
+// ============================================================================
+
+async function uploadToS3(filePath, s3Key, jobId) {
+  const fileContent = fs.readFileSync(filePath);
+  const contentType = s3Key.endsWith('.mp4') ? 'video/mp4' : 
+                      s3Key.endsWith('.webm') ? 'video/webm' : 
+                      'application/octet-stream';
+  
+  const command = new PutObjectCommand({
+    Bucket: S3_BUCKET,
+    Key: s3Key,
+    Body: fileContent,
+    ContentType: contentType,
+    ACL: 'public-read',
+  });
+  
+  await s3Client.send(command);
+  
+  const downloadUrl = `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
+  return downloadUrl;
+}
+
+// ============================================================================
+// CALLBACK
+// ============================================================================
+
+async function sendCallback(callbackUrl, payload, jobId) {
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'VPS-Video-Processor/2.0',
+    };
+    
+    if (CALLBACK_SECRET) {
+      headers['X-Signature'] = generateHmacSignature(payload);
+    }
+    
+    console.log(`[${jobId}] Sending callback to ${callbackUrl}`);
+    
+    const response = await fetch(callbackUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) {
+      console.warn(`[${jobId}] Callback returned ${response.status}`);
+    } else {
+      console.log(`[${jobId}] ✓ Callback sent successfully`);
+    }
+    
+  } catch (error) {
+    console.error(`[${jobId}] Callback failed:`, error.message);
+  }
+}
+
+// ============================================================================
+// START SERVER
+// ============================================================================
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n✓ VPS Video Processor listening on port ${PORT}`);
+  console.log(`  Health check: http://localhost:${PORT}/health`);
+  console.log(`  Process video: POST http://localhost:${PORT}/process\n`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  process.exit(0);
+});
