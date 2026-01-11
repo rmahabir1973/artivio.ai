@@ -183,7 +183,7 @@ async function downloadVideo(url: string, tempDir: string, index: number): Promi
         throw new Error(`Video ${index + 1} link has expired or is no longer accessible. Please re-generate the video.`);
       }
       if (status === 404) {
-        throw new Error(`Video ${index + 1} not found. The video may have been deleted or the link has expired.`);
+        throw new Error(`Clip ${index + 1} not found. The video file may have expired or been deleted from storage. Please re-generate this clip or remove it from the timeline.`);
       }
     }
     
@@ -767,10 +767,28 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 
     onProgress?.('download', `Downloading ${videoUrls.length} media files...`);
 
+    // Refresh S3 signed URLs before downloading (they may have expired)
+    const refreshedUrls = await Promise.all(
+      videoUrls.map(async (url, i) => {
+        if (s3.isS3SignedUrl(url)) {
+          try {
+            const refreshedUrl = await s3.refreshSignedUrl(url);
+            console.log(`[VideoProcessor] ✓ Refreshed clip ${i + 1} S3 URL`);
+            return refreshedUrl;
+          } catch (refreshError: any) {
+            console.warn(`[VideoProcessor] Failed to refresh clip ${i + 1} URL: ${refreshError.message}`);
+            // Fall back to original URL
+            return url;
+          }
+        }
+        return url;
+      })
+    );
+
     // Download all media (videos and images) in parallel
     // For images, we'll convert them to videos after download
     const downloadedPaths = await Promise.all(
-      videoUrls.map(async (url, i) => {
+      refreshedUrls.map(async (url, i) => {
         // Check if this is an image based on URL extension OR clipSettings.isImage flag
         const clipSetting = enhancements?.clipSettings?.find(cs => cs.clipIndex === i);
         const urlIsImage = isImageUrl(url);
@@ -819,7 +837,7 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
       // Get trim settings for this clip (if it was split)
       // Note: For images, we don't apply trim since duration is already set in imageToVideo
       const clipSetting = enhancements?.clipSettings?.find(cs => cs.clipIndex === i);
-      const isImage = clipSetting?.isImage || isImageUrl(videoUrls[i]);
+      const isImage = clipSetting?.isImage || isImageUrl(refreshedUrls[i]);
       
       const trimOptions: NormalizeOptions = {
         // Only apply trim for videos, not images (images already have correct duration)
