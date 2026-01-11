@@ -50,6 +50,14 @@ export interface TimelineTransition {
   durationSeconds: number;
 }
 
+export interface CrossLayerTransition {
+  id: string;
+  fromClipId: string;
+  toClipId: string;
+  type: string;
+  durationSeconds: number;
+}
+
 export interface SelectionState {
   selectedClipIds: Set<string>;
   lastSelectedClipId: string | null;
@@ -60,6 +68,7 @@ export interface TimelineState {
   audioTracks: TimelineAudioTrack[];
   markers: TimelineMarker[];
   transitions: TimelineTransition[];
+  crossLayerTransitions: CrossLayerTransition[];
   zoom: number;
   currentTime: number;
   duration: number;
@@ -296,6 +305,7 @@ export function useTimelineStore(initialState?: Partial<TimelineState>) {
     audioTracks: [],
     markers: [],
     transitions: [],
+    crossLayerTransitions: [],
     zoom: 1,
     currentTime: 0,
     duration: 60,
@@ -697,6 +707,94 @@ export function useTimelineStore(initialState?: Partial<TimelineState>) {
     return clips;
   }, [state.tracks, state.selection.selectedClipIds]);
   
+  const addCrossLayerTransition = useCallback((fromClipId: string, toClipId: string, type: string = 'fade', durationSeconds: number = 1.0) => {
+    pushHistory();
+    
+    const newTransition: CrossLayerTransition = {
+      id: `clt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      fromClipId,
+      toClipId,
+      type,
+      durationSeconds,
+    };
+    
+    setState(prev => ({
+      ...prev,
+      crossLayerTransitions: [...prev.crossLayerTransitions.filter(
+        t => !(t.fromClipId === fromClipId && t.toClipId === toClipId)
+      ), newTransition],
+    }));
+    
+    return newTransition.id;
+  }, [pushHistory]);
+  
+  const updateCrossLayerTransition = useCallback((transitionId: string, updates: Partial<Omit<CrossLayerTransition, 'id'>>) => {
+    pushHistory();
+    
+    setState(prev => ({
+      ...prev,
+      crossLayerTransitions: prev.crossLayerTransitions.map(t =>
+        t.id === transitionId ? { ...t, ...updates } : t
+      ),
+    }));
+  }, [pushHistory]);
+  
+  const removeCrossLayerTransition = useCallback((transitionId: string) => {
+    pushHistory();
+    
+    setState(prev => ({
+      ...prev,
+      crossLayerTransitions: prev.crossLayerTransitions.filter(t => t.id !== transitionId),
+    }));
+  }, [pushHistory]);
+  
+  const getCrossLayerTransition = useCallback((fromClipId: string, toClipId: string): CrossLayerTransition | undefined => {
+    return state.crossLayerTransitions.find(
+      t => t.fromClipId === fromClipId && t.toClipId === toClipId
+    );
+  }, [state.crossLayerTransitions]);
+  
+  const getClipOverlaps = useCallback((): Array<{ fromClip: TimelineClip; toClip: TimelineClip; overlapStart: number; overlapEnd: number; transition?: CrossLayerTransition }> => {
+    const overlaps: Array<{ fromClip: TimelineClip; toClip: TimelineClip; overlapStart: number; overlapEnd: number; transition?: CrossLayerTransition }> = [];
+    const allClips: Array<TimelineClip & { trackIndex: number }> = [];
+    
+    state.tracks.forEach((track, trackIndex) => {
+      track.clips.forEach(clip => {
+        allClips.push({ ...clip, trackIndex });
+      });
+    });
+    
+    for (let i = 0; i < allClips.length; i++) {
+      for (let j = i + 1; j < allClips.length; j++) {
+        const clipA = allClips[i];
+        const clipB = allClips[j];
+        
+        if (clipA.trackId === clipB.trackId) continue;
+        
+        const aStart = clipA.startTime;
+        const aEnd = clipA.startTime + clipA.duration;
+        const bStart = clipB.startTime;
+        const bEnd = clipB.startTime + clipB.duration;
+        
+        const overlapStart = Math.max(aStart, bStart);
+        const overlapEnd = Math.min(aEnd, bEnd);
+        
+        if (overlapStart < overlapEnd && (overlapEnd - overlapStart) >= 0.1) {
+          const fromClip = aEnd <= bEnd ? clipA : clipB;
+          const toClip = aEnd <= bEnd ? clipB : clipA;
+          
+          const transition = state.crossLayerTransitions.find(
+            t => t.fromClipId === fromClip.id && t.toClipId === toClip.id
+          );
+          
+          overlaps.push({ fromClip, toClip, overlapStart, overlapEnd, transition });
+        }
+      }
+    }
+    
+    return overlaps;
+  }, [state.tracks, state.crossLayerTransitions]);
+  
   const pixelsPerSecond = useMemo(() => 100 * state.zoom, [state.zoom]);
   
   return {
@@ -724,6 +822,12 @@ export function useTimelineStore(initialState?: Partial<TimelineState>) {
     
     addMarker,
     removeMarker,
+    
+    addCrossLayerTransition,
+    updateCrossLayerTransition,
+    removeCrossLayerTransition,
+    getCrossLayerTransition,
+    getClipOverlaps,
     
     loadFromLegacy,
     exportToLegacy,

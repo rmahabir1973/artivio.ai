@@ -69,6 +69,14 @@ interface ClipTransitionLocal {
   trackId?: string; // Layer/track the transition belongs to (defaults to 'layer-1')
 }
 
+interface CrossLayerTransitionLocal {
+  id: string;
+  fromClipId: string;
+  toClipId: string;
+  type: string;
+  durationSeconds: number;
+}
+
 interface AudioTrack {
   id: string;
   url: string;
@@ -98,6 +106,7 @@ interface AdvancedTimelineProps {
   audioTracks: AudioTrack[];
   getClipSettings: (clipId: string) => ClipSettingsLocal;
   clipTransitions: ClipTransitionLocal[];
+  crossLayerTransitions?: CrossLayerTransitionLocal[];
   onClipSelect: (clip: VideoClip, index: number) => void;
   onClipRemove: (clipId: string) => void;
   onClipReorder: (fromIndex: number, toIndex: number) => void;
@@ -107,6 +116,9 @@ interface AdvancedTimelineProps {
   onMediaDrop?: (trackId: string, media: DroppedMediaData, dropTimeSeconds: number) => void;
   onTransitionEdit: (index: number) => void;
   onTransitionRemove: (index: number) => void;
+  onCrossLayerTransitionAdd?: (fromClipId: string, toClipId: string, type: string, durationSeconds: number) => void;
+  onCrossLayerTransitionEdit?: (transitionId: string, type: string, durationSeconds: number) => void;
+  onCrossLayerTransitionRemove?: (transitionId: string) => void;
   onAudioRemove: (trackId: string) => void;
   onAudioUpdate?: (trackId: string, updates: Partial<AudioTrack>) => void;
   onAudioSplit?: (trackId: string, splitTimeInTrack: number) => void;
@@ -266,6 +278,180 @@ function DroppableTransitionZone({
         </div>
       )}
     </div>
+  );
+}
+
+interface CrossLayerOverlap {
+  fromClipId: string;
+  toClipId: string;
+  fromTrackId: string;
+  toTrackId: string;
+  overlapStart: number;
+  overlapEnd: number;
+  transition?: CrossLayerTransitionLocal;
+}
+
+function CrossLayerTransitionZone({
+  overlap,
+  pixelsPerSecond,
+  trackHeight,
+  trackConfig,
+  onAddTransition,
+  onEditTransition,
+  onRemoveTransition,
+}: {
+  overlap: CrossLayerOverlap;
+  pixelsPerSecond: number;
+  trackHeight: number;
+  trackConfig: Array<{ id: string }>;
+  onAddTransition?: (fromClipId: string, toClipId: string, type: string, durationSeconds: number) => void;
+  onEditTransition?: (transitionId: string, type: string, durationSeconds: number) => void;
+  onRemoveTransition?: (transitionId: string) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedType, setSelectedType] = useState(overlap.transition?.type || 'fade');
+  const [duration, setDuration] = useState(overlap.transition?.durationSeconds || 1.0);
+  
+  const overlapDuration = overlap.overlapEnd - overlap.overlapStart;
+  const left = overlap.overlapStart * pixelsPerSecond;
+  const width = Math.max(overlapDuration * pixelsPerSecond, 30);
+  
+  const fromTrackIndex = trackConfig.findIndex(t => t.id === overlap.fromTrackId);
+  const toTrackIndex = trackConfig.findIndex(t => t.id === overlap.toTrackId);
+  const topTrackIndex = Math.min(fromTrackIndex, toTrackIndex);
+  const bottomTrackIndex = Math.max(fromTrackIndex, toTrackIndex);
+  const spanHeight = (bottomTrackIndex - topTrackIndex + 1) * trackHeight;
+  const topOffset = topTrackIndex * trackHeight;
+  
+  const hasTransition = !!overlap.transition;
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (hasTransition) {
+      setIsEditing(true);
+    } else if (onAddTransition) {
+      onAddTransition(overlap.fromClipId, overlap.toClipId, 'fade', Math.min(overlapDuration, 1.0));
+    }
+  };
+  
+  const handleSave = () => {
+    if (overlap.transition && onEditTransition) {
+      onEditTransition(overlap.transition.id, selectedType, duration);
+    }
+    setIsEditing(false);
+  };
+  
+  const handleRemove = () => {
+    if (overlap.transition && onRemoveTransition) {
+      onRemoveTransition(overlap.transition.id);
+    }
+    setIsEditing(false);
+  };
+  
+  const transitionTypes = [
+    { value: 'fade', label: 'Fade' },
+    { value: 'dissolve', label: 'Dissolve' },
+    { value: 'fadeblack', label: 'Fade Black' },
+    { value: 'fadewhite', label: 'Fade White' },
+    { value: 'wipeleft', label: 'Wipe Left' },
+    { value: 'wiperight', label: 'Wipe Right' },
+    { value: 'wipeup', label: 'Wipe Up' },
+    { value: 'wipedown', label: 'Wipe Down' },
+    { value: 'slideleft', label: 'Slide Left' },
+    { value: 'slideright', label: 'Slide Right' },
+  ];
+  
+  return (
+    <>
+      <div
+        className={cn(
+          "absolute z-20 cursor-pointer transition-all border-2 border-dashed rounded-sm",
+          hasTransition 
+            ? "bg-yellow-500/20 border-yellow-500/60 hover:bg-yellow-500/30" 
+            : "bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary/50"
+        )}
+        style={{
+          left: `${left}px`,
+          width: `${width}px`,
+          top: `${topOffset}px`,
+          height: `${spanHeight}px`,
+        }}
+        onClick={handleClick}
+        data-testid={`cross-layer-zone-${overlap.fromClipId}-${overlap.toClipId}`}
+      >
+        <div className="absolute inset-0 flex items-center justify-center">
+          {hasTransition ? (
+            <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
+              <Sparkles className="h-2.5 w-2.5" />
+              {overlap.transition?.type}
+            </Badge>
+          ) : (
+            <div className="flex flex-col items-center gap-0.5 opacity-60 hover:opacity-100">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-[8px] text-primary font-medium">Add Effect</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {isEditing && hasTransition && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
+          onClick={() => setIsEditing(false)}
+        >
+          <div 
+            className="bg-background border rounded-lg p-4 shadow-xl min-w-[280px]"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Edit Cross-Layer Transition
+            </h3>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Effect Type</label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="w-full h-8 px-2 text-sm bg-muted border rounded"
+                  data-testid="select-transition-type"
+                >
+                  {transitionTypes.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Duration: {duration.toFixed(1)}s (max: {overlapDuration.toFixed(1)}s)
+                </label>
+                <input
+                  type="range"
+                  min={0.1}
+                  max={Math.max(0.1, overlapDuration)}
+                  step={0.1}
+                  value={duration}
+                  onChange={(e) => setDuration(parseFloat(e.target.value))}
+                  className="w-full"
+                  data-testid="slider-transition-duration"
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-2">
+                <Button size="sm" onClick={handleSave} className="flex-1" data-testid="button-save-transition">
+                  Save
+                </Button>
+                <Button size="sm" variant="destructive" onClick={handleRemove} data-testid="button-remove-transition">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -895,6 +1081,7 @@ export function AdvancedTimeline({
   audioTracks,
   getClipSettings,
   clipTransitions,
+  crossLayerTransitions = [],
   onClipSelect,
   onClipRemove,
   onClipReorder,
@@ -904,6 +1091,9 @@ export function AdvancedTimeline({
   onMediaDrop,
   onTransitionEdit,
   onTransitionRemove,
+  onCrossLayerTransitionAdd,
+  onCrossLayerTransitionEdit,
+  onCrossLayerTransitionRemove,
   onAudioRemove,
   onAudioUpdate,
   onAudioSplit,
@@ -1063,6 +1253,53 @@ export function AdvancedTimeline({
       return { clip, index, startTime, duration, left, width, settings };
     });
   }, [clips, getClipSettings, clipTransitions, pixelsPerSecond, snapEnabled, layerCount]);
+
+  const crossLayerOverlaps = useMemo((): CrossLayerOverlap[] => {
+    const overlaps: CrossLayerOverlap[] = [];
+    
+    for (let i = 0; i < clipPositions.length; i++) {
+      for (let j = i + 1; j < clipPositions.length; j++) {
+        const posA = clipPositions[i];
+        const posB = clipPositions[j];
+        
+        const trackA = posA.clip.trackId || 'layer-1';
+        const trackB = posB.clip.trackId || 'layer-1';
+        
+        if (trackA === trackB) continue;
+        
+        const aStart = posA.startTime;
+        const aEnd = posA.startTime + posA.duration;
+        const bStart = posB.startTime;
+        const bEnd = posB.startTime + posB.duration;
+        
+        const overlapStart = Math.max(aStart, bStart);
+        const overlapEnd = Math.min(aEnd, bEnd);
+        
+        if (overlapStart < overlapEnd && (overlapEnd - overlapStart) >= 0.1) {
+          const fromClip = aEnd <= bEnd ? posA.clip : posB.clip;
+          const toClip = aEnd <= bEnd ? posB.clip : posA.clip;
+          const fromTrackId = fromClip.trackId || 'layer-1';
+          const toTrackId = toClip.trackId || 'layer-1';
+          
+          const existingTransition = crossLayerTransitions.find(
+            t => t.fromClipId === fromClip.id && t.toClipId === toClip.id
+          );
+          
+          overlaps.push({
+            fromClipId: fromClip.id,
+            toClipId: toClip.id,
+            fromTrackId,
+            toTrackId,
+            overlapStart,
+            overlapEnd,
+            transition: existingTransition,
+          });
+        }
+      }
+    }
+    
+    return overlaps;
+  }, [clipPositions, crossLayerTransitions]);
 
   const handleClipSelect = useCallback((clip: VideoClip, index: number, addToSelection: boolean) => {
     if (addToSelection) {
@@ -1482,6 +1719,20 @@ export function AdvancedTimeline({
                   );
                 })}
 
+                {/* Cross-layer transition zones - rendered at overlapping clip regions */}
+                {crossLayerOverlaps.map((overlap) => (
+                  <CrossLayerTransitionZone
+                    key={`cross-${overlap.fromClipId}-${overlap.toClipId}`}
+                    overlap={overlap}
+                    pixelsPerSecond={pixelsPerSecond}
+                    trackHeight={TRACK_HEIGHT}
+                    trackConfig={trackConfig}
+                    onAddTransition={onCrossLayerTransitionAdd}
+                    onEditTransition={onCrossLayerTransitionEdit}
+                    onRemoveTransition={onCrossLayerTransitionRemove}
+                  />
+                ))}
+
                 <Playhead
                   currentTime={currentTime}
                   pixelsPerSecond={pixelsPerSecond}
@@ -1498,4 +1749,4 @@ export function AdvancedTimeline({
   );
 }
 
-export type { VideoClip, ClipSettingsLocal, ClipTransitionLocal, AudioTrack, AdvancedTimelineProps };
+export type { VideoClip, ClipSettingsLocal, ClipTransitionLocal, CrossLayerTransitionLocal, AudioTrack, AdvancedTimelineProps };

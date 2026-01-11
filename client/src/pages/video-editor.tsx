@@ -147,10 +147,20 @@ interface ClipTransitionLocal {
   trackId?: string; // Which layer this transition belongs to
 }
 
+// Cross-layer transition state (for transitions between clips on different layers)
+interface CrossLayerTransitionLocal {
+  id: string;
+  fromClipId: string;
+  toClipId: string;
+  type: string;
+  durationSeconds: number;
+}
+
 interface EnhancementsState {
   transitionMode: 'none' | 'crossfade' | 'perClip';
   transitionDuration: number;
   clipTransitions: ClipTransitionLocal[]; // Per-clip transitions
+  crossLayerTransitions: CrossLayerTransitionLocal[]; // Cross-layer transitions
   fadeIn: boolean;
   fadeOut: boolean;
   fadeDuration: number; // seconds
@@ -582,6 +592,7 @@ export default function VideoEditor() {
     transitionMode: 'none',
     transitionDuration: 1.0,
     clipTransitions: [],
+    crossLayerTransitions: [],
     fadeIn: false,
     fadeOut: false,
     fadeDuration: 0.5,
@@ -1712,6 +1723,16 @@ export default function VideoEditor() {
           fadeOutSeconds: track.fadeOutSeconds ?? 0,
           volume: 1.0,
         })) : undefined,
+        // Cross-layer transitions for multi-track mode
+        crossLayerTransitions: enhancements.crossLayerTransitions.length > 0 
+          ? enhancements.crossLayerTransitions.map(t => ({
+              id: t.id,
+              fromClipId: t.fromClipId,
+              toClipId: t.toClipId,
+              type: t.type,
+              durationSeconds: t.durationSeconds,
+            }))
+          : undefined,
       };
 
       const response = await apiRequest("POST", "/api/video-editor/export", { 
@@ -2494,6 +2515,59 @@ const previewMutation = useMutation({
   const getTransitionAtPosition = useCallback((position: number) => {
     return enhancements.clipTransitions.find(t => t.afterClipIndex === position);
   }, [enhancements.clipTransitions]);
+
+  // Cross-layer transition handlers
+  const handleCrossLayerTransitionAdd = useCallback((fromClipId: string, toClipId: string, type: string, durationSeconds: number) => {
+    const newTransition: CrossLayerTransitionLocal = {
+      id: `clt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      fromClipId,
+      toClipId,
+      type,
+      durationSeconds,
+    };
+    
+    setEnhancements(prev => ({
+      ...prev,
+      crossLayerTransitions: [
+        ...prev.crossLayerTransitions.filter(t => !(t.fromClipId === fromClipId && t.toClipId === toClipId)),
+        newTransition,
+      ],
+    }));
+    setPreviewStatus('stale');
+    
+    toast({
+      title: "Cross-Layer Transition Added",
+      description: `${type.charAt(0).toUpperCase() + type.slice(1)} effect applied between layers`,
+    });
+  }, [toast]);
+
+  const handleCrossLayerTransitionEdit = useCallback((transitionId: string, type: string, durationSeconds: number) => {
+    setEnhancements(prev => ({
+      ...prev,
+      crossLayerTransitions: prev.crossLayerTransitions.map(t =>
+        t.id === transitionId ? { ...t, type, durationSeconds } : t
+      ),
+    }));
+    setPreviewStatus('stale');
+    
+    toast({
+      title: "Cross-Layer Transition Updated",
+      description: `Effect updated to ${type} (${durationSeconds.toFixed(1)}s)`,
+    });
+  }, [toast]);
+
+  const handleCrossLayerTransitionRemove = useCallback((transitionId: string) => {
+    setEnhancements(prev => ({
+      ...prev,
+      crossLayerTransitions: prev.crossLayerTransitions.filter(t => t.id !== transitionId),
+    }));
+    setPreviewStatus('stale');
+    
+    toast({
+      title: "Cross-Layer Transition Removed",
+      description: "Effect between layers has been removed",
+    });
+  }, [toast]);
 
   const handleMultiTrackToggle = useCallback((enabled: boolean) => {
     setUseMultiTrack(enabled);
@@ -3994,6 +4068,10 @@ const previewMutation = useMutation({
               onTimeChange={setTimelineCurrentTime}
               onPlayPause={handleTimelinePlayPause}
               isPlaying={isTimelinePlaying}
+              crossLayerTransitions={enhancements.crossLayerTransitions}
+              onCrossLayerTransitionAdd={handleCrossLayerTransitionAdd}
+              onCrossLayerTransitionEdit={handleCrossLayerTransitionEdit}
+              onCrossLayerTransitionRemove={handleCrossLayerTransitionRemove}
               className="flex-1"
             />
           </div>

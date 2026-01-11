@@ -650,6 +650,17 @@ export const avatarOverlaySchema = z.object({
   endAtSeconds: z.number().min(0).optional(), // When to hide (undefined = entire video)
 }).optional();
 
+// Cross-layer transition (for clips on different layers that overlap in time)
+export const crossLayerTransitionSchema = z.object({
+  id: z.string(),
+  fromClipId: z.string(), // Clip on lower layer
+  toClipId: z.string(), // Clip on upper layer
+  type: z.enum(['fade', 'dissolve', 'fadeblack', 'fadewhite', 'wipeleft', 'wiperight', 'wipeup', 'wipedown', 'slideleft', 'slideright']).default('fade'),
+  durationSeconds: z.number().min(0.1).max(5).default(1),
+});
+
+export const crossLayerTransitionsSchema = z.array(crossLayerTransitionSchema).default([]);
+
 export const videoEnhancementsSchema = z.object({
   transitions: transitionsEnhancementSchema,
   backgroundMusic: backgroundMusicEnhancementSchema,
@@ -658,6 +669,7 @@ export const videoEnhancementsSchema = z.object({
   clipSettings: clipSettingsEnhancementSchema,
   audioTrack: audioTrackSchema,
   avatarOverlay: avatarOverlaySchema,
+  crossLayerTransitions: crossLayerTransitionsSchema,
 }).partial().default({});
 
 export type VideoEnhancements = z.infer<typeof videoEnhancementsSchema>;
@@ -668,6 +680,7 @@ export type SpeedEnhancement = z.infer<typeof speedEnhancementSchema>;
 export type ClipSetting = z.infer<typeof clipSettingSchema>;
 export type AudioTrack = z.infer<typeof audioTrackSchema>;
 export type AvatarOverlay = z.infer<typeof avatarOverlaySchema>;
+export type CrossLayerTransition = z.infer<typeof crossLayerTransitionSchema>;
 
 // Video Combination Request Schema
 export const combineVideosRequestSchema = z.object({

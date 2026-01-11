@@ -8407,6 +8407,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         clips: normalizedClips,
         enhancements: enhancements || undefined,
         multiTrackTimeline: req.body.multiTrackTimeline || undefined,
+        crossLayerTransitions: enhancements?.crossLayerTransitions || undefined,
         callbackUrl: `${getBaseUrl()}/api/video-editor/callback/${jobId}`,
       };
       
