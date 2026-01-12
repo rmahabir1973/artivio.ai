@@ -335,10 +335,12 @@ async function normalizeVideo(inputPath: string, outputPath: string, options?: N
       maxBuffer: 50 * 1024 * 1024,
     });
 
-    const trimInfo = (options?.trimStartSeconds || options?.trimEndSeconds) 
-      ? `, trim: ${options.trimStartSeconds ?? 0}s - ${options.trimEndSeconds ?? 'end'}` 
+    const trimInfo = (options?.trimStartSeconds || options?.trimEndSeconds)
+      ? `, trim: ${options.trimStartSeconds ?? 0}s - ${options.trimEndSeconds ?? 'end'}`
       : '';
-    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'}, resolution: 720p, fps: 30, bitrate: 2500k${trimInfo})`);
+    const resolutionLabel = options?.previewMode ? '360p' : '720p';
+    const bitrateLabel = options?.previewMode ? '800k' : '2500k';
+    console.log(`✓ Normalized video: ${outputPath} (audio: ${metadata.hasAudio ? 'yes' : 'no'}, resolution: ${resolutionLabel}, fps: 30, bitrate: ${bitrateLabel}${trimInfo})`);
   } catch (error: any) {
     console.error(`Normalization error for ${inputPath}:`, error.message);
     throw new Error(`Failed to normalize video: ${error.message}`);
@@ -527,13 +529,17 @@ function buildFilterGraph(
     let runningDuration = adjustedDurations[0];
     
     for (let i = 1; i < videoCount; i++) {
-      const transition = hasPerClipTransitions 
-        ? perClipTransitions.get(i - 1) 
+      const transition = hasPerClipTransitions
+        ? perClipTransitions.get(i - 1)
         : { type: 'fade', durationSeconds: transitionDuration };
-      
+
       const isLast = i === videoCount - 1;
-      const nextLabel = isLast ? 'vxfout' : `v${i}step`;
-      
+      // Use 'vout' directly as final label when no transitions (avoids redundant null filter)
+      // Use 'vxfout' when transitions exist (needs tpad afterwards)
+      const nextLabel = isLast
+        ? (totalTransitionDuration > 0 ? 'vxfout' : 'vout')
+        : `v${i}step`;
+
       if (!transition) {
         // No transition: normalize current stream then concat
         // Normalize current stream timestamps and ensure consistent format
@@ -541,41 +547,38 @@ function buildFilterGraph(
         const normalizedNext = `vnorm${i}b`;
         videoFilterSteps.push(`${currentStream}setpts=PTS-STARTPTS[${normalizedCurrent}]`);
         videoFilterSteps.push(`${videoStreams[i]}setpts=PTS-STARTPTS[${normalizedNext}]`);
-        
+
         // Concat the two normalized streams
         videoFilterSteps.push(`[${normalizedCurrent}][${normalizedNext}]concat=n=2:v=1:a=0[${nextLabel}]`);
         currentStream = `[${nextLabel}]`;
-        
+
         // Update running duration (no overlap for straight cut)
         runningDuration += adjustedDurations[i];
-        
+
         console.log(`[VIDEO PROCESSOR] Straight cut at gap ${i-1}`);
       } else {
         // Has transition: apply xfade
         const duration = transition.durationSeconds;
         const transitionType = transition.type || 'fade';
-        
+
         // Calculate offset based on running duration
         const offset = Math.max(0, runningDuration - duration);
-        
+
         videoFilterSteps.push(`${currentStream}${videoStreams[i]}xfade=transition=${transitionType}:duration=${duration.toFixed(3)}:offset=${offset.toFixed(3)}[${nextLabel}]`);
         currentStream = `[${nextLabel}]`;
-        
+
         // Update running duration (minus transition overlap)
         runningDuration += adjustedDurations[i] - duration;
-        
+
         console.log(`[VIDEO PROCESSOR] Xfade ${transitionType} at gap ${i-1}, offset=${offset.toFixed(3)}`);
       }
     }
-    
-    // Final output: add tpad if we have any transitions to preserve duration
+
+    // Final output: add tpad only when transitions exist to preserve duration
     if (totalTransitionDuration > 0) {
       videoFilterSteps.push(`[vxfout]tpad=stop_duration=${totalTransitionDuration.toFixed(3)}[vout]`);
-    } else {
-      // Pure concat mode (no transitions at all)
-      const inputLabel = currentStream.replace('[', '').replace(']', '');
-      videoFilterSteps.push(`[${inputLabel}]null[vout]`);
     }
+    // When totalTransitionDuration === 0, the loop already outputs directly to [vout]
   } else if (videoCount > 1) {
     videoFilterSteps.push(`${videoStreams.join('')}concat=n=${videoCount}:v=1:a=0[vout]`);
   } else {
@@ -1376,26 +1379,84 @@ export async function combineVideos(options: CombineVideosOptions): Promise<Comb
 function formatFFmpegError(error: string): string {
   const lowerError = error.toLowerCase();
 
+  // Memory and resource errors
+  if (lowerError.includes('cannot allocate') || lowerError.includes('out of memory') || lowerError.includes('memory allocation')) {
+    return 'Insufficient memory to process videos. Try combining fewer or shorter clips.';
+  }
+  if (lowerError.includes('too many open files') || lowerError.includes('ulimit')) {
+    return 'System resource limit reached. Please try again in a moment.';
+  }
+
+  // Stream and mapping errors
+  if (lowerError.includes('stream mapping') || lowerError.includes('stream specifier')) {
+    return 'Video stream configuration error. One of your clips may have an incompatible format.';
+  }
+  if (lowerError.includes('no such filter') || lowerError.includes('unknown filter')) {
+    return 'Unsupported video effect requested. Please try different transition or effect settings.';
+  }
+
+  // Codec and format errors
+  if (lowerError.includes('decoder') && lowerError.includes('not found')) {
+    return 'Unsupported video format detected. Please use MP4, MOV, or WebM files.';
+  }
+  if (lowerError.includes('encoder') && lowerError.includes('not found')) {
+    return 'Video encoding error. Please contact support if this persists.';
+  }
   if (lowerError.includes('codec') || lowerError.includes('format')) {
     return 'Video format incompatibility detected. Videos were automatically converted to a compatible format. Please try again.';
   }
-  if (lowerError.includes('timeout')) {
-    return 'Video processing took too long. Try combining fewer videos or shorter clips.';
+
+  // File structure errors
+  if (lowerError.includes('moov atom') || lowerError.includes('moov not found')) {
+    return 'Video file is incomplete or corrupted (missing metadata). Please re-generate or re-upload the clip.';
   }
-  if (lowerError.includes('no space')) {
-    return 'Insufficient storage space. Please try again later.';
+  if (lowerError.includes('invalid data') || lowerError.includes('invalid nal')) {
+    return 'Video contains invalid data. The file may be corrupted or incomplete.';
+  }
+
+  // Duration and sync errors
+  if (lowerError.includes('discarding') && lowerError.includes('frame')) {
+    return 'Video frame timing issue detected. Processing continued but output may have minor artifacts.';
+  }
+  if (lowerError.includes('discont') || lowerError.includes('discontinuity')) {
+    return 'Video timeline discontinuity detected. One of your clips may have encoding issues.';
+  }
+
+  // I/O and file errors
+  if (lowerError.includes('no such file') || lowerError.includes('does not exist')) {
+    return 'Video file not found. The clip may have expired or been deleted.';
   }
   if (lowerError.includes('permission')) {
     return 'Permission denied. Please check file access.';
   }
-  if (lowerError.includes('connection') || lowerError.includes('download')) {
+  if (lowerError.includes('no space') || lowerError.includes('disk full')) {
+    return 'Insufficient storage space. Please try again later.';
+  }
+
+  // Network errors
+  if (lowerError.includes('connection') || lowerError.includes('download') || lowerError.includes('network')) {
     return 'Failed to download video. Please check your internet connection and try again.';
   }
-  if (lowerError.includes('invalid') || lowerError.includes('corrupt')) {
+  if (lowerError.includes('timeout') || lowerError.includes('timed out')) {
+    return 'Video processing took too long. Try combining fewer videos or shorter clips.';
+  }
+
+  // Filter graph errors
+  if (lowerError.includes('xfade') || lowerError.includes('transition')) {
+    return 'Transition effect failed. Try using a different transition type or shorter duration.';
+  }
+  if (lowerError.includes('filter') || lowerError.includes('filtergraph')) {
+    return 'Video enhancement filter failed. Try reducing the number of text overlays or effects.';
+  }
+
+  // Corruption errors
+  if (lowerError.includes('invalid') || lowerError.includes('corrupt') || lowerError.includes('malformed')) {
     return 'One or more videos appear to be corrupted. Please re-generate and try again.';
   }
-  if (lowerError.includes('filter')) {
-    return 'Video enhancement filter failed. Try reducing the number of text overlays or effects.';
+
+  // Buffer errors
+  if (lowerError.includes('buffer') && (lowerError.includes('overflow') || lowerError.includes('underflow'))) {
+    return 'Video processing buffer error. Try with shorter clips or contact support.';
   }
 
   return 'Video combination failed. Please check your videos and try again.';
