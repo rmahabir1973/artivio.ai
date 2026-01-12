@@ -1612,7 +1612,7 @@ export default function VideoEditor() {
         })),
       };
 
-      // Serialize clip settings from local state (includes trim times for split clips, speed, and image settings)
+      // Serialize clip settings from local state (includes trim times for split clips, speed, position, and image settings)
       const clipSettingsArray = clips.map((clip, index) => {
         const localSettings = clipSettings.get(clip.id);
         const isImage = clip.type === 'image';
@@ -1624,6 +1624,8 @@ export default function VideoEditor() {
           speed: localSettings?.speed ?? 1.0,
           trimStartSeconds: localSettings?.trimStartSeconds,
           trimEndSeconds: localSettings?.trimEndSeconds,
+          positionSeconds: localSettings?.positionSeconds, // Timeline position for multi-track
+          trackId: clip.trackId || 'layer-1', // Track/layer for multi-track editing
           isImage,
           displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
         };
@@ -3090,6 +3092,7 @@ const previewMutation = useMutation({
                   {/* Music Category Content */}
                   {activeCategory === 'music' && (
                     <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground px-1">Drag music to timeline or click to add to audio layer</p>
                       {musicLoading ? (
                         <div className="space-y-2">
                           {Array.from({ length: 3 }).map((_, i) => (
@@ -3104,10 +3107,25 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {musicTracks.map((track) => (
-                            <div
+                            <DraggableMediaItem
                               key={track.id}
-                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                              item={track}
+                              mediaType="audio"
                               onClick={() => {
+                                // Find the next available layer (prefer lower layers for audio)
+                                const usedLayers = new Set(audioTracks.map(t => t.trackId || 'layer-1'));
+                                // Also check video clips on each layer
+                                orderedClips.forEach(c => usedLayers.add(c.trackId || 'layer-1'));
+
+                                let targetLayer = 'layer-2'; // Default to layer-2 for music
+                                const layerOptions = ['layer-2', 'layer-3', 'layer-4', 'layer-5', 'layer-1'];
+                                for (const layer of layerOptions) {
+                                  if (!usedLayers.has(layer)) {
+                                    targetLayer = layer;
+                                    break;
+                                  }
+                                }
+
                                 const trackId = `music_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
                                   id: trackId,
@@ -3115,6 +3133,8 @@ const previewMutation = useMutation({
                                   name: track.prompt || 'Music Track',
                                   type: 'music',
                                   volume: 0.5,
+                                  trackId: targetLayer,
+                                  positionSeconds: 0,
                                 }]);
 
                                 // Initialize audio settings for duration loading
@@ -3128,22 +3148,19 @@ const previewMutation = useMutation({
                                     name: track.prompt || 'Music Track',
                                   },
                                 }));
-                                toast({ title: "Music Added", description: "Music track added to timeline" });
+                                toast({
+                                  title: "Music Added",
+                                  description: `Music track added to Layer ${targetLayer.split('-')[1]}. Drag to reposition.`
+                                });
                               }}
-                              data-testid={`music-item-${track.id}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="text-sm truncate">{track.prompt || 'Music Track'}</span>
-                              </div>
-                            </div>
+                            />
                           ))}
 
                           {/* Load More for Music */}
                           {hasNextMusicPage && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="w-full mt-2"
                               onClick={() => fetchNextMusicPage()}
                               disabled={isFetchingNextMusicPage}
@@ -3160,6 +3177,7 @@ const previewMutation = useMutation({
                   {/* Audio Category Content */}
                   {activeCategory === 'audio' && (
                     <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground px-1">Drag audio to timeline or click to add to voice layer</p>
                       {audioLoading ? (
                         <div className="space-y-2">
                           {Array.from({ length: 3 }).map((_, i) => (
@@ -3174,10 +3192,25 @@ const previewMutation = useMutation({
                       ) : (
                         <>
                           {voiceTracks.map((track) => (
-                            <div
+                            <DraggableMediaItem
                               key={track.id}
-                              className="p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+                              item={track}
+                              mediaType="audio"
                               onClick={() => {
+                                // Find the next available layer (prefer layer-3 for voice/audio)
+                                const usedLayers = new Set(audioTracks.map(t => t.trackId || 'layer-1'));
+                                // Also check video clips on each layer
+                                orderedClips.forEach(c => usedLayers.add(c.trackId || 'layer-1'));
+
+                                let targetLayer = 'layer-3'; // Default to layer-3 for voice
+                                const layerOptions = ['layer-3', 'layer-2', 'layer-4', 'layer-5', 'layer-1'];
+                                for (const layer of layerOptions) {
+                                  if (!usedLayers.has(layer)) {
+                                    targetLayer = layer;
+                                    break;
+                                  }
+                                }
+
                                 const trackId = `voice_${track.id}_${Date.now()}`;
                                 setAudioTracks(prev => [...prev, {
                                   id: trackId,
@@ -3185,6 +3218,8 @@ const previewMutation = useMutation({
                                   name: track.prompt || 'Voice Track',
                                   type: 'voice',
                                   volume: 1.0,
+                                  trackId: targetLayer,
+                                  positionSeconds: 0,
                                 }]);
 
                                 // Initialize audio settings for duration loading
@@ -3199,22 +3234,19 @@ const previewMutation = useMutation({
                                     name: track.prompt || 'Voice Track',
                                   },
                                 }));
-                                toast({ title: "Audio Added", description: "Audio track added to timeline" });
+                                toast({
+                                  title: "Audio Added",
+                                  description: `Voice track added to Layer ${targetLayer.split('-')[1]}. Drag to reposition.`
+                                });
                               }}
-                              data-testid={`audio-item-${track.id}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span className="text-sm truncate">{track.prompt || 'Audio Track'}</span>
-                              </div>
-                            </div>
+                            />
                           ))}
 
                           {/* Load More for Audio */}
                           {hasNextAudioPage && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="w-full mt-2"
                               onClick={() => fetchNextAudioPage()}
                               disabled={isFetchingNextAudioPage}

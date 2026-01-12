@@ -592,19 +592,91 @@ function buildFilterGraph(
   // Final duration = raw sum - overlap + totalPadDuration (preserves original duration)
   const effectiveTotalDuration = rawTotalDuration - crossfadeOverlap + totalPadDuration;
   
+  // ============================================================================
+  // CROSS-LAYER TRANSITIONS
+  // Apply transitions between clips on different layers that overlap in time
+  // ============================================================================
+  let currentVideoOutput = '[vout]';
+
+  if (enhancements?.crossLayerTransitions && enhancements.crossLayerTransitions.length > 0 && videoCount > 1) {
+    console.log(`[VIDEO PROCESSOR] Processing ${enhancements.crossLayerTransitions.length} cross-layer transitions`);
+
+    // Build clip data map for finding clips by ID
+    // Note: In the local processor, we use sequential timing based on clip order
+    let cumulativeTime = 0;
+    const clipDataMap = new Map<string, { index: number; startTime: number; duration: number; endTime: number }>();
+
+    for (let i = 0; i < videoCount; i++) {
+      const clipDuration = adjustedDurations[i];
+      const clipId = `clip-${i}`; // Default ID if not provided
+
+      clipDataMap.set(clipId, {
+        index: i,
+        startTime: cumulativeTime,
+        duration: clipDuration,
+        endTime: cumulativeTime + clipDuration,
+      });
+
+      cumulativeTime += clipDuration;
+    }
+
+    // Process each cross-layer transition
+    let crossLayerIdx = 0;
+    for (const transition of enhancements.crossLayerTransitions) {
+      const fromClip = clipDataMap.get(transition.fromClipId);
+      const toClip = clipDataMap.get(transition.toClipId);
+
+      if (!fromClip || !toClip) {
+        console.log(`[VIDEO PROCESSOR]   Skipping transition: clips not found (from: ${transition.fromClipId}, to: ${transition.toClipId})`);
+        continue;
+      }
+
+      // Calculate overlap region
+      const overlapStart = Math.max(fromClip.startTime, toClip.startTime);
+      const overlapEnd = Math.min(fromClip.endTime, toClip.endTime);
+      const overlapDuration = overlapEnd - overlapStart;
+
+      if (overlapDuration < 0.1) {
+        console.log(`[VIDEO PROCESSOR]   Skipping transition: insufficient overlap (${overlapDuration.toFixed(2)}s)`);
+        continue;
+      }
+
+      const transitionDur = Math.min(transition.durationSeconds || 1.0, overlapDuration);
+      const transitionType = transition.type || 'fade';
+
+      console.log(`[VIDEO PROCESSOR]   Cross-layer transition: ${transitionType} (${transitionDur.toFixed(2)}s) at ${overlapStart.toFixed(2)}s-${overlapEnd.toFixed(2)}s`);
+
+      // Apply overlay with time-based enable for the transition effect
+      const outputLabel = `clt_${crossLayerIdx}`;
+      const enableExpr = `between(t,${overlapStart.toFixed(3)},${(overlapStart + transitionDur).toFixed(3)})`;
+
+      // For cross-layer transitions, use overlay with enable expression
+      // The overlay shows during the transition period, creating a blend effect
+      videoFilterSteps.push(`${currentVideoOutput}${videoStreams[toClip.index]}overlay=0:0:enable='${enableExpr}'[${outputLabel}]`);
+
+      currentVideoOutput = `[${outputLabel}]`;
+      crossLayerIdx++;
+    }
+
+    if (crossLayerIdx > 0) {
+      console.log(`[VIDEO PROCESSOR] ✓ Applied ${crossLayerIdx} cross-layer transitions`);
+    }
+  }
+
+  // Apply text overlays
   if (enhancements?.textOverlays && enhancements.textOverlays.length > 0) {
-    let textFilter = '[vout]';
-    
+    let textFilter = currentVideoOutput;
+
     for (let i = 0; i < enhancements.textOverlays.length; i++) {
       const overlay = enhancements.textOverlays[i];
       const outputLabel = i === enhancements.textOverlays.length - 1 ? 'vfinal' : `vtext${i}`;
-      
+
       const position = getTextPosition(overlay.position, overlay.customPosition);
       const escapedText = overlay.text.replace(/'/g, "\\'").replace(/:/g, "\\:");
       const fontsize = overlay.fontSize || 48;
       const fontcolor = overlay.colorHex || '#FFFFFF';
       const fontfile = overlay.fontFamily ? `fontfile='${overlay.fontFamily}':` : '';
-      
+
       let enableClause = '';
       if (overlay.timing === 'intro') {
         const dur = overlay.displaySeconds || 3;
@@ -613,14 +685,14 @@ function buildFilterGraph(
         const dur = overlay.displaySeconds || 3;
         enableClause = `:enable='gte(t,${effectiveTotalDuration - dur})'`;
       }
-      
+
       videoFilterSteps.push(
         `${textFilter}drawtext=${fontfile}text='${escapedText}':${position}:fontsize=${fontsize}:fontcolor=${fontcolor}${enableClause}[${outputLabel}]`
       );
       textFilter = `[${outputLabel}]`;
     }
   } else {
-    videoFilterSteps.push('[vout]null[vfinal]');
+    videoFilterSteps.push(`${currentVideoOutput}null[vfinal]`);
   }
 
   // CRITICAL FIX: Enhanced audio processing to eliminate glitches between scenes

@@ -197,21 +197,22 @@ app.post('/process', async (req, res) => {
   try {
     fs.mkdirSync(jobDir, { recursive: true });
     
-    const { 
-      clips, 
-      enhancements, 
+    const {
+      clips,
+      enhancements,
       videoSettings,
       multiTrackTimeline,
-      callbackUrl 
+      crossLayerTransitions,
+      callbackUrl
     } = req.body;
-    
+
     // Validate input
     if (!clips || !Array.isArray(clips) || clips.length === 0) {
       return res.status(400).json({ error: 'Invalid or missing clips array' });
     }
-    
+
     const outputFormat = videoSettings?.format || 'mp4';
-    
+
     console.log(`\n[${jobId}] ═══════════════════════════════════════════`);
     console.log(`[${jobId}] New job received`);
     console.log(`[${jobId}]   Clips: ${clips.length}`);
@@ -219,6 +220,7 @@ app.post('/process', async (req, res) => {
     console.log(`[${jobId}]   Quality: ${videoSettings?.quality || 'high'}`);
     console.log(`[${jobId}]   Has Enhancements: ${enhancements ? 'Yes' : 'No'}`);
     console.log(`[${jobId}]   Multi-track: ${multiTrackTimeline ? 'Yes' : 'No'}`);
+    console.log(`[${jobId}]   Cross-layer transitions: ${crossLayerTransitions?.length || 0}`);
     console.log(`[${jobId}]   Callback: ${callbackUrl ? 'Yes' : 'No'}`);
     console.log(`[${jobId}] ═══════════════════════════════════════════\n`);
     
@@ -238,7 +240,7 @@ app.post('/process', async (req, res) => {
     });
     
     // Process video asynchronously
-    processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, callbackUrl);
+    processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, crossLayerTransitions, callbackUrl);
     
   } catch (error) {
     console.error(`[${jobId}] Process error:`, error);
@@ -255,22 +257,22 @@ app.post('/process', async (req, res) => {
 // VIDEO PROCESSING PIPELINE
 // ============================================================================
 
-async function processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, callbackUrl) {
+async function processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, crossLayerTransitions, callbackUrl) {
   const outputFormat = videoSettings?.format || 'mp4';
-  
+
   try {
     console.log(`[${jobId}] Starting advanced video processing pipeline`);
-    
+
     // Stage 1: Download all media (clips + audio + watermark)
     updateJobStatus(jobId, 'downloading', 5);
     const localClips = await downloadClips(clips, enhancements, jobDir, jobId);
     console.log(`[${jobId}] ✓ Downloaded ${localClips.length} clips`);
-    
+
     // Stage 2: Download additional media (background music, audio tracks, watermark)
     updateJobStatus(jobId, 'downloading_audio', 15);
     const audioAssets = await downloadAudioAssets(enhancements, jobDir, jobId);
     console.log(`[${jobId}] ✓ Downloaded audio assets`);
-    
+
     // Stage 3: Probe media metadata (duration, dimensions, has audio)
     updateJobStatus(jobId, 'analyzing', 25);
     for (let clip of localClips) {
@@ -282,7 +284,7 @@ async function processVideo(jobId, jobDir, clips, enhancements, videoSettings, m
       clip.fps = metadata.fps;
       console.log(`[${jobId}]   Clip ${clip.index}: ${clip.actualDuration.toFixed(2)}s, ${clip.width}x${clip.height}, audio: ${clip.hasAudio}`);
     }
-    
+
     // Stage 4: Optional Whisper transcription for captions
     if (enhancements?.captions?.autoGenerate && OPENAI_API_KEY) {
       updateJobStatus(jobId, 'transcribing', 30);
@@ -292,16 +294,17 @@ async function processVideo(jobId, jobDir, clips, enhancements, videoSettings, m
         console.log(`[${jobId}] ✓ Generated Whisper transcript`);
       }
     }
-    
+
     // Stage 5: Build FFmpeg filter graph
     updateJobStatus(jobId, 'building_filters', 35);
     const outputPath = path.join(jobDir, `output.${outputFormat}`);
     const ffmpegArgs = buildAdvancedFFmpegCommand(
-      localClips, 
-      enhancements, 
-      videoSettings, 
+      localClips,
+      enhancements,
+      videoSettings,
       audioAssets,
       multiTrackTimeline,
+      crossLayerTransitions,
       outputPath,
       jobId
     );
@@ -712,49 +715,50 @@ async function generateWhisperTranscript(clips, jobDir, jobId) {
 // FFMPEG COMMAND BUILDER (ADVANCED)
 // ============================================================================
 
-function buildAdvancedFFmpegCommand(clips, enhancements, videoSettings, audioAssets, multiTrackTimeline, outputPath, jobId) {
+function buildAdvancedFFmpegCommand(clips, enhancements, videoSettings, audioAssets, multiTrackTimeline, crossLayerTransitions, outputPath, jobId) {
   const args = [];
-  
+
   // Global options
   args.push('-y'); // Overwrite output
   args.push('-hide_banner');
   args.push('-loglevel', 'info');
-  
+
   // Input files
   const inputMap = new Map(); // Track input indices
   let inputIndex = 0;
-  
+
   // Add clip inputs
   clips.forEach((clip, i) => {
     args.push('-i', clip.localPath);
     inputMap.set(`clip_${i}`, inputIndex++);
   });
-  
+
   // Add background music input if exists
   if (audioAssets.backgroundMusic) {
     args.push('-i', audioAssets.backgroundMusic.localPath);
     inputMap.set('bgm', inputIndex++);
   }
-  
+
   // Add audio track input if exists
   if (audioAssets.audioTrack) {
     args.push('-i', audioAssets.audioTrack.localPath);
     inputMap.set('audioTrack', inputIndex++);
   }
-  
+
   // Add watermark input if exists
   if (audioAssets.watermark) {
     args.push('-i', audioAssets.watermark.localPath);
     inputMap.set('watermark', inputIndex++);
   }
-  
+
   // Build filter complex
   const { filterComplex, videoOutput, audioOutput } = buildFilterGraph(
-    clips, 
-    enhancements, 
-    videoSettings, 
-    audioAssets, 
+    clips,
+    enhancements,
+    videoSettings,
+    audioAssets,
     inputMap,
+    crossLayerTransitions,
     jobId
   );
   
@@ -811,8 +815,8 @@ function buildAdvancedFFmpegCommand(clips, enhancements, videoSettings, audioAss
   return args;
 }
 
-function buildFilterGraph(clips, enhancements, videoSettings, audioAssets, inputMap, jobId) {
-  if (clips.length === 1 && !audioAssets.backgroundMusic && !audioAssets.audioTrack && !audioAssets.watermark) {
+function buildFilterGraph(clips, enhancements, videoSettings, audioAssets, inputMap, crossLayerTransitions, jobId) {
+  if (clips.length === 1 && !audioAssets.backgroundMusic && !audioAssets.audioTrack && !audioAssets.watermark && (!crossLayerTransitions || crossLayerTransitions.length === 0)) {
     // Super simple case: single clip, no enhancements
     const clip = clips[0];
     if (!clip.fadeInSeconds && !clip.fadeOutSeconds && (clip.speed || 1) === 1 && (clip.volume ?? 1) === 1 && !clip.muted) {
@@ -1100,7 +1104,132 @@ function buildFilterGraph(clips, enhancements, videoSettings, audioAssets, input
       finalAudioLabel = '[late_silent]';
     }
   }
-  
+
+  // ============================================================================
+  // CROSS-LAYER TRANSITIONS
+  // Apply transitions between clips on different layers that overlap in time
+  // Uses overlay + blend filters to composite overlapping clips with transition effects
+  // ============================================================================
+  if (crossLayerTransitions && crossLayerTransitions.length > 0 && clips.length > 1) {
+    console.log(`[${jobId}] Processing ${crossLayerTransitions.length} cross-layer transitions`);
+
+    // Build a map of clip IDs to their data
+    const clipMap = new Map();
+    let cumulativeTime = 0;
+
+    clips.forEach((clip, index) => {
+      const speed = clip.speed ?? 1;
+      const trimStart = clip.trimStartSeconds ?? 0;
+      const trimEnd = clip.trimEndSeconds;
+      let duration = clip.actualDuration || clip.duration || 5;
+
+      if (trimEnd !== undefined) {
+        duration = Math.min(duration, trimEnd) - trimStart;
+      } else if (trimStart > 0) {
+        duration = duration - trimStart;
+      }
+      duration = duration / speed;
+
+      // Use explicit startTime/positionSeconds if provided, otherwise calculate cumulative
+      // Priority: startTime > positionSeconds > cumulativeTime (for sequential clips)
+      const startTime = clip.startTime ?? clip.positionSeconds ?? cumulativeTime;
+      const trackId = clip.trackId || 'layer-1';
+      const clipId = clip.id || clip.clipId || `clip-${index}`;
+
+      console.log(`[${jobId}]   Clip ${index} (${clipId}): startTime=${startTime.toFixed(2)}, duration=${duration.toFixed(2)}, track=${trackId}`);
+
+      clipMap.set(clipId, {
+        index,
+        startTime,
+        duration,
+        endTime: startTime + duration,
+        trackId,
+        inputIdx: inputMap.get(`clip_${index}`),
+      });
+
+      // Update cumulative time for sequential fallback (only if no explicit position)
+      if (clip.startTime === undefined && clip.positionSeconds === undefined) {
+        cumulativeTime += duration;
+      } else {
+        cumulativeTime = Math.max(cumulativeTime, startTime + duration);
+      }
+    });
+
+    // Process each cross-layer transition using overlay with blend
+    let crossLayerIndex = 0;
+    for (const transition of crossLayerTransitions) {
+      const fromClip = clipMap.get(transition.fromClipId);
+      const toClip = clipMap.get(transition.toClipId);
+
+      if (!fromClip || !toClip) {
+        console.log(`[${jobId}]   Skipping transition: clips not found (from: ${transition.fromClipId}, to: ${transition.toClipId})`);
+        continue;
+      }
+
+      // Calculate overlap region
+      const overlapStart = Math.max(fromClip.startTime, toClip.startTime);
+      const overlapEnd = Math.min(fromClip.endTime, toClip.endTime);
+      const overlapDuration = overlapEnd - overlapStart;
+
+      if (overlapDuration < 0.1) {
+        console.log(`[${jobId}]   Skipping transition: insufficient overlap (${overlapDuration.toFixed(2)}s)`);
+        continue;
+      }
+
+      // Determine transition parameters
+      const transitionDuration = Math.min(transition.durationSeconds || 1.0, overlapDuration);
+      const transitionType = transition.type || 'fade';
+
+      console.log(`[${jobId}]   Cross-layer transition: ${transitionType} (${transitionDuration.toFixed(2)}s) at ${overlapStart.toFixed(2)}s-${overlapEnd.toFixed(2)}s`);
+
+      // For cross-layer blending, we use overlay with time-based alpha
+      // This creates a dissolve/blend effect during the overlap period
+      const blendOutputLabel = `clt_blend_${crossLayerIndex}`;
+
+      // Calculate the blend timing: fade from 0 to 1 over transition duration
+      // Use overlay with format=auto and blend filter for the transition effect
+      // The blend happens during the overlap period, starting at overlapStart
+
+      // Create a scaled/formatted version of the overlay clip for blending
+      const overlayPrepLabel = `clt_prep_${crossLayerIndex}`;
+      const overlayClipIdx = toClip.inputIdx;
+
+      // Prepare overlay clip: scale to match target, set timing with setpts
+      // We offset the pts so the overlay clip appears at the right time
+      const timeOffset = overlapStart - toClip.startTime; // Offset within the overlay clip
+      filterSteps.push(`[${overlayClipIdx}:v]scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:-1:-1:color=black,setpts=PTS-STARTPTS+${overlapStart.toFixed(3)}/TB,format=yuva420p[${overlayPrepLabel}]`);
+
+      // Apply overlay with time-based enable and blend mode based on transition type
+      // For 'fade' and 'dissolve', we use a time-based alpha blend
+      // The enable expression limits the overlay to the transition period
+      const enableExpr = `between(t,${overlapStart.toFixed(3)},${(overlapStart + transitionDuration).toFixed(3)})`;
+
+      // Calculate alpha expression for smooth fade: goes from 0 to 1 over transition duration
+      // alpha = (t - overlapStart) / transitionDuration, clamped to [0,1]
+      const alphaExpr = `min(1,max(0,(t-${overlapStart.toFixed(3)})/${transitionDuration.toFixed(3)}))`;
+
+      // Use blend filter with time-varying blend factor for smooth transition
+      if (transitionType === 'fade' || transitionType === 'dissolve') {
+        // For fade/dissolve, use overlay with alpha blending
+        filterSteps.push(`${finalVideoLabel}[${overlayPrepLabel}]overlay=0:0:enable='${enableExpr}':format=auto[${blendOutputLabel}]`);
+      } else {
+        // For other transition types, use the blend filter with appropriate mode
+        const blendMode = transitionType === 'addition' ? 'addition' :
+                         transitionType === 'multiply' ? 'multiply' :
+                         transitionType === 'screen' ? 'screen' :
+                         transitionType === 'overlay' ? 'overlay' : 'normal';
+        filterSteps.push(`${finalVideoLabel}[${overlayPrepLabel}]blend=all_mode=${blendMode}:all_opacity='${alphaExpr}':enable='${enableExpr}'[${blendOutputLabel}]`);
+      }
+
+      finalVideoLabel = `[${blendOutputLabel}]`;
+      crossLayerIndex++;
+    }
+
+    if (crossLayerIndex > 0) {
+      console.log(`[${jobId}] ✓ Applied ${crossLayerIndex} cross-layer transitions`);
+    }
+  }
+
   // Apply global fade in/out
   if (enhancements?.fadeIn || enhancements?.fadeOut) {
     const fadeDuration = enhancements.fadeDuration || 1;
