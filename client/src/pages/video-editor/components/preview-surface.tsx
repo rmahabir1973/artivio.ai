@@ -149,13 +149,13 @@ export function PreviewSurface({
       
       <div className="flex-1 flex items-center justify-center p-4 relative">
         {previewUrl ? (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex flex-col items-center justify-center gap-3">
             <video
               ref={videoRef}
               src={previewUrl}
               controls
               className={cn(
-                "max-w-full max-h-full rounded-lg shadow-lg transition-opacity",
+                "max-w-full max-h-[calc(100%-48px)] rounded-lg shadow-lg transition-opacity",
                 status === 'refreshing' && "opacity-70"
               )}
               onTimeUpdate={handleTimeUpdate}
@@ -163,6 +163,28 @@ export function PreviewSurface({
               onSeeked={handleSeeked}
               data-testid="preview-video"
             />
+            {/* Always visible refresh button */}
+            {onForceRefresh && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onForceRefresh}
+                disabled={status === 'refreshing'}
+                data-testid="button-refresh-preview"
+              >
+                {status === 'refreshing' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh Preview
+                  </>
+                )}
+              </Button>
+            )}
             {status === 'refreshing' && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="bg-background/80 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
