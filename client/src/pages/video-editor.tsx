@@ -98,7 +98,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
-import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline } from "./video-editor/components";
+import { EditorSidebar, PreviewSurface, CanvasPreview, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline } from "./video-editor/components";
 import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
 
@@ -638,6 +638,9 @@ export default function VideoEditor() {
   const previewCacheRef = useRef<Map<string, string>>(new Map());
   const lastPreviewSignatureRef = useRef<string | null>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Canvas preview mode (real-time compositing)
+  const [useCanvasPreview, setUseCanvasPreview] = useState(false);
 
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
@@ -3975,19 +3978,43 @@ export default function VideoEditor() {
 
           {/* Center: Preview Surface (flex-1 to take remaining space) */}
           <div className="flex-1 flex flex-col min-w-0 relative">
-            <PreviewSurface
-              previewUrl={previewUrl}
-              status={previewStatus}
-              clipCount={useMultiTrack ? multiTrackItems.length : orderedClips.length}
-              totalDuration={totalDuration}
-              onForceRefresh={generatePreview}
-              errorMessage={previewError}
-              className="flex-1"
-              timelineTime={timelineCurrentTime}
-              isTimelinePlaying={isTimelinePlaying}
-              onTimelineTimeChange={setTimelineCurrentTime}
-            />
-            {textOverlays.length > 0 && (
+            {/* Preview Mode Toggle */}
+            <div className="absolute top-2 right-2 z-10 flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-1.5 border shadow-sm">
+              <span className="text-xs text-muted-foreground">
+                {useCanvasPreview ? 'Real-time' : 'Rendered'}
+              </span>
+              <Switch
+                checked={useCanvasPreview}
+                onCheckedChange={setUseCanvasPreview}
+                disabled={!useMultiTrack}
+                title={!useMultiTrack ? "Enable Multi-Track Mode to use real-time preview" : undefined}
+              />
+              <Sparkles className={cn("h-3 w-3", useCanvasPreview ? "text-primary" : "text-muted-foreground")} />
+            </div>
+
+            {useCanvasPreview && useMultiTrack ? (
+              <CanvasPreview
+                items={multiTrackItems}
+                currentTime={timelineCurrentTime}
+                isPlaying={isTimelinePlaying}
+                onTimeUpdate={setTimelineCurrentTime}
+                className="flex-1"
+              />
+            ) : (
+              <PreviewSurface
+                previewUrl={previewUrl}
+                status={previewStatus}
+                clipCount={useMultiTrack ? multiTrackItems.length : orderedClips.length}
+                totalDuration={totalDuration}
+                onForceRefresh={generatePreview}
+                errorMessage={previewError}
+                className="flex-1"
+                timelineTime={timelineCurrentTime}
+                isTimelinePlaying={isTimelinePlaying}
+                onTimelineTimeChange={setTimelineCurrentTime}
+              />
+            )}
+            {textOverlays.length > 0 && !useCanvasPreview && (
               <TextOverlayRenderer
                 overlays={textOverlays}
                 currentTime={timelineCurrentTime}
