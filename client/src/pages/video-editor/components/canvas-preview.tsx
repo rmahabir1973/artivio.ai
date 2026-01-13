@@ -33,27 +33,11 @@ export function CanvasPreview({
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const [isReady, setIsReady] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0, percentage: 0 });
-  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasSetTimeoutRef = useRef(false);
 
   // Update callback ref when it changes
   useEffect(() => {
     onTimeUpdateRef.current = onTimeUpdate;
   }, [onTimeUpdate]);
-
-  // Hide overlay when loading completes
-  useEffect(() => {
-    if (loadingProgress.percentage === 100) {
-      setShowLoadingOverlay(false);
-      hasSetTimeoutRef.current = false;
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-    }
-  }, [loadingProgress.percentage]);
 
   // Initialize compositor
   useEffect(() => {
@@ -99,34 +83,13 @@ export function CanvasPreview({
         .filter(item => item.type === 'video')
         .map(item => ({ id: item.id, url: item.url }));
 
-      // Show loading overlay if there are videos to load
+      // Start loading videos in background (don't await - let it be async)
       if (videoItems.length > 0) {
-        // Only show overlay and set timeout if we haven't already started loading
-        if (!hasSetTimeoutRef.current) {
-          setShowLoadingOverlay(true);
-          hasSetTimeoutRef.current = true;
-
-          // Clear any existing timeout
-          if (loadingTimeoutRef.current) {
-            clearTimeout(loadingTimeoutRef.current);
-          }
-
-          // Set 5-second timeout
-          loadingTimeoutRef.current = setTimeout(() => {
-            setShowLoadingOverlay(false);
-            hasSetTimeoutRef.current = false;
-          }, 5000);
-        }
+        // Videos will load in background and render when ready
+        videoManager.preloadVideos(videoItems).catch((error) => {
+          console.error('Error preloading videos:', error);
+        });
       }
-
-      videoManager.preloadVideos(videoItems).then(() => {
-        const progress = videoManager.getLoadingProgress();
-        setLoadingProgress(progress);
-      }).catch((error) => {
-        console.error('Error preloading videos:', error);
-        setShowLoadingOverlay(false);
-        hasSetTimeoutRef.current = false;
-      });
 
     // Handle images
     items.forEach(item => {
@@ -194,15 +157,6 @@ export function CanvasPreview({
 
     audioElementsRef.current = newAudioElements;
 
-    // Update loading progress periodically (reduced frequency to minimize overhead)
-    const progressInterval = setInterval(() => {
-      const progress = videoManager.getLoadingProgress();
-      setLoadingProgress(progress);
-      if (progress.percentage === 100) {
-        clearInterval(progressInterval);
-      }
-    }, 500);
-
     // Convert timeline items to compositor layers (visual only)
     const layers: CompositorLayer[] = items
       .filter(item => item.type !== 'audio') // Audio is handled separately
@@ -233,24 +187,8 @@ export function CanvasPreview({
       });
 
       compositorRef.current.setLayers(layers);
-
-      return () => {
-        clearInterval(progressInterval);
-        // Clean up timeout when items change
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = null;
-        }
-        hasSetTimeoutRef.current = false;
-      };
     } catch (error) {
       console.error('Error updating canvas preview items:', error);
-      // Clean up on error too
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-      hasSetTimeoutRef.current = false;
     }
   }, [items]);
 
@@ -294,43 +232,6 @@ export function CanvasPreview({
           <div className="text-center space-y-2">
             <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
             <p className="text-white text-sm">Initializing canvas...</p>
-          </div>
-        </div>
-      )}
-      {isReady && showLoadingOverlay && loadingProgress.percentage < 100 && loadingProgress.total > 0 && (
-        <div className="absolute top-4 left-4 bg-black/90 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm z-10 pointer-events-auto">
-          <div className="flex items-start gap-3">
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-                <p className="text-white text-sm font-medium">
-                  Loading videos: {loadingProgress.loaded} / {loadingProgress.total}
-                </p>
-              </div>
-              <div className="w-48 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${loadingProgress.percentage}%` }}
-                />
-              </div>
-              <p className="text-white/60 text-xs">Preview will show once loaded</p>
-            </div>
-            <button
-              onClick={() => {
-                setShowLoadingOverlay(false);
-                hasSetTimeoutRef.current = false;
-                if (loadingTimeoutRef.current) {
-                  clearTimeout(loadingTimeoutRef.current);
-                  loadingTimeoutRef.current = null;
-                }
-              }}
-              className="text-white/60 hover:text-white transition-colors p-1"
-              title="Dismiss (preview may be incomplete)"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
       )}

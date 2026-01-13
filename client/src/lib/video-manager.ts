@@ -87,14 +87,14 @@ export class VideoManager {
         video.removeEventListener('canplay', onCanPlay);
       };
 
-      // Add timeout of 10 seconds
+      // Add timeout of 3 seconds (reduced to prevent long waits)
       timeoutId = setTimeout(() => {
         console.warn('Video loading timeout:', managedVideo.url);
         // Mark as ready anyway to not block UI
         managedVideo.isReady = true;
         cleanup();
         resolve();
-      }, 10000);
+      }, 3000);
 
       video.addEventListener('loadedmetadata', onLoadedMetadata);
       video.addEventListener('error', onError);
@@ -135,11 +135,18 @@ export class VideoManager {
   }
 
   /**
-   * Preload multiple videos
+   * Preload multiple videos (serially to avoid overwhelming browser)
    */
   async preloadVideos(items: Array<{ id: string; url: string }>): Promise<void> {
-    const promises = items.map(item => this.getOrCreateVideo(item.id, item.url));
-    await Promise.allSettled(promises);
+    // Load videos one at a time to avoid browser freeze
+    for (const item of items) {
+      try {
+        await this.getOrCreateVideo(item.id, item.url);
+      } catch (error) {
+        console.warn('Failed to preload video:', item.url, error);
+        // Continue loading other videos even if one fails
+      }
+    }
   }
 
   /**
