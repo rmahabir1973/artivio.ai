@@ -8614,10 +8614,10 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       // Extract video URLs from clips (handle both formats from frontend)
       const videoUrls = previewClips.map((clip: any) => clip.sourceUrl || clip.url);
       
-      // Build preview enhancements (include speed, background music, audio tracks)
+      // Build preview enhancements (include speed, background music, audio tracks, cross-layer transitions)
       const previewEnhancements = enhancements ? {
         transitions: enhancements.transitions,
-        clipSettings: enhancements.clipSettings?.filter((cs: any) => 
+        clipSettings: enhancements.clipSettings?.filter((cs: any) =>
           previewClips.some((clip: any, index: number) => cs.clipIndex === index)
         ),
         speed: enhancements.speed,
@@ -8625,6 +8625,8 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         audioTrack: enhancements.audioTrack,
         // Include audio tracks with position, trim, and fade settings
         audioTracks: enhancements.audioTracks,
+        // Include cross-layer transitions for multi-track mode
+        crossLayerTransitions: enhancements.crossLayerTransitions,
         fadeIn: enhancements.fadeIn,
         fadeOut: enhancements.fadeOut,
         fadeDuration: enhancements.fadeDuration,

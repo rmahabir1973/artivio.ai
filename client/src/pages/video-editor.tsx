@@ -1967,6 +1967,27 @@ const previewMutation = useMutation({
           fadeOutSeconds: track.fadeOutSeconds ?? 0,
           volume: 1.0,
         })) : undefined,
+        // Background music track
+        backgroundMusic: enhancements.backgroundMusic ? {
+          audioUrl: enhancements.backgroundMusic.audioUrl,
+          volume: enhancements.backgroundMusic.volume,
+        } : undefined,
+        // Voice/TTS audio track
+        audioTrack: enhancements.audioTrack ? {
+          audioUrl: enhancements.audioTrack.audioUrl,
+          type: enhancements.audioTrack.type,
+          volume: enhancements.audioTrack.volume,
+        } : undefined,
+        // Cross-layer transitions for multi-track mode
+        crossLayerTransitions: enhancements.crossLayerTransitions.length > 0
+          ? enhancements.crossLayerTransitions.map(t => ({
+              id: t.id,
+              fromClipId: t.fromClipId,
+              toClipId: t.toClipId,
+              type: t.type,
+              durationSeconds: t.durationSeconds,
+            }))
+          : undefined,
       };
 
       const response = await apiRequest("POST", "/api/video-editor/preview", { 
