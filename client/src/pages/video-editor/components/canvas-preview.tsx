@@ -63,7 +63,7 @@ export function CanvasPreview({
       const compositor = new CanvasCompositor(canvasRef.current, {
         width,
         height,
-        fps: 30,
+        fps: 15, // Reduced from 30 to prevent browser freeze
         backgroundColor: '#000000',
       });
 
@@ -101,11 +101,8 @@ export function CanvasPreview({
 
       // Show loading overlay if there are videos to load
       if (videoItems.length > 0) {
-        console.log('Starting video loading for', videoItems.length, 'videos:', videoItems.map(v => v.url));
-
         // Only show overlay and set timeout if we haven't already started loading
         if (!hasSetTimeoutRef.current) {
-          console.log('Starting new loading cycle - showing overlay');
           setShowLoadingOverlay(true);
           hasSetTimeoutRef.current = true;
 
@@ -115,22 +112,15 @@ export function CanvasPreview({
           }
 
           // Set 5-second timeout
-          console.log('Setting 5-second timeout for loading overlay');
           loadingTimeoutRef.current = setTimeout(() => {
-            console.log('⏰ Loading timeout (5s) - hiding overlay and continuing with available videos');
-            const finalProgress = videoManager.getLoadingProgress();
-            console.log('Final progress at timeout:', finalProgress);
             setShowLoadingOverlay(false);
             hasSetTimeoutRef.current = false;
           }, 5000);
-        } else {
-          console.log('Loading already in progress, skipping overlay re-show');
         }
       }
 
       videoManager.preloadVideos(videoItems).then(() => {
         const progress = videoManager.getLoadingProgress();
-        console.log('Video preloading completed, progress:', progress);
         setLoadingProgress(progress);
       }).catch((error) => {
         console.error('Error preloading videos:', error);
@@ -204,14 +194,14 @@ export function CanvasPreview({
 
     audioElementsRef.current = newAudioElements;
 
-    // Update loading progress periodically
+    // Update loading progress periodically (reduced frequency to minimize overhead)
     const progressInterval = setInterval(() => {
       const progress = videoManager.getLoadingProgress();
       setLoadingProgress(progress);
       if (progress.percentage === 100) {
         clearInterval(progressInterval);
       }
-    }, 200);
+    }, 500);
 
     // Convert timeline items to compositor layers (visual only)
     const layers: CompositorLayer[] = items
@@ -242,7 +232,6 @@ export function CanvasPreview({
         return layer;
       });
 
-      console.log('[CanvasPreview] Setting layers in compositor, count:', layers.length);
       compositorRef.current.setLayers(layers);
 
       return () => {

@@ -96,13 +96,6 @@ export class CanvasCompositor {
    * Update all layers
    */
   setLayers(layers: CompositorLayer[]): void {
-    console.log('[Compositor] Setting layers:', layers.length, 'layers', layers.map(l => ({
-      id: l.id,
-      type: l.type,
-      hasElement: !!l.element,
-      startTime: l.startTime,
-      duration: l.duration,
-    })));
     this.layers.clear();
     layers.forEach(layer => this.layers.set(layer.id, layer));
     this.sortedLayersCache = null; // Invalidate cache
@@ -168,9 +161,6 @@ export class CanvasCompositor {
    */
   private drawVideoLayer(layer: CompositorLayer): void {
     if (!layer.element || !(layer.element instanceof HTMLVideoElement)) {
-      if (Math.random() < 0.05) {
-        console.warn('[Compositor] Video layer missing element:', layer.id);
-      }
       return;
     }
 
@@ -178,15 +168,12 @@ export class CanvasCompositor {
 
     // Check if video is ready
     if (video.readyState < 2) {
-      if (Math.random() < 0.05) {
-        console.warn('[Compositor] Video not ready:', layer.id, 'readyState:', video.readyState);
-      }
       return;
     }
 
-    // Sync video time to layer local time
+    // Sync video time to layer local time (less frequently to reduce CPU load)
     const localTime = this.getLayerLocalTime(layer);
-    if (Math.abs(video.currentTime - localTime) > 0.1) {
+    if (Math.abs(video.currentTime - localTime) > 0.5) {
       video.currentTime = localTime;
     }
 
@@ -375,23 +362,6 @@ export class CanvasCompositor {
     const sortedLayers = this.getSortedLayers();
     const activeLayers = sortedLayers.filter(layer => this.isLayerActive(layer));
 
-    // Debug logging (only log occasionally to avoid spam)
-    if (Math.random() < 0.01) { // Log ~1% of frames
-      console.log('[Compositor] Rendering frame:', {
-        currentTime: this.currentTime,
-        totalLayers: sortedLayers.length,
-        activeLayers: activeLayers.length,
-        isPlaying: this.isPlaying,
-        layers: activeLayers.map(l => ({
-          id: l.id,
-          type: l.type,
-          hasElement: !!l.element,
-          startTime: l.startTime,
-          duration: l.duration,
-        }))
-      });
-    }
-
     // Draw each active layer
     for (const layer of activeLayers) {
       switch (layer.type) {
@@ -416,6 +386,11 @@ export class CanvasCompositor {
 
     // Continue animation loop
     this.animationFrameId = requestAnimationFrame(this.animate);
+
+    // Skip rendering if page is not visible (tab is in background)
+    if (document.hidden) {
+      return;
+    }
 
     // Throttle rendering to target FPS
     const timeSinceLastRender = timestamp - this.lastRenderTime;
