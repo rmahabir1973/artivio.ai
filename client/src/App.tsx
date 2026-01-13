@@ -50,6 +50,7 @@ import {
 import { CreditDisplay } from "@/components/credit-display";
 import { AIAssistantWidget } from "@/components/ai-assistant-widget";
 import { WelcomeModal } from "@/components/welcome-modal";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -200,8 +201,12 @@ function Router() {
       <Route path="/topaz-upscaler" component={TopazUpscaler} />
       <Route path="/topaz-video-upscaler" component={TopazVideoUpscaler} />
       <Route path="/background-remover" component={BackgroundRemover} />
-      <Route path="/video-editor" component={VideoEditor} />
-      <Route path="/video-joiner-express" component={VideoJoinerExpress} />
+      <Route path="/video-editor">
+        <ErrorBoundary><VideoEditor /></ErrorBoundary>
+      </Route>
+      <Route path="/video-joiner-express">
+        <ErrorBoundary><VideoJoinerExpress /></ErrorBoundary>
+      </Route>
       <Route path="/chat" component={Chat} />
       <Route path="/stock-photos" component={StockPhotos} />
 

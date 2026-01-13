@@ -133,6 +133,9 @@ interface AdvancedTimelineProps {
   onSeekPreview?: (time: number) => void;
   isPlaying: boolean;
   className?: string;
+  isDraggingClip?: boolean; // True when a clip/audio is being dragged
+  zoom?: number; // External zoom control
+  onZoomChange?: (zoom: number) => void; // Callback when zoom changes
 }
 
 const TRACK_HEIGHT = 48;
@@ -299,6 +302,7 @@ function CrossLayerTransitionZone({
   onAddTransition,
   onEditTransition,
   onRemoveTransition,
+  isDraggingClip,
 }: {
   overlap: CrossLayerOverlap;
   pixelsPerSecond: number;
@@ -307,6 +311,7 @@ function CrossLayerTransitionZone({
   onAddTransition?: (fromClipId: string, toClipId: string, type: string, durationSeconds: number) => void;
   onEditTransition?: (transitionId: string, type: string, durationSeconds: number) => void;
   onRemoveTransition?: (transitionId: string) => void;
+  isDraggingClip?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedType, setSelectedType] = useState(overlap.transition?.type || 'fade');
@@ -365,9 +370,12 @@ function CrossLayerTransitionZone({
     <>
       <div
         className={cn(
-          "absolute z-20 cursor-pointer transition-all border-2 border-dashed rounded-sm",
-          hasTransition 
-            ? "bg-yellow-500/20 border-yellow-500/60 hover:bg-yellow-500/30" 
+          "absolute z-20 transition-all border-2 border-dashed rounded-sm",
+          isDraggingClip
+            ? "pointer-events-none opacity-30"
+            : "cursor-pointer",
+          hasTransition
+            ? "bg-yellow-500/20 border-yellow-500/60 hover:bg-yellow-500/30"
             : "bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary/50"
         )}
         style={{
@@ -1108,8 +1116,17 @@ export function AdvancedTimeline({
   onSeekPreview,
   isPlaying,
   className,
+  isDraggingClip = false,
+  zoom: externalZoom,
+  onZoomChange,
 }: AdvancedTimelineProps) {
-  const [zoom, setZoom] = useState(1);
+  const [internalZoom, setInternalZoom] = useState(1);
+  const zoom = externalZoom ?? internalZoom;
+  const setZoom = (newZoom: number | ((prev: number) => number)) => {
+    const resolvedZoom = typeof newZoom === 'function' ? newZoom(zoom) : newZoom;
+    setInternalZoom(resolvedZoom);
+    onZoomChange?.(resolvedZoom);
+  };
   const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set());
   const [layerCount, setLayerCount] = useState(1); // Start with 1 layer
   const [trackVisibility, setTrackVisibility] = useState<Record<string, boolean>>({});
@@ -1137,9 +1154,10 @@ export function AdvancedTimeline({
     }
   }, [clips, layerCount]);
 
-  // Auto-extend layerCount based on existing clips (for legacy projects)
+  // Auto-extend layerCount based on existing clips and audio tracks
   useEffect(() => {
     let maxLayer = 1;
+    // Check video clips
     clips.forEach(clip => {
       if (clip.trackId) {
         const layerNum = parseInt(clip.trackId.replace('layer-', ''));
@@ -1148,10 +1166,19 @@ export function AdvancedTimeline({
         }
       }
     });
+    // Also check audio tracks
+    audioTracks.forEach(track => {
+      if (track.trackId) {
+        const layerNum = parseInt(track.trackId.replace('layer-', ''));
+        if (!isNaN(layerNum) && layerNum > maxLayer) {
+          maxLayer = layerNum;
+        }
+      }
+    });
     if (maxLayer > layerCount) {
       setLayerCount(Math.min(maxLayer, MAX_LAYERS));
     }
-  }, [clips, layerCount]);
+  }, [clips, audioTracks, layerCount]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -1730,6 +1757,7 @@ export function AdvancedTimeline({
                     onAddTransition={onCrossLayerTransitionAdd}
                     onEditTransition={onCrossLayerTransitionEdit}
                     onRemoveTransition={onCrossLayerTransitionRemove}
+                    isDraggingClip={isDraggingClip}
                   />
                 ))}
 

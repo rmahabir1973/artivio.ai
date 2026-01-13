@@ -340,7 +340,7 @@ export function PropertiesPanel({
                       <Slider
                         value={[settings.trimStartSeconds ?? 0]}
                         min={0}
-                        max={Math.max((settings.originalDuration ?? 10) - 0.5, 0.1)}
+                        max={Math.max((settings.trimEndSeconds ?? settings.originalDuration ?? 10) - 0.5, 0.1)}
                         step={0.1}
                         onValueChange={([v]) => onClipSettingsChange({ trimStartSeconds: v })}
                         data-testid="slider-trim-start"
@@ -355,7 +355,7 @@ export function PropertiesPanel({
                       </Label>
                       <Slider
                         value={[settings.trimEndSeconds ?? settings.originalDuration ?? 10]}
-                        min={0.5}
+                        min={Math.max((settings.trimStartSeconds ?? 0) + 0.5, 0.5)}
                         max={settings.originalDuration ?? 10}
                         step={0.1}
                         onValueChange={([v]) => onClipSettingsChange({ trimEndSeconds: v })}

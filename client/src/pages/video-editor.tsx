@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from "react";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   DndContext,
@@ -101,6 +101,23 @@ import type { VideoProject } from "@shared/schema";
 import { EditorSidebar, PreviewSurface, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline } from "./video-editor/components";
 import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
+
+// ==========================================
+// Constants - Extracted magic numbers
+// ==========================================
+const PIXELS_PER_SECOND_BASE = 100; // Base pixels per second for timeline (before zoom)
+const TRACK_HEIGHT = 48; // Height of each track/layer in pixels
+const DEFAULT_IMAGE_DURATION = 5; // Default duration for images in seconds
+const DEFAULT_VIDEO_DURATION = 8; // Fallback duration for videos (common AI video length)
+const DEFAULT_AUDIO_DURATION = 30; // Fallback duration for audio tracks
+const DRAG_ACTIVATION_DISTANCE = 3; // Minimum pixels before drag activates
+const LAYER_DRAG_THRESHOLD = 20; // Minimum vertical pixels to trigger layer change
+const HORIZONTAL_DRAG_THRESHOLD = 5; // Minimum horizontal pixels to trigger position update
+const DURATION_LOAD_TIMEOUT = 10000; // Timeout for loading media metadata in ms
+const SESSION_EXPIRY_HOURS = 24; // Hours before localStorage session expires
+const AUTO_SAVE_DEBOUNCE_MS = 1000; // Debounce time for auto-save in ms
+const MIN_TRIM_GAP = 0.5; // Minimum gap between trim start and end in seconds
+const MAX_LAYERS = 10; // Maximum number of layers allowed
 
 type WizardStep = 1 | 2 | 3;
 
@@ -220,11 +237,11 @@ interface SortableClipProps {
   transitionMode: 'none' | 'crossfade';
 }
 
-function SortableClip({ 
-  clip, 
+const SortableClip = memo(function SortableClip({
+  clip,
   clipIndex,
   clipSettings,
-  onRemove, 
+  onRemove,
   onToggleMute,
   onOpenSettings,
   onSplitClip,
@@ -382,7 +399,7 @@ function SortableClip({
       </div>
     </div>
   );
-}
+});
 
 interface VideoCardProps {
   generation: Generation;
@@ -390,7 +407,7 @@ interface VideoCardProps {
   onToggle: (id: string) => void;
 }
 
-function VideoCard({ generation, isSelected, onToggle }: VideoCardProps) {
+const VideoCard = memo(function VideoCard({ generation, isSelected, onToggle }: VideoCardProps) {
   return (
     <div
       className={cn(
@@ -446,7 +463,7 @@ function VideoCard({ generation, isSelected, onToggle }: VideoCardProps) {
       </div>
     </div>
   );
-}
+});
 
 function VideoCardSkeleton() {
   return (
@@ -534,7 +551,7 @@ function ClipSpeedSlider({
 
 export default function VideoEditor() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { getModelCost } = usePricing();
   const isMobile = useIsMobile();
 
@@ -585,6 +602,7 @@ export default function VideoEditor() {
   const [dragDelta, setDragDelta] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dragInitialPosition, setDragInitialPosition] = useState<number>(0);
   const [lastPointerPosition, setLastPointerPosition] = useState<{ x: number; y: number } | null>(null);
+  const [timelineZoom, setTimelineZoom] = useState<number>(1); // Sync with timeline zoom for accurate drag calculations
 
   // Enhanced editor state
   const [clipSettings, setClipSettings] = useState<Map<string, ClipSettingsLocal>>(new Map());
@@ -633,6 +651,9 @@ export default function VideoEditor() {
   const [showTransitionEditModal, setShowTransitionEditModal] = useState(false);
   const [editingTransition, setEditingTransition] = useState<{ position: number; transition: ClipTransitionLocal } | null>(null);
 
+  // Confirmation dialog state for destructive actions
+  const [showResetConfirmDialog, setShowResetConfirmDialog] = useState(false);
+
   // CapCut-style layout state
   const [selectedClip, setSelectedClip] = useState<{ clip: VideoClip; index: number } | null>(null);
   const [timelineCurrentTime, setTimelineCurrentTime] = useState(0);
@@ -662,7 +683,11 @@ export default function VideoEditor() {
   // ==========================================
   // Auto-save to localStorage for session persistence
   // ==========================================
-  const LOCAL_STORAGE_KEY = 'artivio-video-editor-session';
+  // Use user ID in key to prevent collision between different users/tabs
+  const LOCAL_STORAGE_KEY = useMemo(() => {
+    const userId = user?.id || 'guest';
+    return `artivio-video-editor-session-${userId}`;
+  }, [user?.id]);
   const autoSaveDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const isRestoringRef = useRef(false);
 
@@ -705,9 +730,9 @@ export default function VideoEditor() {
         clearTimeout(autoSaveDebounceRef.current);
       }
     };
-  }, [orderedClips, audioTracks, multiTrackItems, useMultiTrack, clipSettings, enhancements, step]);
+  }, [orderedClips, audioTracks, multiTrackItems, useMultiTrack, clipSettings, enhancements, step, LOCAL_STORAGE_KEY]);
 
-  // Restore editor state from localStorage on mount
+  // Restore editor state from localStorage on mount (runs when user ID changes)
   useEffect(() => {
     try {
       const savedSession = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -763,13 +788,13 @@ export default function VideoEditor() {
       console.error('[VIDEO-EDITOR] Failed to restore session:', error);
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
-  }, []);
+  }, [LOCAL_STORAGE_KEY]);
 
   // Clear session when user starts a new project or clears the editor
   const clearLocalSession = useCallback(() => {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     console.log('[VIDEO-EDITOR] Session cleared from localStorage');
-  }, []);
+  }, [LOCAL_STORAGE_KEY]);
 
   // Calculate total timeline duration based on actual clip durations, trim settings, and speed
   const calculateTotalDuration = useCallback((): number => {
@@ -805,6 +830,9 @@ export default function VideoEditor() {
   // Track which clips have already attempted duration loading to prevent infinite loops
   // Key is "clipId:url" to allow re-loading if URL changes
   const attemptedDurationLoadsRef = useRef<Set<string>>(new Set());
+
+  // Track which clips are currently loading their duration
+  const [loadingDurations, setLoadingDurations] = useState<Set<string>>(new Set());
 
   // Default clip settings
   const defaultClipSettings: ClipSettingsLocal = {
@@ -856,8 +884,20 @@ export default function VideoEditor() {
       return;
     }
 
+    // Mark as loading
+    setLoadingDurations(prev => new Set(prev).add(clipId));
+
+    // Helper to clear loading state
+    const clearLoading = () => {
+      setLoadingDurations(prev => {
+        const next = new Set(prev);
+        next.delete(clipId);
+        return next;
+      });
+    };
+
     // Use correct element type for media: video for video files, audio for audio/music files
-    const element = mediaType === 'audio' 
+    const element = mediaType === 'audio'
       ? document.createElement('audio')
       : document.createElement('video');
 
@@ -868,13 +908,15 @@ export default function VideoEditor() {
     element.src = url;
 
     // Timeout after 10 seconds if metadata doesn't load
-    const fallbackDuration = mediaType === 'audio' ? 30 : 10;
+    // Default to 8 seconds for videos (common AI-generated video duration from Veo, etc.)
+    const fallbackDuration = mediaType === 'audio' ? DEFAULT_AUDIO_DURATION : DEFAULT_VIDEO_DURATION;
     const timeoutId = setTimeout(() => {
       console.warn(`[DURATION] Timeout loading ${mediaType} metadata for clip ${clipId}`);
       updateClipSettings(clipId, { originalDuration: fallbackDuration });
+      clearLoading();
       element.src = '';
       element.load();
-    }, 10000);
+    }, DURATION_LOAD_TIMEOUT);
 
     element.onloadedmetadata = () => {
       clearTimeout(timeoutId);
@@ -885,6 +927,7 @@ export default function VideoEditor() {
       } else {
         updateClipSettings(clipId, { originalDuration: fallbackDuration });
       }
+      clearLoading();
       element.src = '';
       element.load(); // Clean up
     };
@@ -893,6 +936,7 @@ export default function VideoEditor() {
       clearTimeout(timeoutId);
       // Silently use fallback - don't spam console with errors
       updateClipSettings(clipId, { originalDuration: fallbackDuration });
+      clearLoading();
       element.src = '';
       element.load();
     };
@@ -902,27 +946,25 @@ export default function VideoEditor() {
   loadClipDurationRef.current = loadClipDuration;
 
   // Load durations for newly added clips
+  // Note: clipSettings removed from deps to prevent circular updates
+  // attemptedDurationLoadsRef inside loadClipDuration prevents duplicate loads
   useEffect(() => {
     for (const clip of orderedClips) {
-      const settings = clipSettings.get(clip.id);
-      // Only load duration if not already loaded
-      if (!settings?.originalDuration && clip.url) {
+      if (clip.url) {
         loadClipDuration(clip.id, clip.url, clip.type || 'video');
       }
     }
-  }, [orderedClips, clipSettings, loadClipDuration]);
+  }, [orderedClips, loadClipDuration]);
 
   // Load durations for audio tracks
+  // Note: clipSettings removed from deps to prevent circular updates
   useEffect(() => {
     for (const track of audioTracks) {
-      const settings = clipSettings.get(track.id);
-      // Only load duration if not already loaded
-      if (!settings?.originalDuration && track.url) {
-        // IMPORTANT: Pass 'audio' as the mediaType parameter
+      if (track.url) {
         loadClipDuration(track.id, track.url, 'audio');
       }
     }
-  }, [audioTracks, clipSettings, loadClipDuration]);
+  }, [audioTracks, loadClipDuration]);
 
   // Build a signature string that represents the current preview state
   // Used for caching and detecting changes
@@ -1123,10 +1165,47 @@ export default function VideoEditor() {
     } catch (error) {
       console.error('Preview generation error:', error);
       setPreviewStatus('error');
-      setPreviewError(error instanceof Error ? error.message : 'Preview generation failed');
+
+      // Provide specific error messages based on error type
+      let errorTitle = "Preview Failed";
+      let errorMessage = "Failed to generate preview";
+
+      if (error instanceof Error) {
+        // Network errors
+        if (error.message.includes('fetch') || error.message.includes('network') || error.name === 'TypeError') {
+          errorTitle = "Network Error";
+          errorMessage = "Unable to connect to the server. Please check your internet connection.";
+        }
+        // Timeout errors
+        else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+          errorTitle = "Request Timeout";
+          errorMessage = "The preview is taking too long. Try with fewer clips or shorter videos.";
+        }
+        // Server errors
+        else if (error.message.includes('500') || error.message.includes('server')) {
+          errorTitle = "Server Error";
+          errorMessage = "The server encountered an error. Please try again later.";
+        }
+        // Rate limiting
+        else if (error.message.includes('429') || error.message.includes('rate') || error.message.includes('limit')) {
+          errorTitle = "Rate Limited";
+          errorMessage = "Too many requests. Please wait a moment before trying again.";
+        }
+        // FFmpeg/processing errors
+        else if (error.message.includes('ffmpeg') || error.message.includes('processing')) {
+          errorTitle = "Processing Error";
+          errorMessage = "Error processing video. One or more clips may be corrupted.";
+        }
+        // Use the actual error message if it's specific
+        else if (error.message && error.message !== 'Preview generation failed') {
+          errorMessage = error.message;
+        }
+      }
+
+      setPreviewError(errorMessage);
       toast({
-        title: "Preview Failed",
-        description: error instanceof Error ? error.message : 'Failed to generate preview',
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -1142,10 +1221,16 @@ export default function VideoEditor() {
   // Open split dialog
   const openSplitDialog = useCallback((clip: VideoClip, index: number) => {
     setSplittingClip({ clip, index });
-    setSplitTime(0);
-    setClipDuration(0);
+    // Use clip settings as fallback duration if video metadata doesn't load
+    const settings = clipSettings.get(clip.id);
+    const fallbackDuration = settings?.originalDuration ?? 8;
+    const trimStart = settings?.trimStartSeconds ?? 0;
+    const trimEnd = settings?.trimEndSeconds ?? fallbackDuration;
+    const effectiveDuration = trimEnd - trimStart;
+    setClipDuration(effectiveDuration);
+    setSplitTime(effectiveDuration / 2);
     setShowSplitModal(true);
-  }, []);
+  }, [clipSettings]);
 
   // Handle video loaded metadata to get duration
   const handleSplitVideoLoaded = useCallback(() => {
@@ -1184,6 +1269,8 @@ export default function VideoEditor() {
     }
 
     const { clip, index } = splittingClip;
+    // Calculate new clip count before state update (state update is async)
+    const newClipCount = orderedClips.length + 1;
 
     // Create two clips from the original
     // First clip: original with trimEnd set to splitTime
@@ -1233,14 +1320,14 @@ export default function VideoEditor() {
 
     toast({
       title: "Clip Split",
-      description: `Clip has been split at ${formatTime(splitTime)}. You now have ${orderedClips.length + 1} clips.`,
+      description: `Clip has been split at ${formatTime(splitTime)}. You now have ${newClipCount} clips.`,
     });
   }, [splittingClip, splitTime, clipDuration, getClipSettings, updateClipSettings, orderedClips.length, toast]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3, // Reduced from 8 for snappier drag initiation
+        distance: DRAG_ACTIVATION_DISTANCE,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -2232,10 +2319,9 @@ const previewMutation = useMutation({
       console.log('[DRAG] Clip drag:', { clipId, dragDelta, dragInitialPosition });
 
       // If significant horizontal movement, update position (only in free mode)
-      if (!enhancements.snapEnabled && Math.abs(dragDelta.x) >= 5) {
+      if (!enhancements.snapEnabled && Math.abs(dragDelta.x) >= HORIZONTAL_DRAG_THRESHOLD) {
         // Calculate new position using initial position + delta
-        // Use 100 pixels per second as base (matches PIXELS_PER_SECOND_BASE in timeline)
-        const pixelsPerSecond = 100; // Base rate - zoom is already factored into the drag delta
+        const pixelsPerSecond = PIXELS_PER_SECOND_BASE * timelineZoom;
         const deltaSeconds = dragDelta.x / pixelsPerSecond;
 
         // Calculate new position from initial, not current (avoids compounding)
@@ -2246,14 +2332,14 @@ const previewMutation = useMutation({
         console.log('[DRAG] Updated clip position:', { clipId, newPosition, deltaSeconds, initial: dragInitialPosition });
       }
 
-      // If significant vertical movement, change track (reduced threshold for better responsiveness)
-      if (Math.abs(dragDelta.y) >= 20 && dragDelta.y !== 0) {
+      // If significant vertical movement, change track
+      if (Math.abs(dragDelta.y) >= LAYER_DRAG_THRESHOLD && dragDelta.y !== 0) {
         const clip = orderedClips.find(c => c.id === clipId);
         if (clip) {
           const currentTrackId = clip.trackId || 'layer-1';
           const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
-          const trackDelta = Math.round(dragDelta.y / 48); // ~48px per track (matches TRACK_HEIGHT)
-          const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
+          const trackDelta = Math.round(dragDelta.y / TRACK_HEIGHT);
+          const newTrackNum = Math.max(1, Math.min(MAX_LAYERS, currentTrackNum + trackDelta));
           const newTrackId = `layer-${newTrackNum}`;
 
           if (newTrackId !== currentTrackId) {
@@ -2277,8 +2363,8 @@ const previewMutation = useMutation({
       console.log('[DRAG] Audio drag:', { trackId, dragDelta, dragInitialPosition });
 
       // If significant horizontal movement, update position
-      if (Math.abs(dragDelta.x) >= 5) {
-        const pixelsPerSecond = 100; // Base rate
+      if (Math.abs(dragDelta.x) >= HORIZONTAL_DRAG_THRESHOLD) {
+        const pixelsPerSecond = PIXELS_PER_SECOND_BASE * timelineZoom;
         const deltaSeconds = dragDelta.x / pixelsPerSecond;
         const newPosition = Math.max(0, dragInitialPosition + deltaSeconds);
 
@@ -2289,14 +2375,14 @@ const previewMutation = useMutation({
         console.log('[DRAG] Updated audio position:', { trackId, newPosition, deltaSeconds });
       }
 
-      // If significant vertical movement, change layer (reduced threshold for better responsiveness)
-      if (Math.abs(dragDelta.y) >= 20 && dragDelta.y !== 0) {
+      // If significant vertical movement, change layer
+      if (Math.abs(dragDelta.y) >= LAYER_DRAG_THRESHOLD && dragDelta.y !== 0) {
         const track = audioTracks.find(t => t.id === trackId);
         if (track) {
           const currentTrackId = track.trackId || 'layer-1';
           const currentTrackNum = parseInt(currentTrackId.split('-')[1] || '1');
-          const trackDelta = Math.round(dragDelta.y / 48); // ~48px per track (matches TRACK_HEIGHT)
-          const newTrackNum = Math.max(1, Math.min(10, currentTrackNum + trackDelta));
+          const trackDelta = Math.round(dragDelta.y / TRACK_HEIGHT);
+          const newTrackNum = Math.max(1, Math.min(MAX_LAYERS, currentTrackNum + trackDelta));
           const newLayerId = `layer-${newTrackNum}`;
 
           if (newLayerId !== currentTrackId) {
@@ -2337,8 +2423,8 @@ const previewMutation = useMutation({
 
         // Calculate drop position based on pointer location on timeline
         let dropTimeSeconds = 0;
-        const PIXELS_PER_SECOND = 100; // Base timeline pixels per second
-        
+        const pixelsPerSecond = PIXELS_PER_SECOND_BASE * timelineZoom;
+
         if (lastPointerPosition) {
           // Find the timeline scroll container by data-testid
           const scrollContainer = document.querySelector('[data-testid="timeline-scroll-container"]');
@@ -2347,14 +2433,15 @@ const previewMutation = useMutation({
             const scrollLeft = scrollContainer.scrollLeft;
             // Calculate X position relative to timeline content
             const relativeX = lastPointerPosition.x - rect.left + scrollLeft;
-            // Convert to seconds
-            dropTimeSeconds = Math.max(0, relativeX / PIXELS_PER_SECOND);
-            console.log('[DRAG] Calculated drop time from pointer:', { 
-              pointerX: lastPointerPosition.x, 
-              rectLeft: rect.left, 
-              scrollLeft, 
-              relativeX, 
-              dropTimeSeconds 
+            // Convert to seconds using zoomed pixels per second
+            dropTimeSeconds = Math.max(0, relativeX / pixelsPerSecond);
+            console.log('[DRAG] Calculated drop time from pointer:', {
+              pointerX: lastPointerPosition.x,
+              rectLeft: rect.left,
+              scrollLeft,
+              relativeX,
+              dropTimeSeconds,
+              timelineZoom
             });
           }
         }
@@ -2580,7 +2667,7 @@ const previewMutation = useMutation({
       const convertedItems: MultiTrackTimelineItem[] = orderedClips.map((clip) => {
         const settings = clipSettings.get(clip.id);
         const speed = settings?.speed || 1;
-        const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 10);
+        const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 8);
         const trimStart = settings?.trimStartSeconds || 0;
         const trimEnd = settings?.trimEndSeconds || originalDuration;
         const effectiveDuration = (trimEnd - trimStart) / speed;
@@ -2676,6 +2763,7 @@ const previewMutation = useMutation({
       transitionMode: 'none',
       transitionDuration: 1.0,
       clipTransitions: [],
+      crossLayerTransitions: [],
       fadeIn: false,
       fadeOut: false,
       fadeDuration: 0.5,
@@ -2804,6 +2892,54 @@ const previewMutation = useMutation({
     });
   }, [audioTracks, toast]);
 
+  // ==========================================
+  // Keyboard shortcuts
+  // ==========================================
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      if (e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement) {
+        return;
+      }
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+      // Delete/Backspace: Remove selected clip
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedClip) {
+        e.preventDefault();
+        removeClipFromTimeline(selectedClip.clip.id);
+        setSelectedClip(null);
+      }
+
+      // Space: Play/pause timeline
+      if (e.key === ' ' && !e.repeat) {
+        e.preventDefault();
+        handleTimelinePlayPause();
+      }
+
+      // Cmd/Ctrl+S: Save project
+      if (cmdOrCtrl && e.key === 's') {
+        e.preventDefault();
+        if (isAuthenticated) {
+          openSaveDialog(false);
+        }
+      }
+
+      // Escape: Deselect and close modals
+      if (e.key === 'Escape') {
+        setSelectedClip(null);
+        setShowSplitModal(false);
+        setShowClipSettingsModal(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedClip, isAuthenticated, handleTimelinePlayPause, removeClipFromTimeline, openSaveDialog]);
+
   if (authLoading) {
     return (
       <SidebarInset>
@@ -2886,7 +3022,7 @@ const previewMutation = useMutation({
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={resetEditor} data-testid="menu-item-new">
+                  <DropdownMenuItem onClick={() => setShowResetConfirmDialog(true)} data-testid="menu-item-new">
                     <Plus className="h-4 w-4 mr-2" />
                     New Project
                   </DropdownMenuItem>
@@ -3331,9 +3467,10 @@ const previewMutation = useMutation({
                       </div>
 
                       {/* Active transitions list */}
-                      {enhancements.clipTransitions.length > 0 && (
+                      {(enhancements.clipTransitions.length > 0 || enhancements.crossLayerTransitions.length > 0) && (
                         <div className="mt-4 space-y-2">
                           <p className="text-xs font-medium text-muted-foreground">Active Transitions</p>
+                          {/* Same-layer transitions */}
                           {enhancements.clipTransitions
                             .sort((a, b) => a.afterClipIndex - b.afterClipIndex)
                             .map((transition) => (
@@ -3367,6 +3504,35 @@ const previewMutation = useMutation({
                                 </div>
                               </div>
                             ))}
+                          {/* Cross-layer transitions */}
+                          {enhancements.crossLayerTransitions.map((transition) => {
+                            const fromClip = orderedClips.find(c => c.id === transition.fromClipId);
+                            const toClip = orderedClips.find(c => c.id === transition.toClipId);
+                            const fromIndex = fromClip ? orderedClips.indexOf(fromClip) + 1 : '?';
+                            const toIndex = toClip ? orderedClips.indexOf(toClip) + 1 : '?';
+                            return (
+                              <div key={transition.id} className="p-2 border border-purple-500/30 bg-purple-500/5 rounded-md flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Layers className="h-3 w-3 text-purple-500" />
+                                  <span className="text-xs">
+                                    Clip {fromIndex} ↔ Clip {toIndex}
+                                  </span>
+                                  <Badge variant="secondary" className="text-[10px] bg-purple-500/20">{transition.type}</Badge>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-destructive"
+                                    onClick={() => handleCrossLayerTransitionRemove(transition.id)}
+                                    data-testid={`remove-cross-transition-${transition.id}`}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -4104,6 +4270,9 @@ const previewMutation = useMutation({
               onCrossLayerTransitionAdd={handleCrossLayerTransitionAdd}
               onCrossLayerTransitionEdit={handleCrossLayerTransitionEdit}
               onCrossLayerTransitionRemove={handleCrossLayerTransitionRemove}
+              isDraggingClip={!!(activeDragData && (activeDragData.type === 'clip' || activeDragData.type === 'audio'))}
+              zoom={timelineZoom}
+              onZoomChange={setTimelineZoom}
               className="flex-1"
             />
           </div>
@@ -4294,6 +4463,7 @@ const previewMutation = useMutation({
                   poster={splittingClip.clip.thumbnailUrl || undefined}
                   className="w-full h-full object-cover"
                   onLoadedMetadata={handleSplitVideoLoaded}
+                  crossOrigin="anonymous"
                   muted
                 />
                 <div className="absolute bottom-2 left-2 right-2 bg-black/60 rounded-lg px-3 py-2">
@@ -4476,6 +4646,52 @@ const previewMutation = useMutation({
               )}
               <Save className="h-4 w-4 mr-2" />
               {isSaveAs ? 'Save Copy' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Editor Confirmation Dialog */}
+      <Dialog open={showResetConfirmDialog} onOpenChange={setShowResetConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Start New Project?
+            </DialogTitle>
+            <DialogDescription>
+              This will clear your current timeline, all clips, audio tracks, and settings.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 text-sm text-muted-foreground">
+            {orderedClips.length > 0 && (
+              <p>You have {orderedClips.length} clip{orderedClips.length !== 1 ? 's' : ''} in your timeline.</p>
+            )}
+            {audioTracks.length > 0 && (
+              <p>You have {audioTracks.length} audio track{audioTracks.length !== 1 ? 's' : ''} added.</p>
+            )}
+            {currentProject && (
+              <p className="mt-2">
+                <span className="font-medium">Tip:</span> Save your project first if you want to keep your work.
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResetConfirmDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                resetEditor();
+                setShowResetConfirmDialog(false);
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear & Start New
             </Button>
           </DialogFooter>
         </DialogContent>

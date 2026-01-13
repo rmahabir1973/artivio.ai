@@ -183,7 +183,7 @@ function StepIndicator({ currentStep }: { currentStep: WizardStep }) {
 }
 
 export default function VideoJoinerExpress() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
   const { toast } = useToast();
   const { getModelCost } = usePricing();
   const baseCreditCost = getModelCost('video-combiner', 150);
@@ -246,10 +246,10 @@ export default function VideoJoinerExpress() {
       return totalFetched < (lastPage.total ?? 0) ? totalFetched : undefined;
     },
     initialPageParam: 0,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !isAuthLoading,
   });
 
-  const allVideos: Generation[] = videosData?.pages.flatMap(page => page.generations) ?? [];
+  const allVideos: Generation[] = videosData?.pages.flatMap(page => page.generations ?? []) ?? [];
   const selectedIds = new Set(selectedClips.map(c => c.id));
 
   const toggleVideoSelection = (video: Generation) => {
@@ -450,7 +450,7 @@ export default function VideoJoinerExpress() {
                 </div>
                 
                 <ScrollArea className="flex-1 -mx-4 px-4">
-                  {isLoadingVideos ? (
+                  {(isAuthLoading || isLoadingVideos) ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {Array.from({ length: 8 }).map((_, i) => (
                         <Skeleton key={i} className="aspect-video rounded-lg" />
