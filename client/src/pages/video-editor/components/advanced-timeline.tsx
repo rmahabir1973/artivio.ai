@@ -370,13 +370,13 @@ function CrossLayerTransitionZone({
     <>
       <div
         className={cn(
-          "absolute z-20 transition-all border-2 border-dashed rounded-sm",
+          "absolute z-20 transition-all border-2 border-dashed rounded-sm pointer-events-none",
           isDraggingClip
-            ? "pointer-events-none opacity-30"
-            : "cursor-pointer",
+            ? "opacity-30"
+            : "opacity-100",
           hasTransition
-            ? "bg-yellow-500/20 border-yellow-500/60 hover:bg-yellow-500/30"
-            : "bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary/50"
+            ? "bg-yellow-500/20 border-yellow-500/60"
+            : "bg-primary/10 border-primary/30"
         )}
         style={{
           left: `${left}px`,
@@ -384,21 +384,26 @@ function CrossLayerTransitionZone({
           top: `${topOffset}px`,
           height: `${spanHeight}px`,
         }}
-        onClick={handleClick}
         data-testid={`cross-layer-zone-${overlap.fromClipId}-${overlap.toClipId}`}
       >
         <div className="absolute inset-0 flex items-center justify-center">
-          {hasTransition ? (
-            <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
-              <Sparkles className="h-2.5 w-2.5" />
-              {overlap.transition?.type}
-            </Badge>
-          ) : (
-            <div className="flex flex-col items-center gap-0.5 opacity-60 hover:opacity-100">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-[8px] text-primary font-medium">Add Effect</span>
-            </div>
-          )}
+          <button
+            onClick={handleClick}
+            className="pointer-events-auto cursor-pointer"
+            disabled={isDraggingClip}
+          >
+            {hasTransition ? (
+              <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
+                <Sparkles className="h-2.5 w-2.5" />
+                {overlap.transition?.type}
+              </Badge>
+            ) : (
+              <div className="flex flex-col items-center gap-0.5 opacity-60 hover:opacity-100">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-[8px] text-primary font-medium">Add Effect</span>
+              </div>
+            )}
+          </button>
         </div>
       </div>
       

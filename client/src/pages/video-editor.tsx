@@ -639,8 +639,8 @@ export default function VideoEditor() {
   const lastPreviewSignatureRef = useRef<string | null>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Canvas preview mode (real-time compositing)
-  const [useCanvasPreview, setUseCanvasPreview] = useState(false);
+  // Canvas preview mode (real-time compositing) - default to true for instant feedback
+  const [useCanvasPreview, setUseCanvasPreview] = useState(true);
 
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
@@ -2739,14 +2739,19 @@ export default function VideoEditor() {
     3: "Preview and export your combined video",
   };
 
-  // Calculate total timeline duration
+  // Calculate total timeline duration - matches AdvancedTimeline logic
   const totalDuration = useMemo(() => {
-    // Find the maximum end time of all clips across all layers
-    let maxEndTime = 0;
+    // Track running time per layer (same as AdvancedTimeline)
+    const runningTimeByLayer: Record<string, number> = {};
+    const maxLayers = 10;
+    for (let i = 1; i <= maxLayers; i++) {
+      runningTimeByLayer[`layer-${i}`] = 0;
+    }
 
-    // Check video/image clips
-    orderedClips.forEach((clip) => {
+    // Calculate positions for video/image clips per layer
+    orderedClips.forEach((clip, index) => {
       const settings = getClipSettings(clip.id);
+      const trackId = clip.trackId || 'layer-1';
       const speed = settings?.speed || 1;
       const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 8);
       const trimStart = settings?.trimStartSeconds || 0;
@@ -2756,23 +2761,33 @@ export default function VideoEditor() {
         ? (settings?.displayDuration || 5)
         : effectiveDuration;
 
-      // Use positionSeconds if available, otherwise calculate sequentially
-      const startTime = settings?.positionSeconds ?? 0;
+      // Use manual position if set, otherwise use layer-based sequential position
+      const startTime = settings?.positionSeconds !== undefined
+        ? settings.positionSeconds
+        : (runningTimeByLayer[trackId] || 0);
+
       const endTime = startTime + displayDuration;
-      maxEndTime = Math.max(maxEndTime, endTime);
+
+      // Update running time for this layer
+      runningTimeByLayer[trackId] = Math.max(runningTimeByLayer[trackId] || 0, endTime);
     });
 
     // Check audio tracks
     audioTracks.forEach((audio) => {
+      const trackId = audio.trackId || 'layer-1';
       const startTime = audio.positionSeconds || 0;
       const duration = audio.duration || 30;
       const trimStart = audio.trimStartSeconds || 0;
       const trimEnd = audio.trimEndSeconds || duration;
       const effectiveDuration = trimEnd - trimStart;
       const endTime = startTime + effectiveDuration;
-      maxEndTime = Math.max(maxEndTime, endTime);
+
+      // Update running time for this layer
+      runningTimeByLayer[trackId] = Math.max(runningTimeByLayer[trackId] || 0, endTime);
     });
 
+    // Return the maximum end time across all layers
+    const maxEndTime = Math.max(...Object.values(runningTimeByLayer), 0);
     return maxEndTime || calculateTotalDuration();
   }, [orderedClips, audioTracks, getClipSettings, calculateTotalDuration]);
 
@@ -4033,12 +4048,20 @@ export default function VideoEditor() {
               <CanvasPreview
                 items={(() => {
                   // Convert orderedClips to MultiTrackTimelineItem format for canvas preview
+                  // Use same logic as AdvancedTimeline for consistent positioning
                   const items: MultiTrackTimelineItem[] = [];
-                  let currentTime = 0;
+
+                  // Track running time per layer (same as AdvancedTimeline)
+                  const runningTimeByLayer: Record<string, number> = {};
+                  const maxLayers = 10;
+                  for (let i = 1; i <= maxLayers; i++) {
+                    runningTimeByLayer[`layer-${i}`] = 0;
+                  }
 
                   // Add video/image clips
                   orderedClips.forEach((clip) => {
                     const settings = getClipSettings(clip.id);
+                    const trackId = clip.trackId || 'layer-1';
                     const speed = settings?.speed || 1;
                     const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 8);
                     const trimStart = settings?.trimStartSeconds || 0;
@@ -4049,11 +4072,12 @@ export default function VideoEditor() {
                       : effectiveDuration;
 
                     // Get track number from trackId (e.g., "layer-1" -> 0, "layer-2" -> 1)
-                    const trackId = clip.trackId || 'layer-1';
                     const trackNumber = parseInt(trackId.split('-')[1] || '1') - 1;
 
-                    // Use positionSeconds if available (for free positioning), otherwise sequential
-                    const startTime = settings?.positionSeconds ?? currentTime;
+                    // Use manual position if set, otherwise use layer-based sequential position
+                    const startTime = settings?.positionSeconds !== undefined
+                      ? settings.positionSeconds
+                      : (runningTimeByLayer[trackId] || 0);
 
                     items.push({
                       id: clip.id,
@@ -4072,10 +4096,8 @@ export default function VideoEditor() {
                       zIndex: trackNumber,
                     });
 
-                    // Only increment currentTime if using sequential positioning
-                    if (settings?.positionSeconds === undefined) {
-                      currentTime = startTime + displayDuration;
-                    }
+                    // Update running time for this layer
+                    runningTimeByLayer[trackId] = startTime + displayDuration;
                   });
 
                   // Add audio tracks
