@@ -34,11 +34,42 @@ export function CanvasPreview({
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const [isReady, setIsReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0, percentage: 0 });
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update callback ref when it changes
   useEffect(() => {
     onTimeUpdateRef.current = onTimeUpdate;
   }, [onTimeUpdate]);
+
+  // Auto-hide loading overlay after 5 seconds
+  useEffect(() => {
+    if (loadingProgress.percentage < 100 && loadingProgress.total > 0) {
+      // Clear existing timeout
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+
+      // Set new timeout to auto-hide after 5 seconds
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.log('Loading timeout - hiding overlay and continuing with available videos');
+        setShowLoadingOverlay(false);
+      }, 5000);
+    }
+
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, [loadingProgress]);
+
+  // Hide overlay when loading completes
+  useEffect(() => {
+    if (loadingProgress.percentage === 100) {
+      setShowLoadingOverlay(false);
+    }
+  }, [loadingProgress.percentage]);
 
   // Initialize compositor
   useEffect(() => {
@@ -84,11 +115,17 @@ export function CanvasPreview({
         .filter(item => item.type === 'video')
         .map(item => ({ id: item.id, url: item.url }));
 
+      // Show loading overlay if there are videos to load
+      if (videoItems.length > 0) {
+        setShowLoadingOverlay(true);
+      }
+
       videoManager.preloadVideos(videoItems).then(() => {
         const progress = videoManager.getLoadingProgress();
         setLoadingProgress(progress);
       }).catch((error) => {
         console.error('Error preloading videos:', error);
+        setShowLoadingOverlay(false);
       });
 
     // Handle images
@@ -241,26 +278,40 @@ export function CanvasPreview({
         style={{ aspectRatio: `${width}/${height}` }}
       />
       {!isReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-none">
           <div className="text-center space-y-2">
             <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
             <p className="text-white text-sm">Initializing canvas...</p>
           </div>
         </div>
       )}
-      {isReady && loadingProgress.percentage < 100 && loadingProgress.total > 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-          <div className="text-center space-y-2">
-            <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
-            <p className="text-white text-sm">
-              Loading videos: {loadingProgress.loaded} / {loadingProgress.total}
-            </p>
-            <div className="w-48 h-2 bg-gray-700 rounded-full overflow-hidden mx-auto">
-              <div
-                className="h-full bg-primary transition-all duration-300"
-                style={{ width: `${loadingProgress.percentage}%` }}
-              />
+      {isReady && showLoadingOverlay && loadingProgress.percentage < 100 && loadingProgress.total > 0 && (
+        <div className="absolute top-4 left-4 bg-black/90 border border-white/20 rounded-lg p-3 shadow-xl backdrop-blur-sm z-10 pointer-events-auto">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+                <p className="text-white text-sm font-medium">
+                  Loading videos: {loadingProgress.loaded} / {loadingProgress.total}
+                </p>
+              </div>
+              <div className="w-48 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${loadingProgress.percentage}%` }}
+                />
+              </div>
+              <p className="text-white/60 text-xs">Preview will show once loaded</p>
             </div>
+            <button
+              onClick={() => setShowLoadingOverlay(false)}
+              className="text-white/60 hover:text-white transition-colors p-1"
+              title="Dismiss (preview may be incomplete)"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}

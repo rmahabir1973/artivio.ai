@@ -60,6 +60,7 @@ export class VideoManager {
 
     const promise = new Promise<void>((resolve, reject) => {
       const video = managedVideo.element;
+      let timeoutId: NodeJS.Timeout | null = null;
 
       const onLoadedMetadata = () => {
         managedVideo.duration = video.duration;
@@ -80,10 +81,20 @@ export class VideoManager {
       };
 
       const cleanup = () => {
+        if (timeoutId) clearTimeout(timeoutId);
         video.removeEventListener('loadedmetadata', onLoadedMetadata);
         video.removeEventListener('error', onError);
         video.removeEventListener('canplay', onCanPlay);
       };
+
+      // Add timeout of 10 seconds
+      timeoutId = setTimeout(() => {
+        console.warn('Video loading timeout:', managedVideo.url);
+        // Mark as ready anyway to not block UI
+        managedVideo.isReady = true;
+        cleanup();
+        resolve();
+      }, 10000);
 
       video.addEventListener('loadedmetadata', onLoadedMetadata);
       video.addEventListener('error', onError);
