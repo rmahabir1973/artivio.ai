@@ -1,0 +1,247 @@
+/**
+ * Cross-Layer Transitions Module for FFmpeg Video Processing
+ * Handles transitions between clips on different timeline layers
+ * INTEGRATED VERSION - Works with main server.js pipeline
+ */
+
+const TRANSITION_MAP = {
+  'fade': 'fade',
+  'dissolve': 'dissolve',
+  'fadeblack': 'fadeblack',
+  'fadewhite': 'fadewhite',
+  'wipeleft': 'wipeleft',
+  'wiperight': 'wiperight',
+  'wipeup': 'wipeup',
+  'wipedown': 'wipedown',
+  'slideleft': 'slideleft',
+  'slideright': 'slideright',
+  'circleopen': 'circleopen',
+  'circleclose': 'circleclose',
+  'pixelize': 'pixelize',
+  'radial': 'radial',
+  'diagtl': 'diagtl',
+  'diagtr': 'diagtr',
+  'diagbl': 'diagbl',
+  'diagbr': 'diagbr',
+  'smoothleft': 'smoothleft',
+  'smoothright': 'smoothright',
+  'smoothup': 'smoothup',
+  'smoothdown': 'smoothdown',
+  'hlslice': 'hlslice',
+  'hrslice': 'hrslice',
+  'vuslice': 'vuslice',
+  'vdslice': 'vdslice',
+  'hblur': 'hblur',
+  'fadegrays': 'fadegrays',
+  'wipetl': 'wipetl',
+  'wipetr': 'wipetr',
+  'wipebl': 'wipebl',
+  'wipebr': 'wipebr',
+  'squeezeh': 'squeezeh',
+  'squeezev': 'squeezev',
+  'zoomin': 'zoomin'
+};
+
+function getFFmpegTransitionType(type) {
+  return TRANSITION_MAP[type] || 'fade';
+}
+
+/**
+ * Main function called by server.js
+ * MUST return format that server.js expects at lines 847-861
+ */
+function processCrossLayerTransitions(payload, downloadedClips) {
+  const { clips, multiTrackTimeline, crossLayerTransitions, videoSettings, enhancements } = payload;
+  
+  console.log('[CrossLayer] Processing cross-layer transitions');
+  console.log('[CrossLayer] Payload clips:', clips.length);
+  console.log('[CrossLayer] Downloaded clips:', downloadedClips.length);
+  console.log('[CrossLayer] Cross-layer transitions:', crossLayerTransitions?.length || 0);
+  
+  if (!crossLayerTransitions || crossLayerTransitions.length === 0) {
+    console.log('[CrossLayer] No cross-layer transitions to process');
+    return null;
+  }
+  
+  if (!multiTrackTimeline || !multiTrackTimeline.items) {
+    console.warn('[CrossLayer] No multiTrackTimeline items found');
+    return null;
+  }
+  
+  // Get target dimensions from video settings (same as main pipeline)
+  const targetWidth = calculateTargetWidth(videoSettings, enhancements);
+  const targetHeight = calculateTargetHeight(videoSettings, enhancements);
+  
+  console.log(`[CrossLayer] Target dimensions: ${targetWidth}x${targetHeight}`);
+  
+  const videoFilters = [];
+  const audioFilters = [];
+  const videoOutputLabels = [];
+  const audioOutputLabels = [];
+  
+  // Process each transition
+  for (let i = 0; i < crossLayerTransitions.length; i++) {
+    const transition = crossLayerTransitions[i];
+    
+    // Find clips in the timeline
+    const fromTimelineClip = multiTrackTimeline.items.find(item => item.id === transition.fromClipId);
+    const toTimelineClip = multiTrackTimeline.items.find(item => item.id === transition.toClipId);
+    
+    if (!fromTimelineClip || !toTimelineClip) {
+      console.warn(`[CrossLayer] Transition ${i}: clips not found in timeline`);
+      continue;
+    }
+    
+    // Find downloaded clip indices
+    const fromIndex = downloadedClips.findIndex(c => c.id === transition.fromClipId);
+    const toIndex = downloadedClips.findIndex(c => c.id === transition.toClipId);
+    
+    if (fromIndex === -1 || toIndex === -1) {
+      console.warn(`[CrossLayer] Transition ${i}: downloaded clips not found`);
+      continue;
+    }
+    
+    // Get clip durations from main clips array (not timeline)
+    const fromClip = clips[fromIndex];
+    const toClip = clips[toIndex];
+    
+    if (!fromClip || !toClip) {
+      console.warn(`[CrossLayer] Transition ${i}: clips not found in main array`);
+      continue;
+    }
+    
+    // Calculate timing - SIMPLIFIED for preview
+    // For preview, we just want the transition effect, not precise timing
+    const transitionDuration = transition.durationSeconds || 1.0;
+    const ffmpegType = getFFmpegTransitionType(transition.type);
+    
+    console.log(`[CrossLayer] Building transition ${i}: ${transition.fromClipId}[${fromIndex}] -> ${transition.toClipId}[${toIndex}]`);
+    console.log(`[CrossLayer]   Type: ${transition.type} -> ${ffmpegType}, Duration: ${transitionDuration}s`);
+    
+    // Build video filter - SIMPLIFIED for preview
+    // Use the clip indices directly in the filter graph
+    const videoFilter = buildSimpleXfadeFilter(
+      fromIndex, 
+      toIndex, 
+      ffmpegType, 
+      transitionDuration, 
+      i,
+      targetWidth,
+      targetHeight
+    );
+    
+    videoFilters.push(videoFilter);
+    videoOutputLabels.push({ label: `xfade_out_${i}` });
+    
+    // Build audio filter - SIMPLIFIED
+    const audioFilter = buildSimpleAudioFilter(fromIndex, toIndex, transitionDuration, i);
+    audioFilters.push(audioFilter);
+    audioOutputLabels.push(`acrossfade_${i}`);
+  }
+  
+  if (videoFilters.length === 0) {
+    console.log('[CrossLayer] No valid filters generated');
+    return null;
+  }
+  
+  console.log(`[CrossLayer] Generated ${videoFilters.length} video filter(s)`);
+  console.log(`[CrossLayer] Generated ${audioFilters.length} audio filter(s)`);
+  
+  return {
+    videoFilters,
+    audioFilters,
+    videoOutputLabels,
+    audioOutputLabels
+  };
+}
+
+/**
+ * Simplified xfade filter for preview
+ * This creates a direct transition between two clips
+ */
+function buildSimpleXfadeFilter(fromIdx, toIdx, ffmpegType, duration, transitionId, targetWidth, targetHeight) {
+  // Create processing chain for each clip (scale, format, etc.)
+  const fromProcessing = `[${fromIdx}:v]scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,setsar=1[v${fromIdx}_proc]`;
+  const toProcessing = `[${toIdx}:v]scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,setsar=1[v${toIdx}_proc]`;
+  
+  // Create the xfade transition
+  const xfade = `[v${fromIdx}_proc][v${toIdx}_proc]xfade=transition=${ffmpegType}:duration=${duration.toFixed(3)}:offset=0[xfade_out_${transitionId}]`;
+  
+  return `${fromProcessing};${toProcessing};${xfade}`;
+}
+
+/**
+ * Simplified audio filter for preview
+ */
+function buildSimpleAudioFilter(fromIdx, toIdx, duration, transitionId) {
+  return `[${fromIdx}:a][${toIdx}:a]acrossfade=d=${duration.toFixed(3)}[acrossfade_${transitionId}]`;
+}
+
+/**
+ * Calculate target width (mirroring server.js logic)
+ */
+function calculateTargetWidth(videoSettings, enhancements) {
+  let targetWidth = 1920;
+  
+  if (enhancements?.aspectRatio) {
+    switch (enhancements.aspectRatio) {
+      case '9:16':
+        targetWidth = 1080;
+        break;
+      case '1:1':
+        targetWidth = 1080;
+        break;
+      case '4:3':
+        targetWidth = 1440;
+        break;
+      default: // 16:9
+        targetWidth = 1920;
+    }
+  }
+  
+  if (videoSettings?.resolution) {
+    const scale = videoSettings.resolution === '720p' ? 0.667 : 
+                  videoSettings.resolution === '480p' ? 0.444 :
+                  videoSettings.resolution === '4k' ? 2 : 1;
+    targetWidth = Math.round(targetWidth * scale);
+  }
+  
+  return targetWidth;
+}
+
+/**
+ * Calculate target height (mirroring server.js logic)
+ */
+function calculateTargetHeight(videoSettings, enhancements) {
+  let targetHeight = 1080;
+  
+  if (enhancements?.aspectRatio) {
+    switch (enhancements.aspectRatio) {
+      case '9:16':
+        targetHeight = 1920;
+        break;
+      case '1:1':
+        targetHeight = 1080;
+        break;
+      case '4:3':
+        targetHeight = 1080;
+        break;
+      default: // 16:9
+        targetHeight = 1080;
+    }
+  }
+  
+  if (videoSettings?.resolution) {
+    const scale = videoSettings.resolution === '720p' ? 0.667 : 
+                  videoSettings.resolution === '480p' ? 0.444 :
+                  videoSettings.resolution === '4k' ? 2 : 1;
+    targetHeight = Math.round(targetHeight * scale);
+  }
+  
+  return targetHeight;
+}
+
+// Export - ONLY the main function is needed by server.js
+module.exports = {
+  processCrossLayerTransitions
+};

@@ -8594,62 +8594,112 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
   
-  // Generate quick low-res preview (local processing for speed)
-  // This creates a fast 360p preview of the video project
+  // Generate preview via VPS (supports single-track and multi-track with cross-layer transitions)
+  // VPS handles all FFmpeg processing including audio mixing and transitions
   app.post('/api/video-editor/preview', requireJWT, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { project, enhancements } = req.body;
+      const { project, enhancements, multiTrackTimeline, videoSettings } = req.body;
       
-      if (!project || !project.clips || !Array.isArray(project.clips) || project.clips.length < 1) {
+      // Multi-track mode check
+      const isMultiTrack = multiTrackTimeline?.enabled && Array.isArray(multiTrackTimeline.items) && multiTrackTimeline.items.length > 0;
+      
+      // Single-track mode requires project clips
+      if (!isMultiTrack && (!project || !project.clips || !Array.isArray(project.clips) || project.clips.length < 1)) {
         return res.status(400).json({ message: "Project with at least one clip is required" });
       }
       
-      // Process all clips for full preview (no artificial limit)
-      const previewClips = project.clips;
+      const vpsUrl = process.env.VPS_VIDEO_PROCESSOR_URL;
       
-      console.log(`[Video Editor] Starting preview generation for user ${userId} with ${previewClips.length} clips`);
-      console.log(`[Video Editor] Received enhancements:`, JSON.stringify(enhancements, null, 2));
+      if (!vpsUrl) {
+        console.error('[Video Editor] VPS_VIDEO_PROCESSOR_URL not configured');
+        return res.status(500).json({ message: "Video preview service not configured" });
+      }
       
-      // Extract video URLs from clips (handle both formats from frontend)
-      const videoUrls = previewClips.map((clip: any) => clip.sourceUrl || clip.url);
+      // Generate unique preview job ID
+      const jobId = `preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Build preview enhancements (include speed, background music, audio tracks, cross-layer transitions)
-      const previewEnhancements = enhancements ? {
-        transitions: enhancements.transitions,
-        clipSettings: enhancements.clipSettings?.filter((cs: any) =>
-          previewClips.some((clip: any, index: number) => cs.clipIndex === index)
-        ),
-        speed: enhancements.speed,
-        backgroundMusic: enhancements.backgroundMusic,
-        audioTrack: enhancements.audioTrack,
-        // Include audio tracks with position, trim, and fade settings
-        audioTracks: enhancements.audioTracks,
-        // Include cross-layer transitions for multi-track mode
-        crossLayerTransitions: enhancements.crossLayerTransitions,
-        fadeIn: enhancements.fadeIn,
-        fadeOut: enhancements.fadeOut,
-        fadeDuration: enhancements.fadeDuration,
-      } : undefined;
+      if (isMultiTrack) {
+        console.log(`[Video Editor] Starting VPS multi-track preview ${jobId} for user ${userId} with ${multiTrackTimeline.items.length} items`);
+      } else {
+        console.log(`[Video Editor] Starting VPS preview ${jobId} for user ${userId} with ${project.clips.length} clips`);
+      }
+      console.log(`[Video Editor] Preview enhancements:`, JSON.stringify(enhancements, null, 2));
       
-      // Use local FFmpeg processing with lower quality settings for speed
-      const { combineVideos } = await import('./videoProcessor.js');
-      
-      const result = await combineVideos({
-        videoUrls,
-        enhancements: previewEnhancements,
-        previewMode: true, // Signal to use lower quality settings
-        onProgress: (stage, message) => {
-          console.log(`[Preview] ${stage}: ${message}`);
+      // Build VPS payload (same structure as export but with previewMode)
+      let vpsPayload: any = {
+        jobId,
+        userId,
+        previewMode: true,
+        videoSettings: {
+          format: 'mp4',
+          quality: 'preview',
+          resolution: videoSettings?.resolution || '720p',
         },
+        enhancements: enhancements || undefined,
+      };
+      
+      if (isMultiTrack) {
+        // Multi-track mode: send timeline items directly (VPS extracts clips from timeline)
+        vpsPayload.multiTrackTimeline = multiTrackTimeline;
+        vpsPayload.crossLayerTransitions = enhancements?.crossLayerTransitions || undefined;
+        // VPS handles clip extraction from multiTrackTimeline - no redundant clips array needed
+      } else {
+        // Single-track mode: normalize clips
+        const normalizedClips = project.clips.map((clip: any, index: number) => {
+          const sourceUrl = clip.sourceUrl || clip.url;
+          if (!sourceUrl) {
+            throw new Error(`Clip ${index + 1} is missing a video URL`);
+          }
+          return {
+            id: clip.id || `clip-${index}`,
+            sourceUrl,
+            order: clip.order ?? index,
+            type: clip.type || 'video',
+          };
+        });
+        normalizedClips.sort((a: any, b: any) => a.order - b.order);
+        vpsPayload.clips = normalizedClips;
+      }
+      
+      console.log(`[Video Editor] Calling VPS for preview at: ${vpsUrl}`);
+      console.log(`[Video Editor] Preview payload:`, JSON.stringify(vpsPayload, null, 2));
+      
+      const vpsResponse = await fetch(vpsUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vpsPayload),
       });
       
-      res.json({
-        status: 'completed',
-        previewUrl: result.outputUrl,
-        duration: result.duration,
-        message: 'Preview generated successfully',
-      });
+      if (!vpsResponse.ok) {
+        const errorText = await vpsResponse.text();
+        console.error(`[Video Editor] VPS preview error for job ${jobId} (status ${vpsResponse.status}):`, errorText);
+        return res.status(500).json({ message: "Preview generation failed on server" });
+      }
+      
+      const vpsResult = await vpsResponse.json();
+      console.log(`[Video Editor] VPS preview response for job ${jobId}:`, vpsResult);
+      
+      // VPS should return synchronous result for preview mode
+      if (vpsResult.downloadUrl || vpsResult.previewUrl) {
+        res.json({
+          status: 'completed',
+          previewUrl: vpsResult.downloadUrl || vpsResult.previewUrl,
+          duration: vpsResult.duration,
+          message: 'Preview generated successfully',
+        });
+      } else if (vpsResult.status === 'processing') {
+        // Async mode - return processing status
+        res.json({
+          status: 'processing',
+          jobId,
+          message: 'Preview is being generated...',
+        });
+      } else {
+        throw new Error(vpsResult.error || 'Preview generation failed');
+      }
       
     } catch (error: any) {
       console.error('[Video Editor] Preview error:', error);

@@ -998,7 +998,7 @@ export default function VideoEditor() {
     return JSON.stringify(signatureData);
   }, [orderedClips, getClipSettings, enhancements]);
 
-  // Backend Lambda preview generation (works for both single and multi-track modes)
+  // Backend VPS preview generation (works for both single and multi-track modes)
   const generatePreview = useCallback(async () => {
     if (orderedClips.length === 0 && multiTrackItems.length === 0) {
       toast({
@@ -1016,7 +1016,7 @@ export default function VideoEditor() {
       let payload: any;
 
       if (useMultiTrack && multiTrackItems.length > 0) {
-        // Multi-track mode: send timeline items to Lambda
+        // Multi-track mode: send timeline items to VPS
         const previewItems = multiTrackItems; // Preview ALL items - no limit
 
         payload = {
@@ -1047,12 +1047,18 @@ export default function VideoEditor() {
             fadeIn: enhancements.fadeIn,
             fadeOut: enhancements.fadeOut,
             fadeDuration: enhancements.fadeDuration,
+            // Include cross-layer transitions for VPS processing
+            crossLayerTransitions: enhancements.crossLayerTransitions,
+            // Include background music for audio mixing (full object to match export)
+            backgroundMusic: enhancements.backgroundMusic,
+            // Include audio track (voice/TTS) for audio mixing (full object to match export)
+            audioTrack: enhancements.audioTrack,
           },
           previewMode: true,
           // Full preview - no duration limit for multi-track mode
         };
       } else {
-        // Single-track mode: send ordered clips to Lambda
+        // Single-track mode: send ordered clips to VPS
         const previewClips = orderedClips; // Preview ALL clips - no limit
 
         const project = {
