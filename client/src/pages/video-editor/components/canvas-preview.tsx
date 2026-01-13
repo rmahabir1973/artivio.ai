@@ -34,40 +34,24 @@ export function CanvasPreview({
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const [isReady, setIsReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0, percentage: 0 });
-  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSetTimeoutRef = useRef(false);
 
   // Update callback ref when it changes
   useEffect(() => {
     onTimeUpdateRef.current = onTimeUpdate;
   }, [onTimeUpdate]);
 
-  // Auto-hide loading overlay after 5 seconds
-  useEffect(() => {
-    if (loadingProgress.percentage < 100 && loadingProgress.total > 0) {
-      // Clear existing timeout
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-
-      // Set new timeout to auto-hide after 5 seconds
-      loadingTimeoutRef.current = setTimeout(() => {
-        console.log('Loading timeout - hiding overlay and continuing with available videos');
-        setShowLoadingOverlay(false);
-      }, 5000);
-    }
-
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-    };
-  }, [loadingProgress]);
-
   // Hide overlay when loading completes
   useEffect(() => {
     if (loadingProgress.percentage === 100) {
       setShowLoadingOverlay(false);
+      hasSetTimeoutRef.current = false;
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
     }
   }, [loadingProgress.percentage]);
 
@@ -117,15 +101,38 @@ export function CanvasPreview({
 
       // Show loading overlay if there are videos to load
       if (videoItems.length > 0) {
+        console.log('Starting video loading for', videoItems.length, 'videos:', videoItems.map(v => v.url));
         setShowLoadingOverlay(true);
+
+        // Set timeout ONCE when loading starts (not on every progress update)
+        if (!hasSetTimeoutRef.current) {
+          hasSetTimeoutRef.current = true;
+
+          // Clear any existing timeout
+          if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+          }
+
+          // Set 5-second timeout
+          console.log('Setting 5-second timeout for loading overlay');
+          loadingTimeoutRef.current = setTimeout(() => {
+            console.log('⏰ Loading timeout (5s) - hiding overlay and continuing with available videos');
+            const finalProgress = videoManager.getLoadingProgress();
+            console.log('Final progress at timeout:', finalProgress);
+            setShowLoadingOverlay(false);
+            hasSetTimeoutRef.current = false;
+          }, 5000);
+        }
       }
 
       videoManager.preloadVideos(videoItems).then(() => {
         const progress = videoManager.getLoadingProgress();
+        console.log('Video preloading completed, progress:', progress);
         setLoadingProgress(progress);
       }).catch((error) => {
         console.error('Error preloading videos:', error);
         setShowLoadingOverlay(false);
+        hasSetTimeoutRef.current = false;
       });
 
     // Handle images
@@ -236,9 +243,21 @@ export function CanvasPreview({
 
       return () => {
         clearInterval(progressInterval);
+        // Clean up timeout when items change
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = null;
+        }
+        hasSetTimeoutRef.current = false;
       };
     } catch (error) {
       console.error('Error updating canvas preview items:', error);
+      // Clean up on error too
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+      hasSetTimeoutRef.current = false;
     }
   }, [items]);
 
@@ -304,7 +323,14 @@ export function CanvasPreview({
               <p className="text-white/60 text-xs">Preview will show once loaded</p>
             </div>
             <button
-              onClick={() => setShowLoadingOverlay(false)}
+              onClick={() => {
+                setShowLoadingOverlay(false);
+                hasSetTimeoutRef.current = false;
+                if (loadingTimeoutRef.current) {
+                  clearTimeout(loadingTimeoutRef.current);
+                  loadingTimeoutRef.current = null;
+                }
+              }}
               className="text-white/60 hover:text-white transition-colors p-1"
               title="Dismiss (preview may be incomplete)"
             >
