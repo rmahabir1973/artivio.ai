@@ -1,0 +1,49 @@
+Great question! Currently the preview is generated server-side with FFmpeg, which is slow. Real-time preview like CapCut/Premiere would require a different approach.
+
+  Let me check what's already in place for client-side preview.
+
+● Search(pattern: "ffmpeg\.wasm|FFmpeg.*wasm|createFFmpeg|canvas.*video|VideoFrame|WebCodecs", path: "client")
+  ⎿  Found 0 files 
+
+● Read(client/src/pages/video-editor/components/preview-surface.tsx)
+  ⎿  Read 251 lines
+
+● Currently there's no real-time preview - just a single pre-rendered video from the server. Here are the realistic options:
+
+  Real-Time Preview Options
+
+  Option 1: Client-Side Canvas Compositing (Recommended)
+
+  How CapCut/Canva web editors do it:
+  - Load each source video as hidden <video> elements
+  - Use <canvas> to draw the current frame based on timeline position
+  - Switch between video sources as playhead moves
+  - Handle transitions with opacity blending
+  - Use Web Audio API for audio preview
+
+  Pros: Instant feedback, no server calls, works offline
+  Cons: Complex implementation, transitions are approximated, ~2-3 days of work
+
+  Option 2: FFmpeg.wasm (WebAssembly)
+
+  - Run FFmpeg directly in the browser
+  - Your replit.md mentions this was planned but not implemented
+
+  Pros: Full FFmpeg features in browser
+  Cons: Still takes 10-30+ seconds to process, not truly "real-time"
+
+  Option 3: Hybrid Approach (Quickest Win)
+
+  - Scrubbing preview: Play source videos directly (no processing) - instant
+  - Full preview: Keep current server-side FFmpeg for accurate preview with effects
+  - Mark preview as "approximate" during scrubbing
+
+  ---
+  My Recommendation
+
+  Start with Option 3 (Hybrid) - quickest to implement:
+  1. Show source videos directly during timeline scrubbing (instant playback)
+  2. Keep "Generate Preview" for full-fidelity preview with transitions/effects
+  3. Auto-generate preview when user pauses editing (debounced, e.g., 3 seconds of inactivity)
+
+  Then later upgrade to Option 1 for true real-time compositing.

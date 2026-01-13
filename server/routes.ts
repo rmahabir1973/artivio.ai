@@ -8707,7 +8707,57 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       res.status(500).json({ message: error.message || "Failed to generate preview" });
     }
   });
-  
+
+  // Check preview job status (polls VPS for async preview jobs)
+  app.get('/api/video-editor/preview-status/:jobId', requireJWT, async (req: any, res) => {
+    try {
+      const { jobId } = req.params;
+
+      const vpsUrl = process.env.VPS_VIDEO_PROCESSOR_URL;
+      if (!vpsUrl) {
+        return res.status(500).json({ message: "Video preview service not configured" });
+      }
+
+      // Query VPS status endpoint
+      const vpsBaseUrl = vpsUrl.replace('/process', '');
+      const statusResponse = await fetch(`${vpsBaseUrl}/status/${jobId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        console.error(`[Video Editor] VPS preview status error for ${jobId}:`, errorText);
+        return res.status(500).json({ status: 'failed', error: 'Failed to check preview status' });
+      }
+
+      const vpsStatus = await statusResponse.json();
+      console.log(`[Video Editor] Preview status for ${jobId}:`, vpsStatus);
+
+      // Map VPS response to client format
+      if (vpsStatus.status === 'completed' && (vpsStatus.downloadUrl || vpsStatus.previewUrl)) {
+        res.json({
+          status: 'completed',
+          previewUrl: vpsStatus.downloadUrl || vpsStatus.previewUrl,
+          duration: vpsStatus.duration,
+        });
+      } else if (vpsStatus.status === 'failed' || vpsStatus.error) {
+        res.json({
+          status: 'failed',
+          error: vpsStatus.error || 'Preview generation failed',
+        });
+      } else {
+        res.json({
+          status: 'processing',
+          progress: vpsStatus.progress,
+        });
+      }
+    } catch (error: any) {
+      console.error('[Video Editor] Preview status error:', error);
+      res.status(500).json({ status: 'failed', error: error.message || 'Failed to check preview status' });
+    }
+  });
+
   // VPS callback for async export completion
   // Security: Validate callback with shared secret from VPS
   app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {

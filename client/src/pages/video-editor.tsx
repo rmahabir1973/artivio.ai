@@ -1157,13 +1157,58 @@ export default function VideoEditor() {
           title: "Preview Ready",
           description: "Your preview has been generated!",
         });
-      } else if (data.status === 'processing') {
+      } else if (data.status === 'processing' && data.jobId) {
         // Handle async processing - poll for completion
         toast({
           title: "Processing",
           description: "Preview is being generated, this may take a few moments...",
         });
-        // Note: For production, implement polling for jobId
+
+        // Poll for completion
+        const pollInterval = 2000; // 2 seconds
+        const maxPolls = 60; // Max 2 minutes
+        let pollCount = 0;
+
+        const pollForCompletion = async () => {
+          try {
+            const statusResponse = await apiRequest("GET", `/api/video-editor/preview-status/${data.jobId}`);
+            const statusData = await statusResponse.json();
+
+            if (statusData.status === 'completed' && statusData.previewUrl) {
+              setPreviewUrl(statusData.previewUrl);
+              setPreviewStatus('ready');
+              toast({
+                title: "Preview Ready",
+                description: "Your preview has been generated!",
+              });
+              return;
+            } else if (statusData.status === 'failed') {
+              throw new Error(statusData.error || 'Preview generation failed');
+            } else if (pollCount < maxPolls) {
+              pollCount++;
+              setTimeout(pollForCompletion, pollInterval);
+            } else {
+              throw new Error('Preview generation timed out');
+            }
+          } catch (pollError: any) {
+            console.error('Preview polling error:', pollError);
+            setPreviewStatus('error');
+            setPreviewError(pollError.message || 'Preview generation failed');
+            toast({
+              title: "Preview Failed",
+              description: pollError.message || 'Preview generation failed',
+              variant: "destructive",
+            });
+          }
+        };
+
+        setTimeout(pollForCompletion, pollInterval);
+      } else if (data.status === 'processing') {
+        // No jobId returned - can't poll, just show message
+        toast({
+          title: "Processing",
+          description: "Preview is being generated...",
+        });
         setPreviewStatus('idle');
       } else {
         throw new Error(data.message || 'Preview generation failed');
@@ -1884,138 +1929,6 @@ export default function VideoEditor() {
       toast({
         title: "Export Failed",
         description: error.message || "Failed to start video export",
-        variant: "destructive",
-      });
-    },
-  });
-
-// Preview mutation for quick low-res preview
-const previewMutation = useMutation({
-  mutationFn: async (clips: VideoClip[]) => {
-    // Build project payload - PREVIEW ALL CLIPS (no limit)
-    const previewClips = clips; // Preview ALL clips, not just first 3
-    const project = {
-      clips: previewClips.map((clip, index) => ({
-        id: clip.id,
-        sourceUrl: clip.url,
-        order: index,
-      })),
-    };
-      // Serialize clip settings for preview clips (includes image settings)
-      const clipSettingsArray = previewClips.map((clip, index) => {
-        const localSettings = clipSettings.get(clip.id);
-        const isImage = clip.type === 'image';
-        return {
-          clipId: clip.id,
-          clipIndex: index,
-          muted: localSettings?.muted ?? false,
-          volume: localSettings?.volume ?? 1,
-          speed: localSettings?.speed ?? 1.0,
-          trimStartSeconds: localSettings?.trimStartSeconds,
-          trimEndSeconds: localSettings?.trimEndSeconds,
-          isImage,
-          displayDuration: isImage ? (localSettings?.displayDuration ?? 5) : undefined,
-        };
-      });
-
-      // Build speed config from clipSettings for per-clip speed adjustments (skip images)
-      const perClipSpeeds = clipSettingsArray
-        .filter(cs => cs.speed !== 1.0 && !cs.isImage)
-        .map(cs => ({ clipIndex: cs.clipIndex, factor: cs.speed }));
-
-      const speedConfig = perClipSpeeds.length > 0 
-        ? { mode: 'perClip' as const, perClip: perClipSpeeds }
-        : { mode: 'none' as const };
-
-      const enhancementsPayload = {
-        transitions: enhancements.transitionMode === 'perClip' ? {
-          mode: 'perClip' as const,
-          perClip: enhancements.clipTransitions.map(t => ({
-            afterClipIndex: t.afterClipIndex,
-            type: t.type,
-            durationSeconds: t.durationSeconds,
-          })),
-        } : enhancements.transitionMode === 'crossfade' ? {
-          mode: 'crossfade' as const,
-          durationSeconds: enhancements.transitionDuration,
-        } : { mode: 'none' as const },
-        fadeIn: enhancements.fadeIn,
-        fadeOut: enhancements.fadeOut,
-        fadeDuration: enhancements.fadeDuration,
-        aspectRatio: enhancements.aspectRatio,
-        speed: speedConfig,
-        clipSettings: clipSettingsArray.filter(cs => 
-          cs.muted || cs.volume !== 1 || cs.trimStartSeconds !== undefined || cs.trimEndSeconds !== undefined || cs.isImage
-        ),
-        watermark: enhancements.watermark ? {
-          imageUrl: enhancements.watermark.imageUrl,
-          position: enhancements.watermark.position,
-          size: enhancements.watermark.size,
-          opacity: enhancements.watermark.opacity,
-        } : undefined,
-        captions: enhancements.captions.filter(c => c.text.trim()).map(c => ({
-          id: c.id,
-          startSeconds: c.startSeconds,
-          endSeconds: c.endSeconds,
-          text: c.text,
-          style: c.style,
-        })),
-        // Include edited audio tracks with position, trim, and fade settings
-        audioTracks: audioTracks.length > 0 ? audioTracks.map(track => ({
-          id: track.id,
-          name: track.name,
-          url: track.url,
-          duration: track.duration,
-          trackId: track.trackId || 'layer-1',
-          positionSeconds: track.positionSeconds ?? 0,
-          trimStartSeconds: track.trimStartSeconds ?? 0,
-          trimEndSeconds: track.trimEndSeconds ?? (track.duration ?? 60),
-          fadeOutSeconds: track.fadeOutSeconds ?? 0,
-          volume: 1.0,
-        })) : undefined,
-        // Background music track
-        backgroundMusic: enhancements.backgroundMusic ? {
-          audioUrl: enhancements.backgroundMusic.audioUrl,
-          volume: enhancements.backgroundMusic.volume,
-        } : undefined,
-        // Voice/TTS audio track
-        audioTrack: enhancements.audioTrack ? {
-          audioUrl: enhancements.audioTrack.audioUrl,
-          type: enhancements.audioTrack.type,
-          volume: enhancements.audioTrack.volume,
-        } : undefined,
-        // Cross-layer transitions for multi-track mode
-        crossLayerTransitions: enhancements.crossLayerTransitions.length > 0
-          ? enhancements.crossLayerTransitions.map(t => ({
-              id: t.id,
-              fromClipId: t.fromClipId,
-              toClipId: t.toClipId,
-              type: t.type,
-              durationSeconds: t.durationSeconds,
-            }))
-          : undefined,
-      };
-
-      const response = await apiRequest("POST", "/api/video-editor/preview", { 
-        project,
-        enhancements: enhancementsPayload,
-      });
-      return await response.json();
-    },
-    onSuccess: (data: { status: string; previewUrl?: string; message?: string }) => {
-      if (data.status === 'completed' && data.previewUrl) {
-        setPreviewUrl(data.previewUrl);
-        setShowPreviewModal(true);
-        toast({
-          title: "Preview Ready",
-          description: "Your low-res preview is ready to view.",
-        });
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Preview Failed",
-        description: error.message || "Failed to generate preview",
         variant: "destructive",
       });
     },
@@ -4084,28 +3997,6 @@ const previewMutation = useMutation({
               />
             )}
 
-            {/* Preview Controls */}
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={generatePreview}
-                disabled={previewStatus === 'refreshing' || (useMultiTrack ? multiTrackItems.length === 0 : orderedClips.length === 0)}
-                data-testid="button-generate-preview"
-              >
-                {previewStatus === 'refreshing' ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating Preview...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Generate Preview
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
 
           {/* Right: Properties Panel (w-72, ~25% of typical screen) */}
