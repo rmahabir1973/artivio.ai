@@ -2741,17 +2741,40 @@ export default function VideoEditor() {
 
   // Calculate total timeline duration
   const totalDuration = useMemo(() => {
-    if (useMultiTrack && multiTrackItems.length > 0) {
-      // For multi-track mode, find the maximum end time of all items
-      const maxEndTime = Math.max(
-        ...multiTrackItems.map(item => item.startTime + item.duration),
-        0
-      );
-      return maxEndTime;
-    }
-    // For sequential mode, sum all durations
-    return calculateTotalDuration();
-  }, [useMultiTrack, multiTrackItems, calculateTotalDuration]);
+    // Find the maximum end time of all clips across all layers
+    let maxEndTime = 0;
+
+    // Check video/image clips
+    orderedClips.forEach((clip) => {
+      const settings = getClipSettings(clip.id);
+      const speed = settings?.speed || 1;
+      const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 8);
+      const trimStart = settings?.trimStartSeconds || 0;
+      const trimEnd = settings?.trimEndSeconds || originalDuration;
+      const effectiveDuration = (trimEnd - trimStart) / speed;
+      const displayDuration = clip.type === 'image'
+        ? (settings?.displayDuration || 5)
+        : effectiveDuration;
+
+      // Use positionSeconds if available, otherwise calculate sequentially
+      const startTime = settings?.positionSeconds ?? 0;
+      const endTime = startTime + displayDuration;
+      maxEndTime = Math.max(maxEndTime, endTime);
+    });
+
+    // Check audio tracks
+    audioTracks.forEach((audio) => {
+      const startTime = audio.positionSeconds || 0;
+      const duration = audio.duration || 30;
+      const trimStart = audio.trimStartSeconds || 0;
+      const trimEnd = audio.trimEndSeconds || duration;
+      const effectiveDuration = trimEnd - trimStart;
+      const endTime = startTime + effectiveDuration;
+      maxEndTime = Math.max(maxEndTime, endTime);
+    });
+
+    return maxEndTime || calculateTotalDuration();
+  }, [orderedClips, audioTracks, getClipSettings, calculateTotalDuration]);
 
   // Update ref for timeline playback
   timelineDurationRef.current = totalDuration;
@@ -4002,15 +4025,87 @@ export default function VideoEditor() {
               <Switch
                 checked={useCanvasPreview}
                 onCheckedChange={setUseCanvasPreview}
-                disabled={!useMultiTrack}
-                title={!useMultiTrack ? "Enable Multi-Track Mode to use real-time preview" : undefined}
               />
               <Sparkles className={cn("h-3 w-3", useCanvasPreview ? "text-primary" : "text-muted-foreground")} />
             </div>
 
-            {useCanvasPreview && useMultiTrack ? (
+            {useCanvasPreview ? (
               <CanvasPreview
-                items={multiTrackItems}
+                items={(() => {
+                  // Convert orderedClips to MultiTrackTimelineItem format for canvas preview
+                  const items: MultiTrackTimelineItem[] = [];
+                  let currentTime = 0;
+
+                  // Add video/image clips
+                  orderedClips.forEach((clip) => {
+                    const settings = getClipSettings(clip.id);
+                    const speed = settings?.speed || 1;
+                    const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 8);
+                    const trimStart = settings?.trimStartSeconds || 0;
+                    const trimEnd = settings?.trimEndSeconds || originalDuration;
+                    const effectiveDuration = (trimEnd - trimStart) / speed;
+                    const displayDuration = clip.type === 'image'
+                      ? (settings?.displayDuration || 5)
+                      : effectiveDuration;
+
+                    // Get track number from trackId (e.g., "layer-1" -> 0, "layer-2" -> 1)
+                    const trackId = clip.trackId || 'layer-1';
+                    const trackNumber = parseInt(trackId.split('-')[1] || '1') - 1;
+
+                    // Use positionSeconds if available (for free positioning), otherwise sequential
+                    const startTime = settings?.positionSeconds ?? currentTime;
+
+                    items.push({
+                      id: clip.id,
+                      type: clip.type || 'video',
+                      track: trackNumber,
+                      startTime: startTime,
+                      duration: displayDuration,
+                      originalDuration: originalDuration,
+                      url: clip.url,
+                      thumbnailUrl: clip.thumbnailUrl,
+                      name: clip.prompt || `${clip.type || 'video'} clip`,
+                      speed: speed !== 1 ? speed : undefined,
+                      trim: trimStart > 0 || trimEnd < originalDuration ? { start: trimStart, end: trimEnd } : undefined,
+                      volume: settings?.volume !== undefined ? Math.round(settings.volume * 100) : 100,
+                      muted: settings?.muted || false,
+                      zIndex: trackNumber,
+                    });
+
+                    // Only increment currentTime if using sequential positioning
+                    if (settings?.positionSeconds === undefined) {
+                      currentTime = startTime + displayDuration;
+                    }
+                  });
+
+                  // Add audio tracks
+                  audioTracks.forEach((audio) => {
+                    const trackId = audio.trackId || 'layer-1';
+                    const trackNumber = parseInt(trackId.split('-')[1] || '1') - 1;
+                    const startTime = audio.positionSeconds || 0;
+                    const duration = audio.duration || 30;
+                    const trimStart = audio.trimStartSeconds || 0;
+                    const trimEnd = audio.trimEndSeconds || duration;
+                    const effectiveDuration = trimEnd - trimStart;
+
+                    items.push({
+                      id: audio.id,
+                      type: 'audio' as const,
+                      track: trackNumber + 10, // Offset audio tracks
+                      startTime: startTime,
+                      duration: effectiveDuration,
+                      originalDuration: duration,
+                      url: audio.url,
+                      name: audio.name,
+                      volume: Math.round(audio.volume * 100),
+                      muted: false,
+                      trim: trimStart > 0 || trimEnd < duration ? { start: trimStart, end: trimEnd } : undefined,
+                      fadeOut: audio.fadeOutSeconds,
+                    });
+                  });
+
+                  return items;
+                })()}
                 currentTime={timelineCurrentTime}
                 isPlaying={isTimelinePlaying}
                 onTimeUpdate={setTimelineCurrentTime}
@@ -4020,7 +4115,7 @@ export default function VideoEditor() {
               <PreviewSurface
                 previewUrl={previewUrl}
                 status={previewStatus}
-                clipCount={useMultiTrack ? multiTrackItems.length : orderedClips.length}
+                clipCount={orderedClips.length}
                 totalDuration={totalDuration}
                 onForceRefresh={generatePreview}
                 errorMessage={previewError}
@@ -4030,7 +4125,7 @@ export default function VideoEditor() {
                 onTimelineTimeChange={setTimelineCurrentTime}
               />
             )}
-            {textOverlays.length > 0 && !useCanvasPreview && (
+            {textOverlays.length > 0 && (
               <TextOverlayRenderer
                 overlays={textOverlays}
                 currentTime={timelineCurrentTime}
@@ -4070,60 +4165,8 @@ export default function VideoEditor() {
 
           {/* Bottom Section: Advanced Timeline (40% of remaining height) */}
           <div className="flex-[4] border-t min-h-0 flex flex-col">
-            {/* Timeline Header with Mode Toggle */}
-            <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Timeline Mode:</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={!useMultiTrack ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleMultiTrackToggle(false)}
-                      className="h-7"
-                    >
-                      Sequential
-                    </Button>
-                    <Button
-                      variant={useMultiTrack ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleMultiTrackToggle(true)}
-                      className="h-7"
-                    >
-                      <Layers className="h-3 w-3 mr-1" />
-                      Multi-Track
-                    </Button>
-                  </div>
-                </div>
-                {useMultiTrack && (
-                  <Badge variant="secondary" className="text-xs">
-                    Real-time preview enabled
-                  </Badge>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {useMultiTrack ? 'Drag clips to different tracks • Overlap for effects' : 'Clips play sequentially'}
-              </div>
-            </div>
-
-            {useMultiTrack ? (
-              <MultiTrackTimeline
-                items={multiTrackItems}
-                onItemsChange={setMultiTrackItems}
-                onItemSelect={(item) => {
-                  const clip = orderedClips.find(c => c.id === item.id);
-                  if (clip) {
-                    const index = orderedClips.findIndex(c => c.id === item.id);
-                    setSelectedClip({ clip, index });
-                  }
-                }}
-                onTimeChange={setTimelineCurrentTime}
-                totalDuration={totalDuration}
-                className="flex-1"
-              />
-            ) : (
-              <AdvancedTimeline
-                clips={orderedClips}
+            <AdvancedTimeline
+              clips={orderedClips}
               audioTracks={audioTracks}
               getClipSettings={getClipSettings}
               clipTransitions={enhancements.clipTransitions}
@@ -4288,7 +4331,6 @@ export default function VideoEditor() {
               onZoomChange={setTimelineZoom}
               className="flex-1"
             />
-            )}
           </div>
         </div>
 
