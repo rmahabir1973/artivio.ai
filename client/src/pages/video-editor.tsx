@@ -4032,16 +4032,40 @@ export default function VideoEditor() {
 
           {/* Center: Preview Surface (flex-1 to take remaining space) */}
           <div className="flex-1 flex flex-col min-w-0 relative">
-            {/* Preview Mode Toggle */}
-            <div className="absolute top-2 right-2 z-10 flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-1.5 border shadow-sm">
-              <span className="text-xs text-muted-foreground">
-                {useCanvasPreview ? 'Real-time' : 'Rendered'}
-              </span>
-              <Switch
-                checked={useCanvasPreview}
-                onCheckedChange={setUseCanvasPreview}
-              />
-              <Sparkles className={cn("h-3 w-3", useCanvasPreview ? "text-primary" : "text-muted-foreground")} />
+            {/* Preview Mode Toggle and Actions */}
+            <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+              {/* Generate Server Preview Button (always visible) */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generatePreview}
+                disabled={previewStatus === 'refreshing' || orderedClips.length === 0}
+                className="bg-background/80 backdrop-blur-sm shadow-sm h-8"
+              >
+                {previewStatus === 'refreshing' ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                    <span className="text-xs">Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Film className="h-3 w-3 mr-1.5" />
+                    <span className="text-xs">Server Preview</span>
+                  </>
+                )}
+              </Button>
+
+              {/* Real-time Toggle */}
+              <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-1.5 border shadow-sm h-8">
+                <span className="text-xs text-muted-foreground">
+                  {useCanvasPreview ? 'Real-time' : 'Rendered'}
+                </span>
+                <Switch
+                  checked={useCanvasPreview}
+                  onCheckedChange={setUseCanvasPreview}
+                />
+                <Sparkles className={cn("h-3 w-3", useCanvasPreview ? "text-primary" : "text-muted-foreground")} />
+              </div>
             </div>
 
             {useCanvasPreview && orderedClips.length > 0 ? (
