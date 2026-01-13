@@ -96,9 +96,19 @@ export class CanvasCompositor {
    * Update all layers
    */
   setLayers(layers: CompositorLayer[]): void {
+    console.log('[Compositor] Setting layers:', layers.length, 'layers', layers.map(l => ({
+      id: l.id,
+      type: l.type,
+      hasElement: !!l.element,
+      startTime: l.startTime,
+      duration: l.duration,
+    })));
     this.layers.clear();
     layers.forEach(layer => this.layers.set(layer.id, layer));
     this.sortedLayersCache = null; // Invalidate cache
+
+    // Render a frame immediately to show something even when paused
+    this.renderFrame();
   }
 
   /**
@@ -157,9 +167,22 @@ export class CanvasCompositor {
    * Draw a video layer
    */
   private drawVideoLayer(layer: CompositorLayer): void {
-    if (!layer.element || !(layer.element instanceof HTMLVideoElement)) return;
+    if (!layer.element || !(layer.element instanceof HTMLVideoElement)) {
+      if (Math.random() < 0.05) {
+        console.warn('[Compositor] Video layer missing element:', layer.id);
+      }
+      return;
+    }
 
     const video = layer.element;
+
+    // Check if video is ready
+    if (video.readyState < 2) {
+      if (Math.random() < 0.05) {
+        console.warn('[Compositor] Video not ready:', layer.id, 'readyState:', video.readyState);
+      }
+      return;
+    }
 
     // Sync video time to layer local time
     const localTime = this.getLayerLocalTime(layer);
@@ -351,6 +374,23 @@ export class CanvasCompositor {
     // Get active layers sorted by z-index
     const sortedLayers = this.getSortedLayers();
     const activeLayers = sortedLayers.filter(layer => this.isLayerActive(layer));
+
+    // Debug logging (only log occasionally to avoid spam)
+    if (Math.random() < 0.01) { // Log ~1% of frames
+      console.log('[Compositor] Rendering frame:', {
+        currentTime: this.currentTime,
+        totalLayers: sortedLayers.length,
+        activeLayers: activeLayers.length,
+        isPlaying: this.isPlaying,
+        layers: activeLayers.map(l => ({
+          id: l.id,
+          type: l.type,
+          hasElement: !!l.element,
+          startTime: l.startTime,
+          duration: l.duration,
+        }))
+      });
+    }
 
     // Draw each active layer
     for (const layer of activeLayers) {

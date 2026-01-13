@@ -242,6 +242,7 @@ export function CanvasPreview({
         return layer;
       });
 
+      console.log('[CanvasPreview] Setting layers in compositor, count:', layers.length);
       compositorRef.current.setLayers(layers);
 
       return () => {
