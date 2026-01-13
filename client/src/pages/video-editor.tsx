@@ -2605,6 +2605,11 @@ export default function VideoEditor() {
     setUseMultiTrack(enabled);
     setMultiTrackKey(prev => prev + 1);
 
+    // Auto-enable canvas preview when switching to multi-track mode
+    if (enabled) {
+      setUseCanvasPreview(true);
+    }
+
     if (enabled && orderedClips.length > 0 && multiTrackItems.length === 0) {
       let currentTime = 0;
       const convertedItems: MultiTrackTimelineItem[] = orderedClips.map((clip) => {
@@ -2735,7 +2740,18 @@ export default function VideoEditor() {
   };
 
   // Calculate total timeline duration
-  const totalDuration = calculateTotalDuration();
+  const totalDuration = useMemo(() => {
+    if (useMultiTrack && multiTrackItems.length > 0) {
+      // For multi-track mode, find the maximum end time of all items
+      const maxEndTime = Math.max(
+        ...multiTrackItems.map(item => item.startTime + item.duration),
+        0
+      );
+      return maxEndTime;
+    }
+    // For sequential mode, sum all durations
+    return calculateTotalDuration();
+  }, [useMultiTrack, multiTrackItems, calculateTotalDuration]);
 
   // Update ref for timeline playback
   timelineDurationRef.current = totalDuration;
@@ -4054,8 +4070,60 @@ export default function VideoEditor() {
 
           {/* Bottom Section: Advanced Timeline (40% of remaining height) */}
           <div className="flex-[4] border-t min-h-0 flex flex-col">
-            <AdvancedTimeline
-              clips={orderedClips}
+            {/* Timeline Header with Mode Toggle */}
+            <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Timeline Mode:</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={!useMultiTrack ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleMultiTrackToggle(false)}
+                      className="h-7"
+                    >
+                      Sequential
+                    </Button>
+                    <Button
+                      variant={useMultiTrack ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleMultiTrackToggle(true)}
+                      className="h-7"
+                    >
+                      <Layers className="h-3 w-3 mr-1" />
+                      Multi-Track
+                    </Button>
+                  </div>
+                </div>
+                {useMultiTrack && (
+                  <Badge variant="secondary" className="text-xs">
+                    Real-time preview enabled
+                  </Badge>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {useMultiTrack ? 'Drag clips to different tracks • Overlap for effects' : 'Clips play sequentially'}
+              </div>
+            </div>
+
+            {useMultiTrack ? (
+              <MultiTrackTimeline
+                items={multiTrackItems}
+                onItemsChange={setMultiTrackItems}
+                onItemSelect={(item) => {
+                  const clip = orderedClips.find(c => c.id === item.id);
+                  if (clip) {
+                    const index = orderedClips.findIndex(c => c.id === item.id);
+                    setSelectedClip({ clip, index });
+                  }
+                }}
+                onTimeChange={setTimelineCurrentTime}
+                totalDuration={totalDuration}
+                className="flex-1"
+              />
+            ) : (
+              <AdvancedTimeline
+                clips={orderedClips}
               audioTracks={audioTracks}
               getClipSettings={getClipSettings}
               clipTransitions={enhancements.clipTransitions}
@@ -4220,6 +4288,7 @@ export default function VideoEditor() {
               onZoomChange={setTimelineZoom}
               className="flex-1"
             />
+            )}
           </div>
         </div>
 
