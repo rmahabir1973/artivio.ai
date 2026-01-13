@@ -8626,10 +8626,11 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       }
       console.log(`[Video Editor] Preview enhancements:`, JSON.stringify(enhancements, null, 2));
       
-      // Build VPS payload (same structure as export but with previewMode)
+      // Build VPS payload (same structure as export but with preview flags)
       let vpsPayload: any = {
         jobId,
         userId,
+        jobType: 'preview',
         previewMode: true,
         videoSettings: {
           format: 'mp4',
