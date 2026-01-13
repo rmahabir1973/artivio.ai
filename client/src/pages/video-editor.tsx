@@ -639,8 +639,8 @@ export default function VideoEditor() {
   const lastPreviewSignatureRef = useRef<string | null>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Canvas preview mode (real-time compositing) - default to true for instant feedback
-  const [useCanvasPreview, setUseCanvasPreview] = useState(true);
+  // Canvas preview mode (real-time compositing) - default to false until clips are added
+  const [useCanvasPreview, setUseCanvasPreview] = useState(false);
 
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
@@ -4044,89 +4044,94 @@ export default function VideoEditor() {
               <Sparkles className={cn("h-3 w-3", useCanvasPreview ? "text-primary" : "text-muted-foreground")} />
             </div>
 
-            {useCanvasPreview ? (
+            {useCanvasPreview && orderedClips.length > 0 ? (
               <CanvasPreview
                 items={(() => {
-                  // Convert orderedClips to MultiTrackTimelineItem format for canvas preview
-                  // Use same logic as AdvancedTimeline for consistent positioning
-                  const items: MultiTrackTimelineItem[] = [];
+                  try {
+                    // Convert orderedClips to MultiTrackTimelineItem format for canvas preview
+                    // Use same logic as AdvancedTimeline for consistent positioning
+                    const items: MultiTrackTimelineItem[] = [];
 
-                  // Track running time per layer (same as AdvancedTimeline)
-                  const runningTimeByLayer: Record<string, number> = {};
-                  const maxLayers = 10;
-                  for (let i = 1; i <= maxLayers; i++) {
-                    runningTimeByLayer[`layer-${i}`] = 0;
+                    // Track running time per layer (same as AdvancedTimeline)
+                    const runningTimeByLayer: Record<string, number> = {};
+                    const maxLayers = 10;
+                    for (let i = 1; i <= maxLayers; i++) {
+                      runningTimeByLayer[`layer-${i}`] = 0;
+                    }
+
+                    // Add video/image clips
+                    orderedClips.forEach((clip) => {
+                      const settings = getClipSettings(clip.id);
+                      const trackId = clip.trackId || 'layer-1';
+                      const speed = settings?.speed || 1;
+                      const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 8);
+                      const trimStart = settings?.trimStartSeconds || 0;
+                      const trimEnd = settings?.trimEndSeconds || originalDuration;
+                      const effectiveDuration = (trimEnd - trimStart) / speed;
+                      const displayDuration = clip.type === 'image'
+                        ? (settings?.displayDuration || 5)
+                        : effectiveDuration;
+
+                      // Get track number from trackId (e.g., "layer-1" -> 0, "layer-2" -> 1)
+                      const trackNumber = Math.max(0, parseInt(trackId.split('-')[1] || '1') - 1);
+
+                      // Use manual position if set, otherwise use layer-based sequential position
+                      const startTime = settings?.positionSeconds !== undefined
+                        ? settings.positionSeconds
+                        : (runningTimeByLayer[trackId] || 0);
+
+                      items.push({
+                        id: clip.id,
+                        type: clip.type || 'video',
+                        track: trackNumber,
+                        startTime: startTime,
+                        duration: displayDuration,
+                        originalDuration: originalDuration,
+                        url: clip.url,
+                        thumbnailUrl: clip.thumbnailUrl,
+                        name: clip.prompt || `${clip.type || 'video'} clip`,
+                        speed: speed !== 1 ? speed : undefined,
+                        trim: trimStart > 0 || trimEnd < originalDuration ? { start: trimStart, end: trimEnd } : undefined,
+                        volume: settings?.volume !== undefined ? Math.round(settings.volume * 100) : 100,
+                        muted: settings?.muted || false,
+                        zIndex: trackNumber,
+                      });
+
+                      // Update running time for this layer
+                      runningTimeByLayer[trackId] = startTime + displayDuration;
+                    });
+
+                    // Add audio tracks
+                    audioTracks.forEach((audio) => {
+                      const trackId = audio.trackId || 'layer-1';
+                      const trackNumber = Math.max(0, parseInt(trackId.split('-')[1] || '1') - 1);
+                      const startTime = audio.positionSeconds || 0;
+                      const duration = audio.duration || 30;
+                      const trimStart = audio.trimStartSeconds || 0;
+                      const trimEnd = audio.trimEndSeconds || duration;
+                      const effectiveDuration = trimEnd - trimStart;
+
+                      items.push({
+                        id: audio.id,
+                        type: 'audio' as const,
+                        track: trackNumber + 10, // Offset audio tracks
+                        startTime: startTime,
+                        duration: effectiveDuration,
+                        originalDuration: duration,
+                        url: audio.url,
+                        name: audio.name,
+                        volume: Math.round(audio.volume * 100),
+                        muted: false,
+                        trim: trimStart > 0 || trimEnd < duration ? { start: trimStart, end: trimEnd } : undefined,
+                        fadeOut: audio.fadeOutSeconds,
+                      });
+                    });
+
+                    return items;
+                  } catch (error) {
+                    console.error('Error converting clips to canvas format:', error);
+                    return [];
                   }
-
-                  // Add video/image clips
-                  orderedClips.forEach((clip) => {
-                    const settings = getClipSettings(clip.id);
-                    const trackId = clip.trackId || 'layer-1';
-                    const speed = settings?.speed || 1;
-                    const originalDuration = settings?.originalDuration || (clip.type === 'image' ? 5 : 8);
-                    const trimStart = settings?.trimStartSeconds || 0;
-                    const trimEnd = settings?.trimEndSeconds || originalDuration;
-                    const effectiveDuration = (trimEnd - trimStart) / speed;
-                    const displayDuration = clip.type === 'image'
-                      ? (settings?.displayDuration || 5)
-                      : effectiveDuration;
-
-                    // Get track number from trackId (e.g., "layer-1" -> 0, "layer-2" -> 1)
-                    const trackNumber = parseInt(trackId.split('-')[1] || '1') - 1;
-
-                    // Use manual position if set, otherwise use layer-based sequential position
-                    const startTime = settings?.positionSeconds !== undefined
-                      ? settings.positionSeconds
-                      : (runningTimeByLayer[trackId] || 0);
-
-                    items.push({
-                      id: clip.id,
-                      type: clip.type || 'video',
-                      track: trackNumber,
-                      startTime: startTime,
-                      duration: displayDuration,
-                      originalDuration: originalDuration,
-                      url: clip.url,
-                      thumbnailUrl: clip.thumbnailUrl,
-                      name: clip.prompt || `${clip.type || 'video'} clip`,
-                      speed: speed !== 1 ? speed : undefined,
-                      trim: trimStart > 0 || trimEnd < originalDuration ? { start: trimStart, end: trimEnd } : undefined,
-                      volume: settings?.volume !== undefined ? Math.round(settings.volume * 100) : 100,
-                      muted: settings?.muted || false,
-                      zIndex: trackNumber,
-                    });
-
-                    // Update running time for this layer
-                    runningTimeByLayer[trackId] = startTime + displayDuration;
-                  });
-
-                  // Add audio tracks
-                  audioTracks.forEach((audio) => {
-                    const trackId = audio.trackId || 'layer-1';
-                    const trackNumber = parseInt(trackId.split('-')[1] || '1') - 1;
-                    const startTime = audio.positionSeconds || 0;
-                    const duration = audio.duration || 30;
-                    const trimStart = audio.trimStartSeconds || 0;
-                    const trimEnd = audio.trimEndSeconds || duration;
-                    const effectiveDuration = trimEnd - trimStart;
-
-                    items.push({
-                      id: audio.id,
-                      type: 'audio' as const,
-                      track: trackNumber + 10, // Offset audio tracks
-                      startTime: startTime,
-                      duration: effectiveDuration,
-                      originalDuration: duration,
-                      url: audio.url,
-                      name: audio.name,
-                      volume: Math.round(audio.volume * 100),
-                      muted: false,
-                      trim: trimStart > 0 || trimEnd < duration ? { start: trimStart, end: trimEnd } : undefined,
-                      fadeOut: audio.fadeOutSeconds,
-                    });
-                  });
-
-                  return items;
                 })()}
                 currentTime={timelineCurrentTime}
                 isPlaying={isTimelinePlaying}

@@ -31,51 +31,65 @@ export function CanvasPreview({
   const audioMixerRef = useRef<AudioMixer>(new AudioMixer());
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const onTimeUpdateRef = useRef(onTimeUpdate);
   const [isReady, setIsReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0, percentage: 0 });
+
+  // Update callback ref when it changes
+  useEffect(() => {
+    onTimeUpdateRef.current = onTimeUpdate;
+  }, [onTimeUpdate]);
 
   // Initialize compositor
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    const compositor = new CanvasCompositor(canvasRef.current, {
-      width,
-      height,
-      fps: 30,
-      backgroundColor: '#000000',
-    });
+    try {
+      const compositor = new CanvasCompositor(canvasRef.current, {
+        width,
+        height,
+        fps: 30,
+        backgroundColor: '#000000',
+      });
 
-    compositor.setOnTimeUpdate(time => {
-      onTimeUpdate?.(time);
-    });
+      compositor.setOnTimeUpdate(time => {
+        onTimeUpdateRef.current?.(time);
+      });
 
-    compositorRef.current = compositor;
-    setIsReady(true);
+      compositorRef.current = compositor;
+      setIsReady(true);
 
-    return () => {
-      compositor.destroy();
-      compositorRef.current = null;
-    };
-  }, [width, height, onTimeUpdate]);
+      return () => {
+        compositor.destroy();
+        compositorRef.current = null;
+      };
+    } catch (error) {
+      console.error('Error initializing canvas compositor:', error);
+      setIsReady(false);
+    }
+  }, [width, height]);
 
   // Create video/image/audio elements for each item
   useEffect(() => {
     if (!compositorRef.current) return;
 
-    const videoManager = videoManagerRef.current;
-    const audioMixer = audioMixerRef.current;
-    const newImageElements = new Map<string, HTMLImageElement>();
-    const newAudioElements = new Map<string, HTMLAudioElement>();
+    try {
+      const videoManager = videoManagerRef.current;
+      const audioMixer = audioMixerRef.current;
+      const newImageElements = new Map<string, HTMLImageElement>();
+      const newAudioElements = new Map<string, HTMLAudioElement>();
 
-    // Preload videos using video manager
-    const videoItems = items
-      .filter(item => item.type === 'video')
-      .map(item => ({ id: item.id, url: item.url }));
+      // Preload videos using video manager
+      const videoItems = items
+        .filter(item => item.type === 'video')
+        .map(item => ({ id: item.id, url: item.url }));
 
-    videoManager.preloadVideos(videoItems).then(() => {
-      const progress = videoManager.getLoadingProgress();
-      setLoadingProgress(progress);
-    });
+      videoManager.preloadVideos(videoItems).then(() => {
+        const progress = videoManager.getLoadingProgress();
+        setLoadingProgress(progress);
+      }).catch((error) => {
+        console.error('Error preloading videos:', error);
+      });
 
     // Handle images
     items.forEach(item => {
@@ -181,11 +195,14 @@ export function CanvasPreview({
         return layer;
       });
 
-    compositorRef.current.setLayers(layers);
+      compositorRef.current.setLayers(layers);
 
-    return () => {
-      clearInterval(progressInterval);
-    };
+      return () => {
+        clearInterval(progressInterval);
+      };
+    } catch (error) {
+      console.error('Error updating canvas preview items:', error);
+    }
   }, [items]);
 
   // Sync playback state
