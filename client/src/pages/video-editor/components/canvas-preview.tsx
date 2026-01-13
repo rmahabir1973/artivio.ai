@@ -102,10 +102,11 @@ export function CanvasPreview({
       // Show loading overlay if there are videos to load
       if (videoItems.length > 0) {
         console.log('Starting video loading for', videoItems.length, 'videos:', videoItems.map(v => v.url));
-        setShowLoadingOverlay(true);
 
-        // Set timeout ONCE when loading starts (not on every progress update)
+        // Only show overlay and set timeout if we haven't already started loading
         if (!hasSetTimeoutRef.current) {
+          console.log('Starting new loading cycle - showing overlay');
+          setShowLoadingOverlay(true);
           hasSetTimeoutRef.current = true;
 
           // Clear any existing timeout
@@ -122,6 +123,8 @@ export function CanvasPreview({
             setShowLoadingOverlay(false);
             hasSetTimeoutRef.current = false;
           }, 5000);
+        } else {
+          console.log('Loading already in progress, skipping overlay re-show');
         }
       }
 
