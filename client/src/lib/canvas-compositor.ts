@@ -47,15 +47,19 @@ export class CanvasCompositor {
   private ctx: CanvasRenderingContext2D;
   private config: CompositorConfig;
   private layers: Map<string, CompositorLayer> = new Map();
+  private sortedLayersCache: CompositorLayer[] | null = null;
   private animationFrameId: number | null = null;
   private lastFrameTime: number = 0;
+  private lastRenderTime: number = 0;
   private currentTime: number = 0;
   private isPlaying: boolean = false;
   private onTimeUpdate?: (time: number) => void;
+  private frameInterval: number;
 
   constructor(canvas: HTMLCanvasElement, config: CompositorConfig) {
     this.canvas = canvas;
     this.config = config;
+    this.frameInterval = 1000 / config.fps; // ms between frames (e.g., 33.33ms for 30fps)
 
     // Set canvas dimensions
     this.canvas.width = config.width;
@@ -67,9 +71,9 @@ export class CanvasCompositor {
     }
     this.ctx = ctx;
 
-    // Set default styles
+    // Set default styles (use 'low' for better performance)
     this.ctx.imageSmoothingEnabled = true;
-    this.ctx.imageSmoothingQuality = 'high';
+    this.ctx.imageSmoothingQuality = 'low';
   }
 
   /**
@@ -77,6 +81,7 @@ export class CanvasCompositor {
    */
   addLayer(layer: CompositorLayer): void {
     this.layers.set(layer.id, layer);
+    this.sortedLayersCache = null; // Invalidate cache
   }
 
   /**
@@ -84,6 +89,7 @@ export class CanvasCompositor {
    */
   removeLayer(layerId: string): void {
     this.layers.delete(layerId);
+    this.sortedLayersCache = null; // Invalidate cache
   }
 
   /**
@@ -92,14 +98,18 @@ export class CanvasCompositor {
   setLayers(layers: CompositorLayer[]): void {
     this.layers.clear();
     layers.forEach(layer => this.layers.set(layer.id, layer));
+    this.sortedLayersCache = null; // Invalidate cache
   }
 
   /**
-   * Get layers sorted by z-index
+   * Get layers sorted by z-index (cached)
    */
   private getSortedLayers(): CompositorLayer[] {
-    return Array.from(this.layers.values())
-      .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    if (!this.sortedLayersCache) {
+      this.sortedLayersCache = Array.from(this.layers.values())
+        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+    }
+    return this.sortedLayersCache;
   }
 
   /**
@@ -359,14 +369,24 @@ export class CanvasCompositor {
   }
 
   /**
-   * Animation loop
+   * Animation loop with frame rate throttling
    */
   private animate = (timestamp: number): void => {
     if (!this.isPlaying) return;
 
+    // Continue animation loop
+    this.animationFrameId = requestAnimationFrame(this.animate);
+
+    // Throttle rendering to target FPS
+    const timeSinceLastRender = timestamp - this.lastRenderTime;
+    if (timeSinceLastRender < this.frameInterval) {
+      return; // Skip this frame
+    }
+
     // Calculate time delta
     const deltaTime = this.lastFrameTime ? (timestamp - this.lastFrameTime) / 1000 : 0;
     this.lastFrameTime = timestamp;
+    this.lastRenderTime = timestamp - (timeSinceLastRender % this.frameInterval);
 
     // Update current time
     if (deltaTime > 0) {
@@ -376,9 +396,6 @@ export class CanvasCompositor {
 
     // Render frame
     this.renderFrame();
-
-    // Continue animation
-    this.animationFrameId = requestAnimationFrame(this.animate);
   };
 
   /**
@@ -389,6 +406,7 @@ export class CanvasCompositor {
 
     this.isPlaying = true;
     this.lastFrameTime = 0;
+    this.lastRenderTime = 0;
 
     // Start all video elements
     this.layers.forEach(layer => {
