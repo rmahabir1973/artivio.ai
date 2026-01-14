@@ -28,7 +28,6 @@ export class AudioMixer {
   private connectedElements: WeakMap<HTMLMediaElement, MediaElementAudioSourceNode> = new WeakMap();
   private isInitialized: boolean = false;
   private currentTime: number = 0;
-  private animationFrameId: number | null = null;
 
   constructor() {
     // Create audio context (will be initialized on first user interaction)
@@ -136,9 +135,12 @@ export class AudioMixer {
    * Update current time and apply fade effects
    */
   updateTime(currentTime: number): void {
+    // Skip if audio context is in error state
+    if (this.audioContext.state === 'closed') return;
+
     this.currentTime = currentTime;
 
-    this.tracks.forEach((trackData, trackId) => {
+    this.tracks.forEach((trackData) => {
       const track = trackData.track;
       const gainNode = trackData.gainNode;
 
@@ -147,8 +149,10 @@ export class AudioMixer {
       const isActive = currentTime >= track.startTime && currentTime < endTime;
 
       if (!isActive) {
-        // Mute inactive tracks
-        gainNode.gain.value = 0;
+        // Mute inactive tracks - direct set, no ramping
+        if (gainNode.gain.value !== 0) {
+          gainNode.gain.value = 0;
+        }
         return;
       }
 
@@ -174,11 +178,11 @@ export class AudioMixer {
         }
       }
 
-      // Update gain with smooth ramping to avoid clicks
-      const now = this.audioContext.currentTime;
-      gainNode.gain.cancelScheduledValues(now);
-      gainNode.gain.setValueAtTime(gainNode.gain.value, now);
-      gainNode.gain.linearRampToValueAtTime(finalVolume, now + 0.1);
+      // Only update if volume changed significantly (avoid spamming audio API)
+      if (Math.abs(gainNode.gain.value - finalVolume) > 0.01) {
+        // Simple direct assignment - avoid ramping which creates many scheduled values
+        gainNode.gain.value = finalVolume;
+      }
     });
   }
 
@@ -229,7 +233,12 @@ export class AudioMixer {
    * Start playback
    */
   async play(): Promise<void> {
-    await this.initialize();
+    try {
+      await this.initialize();
+    } catch (e) {
+      console.warn('[AudioMixer] Failed to initialize:', e);
+      return;
+    }
 
     // Play all active tracks
     this.tracks.forEach((trackData) => {
@@ -246,8 +255,7 @@ export class AudioMixer {
       }
     });
 
-    // Start fade animation loop
-    this.startFadeLoop();
+    // Note: No separate animation loop - time updates come from compositor via syncTracks/updateTime
   }
 
   /**
@@ -261,9 +269,6 @@ export class AudioMixer {
         element.pause();
       }
     });
-
-    // Stop fade animation loop
-    this.stopFadeLoop();
   }
 
   /**
@@ -272,30 +277,6 @@ export class AudioMixer {
   seek(time: number): void {
     this.currentTime = time;
     this.syncTracks(time);
-  }
-
-  /**
-   * Start the fade animation loop
-   */
-  private startFadeLoop(): void {
-    if (this.animationFrameId !== null) return;
-
-    const loop = () => {
-      this.updateTime(this.currentTime);
-      this.animationFrameId = requestAnimationFrame(loop);
-    };
-
-    this.animationFrameId = requestAnimationFrame(loop);
-  }
-
-  /**
-   * Stop the fade animation loop
-   */
-  private stopFadeLoop(): void {
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
-    }
   }
 
   /**
@@ -325,11 +306,12 @@ export class AudioMixer {
    * Cleanup
    */
   destroy(): void {
-    this.stopFadeLoop();
     this.clear();
 
     if (this.audioContext.state !== 'closed') {
-      this.audioContext.close();
+      this.audioContext.close().catch(() => {
+        // Ignore close errors
+      });
     }
   }
 }

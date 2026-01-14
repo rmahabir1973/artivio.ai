@@ -1,0 +1,17 @@
+[AUTH BRIDGE] Initializing auth bridge before React render
+index-Dm_qRbjj.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-Dm_qRbjj.js:993 [AUTH] Initializing auth
+index-Dm_qRbjj.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-Dm_qRbjj.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated Object
+index-Dm_qRbjj.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-Dm_qRbjj.js:1567 [VIDEO-EDITOR] Session restored from localStorage
+index-Dm_qRbjj.js:1567 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768424563851_12abahb3c: 8s
+index-Dm_qRbjj.js:1567 [DURATION] Loaded video clip a5a658b7-1c89-4b75-99d4-a926455786ef_1768424577285_ibx0nipyq: 8s
+index-Dm_qRbjj.js:1567 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768424563851_12abahb3c: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260114%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260114T210237Z&X-Amz-Expires=604800&X-Amz-Signature=b6eeb8b600b3904474a80284e8ef6a3e461743bd77700ca718761745ebf1b27d&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-Dm_qRbjj.js:1567 [CanvasPreviewPro] Loading video a5a658b7-1c89-4b75-99d4-a926455786ef_1768424577285_ibx0nipyq: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a5a658b7-1c89-4b75-99d4-a926455786ef-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260114%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260114T210237Z&X-Amz-Expires=604800&X-Amz-Signature=bb3d1c28acf566e9c9706c8683f3456d9b69702b1981075e642320bf70fc7c16&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-Dm_qRbjj.js:1454 FFmpeg worker ready
+index-Dm_qRbjj.js:1454 Video decoder worker ready
+index-Dm_qRbjj.js:1454 Initializing FFmpeg WASM...
+index-Dm_qRbjj.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768424563851_12abahb3c: 0%
+index-Dm_qRbjj.js:1567 Loading a5a658b7-1c89-4b75-99d4-a926455786ef_1768424577285_ibx0nipyq: 0%
+index-Dm_qRbjj.js:1454 FFmpeg WASM initialized
