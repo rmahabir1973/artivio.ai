@@ -79,6 +79,7 @@ export class WebGLCompositor {
   private isPlaying: boolean = false;
   private frameInterval: number;
   private onTimeUpdate?: (time: number) => void;
+  private layerProvider?: (time: number) => WebGLLayer[]; // Called before each render
 
   constructor(canvas: HTMLCanvasElement | OffscreenCanvas, config: WebGLCompositorConfig) {
     this.canvas = canvas;
@@ -333,13 +334,16 @@ export class WebGLCompositor {
   /**
    * Update layers
    */
-  setLayers(layers: WebGLLayer[]): void {
+  setLayers(layers: WebGLLayer[], renderImmediately = true): void {
     this.layers.clear();
     layers.forEach(layer => this.layers.set(layer.id, layer));
     this.sortedLayersCache = null;
 
-    // Render frame immediately
-    this.renderFrame();
+    // Only render immediately if not playing (avoid double renders with animate loop)
+    // When playing, the animate() loop handles rendering
+    if (renderImmediately && !this.isPlaying) {
+      this.renderFrame();
+    }
   }
 
   /**
@@ -431,8 +435,9 @@ export class WebGLCompositor {
     // Create or update texture
     let texture = this.textures.get(layer.id);
     if (!texture) {
-      texture = gl.createTexture();
-      if (!texture) return;
+      const newTexture = gl.createTexture();
+      if (!newTexture) return;
+      texture = newTexture;
       this.textures.set(layer.id, texture);
     }
 
@@ -536,10 +541,19 @@ export class WebGLCompositor {
 
     if (deltaTime > 0) {
       this.currentTime += deltaTime;
-      this.onTimeUpdate?.(this.currentTime);
     }
 
+    // Get fresh layers from provider BEFORE rendering (synchronous)
+    if (this.layerProvider) {
+      const freshLayers = this.layerProvider(this.currentTime);
+      this.setLayers(freshLayers, false);
+    }
+
+    // Render the frame
     this.renderFrame();
+
+    // Notify time update AFTER render
+    this.onTimeUpdate?.(this.currentTime);
   };
 
   /**
@@ -576,6 +590,13 @@ export class WebGLCompositor {
     this.currentTime = Math.max(0, time);
     this.renderFrame();
     this.onTimeUpdate?.(this.currentTime);
+  }
+
+  /**
+   * Set layer provider callback (called synchronously before each render)
+   */
+  setLayerProvider(provider: ((time: number) => WebGLLayer[]) | undefined): void {
+    this.layerProvider = provider;
   }
 
   /**

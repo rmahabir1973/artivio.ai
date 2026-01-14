@@ -36,8 +36,7 @@ export function CanvasPreviewPro({
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const onTimeUpdateRef = useRef(onTimeUpdate);
-  const frameRequestRef = useRef<number | null>(null);
-  const isRenderingRef = useRef(false); // Prevent duplicate RAF loops
+  const frameCounterRef = useRef(0); // Explicit frame counter for buffer cadence
 
   const [isReady, setIsReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; total: number }>({
@@ -118,6 +117,14 @@ export function CanvasPreviewPro({
 
     // Extract video items
     const videoItems = items.filter(item => item.type === 'video');
+    
+    // Cleanup stale failure entries for removed clips
+    const currentVideoIds = new Set(videoItems.map(item => item.id));
+    Array.from(failedVideosRef.current.keys()).forEach(videoId => {
+      if (!currentVideoIds.has(videoId)) {
+        failedVideosRef.current.delete(videoId);
+      }
+    });
 
     // Helper to ensure URL is absolute
     const ensureAbsoluteUrl = (url: string): string => {
@@ -285,17 +292,22 @@ export function CanvasPreviewPro({
     };
   }, [items]);
 
-  // Custom render loop - gets frames from worker and renders with WebGL
-  const renderFrame = useCallback(() => {
-    // Prevent duplicate RAF loops from race conditions
-    if (isRenderingRef.current) return;
-    if (!compositorRef.current || !workerManagerRef.current) return;
-
-    isRenderingRef.current = true;
-
+  // Layer provider callback - called synchronously by compositor before each render
+  const buildLayers = useCallback((time: number): WebGLLayer[] => {
     const workerManager = workerManagerRef.current;
+    if (!workerManager) return [];
 
     // Build WebGL layers from current timeline items
+    const videoItems: Array<{
+      id: string;
+      startTime: number;
+      duration: number;
+      trim?: { start: number; end: number };
+      speed?: number;
+    }> = [];
+
+    let hasAnyMissingFrame = false;
+
     const layers: WebGLLayer[] = items
       .filter(item => item.type !== 'audio')
       .map(item => {
@@ -313,8 +325,17 @@ export function CanvasPreviewPro({
         };
 
         if (item.type === 'video') {
+          // Track video items for buffering
+          videoItems.push({
+            id: item.id,
+            startTime: item.startTime,
+            duration: item.duration,
+            trim: item.trim,
+            speed: item.speed,
+          });
+          
           // Get frame from worker manager
-          const timeInClip = currentTime - item.startTime;
+          const timeInClip = time - item.startTime;
           if (timeInClip >= 0 && timeInClip <= item.duration) {
             const speed = item.speed || 1;
             const trimStart = item.trim?.start || 0;
@@ -323,6 +344,11 @@ export function CanvasPreviewPro({
             // Get cached frame from worker
             const frame = workerManager.getFrame(item.id, localTime);
             layer.frame = frame;
+            
+            // Track if we're missing frames we should have
+            if (!frame) {
+              hasAnyMissingFrame = true;
+            }
           }
         } else if (item.type === 'image') {
           layer.frame = imageElementsRef.current.get(item.id) || null;
@@ -331,50 +357,85 @@ export function CanvasPreviewPro({
         return layer;
       });
 
-    compositorRef.current.setLayers(layers);
-
-    // Continue if playing, reset flag in next frame callback
-    if (isPlaying) {
-      frameRequestRef.current = requestAnimationFrame(() => {
-        isRenderingRef.current = false;
-        renderFrame();
-      });
-    } else {
-      isRenderingRef.current = false;
+    // Buffer frames more aggressively if any are missing, otherwise every 10 frames
+    frameCounterRef.current++;
+    const shouldBuffer = hasAnyMissingFrame || (frameCounterRef.current % 10 === 0);
+    if (shouldBuffer && videoItems.length > 0) {
+      workerManager.bufferFrames(time, videoItems);
     }
-  }, [items, currentTime, isPlaying]);
 
-  // Sync playback state
-  useEffect(() => {
+    return layers;
+  }, [items]);
+
+  // Render frame for seeking (when not playing) - reuses buildLayers for consistency
+  const renderFrame = useCallback(() => {
     if (!compositorRef.current) return;
 
+    const compositor = compositorRef.current;
+    
+    // Reuse buildLayers for consistent layer building
+    const layers = buildLayers(currentTime);
+
+    // Render immediately (for seeking when paused)
+    compositor.setLayers(layers, true);
+  }, [buildLayers, currentTime]);
+
+  // Sync playback state - use layer provider for synchronous layer updates
+  useEffect(() => {
+    if (!compositorRef.current || !workerManagerRef.current) return;
+
     const audioMixer = audioMixerRef.current;
+    const workerManager = workerManagerRef.current;
+    const compositor = compositorRef.current;
 
     if (isPlaying) {
-      compositorRef.current.play();
-      audioMixer.play();
+      // Reset frame counter for new playback session
+      frameCounterRef.current = 0;
 
-      // Start render loop
-      renderFrame();
+      // Pre-buffer frames before starting playback
+      const videoItems = items
+        .filter(item => item.type === 'video')
+        .map(item => ({
+          id: item.id,
+          startTime: item.startTime,
+          duration: item.duration,
+          trim: item.trim,
+          speed: item.speed,
+        }));
+      
+      if (videoItems.length > 0) {
+        workerManager.bufferFrames(currentTime, videoItems);
+      }
+
+      // Set up layer provider for synchronous layer updates
+      compositor.setLayerProvider(buildLayers);
+      
+      // Set up time callback to notify parent
+      compositor.setOnTimeUpdate(time => {
+        onTimeUpdateRef.current?.(time);
+      });
+
+      // Seek compositor to current position before starting
+      compositor.seek(currentTime);
+      
+      // Start playback (compositor manages its own RAF loop)
+      compositor.play();
+      audioMixer.play();
     } else {
-      compositorRef.current.pause();
+      compositor.pause();
       audioMixer.pause();
 
-      // Cancel render loop
-      if (frameRequestRef.current) {
-        cancelAnimationFrame(frameRequestRef.current);
-        frameRequestRef.current = null;
-      }
+      // Clear layer provider when paused
+      compositor.setLayerProvider(undefined);
     }
 
     return () => {
-      isRenderingRef.current = false;
-      if (frameRequestRef.current) {
-        cancelAnimationFrame(frameRequestRef.current);
-        frameRequestRef.current = null;
+      // Cleanup: remove layer provider
+      if (compositorRef.current) {
+        compositorRef.current.setLayerProvider(undefined);
       }
     };
-  }, [isPlaying, renderFrame]);
+  }, [isPlaying, buildLayers, items, currentTime]);
 
   // Sync current time (seeking)
   useEffect(() => {
