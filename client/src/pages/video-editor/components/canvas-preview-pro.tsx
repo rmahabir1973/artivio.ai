@@ -37,6 +37,7 @@ export function CanvasPreviewPro({
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const frameRequestRef = useRef<number | null>(null);
+  const isRenderingRef = useRef(false); // Prevent duplicate RAF loops
 
   const [isReady, setIsReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; total: number }>({
@@ -168,6 +169,10 @@ export function CanvasPreviewPro({
       });
     };
 
+    // AbortController to cancel async operations on unmount/change
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
     // Load videos in worker (non-blocking!)
     const loadVideos = async () => {
       if (videoItems.length === 0) {
@@ -178,29 +183,36 @@ export function CanvasPreviewPro({
       setLoadingProgress({ loaded: 0, total: videoItems.length });
 
       let loaded = 0;
-      
+
       for (const item of videoItems) {
+        // Check if aborted before each video load
+        if (signal.aborted) return;
+
         const absoluteUrl = ensureAbsoluteUrl(item.url);
-        
+
         // Check if already loaded successfully
         if (workerManager.isVideoLoaded(item.id)) {
           loaded++;
-          setLoadingProgress({ loaded, total: videoItems.length });
+          if (!signal.aborted) setLoadingProgress({ loaded, total: videoItems.length });
           continue;
         }
-        
+
         // Check retry limits
         if (!shouldAttemptLoad(item.id, absoluteUrl)) {
           console.log(`[CanvasPreviewPro] Skipping ${item.id} (max retries exceeded or in cooldown)`);
           loaded++;
-          setLoadingProgress({ loaded, total: videoItems.length });
+          if (!signal.aborted) setLoadingProgress({ loaded, total: videoItems.length });
           continue;
         }
-        
+
         try {
           console.log(`[CanvasPreviewPro] Loading video ${item.id}: ${absoluteUrl}`);
-          
+
           const metadata = await workerManager.loadVideo(item.id, absoluteUrl);
+
+          // Check if aborted after async operation
+          if (signal.aborted) return;
+
           if (metadata) {
             // Success - clear any failure tracking
             failedVideosRef.current.delete(item.id);
@@ -210,12 +222,13 @@ export function CanvasPreviewPro({
             console.warn(`[CanvasPreviewPro] Failed to load ${item.id}, attempt ${failedVideosRef.current.get(item.id)?.attempts || 1}`);
           }
         } catch (error) {
+          if (signal.aborted) return;
           console.error('Failed to load video:', absoluteUrl, error);
           recordFailure(item.id, absoluteUrl);
         }
-        
+
         loaded++;
-        setLoadingProgress({ loaded, total: videoItems.length });
+        if (!signal.aborted) setLoadingProgress({ loaded, total: videoItems.length });
       }
     };
 
@@ -266,11 +279,20 @@ export function CanvasPreviewPro({
     });
 
     audioElementsRef.current = newAudioElements;
+
+    // Cleanup: abort pending async operations
+    return () => {
+      abortController.abort();
+    };
   }, [items]);
 
   // Custom render loop - gets frames from worker and renders with WebGL
   const renderFrame = useCallback(() => {
+    // Prevent duplicate RAF loops from race conditions
+    if (isRenderingRef.current) return;
     if (!compositorRef.current || !workerManagerRef.current) return;
+
+    isRenderingRef.current = true;
 
     const workerManager = workerManagerRef.current;
 
@@ -312,9 +334,14 @@ export function CanvasPreviewPro({
 
     compositorRef.current.setLayers(layers);
 
-    // Continue if playing
+    // Continue if playing, reset flag in next frame callback
     if (isPlaying) {
-      frameRequestRef.current = requestAnimationFrame(renderFrame);
+      frameRequestRef.current = requestAnimationFrame(() => {
+        isRenderingRef.current = false;
+        renderFrame();
+      });
+    } else {
+      isRenderingRef.current = false;
     }
   }, [items, currentTime, isPlaying]);
 
@@ -342,6 +369,7 @@ export function CanvasPreviewPro({
     }
 
     return () => {
+      isRenderingRef.current = false;
       if (frameRequestRef.current) {
         cancelAnimationFrame(frameRequestRef.current);
         frameRequestRef.current = null;

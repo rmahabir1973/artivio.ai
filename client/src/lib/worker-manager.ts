@@ -7,6 +7,9 @@
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
 
+// Limit frame cache to prevent memory exhaustion (~10 seconds at 30fps per video)
+const MAX_FRAMES_PER_VIDEO = 300;
+
 export interface VideoMetadata {
   duration: number;
   width: number;
@@ -88,7 +91,7 @@ export class WorkerManager {
         break;
 
       case 'frame':
-        // Cache frame
+        // Cache frame with size limits to prevent memory exhaustion
         if (!this.frameCache.has(videoId)) {
           this.frameCache.set(videoId, new Map());
         }
@@ -101,6 +104,18 @@ export class WorkerManager {
         const oldFrame = cache.get(timeKey);
         if (oldFrame) {
           oldFrame.close();
+        }
+
+        // Evict oldest frames if over limit (FIFO eviction)
+        while (cache.size >= MAX_FRAMES_PER_VIDEO) {
+          const firstKey = cache.keys().next().value;
+          if (firstKey !== undefined) {
+            const evictFrame = cache.get(firstKey);
+            if (evictFrame) evictFrame.close();
+            cache.delete(firstKey);
+          } else {
+            break;
+          }
         }
 
         cache.set(timeKey, frame);

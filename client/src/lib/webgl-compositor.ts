@@ -69,6 +69,7 @@ export class WebGLCompositor {
   // Layer management
   private layers: Map<string, WebGLLayer> = new Map();
   private sortedLayersCache: WebGLLayer[] | null = null;
+  private lastUploadedFrames: Map<string, VideoFrame | HTMLImageElement | null> = new Map();
 
   // Animation
   private animationFrameId: number | null = null;
@@ -435,13 +436,17 @@ export class WebGLCompositor {
       this.textures.set(layer.id, texture);
     }
 
-    // Upload frame to texture
+    // Upload frame to texture only if frame changed (prevents GPU stalls)
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, layer.frame);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const lastFrame = this.lastUploadedFrames.get(layer.id);
+    if (layer.frame !== lastFrame) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, layer.frame);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this.lastUploadedFrames.set(layer.id, layer.frame);
+    }
 
     // Setup vertex positions
     const positionLoc = gl.getAttribLocation(program, 'a_position');

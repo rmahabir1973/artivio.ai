@@ -30,6 +30,9 @@ interface VideoMetadata {
   hasAudio: boolean;
 }
 
+// Limit video chunks to prevent memory exhaustion (~100 seconds at 30fps)
+const MAX_VIDEO_CHUNKS = 3000;
+
 class VideoDecoderWorker {
   private decoders: Map<string, {
     decoder: VideoDecoder;
@@ -166,20 +169,10 @@ class VideoDecoderWorker {
 
       const decoder = new VideoDecoder({
         output: (frame: VideoFrame) => {
-          // Store frame in buffer
           const timestamp = frame.timestamp / 1000000; // to seconds
-          const frameIndex = Math.floor(timestamp * metadata.frameRate);
-          const bufferIndex = frameIndex % 90; // 3 seconds at 30fps
-
-          // Close old frame if exists
-          const oldFrame = frameBuffer.get(bufferIndex);
-          if (oldFrame) {
-            oldFrame.close();
-          }
-
-          frameBuffer.set(bufferIndex, frame);
 
           // Send frame to main thread (transfer ownership for zero-copy)
+          // Note: Don't store in frameBuffer - frame becomes detached after transfer
           this.sendMessage({
             type: 'frame',
             videoId,
@@ -215,6 +208,19 @@ class VideoDecoderWorker {
             data: sample.data,
           });
           videoData.push(chunk);
+        }
+
+        // Limit memory: remove oldest non-keyframe chunks when over limit
+        if (videoData.length > MAX_VIDEO_CHUNKS) {
+          const excess = videoData.length - MAX_VIDEO_CHUNKS;
+          let removed = 0;
+          for (let i = 0; i < videoData.length && removed < excess; i++) {
+            if (videoData[i].type !== 'key') {
+              videoData.splice(i, 1);
+              removed++;
+              i--; // Adjust index after splice
+            }
+          }
         }
       };
 
@@ -293,8 +299,8 @@ class VideoDecoderWorker {
         console.error('Decode error:', error);
       }
 
-      // Yield to worker thread every 10 frames
-      if (i % 10 === 0) {
+      // Yield to worker thread every 2 frames (more responsive UI)
+      if (i % 2 === 0) {
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
