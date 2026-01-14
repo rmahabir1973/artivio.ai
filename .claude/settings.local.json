@@ -6,7 +6,8 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix loading overlay timeout issue\n\n- Changed timeout logic to only set ONCE when loading starts\n- Removed problematic useEffect that reset timeout every progress update\n- Added hasSetTimeoutRef to track timeout state\n- Added extensive console logging for debugging\n- Added proper cleanup in useEffect returns and error handlers\n- Fixed X button to properly reset timeout state\n\nThis should fix the infinite loading overlay that was stuck for 30+ minutes.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

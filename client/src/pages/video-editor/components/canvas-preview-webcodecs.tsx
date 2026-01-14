@@ -1,14 +1,12 @@
-import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { CanvasCompositor, CompositorLayer } from '@/lib/canvas-compositor';
-import { VideoManager } from '@/lib/video-manager';
-import { WebCodecsVideoManager } from '@/lib/webcodecs-video-manager';
+import { WebCodecsVideoManager, VideoConfig } from '@/lib/webcodecs-video-manager';
 import { AudioMixer, AudioTrack } from '@/lib/audio-mixer';
 import { cn } from '@/lib/utils';
 import { MultiTrackTimelineItem } from '@/pages/video-editor/components/multi-track-timeline';
-import { Loader2, Sparkles } from 'lucide-react';
-import { CanvasPreviewWebCodecs } from './canvas-preview-webcodecs';
+import { Loader2 } from 'lucide-react';
 
-interface CanvasPreviewProps {
+interface CanvasPreviewWebCodecsProps {
   items: MultiTrackTimelineItem[];
   currentTime: number;
   isPlaying: boolean;
@@ -18,7 +16,7 @@ interface CanvasPreviewProps {
   className?: string;
 }
 
-export function CanvasPreview({
+export function CanvasPreviewWebCodecs({
   items,
   currentTime,
   isPlaying,
@@ -26,40 +24,18 @@ export function CanvasPreview({
   width = 1920,
   height = 1080,
   className,
-}: CanvasPreviewProps) {
-  // Check if WebCodecs is supported
-  const webCodecsSupported = useMemo(() => WebCodecsVideoManager.isSupported(), []);
-
-  // Use WebCodecs when available for better performance
-  if (webCodecsSupported) {
-    return (
-      <div className="relative">
-        <div className="absolute top-2 left-2 z-10 bg-primary/10 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1.5">
-          <Sparkles className="h-3 w-3 text-primary" />
-          <span className="text-xs font-medium text-primary">WebCodecs Accelerated</span>
-        </div>
-        <CanvasPreviewWebCodecs
-          items={items}
-          currentTime={currentTime}
-          isPlaying={isPlaying}
-          onTimeUpdate={onTimeUpdate}
-          width={width}
-          height={height}
-          className={className}
-        />
-      </div>
-    );
-  }
-
-  // Fallback to traditional implementation
+}: CanvasPreviewWebCodecsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const compositorRef = useRef<CanvasCompositor | null>(null);
-  const videoManagerRef = useRef<VideoManager>(new VideoManager());
+  const videoManagerRef = useRef<WebCodecsVideoManager>(new WebCodecsVideoManager());
   const audioMixerRef = useRef<AudioMixer>(new AudioMixer());
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const onTimeUpdateRef = useRef(onTimeUpdate);
+  const frameRequestRef = useRef<number | null>(null);
+
   const [isReady, setIsReady] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0 });
 
   // Update callback ref when it changes
   useEffect(() => {
@@ -95,33 +71,48 @@ export function CanvasPreview({
     }
   }, [width, height]);
 
-  // Create video/image/audio elements for each item
+  // Load videos using WebCodecs
   useEffect(() => {
     if (!compositorRef.current) return;
 
-    try {
-      const videoManager = videoManagerRef.current;
-      const audioMixer = audioMixerRef.current;
-      const newImageElements = new Map<string, HTMLImageElement>();
-      const newAudioElements = new Map<string, HTMLAudioElement>();
+    const videoManager = videoManagerRef.current;
+    const audioMixer = audioMixerRef.current;
+    const newImageElements = new Map<string, HTMLImageElement>();
+    const newAudioElements = new Map<string, HTMLAudioElement>();
 
-      // Preload videos using video manager
-      const videoItems = items
-        .filter(item => item.type === 'video')
-        .map(item => ({ id: item.id, url: item.url }));
+    // Extract video items
+    const videoItems = items.filter(item => item.type === 'video');
 
-      // Start loading videos in background (don't await - let it be async)
-      if (videoItems.length > 0) {
-        // Videos will load in background and render when ready
-        videoManager.preloadVideos(videoItems).catch((error) => {
-          console.error('Error preloading videos:', error);
-        });
+    // Load videos in background
+    const loadVideos = async () => {
+      if (videoItems.length === 0) return;
+
+      setLoadingProgress({ loaded: 0, total: videoItems.length });
+
+      let loaded = 0;
+      for (const item of videoItems) {
+        try {
+          const config: VideoConfig = {
+            id: item.id,
+            url: item.url,
+            trimStart: item.trim?.start,
+            trimEnd: item.trim?.end,
+          };
+
+          await videoManager.loadVideo(config);
+          loaded++;
+          setLoadingProgress({ loaded, total: videoItems.length });
+        } catch (error) {
+          console.error('Failed to load video with WebCodecs:', item.url, error);
+        }
       }
+    };
+
+    loadVideos().catch(console.error);
 
     // Handle images
     items.forEach(item => {
       if (item.type === 'image') {
-        // Reuse existing image element if possible
         let image = imageElementsRef.current.get(item.id);
         if (!image || image.src !== item.url) {
           image = document.createElement('img');
@@ -134,10 +125,9 @@ export function CanvasPreview({
 
     imageElementsRef.current = newImageElements;
 
-    // Handle audio tracks (both video audio and standalone audio)
+    // Handle audio tracks
     items.forEach(item => {
       if (item.type === 'audio') {
-        // Create audio element for standalone audio tracks
         let audio = audioElementsRef.current.get(item.id);
         if (!audio || audio.src !== item.url) {
           audio = document.createElement('audio');
@@ -147,7 +137,6 @@ export function CanvasPreview({
         }
         newAudioElements.set(item.id, audio);
 
-        // Add to audio mixer
         const audioTrack: AudioTrack = {
           id: item.id,
           element: audio,
@@ -161,32 +150,21 @@ export function CanvasPreview({
           speed: item.speed,
         };
         audioMixer.addTrack(audioTrack);
-      } else if (item.type === 'video' && !item.muted) {
-        // Add video audio to mixer
-        const managedVideo = videoManager.getVideo(item.id);
-        if (managedVideo) {
-          const audioTrack: AudioTrack = {
-            id: `${item.id}-audio`,
-            element: managedVideo.element,
-            startTime: item.startTime,
-            duration: item.duration,
-            volume: item.volume ?? 100,
-            fadeIn: item.fadeIn,
-            fadeOut: item.fadeOut,
-            muted: item.muted,
-            trim: item.trim,
-            speed: item.speed,
-          };
-          audioMixer.addTrack(audioTrack);
-        }
       }
     });
 
     audioElementsRef.current = newAudioElements;
+  }, [items]);
 
-    // Convert timeline items to compositor layers (visual only)
+  // Custom render loop for WebCodecs frames
+  const renderFrame = useCallback(() => {
+    if (!compositorRef.current) return;
+
+    const videoManager = videoManagerRef.current;
+
+    // Get current frames from WebCodecs for each video
     const layers: CompositorLayer[] = items
-      .filter(item => item.type !== 'audio') // Audio is handled separately
+      .filter(item => item.type !== 'audio')
       .map(item => {
         const layer: CompositorLayer = {
           id: item.id,
@@ -201,11 +179,20 @@ export function CanvasPreview({
           transition: item.transition,
           trim: item.trim,
           speed: item.speed,
+          useWebCodecs: item.type === 'video',
         };
 
         if (item.type === 'video') {
-          const managedVideo = videoManager.getVideo(item.id);
-          layer.element = managedVideo?.element || null;
+          // Get current frame from WebCodecs
+          const timeInClip = currentTime - item.startTime;
+          if (timeInClip >= 0 && timeInClip <= item.duration) {
+            const speed = item.speed || 1;
+            const trimStart = item.trim?.start || 0;
+            const localTime = trimStart + (timeInClip * speed);
+
+            const frame = videoManager.getFrame(item.id, localTime);
+            layer.element = frame;
+          }
         } else if (item.type === 'image') {
           layer.element = imageElementsRef.current.get(item.id) || null;
         }
@@ -213,11 +200,13 @@ export function CanvasPreview({
         return layer;
       });
 
-      compositorRef.current.setLayers(layers);
-    } catch (error) {
-      console.error('Error updating canvas preview items:', error);
+    compositorRef.current.setLayers(layers);
+
+    // Continue frame rendering loop if playing
+    if (isPlaying) {
+      frameRequestRef.current = requestAnimationFrame(renderFrame);
     }
-  }, [items]);
+  }, [items, currentTime, isPlaying]);
 
   // Sync playback state
   useEffect(() => {
@@ -228,24 +217,60 @@ export function CanvasPreview({
     if (isPlaying) {
       compositorRef.current.play();
       audioMixer.play();
+
+      // Start custom render loop for WebCodecs frames
+      renderFrame();
     } else {
       compositorRef.current.pause();
       audioMixer.pause();
-    }
-  }, [isPlaying]);
 
-  // Sync current time
+      // Cancel frame rendering loop
+      if (frameRequestRef.current) {
+        cancelAnimationFrame(frameRequestRef.current);
+        frameRequestRef.current = null;
+      }
+    }
+
+    return () => {
+      if (frameRequestRef.current) {
+        cancelAnimationFrame(frameRequestRef.current);
+        frameRequestRef.current = null;
+      }
+    };
+  }, [isPlaying, renderFrame]);
+
+  // Sync current time and buffer frames
   useEffect(() => {
     if (!compositorRef.current || isPlaying) return;
 
+    const videoManager = videoManagerRef.current;
     const audioMixer = audioMixerRef.current;
 
     // Only seek when not playing to avoid conflicts
     if (Math.abs(compositorRef.current.getCurrentTime() - currentTime) > 0.1) {
       compositorRef.current.seek(currentTime);
       audioMixer.seek(currentTime);
+
+      // Seek WebCodecs videos and buffer frames
+      const videoItems = items
+        .filter(item => item.type === 'video')
+        .map(item => ({
+          id: item.id,
+          startTime: item.startTime,
+          duration: item.duration,
+          trim: item.trim,
+          speed: item.speed,
+        }));
+
+      videoManager.seekAll(currentTime, videoItems).then(() => {
+        // Trigger a render after seeking
+        renderFrame();
+      }).catch(console.error);
+
+      // Pre-buffer frames for smooth playback
+      videoManager.bufferAround(currentTime, videoItems).catch(console.error);
     }
-  }, [currentTime, isPlaying]);
+  }, [currentTime, isPlaying, items, renderFrame]);
 
   return (
     <div className={cn('relative', className)}>
@@ -258,7 +283,17 @@ export function CanvasPreview({
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-none">
           <div className="text-center space-y-2">
             <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
-            <p className="text-white text-sm">Initializing canvas...</p>
+            <p className="text-white text-sm">Initializing WebCodecs canvas...</p>
+          </div>
+        </div>
+      )}
+      {isReady && loadingProgress.total > 0 && loadingProgress.loaded < loadingProgress.total && (
+        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>
+              Loading videos: {loadingProgress.loaded}/{loadingProgress.total}
+            </span>
           </div>
         </div>
       )}

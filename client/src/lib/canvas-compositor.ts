@@ -6,7 +6,7 @@
 export interface CompositorLayer {
   id: string;
   type: 'video' | 'image' | 'text';
-  element: HTMLVideoElement | HTMLImageElement | null;
+  element: HTMLVideoElement | HTMLImageElement | VideoFrame | null;
   startTime: number;
   duration: number;
   zIndex: number;
@@ -33,6 +33,9 @@ export interface CompositorLayer {
   // Trim properties
   trim?: { start: number; end: number };
   speed?: number;
+
+  // WebCodecs support
+  useWebCodecs?: boolean; // If true, element should be VideoFrame
 }
 
 export interface CompositorConfig {
@@ -164,7 +167,18 @@ export class CanvasCompositor {
    * Draw a video layer
    */
   private drawVideoLayer(layer: CompositorLayer): void {
-    if (!layer.element || !(layer.element instanceof HTMLVideoElement)) {
+    if (!layer.element) {
+      return;
+    }
+
+    // Handle VideoFrame (WebCodecs)
+    if (layer.useWebCodecs && 'displayWidth' in layer.element) {
+      this.drawVideoFrame(layer, layer.element as VideoFrame);
+      return;
+    }
+
+    // Handle traditional HTMLVideoElement
+    if (!(layer.element instanceof HTMLVideoElement)) {
       return;
     }
 
@@ -226,6 +240,51 @@ export class CanvasCompositor {
     } catch (error) {
       // Video might not be ready yet
       console.debug('Failed to draw video frame:', error);
+    }
+
+    // Restore context state
+    this.ctx.restore();
+  }
+
+  /**
+   * Draw a VideoFrame (WebCodecs)
+   */
+  private drawVideoFrame(layer: CompositorLayer, frame: VideoFrame): void {
+    // Calculate position and size
+    const pos = layer.position || {
+      x: 0,
+      y: 0,
+      width: this.config.width,
+      height: this.config.height,
+    };
+
+    // Calculate opacity (layer opacity * transition opacity)
+    const layerOpacity = layer.opacity ?? 1;
+    const transitionOpacity = this.getTransitionOpacity(layer);
+    const finalOpacity = layerOpacity * transitionOpacity;
+
+    // Save context state
+    this.ctx.save();
+
+    // Apply opacity
+    this.ctx.globalAlpha = finalOpacity;
+
+    // Apply transition effects
+    if (layer.transition) {
+      this.applyTransitionEffect(layer, pos);
+    }
+
+    // Draw video frame (VideoFrame supports drawImage directly)
+    try {
+      this.ctx.drawImage(
+        frame,
+        pos.x,
+        pos.y,
+        pos.width,
+        pos.height
+      );
+    } catch (error) {
+      console.debug('Failed to draw VideoFrame:', error);
     }
 
     // Restore context state
