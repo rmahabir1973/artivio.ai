@@ -169,9 +169,8 @@ export function CanvasPreviewPro({
       });
     };
 
-    // AbortController to cancel async operations on unmount/change
-    const abortController = new AbortController();
-    const { signal } = abortController;
+    // Track if component is still mounted
+    let isMounted = true;
 
     // Load videos in worker (non-blocking!)
     const loadVideos = async () => {
@@ -185,15 +184,15 @@ export function CanvasPreviewPro({
       let loaded = 0;
 
       for (const item of videoItems) {
-        // Check if aborted before each video load
-        if (signal.aborted) return;
+        // Check if still mounted
+        if (!isMounted) return;
 
         const absoluteUrl = ensureAbsoluteUrl(item.url);
 
-        // Check if already loaded successfully
-        if (workerManager.isVideoLoaded(item.id)) {
+        // Check if already loaded or currently loading
+        if (workerManager.isVideoLoaded(item.id) || workerManager.isVideoLoading(item.id)) {
           loaded++;
-          if (!signal.aborted) setLoadingProgress({ loaded, total: videoItems.length });
+          if (isMounted) setLoadingProgress({ loaded, total: videoItems.length });
           continue;
         }
 
@@ -201,7 +200,7 @@ export function CanvasPreviewPro({
         if (!shouldAttemptLoad(item.id, absoluteUrl)) {
           console.log(`[CanvasPreviewPro] Skipping ${item.id} (max retries exceeded or in cooldown)`);
           loaded++;
-          if (!signal.aborted) setLoadingProgress({ loaded, total: videoItems.length });
+          if (isMounted) setLoadingProgress({ loaded, total: videoItems.length });
           continue;
         }
 
@@ -210,8 +209,8 @@ export function CanvasPreviewPro({
 
           const metadata = await workerManager.loadVideo(item.id, absoluteUrl);
 
-          // Check if aborted after async operation
-          if (signal.aborted) return;
+          // Check if still mounted after async operation
+          if (!isMounted) return;
 
           if (metadata) {
             // Success - clear any failure tracking
@@ -222,13 +221,13 @@ export function CanvasPreviewPro({
             console.warn(`[CanvasPreviewPro] Failed to load ${item.id}, attempt ${failedVideosRef.current.get(item.id)?.attempts || 1}`);
           }
         } catch (error) {
-          if (signal.aborted) return;
+          if (!isMounted) return;
           console.error('Failed to load video:', absoluteUrl, error);
           recordFailure(item.id, absoluteUrl);
         }
 
         loaded++;
-        if (!signal.aborted) setLoadingProgress({ loaded, total: videoItems.length });
+        if (isMounted) setLoadingProgress({ loaded, total: videoItems.length });
       }
     };
 
@@ -280,9 +279,9 @@ export function CanvasPreviewPro({
 
     audioElementsRef.current = newAudioElements;
 
-    // Cleanup: abort pending async operations
+    // Cleanup: mark as unmounted to stop pending async operations
     return () => {
-      abortController.abort();
+      isMounted = false;
     };
   }, [items]);
 

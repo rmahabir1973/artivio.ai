@@ -35,6 +35,7 @@ export class WorkerManager {
 
   private config: WorkerManagerConfig;
   private loadedVideos: Set<string> = new Set();
+  private loadingVideos: Set<string> = new Set(); // Track videos currently loading
   private videoMetadata: Map<string, VideoMetadata> = new Map();
 
   // Frame cache for quick access
@@ -184,17 +185,29 @@ export class WorkerManager {
    * Load a video in the decoder worker
    */
   async loadVideo(videoId: string, url: string): Promise<VideoMetadata | null> {
+    // Already loaded
     if (this.loadedVideos.has(videoId)) {
       return this.videoMetadata.get(videoId) || null;
     }
+
+    // Already loading - don't start another load
+    if (this.loadingVideos.has(videoId)) {
+      console.log(`[WorkerManager] Video ${videoId} already loading, skipping duplicate request`);
+      return null;
+    }
+
+    // Mark as loading
+    this.loadingVideos.add(videoId);
 
     return new Promise((resolve) => {
       const handler = (event: MessageEvent) => {
         if (event.data.type === 'loaded' && event.data.videoId === videoId) {
           this.videoDecoderWorker?.removeEventListener('message', handler);
+          this.loadingVideos.delete(videoId);
           resolve(event.data.metadata || null);
         } else if (event.data.type === 'error' && event.data.videoId === videoId) {
           this.videoDecoderWorker?.removeEventListener('message', handler);
+          this.loadingVideos.delete(videoId);
           resolve(null);
         }
       };
@@ -262,6 +275,13 @@ export class WorkerManager {
    */
   isVideoLoaded(videoId: string): boolean {
     return this.loadedVideos.has(videoId);
+  }
+
+  /**
+   * Check if video is currently loading
+   */
+  isVideoLoading(videoId: string): boolean {
+    return this.loadingVideos.has(videoId);
   }
 
   /**

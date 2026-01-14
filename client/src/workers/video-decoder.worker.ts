@@ -98,6 +98,20 @@ class VideoDecoderWorker {
    * Load and initialize a video
    */
   private async loadVideo(videoId: string, url: string): Promise<void> {
+    // Check if already loaded - prevent duplicate loads
+    if (this.decoders.has(videoId)) {
+      const existing = this.decoders.get(videoId);
+      if (existing?.isReady) {
+        // Already loaded, just send the loaded message again
+        this.sendMessage({
+          type: 'loaded',
+          videoId,
+          metadata: existing.metadata,
+        });
+        return;
+      }
+    }
+
     this.sendMessage({ type: 'loading', videoId, progress: 0 });
 
     try {
