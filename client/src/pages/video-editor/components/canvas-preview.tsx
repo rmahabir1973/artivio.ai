@@ -2,11 +2,14 @@ import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { CanvasCompositor, CompositorLayer } from '@/lib/canvas-compositor';
 import { VideoManager } from '@/lib/video-manager';
 import { WebCodecsVideoManager } from '@/lib/webcodecs-video-manager';
+import { WorkerManager } from '@/lib/worker-manager';
+import { WebGLCompositor } from '@/lib/webgl-compositor';
 import { AudioMixer, AudioTrack } from '@/lib/audio-mixer';
 import { cn } from '@/lib/utils';
 import { MultiTrackTimelineItem } from '@/pages/video-editor/components/multi-track-timeline';
 import { Loader2, Sparkles } from 'lucide-react';
 import { CanvasPreviewWebCodecs } from './canvas-preview-webcodecs';
+import { CanvasPreviewPro } from './canvas-preview-pro';
 
 interface CanvasPreviewProps {
   items: MultiTrackTimelineItem[];
@@ -27,16 +30,33 @@ export function CanvasPreview({
   height = 1080,
   className,
 }: CanvasPreviewProps) {
-  // Check if WebCodecs is supported
+  // Check capabilities in priority order
+  const workerSupported = useMemo(() => WorkerManager.isSupported(), []);
+  const webglSupported = useMemo(() => WebGLCompositor.isSupported(), []);
   const webCodecsSupported = useMemo(() => WebCodecsVideoManager.isSupported(), []);
 
-  // Use WebCodecs when available for better performance
+  // BEST: Use professional architecture (Workers + WebGL + WebCodecs)
+  if (workerSupported && webglSupported && webCodecsSupported) {
+    return (
+      <CanvasPreviewPro
+        items={items}
+        currentTime={currentTime}
+        isPlaying={isPlaying}
+        onTimeUpdate={onTimeUpdate}
+        width={width}
+        height={height}
+        className={className}
+      />
+    );
+  }
+
+  // FALLBACK 1: WebCodecs without workers (still better than <video>)
   if (webCodecsSupported) {
     return (
       <div className="relative">
         <div className="absolute top-2 left-2 z-10 bg-primary/10 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1.5">
           <Sparkles className="h-3 w-3 text-primary" />
-          <span className="text-xs font-medium text-primary">WebCodecs Accelerated</span>
+          <span className="text-xs font-medium text-primary">WebCodecs (No Workers)</span>
         </div>
         <CanvasPreviewWebCodecs
           items={items}
@@ -51,7 +71,7 @@ export function CanvasPreview({
     );
   }
 
-  // Fallback to traditional implementation
+  // FALLBACK 2: Traditional <video> elements (slowest)
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const compositorRef = useRef<CanvasCompositor | null>(null);
   const videoManagerRef = useRef<VideoManager>(new VideoManager());
