@@ -24,6 +24,8 @@ export class AudioMixer {
     source: MediaElementAudioSourceNode;
     gainNode: GainNode;
   }> = new Map();
+  // Track elements that have already been connected (can only connect once per element)
+  private connectedElements: WeakMap<HTMLMediaElement, MediaElementAudioSourceNode> = new WeakMap();
   private isInitialized: boolean = false;
   private currentTime: number = 0;
   private animationFrameId: number | null = null;
@@ -55,11 +57,26 @@ export class AudioMixer {
    * Add or update an audio track
    */
   addTrack(track: AudioTrack): void {
-    // Remove existing track if present
+    // Check if this track ID already exists with the same element
+    const existing = this.tracks.get(track.id);
+    if (existing && existing.track.element === track.element) {
+      // Same element, just update the track data and volume
+      existing.track = track;
+      const volumeMultiplier = (track.volume ?? 100) / 100;
+      existing.gainNode.gain.value = track.muted ? 0 : volumeMultiplier;
+      return;
+    }
+
+    // Remove existing track if present (different element or new track)
     this.removeTrack(track.id);
 
-    // Create source node from media element
-    const source = this.audioContext.createMediaElementSource(track.element);
+    // Get or create source node for this element
+    // Note: createMediaElementSource can only be called ONCE per element
+    let source = this.connectedElements.get(track.element);
+    if (!source) {
+      source = this.audioContext.createMediaElementSource(track.element);
+      this.connectedElements.set(track.element, source);
+    }
 
     // Create gain node for this track
     const gainNode = this.audioContext.createGain();
