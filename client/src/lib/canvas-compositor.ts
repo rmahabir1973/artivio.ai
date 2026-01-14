@@ -51,10 +51,12 @@ export class CanvasCompositor {
   private animationFrameId: number | null = null;
   private lastFrameTime: number = 0;
   private lastRenderTime: number = 0;
+  private lastSyncTimes: Map<string, number> = new Map();
   private currentTime: number = 0;
   private isPlaying: boolean = false;
   private onTimeUpdate?: (time: number) => void;
   private frameInterval: number;
+  private syncInterval: number = 100; // Sync each video every 100ms instead of every frame
 
   constructor(canvas: HTMLCanvasElement, config: CompositorConfig) {
     this.canvas = canvas;
@@ -89,6 +91,7 @@ export class CanvasCompositor {
    */
   removeLayer(layerId: string): void {
     this.layers.delete(layerId);
+    this.lastSyncTimes.delete(layerId); // Clean up sync time tracking
     this.sortedLayersCache = null; // Invalidate cache
   }
 
@@ -97,6 +100,7 @@ export class CanvasCompositor {
    */
   setLayers(layers: CompositorLayer[]): void {
     this.layers.clear();
+    this.lastSyncTimes.clear(); // Clear sync times when layers change
     layers.forEach(layer => this.layers.set(layer.id, layer));
     this.sortedLayersCache = null; // Invalidate cache
 
@@ -171,10 +175,19 @@ export class CanvasCompositor {
       return;
     }
 
-    // Sync video time to layer local time (less frequently to reduce CPU load)
-    const localTime = this.getLayerLocalTime(layer);
-    if (Math.abs(video.currentTime - localTime) > 0.5) {
-      video.currentTime = localTime;
+    // Sync video time only occasionally to reduce CPU load
+    // Check when this specific video was last synced
+    const now = performance.now();
+    const lastSync = this.lastSyncTimes.get(layer.id) || 0;
+    const shouldSync = (now - lastSync) >= this.syncInterval;
+
+    if (shouldSync) {
+      const localTime = this.getLayerLocalTime(layer);
+      // Only seek if significantly out of sync (0.5 second threshold)
+      if (Math.abs(video.currentTime - localTime) > 0.5) {
+        video.currentTime = localTime;
+      }
+      this.lastSyncTimes.set(layer.id, now);
     }
 
     // Calculate position and size

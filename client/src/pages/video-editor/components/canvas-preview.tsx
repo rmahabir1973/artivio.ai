@@ -47,7 +47,7 @@ export function CanvasPreview({
       const compositor = new CanvasCompositor(canvasRef.current, {
         width,
         height,
-        fps: 15, // Reduced from 30 to prevent browser freeze
+        fps: 30, // Smooth realtime preview at 30fps
         backgroundColor: '#000000',
       });
 

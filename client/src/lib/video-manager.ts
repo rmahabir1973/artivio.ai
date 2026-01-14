@@ -105,8 +105,10 @@ export class VideoManager {
         onLoadedMetadata();
       }
 
-      // Start loading
-      video.load();
+      // Start loading - defer to next tick to prevent blocking
+      setTimeout(() => {
+        video.load();
+      }, 0);
     });
 
     this.preloadPromises.set(managedVideo.id, promise);
@@ -135,16 +137,30 @@ export class VideoManager {
   }
 
   /**
-   * Preload multiple videos (serially to avoid overwhelming browser)
+   * Preload multiple videos (in parallel with batching to prevent browser freeze)
    */
   async preloadVideos(items: Array<{ id: string; url: string }>): Promise<void> {
-    // Load videos one at a time to avoid browser freeze
-    for (const item of items) {
-      try {
-        await this.getOrCreateVideo(item.id, item.url);
-      } catch (error) {
-        console.warn('Failed to preload video:', item.url, error);
-        // Continue loading other videos even if one fails
+    // Load videos in parallel BUT with batching to prevent overwhelming the browser
+    // This uses microtasks to break up the work and keep UI responsive
+    const BATCH_SIZE = 3; // Load max 3 videos at a time
+
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      const batch = items.slice(i, i + BATCH_SIZE);
+
+      // Load batch in parallel
+      const promises = batch.map(async item => {
+        try {
+          await this.getOrCreateVideo(item.id, item.url);
+        } catch (error) {
+          console.warn('Failed to preload video:', item.url, error);
+        }
+      });
+
+      await Promise.allSettled(promises);
+
+      // Yield to browser between batches to prevent UI freeze
+      if (i + BATCH_SIZE < items.length) {
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
   }
