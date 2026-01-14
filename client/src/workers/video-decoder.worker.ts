@@ -45,8 +45,12 @@ class VideoDecoderWorker {
     this.sendMessage({ type: 'ready' });
   }
 
-  private sendMessage(message: any): void {
-    self.postMessage(message);
+  private sendMessage(message: any, transfer?: Transferable[]): void {
+    if (transfer && transfer.length > 0) {
+      self.postMessage(message, { transfer });
+    } else {
+      self.postMessage(message);
+    }
   }
 
   private async handleMessage(event: MessageEvent<DecoderMessage>): Promise<void> {
@@ -94,10 +98,34 @@ class VideoDecoderWorker {
     this.sendMessage({ type: 'loading', videoId, progress: 0 });
 
     try {
-      // Fetch video data
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
+      // Validate URL - must be absolute URL (http://, https://, blob:, or data:)
+      const validProtocols = ['http://', 'https://', 'blob:', 'data:'];
+      const hasValidProtocol = validProtocols.some(protocol => url.startsWith(protocol));
+      if (!hasValidProtocol) {
+        throw new Error(`Invalid URL: ${url} - must be an absolute URL (http://, https://, blob:, or data:)`);
+      }
+
+      // Fetch video data with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      let response: Response;
+      let blob: Blob;
+      let arrayBuffer: ArrayBuffer;
+      
+      try {
+        response = await fetch(url, { signal: controller.signal });
+        
+        // Check for errors
+        if (!response.ok) {
+          throw new Error(`Failed to fetch video: ${response.status} ${response.statusText} for ${url}`);
+        }
+        
+        blob = await response.blob();
+        arrayBuffer = await blob.arrayBuffer();
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       // Create MP4Box file for demuxing
       const mp4boxFile = MP4Box.createFile();

@@ -44,6 +44,11 @@ export function CanvasPreviewPro({
     total: 0,
   });
   const [videoMetadata, setVideoMetadata] = useState<Map<string, VideoMetadata>>(new Map());
+  
+  // Track failed video loads with retry info - keyed by URL to reset when URL changes
+  const failedVideosRef = useRef<Map<string, { attempts: number; lastAttempt: number; url: string }>>(new Map());
+  const MAX_RETRY_ATTEMPTS = 3;
+  const RETRY_COOLDOWN_MS = 5000; // 5 seconds between retries
 
   // Update callback ref
   useEffect(() => {
@@ -113,6 +118,56 @@ export function CanvasPreviewPro({
     // Extract video items
     const videoItems = items.filter(item => item.type === 'video');
 
+    // Helper to ensure URL is absolute
+    const ensureAbsoluteUrl = (url: string): string => {
+      // Already absolute (http, https, blob, data)
+      if (url.startsWith('http://') || url.startsWith('https://') || 
+          url.startsWith('blob:') || url.startsWith('data:')) {
+        return url;
+      }
+      // For relative URLs, try to construct absolute URL from window.location
+      if (typeof window !== 'undefined') {
+        return new URL(url, window.location.origin).href;
+      }
+      return url;
+    };
+
+    // Check if we should attempt to load a video (respects retry limits)
+    const shouldAttemptLoad = (videoId: string, url: string): boolean => {
+      const failedInfo = failedVideosRef.current.get(videoId);
+      
+      if (!failedInfo) return true; // Never failed, go ahead
+      
+      // If URL changed, reset attempts
+      if (failedInfo.url !== url) {
+        failedVideosRef.current.delete(videoId);
+        return true;
+      }
+      
+      // Check if max attempts reached
+      if (failedInfo.attempts >= MAX_RETRY_ATTEMPTS) {
+        return false; // Too many failures
+      }
+      
+      // Check cooldown period
+      const now = Date.now();
+      if (now - failedInfo.lastAttempt < RETRY_COOLDOWN_MS) {
+        return false; // Still in cooldown
+      }
+      
+      return true; // Retry allowed
+    };
+
+    // Record a failed load attempt
+    const recordFailure = (videoId: string, url: string): void => {
+      const existing = failedVideosRef.current.get(videoId);
+      failedVideosRef.current.set(videoId, {
+        attempts: (existing?.attempts || 0) + 1,
+        lastAttempt: Date.now(),
+        url,
+      });
+    };
+
     // Load videos in worker (non-blocking!)
     const loadVideos = async () => {
       if (videoItems.length === 0) {
@@ -123,14 +178,44 @@ export function CanvasPreviewPro({
       setLoadingProgress({ loaded: 0, total: videoItems.length });
 
       let loaded = 0;
+      
       for (const item of videoItems) {
-        try {
-          await workerManager.loadVideo(item.id, item.url);
+        const absoluteUrl = ensureAbsoluteUrl(item.url);
+        
+        // Check if already loaded successfully
+        if (workerManager.isVideoLoaded(item.id)) {
           loaded++;
           setLoadingProgress({ loaded, total: videoItems.length });
-        } catch (error) {
-          console.error('Failed to load video:', item.url, error);
+          continue;
         }
+        
+        // Check retry limits
+        if (!shouldAttemptLoad(item.id, absoluteUrl)) {
+          console.log(`[CanvasPreviewPro] Skipping ${item.id} (max retries exceeded or in cooldown)`);
+          loaded++;
+          setLoadingProgress({ loaded, total: videoItems.length });
+          continue;
+        }
+        
+        try {
+          console.log(`[CanvasPreviewPro] Loading video ${item.id}: ${absoluteUrl}`);
+          
+          const metadata = await workerManager.loadVideo(item.id, absoluteUrl);
+          if (metadata) {
+            // Success - clear any failure tracking
+            failedVideosRef.current.delete(item.id);
+          } else {
+            // Loading failed
+            recordFailure(item.id, absoluteUrl);
+            console.warn(`[CanvasPreviewPro] Failed to load ${item.id}, attempt ${failedVideosRef.current.get(item.id)?.attempts || 1}`);
+          }
+        } catch (error) {
+          console.error('Failed to load video:', absoluteUrl, error);
+          recordFailure(item.id, absoluteUrl);
+        }
+        
+        loaded++;
+        setLoadingProgress({ loaded, total: videoItems.length });
       }
     };
 
@@ -203,7 +288,7 @@ export function CanvasPreviewPro({
           position: item.position,
           opacity: item.opacity,
           text: item.text,
-          transition: item.transition,
+          transition: item.transition as WebGLLayer['transition'],
         };
 
         if (item.type === 'video') {
