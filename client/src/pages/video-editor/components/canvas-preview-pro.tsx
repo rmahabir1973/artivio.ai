@@ -1,10 +1,13 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { WebGLCompositor, WebGLLayer } from '@/lib/webgl-compositor';
 import { WorkerManager, VideoMetadata } from '@/lib/worker-manager';
-import { AudioMixer, AudioTrack } from '@/lib/audio-mixer';
 import { cn } from '@/lib/utils';
 import { MultiTrackTimelineItem } from '@/pages/video-editor/components/multi-track-timeline';
-import { Loader2, Sparkles, Cpu } from 'lucide-react';
+import { Loader2, Cpu } from 'lucide-react';
+
+// Note: Audio is disabled in real-time WebGL preview mode.
+// WebAudio API causes errors when used with high-frequency WebGL RAF loops.
+// Audio playback should use Server Preview mode which uses native video elements.
 
 interface CanvasPreviewProProps {
   items: MultiTrackTimelineItem[];
@@ -32,8 +35,6 @@ export function CanvasPreviewPro({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const compositorRef = useRef<WebGLCompositor | null>(null);
   const workerManagerRef = useRef<WorkerManager | null>(null);
-  const audioMixerRef = useRef<AudioMixer>(new AudioMixer());
-  const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const frameCounterRef = useRef(0); // Explicit frame counter for buffer cadence
@@ -111,9 +112,7 @@ export function CanvasPreviewPro({
     if (!compositorRef.current || !workerManagerRef.current) return;
 
     const workerManager = workerManagerRef.current;
-    const audioMixer = audioMixerRef.current;
     const newImageElements = new Map<string, HTMLImageElement>();
-    const newAudioElements = new Map<string, HTMLAudioElement>();
 
     // Extract video items
     const videoItems = items.filter(item => item.type === 'video');
@@ -256,35 +255,8 @@ export function CanvasPreviewPro({
 
     imageElementsRef.current = newImageElements;
 
-    // Handle audio tracks
-    items.forEach(item => {
-      if (item.type === 'audio') {
-        let audio = audioElementsRef.current.get(item.id);
-        if (!audio || audio.src !== item.url) {
-          audio = document.createElement('audio');
-          audio.src = item.url;
-          audio.crossOrigin = 'anonymous';
-          audio.preload = 'auto';
-        }
-        newAudioElements.set(item.id, audio);
-
-        const audioTrack: AudioTrack = {
-          id: item.id,
-          element: audio,
-          startTime: item.startTime,
-          duration: item.duration,
-          volume: item.volume ?? 100,
-          fadeIn: item.fadeIn,
-          fadeOut: item.fadeOut,
-          muted: item.muted,
-          trim: item.trim,
-          speed: item.speed,
-        };
-        audioMixer.addTrack(audioTrack);
-      }
-    });
-
-    audioElementsRef.current = newAudioElements;
+    // Note: Audio tracks are not handled in real-time WebGL preview mode
+    // Audio playback should use Server Preview mode which uses native video elements
 
     // Cleanup: mark as unmounted to stop pending async operations
     return () => {
@@ -384,7 +356,6 @@ export function CanvasPreviewPro({
   useEffect(() => {
     if (!compositorRef.current || !workerManagerRef.current) return;
 
-    const audioMixer = audioMixerRef.current;
     const workerManager = workerManagerRef.current;
     const compositor = compositorRef.current;
 
@@ -419,11 +390,10 @@ export function CanvasPreviewPro({
       compositor.seek(currentTime);
       
       // Start playback (compositor manages its own RAF loop)
+      // Note: Audio is not played in real-time mode - use Server Preview for audio
       compositor.play();
-      audioMixer.play();
     } else {
       compositor.pause();
-      audioMixer.pause();
 
       // Clear layer provider when paused
       compositor.setLayerProvider(undefined);
@@ -443,12 +413,10 @@ export function CanvasPreviewPro({
 
     const compositor = compositorRef.current;
     const workerManager = workerManagerRef.current;
-    const audioMixer = audioMixerRef.current;
 
     // Only seek when not playing
     if (Math.abs(compositor.getCurrentTime() - currentTime) > 0.1) {
       compositor.seek(currentTime);
-      audioMixer.seek(currentTime);
 
       // Seek workers to correct position
       const videoItems = items
