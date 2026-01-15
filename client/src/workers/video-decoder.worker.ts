@@ -146,12 +146,57 @@ class VideoDecoderWorker {
 
       // Create MP4Box file for demuxing
       const mp4boxFile = MP4Box.createFile();
+      
+      // Shared state for sample extraction
+      const videoData: EncodedVideoChunk[] = [];
+      const frameBuffer = new Map<number, VideoFrame>();
+      let decoder: VideoDecoder | null = null;
+      let samplesResolve: (() => void) | null = null;
+      let sampleCount = 0;
 
-      // Extract metadata and setup decoder
+      // Set up onSamples BEFORE parsing - this is critical for mp4box
+      mp4boxFile.onSamples = (trackId: number, ref: any, samples: any[]) => {
+        console.log(`[VideoDecoder] Received ${samples.length} samples for ${videoId}`);
+        
+        for (const sample of samples) {
+          const chunk = new EncodedVideoChunk({
+            type: sample.is_sync ? 'key' : 'delta',
+            timestamp: (sample.cts * 1000000) / sample.timescale,
+            duration: (sample.duration * 1000000) / sample.timescale,
+            data: sample.data,
+          });
+          videoData.push(chunk);
+        }
+        
+        sampleCount += samples.length;
+
+        // Limit memory: remove oldest non-keyframe chunks when over limit
+        if (videoData.length > MAX_VIDEO_CHUNKS) {
+          const excess = videoData.length - MAX_VIDEO_CHUNKS;
+          let removed = 0;
+          for (let i = 0; i < videoData.length && removed < excess; i++) {
+            if (videoData[i].type !== 'key') {
+              videoData.splice(i, 1);
+              removed++;
+              i--; // Adjust index after splice
+            }
+          }
+        }
+        
+        // Resolve the samples promise after we've received samples
+        if (samplesResolve && sampleCount > 0) {
+          samplesResolve();
+          samplesResolve = null;
+        }
+      };
+
+      // Extract metadata and setup decoder - extraction happens inside onReady
       const metadata = await new Promise<VideoMetadata>((resolve, reject) => {
         mp4boxFile.onError = (e: any) => reject(e);
 
-        mp4boxFile.onReady = async (info: any) => {
+        mp4boxFile.onReady = (info: any) => {
+          console.log(`[VideoDecoder] onReady fired for ${videoId}`);
+          
           const videoTrack = info.videoTracks[0];
           if (!videoTrack) {
             reject(new Error('No video track found'));
@@ -167,6 +212,12 @@ class VideoDecoderWorker {
             hasAudio: info.audioTracks.length > 0,
           };
 
+          // Set extraction options and start INSIDE onReady - this is critical!
+          console.log(`[VideoDecoder] Setting extraction options for track ${videoTrack.id}`);
+          mp4boxFile.setExtractionOptions(videoTrack.id, null, { nbSamples: 1000 });
+          mp4boxFile.start();
+          console.log(`[VideoDecoder] Extraction started for ${videoId}`);
+
           resolve(metadata);
         };
 
@@ -178,15 +229,12 @@ class VideoDecoderWorker {
       });
 
       // Create decoder
-      const videoData: EncodedVideoChunk[] = [];
-      const frameBuffer = new Map<number, VideoFrame>();
-
-      const decoder = new VideoDecoder({
+      decoder = new VideoDecoder({
         output: (frame: VideoFrame) => {
           const timestamp = frame.timestamp / 1000000; // to seconds
+          console.log(`[VideoDecoder] Frame output: ${videoId} @ ${timestamp.toFixed(3)}s`);
 
           // Send frame to main thread (transfer ownership for zero-copy)
-          // Note: Don't store in frameBuffer - frame becomes detached after transfer
           this.sendMessage({
             type: 'frame',
             videoId,
@@ -195,6 +243,7 @@ class VideoDecoderWorker {
           }, [frame]);
         },
         error: (error: Error) => {
+          console.error(`[VideoDecoder] Decoder error for ${videoId}:`, error.message);
           this.sendMessage({
             type: 'error',
             videoId,
@@ -205,56 +254,25 @@ class VideoDecoderWorker {
 
       // Configure decoder
       const trackInfo = mp4boxFile.getTrackById(1);
+      const codecString = this.getCodecString(trackInfo);
+      console.log(`[VideoDecoder] Configuring decoder with codec: ${codecString}`);
+      
       decoder.configure({
-        codec: this.getCodecString(trackInfo),
+        codec: codecString,
         codedWidth: metadata.width,
         codedHeight: metadata.height,
         optimizeForLatency: true,
       });
 
-      // Wait for samples to be extracted before continuing
-      const samplesPromise = new Promise<void>((resolve) => {
-        let sampleCount = 0;
-        
-        mp4boxFile.onSamples = (trackId: number, ref: any, samples: any[]) => {
-          console.log(`[VideoDecoder] Received ${samples.length} samples for ${videoId}`);
-          
-          for (const sample of samples) {
-            const chunk = new EncodedVideoChunk({
-              type: sample.is_sync ? 'key' : 'delta',
-              timestamp: (sample.cts * 1000000) / sample.timescale,
-              duration: (sample.duration * 1000000) / sample.timescale,
-              data: sample.data,
-            });
-            videoData.push(chunk);
-          }
-          
-          sampleCount += samples.length;
-
-          // Limit memory: remove oldest non-keyframe chunks when over limit
-          if (videoData.length > MAX_VIDEO_CHUNKS) {
-            const excess = videoData.length - MAX_VIDEO_CHUNKS;
-            let removed = 0;
-            for (let i = 0; i < videoData.length && removed < excess; i++) {
-              if (videoData[i].type !== 'key') {
-                videoData.splice(i, 1);
-                removed++;
-                i--; // Adjust index after splice
-              }
-            }
-          }
-          
-          // Resolve after we've received samples
-          if (sampleCount > 0) {
-            resolve();
-          }
-        };
-      });
-
-      mp4boxFile.setExtractionOptions(1, null, { nbSamples: 1000 });
-      mp4boxFile.start();
-      
       // Wait for initial samples to be extracted (with timeout)
+      const samplesPromise = new Promise<void>((resolve) => {
+        if (sampleCount > 0) {
+          resolve(); // Already have samples
+        } else {
+          samplesResolve = resolve;
+        }
+      });
+      
       await Promise.race([
         samplesPromise,
         new Promise<void>(resolve => setTimeout(resolve, 5000)) // 5 second timeout
