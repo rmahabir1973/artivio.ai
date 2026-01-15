@@ -1,0 +1,14 @@
+[WorkerManager] getFrame: No cache for 82664c19-f0ee-4a4a-aecd-1afd9eb9375c_1768508295279_lvom3hl59, time=0.850
+9index-BtvN9xvw.js:1454 Video seeked: 82664c19-f0ee-4a4a-aecd-1afd9eb9375c_1768508295279_lvom3hl59
+3index-BtvN9xvw.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-BtvN9xvw.js:1567 [CanvasPreviewPro] Loading video 82664c19-f0ee-4a4a-aecd-1afd9eb9375c_1768508295279_lvom3hl59: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/82664c19-f0ee-4a4a-aecd-1afd9eb9375c-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260115%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260115T201803Z&X-Amz-Expires=604800&X-Amz-Signature=1222900f39ecd49ccc45c74930e3c6a8a04bad03b1fdb0fd4c2d9fd9e2c435e7&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-BtvN9xvw.js:1454 [WorkerManager] getFrame: No cache for 0c3f18e8-a721-4a36-9dba-0e2da168b917_1768508296016_2dfv71yoz, time=4.517
+index-BtvN9xvw.js:1567 [CanvasPreviewPro] Loading video 0c3f18e8-a721-4a36-9dba-0e2da168b917_1768508296016_2dfv71yoz: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/0c3f18e8-a721-4a36-9dba-0e2da168b917-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260115%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260115T201803Z&X-Amz-Expires=604800&X-Amz-Signature=e75e763372163e69ed312f96394c7d65c9a540ccb18fe9b0d1293c212a919b53&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-BtvN9xvw.js:1454 FFmpeg worker ready
+index-BtvN9xvw.js:1454 Video decoder worker ready
+index-BtvN9xvw.js:1454 Initializing FFmpeg WASM...
+index-BtvN9xvw.js:1567 Loading 82664c19-f0ee-4a4a-aecd-1afd9eb9375c_1768508295279_lvom3hl59: 0%
+index-BtvN9xvw.js:1567 Loading 0c3f18e8-a721-4a36-9dba-0e2da168b917_1768508296016_2dfv71yoz: 0%
+index-BtvN9xvw.js:1454 [WorkerManager] Video loaded: 0c3f18e8-a721-4a36-9dba-0e2da168b917_1768508296016_2dfv71yoz {duration: 8, width: 1280, height: 720, frameRate: 24, hasVideo: true, …}
+index-BtvN9xvw.js:1454 [WorkerManager] Video loaded: 82664c19-f0ee-4a4a-aecd-1afd9eb9375c_1768508295279_lvom3hl59 {duration: 8, width: 1280, height: 720, frameRate: 24, hasVideo: true, …}
+index-BtvN9xvw.js:1454 FFmpeg WASM initialized

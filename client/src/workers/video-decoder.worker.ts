@@ -212,34 +212,55 @@ class VideoDecoderWorker {
         optimizeForLatency: true,
       });
 
-      // Extract video samples
-      mp4boxFile.onSamples = (trackId: number, ref: any, samples: any[]) => {
-        for (const sample of samples) {
-          const chunk = new EncodedVideoChunk({
-            type: sample.is_sync ? 'key' : 'delta',
-            timestamp: (sample.cts * 1000000) / sample.timescale,
-            duration: (sample.duration * 1000000) / sample.timescale,
-            data: sample.data,
-          });
-          videoData.push(chunk);
-        }
+      // Wait for samples to be extracted before continuing
+      const samplesPromise = new Promise<void>((resolve) => {
+        let sampleCount = 0;
+        
+        mp4boxFile.onSamples = (trackId: number, ref: any, samples: any[]) => {
+          console.log(`[VideoDecoder] Received ${samples.length} samples for ${videoId}`);
+          
+          for (const sample of samples) {
+            const chunk = new EncodedVideoChunk({
+              type: sample.is_sync ? 'key' : 'delta',
+              timestamp: (sample.cts * 1000000) / sample.timescale,
+              duration: (sample.duration * 1000000) / sample.timescale,
+              data: sample.data,
+            });
+            videoData.push(chunk);
+          }
+          
+          sampleCount += samples.length;
 
-        // Limit memory: remove oldest non-keyframe chunks when over limit
-        if (videoData.length > MAX_VIDEO_CHUNKS) {
-          const excess = videoData.length - MAX_VIDEO_CHUNKS;
-          let removed = 0;
-          for (let i = 0; i < videoData.length && removed < excess; i++) {
-            if (videoData[i].type !== 'key') {
-              videoData.splice(i, 1);
-              removed++;
-              i--; // Adjust index after splice
+          // Limit memory: remove oldest non-keyframe chunks when over limit
+          if (videoData.length > MAX_VIDEO_CHUNKS) {
+            const excess = videoData.length - MAX_VIDEO_CHUNKS;
+            let removed = 0;
+            for (let i = 0; i < videoData.length && removed < excess; i++) {
+              if (videoData[i].type !== 'key') {
+                videoData.splice(i, 1);
+                removed++;
+                i--; // Adjust index after splice
+              }
             }
           }
-        }
-      };
+          
+          // Resolve after we've received samples
+          if (sampleCount > 0) {
+            resolve();
+          }
+        };
+      });
 
       mp4boxFile.setExtractionOptions(1, null, { nbSamples: 1000 });
       mp4boxFile.start();
+      
+      // Wait for initial samples to be extracted (with timeout)
+      await Promise.race([
+        samplesPromise,
+        new Promise<void>(resolve => setTimeout(resolve, 5000)) // 5 second timeout
+      ]);
+      
+      console.log(`[VideoDecoder] ${videoId} has ${videoData.length} chunks after extraction`);
 
       // Store decoder state
       this.decoders.set(videoId, {
@@ -259,8 +280,12 @@ class VideoDecoderWorker {
 
       // Decode first keyframe for instant preview
       if (videoData.length > 0) {
+        console.log(`[VideoDecoder] Decoding first frame for ${videoId}`);
         decoder.decode(videoData[0]);
         await decoder.flush();
+        console.log(`[VideoDecoder] First frame decoded for ${videoId}`);
+      } else {
+        console.warn(`[VideoDecoder] No video chunks available for ${videoId}`);
       }
     } catch (error) {
       this.sendMessage({
