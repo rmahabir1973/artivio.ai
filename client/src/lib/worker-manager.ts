@@ -84,6 +84,7 @@ export class WorkerManager {
         break;
 
       case 'loaded':
+        console.log(`[WorkerManager] Video loaded: ${videoId}`, metadata);
         this.loadedVideos.add(videoId);
         if (metadata) {
           this.videoMetadata.set(videoId, metadata);
@@ -92,6 +93,9 @@ export class WorkerManager {
         break;
 
       case 'frame':
+        // Log frame receipt for debugging
+        console.log(`[WorkerManager] Frame received: ${videoId} @ ${timestamp.toFixed(3)}s`);
+        
         // Cache frame with size limits to prevent memory exhaustion
         if (!this.frameCache.has(videoId)) {
           this.frameCache.set(videoId, new Map());
@@ -257,11 +261,29 @@ export class WorkerManager {
    */
   getFrame(videoId: string, time: number): VideoFrame | null {
     const cache = this.frameCache.get(videoId);
-    if (!cache) return null;
+    if (!cache) {
+      // Log only once per second to avoid spam
+      if (Math.floor(time) !== Math.floor(this._lastGetFrameLogTime || -1)) {
+        console.log(`[WorkerManager] getFrame: No cache for ${videoId}, time=${time.toFixed(3)}`);
+        this._lastGetFrameLogTime = time;
+      }
+      return null;
+    }
 
     const timeKey = Math.round(time * 10);
-    return cache.get(timeKey) || null;
+    const frame = cache.get(timeKey);
+    
+    // Log cache misses occasionally for debugging
+    if (!frame && Math.floor(time * 2) !== Math.floor((this._lastCacheMissLogTime || -1) * 2)) {
+      console.log(`[WorkerManager] getFrame: Cache miss ${videoId} @ ${time.toFixed(3)}s (key=${timeKey}), cache has ${cache.size} frames`);
+      this._lastCacheMissLogTime = time;
+    }
+    
+    return frame || null;
   }
+  
+  private _lastGetFrameLogTime?: number;
+  private _lastCacheMissLogTime?: number;
 
   /**
    * Get video metadata
