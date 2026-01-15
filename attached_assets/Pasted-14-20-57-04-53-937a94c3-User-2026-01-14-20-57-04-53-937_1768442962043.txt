@@ -1,0 +1,132 @@
+14 20:57:04.53
+937a94c3
+User
+}
+2026-01-14 20:57:04.53
+937a94c3
+User
+at requireJWT (file:///home/runner/workspace/dist/index.js:11355:21)
+2026-01-14 20:57:04.53
+937a94c3
+User
+expiredAt: 2026-01-15T01:47:56.000Z
+2026-01-14 20:57:04.53
+937a94c3
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2026-01-14 20:57:04.53
+937a94c3
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2026-01-14 20:57:04.53
+937a94c3
+User
+1:57:04 AM [express] GET /api/auth/user 401 in 2ms :: {"message":"Unauthorized - Invalid token"}
+2026-01-14 20:57:04.66
+937a94c3
+User
+1:57:04 AM [express] GET /api/announcements/active 304 in 133ms :: []
+2026-01-14 20:57:49.58
+937a94c3
+User
+📊 [RATE LIMIT MONITOR] Would block ip:70.49.189.157 (16/15) - auth - /user
+2026-01-14 20:57:49.58
+937a94c3
+User
+at getSecret (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:97:14)
+2026-01-14 20:57:49.58
+937a94c3
+User
+[JWT MIDDLEWARE] Invalid or expired access token
+2026-01-14 20:57:49.58
+937a94c3
+User
+at verifyAccessToken (file:///home/runner/workspace/dist/index.js:11251:25)
+2026-01-14 20:57:49.58
+937a94c3
+User
+at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+2026-01-14 20:57:49.58
+937a94c3
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2026-01-14 20:57:49.58
+937a94c3
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+2026-01-14 20:57:49.58
+937a94c3
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2026-01-14 20:57:49.58
+937a94c3
+User
+}
+2026-01-14 20:57:49.58
+937a94c3
+User
+at requireJWT (file:///home/runner/workspace/dist/index.js:11355:21)
+2026-01-14 20:57:49.58
+937a94c3
+User
+at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15 {
+2026-01-14 20:57:49.58
+937a94c3
+User
+[JWT] Access token verification failed: TokenExpiredError: jwt expired
+2026-01-14 20:57:49.58
+937a94c3
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2026-01-14 20:57:49.58
+937a94c3
+User
+expiredAt: 2026-01-15T01:47:56.000Z
+2026-01-14 20:57:49.58
+937a94c3
+User
+at /home/runner/workspace/node_modules/jsonwebtoken/verify.js:190:21
+2026-01-14 20:57:49.59
+937a94c3
+User
+1:57:49 AM [express] GET /api/auth/user 401 in 3ms :: {"message":"Unauthorized - Invalid token"}
+2026-01-14 20:57:49.79
+937a94c3
+User
+1:57:49 AM [express] GET /api/pricing 200 in 115ms :: [{"id":"edffea3f-8044-4426-9477-c183153bb9d6",…
+2026-01-14 20:58:09.79
+937a94c3
+User
+📊 [RATE LIMIT MONITOR] Would block ip:70.49.189.157 (17/15) - auth - /user
+2026-01-14 20:58:09.79
+937a94c3
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2026-01-14 20:58:09.79
+937a94c3
+User
+[JWT MIDDLEWARE] Invalid or expired access token
+2026-01-14 20:58:09.79
+937a94c3
+User
+}
+2026-01-14 20:58:09.79
+937a94c3
+User
+expiredAt: 2026-01-15T01:47:56.000Z
+2026-01-14 20:58:09.79
+937a94c3
+User
+at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15 {
+2026-01-14 20:58:09.79
+937a94c3
+User
+[JWT] Access token verification failed: TokenExpiredError: jwt expired
+2026-01-14 20:58:09.79
+937a94c3
+User
+at verifyAccessToken (file:///home/runner/workspace/dist/index.js:11251:25)
+2026-01-14 20:58:09.79
+937a94c3
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
