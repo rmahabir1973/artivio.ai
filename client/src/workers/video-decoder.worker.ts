@@ -56,7 +56,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.log('[VideoDecoderWorker] Worker initialized');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER INITIALIZED v2 ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -72,7 +72,7 @@ class VideoDecoderWorker {
     const { type, videoId, url, time, items } = event.data;
 
     // Unconditional log to verify worker receives ALL messages
-    console.log(`[VideoDecoderWorker] handleMessage received: type=${type}`);
+    console.warn(`[VideoDecoderWorker] *** MESSAGE RECEIVED *** type=${type}, videoId=${videoId}, time=${time}`);
 
     try {
       switch (type) {
