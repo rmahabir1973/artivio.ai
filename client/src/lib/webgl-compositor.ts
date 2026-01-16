@@ -524,11 +524,17 @@ export class WebGLCompositor {
    * Animation loop
    */
   private animate = (timestamp: number): void => {
-    if (!this.isPlaying) return;
+    if (!this.isPlaying) {
+      console.warn('[WebGLCompositor] animate called but isPlaying=false');
+      return;
+    }
 
     this.animationFrameId = requestAnimationFrame(this.animate);
 
-    if (document.hidden) return;
+    if (document.hidden) {
+      console.warn('[WebGLCompositor] animate skipped - document hidden');
+      return;
+    }
 
     const timeSinceLastRender = timestamp - this.lastRenderTime;
     if (timeSinceLastRender < this.frameInterval) {
@@ -541,6 +547,11 @@ export class WebGLCompositor {
 
     if (deltaTime > 0) {
       this.currentTime += deltaTime;
+    }
+
+    // Log every ~1 second (30 frames at 30fps)
+    if (Math.floor(this.currentTime * 30) % 30 === 0) {
+      console.log(`[WebGLCompositor] animate: time=${this.currentTime.toFixed(2)}s, hasLayerProvider=${!!this.layerProvider}`);
     }
 
     // Get fresh layers from provider BEFORE rendering (synchronous)
@@ -560,12 +571,14 @@ export class WebGLCompositor {
    * Start playback
    */
   play(): void {
+    console.log('[WebGLCompositor] play() called, isPlaying=', this.isPlaying, 'hasLayerProvider=', !!this.layerProvider);
     if (this.isPlaying) return;
 
     this.isPlaying = true;
     this.lastFrameTime = 0;
     this.lastRenderTime = 0;
 
+    console.log('[WebGLCompositor] Starting animation loop');
     this.animationFrameId = requestAnimationFrame(this.animate);
   }
 
