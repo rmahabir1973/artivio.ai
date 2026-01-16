@@ -433,7 +433,8 @@ class VideoDecoderWorker {
   }
 
   /**
-   * Decode first keyframe for immediate preview
+   * Decode initial frames for immediate preview
+   * Decodes first keyframe + some following frames for smoother start
    */
   private async decodeFirstKeyframe(videoId: string): Promise<void> {
     const video = this.videos.get(videoId);
@@ -441,62 +442,80 @@ class VideoDecoderWorker {
       return;
     }
 
+    video.isDecoding = true;
+
     try {
       // Find first keyframe index
       const keyframeIndex = video.chunks.findIndex(chunk => chunk.type === 'key');
       if (keyframeIndex === -1) {
         console.warn(`[VideoDecoderWorker] ${videoId}: No keyframe found`);
+        video.isDecoding = false;
         return;
       }
 
-      const firstKeyframe = video.chunks[keyframeIndex];
-      console.log(`[VideoDecoderWorker] ${videoId}: Decoding first keyframe for preview`);
+      console.log(`[VideoDecoderWorker] ${videoId}: Decoding initial frames for preview`);
 
-      // Reset decoder to ensure clean state
-      if (video.decoder.state === 'configured') {
-        video.decoder.reset();
-        if (video.decoderConfig) {
-          video.decoder.configure(video.decoderConfig);
-        }
+      // Decode first 30 frames (about 1 second at 30fps) for initial buffer
+      const framesToDecode = Math.min(30, video.chunks.length - keyframeIndex);
+      let lastIndex = keyframeIndex - 1;
+      let lastTimestamp = -1;
+
+      for (let i = keyframeIndex; i < keyframeIndex + framesToDecode; i++) {
+        if (video.decoder.state !== 'configured') break;
+
+        const chunk = video.chunks[i];
+        video.decoder.decode(chunk);
+        lastIndex = i;
+        lastTimestamp = chunk.timestamp / 1_000_000;
       }
 
-      // Decode the keyframe
-      video.decoder.decode(firstKeyframe);
-      await video.decoder.flush();
+      if (video.decoder.state === 'configured') {
+        await video.decoder.flush();
 
-      // Initialize tracking (but don't prevent re-decode of these frames for buffer)
-      video.lastDecodedIndex = keyframeIndex;
-      video.lastDecodedTimestamp = firstKeyframe.timestamp / 1_000_000;
+        // Update tracking
+        video.lastDecodedIndex = lastIndex;
+        video.lastDecodedTimestamp = lastTimestamp;
 
-      console.log(`[VideoDecoderWorker] ${videoId}: First keyframe decoded at ${video.lastDecodedTimestamp}s`);
+        console.log(`[VideoDecoderWorker] ${videoId}: Initial decode complete, ${framesToDecode} frames, up to ${lastTimestamp.toFixed(2)}s`);
+      }
     } catch (error) {
-      console.warn(`[VideoDecoderWorker] ${videoId}: Failed to decode first keyframe:`, error);
+      console.warn(`[VideoDecoderWorker] ${videoId}: Failed to decode initial frames:`, error);
+    } finally {
+      video.isDecoding = false;
     }
   }
 
   /**
    * Seek to specific time and decode frames
-   * Supports continuous playback by continuing from last decoded position
+   * Simpler approach: always decode from keyframe, track progress to avoid re-decoding
    */
   private async seekVideo(videoId: string, time: number): Promise<void> {
     const video = this.videos.get(videoId);
     if (!video?.isReady || !video.decoder || !video.metadata || video.chunks.length === 0) {
-      console.warn(`[VideoDecoderWorker] ${videoId}: Not ready for seek`);
       return;
     }
 
-    // Prevent concurrent decode operations - but log when skipped
+    // Prevent concurrent decode operations
     if (video.isDecoding) {
-      console.log(`[VideoDecoderWorker] ${videoId}: Skipping seek to ${time}s - already decoding`);
       return;
     }
+
+    const targetTimestamp = time * 1_000_000; // Convert to microseconds
+
+    // Check if we already have frames decoded past this point
+    if (video.lastDecodedTimestamp >= 0) {
+      const lastDecodedUs = video.lastDecodedTimestamp * 1_000_000;
+      // If we've already decoded past the target + 1 second buffer, skip
+      if (lastDecodedUs > targetTimestamp + 1_000_000) {
+        return;
+      }
+    }
+
     video.isDecoding = true;
-    console.log(`[VideoDecoderWorker] ${videoId}: seekVideo called for time ${time}s, lastDecoded: idx=${video.lastDecodedIndex}, ts=${video.lastDecodedTimestamp}`);
 
     try {
       // Check decoder state
       if (video.decoder.state !== 'configured') {
-        console.warn(`[VideoDecoderWorker] ${videoId}: Decoder not configured, resetting...`);
         video.decoder.reset();
         if (video.decoderConfig) {
           video.decoder.configure(video.decoderConfig);
@@ -505,94 +524,44 @@ class VideoDecoderWorker {
         video.lastDecodedTimestamp = -1;
       }
 
-      const targetTimestamp = time * 1_000_000; // Convert to microseconds
-      const bufferAhead = 2_000_000; // Buffer 2 seconds ahead
-      const targetEndTimestamp = targetTimestamp + bufferAhead;
+      // Determine start index
+      let startIndex: number;
 
-      let startIndex = -1;
-      let needsKeyframeReset = false;
-
-      // Check if we can continue from last decoded position
-      if (video.lastDecodedIndex >= 0 && video.lastDecodedTimestamp >= 0) {
-        const lastDecodedUs = video.lastDecodedTimestamp * 1_000_000;
-
-        // If target is close to or ahead of last decoded, continue forward
-        if (targetTimestamp >= lastDecodedUs - 500_000 && targetTimestamp <= lastDecodedUs + bufferAhead) {
-          // Continue from next frame after last decoded
-          startIndex = video.lastDecodedIndex + 1;
-        } else if (targetTimestamp < lastDecodedUs - 500_000) {
-          // Seeking backward - need to reset to keyframe
-          needsKeyframeReset = true;
-        }
+      if (video.lastDecodedIndex >= 0 && video.lastDecodedIndex < video.chunks.length - 1) {
+        // Continue from where we left off
+        startIndex = video.lastDecodedIndex + 1;
+      } else if (video.lastDecodedIndex < 0) {
+        // Start from beginning (keyframe)
+        startIndex = 0;
       } else {
-        needsKeyframeReset = true;
-      }
-
-      // Find keyframe if needed
-      if (needsKeyframeReset || startIndex < 0) {
-        let keyframeIndex = -1;
-
-        // Find the nearest keyframe before target time
-        for (let i = 0; i < video.chunks.length; i++) {
-          const chunk = video.chunks[i];
-          if (chunk.type === 'key' && chunk.timestamp <= targetTimestamp) {
-            keyframeIndex = i;
-          } else if (chunk.timestamp > targetTimestamp) {
-            break;
-          }
-        }
-
-        if (keyframeIndex === -1) {
-          // Fall back to first keyframe
-          keyframeIndex = video.chunks.findIndex(chunk => chunk.type === 'key');
-          if (keyframeIndex === -1) keyframeIndex = 0;
-        }
-
-        // Reset decoder for seeking backward
-        if (needsKeyframeReset && video.decoder.state === 'configured') {
-          video.decoder.reset();
-          if (video.decoderConfig) {
-            video.decoder.configure(video.decoderConfig);
-          }
-        }
-
-        startIndex = keyframeIndex;
-      }
-
-      // Ensure startIndex is valid
-      if (startIndex < 0 || startIndex >= video.chunks.length) {
-        console.log(`[VideoDecoderWorker] ${videoId}: Invalid startIndex ${startIndex}, chunks length: ${video.chunks.length}`);
+        // Already decoded everything
         video.isDecoding = false;
         return;
       }
 
-      // Calculate how many frames to decode to reach target + buffer
-      let framesToDecode = 0;
-      for (let i = startIndex; i < video.chunks.length; i++) {
-        framesToDecode++;
-        if (video.chunks[i].timestamp >= targetEndTimestamp) {
-          break;
+      // Ensure we start from a keyframe if this is a fresh start
+      if (video.lastDecodedIndex < 0) {
+        const keyframeIndex = video.chunks.findIndex(chunk => chunk.type === 'key');
+        if (keyframeIndex >= 0) {
+          startIndex = keyframeIndex;
         }
-        // Limit batch size to prevent blocking
-        if (framesToDecode >= 60) break;
       }
 
-      console.log(`[VideoDecoderWorker] ${videoId}: Will decode ${framesToDecode} frames from index ${startIndex}, needsKeyframeReset: ${needsKeyframeReset}`);
-
-      if (framesToDecode === 0) {
-        console.log(`[VideoDecoderWorker] ${videoId}: No frames to decode`);
+      if (startIndex >= video.chunks.length) {
         video.isDecoding = false;
         return;
       }
 
-      // Decode frames
+      // Decode a batch of frames (up to 3 seconds worth or 90 frames)
+      const targetEndTimestamp = targetTimestamp + 3_000_000; // 3 seconds ahead
+      const maxFrames = 90;
+
       let decodedCount = 0;
-      let lastIndex = startIndex - 1;
+      let lastIndex = video.lastDecodedIndex;
       let lastTimestamp = video.lastDecodedTimestamp;
 
-      for (let i = startIndex; i < startIndex + framesToDecode && i < video.chunks.length; i++) {
+      for (let i = startIndex; i < video.chunks.length && decodedCount < maxFrames; i++) {
         if (video.decoder.state !== 'configured') {
-          console.warn(`[VideoDecoderWorker] ${videoId}: Decoder state changed to ${video.decoder.state} during decode`);
           break;
         }
 
@@ -601,9 +570,12 @@ class VideoDecoderWorker {
         decodedCount++;
         lastIndex = i;
         lastTimestamp = chunk.timestamp / 1_000_000;
-      }
 
-      console.log(`[VideoDecoderWorker] ${videoId}: Decoded ${decodedCount} frames, decoder state: ${video.decoder.state}`);
+        // Stop if we've decoded past target + buffer
+        if (chunk.timestamp > targetEndTimestamp) {
+          break;
+        }
+      }
 
       if (video.decoder.state === 'configured' && decodedCount > 0) {
         await video.decoder.flush();
@@ -611,14 +583,12 @@ class VideoDecoderWorker {
         // Update tracking
         video.lastDecodedIndex = lastIndex;
         video.lastDecodedTimestamp = lastTimestamp;
-        console.log(`[VideoDecoderWorker] ${videoId}: Flush complete, lastDecodedIndex: ${lastIndex}, lastDecodedTimestamp: ${lastTimestamp}`);
       }
 
       this.sendMessage({ type: 'seeked', videoId, time, success: true });
 
     } catch (error) {
       console.error(`[VideoDecoderWorker] ${videoId}: Seek failed:`, error);
-      // Reset tracking on error
       video.lastDecodedIndex = -1;
       video.lastDecodedTimestamp = -1;
       this.sendMessage({
@@ -646,20 +616,12 @@ class VideoDecoderWorker {
       speed?: number;
     }>
   ): Promise<void> {
-    console.log(`[VideoDecoderWorker] bufferFrames called for time ${time}s with ${items.length} items`);
-
     const bufferPromises = items.map(async (item) => {
       const video = this.videos.get(item.id);
-      if (!video?.isReady) {
-        console.log(`[VideoDecoderWorker] ${item.id}: Not ready for buffering`);
-        return;
-      }
+      if (!video?.isReady) return;
 
       const timeInClip = time - item.startTime;
-      if (timeInClip < -1 || timeInClip > item.duration + 1) {
-        console.log(`[VideoDecoderWorker] ${item.id}: Outside clip range (timeInClip: ${timeInClip})`);
-        return;
-      }
+      if (timeInClip < -1 || timeInClip > item.duration + 1) return;
 
       const speed = item.speed || 1;
       const trimStart = item.trim?.start || 0;
