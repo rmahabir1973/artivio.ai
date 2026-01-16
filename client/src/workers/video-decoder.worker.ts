@@ -331,7 +331,7 @@ class VideoDecoderWorker {
         mp4boxFile.onSamples = (trackId: number, ref: any, samples: any[]) => {
           if (!videoTrack || trackId !== videoTrack.id) return;
 
-          console.log(`[VideoDecoderWorker] ${videoId}: Received ${samples.length} samples`);
+          console.log(`[VideoDecoderWorker] ${videoId}: Received ${samples.length} samples (total now: ${extractedChunks.length + samples.length})`);
 
           for (const sample of samples) {
             try {
@@ -348,6 +348,22 @@ class VideoDecoderWorker {
 
           // Release samples to free memory
           mp4boxFile.releaseUsedSamples(trackId, samples.length);
+
+          // Check if we've received all expected samples
+          const expectedSamples = videoTrack?.nb_samples || 0;
+          if (extractedChunks.length >= expectedSamples && !resolved) {
+            resolved = true;
+            cleanup();
+            mp4boxFile.stop();
+
+            console.log(`[VideoDecoderWorker] ${videoId}: All ${extractedChunks.length} samples extracted`);
+            resolve({
+              metadata: videoMetadata!,
+              track: videoTrack,
+              chunks: extractedChunks,
+              description: codecDescription
+            });
+          }
         };
 
         mp4boxFile.onError = (error: any) => {
@@ -363,7 +379,7 @@ class VideoDecoderWorker {
           mp4boxFile.appendBuffer(arrayBuffer);
           mp4boxFile.flush();
 
-          // Give MP4Box time to process all samples
+          // Safety timeout - resolve with whatever we have after 2 seconds
           setTimeout(() => {
             if (resolved) return;
             resolved = true;
@@ -374,14 +390,19 @@ class VideoDecoderWorker {
               return;
             }
 
-            console.log(`[VideoDecoderWorker] ${videoId}: Extracted ${extractedChunks.length} chunks total`);
-            resolve({
-              metadata: videoMetadata,
-              track: videoTrack,
-              chunks: extractedChunks,
-              description: codecDescription
-            });
-          }, 100);
+            // Accept partial extraction if we have at least some chunks
+            if (extractedChunks.length > 0) {
+              console.log(`[VideoDecoderWorker] ${videoId}: Timeout - extracted ${extractedChunks.length} chunks (expected ${videoTrack.nb_samples})`);
+              resolve({
+                metadata: videoMetadata,
+                track: videoTrack,
+                chunks: extractedChunks,
+                description: codecDescription
+              });
+            } else {
+              reject(new Error('No video samples extracted'));
+            }
+          }, 2000);
         } catch (error) {
           reject(new Error(`Failed to parse MP4: ${error}`));
         }
