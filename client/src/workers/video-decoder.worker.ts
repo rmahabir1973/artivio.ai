@@ -86,6 +86,7 @@ class VideoDecoderWorker {
           break;
 
         case 'buffer':
+          console.log(`[VideoDecoderWorker] Received buffer message: time=${time}, items=${items?.length}`);
           if (time !== undefined && items) {
             await this.bufferFrames(time, items);
           }

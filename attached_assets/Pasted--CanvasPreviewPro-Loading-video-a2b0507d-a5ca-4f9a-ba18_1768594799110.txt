@@ -1,0 +1,73 @@
+[CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260116T201911Z&X-Amz-Expires=604800&X-Amz-Signature=914546e2db30e219fad295540c0c45b5f6984482e33516b688cb377951dfbdad&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-D1_hkZVB.js:1454 FFmpeg worker ready
+index-D1_hkZVB.js:1454 Initializing FFmpeg WASM...
+index-D1_hkZVB.js:1454 Video decoder worker ready
+index-D1_hkZVB.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73: 0%
+index-D1_hkZVB.js:1567 [CanvasPreviewPro] Loading video a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a5a658b7-1c89-4b75-99d4-a926455786ef-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260116T201911Z&X-Amz-Expires=604800&X-Amz-Signature=8783b5d44ed68891ade033785098eead408498232204fbee5a761f3ea4d035dc&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-D1_hkZVB.js:1567 Loading a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l: 0%
+index-D1_hkZVB.js:1567 [DURATION] Loaded video clip a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l: 8s
+index-D1_hkZVB.js:1567 Loading a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l: 50%
+index-D1_hkZVB.js:1567 Loading a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l: 75%
+index-D1_hkZVB.js:1454 [WorkerManager] Video loaded: a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l {duration: 8, width: 1280, height: 720, frameRate: 24, hasVideo: true, …}
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.083333
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.125
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.166666
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.208333
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.25
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.291666
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.333333
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.375
+index-D1_hkZVB.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l at 0.416666
+index-D1_hkZVB.js:1454  FFmpeg error: Error: failed to import ffmpeg-core.js
+handleFFmpegMessage @ index-D1_hkZVB.js:1454
+index-D1_hkZVB.js:1567 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l {clip: {…}, index: 1, type: 'clip'}
+index-D1_hkZVB.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73: 50%
+index-D1_hkZVB.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73: 75%
+index-D1_hkZVB.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 {duration: 8, width: 1280, height: 720, frameRate: 24, hasVideo: true, …}
+index-D1_hkZVB.js:1567 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73: 8s
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.083333
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.125
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.166666
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.208333
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.25
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.291666
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.333333
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.375
+index-D1_hkZVB.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768594761427_9xln8yf73 at 0.416666
+index-D1_hkZVB.js:1567 [DRAG] handleDragEnd: {activeId: 'a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l', overId: 'track-drop-layer-1', useMultiTrack: false}
+index-D1_hkZVB.js:1567 [DRAG] Clip drag: {clipId: 'a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l', dragDelta: {…}, dragInitialPosition: 0}
+index-D1_hkZVB.js:1567 [DRAG] Updated clip position: {clipId: 'a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l', newPosition: 0, deltaSeconds: -0.52, initial: 0}
+index-D1_hkZVB.js:1567 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l {clip: {…}, index: 1, type: 'clip'}
+index-D1_hkZVB.js:1567 [DRAG] handleDragEnd: {activeId: 'a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l', overId: 'track-drop-layer-2', useMultiTrack: false}
+index-D1_hkZVB.js:1567 [DRAG] Clip drag: {clipId: 'a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l', dragDelta: {…}, dragInitialPosition: 0}
+index-D1_hkZVB.js:1567 [DRAG] Updated clip position: {clipId: 'a5a658b7-1c89-4b75-99d4-a926455786ef_1768594761978_300pktw5l', newPosition: 5.92, deltaSeconds: 5.92, initial: 0}
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items
+5index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 0.02s for 2 items
+6index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 1.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 2.02s for 2 items
+6index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 2.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 3.02s for 2 items
+5index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 3.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 4.02s for 2 items
+7index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 4.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 5.02s for 2 items
+6index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 5.02s for 2 items
+index-D1_hkZVB.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 6.02s for 2 items
+5index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 6.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 7.02s for 2 items
+5index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 7.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 8.02s for 2 items
+6index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 8.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 9.02s for 2 items
+6index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 9.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 10.02s for 2 items
+6index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 10.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 11.02s for 2 items
+5index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 11.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 12.02s for 2 items
+7index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 12.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 13.02s for 2 items
+6index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 13.02s for 2 items
+index-D1_hkZVB.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items
