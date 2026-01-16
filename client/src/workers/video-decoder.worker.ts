@@ -225,15 +225,64 @@ class VideoDecoderWorker {
             if (trak?.mdia?.minf?.stbl?.stsd?.entries?.[0]) {
               const entry = trak.mdia.minf.stbl.stsd.entries[0];
 
-              // Check for avcC (H.264) or hvcC (H.265)
-              const configBox = entry.avcC || entry.hvcC;
-              if (configBox) {
-                // Serialize the config box to get the description
+              // Check for avcC (H.264)
+              if (entry.avcC) {
+                const avcC = entry.avcC;
+                // Manually serialize AVCDecoderConfigurationRecord
+                // Structure: configVersion(1) + profile(1) + compat(1) + level(1) +
+                //           lengthSize(1) + numSPS(1) + [spsLen(2) + spsData]... +
+                //           numPPS(1) + [ppsLen(2) + ppsData]...
+
+                let totalSize = 6; // Fixed header bytes
+                const spsArray = avcC.SPS || [];
+                const ppsArray = avcC.PPS || [];
+
+                for (const sps of spsArray) {
+                  totalSize += 2 + sps.length; // 2 bytes length + data
+                }
+                totalSize += 1; // numPPS byte
+                for (const pps of ppsArray) {
+                  totalSize += 2 + pps.length; // 2 bytes length + data
+                }
+
+                const buffer = new ArrayBuffer(totalSize);
+                const view = new DataView(buffer);
+                const bytes = new Uint8Array(buffer);
+                let offset = 0;
+
+                // Write header
+                view.setUint8(offset++, avcC.configurationVersion || 1);
+                view.setUint8(offset++, avcC.AVCProfileIndication || 100);
+                view.setUint8(offset++, avcC.profile_compatibility || 0);
+                view.setUint8(offset++, avcC.AVCLevelIndication || 31);
+                view.setUint8(offset++, 0xFF); // 6 bits reserved (all 1s) + 2 bits lengthSizeMinusOne (3 = 4 bytes)
+                view.setUint8(offset++, 0xE0 | spsArray.length); // 3 bits reserved (all 1s) + 5 bits numSPS
+
+                // Write SPS
+                for (const sps of spsArray) {
+                  view.setUint16(offset, sps.length);
+                  offset += 2;
+                  bytes.set(new Uint8Array(sps.buffer || sps), offset);
+                  offset += sps.length;
+                }
+
+                // Write PPS count and data
+                view.setUint8(offset++, ppsArray.length);
+                for (const pps of ppsArray) {
+                  view.setUint16(offset, pps.length);
+                  offset += 2;
+                  bytes.set(new Uint8Array(pps.buffer || pps), offset);
+                  offset += pps.length;
+                }
+
+                codecDescription = bytes;
+                console.log(`[VideoDecoder] Extracted avcC description: ${codecDescription.length} bytes, SPS: ${spsArray.length}, PPS: ${ppsArray.length}`);
+              } else if (entry.hvcC) {
+                // For HEVC, try the DataStream approach
                 const stream = new (MP4Box as any).DataStream(undefined, 0, (MP4Box as any).DataStream.BIG_ENDIAN);
-                configBox.write(stream);
-                // Skip the 8-byte box header (4 bytes size + 4 bytes type)
+                entry.hvcC.write(stream);
                 codecDescription = new Uint8Array(stream.buffer, 8);
-                console.log(`[VideoDecoder] Extracted codec description: ${codecDescription.length} bytes`);
+                console.log(`[VideoDecoder] Extracted hvcC description: ${codecDescription.length} bytes`);
               }
             }
           } catch (e) {
@@ -256,11 +305,14 @@ class VideoDecoderWorker {
         mp4boxFile.flush();
       });
 
+      // Track decode errors to prevent spam
+      let decodeErrorCount = 0;
+      let lastErrorMessage = '';
+
       // Create decoder
       decoder = new VideoDecoder({
         output: (frame: VideoFrame) => {
           const timestamp = frame.timestamp / 1000000; // to seconds
-          console.log(`[VideoDecoder] Frame output: ${videoId} @ ${timestamp.toFixed(3)}s`);
 
           // Send frame to main thread (transfer ownership for zero-copy)
           this.sendMessage({
@@ -271,12 +323,20 @@ class VideoDecoderWorker {
           }, [frame]);
         },
         error: (error: Error) => {
-          console.error(`[VideoDecoder] Decoder error for ${videoId}:`, error.message);
-          this.sendMessage({
-            type: 'error',
-            videoId,
-            error: error.message,
-          });
+          decodeErrorCount++;
+          // Only log first error and every 100th after to prevent console spam
+          if (decodeErrorCount === 1 || decodeErrorCount % 100 === 0) {
+            console.error(`[VideoDecoder] Decoder error #${decodeErrorCount} for ${videoId}:`, error.message);
+          }
+          // Only send first error to main thread
+          if (lastErrorMessage !== error.message) {
+            lastErrorMessage = error.message;
+            this.sendMessage({
+              type: 'error',
+              videoId,
+              error: error.message,
+            });
+          }
         },
       });
 

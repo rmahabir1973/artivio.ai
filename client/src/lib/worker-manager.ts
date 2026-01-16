@@ -93,9 +93,6 @@ export class WorkerManager {
         break;
 
       case 'frame':
-        // Log frame receipt for debugging
-        console.log(`[WorkerManager] Frame received: ${videoId} @ ${timestamp.toFixed(3)}s`);
-        
         // Cache frame with size limits to prevent memory exhaustion
         if (!this.frameCache.has(videoId)) {
           this.frameCache.set(videoId, new Map());
