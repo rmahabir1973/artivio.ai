@@ -190,18 +190,24 @@ class VideoDecoderWorker {
         }
       };
 
+      // Track info for codec configuration
+      let videoTrackInfo: any = null;
+      let codecDescription: Uint8Array | undefined = undefined;
+
       // Extract metadata and setup decoder - extraction happens inside onReady
       const metadata = await new Promise<VideoMetadata>((resolve, reject) => {
         mp4boxFile.onError = (e: any) => reject(e);
 
         mp4boxFile.onReady = (info: any) => {
           console.log(`[VideoDecoder] onReady fired for ${videoId}`);
-          
+
           const videoTrack = info.videoTracks[0];
           if (!videoTrack) {
             reject(new Error('No video track found'));
             return;
           }
+
+          videoTrackInfo = videoTrack;
 
           const metadata: VideoMetadata = {
             duration: info.duration / info.timescale,
@@ -211,6 +217,28 @@ class VideoDecoderWorker {
             hasVideo: info.videoTracks.length > 0,
             hasAudio: info.audioTracks.length > 0,
           };
+
+          // Extract codec description for H.264/H.265
+          // This is REQUIRED for AVC formatted H.264 to decode properly
+          try {
+            const trak = mp4boxFile.getTrackById(videoTrack.id);
+            if (trak?.mdia?.minf?.stbl?.stsd?.entries?.[0]) {
+              const entry = trak.mdia.minf.stbl.stsd.entries[0];
+
+              // Check for avcC (H.264) or hvcC (H.265)
+              const configBox = entry.avcC || entry.hvcC;
+              if (configBox) {
+                // Serialize the config box to get the description
+                const stream = new (MP4Box as any).DataStream(undefined, 0, (MP4Box as any).DataStream.BIG_ENDIAN);
+                configBox.write(stream);
+                // Skip the 8-byte box header (4 bytes size + 4 bytes type)
+                codecDescription = new Uint8Array(stream.buffer, 8);
+                console.log(`[VideoDecoder] Extracted codec description: ${codecDescription.length} bytes`);
+              }
+            }
+          } catch (e) {
+            console.warn(`[VideoDecoder] Could not extract codec description:`, e);
+          }
 
           // Set extraction options and start INSIDE onReady - this is critical!
           console.log(`[VideoDecoder] Setting extraction options for track ${videoTrack.id}`);
@@ -252,17 +280,25 @@ class VideoDecoderWorker {
         },
       });
 
-      // Configure decoder
-      const trackInfo = mp4boxFile.getTrackById(1);
-      const codecString = this.getCodecString(trackInfo);
+      // Configure decoder with codec description (required for H.264)
+      // Use the codec string from mp4box videoTrack which is already properly formatted
+      const codecString = videoTrackInfo?.codec || 'avc1.64001f';
       console.log(`[VideoDecoder] Configuring decoder with codec: ${codecString}`);
-      
-      decoder.configure({
+      console.log(`[VideoDecoder] Has codec description: ${codecDescription ? 'yes' : 'no'}`);
+
+      const decoderConfig: VideoDecoderConfig = {
         codec: codecString,
         codedWidth: metadata.width,
         codedHeight: metadata.height,
         optimizeForLatency: true,
-      });
+      };
+
+      // Add description for H.264/H.265 - this is CRITICAL for AVC formatted video
+      if (codecDescription) {
+        decoderConfig.description = codecDescription;
+      }
+
+      decoder.configure(decoderConfig);
 
       // Wait for initial samples to be extracted (with timeout)
       const samplesPromise = new Promise<void>((resolve) => {
