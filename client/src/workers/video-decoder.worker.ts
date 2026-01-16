@@ -653,22 +653,44 @@ class VideoDecoderWorker {
       speed?: number;
     }>
   ): Promise<void> {
+    // Log once per second
+    const shouldLog = Math.floor(time) !== Math.floor(this._lastBufferLogTime || -1);
+    if (shouldLog) {
+      console.log(`[VideoDecoderWorker] bufferFrames(${time.toFixed(2)}s) for ${items.length} items`);
+      this._lastBufferLogTime = time;
+    }
+
     const bufferPromises = items.map(async (item) => {
       const video = this.videos.get(item.id);
-      if (!video?.isReady) return;
+      if (!video?.isReady) {
+        if (shouldLog) {
+          console.log(`[VideoDecoderWorker] bufferFrames: ${item.id} not ready (isReady=${video?.isReady}, hasVideo=${!!video})`);
+        }
+        return;
+      }
 
       const timeInClip = time - item.startTime;
-      if (timeInClip < -1 || timeInClip > item.duration + 1) return;
+      if (timeInClip < -1 || timeInClip > item.duration + 1) {
+        if (shouldLog) {
+          console.log(`[VideoDecoderWorker] bufferFrames: ${item.id} out of range (timeInClip=${timeInClip.toFixed(2)}, startTime=${item.startTime}, duration=${item.duration})`);
+        }
+        return;
+      }
 
       const speed = item.speed || 1;
       const trimStart = item.trim?.start || 0;
       const localTime = trimStart + (timeInClip * speed);
 
+      if (shouldLog) {
+        console.log(`[VideoDecoderWorker] bufferFrames: Calling seekVideo for ${item.id} at localTime=${localTime.toFixed(2)}s`);
+      }
       await this.seekVideo(item.id, localTime);
     });
 
     await Promise.all(bufferPromises);
   }
+  
+  private _lastBufferLogTime?: number;
 
   /**
    * Reset decoder for a video
