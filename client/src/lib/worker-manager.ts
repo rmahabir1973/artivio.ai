@@ -258,27 +258,44 @@ export class WorkerManager {
 
   /**
    * Get cached frame for a video at specific time
+   * Uses fuzzy matching to find nearest frame within tolerance
    */
   getFrame(videoId: string, time: number): VideoFrame | null {
     const cache = this.frameCache.get(videoId);
-    if (!cache) {
-      // Log only once per second to avoid spam
-      if (Math.floor(time) !== Math.floor(this._lastGetFrameLogTime || -1)) {
-        console.log(`[WorkerManager] getFrame: No cache for ${videoId}, time=${time.toFixed(3)}`);
-        this._lastGetFrameLogTime = time;
-      }
+    if (!cache || cache.size === 0) {
       return null;
     }
 
     const timeKey = Math.round(time * 10);
-    const frame = cache.get(timeKey);
-    
-    // Log cache misses occasionally for debugging
-    if (!frame && Math.floor(time * 2) !== Math.floor((this._lastCacheMissLogTime || -1) * 2)) {
-      console.log(`[WorkerManager] getFrame: Cache miss ${videoId} @ ${time.toFixed(3)}s (key=${timeKey}), cache has ${cache.size} frames`);
-      this._lastCacheMissLogTime = time;
+    let frame = cache.get(timeKey);
+
+    // If exact match not found, try nearby keys (within 0.2s)
+    if (!frame) {
+      for (let offset = 1; offset <= 2; offset++) {
+        frame = cache.get(timeKey - offset) || cache.get(timeKey + offset);
+        if (frame) break;
+      }
     }
-    
+
+    // Still no frame? Find the closest one in the cache
+    if (!frame && cache.size > 0) {
+      let closestKey = -1;
+      let closestDistance = Infinity;
+
+      for (const key of cache.keys()) {
+        const distance = Math.abs(key - timeKey);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestKey = key;
+        }
+      }
+
+      // Use closest frame if within 1 second (10 time keys)
+      if (closestKey >= 0 && closestDistance <= 10) {
+        frame = cache.get(closestKey);
+      }
+    }
+
     return frame || null;
   }
   

@@ -332,12 +332,29 @@ class VideoDecoderWorker {
         metadata,
       });
 
-      // Decode first keyframe for instant preview
+      // Pre-decode first several seconds of video for smooth playback start
+      // Decode up to 180 frames (~6 seconds at 30fps) to have a buffer ready
       if (videoData.length > 0) {
-        console.log(`[VideoDecoder] Decoding first frame for ${videoId}`);
-        decoder.decode(videoData[0]);
+        const framesToDecode = Math.min(videoData.length, 180);
+        console.log(`[VideoDecoder] Pre-decoding ${framesToDecode} frames for ${videoId}`);
+
+        for (let i = 0; i < framesToDecode; i++) {
+          try {
+            decoder.decode(videoData[i]);
+          } catch (e) {
+            console.warn(`[VideoDecoder] Error decoding frame ${i}:`, e);
+            break;
+          }
+
+          // Yield every 30 frames to avoid blocking
+          if (i % 30 === 29) {
+            await decoder.flush();
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+        }
+
         await decoder.flush();
-        console.log(`[VideoDecoder] First frame decoded for ${videoId}`);
+        console.log(`[VideoDecoder] Pre-decoded ${framesToDecode} frames for ${videoId}`);
       } else {
         console.warn(`[VideoDecoder] No video chunks available for ${videoId}`);
       }
