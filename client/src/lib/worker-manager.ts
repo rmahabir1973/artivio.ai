@@ -99,8 +99,8 @@ export class WorkerManager {
         }
         const cache = this.frameCache.get(videoId)!;
 
-        // Store frame with timestamp as key (rounded to nearest 0.1s)
-        const timeKey = Math.round(timestamp * 10);
+        // Store frame with timestamp as key (rounded to nearest 0.033s for 30fps resolution)
+        const timeKey = Math.round(timestamp * 30);
 
         // Close old frame at this time if exists
         const oldFrame = cache.get(timeKey);
@@ -263,12 +263,13 @@ export class WorkerManager {
       return null;
     }
 
-    const timeKey = Math.round(time * 10);
+    // Match resolution used in cache storage (30fps = 0.033s per key)
+    const timeKey = Math.round(time * 30);
     let frame = cache.get(timeKey);
 
-    // If exact match not found, try nearby keys (within 0.2s)
+    // If exact match not found, try nearby keys (within ~0.1s = 3 keys at 30fps)
     if (!frame) {
-      for (let offset = 1; offset <= 2; offset++) {
+      for (let offset = 1; offset <= 3; offset++) {
         frame = cache.get(timeKey - offset) || cache.get(timeKey + offset);
         if (frame) break;
       }
@@ -287,8 +288,8 @@ export class WorkerManager {
         }
       }
 
-      // Use closest frame if within 1 second (10 time keys)
-      if (closestKey >= 0 && closestDistance <= 10) {
+      // Use closest frame if within 1 second (30 time keys at 30fps resolution)
+      if (closestKey >= 0 && closestDistance <= 30) {
         frame = cache.get(closestKey);
       }
     }
