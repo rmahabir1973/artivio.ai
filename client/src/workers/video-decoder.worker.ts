@@ -223,66 +223,6 @@ class VideoDecoderWorker {
   }
 
   /**
-   * Extract all video samples using MP4Box
-   */
-  private async extractVideoSamples(
-    videoId: string,
-    mp4boxFile: any,
-    track: any,
-    timescale: number
-  ): Promise<EncodedVideoChunk[]> {
-    return new Promise((resolve, reject) => {
-      const chunks: EncodedVideoChunk[] = [];
-      let extractionStarted = false;
-      let timeoutId: number;
-
-      mp4boxFile.onSamples = (trackId: number, ref: any, samples: any[]) => {
-        if (trackId !== track.id) return;
-
-        for (const sample of samples) {
-          try {
-            chunks.push(new EncodedVideoChunk({
-              type: sample.is_sync ? 'key' : 'delta',
-              timestamp: (sample.cts * 1_000_000) / timescale,
-              duration: (sample.duration * 1_000_000) / timescale,
-              data: sample.data,
-            }));
-          } catch (error) {
-            console.warn(`[VideoDecoderWorker] ${videoId}: Failed to create chunk:`, error);
-          }
-        }
-
-        extractionStarted = true;
-      };
-
-      mp4boxFile.onError = (error: any) => {
-        clearTimeout(timeoutId);
-        reject(new Error(`MP4Box extraction error: ${error}`));
-      };
-
-      mp4boxFile.setExtractionOptions(track.id, null, { nbSamples: Infinity });
-      mp4boxFile.start();
-      extractionStarted = true;
-
-      // Wait for extraction to complete
-      const checkCompletion = () => {
-        if (extractionStarted) {
-          // Give some time for more samples to arrive
-          setTimeout(() => {
-            clearTimeout(timeoutId);
-            console.log(`[VideoDecoderWorker] ${videoId}: Extracted ${chunks.length} chunks`);
-            resolve(chunks);
-          }, 100);
-        } else {
-          timeoutId = setTimeout(checkCompletion, 50);
-        }
-      };
-
-      timeoutId = setTimeout(checkCompletion, 1000);
-    });
-  }
-
-  /**
    * Load and decode a video
    */
   private async loadVideo(videoId: string, url: string): Promise<void> {
@@ -322,27 +262,41 @@ class VideoDecoderWorker {
       const mp4boxFile = MP4Box.createFile();
       videoState.mp4boxFile = mp4boxFile;
 
-      // Get video metadata and track info
-      const { metadata, track } = await new Promise<{ metadata: VideoMetadata; track: any }>((resolve, reject) => {
+      // Extract metadata and samples in one pass
+      // MP4Box processes samples during appendBuffer, so we must set up extraction
+      // options in onReady BEFORE calling flush()
+      const { metadata, track, chunks, description } = await new Promise<{
+        metadata: VideoMetadata;
+        track: any;
+        chunks: EncodedVideoChunk[];
+        description?: Uint8Array;
+      }>((resolve, reject) => {
         let resolved = false;
+        let videoTrack: any = null;
+        let videoMetadata: VideoMetadata | null = null;
+        let codecDescription: Uint8Array | undefined = undefined;
+        const extractedChunks: EncodedVideoChunk[] = [];
+        let trackTimescale = 1;
 
         const cleanup = () => {
           mp4boxFile.onReady = null;
           mp4boxFile.onError = null;
+          mp4boxFile.onSamples = null;
         };
 
         mp4boxFile.onReady = (info: any) => {
-          if (resolved) return;
-          resolved = true;
-          cleanup();
-
-          const videoTrack = info.videoTracks[0];
+          videoTrack = info.videoTracks[0];
           if (!videoTrack) {
+            resolved = true;
+            cleanup();
             reject(new Error('No video track found'));
             return;
           }
 
-          const metadata: VideoMetadata = {
+          // Use track timescale for sample timestamps, not movie timescale
+          trackTimescale = videoTrack.timescale || info.timescale;
+
+          videoMetadata = {
             duration: info.duration / info.timescale,
             width: videoTrack.video.width,
             height: videoTrack.video.height,
@@ -350,11 +304,43 @@ class VideoDecoderWorker {
             hasVideo: info.videoTracks.length > 0,
             hasAudio: info.audioTracks.length > 0,
             codec: videoTrack.codec,
-            timescale: info.timescale,
+            timescale: trackTimescale,
           };
 
-          console.log(`[VideoDecoderWorker] ${videoId}: Found track - ${metadata.width}x${metadata.height}, codec: ${metadata.codec}, duration: ${metadata.duration}s`);
-          resolve({ metadata, track: videoTrack });
+          console.log(`[VideoDecoderWorker] ${videoId}: Found track - ${videoMetadata.width}x${videoMetadata.height}, codec: ${videoMetadata.codec}, duration: ${videoMetadata.duration}s, track timescale: ${trackTimescale}`);
+
+          // Extract codec description
+          codecDescription = this.getDescription(mp4boxFile, videoTrack);
+          if (codecDescription) {
+            console.log(`[VideoDecoderWorker] ${videoId}: Codec description extracted, ${codecDescription.length} bytes`);
+          }
+
+          // Set up sample extraction BEFORE processing continues
+          // This is critical - extraction options must be set in onReady
+          mp4boxFile.setExtractionOptions(videoTrack.id, null, { nbSamples: Infinity });
+          mp4boxFile.start();
+        };
+
+        mp4boxFile.onSamples = (trackId: number, ref: any, samples: any[]) => {
+          if (!videoTrack || trackId !== videoTrack.id) return;
+
+          console.log(`[VideoDecoderWorker] ${videoId}: Received ${samples.length} samples`);
+
+          for (const sample of samples) {
+            try {
+              extractedChunks.push(new EncodedVideoChunk({
+                type: sample.is_sync ? 'key' : 'delta',
+                timestamp: (sample.cts * 1_000_000) / trackTimescale,
+                duration: (sample.duration * 1_000_000) / trackTimescale,
+                data: sample.data,
+              }));
+            } catch (error) {
+              console.warn(`[VideoDecoderWorker] ${videoId}: Failed to create chunk:`, error);
+            }
+          }
+
+          // Release samples to free memory
+          mp4boxFile.releaseUsedSamples(trackId, samples.length);
         };
 
         mp4boxFile.onError = (error: any) => {
@@ -369,29 +355,39 @@ class VideoDecoderWorker {
         try {
           mp4boxFile.appendBuffer(arrayBuffer);
           mp4boxFile.flush();
+
+          // Give MP4Box time to process all samples
+          setTimeout(() => {
+            if (resolved) return;
+            resolved = true;
+            cleanup();
+
+            if (!videoMetadata || !videoTrack) {
+              reject(new Error('Failed to extract video metadata'));
+              return;
+            }
+
+            console.log(`[VideoDecoderWorker] ${videoId}: Extracted ${extractedChunks.length} chunks total`);
+            resolve({
+              metadata: videoMetadata,
+              track: videoTrack,
+              chunks: extractedChunks,
+              description: codecDescription
+            });
+          }, 100);
         } catch (error) {
           reject(new Error(`Failed to parse MP4: ${error}`));
         }
       });
 
       videoState.metadata = metadata;
+      videoState.chunks = chunks;
       this.sendMessage({ type: 'loading', videoId, progress: 75 });
-
-      // Get codec description
-      const description = this.getDescription(mp4boxFile, track);
-      if (description) {
-        console.log(`[VideoDecoderWorker] ${videoId}: Codec description extracted, ${description.length} bytes`);
-      }
 
       // Initialize decoder
       console.log(`[VideoDecoderWorker] ${videoId}: Initializing decoder...`);
       const decoder = await this.initializeDecoder(videoId, metadata, description);
       videoState.decoder = decoder;
-
-      // Extract video samples
-      console.log(`[VideoDecoderWorker] ${videoId}: Extracting video samples...`);
-      const chunks = await this.extractVideoSamples(videoId, mp4boxFile, track, metadata.timescale);
-      videoState.chunks = chunks;
 
       // Stop MP4Box processing
       mp4boxFile.stop();
