@@ -47,6 +47,8 @@ interface VideoState {
   lastDecodedIndex: number;
   lastDecodedTimestamp: number;
   isDecoding: boolean;
+  // For logging rate limiting
+  _lastSkipLogTime?: number;
 }
 
 class VideoDecoderWorker {
@@ -513,11 +515,13 @@ class VideoDecoderWorker {
   private async seekVideo(videoId: string, time: number): Promise<void> {
     const video = this.videos.get(videoId);
     if (!video?.isReady || !video.decoder || !video.metadata || video.chunks.length === 0) {
+      console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Not ready - isReady=${video?.isReady}, hasDecoder=${!!video?.decoder}, chunks=${video?.chunks?.length || 0}`);
       return;
     }
 
     // Prevent concurrent decode operations
     if (video.isDecoding) {
+      console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Already decoding, skipping`);
       return;
     }
 
@@ -528,6 +532,11 @@ class VideoDecoderWorker {
       const lastDecodedUs = video.lastDecodedTimestamp * 1_000_000;
       // If we've already decoded past the target + 1 second buffer, skip
       if (lastDecodedUs > targetTimestamp + 1_000_000) {
+        // Only log occasionally to avoid spam
+        if (Math.floor(time) !== Math.floor(video._lastSkipLogTime || -1)) {
+          console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Already decoded to ${video.lastDecodedTimestamp.toFixed(2)}s, skipping`);
+          video._lastSkipLogTime = time;
+        }
         return;
       }
     }
@@ -577,12 +586,15 @@ class VideoDecoderWorker {
       const targetEndTimestamp = targetTimestamp + 3_000_000; // 3 seconds ahead
       const maxFrames = 90;
 
+      console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Decoding from index ${startIndex}, target=${(targetTimestamp/1_000_000).toFixed(2)}s, chunks=${video.chunks.length}`);
+
       let decodedCount = 0;
       let lastIndex = video.lastDecodedIndex;
       let lastTimestamp = video.lastDecodedTimestamp;
 
       for (let i = startIndex; i < video.chunks.length && decodedCount < maxFrames; i++) {
         if (video.decoder.state !== 'configured') {
+          console.warn(`[VideoDecoderWorker] seekVideo(${videoId}): Decoder not configured, state=${video.decoder.state}`);
           break;
         }
 
@@ -604,6 +616,10 @@ class VideoDecoderWorker {
         // Update tracking
         video.lastDecodedIndex = lastIndex;
         video.lastDecodedTimestamp = lastTimestamp;
+        
+        console.log(`[VideoDecoderWorker] seekVideo(${videoId}): Decoded ${decodedCount} frames, now at index ${lastIndex}/${video.chunks.length}, timestamp ${lastTimestamp.toFixed(2)}s`);
+      } else {
+        console.log(`[VideoDecoderWorker] seekVideo(${videoId}): No frames decoded, decoderState=${video.decoder.state}, count=${decodedCount}`);
       }
 
       this.sendMessage({ type: 'seeked', videoId, time, success: true });

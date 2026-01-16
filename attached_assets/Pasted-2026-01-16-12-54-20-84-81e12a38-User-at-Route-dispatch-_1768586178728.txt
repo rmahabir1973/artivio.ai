@@ -1,0 +1,144 @@
+2026-01-16 12:54:20.84
+81e12a38
+User
+at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+2026-01-16 12:54:20.84
+81e12a38
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2026-01-16 12:54:20.84
+81e12a38
+User
+[JWT] Access token verification failed: TokenExpiredError: jwt expired
+2026-01-16 12:54:20.84
+81e12a38
+User
+5:54:20 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized - Invalid token"}
+2026-01-16 12:54:33.37
+81e12a38
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2026-01-16 12:54:33.37
+81e12a38
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2026-01-16 12:54:33.40
+81e12a38
+User
+}
+2026-01-16 12:54:33.40
+81e12a38
+User
+email: 'ryan.mahabir@outlook.com',
+2026-01-16 12:54:33.40
+81e12a38
+User
+isAdmin: true
+2026-01-16 12:54:33.40
+81e12a38
+User
+[AUTH] ✓ User data fetched successfully {
+2026-01-16 12:54:33.40
+81e12a38
+User
+userId: '49729939',
+2026-01-16 12:54:33.40
+81e12a38
+User
+5:54:33 PM [express] GET /api/auth/user 200 in 49ms :: {"id":"49729939","email":"ryan.mahabir@outloo…
+2026-01-16 12:55:03.76
+81e12a38
+User
+[JWT MIDDLEWARE] ✓ Token verified { userId: '49729939', email: 'ryan.mahabir@outlook.com' }
+2026-01-16 12:55:03.76
+81e12a38
+User
+[AUTH] Fetching user data { userId: '49729939' }
+2026-01-16 12:55:03.78
+81e12a38
+User
+}
+2026-01-16 12:55:03.78
+81e12a38
+User
+[AUTH] ✓ User data fetched successfully {
+2026-01-16 12:55:03.78
+81e12a38
+User
+email: 'ryan.mahabir@outlook.com',
+2026-01-16 12:55:03.78
+81e12a38
+User
+isAdmin: true
+2026-01-16 12:55:03.78
+81e12a38
+User
+5:55:03 PM [express] GET /api/auth/user 200 in 134ms :: {"id":"49729939","email":"ryan.mahabir@outlo…
+2026-01-16 12:55:03.78
+81e12a38
+User
+userId: '49729939',
+2026-01-16 12:55:03.80
+81e12a38
+User
+5:55:03 PM [express] GET /api/announcements/active 304 in 91ms :: []
+2026-01-16 12:55:20.84
+81e12a38
+User
+at next (/home/runner/workspace/node_modules/express/lib/router/route.js:149:13)
+2026-01-16 12:55:20.84
+81e12a38
+User
+at requireJWT (file:///home/runner/workspace/dist/index.js:11355:21)
+2026-01-16 12:55:20.84
+81e12a38
+User
+at module.exports [as verify] (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:101:10)
+2026-01-16 12:55:20.84
+81e12a38
+User
+at getSecret (/home/runner/workspace/node_modules/jsonwebtoken/verify.js:97:14)
+2026-01-16 12:55:20.84
+81e12a38
+User
+at /home/runner/workspace/node_modules/jsonwebtoken/verify.js:190:21
+2026-01-16 12:55:20.84
+81e12a38
+User
+[JWT MIDDLEWARE] Invalid or expired access token
+2026-01-16 12:55:20.84
+81e12a38
+User
+at Route.dispatch (/home/runner/workspace/node_modules/express/lib/router/route.js:119:3)
+2026-01-16 12:55:20.84
+81e12a38
+User
+at /home/runner/workspace/node_modules/express/lib/router/index.js:284:15 {
+2026-01-16 12:55:20.84
+81e12a38
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2026-01-16 12:55:20.84
+81e12a38
+User
+[JWT] Access token verification failed: TokenExpiredError: jwt expired
+2026-01-16 12:55:20.84
+81e12a38
+User
+}
+2026-01-16 12:55:20.84
+81e12a38
+User
+at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+2026-01-16 12:55:20.84
+81e12a38
+User
+at verifyAccessToken (file:///home/runner/workspace/dist/index.js:11251:25)
+2026-01-16 12:55:20.84
+81e12a38
+User
+expiredAt: 2026-01-16T14:18:08.000Z
+2026-01-16 12:55:20.85
+81e12a38
+User
+5:55:20 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized - Invalid token"}

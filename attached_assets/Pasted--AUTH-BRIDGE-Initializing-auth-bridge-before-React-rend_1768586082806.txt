@@ -1,0 +1,66 @@
+[AUTH BRIDGE] Initializing auth bridge before React render
+index-BqPm9VDY.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-BqPm9VDY.js:993 [AUTH] Initializing auth
+index-BqPm9VDY.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-BqPm9VDY.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated {hasToken: true, hasUser: true, userId: '49729939'}
+index-BqPm9VDY.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-BqPm9VDY.js:1567 [VIDEO-EDITOR] Session restored from localStorage
+index-BqPm9VDY.js:1567 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260116T143009Z&X-Amz-Expires=604800&X-Amz-Signature=cda6b62056747251ca47c48081f9922380deb2693b6e12fb24186c2e6653b7b0&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-BqPm9VDY.js:1567 [CanvasPreviewPro] Loading video a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a5a658b7-1c89-4b75-99d4-a926455786ef-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260116T143009Z&X-Amz-Expires=604800&X-Amz-Signature=e43dbe0efc77841d1c5e5e643bfe21343d63c34b61c4da0dfe4088e49fab2132&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-BqPm9VDY.js:1454 FFmpeg worker ready
+index-BqPm9VDY.js:1454 Video decoder worker ready
+index-BqPm9VDY.js:1454 Initializing FFmpeg WASM...
+index-BqPm9VDY.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038: 0%
+index-BqPm9VDY.js:1567 Loading a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn: 0%
+index-BqPm9VDY.js:1567 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038: 8s
+index-BqPm9VDY.js:1567 [DURATION] Loaded video clip a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn: 8s
+index-BqPm9VDY.js:1454  FFmpeg error: Error: failed to import ffmpeg-core.js
+handleFFmpegMessage @ index-BqPm9VDY.js:1454
+index-BqPm9VDY.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038: 50%
+index-BqPm9VDY.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038: 75%
+index-BqPm9VDY.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 {duration: 8, width: 1280, height: 720, frameRate: 24, hasVideo: true, …}
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.083333
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.125
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.166666
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.208333
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.25
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.291666
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.333333
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.375
+index-BqPm9VDY.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768573811454_1mz2ti038 at 0.416666
+index-BqPm9VDY.js:1567 Loading a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn: 50%
+index-BqPm9VDY.js:1567 Loading a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn: 75%
+index-BqPm9VDY.js:1454 [WorkerManager] Video loaded: a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn {duration: 8, width: 1280, height: 720, frameRate: 24, hasVideo: true, …}
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items
+2index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 0.02s for 2 items
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.083333
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.125
+5index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 0.02s for 2 items
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.166666
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.208333
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.25
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.291666
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.333333
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.375
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 0.02s for 2 items
+index-BqPm9VDY.js:1567 Frame received for a5a658b7-1c89-4b75-99d4-a926455786ef_1768573811830_b8tt8i2nn at 0.416666
+7index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 1.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 2.02s for 2 items
+5index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 2.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 3.02s for 2 items
+9index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 3.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 4.02s for 2 items
+7index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 4.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 5.02s for 2 items
+6index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 5.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 6.02s for 2 items
+7index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 6.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 7.02s for 2 items
+7index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 7.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 8.02s for 2 items
+6index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 8.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 9.02s for 2 items
+8index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 9.02s for 2 items
+index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 10.02s for 2 items
+5index-BqPm9VDY.js:1454 [WorkerManager] bufferFrames called at time 10.02s for 2 items
