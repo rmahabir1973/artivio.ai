@@ -71,6 +71,9 @@ class VideoDecoderWorker {
   private async handleMessage(event: MessageEvent<DecoderMessage>): Promise<void> {
     const { type, videoId, url, time, items } = event.data;
 
+    // Unconditional log to verify worker receives ALL messages
+    console.log(`[VideoDecoderWorker] handleMessage received: type=${type}`);
+
     try {
       switch (type) {
         case 'load':
