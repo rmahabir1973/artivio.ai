@@ -485,11 +485,13 @@ class VideoDecoderWorker {
       return;
     }
 
-    // Prevent concurrent decode operations
+    // Prevent concurrent decode operations - but log when skipped
     if (video.isDecoding) {
+      console.log(`[VideoDecoderWorker] ${videoId}: Skipping seek to ${time}s - already decoding`);
       return;
     }
     video.isDecoding = true;
+    console.log(`[VideoDecoderWorker] ${videoId}: seekVideo called for time ${time}s, lastDecoded: idx=${video.lastDecodedIndex}, ts=${video.lastDecodedTimestamp}`);
 
     try {
       // Check decoder state
@@ -559,6 +561,7 @@ class VideoDecoderWorker {
 
       // Ensure startIndex is valid
       if (startIndex < 0 || startIndex >= video.chunks.length) {
+        console.log(`[VideoDecoderWorker] ${videoId}: Invalid startIndex ${startIndex}, chunks length: ${video.chunks.length}`);
         video.isDecoding = false;
         return;
       }
@@ -574,7 +577,10 @@ class VideoDecoderWorker {
         if (framesToDecode >= 60) break;
       }
 
+      console.log(`[VideoDecoderWorker] ${videoId}: Will decode ${framesToDecode} frames from index ${startIndex}, needsKeyframeReset: ${needsKeyframeReset}`);
+
       if (framesToDecode === 0) {
+        console.log(`[VideoDecoderWorker] ${videoId}: No frames to decode`);
         video.isDecoding = false;
         return;
       }
@@ -585,7 +591,10 @@ class VideoDecoderWorker {
       let lastTimestamp = video.lastDecodedTimestamp;
 
       for (let i = startIndex; i < startIndex + framesToDecode && i < video.chunks.length; i++) {
-        if (video.decoder.state !== 'configured') break;
+        if (video.decoder.state !== 'configured') {
+          console.warn(`[VideoDecoderWorker] ${videoId}: Decoder state changed to ${video.decoder.state} during decode`);
+          break;
+        }
 
         const chunk = video.chunks[i];
         video.decoder.decode(chunk);
@@ -594,12 +603,15 @@ class VideoDecoderWorker {
         lastTimestamp = chunk.timestamp / 1_000_000;
       }
 
+      console.log(`[VideoDecoderWorker] ${videoId}: Decoded ${decodedCount} frames, decoder state: ${video.decoder.state}`);
+
       if (video.decoder.state === 'configured' && decodedCount > 0) {
         await video.decoder.flush();
 
         // Update tracking
         video.lastDecodedIndex = lastIndex;
         video.lastDecodedTimestamp = lastTimestamp;
+        console.log(`[VideoDecoderWorker] ${videoId}: Flush complete, lastDecodedIndex: ${lastIndex}, lastDecodedTimestamp: ${lastTimestamp}`);
       }
 
       this.sendMessage({ type: 'seeked', videoId, time, success: true });
@@ -634,12 +646,20 @@ class VideoDecoderWorker {
       speed?: number;
     }>
   ): Promise<void> {
+    console.log(`[VideoDecoderWorker] bufferFrames called for time ${time}s with ${items.length} items`);
+
     const bufferPromises = items.map(async (item) => {
       const video = this.videos.get(item.id);
-      if (!video?.isReady) return;
+      if (!video?.isReady) {
+        console.log(`[VideoDecoderWorker] ${item.id}: Not ready for buffering`);
+        return;
+      }
 
       const timeInClip = time - item.startTime;
-      if (timeInClip < -1 || timeInClip > item.duration + 1) return;
+      if (timeInClip < -1 || timeInClip > item.duration + 1) {
+        console.log(`[VideoDecoderWorker] ${item.id}: Outside clip range (timeInClip: ${timeInClip})`);
+        return;
+      }
 
       const speed = item.speed || 1;
       const trimStart = item.trim?.start || 0;
