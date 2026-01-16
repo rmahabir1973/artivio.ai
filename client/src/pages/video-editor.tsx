@@ -640,7 +640,7 @@ export default function VideoEditor() {
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Canvas preview mode (real-time compositing) - default to false until clips are added
-  const [useCanvasPreview, setUseCanvasPreview] = useState(false);
+  const [useCanvasPreview, setUseCanvasPreview] = useState(true);
 
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
@@ -2795,21 +2795,27 @@ export default function VideoEditor() {
   timelineDurationRef.current = totalDuration;
 
   // Handle timeline play/pause
+  // When using canvas preview (real-time mode), the CanvasPreview component handles time progression
+  // via onTimeUpdate callback. Only use setInterval for server preview mode.
   const handleTimelinePlayPause = useCallback(() => {
     setIsTimelinePlaying(prev => {
       if (!prev) {
-        timelinePlayIntervalRef.current = setInterval(() => {
-          setTimelineCurrentTime(t => {
-            if (t >= timelineDurationRef.current) {
-              setIsTimelinePlaying(false);
-              if (timelinePlayIntervalRef.current) {
-                clearInterval(timelinePlayIntervalRef.current);
+        // Only use setInterval when NOT using real-time canvas preview
+        // Canvas preview handles its own time progression via onTimeUpdate
+        if (!useCanvasPreview) {
+          timelinePlayIntervalRef.current = setInterval(() => {
+            setTimelineCurrentTime(t => {
+              if (t >= timelineDurationRef.current) {
+                setIsTimelinePlaying(false);
+                if (timelinePlayIntervalRef.current) {
+                  clearInterval(timelinePlayIntervalRef.current);
+                }
+                return 0;
               }
-              return 0;
-            }
-            return t + 1/30;
-          });
-        }, 1000/30);
+              return t + 1/30;
+            });
+          }, 1000/30);
+        }
       } else {
         if (timelinePlayIntervalRef.current) {
           clearInterval(timelinePlayIntervalRef.current);
@@ -2817,7 +2823,16 @@ export default function VideoEditor() {
       }
       return !prev;
     });
-  }, []);
+  }, [useCanvasPreview]);
+
+  // Handle end of timeline for canvas preview mode
+  // The canvas preview updates time via onTimeUpdate, so we need to check for end externally
+  useEffect(() => {
+    if (useCanvasPreview && isTimelinePlaying && timelineCurrentTime >= totalDuration) {
+      setIsTimelinePlaying(false);
+      setTimelineCurrentTime(0);
+    }
+  }, [useCanvasPreview, isTimelinePlaying, timelineCurrentTime, totalDuration]);
 
   // Handle adding clip to timeline from media panel
   // Uses unique instance IDs to allow the same video to be added multiple times
