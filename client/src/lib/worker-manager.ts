@@ -246,6 +246,10 @@ export class WorkerManager {
       speed?: number;
     }>
   ): void {
+    // Log every 30th call (roughly every second at 30fps)
+    if (Math.floor(time * 30) % 30 === 0) {
+      console.log(`[WorkerManager] bufferFrames called at time ${time.toFixed(2)}s for ${items.length} items`);
+    }
     this.videoDecoderWorker?.postMessage({
       type: 'buffer',
       time,

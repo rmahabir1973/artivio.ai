@@ -333,6 +333,10 @@ export function CanvasPreviewPro({
     frameCounterRef.current++;
     const shouldBuffer = hasAnyMissingFrame || (frameCounterRef.current % 10 === 0);
     if (shouldBuffer && videoItems.length > 0) {
+      // Log occasionally to avoid spam
+      if (frameCounterRef.current % 30 === 0) {
+        console.log(`[buildLayers] time=${time.toFixed(2)}s, hasAnyMissingFrame=${hasAnyMissingFrame}, videoItems=${videoItems.length}`);
+      }
       workerManager.bufferFrames(time, videoItems);
     }
 
