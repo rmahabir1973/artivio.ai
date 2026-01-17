@@ -2,7 +2,7 @@
  * Video Decoder Web Worker
  * Based on W3C WebCodecs samples: https://github.com/w3c/webcodecs/tree/main/samples/video-decode-display
  * Uses MP4Box.js for demuxing and WebCodecs VideoDecoder for hardware-accelerated decoding
- * BUILD_TIMESTAMP: 2025-01-17T05:00:00Z - v16-fix-play-spam
+ * BUILD_TIMESTAMP: 2025-01-17T05:30:00Z - v17-track-output-time
  */
 
 // @ts-ignore - MP4Box types not available
@@ -46,7 +46,8 @@ interface VideoState {
   decoderConfig: VideoDecoderConfig | null;
   // Track decode progress for continuous playback
   lastDecodedIndex: number;
-  lastDecodedTimestamp: number;
+  lastDecodedTimestamp: number; // Last timestamp SUBMITTED to decoder (may be in queue)
+  lastOutputTimestamp: number;  // Last timestamp ACTUALLY OUTPUT from decoder (sent to main thread)
   // Next keyframe index after initial decode (for continuous playback after flush)
   nextKeyframeIndex?: number;
   // Promise-based decode tracking (replaces boolean isDecoding)
@@ -62,7 +63,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v16-fix-play-spam ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v17-track-output-time ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -229,6 +230,10 @@ class VideoDecoderWorker {
     video.pendingFrames++;
     const timestamp = frame.timestamp / 1_000_000; // Convert to seconds
 
+    // CRITICAL: Track the last OUTPUT timestamp (not last submitted)
+    // This is what we actually have available for playback
+    video.lastOutputTimestamp = timestamp;
+
     try {
       this.sendMessage({
         type: 'frame',
@@ -269,6 +274,7 @@ class VideoDecoderWorker {
       decoderConfig: null,
       lastDecodedIndex: -1,
       lastDecodedTimestamp: -1,
+      lastOutputTimestamp: -1, // Track what's actually available (output from decoder)
       currentDecodeTask: null,
     };
     this.videos.set(videoId, videoState);
@@ -568,16 +574,16 @@ class VideoDecoderWorker {
 
     const targetTimestamp = time * 1_000_000; // Convert to microseconds
 
-    // Check if we need to decode more frames
-    // Decode when: buffer < 2 seconds ahead of current time
-    // This ensures smooth continuous playback
-    const bufferAhead = video.lastDecodedTimestamp - time;
-    const needsMoreFrames = video.lastDecodedTimestamp < 0 || bufferAhead < 2.0;
+    // CRITICAL: Use lastOutputTimestamp (what's actually available) not lastDecodedTimestamp (what's in decoder queue)
+    // The decoder queues frames internally - they're not available until output callback fires
+    const actualBuffer = video.lastOutputTimestamp; // What we actually have
+    const bufferAhead = actualBuffer - time;
+    const needsMoreFrames = actualBuffer < 0 || bufferAhead < 2.0;
     
     if (!needsMoreFrames) {
       // Plenty of buffer, skip decoding (log once per second)
       if (Math.floor(time) !== Math.floor(video._lastAheadLogTime || -1)) {
-        this.debug('SEEK_BUFFERED', `${videoId.slice(0,8)} t=${time.toFixed(2)}s decoded=${video.lastDecodedTimestamp.toFixed(2)}s buffer=${bufferAhead.toFixed(2)}s`);
+        this.debug('SEEK_BUFFERED', `${videoId.slice(0,8)} t=${time.toFixed(2)}s output=${actualBuffer.toFixed(2)}s submitted=${video.lastDecodedTimestamp.toFixed(2)}s buffer=${bufferAhead.toFixed(2)}s`);
         video._lastAheadLogTime = time;
       }
       return;

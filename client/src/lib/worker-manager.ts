@@ -6,7 +6,7 @@
 
 // Use dynamic worker imports with cache-busting to ensure fresh code loads
 // Version must be updated when worker code changes significantly
-const WORKER_VERSION = '2025-01-17T0500-v16-fix-play-spam';
+const WORKER_VERSION = '2025-01-17T0530-v17-track-output-time';
 
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';

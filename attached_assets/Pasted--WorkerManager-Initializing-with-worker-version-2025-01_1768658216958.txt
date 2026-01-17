@@ -1,0 +1,1177 @@
+[WorkerManager] Initializing with worker version: 2025-01-17T0500-v16-fix-play-spam
+index-B_Xh4mdc.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-B_Xh4mdc.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-B_Xh4mdc.js:993 [AUTH] Initializing auth
+index-B_Xh4mdc.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-B_Xh4mdc.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated Object
+index-B_Xh4mdc.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-B_Xh4mdc.js:1567 [VIDEO-EDITOR] Session restored from localStorage
+index-B_Xh4mdc.js:1567 [CanvasPreviewPro] Loading video ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-ff55d5ae-9d1e-4421-b334-adaaaf79c3bf.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T042021Z&X-Amz-Expires=604800&X-Amz-Signature=202e46ea7da768f3cf1195bddc89bef58d2ec61c11cba87531d9e2cd43f8bdc5&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-B_Xh4mdc.js:1567 [DURATION] Loaded video clip ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: 10.1s
+ [FFmpegWorker] Worker initialized
+index-B_Xh4mdc.js:1454 FFmpeg worker ready
+index-B_Xh4mdc.js:1454 Initializing FFmpeg WASM...
+ [VideoDecoderWorker] *** NEW WORKER v16-fix-play-spam ***
+Yl @ video-decoder.worker-VIdvAt-o.js:1Understand this warning
+index-B_Xh4mdc.js:1454 Video decoder worker ready
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=load videoId=ff55d5ae time=undefined items=undefined
+index-B_Xh4mdc.js:1567 Loading ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: 0%
+ [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-ff55d5ae-9d1e-4421-b334-adaaaf79c3bf.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T042021Z&X-Amz-Expires=604800&X-Amz-Signature=202e46ea7da768f3cf1195bddc89bef58d2ec61c11cba87531d9e2cd43f8bdc5&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-B_Xh4mdc.js:1567 Loading ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: 50%
+ [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: Found track - 1280x720, codec: avc1.64001f, duration: 10.101s, track timescale: 15360
+ [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: Codec description extracted, 46 bytes
+ [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: Received 300 samples (total now: 300)
+ [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: All 300 samples extracted
+index-B_Xh4mdc.js:1567 Loading ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: 75%
+ [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: Initializing decoder...
+ [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt: Video loaded successfully with 300 chunks
+index-B_Xh4mdc.js:1454 [WORKER:INIT_START] ff55d5ae keyframeIdx=0 chunks=300
+index-B_Xh4mdc.js:1454 [WORKER:INIT_DECODED] ff55d5ae count=30 lastTs=1.07s queueSize=30
+index-B_Xh4mdc.js:1454 [WORKER:INIT_DONE] ff55d5ae ready for playback, will continue decoding on demand
+index-B_Xh4mdc.js:1454 [WorkerManager] Video loaded: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt Object
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.066666
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.1
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.133333
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.166666
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.2
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.233333
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.266666
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.3
+index-B_Xh4mdc.js:1567 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768623625745_79teoa9pt at 0.333333
+ [FFmpegWorker] Initialization failed: Error: failed to import ffmpeg-core.js
+(anonymous) @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+ [FFmpegWorker] Task undefined failed: Error: failed to import ffmpeg-core.js
+handleMessage @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+index-B_Xh4mdc.js:1454 FFmpeg error: Error: failed to import ffmpeg-core.js
+handleFFmpegMessage @ index-B_Xh4mdc.js:1454Understand this error
+index-B_Xh4mdc.js:1567 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T135520Z&X-Amz-Expires=604800&X-Amz-Signature=5df45859b409a74a3d0db9ab4b7ebc3d2b5e86075e93bb906c5d7210ed43d8be&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Worker initialized
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] *** NEW WORKER v16-fix-play-spam ***
+Yl @ video-decoder.worker-VIdvAt-o.js:1Understand this warning
+index-B_Xh4mdc.js:1454 FFmpeg worker ready
+index-B_Xh4mdc.js:1454 Video decoder worker ready
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T135520Z&X-Amz-Expires=604800&X-Amz-Signature=5df45859b409a74a3d0db9ab4b7ebc3d2b5e86075e93bb906c5d7210ed43d8be&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-B_Xh4mdc.js:1454 Initializing FFmpeg WASM...
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=load videoId=a2b0507d time=undefined items=undefined
+index-B_Xh4mdc.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: 0%
+index-B_Xh4mdc.js:1567 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: 8s
+index-B_Xh4mdc.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: 50%
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: Found track - 1280x720, codec: avc1.64001f, duration: 8s, track timescale: 12288
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: Codec description extracted, 46 bytes
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: Received 192 samples (total now: 192)
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: All 192 samples extracted
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: Initializing decoder...
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: Video loaded successfully with 192 chunks
+index-B_Xh4mdc.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk: 75%
+index-B_Xh4mdc.js:1454 [WORKER:INIT_START] a2b0507d keyframeIdx=0 chunks=192
+index-B_Xh4mdc.js:1454 [WORKER:INIT_DECODED] a2b0507d count=30 lastTs=1.42s queueSize=30
+index-B_Xh4mdc.js:1454 [WORKER:INIT_DONE] a2b0507d ready for playback, will continue decoding on demand
+index-B_Xh4mdc.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk Object
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.083333
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.125
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.166666
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.208333
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.25
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.291666
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.333333
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.375
+index-B_Xh4mdc.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk at 0.416666
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Initialization failed: Error: failed to import ffmpeg-core.js
+(anonymous) @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Task undefined failed: Error: failed to import ffmpeg-core.js
+handleMessage @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+index-B_Xh4mdc.js:1454 FFmpeg error: Error: failed to import ffmpeg-core.js
+handleFFmpegMessage @ index-B_Xh4mdc.js:1454Understand this error
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=1
+index-B_Xh4mdc.js:1567 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-B_Xh4mdc.js:1567 [WebGLCompositor] Starting animation loop
+index-B_Xh4mdc.js:1567 [CanvasPreviewPro] Started playback at 0.00s
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-12] size=9 found=true at 2
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=0.00s items=1 videos=[a2b0507d:ready=true,idx=29]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=1.42s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=30
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=40 idx=69/192 ts=3.08s
+index-B_Xh4mdc.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=0.04 key=1 cache=[2-12] size=9 found=true at 2
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0.2960999999999986, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=0.30s items=1 videos=[a2b0507d:ready=true,idx=69]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.30s lastDecoded=3.08s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.30s decoded=3.08s buffer=2.79s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0.628, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.63 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=0.96s, hasAnyMissingFrame=false, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0.9604999999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.96 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=1.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=1.03 key=31 cache=[2-12] size=9 found=true at 12
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.2975999999999985, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=1.30s items=1 videos=[a2b0507d:ready=true,idx=69]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=1.30s lastDecoded=3.08s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=70
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=32 idx=101/192 ts=4.42s
+index-B_Xh4mdc.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.428700000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.43 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=1.43s decoded=4.42s buffer=2.99s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.459200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.46 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.4969000000000017, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.5274000000000016, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.5652999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.57 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.5957999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.60 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.6270000000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.6642999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.6945999999999988, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.69 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.733200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.7624000000000017, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.76 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.7929000000000017, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.79 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.8327000000000009, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.8639000000000017, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.86 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.8942999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.89 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.9317999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.93 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=1.96s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.9624000000000017, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.96 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.9947999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.99 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=2.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=2.03 key=61 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 2.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.025900000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=2.03s items=1 videos=[a2b0507d:ready=true,idx=101]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=2.03s lastDecoded=4.42s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=2.03s decoded=4.42s buffer=2.39s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.065599999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.07 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.0955000000000004, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.10 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.126200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.13 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.165599999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.17 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.1962000000000015, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.20 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.2272000000000016, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.23 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.2655999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.27 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.296000000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.30 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.3255000000000012, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.3633000000000006, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.36 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.394700000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.39 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.4259000000000026, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.43 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=102
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=28 idx=129/192 ts=5.58s
+index-B_Xh4mdc.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.4643000000000006, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.46 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.4950000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.5326, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.562900000000003, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.56 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.593300000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.59 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.6310000000000016, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.6612000000000022, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.6991, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.70 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.7301, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.759300000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.76 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.796300000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.80 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.8265000000000016, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.863400000000003, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.86 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.893900000000003, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.89 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.9325000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.93 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=2.96s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.9630000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.96 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.9933000000000005, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.99 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=3.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=3.03 key=91 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 3.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.0305999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=3.03s items=1 videos=[a2b0507d:ready=true,idx=129]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=3.03s lastDecoded=5.58s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=3.03s decoded=5.58s buffer=2.55s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.061700000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.06 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.092700000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.09 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.130200000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.13 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.161700000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.16 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.1997000000000018, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.20 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.2312000000000016, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.23 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.260500000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.26 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.294400000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.29 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.3254000000000024, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.3642000000000016, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.36 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.3942000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.39 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.4270999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.4649000000000023, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.46 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.4960999999999993, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.5255999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.5657000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.57 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.5954000000000024, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.60 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=130
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=28 idx=157/192 ts=6.75s
+index-B_Xh4mdc.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.625500000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.6635999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.694500000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.69 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.7322000000000015, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.7619000000000025, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.76 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.7920999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.79 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.8300999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.8613, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.86 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.893400000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.89 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.930900000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.93 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=3.96s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.961200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.96 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.999099999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.00 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=4.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=4.03 key=121 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 4.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.0298, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=4.03s items=1 videos=[a2b0507d:ready=true,idx=157]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=4.03s lastDecoded=6.75s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=4.03s decoded=6.75s buffer=2.72s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.060900000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.06 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.098700000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.10 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.1297999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.13 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.159, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.16 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.196, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.20 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.225499999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.23 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.2627, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.26 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.292799999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.29 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.330299999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.3600999999999965, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.36 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.398299999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.40 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.428999999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.459699999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.46 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.497499999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.528099999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.5589999999999975, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.56 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.5989999999999975, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.60 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.629399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.660899999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.692199999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.69 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.731399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.762699999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.76 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=158
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=28 idx=185/192 ts=7.92s
+index-B_Xh4mdc.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.7944999999999975, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.79 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.829299999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.860199999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.86 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.895099999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.90 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.925699999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.93 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=4.96s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.964199999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.96 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.995299999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.00 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=5.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=5.03 key=151 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 5.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.025899999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=5.03s items=1 videos=[a2b0507d:ready=true,idx=185]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=5.03s lastDecoded=7.92s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=5.03s decoded=7.92s buffer=2.89s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.062799999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.06 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.093099999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.09 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.131399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.13 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.162499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.16 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.193299999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.19 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.230999999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.23 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.260799999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.26 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.2993999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.30 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.329899999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.360499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.36 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.399599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.40 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.430099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.465099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.47 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.496499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.527299999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.564099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.56 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.594999999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.59 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.626299999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.663599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.693999999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.69 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.733099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.762499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.76 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.7928999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.79 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.825599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.862699999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.86 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.894499999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.89 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.931900000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.93 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=186
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=6 idx=191/192 ts=8.00s
+index-B_Xh4mdc.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768658123759_5va9x1pyk
+index-B_Xh4mdc.js:1567 [buildLayers] time=5.96s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.963599999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.96 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.993599999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.99 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=6.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=6.03 key=181 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 6.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.031, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=6.03s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=6.03s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.0617, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.06 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.0935, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.09 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.131200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.13 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.161900000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.16 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.192200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.19 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.2258, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.23 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.2645, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.26 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.2963, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.327400000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.33 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.365099999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.37 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.3968, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.40 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.427400000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.43 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.464599999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.46 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.496099999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.50 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.5258, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.53 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.564900000000002, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.56 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.596200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.60 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.627200000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.63 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.663700000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.66 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.6935, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.69 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.7307999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.73 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.7615, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.76 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.7989999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.80 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.829099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.83 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.859499999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.86 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.8976999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.90 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.928699999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.93 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1567 [buildLayers] time=6.97s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.965199999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.97 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.995699999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=7.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=7.03 key=211 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 7.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.026799999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=7.03s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=7.03s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.0644, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.06 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.094199999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.09 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.132299999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.13 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.159299999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.16 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.197699999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.20 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.227799999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.23 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.266599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.27 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.298799999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.328799999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.33 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.366099999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.37 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.395899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.40 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.426899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.43 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.465499999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.47 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.495699999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.50 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.529799999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.53 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.559999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.56 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.597699999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.60 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.629299999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.63 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.659899999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.66 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.6919999999999975, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.69 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.7296999999999985, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.73 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.759399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.76 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.797799999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.80 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.828499999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.83 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.865799999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.87 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.896599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.90 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.928699999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.93 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1567 [buildLayers] time=7.96s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.959199999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.96 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.998399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=8.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 1 items, worker=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-12] size=9 found=true at 2
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=seek videoId=a2b0507d time=0.00 items=undefined
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s decoded=8.00s buffer=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=0.00s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s decoded=8.00s buffer=8.00s
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=1
+index-B_Xh4mdc.js:1567 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-B_Xh4mdc.js:1567 [WebGLCompositor] Starting animation loop
+index-B_Xh4mdc.js:1567 [CanvasPreviewPro] Started playback at 0.00s
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-12] size=9 found=true at 2
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=0.00s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s decoded=8.00s buffer=8.00s
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=0.03 key=1 cache=[2-12] size=9 found=true at 2
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0.2970999999999986, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=0.30s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.30s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.30s decoded=8.00s buffer=7.70s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0.6327000000000007, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.63 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=0.97s, hasAnyMissingFrame=false, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0.9670000000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.97 items=1
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=1.04 key=31 cache=[2-12] size=9 found=true at 12
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.301, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=1.30s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=1.30s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=1.30s decoded=8.00s buffer=6.70s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.4292000000000007, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.4694000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.47 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.4994999999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.5294999999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.5680999999999985, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.57 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.5982999999999992, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.60 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.6357000000000006, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.64 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.6624000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.6995999999999984, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.70 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.7357999999999991, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.74 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.769, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.77 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.7994999999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.80 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.8297999999999992, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.8664000000000014, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.87 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.8967999999999992, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.90 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.9340999999999984, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.93 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=1.96s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.964299999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.96 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=1.9994000000000012, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.00 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=2.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=2.03 key=61 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 2.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.0304999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=2.03s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=2.03s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=2.03s decoded=8.00s buffer=5.97s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.063099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.06 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.0974999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.10 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.135099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.14 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.1652000000000005, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.17 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.196099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.20 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.234299999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.23 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.2657999999999987, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.27 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.296099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.30 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.3294000000000006, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.3661999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.37 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.3954000000000004, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.40 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.4332, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.4639000000000006, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.46 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.501099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.5347, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.5657, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.57 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.595400000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.60 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.633900000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.6649999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.7024999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.70 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.7329999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.7672999999999988, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.77 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.798299999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.80 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.830400000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.867400000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.87 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.8979999999999992, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.90 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.9289999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.93 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=2.97s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.9672, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.97 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=2.9972999999999987, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.00 items=1
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=3.04 key=91 cache=[2-12] size=9 found=false
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.036099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.04 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=3.04s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=3.04s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=3.04s decoded=8.00s buffer=4.96s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.0689999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.07 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.0999000000000008, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.10 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.1307, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.13 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.1669999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.17 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.1977, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.20 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.2294999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.23 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.2619999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.26 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.3014999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.30 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.331900000000001, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.3624999999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.36 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.3995999999999977, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.40 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.4287999999999985, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.4679000000000006, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.47 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.4987, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.5292999999999983, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.53 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.5671999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.57 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.5970999999999975, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.60 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.6285999999999974, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.6650999999999976, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.67 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.6955999999999976, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.70 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.733299999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.7636999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.76 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.8011999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.80 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.8316999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.862299999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.86 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.899499999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.90 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.9290999999999974, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.93 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=3.97s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.9654999999999987, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.97 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=3.996299999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.00 items=1
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=4.04 key=121 cache=[2-12] size=9 found=false
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.035599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.04 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=4.04s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=4.04s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=4.04s decoded=8.00s buffer=3.96s
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.065599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.07 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.095499999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.10 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.134599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.13 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.165499999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.17 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.195799999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.20 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.234099999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.23 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.264799999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.26 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.2966999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.30 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.329199999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.368499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.37 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.399499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.40 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.430099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.475699999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.48 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.495799999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.6470999999999965, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.65 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.7684, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.77 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.838499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.84 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.895099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.90 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.902399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.90 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.933599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.93 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=4.964499999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.96 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=5.00s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=5.00 key=150 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 5.00s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.001599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=5.00s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=5.00s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=5.00s decoded=8.00s buffer=3.00s
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=5.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 5.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.031699999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.03 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.068699999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.07 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.098999999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.10 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.1331999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.13 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.165099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.17 items=1
+index-B_Xh4mdc.js:1567 [buildLayers] time=5.20s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.202599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.20 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.235299999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.24 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.2662999999999975, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.27 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.296599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.30 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.3287999999999975, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.33 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.367599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.37 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.398099999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.40 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.428599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.43 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.4674, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.47 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.497599999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.50 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.5356999999999985, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.54 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.564599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.56 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.595399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.60 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.633299999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.63 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.664599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.66 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.702799999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.70 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.733399999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.73 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.763599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.76 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.801999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.80 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.831899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.83 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.868899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.87 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.899399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.90 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.9293999999999984, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.93 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.967799999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.97 items=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=5.997699999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.00 items=1
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=6.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=6.03 key=181 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 6.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.028899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=6.03s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=6.03s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.066599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.07 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.0967999999999964, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.10 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.135799999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.14 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.165899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.17 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:993 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-B_Xh4mdc.js:993
+(anonymous) @ index-B_Xh4mdc.js:993
+index-B_Xh4mdc.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-B_Xh4mdc.js:1567 [buildLayers] time=6.20s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.196599999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.20 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.235399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.24 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.267799999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.27 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.297399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.335099999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.34 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.3668, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.37 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.398499999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.40 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.4357999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.44 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.466499999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.47 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.495999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.50 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.534599999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.53 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.565799999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.57 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.596599999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.60 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.634899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.63 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.664699999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.66 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.695399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.70 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.734299999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.73 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.764999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.76 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.802399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.80 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.834099999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.83 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.864099999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.86 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.901999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.90 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.932699999999993, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.93 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=6.963699999999993, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.96 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=7.00s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=7.00 key=210 cache=[2-12] size=9 found=false
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 7.00s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.000599999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=7.00s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=7.00s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=7.03s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 7.03s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.031999999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.03 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.063499999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.06 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.101799999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.10 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.131299999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.13 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.168299999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.17 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1567 [buildLayers] time=7.20s, hasAnyMissingFrame=true, videoItems=1
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.198899999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.20 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.229799999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.23 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.268399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.27 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.298199999999993, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.30 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.331199999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.33 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.369399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.37 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.400899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.40 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.4308999999999985, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.43 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.469899999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.47 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.5014999999999965, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.50 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.532399999999998, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.53 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.562799999999999, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.56 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.6008, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.60 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.631999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.63 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.6631999999999945, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.66 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.700599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.70 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.729499999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.73 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.768599999999996, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.77 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.7988, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.80 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.8293, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.83 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.8652999999999995, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.87 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.896199999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.90 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.934699999999994, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.93 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=7.961999999999997, items=1
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.96 items=1
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-B_Xh4mdc.js:1454 [WebGLCompositor] animate: time=8.00s, hasLayerProvider=true
+index-B_Xh4mdc.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 1 items, worker=true
+video-decoder.worker-VIdvAt-o.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=1
+index-B_Xh4mdc.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-12] size=9 found=true at 2
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=seek videoId=a2b0507d time=0.00 items=undefined
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s decoded=8.00s buffer=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=1
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER] time=0.00s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-B_Xh4mdc.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-B_Xh4mdc.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s decoded=8.00s buffer=8.00s
+index-B_Xh4mdc.js:48 Fetch finished loading: GET "https://artivio.ai/api/announcements/active".
+At @ index-B_Xh4mdc.js:48
+await in At
+Ba @ index-B_Xh4mdc.js:48
+(anonymous) @ index-B_Xh4mdc.js:48
+a @ index-B_Xh4mdc.js:48
+g @ index-B_Xh4mdc.js:48
+start @ index-B_Xh4mdc.js:48
+fetch @ index-B_Xh4mdc.js:48
+mN @ index-B_Xh4mdc.js:48
+(anonymous) @ index-B_Xh4mdc.js:48
+index-B_Xh4mdc.js:993 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-B_Xh4mdc.js:993
+(anonymous) @ index-B_Xh4mdc.js:993
+index-B_Xh4mdc.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-B_Xh4mdc.js:993 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-B_Xh4mdc.js:993
+(anonymous) @ index-B_Xh4mdc.js:993
+index-B_Xh4mdc.js:993 [AUTH] ✓ User data refreshed (credits updated)
