@@ -59,7 +59,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v9-verbose ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v10-wait-queue ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -545,12 +545,21 @@ class VideoDecoderWorker {
       video.lastDecodedIndex = lastIndex;
       video.lastDecodedTimestamp = lastTimestamp;
 
-      this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s`);
+      this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s queueSize=${video.decoder.decodeQueueSize}`);
 
-      // After flush (success or timeout), decoder needs a keyframe to continue
-      // DON'T flush during initial decode - let frames output naturally
-      // This keeps the decoder state valid for continuous decoding
-      this.debug('INIT_DONE', `${videoId.slice(0,8)} ready for playback, no flush needed`);
+      // CRITICAL: Wait for all pending frames to be output
+      // WebCodecs decode() is async - frames output later via callback
+      // Without waiting, playback starts before frames are cached
+      const maxWaitMs = 2000;
+      const startWait = performance.now();
+      
+      while (video.decoder.decodeQueueSize > 0 && (performance.now() - startWait) < maxWaitMs) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      
+      this.debug('INIT_FLUSHED', `${videoId.slice(0,8)} queueSize=${video.decoder.decodeQueueSize} waited=${(performance.now() - startWait).toFixed(0)}ms`);
+      
+      this.debug('INIT_DONE', `${videoId.slice(0,8)} ready for playback`);
     } catch (error) {
       this.debug('INIT_ERROR', `${videoId.slice(0,8)} ${error}`);
     }
