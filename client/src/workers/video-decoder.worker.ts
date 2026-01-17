@@ -56,7 +56,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER INITIALIZED v2 ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER INITIALIZED v4-flush-fix ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -642,7 +642,16 @@ class VideoDecoderWorker {
       }
 
       if (video.decoder.state === 'configured' && decodedCount > 0) {
-        await video.decoder.flush();
+        // Flush with timeout to prevent hanging forever (this was causing isDecoding to get stuck!)
+        try {
+          await Promise.race([
+            video.decoder.flush(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('seek flush timeout')), 3000))
+          ]);
+        } catch (flushError) {
+          this.debug('SEEK_FLUSH_ERR', `${videoId.slice(0,8)} flush failed: ${flushError}`);
+          // Continue anyway - frames may still be available
+        }
 
         // Update tracking
         video.lastDecodedIndex = lastIndex;
@@ -668,6 +677,7 @@ class VideoDecoderWorker {
       });
     } finally {
       video.isDecoding = false;
+      this.debug('SEEK_UNLOCK', `${videoId.slice(0,8)} isDecoding=false`);
     }
   }
 

@@ -1,0 +1,44 @@
+● This is the smoking gun! The logs clearly show the problem:
+
+  [WORKER:SEEK_SKIP] a2b0507d already decoding - repeated hundreds of times
+
+  The isDecoding flag is stuck as true and never gets reset. This means decodeFirstKeyframe started but never completed - likely the await video.decoder.flush() is hanging forever.
+
+  Also notice:
+  - cache=[2-12] size=9 - only 9 frames cached (frames 2-12)
+  - key=210 (time 7.01s) - requesting frame 210 but cache only goes to 12
+  - found=false - no frame available
+
+  The fix is to add a timeout to prevent isDecoding from being stuck. Let me fix this now:
+
+● Update(client/src/workers/video-decoder.worker.ts)
+  ⎿  Added 11 lines, removed 1 line                                                               
+      512        this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount}          
+           lastTs=${lastTimestamp.toFixed(2)}s decoderState=${video.decoder.state}`);             
+      513                                                                                         
+      514        if (video.decoder.state === 'configured') {                                      
+      515 -        await video.decoder.flush();                                                   
+      515 +        // Flush with timeout to prevent hanging forever                               
+      516 +        try {                                                                          
+      517 +          await Promise.race([                                                         
+      518 +            video.decoder.flush(),                                                     
+      519 +            new Promise((_, reject) => setTimeout(() => reject(new Error('flush        
+          +timeout')), 5000))                                                                     
+      520 +          ]);                                                                          
+      521 +        } catch (flushError) {                                                         
+      522 +          this.debug('INIT_FLUSH_ERR', `${videoId.slice(0,8)} flush failed:            
+          +${flushError}`);                                                                       
+      523 +          // Continue anyway - frames may still be available                           
+      524 +        }                                                                              
+      525                                                                                         
+      526          // Update tracking                                                             
+      527          video.lastDecodedIndex = lastIndex;                                            
+     ...
+      526        this.debug('INIT_ERROR', `${videoId.slice(0,8)} ${error}`);                      
+      527      } finally {                                                                        
+      528        video.isDecoding = false;                                                        
+      529 +      this.debug('INIT_UNLOCK', `${videoId.slice(0,8)} isDecoding=false`);             
+      530      }                                                                                  
+      531    }                                                                                    
+      532                                                                                         
+  ⎿  You've hit your limit · resets Jan 19, 9pm (UTC)
