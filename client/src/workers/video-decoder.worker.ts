@@ -56,7 +56,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER INITIALIZED v4-flush-fix ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v5-aggressive-fix ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -511,23 +511,22 @@ class VideoDecoderWorker {
 
       this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s decoderState=${video.decoder.state}`);
 
+      // Update tracking BEFORE flush (so frames are available even if flush hangs)
+      video.lastDecodedIndex = lastIndex;
+      video.lastDecodedTimestamp = lastTimestamp;
+
       if (video.decoder.state === 'configured') {
-        // Flush with timeout to prevent hanging forever
+        // Flush with SHORT timeout (500ms) - if it hangs, frames were already decoded
         try {
           await Promise.race([
             video.decoder.flush(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 5000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 500))
           ]);
+          this.debug('INIT_DONE', `${videoId.slice(0,8)} flushed, lastIdx=${lastIndex} lastTs=${lastTimestamp.toFixed(2)}s`);
         } catch (flushError) {
-          this.debug('INIT_FLUSH_ERR', `${videoId.slice(0,8)} flush failed: ${flushError}`);
-          // Continue anyway - frames may still be available
+          this.debug('INIT_FLUSH_ERR', `${videoId.slice(0,8)} flush timed out - continuing anyway`);
+          // Frames were decoded and sent via output callback, just flush hung
         }
-
-        // Update tracking
-        video.lastDecodedIndex = lastIndex;
-        video.lastDecodedTimestamp = lastTimestamp;
-
-        this.debug('INIT_DONE', `${videoId.slice(0,8)} flushed, lastIdx=${lastIndex} lastTs=${lastTimestamp.toFixed(2)}s`);
       } else {
         this.debug('INIT_NOFLUSH', `${videoId.slice(0,8)} decoder state=${video.decoder.state}, NOT flushing`);
       }
@@ -641,22 +640,20 @@ class VideoDecoderWorker {
         }
       }
 
+      // Update tracking BEFORE flush (so frames are usable even if flush hangs)
+      video.lastDecodedIndex = lastIndex;
+      video.lastDecodedTimestamp = lastTimestamp;
+
       if (video.decoder.state === 'configured' && decodedCount > 0) {
-        // Flush with timeout to prevent hanging forever (this was causing isDecoding to get stuck!)
+        // Flush with SHORT timeout (500ms) - frames already decoded via output callback
         try {
           await Promise.race([
             video.decoder.flush(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('seek flush timeout')), 3000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('seek flush timeout')), 500))
           ]);
         } catch (flushError) {
-          this.debug('SEEK_FLUSH_ERR', `${videoId.slice(0,8)} flush failed: ${flushError}`);
-          // Continue anyway - frames may still be available
+          this.debug('SEEK_FLUSH_ERR', `${videoId.slice(0,8)} flush timed out - continuing`);
         }
-
-        // Update tracking
-        video.lastDecodedIndex = lastIndex;
-        video.lastDecodedTimestamp = lastTimestamp;
-
         this.debug('SEEK_DONE', `${videoId.slice(0,8)} decoded=${decodedCount} idx=${lastIndex}/${video.chunks.length} ts=${lastTimestamp.toFixed(2)}s`);
       } else {
         this.debug('SEEK_NONE', `${videoId.slice(0,8)} decoded=0 state=${video.decoder.state}`);
