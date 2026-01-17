@@ -51,6 +51,7 @@ interface VideoState {
   currentDecodeTask: Promise<void> | null;
   // For logging rate limiting
   _lastSkipLogTime?: number;
+  _lastAheadLogTime?: number;
 }
 
 class VideoDecoderWorker {
@@ -58,7 +59,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v6-promise-based ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v7-debug-frames ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -581,6 +582,11 @@ class VideoDecoderWorker {
       const lastDecodedUs = video.lastDecodedTimestamp * 1_000_000;
       // If we've already decoded past the target + 2 second buffer, skip
       if (lastDecodedUs > targetTimestamp + 2_000_000) {
+        // Log occasionally  
+        if (Math.floor(time) !== Math.floor(video._lastAheadLogTime || -1)) {
+          this.debug('SEEK_AHEAD', `${videoId.slice(0,8)} target=${time.toFixed(2)}s lastDecoded=${video.lastDecodedTimestamp.toFixed(2)}s idx=${video.lastDecodedIndex}/${video.chunks.length}`);
+          video._lastAheadLogTime = time;
+        }
         return; // No need to decode more - we're ahead
       }
     }

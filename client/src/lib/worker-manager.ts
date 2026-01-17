@@ -6,7 +6,7 @@
 
 // Use dynamic worker imports with cache-busting to ensure fresh code loads
 // Version must be updated when worker code changes significantly
-const WORKER_VERSION = '2025-01-17-v6-promise-based';
+const WORKER_VERSION = '2025-01-17-v7-debug-frames';
 
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
@@ -113,6 +113,11 @@ export class WorkerManager {
 
         // Store frame with timestamp as key (rounded to nearest 0.033s for 30fps resolution)
         const timeKey = Math.round(timestamp * 30);
+
+        // Log every 30th frame received (roughly 1 per second)
+        if (timeKey % 30 === 0) {
+          console.log(`[WorkerManager] FRAME RECEIVED: ${videoId.slice(0,8)} ts=${timestamp.toFixed(2)}s key=${timeKey} cacheSize=${cache.size}`);
+        }
 
         // Close old frame at this time if exists
         const oldFrame = cache.get(timeKey);
