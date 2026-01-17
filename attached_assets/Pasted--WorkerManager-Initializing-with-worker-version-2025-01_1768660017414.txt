@@ -1,0 +1,720 @@
+[WorkerManager] Initializing with worker version: 2025-01-17T0530-v17-track-output-time
+index-BWsXubDx.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-BWsXubDx.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-BWsXubDx.js:993 [AUTH] Initializing auth
+index-BWsXubDx.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-BWsXubDx.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated Object
+index-BWsXubDx.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-BWsXubDx.js:1567 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T142542Z&X-Amz-Expires=604800&X-Amz-Signature=fe9bba40b47fd5cd9b6be402dd0c1957197ca5d8c572bb3907578c0582bcc16c&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+ [FFmpegWorker] Worker initialized
+index-BWsXubDx.js:1454 FFmpeg worker ready
+index-BWsXubDx.js:1454 Initializing FFmpeg WASM...
+ [VideoDecoderWorker] *** NEW WORKER v17-track-output-time ***
+Yl @ video-decoder.worker-BuZNtTZz.js:1Understand this warning
+index-BWsXubDx.js:1454 Video decoder worker ready
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=load videoId=a2b0507d time=undefined items=undefined
+index-BWsXubDx.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: 0%
+ [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T142542Z&X-Amz-Expires=604800&X-Amz-Signature=fe9bba40b47fd5cd9b6be402dd0c1957197ca5d8c572bb3907578c0582bcc16c&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-BWsXubDx.js:1567 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: 8s
+index-BWsXubDx.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: 50%
+ [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Found track - 1280x720, codec: avc1.64001f, duration: 8s, track timescale: 12288
+ [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Codec description extracted, 46 bytes
+ [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Received 192 samples (total now: 192)
+ [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: All 192 samples extracted
+index-BWsXubDx.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: 75%
+ [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Initializing decoder...
+ [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Video loaded successfully with 192 chunks
+index-BWsXubDx.js:1454 [WORKER:INIT_START] a2b0507d keyframeIdx=0 chunks=192
+index-BWsXubDx.js:1454 [WORKER:INIT_DECODED] a2b0507d count=30 lastTs=1.42s queueSize=30
+index-BWsXubDx.js:1454 [WORKER:INIT_DONE] a2b0507d ready for playback, will continue decoding on demand
+index-BWsXubDx.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d Object
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.083333
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.125
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.166666
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.208333
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.25
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.291666
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.333333
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.375
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.416666
+ [FFmpegWorker] Initialization failed: Error: failed to import ffmpeg-core.js
+(anonymous) @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+ [FFmpegWorker] Task undefined failed: Error: failed to import ffmpeg-core.js
+handleMessage @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+index-BWsXubDx.js:1454 FFmpeg error: Error: failed to import ffmpeg-core.js
+handleFFmpegMessage @ index-BWsXubDx.js:1454Understand this error
+index-BWsXubDx.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 1 items, worker=true
+index-BWsXubDx.js:1567 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-BWsXubDx.js:1567 [WebGLCompositor] Starting animation loop
+index-BWsXubDx.js:1567 [CanvasPreviewPro] Started playback at 0.00s
+index-BWsXubDx.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-12] size=9 found=true at 2
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=1
+ [VideoDecoderWorker] Received buffer message: time=0, items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=0.00s items=1 videos=[a2b0507d:ready=true,idx=29]
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=1.42s
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=30
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=40 idx=69/192 ts=3.08s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WebGLCompositor] animate: time=0.02s, hasLayerProvider=true
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=0.02 key=1 cache=[2-12] size=9 found=true at 2
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.29 items=1
+ [VideoDecoderWorker] Received buffer message: time=0.2895999999999985, items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=0.29s items=1 videos=[a2b0507d:ready=true,idx=69]
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.29s lastDecoded=3.08s
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=70
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=8 idx=77/192 ts=3.42s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.62 items=1
+ [VideoDecoderWorker] Received buffer message: time=0.6230999999999987, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=78
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=8 idx=85/192 ts=3.75s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1567 [buildLayers] time=0.96s, hasAnyMissingFrame=false, videoItems=1
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.96 items=1
+ [VideoDecoderWorker] Received buffer message: time=0.9572999999999994, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=86
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=8 idx=93/192 ts=4.08s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WebGLCompositor] animate: time=1.02s, hasLayerProvider=true
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=1.02 key=31 cache=[2-12] size=9 found=true at 12
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.29 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.2900000000000003, items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=1.29s items=1 videos=[a2b0507d:ready=true,idx=93]
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=1.29s lastDecoded=4.08s
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=94
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=8 idx=101/192 ts=4.42s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.42 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.422199999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=102
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=4 idx=105/192 ts=4.58s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.45 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.4545999999999986, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=106
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=106/192 ts=4.50s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.49 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.4857999999999993, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=107
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=2 idx=108/192 ts=4.54s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.52 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.5168999999999997, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=109
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=109/192 ts=4.75s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.55 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.5540999999999987, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=110
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=110/192 ts=4.67s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.58 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.584699999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=111
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=111/192 ts=4.63s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.62 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.6222999999999994, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=112
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=112/192 ts=4.71s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.65 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.652899999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=113
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=113/192 ts=4.92s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.68 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.6840000000000002, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=114
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=114/192 ts=4.83s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.72 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.7217999999999993, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=115
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=115/192 ts=4.79s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.75 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.752, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=116
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=116/192 ts=4.88s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.79 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.7895, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=117
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=117/192 ts=5.08s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.82 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.822, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=118
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=118/192 ts=5.00s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.85 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.8515999999999986, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=119
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=119/192 ts=4.96s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.89 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.8895999999999986, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=120
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=120/192 ts=5.04s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.92 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.9197999999999993, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=121
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=121/192 ts=5.25s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1567 [buildLayers] time=1.95s, hasAnyMissingFrame=true, videoItems=1
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.95 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.951, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=122
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=122/192 ts=5.17s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.99 items=1
+ [VideoDecoderWorker] Received buffer message: time=1.9887000000000008, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=123
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=123/192 ts=5.13s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WebGLCompositor] animate: time=2.02s, hasLayerProvider=true
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=2.02 key=61 cache=[2-12] size=9 found=false
+index-BWsXubDx.js:1454 [WorkerManager] bufferFrames called at time 2.02s for 1 items, worker=true
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.02 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.0188999999999977, items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=2.02s items=1 videos=[a2b0507d:ready=true,idx=123]
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=2.02s lastDecoded=5.13s
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=124
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=124/192 ts=5.21s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.05 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.0515999999999983, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=125
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=125/192 ts=5.42s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.09 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.0907000000000004, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=126
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=126/192 ts=5.33s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.12 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.1225999999999985, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=127
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=127/192 ts=5.29s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.15 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.153200000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=128
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=128/192 ts=5.38s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.18 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.1835, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=129
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=129/192 ts=5.58s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.22 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.222899999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=130
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=130/192 ts=5.50s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.25 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.253899999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=131
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=131/192 ts=5.46s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.28 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.284700000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=132
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=132/192 ts=5.54s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.32 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.323099999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=133
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=133/192 ts=5.75s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.35 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.353599999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=134
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=134/192 ts=5.67s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.39 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.390700000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=135
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=135/192 ts=5.63s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.42 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.4233999999999982, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=136
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=136/192 ts=5.71s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.45 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.454099999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=137
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=137/192 ts=5.92s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.48 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.4848, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=138
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=138/192 ts=5.83s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.52 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.5213, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=139
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=139/192 ts=5.79s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.55 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.5528, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=140
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=140/192 ts=5.88s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.59 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.5907000000000013, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=141
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=141/192 ts=6.08s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.62 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.620099999999999, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=142
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=142/192 ts=6.00s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.65 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.650599999999999, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=143
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=143/192 ts=5.96s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.69 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.6877999999999997, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=144
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=144/192 ts=6.04s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.72 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.7180000000000004, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=145
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=145/192 ts=6.25s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.76 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.755599999999999, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=146
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=146/192 ts=6.17s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.79 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.787099999999999, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=147
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=147/192 ts=6.13s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.82 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.8247999999999993, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=148
+ [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=148/192 ts=6.21s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.86 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.856, items=1
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=149
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=149/192 ts=6.42s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.89 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.8865, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=150
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=150/192 ts=6.33s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.92 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.9230999999999985, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=151
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=151/192 ts=6.29s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1567 [buildLayers] time=2.95s, hasAnyMissingFrame=true, videoItems=1
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.95 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.9538999999999977, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=152
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=152/192 ts=6.38s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.99 items=1
+ [VideoDecoderWorker] Received buffer message: time=2.9910999999999985, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=153
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=153/192 ts=6.58s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WebGLCompositor] animate: time=3.02s, hasLayerProvider=true
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=3.02 key=91 cache=[2-12] size=9 found=false
+index-BWsXubDx.js:1454 [WorkerManager] bufferFrames called at time 3.02s for 1 items, worker=true
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.02 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.0210999999999983, items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=3.02s items=1 videos=[a2b0507d:ready=true,idx=153]
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=3.02s lastDecoded=6.58s
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=154
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=154/192 ts=6.50s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.05 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.052299999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=155
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=155/192 ts=6.46s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.09 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.0903999999999976, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=156
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=156/192 ts=6.54s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.12 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.1218999999999975, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=157
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=157/192 ts=6.75s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.15 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.151799999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=158
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=158/192 ts=6.67s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.19 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.190799999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=159
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=159/192 ts=6.63s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.22 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.2202000000000006, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=160
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=160/192 ts=6.71s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.25 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.251299999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=161
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=161/192 ts=6.92s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.29 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.2890999999999986, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=162
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=162/192 ts=6.83s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.32 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.3197999999999994, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=163
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=163/192 ts=6.79s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.36 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.358, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=164
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=164/192 ts=6.88s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.39 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.388, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=165
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=165/192 ts=7.08s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.42 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.4177999999999993, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=166
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=166/192 ts=7.00s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.46 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.456899999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=167
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=167/192 ts=6.96s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.49 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.4875999999999987, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=168
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=168/192 ts=7.04s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.52 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.5180999999999987, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=169
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=169/192 ts=7.25s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.56 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.5562999999999994, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=170
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=170/192 ts=7.17s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.59 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.587399999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=171
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=171/192 ts=7.13s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.62 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.617099999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=172
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=172/192 ts=7.21s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.66 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.6552999999999995, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=173
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=173/192 ts=7.42s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.69 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.6865, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=174
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=174/192 ts=7.33s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.72 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.7172999999999994, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=175
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=175/192 ts=7.29s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.76 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.7557999999999994, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=176
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=176/192 ts=7.38s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.79 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.786899999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=177
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=177/192 ts=7.58s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.82 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.824399999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=178
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=178/192 ts=7.50s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.85 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.853899999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=179
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=179/192 ts=7.46s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.88 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.884200000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=180
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=180/192 ts=7.54s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.92 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.9207000000000014, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=181
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=181/192 ts=7.75s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1567 [buildLayers] time=3.95s, hasAnyMissingFrame=true, videoItems=1
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.95 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.9505999999999992, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=182
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=182/192 ts=7.67s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.98 items=1
+ [VideoDecoderWorker] Received buffer message: time=3.9835000000000007, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=183
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=183/192 ts=7.63s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WebGLCompositor] animate: time=4.02s, hasLayerProvider=true
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=4.02 key=121 cache=[2-12] size=9 found=false
+index-BWsXubDx.js:1454 [WorkerManager] bufferFrames called at time 4.02s for 1 items, worker=true
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.02 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.0248, items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=4.02s items=1 videos=[a2b0507d:ready=true,idx=183]
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=4.02s lastDecoded=7.63s
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=184
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=184/192 ts=7.71s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.06 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.055000000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=185
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=185/192 ts=7.92s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.09 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.086700000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=186
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=186/192 ts=7.83s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.12 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.118700000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=187
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=187/192 ts=7.79s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.16 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.157399999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=188
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=188/192 ts=7.88s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.19 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.187, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=189
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=189/192 ts=8.04s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.22 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.2170999999999985, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=190
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=190/192 ts=7.96s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.26 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.255799999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=191
+index-BWsXubDx.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=1 idx=191/192 ts=8.00s
+index-BWsXubDx.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.29 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.2855, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.32 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.324, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.35 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.354299999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.39 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.385099999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.42 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.423299999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.46 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.455599999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.49 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.486599999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.52 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.517599999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.56 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.556099999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.59 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.587799999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.62 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.618099999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.66 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.657299999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.69 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.687200000000001, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.72 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.7175, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.75 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.755, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.78 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.784799999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.82 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.816999999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.85 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.854799999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.89 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.886799999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.92 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.918599999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1567 [buildLayers] time=4.96s, hasAnyMissingFrame=true, videoItems=1
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.96 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.955099999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.99 items=1
+ [VideoDecoderWorker] Received buffer message: time=4.986299999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WebGLCompositor] animate: time=5.02s, hasLayerProvider=true
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=5.02 key=151 cache=[2-12] size=9 found=false
+index-BWsXubDx.js:1454 [WorkerManager] bufferFrames called at time 5.02s for 1 items, worker=true
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.02 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.021399999999997, items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=5.02s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=5.02s lastDecoded=8.00s
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.05 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.0532, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.08 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.084499999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.12 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.123499999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.15 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.152799999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.19 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.190399999999997, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.22 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.220299999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.25 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.250399999999996, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.29 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.289199999999999, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.32 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.3206999999999995, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.35 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.3527999999999984, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.39 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.3855999999999975, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.42 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.417299999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.46 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.456299999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.49 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.486999999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.52 items=1
+ [VideoDecoderWorker] Received buffer message: time=5.517499999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-BWsXubDx.js:1567 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T142542Z&X-Amz-Expires=604800&X-Amz-Signature=fe9bba40b47fd5cd9b6be402dd0c1957197ca5d8c572bb3907578c0582bcc16c&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-BWsXubDx.js:1454 [WorkerManager] getFrame: a2b0507d t=5.52 NO CACHE (empty)
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] *** NEW WORKER v17-track-output-time ***
+Yl @ video-decoder.worker-BuZNtTZz.js:1Understand this warning
+index-BWsXubDx.js:1454 Video decoder worker ready
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T142542Z&X-Amz-Expires=604800&X-Amz-Signature=fe9bba40b47fd5cd9b6be402dd0c1957197ca5d8c572bb3907578c0582bcc16c&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] Received buffer message: time=5.517499999999998, items=1
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Worker initialized
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] Received buffer message: time=5.517499999999998, items=1
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=load videoId=a2b0507d time=undefined items=undefined
+index-BWsXubDx.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: 0%
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=seek videoId=a2b0507d time=5.52 items=undefined
+index-BWsXubDx.js:1454 [WORKER:SEEK_SKIP] a2b0507d not ready
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.52 items=1
+index-BWsXubDx.js:1454 [WORKER:BUFFER] time=5.52s items=1 videos=[a2b0507d:ready=false,idx=-1]
+index-BWsXubDx.js:1454 FFmpeg worker ready
+index-BWsXubDx.js:1454 [WORKER:BUFFER_SKIP] a2b0507d not ready isReady=false exists=true
+index-BWsXubDx.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.52 items=1
+index-BWsXubDx.js:1454 Initializing FFmpeg WASM...
+index-BWsXubDx.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: 50%
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Found track - 1280x720, codec: avc1.64001f, duration: 8s, track timescale: 12288
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Codec description extracted, 46 bytes
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Received 192 samples (total now: 192)
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: All 192 samples extracted
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Initializing decoder...
+video-decoder.worker-BuZNtTZz.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: Video loaded successfully with 192 chunks
+index-BWsXubDx.js:1567 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d: 75%
+index-BWsXubDx.js:1454 [WORKER:INIT_START] a2b0507d keyframeIdx=0 chunks=192
+index-BWsXubDx.js:1454 [WORKER:INIT_DECODED] a2b0507d count=30 lastTs=1.42s queueSize=30
+index-BWsXubDx.js:1454 [WORKER:INIT_DONE] a2b0507d ready for playback, will continue decoding on demand
+index-BWsXubDx.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d Object
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.083333
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.125
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.166666
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.208333
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.25
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.291666
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.333333
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.375
+index-BWsXubDx.js:1567 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768659944484_ujukhux4d at 0.416666
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Initialization failed: Error: failed to import ffmpeg-core.js
+(anonymous) @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Task undefined failed: Error: failed to import ffmpeg-core.js
+handleMessage @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+index-BWsXubDx.js:1454 FFmpeg error: Error: failed to import ffmpeg-core.js
+handleFFmpegMessage @ index-BWsXubDx.js:1454Understand this error
+index-BWsXubDx.js:993 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-BWsXubDx.js:993
+(anonymous) @ index-BWsXubDx.js:993
+index-BWsXubDx.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-BWsXubDx.js:993 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-BWsXubDx.js:993
+(anonymous) @ index-BWsXubDx.js:993
+index-BWsXubDx.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-BWsXubDx.js:48 Fetch finished loading: GET "https://artivio.ai/api/announcements/active".
+At @ index-BWsXubDx.js:48
+await in At
+Ba @ index-BWsXubDx.js:48
+(anonymous) @ index-BWsXubDx.js:48
+a @ index-BWsXubDx.js:48
+g @ index-BWsXubDx.js:48
+start @ index-BWsXubDx.js:48
+fetch @ index-BWsXubDx.js:48
+mN @ index-BWsXubDx.js:48
+(anonymous) @ index-BWsXubDx.js:48

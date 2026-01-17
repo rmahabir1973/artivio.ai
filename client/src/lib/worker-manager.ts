@@ -6,7 +6,7 @@
 
 // Use dynamic worker imports with cache-busting to ensure fresh code loads
 // Version must be updated when worker code changes significantly
-const WORKER_VERSION = '2025-01-17T0530-v17-track-output-time';
+const WORKER_VERSION = '2025-01-17T0600-v18-imagebitmap-fix';
 
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
@@ -48,8 +48,9 @@ export class WorkerManager {
   private loadingVideos: Set<string> = new Set(); // Track videos currently loading
   private videoMetadata: Map<string, VideoMetadata> = new Map();
 
-  // Frame cache for quick access
-  private frameCache: Map<string, Map<number, VideoFrame>> = new Map();
+  // Frame cache for quick access - stores ImageBitmap (not VideoFrame) to avoid decoder backpressure
+  // VideoFrames hold onto decoder's internal buffer pool - must be closed immediately after conversion
+  private frameCache: Map<string, Map<number, ImageBitmap>> = new Map();
   private currentPlaybackTimeKey: Map<string, number> = new Map(); // Track playback position per video
 
   constructor(config: WorkerManagerConfig = {}) {
@@ -109,66 +110,11 @@ export class WorkerManager {
         break;
 
       case 'frame':
-        // Cache frame with size limits to prevent memory exhaustion
-        if (!this.frameCache.has(videoId)) {
-          this.frameCache.set(videoId, new Map());
-        }
-        const cache = this.frameCache.get(videoId)!;
-
-        // Store frame with timestamp as key (rounded to nearest 0.033s for 30fps resolution)
-        const timeKey = Math.round(timestamp * 30);
-
-        // Log every 30th frame received (roughly 1 per second)
-        if (timeKey % 30 === 0) {
-          console.log(`[WorkerManager] FRAME RECEIVED: ${videoId.slice(0,8)} ts=${timestamp.toFixed(2)}s key=${timeKey} cacheSize=${cache.size}`);
-        }
-
-        // Close old frame at this time if exists
-        const oldFrame = cache.get(timeKey);
-        if (oldFrame) {
-          oldFrame.close();
-        }
-
-        // TIME-AWARE EVICTION: Only evict frames BEFORE current playback position
-        // This ensures we keep future frames that we haven't played yet
-        const currentTimeKey = this.currentPlaybackTimeKey.get(videoId) || 0;
-        
-        while (cache.size >= MAX_FRAMES_PER_VIDEO) {
-          // Find the oldest frame that's BEFORE current playback time
-          let evictKey: number | undefined = undefined;
-          let oldestKey = Infinity;
-          
-          for (const key of cache.keys()) {
-            // Only evict frames that are at least 1 second (30 frames) behind playback
-            if (key < currentTimeKey - 30 && key < oldestKey) {
-              oldestKey = key;
-              evictKey = key;
-            }
-          }
-          
-          if (evictKey !== undefined) {
-            const evictFrame = cache.get(evictKey);
-            if (evictFrame) evictFrame.close();
-            cache.delete(evictKey);
-          } else {
-            // No old frames to evict - we have to evict future frames (emergency)
-            // This shouldn't happen normally with proper buffer sizing
-            const firstKey = cache.keys().next().value;
-            if (firstKey !== undefined) {
-              console.warn(`[WorkerManager] EMERGENCY EVICT: future frame key=${firstKey} currentTime=${currentTimeKey}`);
-              const evictFrame = cache.get(firstKey);
-              if (evictFrame) evictFrame.close();
-              cache.delete(firstKey);
-            } else {
-              break;
-            }
-          }
-        }
-
-        cache.set(timeKey, frame);
-
-        // Notify callback
-        this.config.onFrame?.(videoId, frame, timestamp);
+        // CRITICAL: Convert VideoFrame to ImageBitmap immediately and close VideoFrame!
+        // VideoDecoder has a limited internal frame pool (~10 frames).
+        // If we hold onto VideoFrames without closing them, the decoder stalls.
+        // ImageBitmap is a copy that doesn't hold onto decoder resources.
+        this.handleFrameAsync(videoId, frame, timestamp);
         break;
 
       case 'seeked':
@@ -179,6 +125,83 @@ export class WorkerManager {
         console.error('Video decoder error:', error);
         this.config.onError?.(videoId, error);
         break;
+    }
+  }
+
+  /**
+   * Handle frame from worker asynchronously
+   * CRITICAL: Converts VideoFrame to ImageBitmap and immediately closes VideoFrame
+   * This releases the decoder's internal frame buffer, preventing backpressure stall
+   */
+  private async handleFrameAsync(videoId: string, frame: VideoFrame, timestamp: number): Promise<void> {
+    try {
+      // Convert VideoFrame to ImageBitmap IMMEDIATELY
+      // This copies the pixel data and allows us to close the VideoFrame
+      const imageBitmap = await createImageBitmap(frame);
+      
+      // CRITICAL: Close the VideoFrame to release decoder's internal buffer
+      // Without this, the decoder stalls after ~10 frames!
+      frame.close();
+
+      // Cache the ImageBitmap (not VideoFrame)
+      if (!this.frameCache.has(videoId)) {
+        this.frameCache.set(videoId, new Map());
+      }
+      const cache = this.frameCache.get(videoId)!;
+
+      // Store frame with timestamp as key (rounded to nearest 0.033s for 30fps resolution)
+      const timeKey = Math.round(timestamp * 30);
+
+      // Log every 30th frame received (roughly 1 per second)
+      if (timeKey % 30 === 0) {
+        console.log(`[WorkerManager] FRAME CACHED: ${videoId.slice(0,8)} ts=${timestamp.toFixed(2)}s key=${timeKey} cacheSize=${cache.size}`);
+      }
+
+      // Close old ImageBitmap at this time if exists
+      const oldBitmap = cache.get(timeKey);
+      if (oldBitmap) {
+        oldBitmap.close();
+      }
+
+      // TIME-AWARE EVICTION: Only evict frames BEFORE current playback position
+      const currentTimeKey = this.currentPlaybackTimeKey.get(videoId) || 0;
+      
+      while (cache.size >= MAX_FRAMES_PER_VIDEO) {
+        let evictKey: number | undefined = undefined;
+        let oldestKey = Infinity;
+        
+        for (const key of cache.keys()) {
+          if (key < currentTimeKey - 30 && key < oldestKey) {
+            oldestKey = key;
+            evictKey = key;
+          }
+        }
+        
+        if (evictKey !== undefined) {
+          const evictBitmap = cache.get(evictKey);
+          if (evictBitmap) evictBitmap.close();
+          cache.delete(evictKey);
+        } else {
+          const firstKey = cache.keys().next().value;
+          if (firstKey !== undefined) {
+            console.warn(`[WorkerManager] EMERGENCY EVICT: key=${firstKey} currentTime=${currentTimeKey}`);
+            const evictBitmap = cache.get(firstKey);
+            if (evictBitmap) evictBitmap.close();
+            cache.delete(firstKey);
+          } else {
+            break;
+          }
+        }
+      }
+
+      cache.set(timeKey, imageBitmap);
+
+      // Notify callback (passing ImageBitmap as VideoFrame for backward compatibility)
+      // Note: WebGL can use ImageBitmap directly via texImage2D
+      this.config.onFrame?.(videoId, imageBitmap as unknown as VideoFrame, timestamp);
+    } catch (error) {
+      console.error(`[WorkerManager] Failed to convert frame to ImageBitmap:`, error);
+      frame.close(); // Still close the frame on error!
     }
   }
 
@@ -309,8 +332,9 @@ export class WorkerManager {
   /**
    * Get cached frame for a video at specific time
    * Uses fuzzy matching to find nearest frame within tolerance
+   * Returns ImageBitmap (compatible with WebGL texImage2D)
    */
-  getFrame(videoId: string, time: number): VideoFrame | null {
+  getFrame(videoId: string, time: number): ImageBitmap | null {
     const cache = this.frameCache.get(videoId);
     
     // Match resolution used in cache storage (30fps = 0.033s per key)

@@ -7,7 +7,7 @@
 export interface WebGLLayer {
   id: string;
   type: 'video' | 'image' | 'text';
-  frame: VideoFrame | HTMLImageElement | null;
+  frame: ImageBitmap | VideoFrame | HTMLImageElement | null;
   startTime: number;
   duration: number;
   zIndex: number;
@@ -69,7 +69,7 @@ export class WebGLCompositor {
   // Layer management
   private layers: Map<string, WebGLLayer> = new Map();
   private sortedLayersCache: WebGLLayer[] | null = null;
-  private lastUploadedFrames: Map<string, VideoFrame | HTMLImageElement | null> = new Map();
+  private lastUploadedFrames: Map<string, ImageBitmap | VideoFrame | HTMLImageElement | null> = new Map();
 
   // Animation
   private animationFrameId: number | null = null;
