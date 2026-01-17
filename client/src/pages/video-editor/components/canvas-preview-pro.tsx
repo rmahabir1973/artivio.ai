@@ -339,6 +339,15 @@ export function CanvasPreviewPro({
           console.log(`[Audio] ${item.id}: canplaythrough - READY TO PLAY`);
         };
         
+        // Track when audio gets paused unexpectedly
+        audio.onpause = () => {
+          console.log(`[Audio] ${item.id}: PAUSED EVENT (currentTime=${audio!.currentTime.toFixed(2)})`);
+        };
+        
+        audio.onplay = () => {
+          console.log(`[Audio] ${item.id}: PLAY EVENT started`);
+        };
+        
         // Add to DOM container (required for proper loading)
         audioContainer.appendChild(audio);
         
@@ -700,12 +709,12 @@ export function CanvasPreviewPro({
     }
 
     return () => {
-      // Cleanup: remove layer provider and pause audio
+      // Cleanup: only remove layer provider
+      // Do NOT pause audio here - that's handled by the main effect logic
+      // Pausing in cleanup would cause audio to stop whenever deps change
       if (compositorRef.current) {
         compositorRef.current.setLayerProvider(undefined);
       }
-      // Pause all audio elements
-      audioElementsRef.current.forEach(audio => audio.pause());
     };
   }, [isPlaying, buildLayers, items, syncAudioToTime]); // REMOVED currentTime from deps!
 

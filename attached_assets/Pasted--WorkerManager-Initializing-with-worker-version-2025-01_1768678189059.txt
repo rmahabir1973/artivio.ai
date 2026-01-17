@@ -1,0 +1,2480 @@
+[WorkerManager] Initializing with worker version: 2025-01-17T0600-v18-imagebitmap-fix
+index-bDW5UVFQ.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-bDW5UVFQ.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-bDW5UVFQ.js:993 [AUTH] Initializing auth
+index-bDW5UVFQ.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-bDW5UVFQ.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated Object
+index-bDW5UVFQ.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-bDW5UVFQ.js:1677 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260117T192909Z&X-Amz-Expires=604800&X-Amz-Signature=ab84c890f999b41a3db074a683e503cd60a35948662853007b94327c6f1cc04a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-bDW5UVFQ.js:1677 [CanvasPreviewPro] Audio setup: 1 items need audio
+index-bDW5UVFQ.js:1677 [Audio] Created element for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: https://artivio-video-exports.s3.us-east-1.amazonaws.com/vid...
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 still loading...
+(anonymous) @ index-bDW5UVFQ.js:1677
+index-bDW5UVFQ.js:1454 FFmpeg worker ready
+index-bDW5UVFQ.js:1454 Initializing FFmpeg WASM...
+index-bDW5UVFQ.js:1454 Video decoder worker ready
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=load videoId=a2b0507d time=undefined items=undefined
+index-bDW5UVFQ.js:1677 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: 0%
+index-bDW5UVFQ.js:1677 [VIDEO-EDITOR] Session auto-saved to localStorage
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: metadata loaded, duration=8.00s
+index-bDW5UVFQ.js:1677 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: 8s
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: 50%
+index-bDW5UVFQ.js:1677 Loading a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: 75%
+index-bDW5UVFQ.js:1454 [WORKER:INIT_START] a2b0507d keyframeIdx=0 chunks=192
+index-bDW5UVFQ.js:1454 [WORKER:INIT_DECODED] a2b0507d count=30 lastTs=1.42s queueSize=30
+index-bDW5UVFQ.js:1454 [WORKER:INIT_DONE] a2b0507d ready for playback, will continue decoding on demand
+index-bDW5UVFQ.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 Object
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.208333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.458333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.583333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.625
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.875
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 0.958333
+index-bDW5UVFQ.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=1.00s key=30 cacheSize=22
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.041666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.208333
+index-bDW5UVFQ.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 1 items, worker=true
+index-bDW5UVFQ.js:1677 [Audio Sync] time=0.00s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=0.00, targetTime=0.00, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 calling PLAY...
+index-bDW5UVFQ.js:1677 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-bDW5UVFQ.js:1677 [WebGLCompositor] Starting animation loop
+index-bDW5UVFQ.js:1677 [CanvasPreviewPro] Started playback with audio at 0.00s
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-36] size=28 found=true at 2
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=0.00s items=1 videos=[a2b0507d:ready=true,idx=29]
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 PLAY SUCCESS!
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=1.42s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=30
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=40 idx=69/192 ts=3.08s
+index-bDW5UVFQ.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.458333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.583333
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=0.03 key=1 cache=[2-47] size=37 found=true at 2
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.625
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.875
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 1.958333
+index-bDW5UVFQ.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=2.00s key=60 cacheSize=46
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.041666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.208333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.458333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.583333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.625
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.875
+index-bDW5UVFQ.js:1677 [Audio Sync] time=0.26s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=0.02, targetTime=0.26, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 0.26s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+play @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+JA @ index-bDW5UVFQ.js:40
+Gg @ index-bDW5UVFQ.js:40
+mve @ index-bDW5UVFQ.js:40
+nf @ index-bDW5UVFQ.js:40
+L$ @ index-bDW5UVFQ.js:40
+Tm @ index-bDW5UVFQ.js:38
+(anonymous) @ index-bDW5UVFQ.js:40
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.29 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=0.29s items=1 videos=[a2b0507d:ready=true,idx=69]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.29s lastDecoded=3.08s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.29s output=2.88s submitted=3.08s buffer=2.58s
+index-bDW5UVFQ.js:1677 [Audio Sync] time=0.53s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=0.26, targetTime=0.53, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 0.53s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.64 items=1
+index-bDW5UVFQ.js:1677 [Audio Sync] time=0.79s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=0.53, targetTime=0.79, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 0.79s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [buildLayers] time=0.98s, hasAnyMissingFrame=false, videoItems=1
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.98 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=70
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=93/192 ts=4.08s
+index-bDW5UVFQ.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 2.958333
+index-bDW5UVFQ.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=3.00s key=90 cacheSize=70
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.041666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.208333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.458333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.583333
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=1.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=1.01 key=30 cache=[2-107] size=85 found=true at 30
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.625
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.875
+index-bDW5UVFQ.js:1677 [Audio Sync] time=1.08s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=0.79, targetTime=1.08, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 1.08s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio Sync] time=1.34s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=1, paused=true, currentTime=1.08, targetTime=1.34, volume=1
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.34 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=1.34s items=1 videos=[a2b0507d:ready=true,idx=93]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=1.34s lastDecoded=4.08s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=1.34s output=3.88s submitted=4.08s buffer=2.53s
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=1.61s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=1.08, targetTime=1.61, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 1.61s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.68 items=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=1.86s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=1.61, targetTime=1.86, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 1.86s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=2.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=2.01 key=60 cache=[2-116] size=92 found=true at 60
+index-bDW5UVFQ.js:1677 [buildLayers] time=2.01s, hasAnyMissingFrame=false, videoItems=1
+index-bDW5UVFQ.js:1454 [WorkerManager] bufferFrames called at time 2.01s for 1 items, worker=true
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.01 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=2.01s items=1 videos=[a2b0507d:ready=true,idx=93]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=2.01s lastDecoded=4.08s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=94
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=117/192 ts=5.08s
+index-bDW5UVFQ.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 3.958333
+index-bDW5UVFQ.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=4.00s key=120 cacheSize=94
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.041666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.208333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.458333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.583333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.625
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.875
+index-bDW5UVFQ.js:1677 [Audio Sync] time=2.23s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=1.86, targetTime=2.23, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 2.23s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.41 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=2.41s output=4.88s submitted=5.08s buffer=2.47s
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=2.48s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=2.23, targetTime=2.48, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 2.48s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=2.74s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=2.48, targetTime=2.74, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 2.74s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.74 items=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=3.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=3.01 key=90 cache=[2-146] size=116 found=true at 90
+index-bDW5UVFQ.js:1677 [Audio Sync] time=3.01s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=2.74, targetTime=3.01, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 3.01s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [buildLayers] time=3.08s, hasAnyMissingFrame=false, videoItems=1
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.08 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=3.08s items=1 videos=[a2b0507d:ready=true,idx=117]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=3.08s lastDecoded=5.08s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=118
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=141/192 ts=6.08s
+index-bDW5UVFQ.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 4.958333
+index-bDW5UVFQ.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=5.00s key=150 cacheSize=118
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.041666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.208333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.458333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.583333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.625
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.875
+index-bDW5UVFQ.js:1677 [Audio Sync] time=3.26s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=1, paused=true, currentTime=3.01, targetTime=3.26, volume=1
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.41 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=3.41s output=5.88s submitted=6.08s buffer=2.47s
+index-bDW5UVFQ.js:1677 [Audio Sync] time=3.54s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=3.01, targetTime=3.54, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 3.54s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.74 items=1
+index-bDW5UVFQ.js:1677 [Audio Sync] time=3.81s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=3.54, targetTime=3.81, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 3.81s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=4.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=4.01 key=120 cache=[2-176] size=140 found=true at 120
+index-bDW5UVFQ.js:1677 [buildLayers] time=4.08s, hasAnyMissingFrame=false, videoItems=1
+index-bDW5UVFQ.js:1677 [Audio Sync] time=4.08s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=3.81, targetTime=4.08, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 4.08s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.08 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=4.08s items=1 videos=[a2b0507d:ready=true,idx=141]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=4.08s lastDecoded=6.08s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=142
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=165/192 ts=7.08s
+index-bDW5UVFQ.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 5.958333
+index-bDW5UVFQ.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=6.00s key=180 cacheSize=142
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.041666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.208333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.458333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.583333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.625
+index-bDW5UVFQ.js:1677 [Audio Sync] time=4.38s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=1, paused=true, currentTime=4.08, targetTime=4.38, volume=1
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.875
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.61 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=4.61s output=6.88s submitted=7.08s buffer=2.27s
+index-bDW5UVFQ.js:1677 [Audio Sync] time=4.64s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=1, paused=true, currentTime=4.08, targetTime=4.64, volume=1
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=4.91s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=4.08, targetTime=4.91, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 4.91s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.94 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=166
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=189/192 ts=8.04s
+index-bDW5UVFQ.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 6.958333
+index-bDW5UVFQ.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=7.00s key=210 cacheSize=166
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.041666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.083333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.125
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.166666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.208333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.25
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.291666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.333333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.375
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.416666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.458333
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=5.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=5.01 key=150 cache=[2-224] size=178 found=true at 150
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.5
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.541666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.583333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.625
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.666666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.708333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.75
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.791666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.833333
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.875
+index-bDW5UVFQ.js:1677 [Audio Sync] time=5.16s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=1, paused=true, currentTime=4.91, targetTime=5.16, volume=1
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [buildLayers] time=5.31s, hasAnyMissingFrame=false, videoItems=1
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.31 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=5.31s items=1 videos=[a2b0507d:ready=true,idx=189]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=5.31s lastDecoded=8.04s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=5.31s output=7.88s submitted=8.04s buffer=2.57s
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=5.41s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=4.91, targetTime=5.41, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 5.41s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.64 items=1
+index-bDW5UVFQ.js:1677 [Audio Sync] time=5.68s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=5.41, targetTime=5.68, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 5.68s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=5.94s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=5.68, targetTime=5.94, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 5.94s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.98 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=190
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=2 idx=191/192 ts=8.00s
+index-bDW5UVFQ.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.916666
+index-bDW5UVFQ.js:1677 Frame received for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 at 7.958333
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=6.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=6.01 key=180 cache=[2-239] size=190 found=true at 180
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=6.21s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=5.94, targetTime=6.21, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 6.21s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [buildLayers] time=6.31s, hasAnyMissingFrame=false, videoItems=1
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.31 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=6.31s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=6.31s lastDecoded=8.00s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=6.48s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=6.21, targetTime=6.48, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 6.48s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.64 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-bDW5UVFQ.js:1677 [Audio Sync] time=6.74s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=6.48, targetTime=6.74, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 6.74s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.98 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=7.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=7.01 key=210 cache=[2-239] size=190 found=true at 210
+index-bDW5UVFQ.js:1677 [Audio Sync] time=7.01s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=6.74, targetTime=7.01, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 7.01s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=7.28s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=7.01, targetTime=7.28, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 7.28s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [buildLayers] time=7.31s, hasAnyMissingFrame=false, videoItems=1
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.31 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=7.31s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=7.31s lastDecoded=8.00s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=7.54s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=7.28, targetTime=7.54, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 7.54s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.64 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1677 [Audio Sync] time=7.81s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=7.54, targetTime=7.81, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 7.81s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+requestAnimationFrame
+Yce.animate @ index-bDW5UVFQ.js:1454
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.98 items=1
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-bDW5UVFQ.js:1454 [WebGLCompositor] animate: time=8.01s, hasLayerProvider=true
+index-bDW5UVFQ.js:1677 [Audio Sync] time=0.00s, shouldPlay=true, audioElements=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 ACTIVE: readyState=4, paused=true, currentTime=7.81, targetTime=0.00, volume=1
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 SEEK to 0.00s
+index-bDW5UVFQ.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922 NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+seek @ index-bDW5UVFQ.js:1677
+(anonymous) @ index-bDW5UVFQ.js:1677
+JA @ index-bDW5UVFQ.js:40
+Gg @ index-bDW5UVFQ.js:40
+L$ @ index-bDW5UVFQ.js:40
+Tm @ index-bDW5UVFQ.js:38
+mve @ index-bDW5UVFQ.js:40
+nf @ index-bDW5UVFQ.js:40
+YX @ index-bDW5UVFQ.js:40
+S @ index-bDW5UVFQ.js:25
+D @ index-bDW5UVFQ.js:25
+index-bDW5UVFQ.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 1 items, worker=true
+index-bDW5UVFQ.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-239] size=190 found=true at 2
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=seek videoId=a2b0507d time=0.00 items=undefined
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-bDW5UVFQ.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=1
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER] time=0.00s items=1 videos=[a2b0507d:ready=true,idx=191]
+index-bDW5UVFQ.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-bDW5UVFQ.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplay (readyState=4)
+index-bDW5UVFQ.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768678155010_oqprnp922: canplaythrough - READY TO PLAY
+index-bDW5UVFQ.js:993 [AUTH] ✓ User data refreshed (credits updated)
