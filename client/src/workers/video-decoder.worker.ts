@@ -46,7 +46,9 @@ interface VideoState {
   // Track decode progress for continuous playback
   lastDecodedIndex: number;
   lastDecodedTimestamp: number;
-  isDecoding: boolean;
+  // Promise-based decode tracking (replaces boolean isDecoding)
+  // This ensures we can't get stuck - the promise always resolves/rejects
+  currentDecodeTask: Promise<void> | null;
   // For logging rate limiting
   _lastSkipLogTime?: number;
 }
@@ -56,7 +58,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v5-aggressive-fix ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v6-promise-based ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -263,7 +265,7 @@ class VideoDecoderWorker {
       decoderConfig: null,
       lastDecodedIndex: -1,
       lastDecodedTimestamp: -1,
-      isDecoding: false,
+      currentDecodeTask: null,
     };
     this.videos.set(videoId, videoState);
 
@@ -469,6 +471,7 @@ class VideoDecoderWorker {
   /**
    * Decode initial frames for immediate preview
    * Decodes first keyframe + some following frames for smoother start
+   * Uses Promise-based tracking to prevent stuck states
    */
   private async decodeFirstKeyframe(videoId: string): Promise<void> {
     const video = this.videos.get(videoId);
@@ -477,14 +480,42 @@ class VideoDecoderWorker {
       return;
     }
 
-    video.isDecoding = true;
+    // If there's already a decode task running, wait for it (don't block indefinitely)
+    if (video.currentDecodeTask) {
+      this.debug('INIT_WAIT', `${videoId.slice(0,8)} waiting for previous task`);
+      try {
+        await Promise.race([video.currentDecodeTask, new Promise(r => setTimeout(r, 100))]);
+      } catch (e) {
+        // Ignore - just continue
+      }
+    }
+
+    // Create the decode task as a Promise
+    const decodeTask = this.performInitialDecode(videoId);
+    video.currentDecodeTask = decodeTask;
+    
+    try {
+      await decodeTask;
+    } finally {
+      // Clear the task when done (critical - this replaces the boolean flag)
+      if (video.currentDecodeTask === decodeTask) {
+        video.currentDecodeTask = null;
+      }
+    }
+  }
+
+  /**
+   * Internal: perform the actual initial decode
+   */
+  private async performInitialDecode(videoId: string): Promise<void> {
+    const video = this.videos.get(videoId);
+    if (!video?.decoder) return;
 
     try {
       // Find first keyframe index
       const keyframeIndex = video.chunks.findIndex(chunk => chunk.type === 'key');
       if (keyframeIndex === -1) {
         this.debug('INIT_SKIP', `${videoId.slice(0,8)} no keyframe found`);
-        video.isDecoding = false;
         return;
       }
 
@@ -509,69 +540,82 @@ class VideoDecoderWorker {
         decodedCount++;
       }
 
-      this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s decoderState=${video.decoder.state}`);
-
-      // Update tracking BEFORE flush (so frames are available even if flush hangs)
+      // Update tracking IMMEDIATELY after decode (before flush)
       video.lastDecodedIndex = lastIndex;
       video.lastDecodedTimestamp = lastTimestamp;
 
+      this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s`);
+
+      // Flush is optional - frames are already queued for output
       if (video.decoder.state === 'configured') {
-        // Flush with SHORT timeout (500ms) - if it hangs, frames were already decoded
         try {
           await Promise.race([
             video.decoder.flush(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 200))
           ]);
-          this.debug('INIT_DONE', `${videoId.slice(0,8)} flushed, lastIdx=${lastIndex} lastTs=${lastTimestamp.toFixed(2)}s`);
-        } catch (flushError) {
-          this.debug('INIT_FLUSH_ERR', `${videoId.slice(0,8)} flush timed out - continuing anyway`);
-          // Frames were decoded and sent via output callback, just flush hung
+          this.debug('INIT_DONE', `${videoId.slice(0,8)} flushed ok`);
+        } catch {
+          this.debug('INIT_FLUSH_SKIP', `${videoId.slice(0,8)} flush timeout - continuing`);
         }
-      } else {
-        this.debug('INIT_NOFLUSH', `${videoId.slice(0,8)} decoder state=${video.decoder.state}, NOT flushing`);
       }
     } catch (error) {
       this.debug('INIT_ERROR', `${videoId.slice(0,8)} ${error}`);
-    } finally {
-      video.isDecoding = false;
-      this.debug('INIT_UNLOCK', `${videoId.slice(0,8)} isDecoding=false`);
     }
   }
 
   /**
    * Seek to specific time and decode frames
-   * Simpler approach: always decode from keyframe, track progress to avoid re-decoding
+   * Uses Promise-based tracking to prevent stuck states
    */
   private async seekVideo(videoId: string, time: number): Promise<void> {
     const video = this.videos.get(videoId);
     if (!video?.isReady || !video.decoder || !video.metadata || video.chunks.length === 0) {
-      this.debug('SEEK_SKIP', `${videoId.slice(0,8)} not ready: isReady=${video?.isReady} decoder=${!!video?.decoder} chunks=${video?.chunks?.length || 0}`);
-      return;
-    }
-
-    // Prevent concurrent decode operations
-    if (video.isDecoding) {
-      this.debug('SEEK_SKIP', `${videoId.slice(0,8)} already decoding`);
+      this.debug('SEEK_SKIP', `${videoId.slice(0,8)} not ready`);
       return;
     }
 
     const targetTimestamp = time * 1_000_000; // Convert to microseconds
 
-    // Check if we already have frames decoded past this point
+    // Check if we already have frames decoded past this point (skip unnecessary work)
     if (video.lastDecodedTimestamp >= 0) {
       const lastDecodedUs = video.lastDecodedTimestamp * 1_000_000;
-      // If we've already decoded past the target + 1 second buffer, skip
-      if (lastDecodedUs > targetTimestamp + 1_000_000) {
-        // Only log occasionally to avoid spam
-        if (Math.floor(time) !== Math.floor(video._lastSkipLogTime || -1)) {
-          this.debug('SEEK_AHEAD', `${videoId.slice(0,8)} target=${time.toFixed(2)} lastDecoded=${video.lastDecodedTimestamp.toFixed(2)} (skipping - already ahead)`);
-          video._lastSkipLogTime = time;
-        }
-        return;
+      // If we've already decoded past the target + 2 second buffer, skip
+      if (lastDecodedUs > targetTimestamp + 2_000_000) {
+        return; // No need to decode more - we're ahead
       }
     }
 
-    video.isDecoding = true;
+    // If there's a decode task running, don't block - just skip this call
+    // The next RAF will try again
+    if (video.currentDecodeTask) {
+      // Don't spam logs - only log once per second
+      if (Math.floor(time) !== Math.floor(video._lastSkipLogTime || -1)) {
+        this.debug('SEEK_BUSY', `${videoId.slice(0,8)} decode in progress, will retry`);
+        video._lastSkipLogTime = time;
+      }
+      return;
+    }
+
+    // Create and track the decode task
+    const decodeTask = this.performSeekDecode(videoId, time, targetTimestamp);
+    video.currentDecodeTask = decodeTask;
+
+    try {
+      await decodeTask;
+    } finally {
+      // Clear the task when done (critical - prevents stuck state)
+      if (video.currentDecodeTask === decodeTask) {
+        video.currentDecodeTask = null;
+      }
+    }
+  }
+
+  /**
+   * Internal: perform the actual seek decode operation
+   */
+  private async performSeekDecode(videoId: string, time: number, targetTimestamp: number): Promise<void> {
+    const video = this.videos.get(videoId);
+    if (!video?.decoder) return;
 
     try {
       // Check decoder state
@@ -593,22 +637,16 @@ class VideoDecoderWorker {
       } else if (video.lastDecodedIndex < 0) {
         // Start from beginning (keyframe)
         startIndex = 0;
-      } else {
-        // Already decoded everything
-        video.isDecoding = false;
-        return;
-      }
-
-      // Ensure we start from a keyframe if this is a fresh start
-      if (video.lastDecodedIndex < 0) {
         const keyframeIndex = video.chunks.findIndex(chunk => chunk.type === 'key');
         if (keyframeIndex >= 0) {
           startIndex = keyframeIndex;
         }
+      } else {
+        // Already decoded everything
+        return;
       }
 
       if (startIndex >= video.chunks.length) {
-        video.isDecoding = false;
         return;
       }
 
@@ -616,15 +654,12 @@ class VideoDecoderWorker {
       const targetEndTimestamp = targetTimestamp + 3_000_000; // 3 seconds ahead
       const maxFrames = 90;
 
-      console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Decoding from index ${startIndex}, target=${(targetTimestamp/1_000_000).toFixed(2)}s, chunks=${video.chunks.length}`);
-
       let decodedCount = 0;
       let lastIndex = video.lastDecodedIndex;
       let lastTimestamp = video.lastDecodedTimestamp;
 
       for (let i = startIndex; i < video.chunks.length && decodedCount < maxFrames; i++) {
         if (video.decoder.state !== 'configured') {
-          console.warn(`[VideoDecoderWorker] seekVideo(${videoId}): Decoder not configured, state=${video.decoder.state}`);
           break;
         }
 
@@ -640,23 +675,24 @@ class VideoDecoderWorker {
         }
       }
 
-      // Update tracking BEFORE flush (so frames are usable even if flush hangs)
+      // Update tracking IMMEDIATELY (before flush)
       video.lastDecodedIndex = lastIndex;
       video.lastDecodedTimestamp = lastTimestamp;
 
+      if (decodedCount > 0) {
+        this.debug('SEEK_DONE', `${videoId.slice(0,8)} decoded=${decodedCount} idx=${lastIndex}/${video.chunks.length} ts=${lastTimestamp.toFixed(2)}s`);
+      }
+
+      // Flush is optional - frames are already queued for output
       if (video.decoder.state === 'configured' && decodedCount > 0) {
-        // Flush with SHORT timeout (500ms) - frames already decoded via output callback
         try {
           await Promise.race([
             video.decoder.flush(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('seek flush timeout')), 500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 200))
           ]);
-        } catch (flushError) {
-          this.debug('SEEK_FLUSH_ERR', `${videoId.slice(0,8)} flush timed out - continuing`);
+        } catch {
+          // Flush timeout is fine - frames were already sent via output callback
         }
-        this.debug('SEEK_DONE', `${videoId.slice(0,8)} decoded=${decodedCount} idx=${lastIndex}/${video.chunks.length} ts=${lastTimestamp.toFixed(2)}s`);
-      } else {
-        this.debug('SEEK_NONE', `${videoId.slice(0,8)} decoded=0 state=${video.decoder.state}`);
       }
 
       this.sendMessage({ type: 'seeked', videoId, time, success: true });
@@ -672,9 +708,6 @@ class VideoDecoderWorker {
         success: false,
         error: error instanceof Error ? error.message : String(error)
       });
-    } finally {
-      video.isDecoding = false;
-      this.debug('SEEK_UNLOCK', `${videoId.slice(0,8)} isDecoding=false`);
     }
   }
 
@@ -745,7 +778,7 @@ class VideoDecoderWorker {
       // Reset tracking
       video.lastDecodedIndex = -1;
       video.lastDecodedTimestamp = -1;
-      video.isDecoding = false;
+      video.currentDecodeTask = null;
       console.log(`[VideoDecoderWorker] ${videoId}: Decoder reset`);
     }
   }
