@@ -519,9 +519,17 @@ export function CanvasPreviewPro({
     compositor.setLayers(layers, true);
   }, [buildLayers, currentTime]);
 
+  // Track which audio elements we've already warned about
+  const audioWarningsRef = useRef<Set<string>>(new Set());
+
   // Audio sync helper - syncs all audio elements to the given time
   const syncAudioToTime = useCallback((time: number, shouldPlay: boolean) => {
     const audioElements = audioElementsRef.current;
+    
+    // Log when starting playback
+    if (shouldPlay) {
+      console.log(`[Audio Sync] time=${time.toFixed(2)}s, shouldPlay=true, audioElements=${audioElements.size}`);
+    }
     
     items.forEach(item => {
       if (item.type !== 'video' && item.type !== 'audio') return;
@@ -529,12 +537,23 @@ export function CanvasPreviewPro({
       
       const audio = audioElements.get(item.id);
       if (!audio) {
-        console.warn(`[CanvasPreviewPro] No audio element for ${item.id}`);
+        // Only warn once per item
+        if (!audioWarningsRef.current.has(`no-${item.id}`)) {
+          console.warn(`[Audio] No audio element for ${item.id}`);
+          audioWarningsRef.current.add(`no-${item.id}`);
+        }
         return;
       }
       if (!isFinite(audio.duration)) {
-        console.warn(`[CanvasPreviewPro] Audio ${item.id} not loaded yet (duration=${audio.duration})`);
+        // Only warn once per item until it loads
+        if (!audioWarningsRef.current.has(`loading-${item.id}`)) {
+          console.warn(`[Audio] ${item.id} still loading...`);
+          audioWarningsRef.current.add(`loading-${item.id}`);
+        }
         return;
+      } else {
+        // Clear the loading warning once loaded
+        audioWarningsRef.current.delete(`loading-${item.id}`);
       }
       
       const timeInClip = time - item.startTime;
