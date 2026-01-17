@@ -230,7 +230,7 @@ export function CanvasPreview({
           position: item.position,
           opacity: item.opacity,
           text: item.text,
-          transition: item.transition,
+          transition: item.transition as CompositorLayer['transition'],
           trim: item.trim,
           speed: item.speed,
         };

@@ -98,7 +98,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
-import { EditorSidebar, PreviewSurface, CanvasPreview, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline } from "./video-editor/components";
+import { EditorSidebar, CanvasPreview, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline } from "./video-editor/components";
 import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
 
@@ -593,6 +593,11 @@ export default function VideoEditor() {
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Smart export routing - browser for short videos, VPS for long videos
+  const BROWSER_EXPORT_MAX_DURATION_SECONDS = 600; // 10 minutes threshold
+  const [exportMode, setExportMode] = useState<'auto' | 'browser' | 'vps'>('auto');
+  const [exportPhase, setExportPhase] = useState<string>('');
 
   // New OpenCut/CapCut-style layout state
   const [activeCategory, setActiveCategory] = useState<EditorCategory>('media');
@@ -639,8 +644,6 @@ export default function VideoEditor() {
   const lastPreviewSignatureRef = useRef<string | null>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Canvas preview mode (real-time compositing) - default to false until clips are added
-  const [useCanvasPreview, setUseCanvasPreview] = useState(true);
 
   // Project management state
   const [currentProject, setCurrentProject] = useState<VideoProject | null>(null);
@@ -2605,11 +2608,6 @@ export default function VideoEditor() {
     setUseMultiTrack(enabled);
     setMultiTrackKey(prev => prev + 1);
 
-    // Auto-enable canvas preview when switching to multi-track mode
-    if (enabled) {
-      setUseCanvasPreview(true);
-    }
-
     if (enabled && orderedClips.length > 0 && multiTrackItems.length === 0) {
       let currentTime = 0;
       const convertedItems: MultiTrackTimelineItem[] = orderedClips.map((clip) => {
@@ -2683,7 +2681,21 @@ export default function VideoEditor() {
       return;
     }
 
-    exportMutation.mutate(orderedClips);
+    // Smart export routing based on duration
+    const shouldUseBrowserExport = 
+      exportMode === 'browser' || 
+      (exportMode === 'auto' && totalDuration <= BROWSER_EXPORT_MAX_DURATION_SECONDS);
+    
+    if (shouldUseBrowserExport && typeof VideoEncoder !== 'undefined') {
+      // Browser export is not yet fully implemented - fallback to VPS
+      // Future: startBrowserExport();
+      console.log(`[Export] Duration: ${totalDuration.toFixed(1)}s - Would use browser export (< 10 min), falling back to VPS`);
+      exportMutation.mutate(orderedClips);
+    } else {
+      // Use VPS for long videos or when browser export is not available
+      console.log(`[Export] Duration: ${totalDuration.toFixed(1)}s - Using VPS export`);
+      exportMutation.mutate(orderedClips);
+    }
   };
 
   const goBack = () => {
@@ -2795,44 +2807,18 @@ export default function VideoEditor() {
   timelineDurationRef.current = totalDuration;
 
   // Handle timeline play/pause
-  // When using canvas preview (real-time mode), the CanvasPreview component handles time progression
-  // via onTimeUpdate callback. Only use setInterval for server preview mode.
+  // CanvasPreview handles time progression via onTimeUpdate callback
   const handleTimelinePlayPause = useCallback(() => {
-    setIsTimelinePlaying(prev => {
-      if (!prev) {
-        // Only use setInterval when NOT using real-time canvas preview
-        // Canvas preview handles its own time progression via onTimeUpdate
-        if (!useCanvasPreview) {
-          timelinePlayIntervalRef.current = setInterval(() => {
-            setTimelineCurrentTime(t => {
-              if (t >= timelineDurationRef.current) {
-                setIsTimelinePlaying(false);
-                if (timelinePlayIntervalRef.current) {
-                  clearInterval(timelinePlayIntervalRef.current);
-                }
-                return 0;
-              }
-              return t + 1/30;
-            });
-          }, 1000/30);
-        }
-      } else {
-        if (timelinePlayIntervalRef.current) {
-          clearInterval(timelinePlayIntervalRef.current);
-        }
-      }
-      return !prev;
-    });
-  }, [useCanvasPreview]);
+    setIsTimelinePlaying(prev => !prev);
+  }, []);
 
-  // Handle end of timeline for canvas preview mode
-  // The canvas preview updates time via onTimeUpdate, so we need to check for end externally
+  // Handle end of timeline - canvas preview updates time via onTimeUpdate
   useEffect(() => {
-    if (useCanvasPreview && isTimelinePlaying && timelineCurrentTime >= totalDuration) {
+    if (isTimelinePlaying && timelineCurrentTime >= totalDuration) {
       setIsTimelinePlaying(false);
       setTimelineCurrentTime(0);
     }
-  }, [useCanvasPreview, isTimelinePlaying, timelineCurrentTime, totalDuration]);
+  }, [isTimelinePlaying, timelineCurrentTime, totalDuration]);
 
   // Handle adding clip to timeline from media panel
   // Uses unique instance IDs to allow the same video to be added multiple times
@@ -4025,43 +4011,15 @@ export default function VideoEditor() {
 
           {/* Center: Preview Surface (flex-1 to take remaining space) */}
           <div className="flex-1 flex flex-col min-w-0 relative">
-            {/* Preview Mode Toggle and Actions */}
+            {/* Live Preview Indicator */}
             <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
-              {/* Generate Server Preview Button (always visible) */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={generatePreview}
-                disabled={previewStatus === 'refreshing' || orderedClips.length === 0}
-                className="bg-background/80 backdrop-blur-sm shadow-sm h-8"
-              >
-                {previewStatus === 'refreshing' ? (
-                  <>
-                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                    <span className="text-xs">Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <Film className="h-3 w-3 mr-1.5" />
-                    <span className="text-xs">Server Preview</span>
-                  </>
-                )}
-              </Button>
-
-              {/* Real-time Toggle */}
               <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-1.5 border shadow-sm h-8">
-                <span className="text-xs text-muted-foreground">
-                  {useCanvasPreview ? 'Real-time' : 'Rendered'}
-                </span>
-                <Switch
-                  checked={useCanvasPreview}
-                  onCheckedChange={setUseCanvasPreview}
-                />
-                <Sparkles className={cn("h-3 w-3", useCanvasPreview ? "text-primary" : "text-muted-foreground")} />
+                <Sparkles className="h-3 w-3 text-primary" />
+                <span className="text-xs font-medium text-primary">Live Preview</span>
               </div>
             </div>
 
-            {useCanvasPreview && orderedClips.length > 0 ? (
+            {orderedClips.length > 0 ? (
               <CanvasPreview
                 items={(() => {
                   try {
@@ -4157,18 +4115,12 @@ export default function VideoEditor() {
                 className="flex-1"
               />
             ) : (
-              <PreviewSurface
-                previewUrl={previewUrl}
-                status={previewStatus}
-                clipCount={orderedClips.length}
-                totalDuration={totalDuration}
-                onForceRefresh={generatePreview}
-                errorMessage={previewError}
-                className="flex-1"
-                timelineTime={timelineCurrentTime}
-                isTimelinePlaying={isTimelinePlaying}
-                onTimelineTimeChange={setTimelineCurrentTime}
-              />
+              <div className="flex-1 flex items-center justify-center bg-black/90 text-muted-foreground">
+                <div className="text-center space-y-2">
+                  <Film className="h-12 w-12 mx-auto opacity-30" />
+                  <p className="text-sm">Add clips to preview your video</p>
+                </div>
+              </div>
             )}
             {textOverlays.length > 0 && (
               <TextOverlayRenderer

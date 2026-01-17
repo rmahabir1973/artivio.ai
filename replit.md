@@ -15,9 +15,10 @@ The frontend uses React, TypeScript, Tailwind CSS, and Shadcn UI for a modern, r
 The platform is built with a React/TypeScript/Tailwind CSS frontend and an Express.js/Node.js/TypeScript backend. PostgreSQL (Neon) with Drizzle ORM handles data, including JSONB for dynamic content. Authentication is JWT-based with Google OAuth and local email/password. Asynchronous AI operations use webhook-based callbacks. Credit management includes automatic refunds and smart cost previews, with all pricing being 100% database-driven. AWS S3 handles scalable cloud storage with a local fallback. AI Chat uses Server-Sent Events (SSE) for real-time responses. 
 
 **Video Editor Preview & Processing**:
-- **Client-side Preview**: FFmpeg.wasm generates real-time previews for both single-track and multi-track modes (limited to first 3 clips in single-track mode, 10 visual items in multi-track mode) for fast visual feedback
-- **Full-Fidelity Export**: AWS Lambda handles complete exports with full audio mixing, text rendering, and all effects
-- **Unified Function**: `generateBrowserPreview()` handles both modes, automatically converting timeline formats to FFmpeg compatibility
+- **Live Preview Only**: WebGL-based real-time compositor using WebCodecs for frame decoding (no FFmpeg.wasm). CanvasPreviewPro component handles multi-track video composition with Web Workers for parallel frame decoding.
+- **Audio Sync**: HTMLAudioElement-based audio playback synchronized to WebGL compositor with periodic sync (0.1s tolerance), playback rate adjustment for speed (0.5x-2x), and trimEnd boundary handling.
+- **Full-Fidelity Export**: VPS with FFmpeg 8.0.1 handles complete exports with full audio mixing, text rendering, transitions, and all effects. Supports 12 transition types: fade, dissolve, fadeblack, fadewhite, wipeleft, wiperight, wipeup, wipedown, slideleft, slideright, slideup, slidedown.
+- **Smart Export Routing**: Duration-based routing infrastructure (browser export for <10 min, VPS for >10 min) - currently falls back to VPS while browser export is being finalized.
 
 Video processing uses FFmpeg-based architecture, normalizing videos to 30fps, 720p max, 44100Hz audio. API keys for external services use round-robin rotation. Stripe is integrated for subscription and payment processing. Security is hardened using Helmet. A real-time generation queue dashboard is provided. Social media integration includes backend services for platform connections, planning, and analytics. All voice services utilize Fish Audio. GA4 Data API is integrated for admin site traffic analytics.
 

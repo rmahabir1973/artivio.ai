@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils';
 import { MultiTrackTimelineItem } from '@/pages/video-editor/components/multi-track-timeline';
 import { Loader2, Cpu } from 'lucide-react';
 
-// Note: Audio is disabled in real-time WebGL preview mode.
-// WebAudio API causes errors when used with high-frequency WebGL RAF loops.
-// Audio playback should use Server Preview mode which uses native video elements.
+// Audio playback uses HTMLAudioElement for synchronized audio with WebGL preview.
+// Videos have their audio extracted and played through hidden audio elements.
+// Audio tracks and video audio are synced with the compositor's playback state.
 
 // Cross-layer transition definition (matches store type)
 interface CrossLayerTransition {
@@ -47,8 +47,10 @@ export function CanvasPreviewPro({
   const compositorRef = useRef<WebGLCompositor | null>(null);
   const workerManagerRef = useRef<WorkerManager | null>(null);
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const frameCounterRef = useRef(0); // Explicit frame counter for buffer cadence
+  const lastAudioSyncTimeRef = useRef<number>(0); // Track last audio sync to avoid drift
 
   const [isReady, setIsReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; total: number }>({
@@ -266,12 +268,71 @@ export function CanvasPreviewPro({
 
     imageElementsRef.current = newImageElements;
 
-    // Note: Audio tracks are not handled in real-time WebGL preview mode
-    // Audio playback should use Server Preview mode which uses native video elements
-
     // Cleanup: mark as unmounted to stop pending async operations
     return () => {
       isMounted = false;
+    };
+  }, [items]);
+
+  // Load and manage audio elements for video clips and audio tracks
+  useEffect(() => {
+    const newAudioElements = new Map<string, HTMLAudioElement>();
+    
+    // Get all items that need audio playback
+    const audioItems = items.filter(item => 
+      (item.type === 'video' && !item.muted) || item.type === 'audio'
+    );
+    
+    audioItems.forEach(item => {
+      let audio = audioElementsRef.current.get(item.id);
+      
+      if (!audio || audio.src !== item.url) {
+        audio = document.createElement('audio');
+        audio.src = item.url;
+        audio.crossOrigin = 'anonymous';
+        audio.preload = 'auto';
+        audio.loop = false;
+        
+        // Set initial volume
+        const volume = (item.volume !== undefined ? item.volume : 100) / 100;
+        audio.volume = Math.max(0, Math.min(1, volume));
+        
+        // Mute if needed
+        audio.muted = item.muted || false;
+        
+        // Handle load errors gracefully
+        audio.onerror = () => {
+          console.warn(`Failed to load audio for ${item.id}: ${item.url}`);
+        };
+        
+        audio.onloadedmetadata = () => {
+          console.log(`Audio loaded for ${item.id}: duration=${audio!.duration.toFixed(2)}s`);
+        };
+      } else {
+        // Update volume/mute on existing element
+        const volume = (item.volume !== undefined ? item.volume : 100) / 100;
+        audio.volume = Math.max(0, Math.min(1, volume));
+        audio.muted = item.muted || false;
+      }
+      
+      newAudioElements.set(item.id, audio);
+    });
+    
+    // Cleanup old audio elements that are no longer in the timeline
+    audioElementsRef.current.forEach((audio, id) => {
+      if (!newAudioElements.has(id)) {
+        audio.pause();
+        audio.src = '';
+      }
+    });
+    
+    audioElementsRef.current = newAudioElements;
+    
+    return () => {
+      // Pause all audio on unmount
+      newAudioElements.forEach(audio => {
+        audio.pause();
+      });
     };
   }, [items]);
 
@@ -417,6 +478,72 @@ export function CanvasPreviewPro({
     compositor.setLayers(layers, true);
   }, [buildLayers, currentTime]);
 
+  // Audio sync helper - syncs all audio elements to the given time
+  const syncAudioToTime = useCallback((time: number, shouldPlay: boolean) => {
+    const audioElements = audioElementsRef.current;
+    
+    items.forEach(item => {
+      if (item.type !== 'video' && item.type !== 'audio') return;
+      if (item.type === 'video' && item.muted) return;
+      
+      const audio = audioElements.get(item.id);
+      if (!audio || !isFinite(audio.duration)) return;
+      
+      const timeInClip = time - item.startTime;
+      const isActive = timeInClip >= 0 && timeInClip < item.duration;
+      
+      // Calculate local time within the clip (respecting trim and speed)
+      const trimStart = item.trim?.start || 0;
+      const trimEnd = item.trim?.end || audio.duration;
+      const speed = item.speed || 1;
+      const localTime = trimStart + (timeInClip * speed);
+      
+      // Check if local time exceeds trimEnd (audio should stop)
+      const isWithinTrimBounds = localTime >= trimStart && localTime < trimEnd;
+      const effectiveActive = isActive && isWithinTrimBounds;
+      
+      // Set playback rate to match speed (browsers generally support 0.5-2x)
+      const clampedSpeed = Math.max(0.5, Math.min(2, speed));
+      if (audio.playbackRate !== clampedSpeed) {
+        audio.playbackRate = clampedSpeed;
+      }
+      
+      // Apply fade out effect for audio tracks
+      let volume = (item.volume !== undefined ? item.volume : 100) / 100;
+      if (item.fadeOut && timeInClip > 0) {
+        const timeToEnd = item.duration - timeInClip;
+        if (timeToEnd < item.fadeOut) {
+          const fadeProgress = timeToEnd / item.fadeOut;
+          volume *= Math.max(0, fadeProgress);
+        }
+      }
+      audio.volume = Math.max(0, Math.min(1, volume));
+      
+      if (effectiveActive && shouldPlay) {
+        // Clamp localTime to valid range
+        const clampedLocalTime = Math.max(trimStart, Math.min(localTime, trimEnd - 0.05));
+        
+        // Seek if time difference is too large (drift correction)
+        if (audio.readyState >= 2 && Math.abs(audio.currentTime - clampedLocalTime) > 0.1) {
+          audio.currentTime = clampedLocalTime;
+        }
+        
+        // Play if not already playing
+        if (audio.paused && audio.readyState >= 2) {
+          audio.play().catch((e) => {
+            // Log autoplay errors for debugging
+            console.warn(`[Audio] Play failed for ${item.id}:`, e.message);
+          });
+        }
+      } else {
+        // Pause if not active, outside trim bounds, or not playing
+        if (!audio.paused) {
+          audio.pause();
+        }
+      }
+    });
+  }, [items]);
+
   // Track if we've started playback to avoid repeated play() calls
   const isPlayingRef = useRef(false);
   const startTimeRef = useRef(0);
@@ -439,6 +566,7 @@ export function CanvasPreviewPro({
         // Reset frame counter for new playback session
         frameCounterRef.current = 0;
         startTimeRef.current = currentTime;
+        lastAudioSyncTimeRef.current = currentTime;
 
         // Pre-buffer frames before starting playback
         const videoItems = items
@@ -458,19 +586,27 @@ export function CanvasPreviewPro({
         // Set up layer provider for synchronous layer updates
         compositor.setLayerProvider(buildLayers);
         
-        // Set up time callback to notify parent
+        // Set up time callback to notify parent AND sync audio
         compositor.setOnTimeUpdate(time => {
           onTimeUpdateRef.current?.(time);
+          
+          // Sync audio periodically (every 0.25s to avoid too many seeks)
+          if (Math.abs(time - lastAudioSyncTimeRef.current) > 0.25) {
+            lastAudioSyncTimeRef.current = time;
+            syncAudioToTime(time, true);
+          }
         });
 
         // Seek compositor to current position before starting
         compositor.seek(startTimeRef.current);
         
+        // Start audio playback at current position
+        syncAudioToTime(startTimeRef.current, true);
+        
         // Start playback (compositor manages its own RAF loop)
-        // Note: Audio is not played in real-time mode - use Server Preview for audio
         compositor.play();
         
-        console.log(`[CanvasPreviewPro] Started playback at ${startTimeRef.current.toFixed(2)}s`);
+        console.log(`[CanvasPreviewPro] Started playback with audio at ${startTimeRef.current.toFixed(2)}s`);
       }
       // If already playing, just update the layer provider (items may have changed)
       else {
@@ -479,18 +615,23 @@ export function CanvasPreviewPro({
     } else {
       isPlayingRef.current = false;
       compositor.pause();
+      
+      // Pause all audio
+      syncAudioToTime(currentTime, false);
 
       // Clear layer provider when paused
       compositor.setLayerProvider(undefined);
     }
 
     return () => {
-      // Cleanup: remove layer provider
+      // Cleanup: remove layer provider and pause audio
       if (compositorRef.current) {
         compositorRef.current.setLayerProvider(undefined);
       }
+      // Pause all audio elements
+      audioElementsRef.current.forEach(audio => audio.pause());
     };
-  }, [isPlaying, buildLayers, items]); // REMOVED currentTime from deps!
+  }, [isPlaying, buildLayers, items, syncAudioToTime]); // REMOVED currentTime from deps!
 
   // Sync current time (seeking)
   useEffect(() => {
@@ -528,11 +669,14 @@ export function CanvasPreviewPro({
 
       // Buffer frames around current position
       workerManager.bufferFrames(currentTime, videoItems);
+      
+      // Sync audio to the new position (paused state)
+      syncAudioToTime(currentTime, false);
 
       // Trigger render after seeking
       renderFrame();
     }
-  }, [currentTime, isPlaying, items, renderFrame]);
+  }, [currentTime, isPlaying, items, renderFrame, syncAudioToTime]);
 
   const isLoading = loadingProgress.total > 0 && loadingProgress.loaded < loadingProgress.total;
 
