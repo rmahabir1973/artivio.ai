@@ -59,7 +59,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v7-debug-frames ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v8-no-flush ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -547,18 +547,10 @@ class VideoDecoderWorker {
 
       this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s`);
 
-      // Flush is optional - frames are already queued for output
-      if (video.decoder.state === 'configured') {
-        try {
-          await Promise.race([
-            video.decoder.flush(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 200))
-          ]);
-          this.debug('INIT_DONE', `${videoId.slice(0,8)} flushed ok`);
-        } catch {
-          this.debug('INIT_FLUSH_SKIP', `${videoId.slice(0,8)} flush timeout - continuing`);
-        }
-      }
+      // After flush (success or timeout), decoder needs a keyframe to continue
+      // DON'T flush during initial decode - let frames output naturally
+      // This keeps the decoder state valid for continuous decoding
+      this.debug('INIT_DONE', `${videoId.slice(0,8)} ready for playback, no flush needed`);
     } catch (error) {
       this.debug('INIT_ERROR', `${videoId.slice(0,8)} ${error}`);
     }
@@ -578,16 +570,18 @@ class VideoDecoderWorker {
     const targetTimestamp = time * 1_000_000; // Convert to microseconds
 
     // Check if we already have frames decoded past this point (skip unnecessary work)
-    if (video.lastDecodedTimestamp >= 0) {
-      const lastDecodedUs = video.lastDecodedTimestamp * 1_000_000;
-      // If we've already decoded past the target + 2 second buffer, skip
-      if (lastDecodedUs > targetTimestamp + 2_000_000) {
-        // Log occasionally  
+    // If target is within our already-decoded range, skip decoding
+    if (video.lastDecodedTimestamp >= 0 && video.lastDecodedTimestamp > time) {
+      // We've already decoded past the target - no need to decode more
+      // Only decode more if we're approaching the end of our buffer (within 0.5s)
+      const bufferRemaining = video.lastDecodedTimestamp - time;
+      if (bufferRemaining > 0.5) {
+        // Plenty of buffer remaining, skip decoding
         if (Math.floor(time) !== Math.floor(video._lastAheadLogTime || -1)) {
-          this.debug('SEEK_AHEAD', `${videoId.slice(0,8)} target=${time.toFixed(2)}s lastDecoded=${video.lastDecodedTimestamp.toFixed(2)}s idx=${video.lastDecodedIndex}/${video.chunks.length}`);
+          this.debug('SEEK_AHEAD', `${videoId.slice(0,8)} target=${time.toFixed(2)}s lastDecoded=${video.lastDecodedTimestamp.toFixed(2)}s buffer=${bufferRemaining.toFixed(2)}s`);
           video._lastAheadLogTime = time;
         }
-        return; // No need to decode more - we're ahead
+        return;
       }
     }
 
@@ -689,17 +683,9 @@ class VideoDecoderWorker {
         this.debug('SEEK_DONE', `${videoId.slice(0,8)} decoded=${decodedCount} idx=${lastIndex}/${video.chunks.length} ts=${lastTimestamp.toFixed(2)}s`);
       }
 
-      // Flush is optional - frames are already queued for output
-      if (video.decoder.state === 'configured' && decodedCount > 0) {
-        try {
-          await Promise.race([
-            video.decoder.flush(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 200))
-          ]);
-        } catch {
-          // Flush timeout is fine - frames were already sent via output callback
-        }
-      }
+      // DON'T flush - keep decoder ready for continuous decoding
+      // Frames are output via the callback as they're decoded
+      // Flushing would reset decoder state and require a keyframe for next decode
 
       this.sendMessage({ type: 'seeked', videoId, time, success: true });
 

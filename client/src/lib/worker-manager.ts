@@ -6,7 +6,7 @@
 
 // Use dynamic worker imports with cache-busting to ensure fresh code loads
 // Version must be updated when worker code changes significantly
-const WORKER_VERSION = '2025-01-17-v7-debug-frames';
+const WORKER_VERSION = '2025-01-17-v8-no-flush';
 
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
