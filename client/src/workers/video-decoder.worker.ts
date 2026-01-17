@@ -2,7 +2,7 @@
  * Video Decoder Web Worker
  * Based on W3C WebCodecs samples: https://github.com/w3c/webcodecs/tree/main/samples/video-decode-display
  * Uses MP4Box.js for demuxing and WebCodecs VideoDecoder for hardware-accelerated decoding
- * BUILD_TIMESTAMP: 2025-01-17T04:05:00Z - v12-flush-initial
+ * BUILD_TIMESTAMP: 2025-01-17T04:20:00Z - v13-fix-seek-ahead
  */
 
 // @ts-ignore - MP4Box types not available
@@ -62,7 +62,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v12-flush-initial ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v13-fix-seek-ahead ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -583,9 +583,14 @@ class VideoDecoderWorker {
 
     const targetTimestamp = time * 1_000_000; // Convert to microseconds
 
+    // CRITICAL: If we have a nextKeyframeIndex set (after flush), we MUST decode from it
+    // Don't skip - flush() clears decoder's reference frames, so we need new keyframe
+    const mustDecodeFromKeyframe = video.nextKeyframeIndex !== undefined && video.nextKeyframeIndex > 0;
+
     // Check if we already have frames decoded past this point (skip unnecessary work)
     // If target is within our already-decoded range, skip decoding
-    if (video.lastDecodedTimestamp >= 0 && video.lastDecodedTimestamp > time) {
+    // BUT: Don't skip if we need to decode from a new keyframe after flush
+    if (!mustDecodeFromKeyframe && video.lastDecodedTimestamp >= 0 && video.lastDecodedTimestamp > time) {
       // We've already decoded past the target - no need to decode more
       // Only decode more if we're approaching the end of our buffer (within 0.5s)
       const bufferRemaining = video.lastDecodedTimestamp - time;
