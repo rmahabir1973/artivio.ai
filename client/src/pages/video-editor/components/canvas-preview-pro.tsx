@@ -374,13 +374,13 @@ export function CanvasPreviewPro({
           
           if (fromLayer && toLayer) {
             fromLayer.crossTransition = {
-              type: transition.type as 'fade' | 'dissolve' | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown',
+              type: transition.type,
               progress: Math.max(0, Math.min(1, progress)),
               otherLayerId: transition.toClipId,
               isSource: true,
             };
             toLayer.crossTransition = {
-              type: transition.type as 'fade' | 'dissolve' | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown',
+              type: transition.type,
               progress: Math.max(0, Math.min(1, progress)),
               otherLayerId: transition.fromClipId,
               isSource: false,

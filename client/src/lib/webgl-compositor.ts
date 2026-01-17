@@ -42,7 +42,7 @@ export interface WebGLLayer {
 
   // Cross-layer transition (blend with another layer)
   crossTransition?: {
-    type: 'fade' | 'dissolve' | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown';
+    type: string; // fade, dissolve, wipeleft, wiperight, wipeup, wipedown, fadeblack, fadewhite, slideleft, slideright
     progress: number; // 0-1, how far through the transition
     otherLayerId: string; // The layer to blend with
     isSource: boolean; // true = this is the outgoing layer, false = incoming
@@ -260,7 +260,7 @@ export class WebGLCompositor {
       uniform sampler2D u_textureFrom;  // Outgoing clip
       uniform sampler2D u_textureTo;    // Incoming clip  
       uniform float u_progress;          // 0-1 transition progress
-      uniform int u_transitionType;      // 0=fade, 1=dissolve, 2=wipeLeft, 3=wipeRight, 4=wipeUp, 5=wipeDown
+      uniform int u_transitionType;      // 0=fade, 1=dissolve, 2=wipeLeft, 3=wipeRight, 4=wipeUp, 5=wipeDown, 6=fadeBlack, 7=fadeWhite, 8=slideLeft, 9=slideRight
       uniform float u_opacity;
 
       // Simple hash for dissolve effect
@@ -273,29 +273,73 @@ export class WebGLCompositor {
         vec4 colorTo = texture(u_textureTo, v_texCoord);
         
         float mixFactor = u_progress;
+        vec4 color;
         
         if (u_transitionType == 0) {
           // Fade: simple linear blend
-          mixFactor = u_progress;
+          color = mix(colorFrom, colorTo, u_progress);
         } else if (u_transitionType == 1) {
           // Dissolve: random pixel threshold
           float threshold = hash(v_texCoord * 100.0);
           mixFactor = step(threshold, u_progress);
+          color = mix(colorFrom, colorTo, mixFactor);
         } else if (u_transitionType == 2) {
           // Wipe Left: reveal from right
           mixFactor = step(1.0 - v_texCoord.x, u_progress);
+          color = mix(colorFrom, colorTo, mixFactor);
         } else if (u_transitionType == 3) {
           // Wipe Right: reveal from left  
           mixFactor = step(v_texCoord.x, u_progress);
+          color = mix(colorFrom, colorTo, mixFactor);
         } else if (u_transitionType == 4) {
           // Wipe Up: reveal from bottom
           mixFactor = step(1.0 - v_texCoord.y, u_progress);
+          color = mix(colorFrom, colorTo, mixFactor);
         } else if (u_transitionType == 5) {
           // Wipe Down: reveal from top
           mixFactor = step(v_texCoord.y, u_progress);
+          color = mix(colorFrom, colorTo, mixFactor);
+        } else if (u_transitionType == 6) {
+          // Fade Black: fade out to black, then fade in from black
+          vec4 black = vec4(0.0, 0.0, 0.0, 1.0);
+          if (u_progress < 0.5) {
+            color = mix(colorFrom, black, u_progress * 2.0);
+          } else {
+            color = mix(black, colorTo, (u_progress - 0.5) * 2.0);
+          }
+        } else if (u_transitionType == 7) {
+          // Fade White: fade out to white, then fade in from white
+          vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
+          if (u_progress < 0.5) {
+            color = mix(colorFrom, white, u_progress * 2.0);
+          } else {
+            color = mix(white, colorTo, (u_progress - 0.5) * 2.0);
+          }
+        } else if (u_transitionType == 8) {
+          // Slide Left: new clip slides in from the right
+          float slidePos = 1.0 - u_progress;
+          vec2 fromCoord = v_texCoord + vec2(u_progress, 0.0);
+          vec2 toCoord = v_texCoord - vec2(slidePos, 0.0);
+          if (v_texCoord.x < u_progress) {
+            color = texture(u_textureTo, toCoord + vec2(1.0, 0.0));
+          } else {
+            color = texture(u_textureFrom, fromCoord - vec2(1.0, 0.0));
+          }
+        } else if (u_transitionType == 9) {
+          // Slide Right: new clip slides in from the left
+          float slidePos = 1.0 - u_progress;
+          if (v_texCoord.x > slidePos) {
+            vec2 toCoord = v_texCoord - vec2(slidePos, 0.0);
+            color = texture(u_textureTo, toCoord);
+          } else {
+            vec2 fromCoord = v_texCoord + vec2(u_progress, 0.0);
+            color = texture(u_textureFrom, fromCoord);
+          }
+        } else {
+          // Default: simple fade
+          color = mix(colorFrom, colorTo, u_progress);
         }
         
-        vec4 color = mix(colorFrom, colorTo, mixFactor);
         outColor = vec4(color.rgb, color.a * u_opacity);
       }
     `;
@@ -503,13 +547,19 @@ export class WebGLCompositor {
    * Get transition type enum value for shader
    */
   private getTransitionTypeValue(type: string): number {
-    switch (type) {
+    // Normalize type to handle both camelCase and lowercase
+    const normalizedType = type.toLowerCase();
+    switch (normalizedType) {
       case 'fade': return 0;
       case 'dissolve': return 1;
-      case 'wipeLeft': return 2;
-      case 'wipeRight': return 3;
-      case 'wipeUp': return 4;
-      case 'wipeDown': return 5;
+      case 'wipeleft': return 2;
+      case 'wiperight': return 3;
+      case 'wipeup': return 4;
+      case 'wipedown': return 5;
+      case 'fadeblack': return 6;
+      case 'fadewhite': return 7;
+      case 'slideleft': return 8;
+      case 'slideright': return 9;
       default: return 0; // Default to fade
     }
   }
