@@ -2,6 +2,7 @@
  * Video Decoder Web Worker
  * Based on W3C WebCodecs samples: https://github.com/w3c/webcodecs/tree/main/samples/video-decode-display
  * Uses MP4Box.js for demuxing and WebCodecs VideoDecoder for hardware-accelerated decoding
+ * BUILD_TIMESTAMP: 2025-01-17T04:05:00Z - v12-flush-initial
  */
 
 // @ts-ignore - MP4Box types not available
