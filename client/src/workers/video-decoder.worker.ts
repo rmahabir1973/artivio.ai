@@ -512,7 +512,16 @@ class VideoDecoderWorker {
       this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s decoderState=${video.decoder.state}`);
 
       if (video.decoder.state === 'configured') {
-        await video.decoder.flush();
+        // Flush with timeout to prevent hanging forever
+        try {
+          await Promise.race([
+            video.decoder.flush(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('flush timeout')), 5000))
+          ]);
+        } catch (flushError) {
+          this.debug('INIT_FLUSH_ERR', `${videoId.slice(0,8)} flush failed: ${flushError}`);
+          // Continue anyway - frames may still be available
+        }
 
         // Update tracking
         video.lastDecodedIndex = lastIndex;
@@ -526,6 +535,7 @@ class VideoDecoderWorker {
       this.debug('INIT_ERROR', `${videoId.slice(0,8)} ${error}`);
     } finally {
       video.isDecoding = false;
+      this.debug('INIT_UNLOCK', `${videoId.slice(0,8)} isDecoding=false`);
     }
   }
 
