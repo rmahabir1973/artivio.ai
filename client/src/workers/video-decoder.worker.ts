@@ -59,7 +59,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v8-no-flush ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v9-verbose ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -718,23 +718,32 @@ class VideoDecoderWorker {
   ): Promise<void> {
     // Log once per second (with debug to main thread)
     const shouldLog = Math.floor(time) !== Math.floor(this._lastBufferLogTime || -1);
-    if (shouldLog) {
-      this.debug('BUFFER', `time=${time.toFixed(2)}s items=${items.length}`);
-      this._lastBufferLogTime = time;
+    
+    // ALWAYS log first few buffer calls for debugging
+    const earlyLog = time < 0.2;
+    
+    if (shouldLog || earlyLog) {
+      // Log video state for each item
+      const videoStates = items.map(item => {
+        const v = this.videos.get(item.id);
+        return `${item.id.slice(0,8)}:ready=${v?.isReady},idx=${v?.lastDecodedIndex}`;
+      }).join(', ');
+      this.debug('BUFFER', `time=${time.toFixed(2)}s items=${items.length} videos=[${videoStates}]`);
+      if (shouldLog) this._lastBufferLogTime = time;
     }
 
     const bufferPromises = items.map(async (item) => {
       const video = this.videos.get(item.id);
       if (!video?.isReady) {
-        if (shouldLog) {
-          this.debug('BUFFER_SKIP', `${item.id.slice(0,8)} not ready isReady=${video?.isReady}`);
+        if (shouldLog || earlyLog) {
+          this.debug('BUFFER_SKIP', `${item.id.slice(0,8)} not ready isReady=${video?.isReady} exists=${!!video}`);
         }
         return;
       }
 
       const timeInClip = time - item.startTime;
       if (timeInClip < -1 || timeInClip > item.duration + 1) {
-        if (shouldLog) {
+        if (shouldLog || earlyLog) {
           this.debug('BUFFER_SKIP', `${item.id.slice(0,8)} out of range timeInClip=${timeInClip.toFixed(2)}`);
         }
         return;
@@ -744,8 +753,8 @@ class VideoDecoderWorker {
       const trimStart = item.trim?.start || 0;
       const localTime = trimStart + (timeInClip * speed);
 
-      if (shouldLog) {
-        this.debug('BUFFER_SEEK', `${item.id.slice(0,8)} localTime=${localTime.toFixed(2)}s`);
+      if (shouldLog || earlyLog) {
+        this.debug('BUFFER_SEEK', `${item.id.slice(0,8)} localTime=${localTime.toFixed(2)}s lastDecoded=${video.lastDecodedTimestamp.toFixed(2)}s`);
       }
       await this.seekVideo(item.id, localTime);
     });
