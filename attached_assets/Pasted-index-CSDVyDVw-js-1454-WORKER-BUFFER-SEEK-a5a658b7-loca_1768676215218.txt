@@ -1,0 +1,46 @@
+index-CSDVyDVw.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=6.78s lastDecoded=8.04s
+index-CSDVyDVw.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CSDVyDVw.js:1454 [WorkerManager] getFrame: a5a658b7 t=7.02 key=211 cache=[2-239] size=190 found=true at 211
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=13.639700000000017, items=2
+index-CSDVyDVw.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=13.64 items=2
+index-CSDVyDVw.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CSDVyDVw.js:1677 [buildLayers] time=13.97s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=13.968200000000019, items=2
+index-CSDVyDVw.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=13.97 items=2
+index-CSDVyDVw.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CSDVyDVw.js:1454 [WebGLCompositor] animate: time=14.01s, hasLayerProvider=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=14.300100000000016, items=2
+index-CSDVyDVw.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=14.30 items=2
+index-CSDVyDVw.js:1454 [WORKER:BUFFER] time=14.30s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-CSDVyDVw.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=14.30
+index-CSDVyDVw.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=7.78s lastDecoded=8.04s
+index-CSDVyDVw.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CSDVyDVw.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=2
+index-CSDVyDVw.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-239] size=190 found=true at 2
+index-CSDVyDVw.js:1454 [WORKER:MSG_RECV] type=seek videoId=a2b0507d time=0.00 items=undefined
+index-CSDVyDVw.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-CSDVyDVw.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-CSDVyDVw.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-CSDVyDVw.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-CSDVyDVw.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-CSDVyDVw.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-6.52
+index-CSDVyDVw.js:993 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-CSDVyDVw.js:993
+(anonymous) @ index-CSDVyDVw.js:993
+index-CSDVyDVw.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-CSDVyDVw.js:48 Fetch finished loading: GET "https://artivio.ai/api/announcements/active".
+At @ index-CSDVyDVw.js:48
+await in At
+Fa @ index-CSDVyDVw.js:48
+(anonymous) @ index-CSDVyDVw.js:48
+a @ index-CSDVyDVw.js:48
+g @ index-CSDVyDVw.js:48
+start @ index-CSDVyDVw.js:48
+fetch @ index-CSDVyDVw.js:48
+hN @ index-CSDVyDVw.js:48
+(anonymous) @ index-CSDVyDVw.js:48
+index-CSDVyDVw.js:993 Fetch finished loading: GET "https://artivio.ai/api/auth/user".
+(anonymous) @ index-CSDVyDVw.js:993
+(anonymous) @ index-CSDVyDVw.js:993
+index-CSDVyDVw.js:993 [AUTH] ✓ User data refreshed (credits updated)

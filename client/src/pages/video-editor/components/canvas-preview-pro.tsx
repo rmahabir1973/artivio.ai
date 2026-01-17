@@ -544,22 +544,31 @@ export function CanvasPreviewPro({
         // Clamp localTime to valid range
         const clampedLocalTime = Math.max(trimStart, Math.min(localTime, trimEnd - 0.05));
         
+        console.log(`[Audio] ${item.id} ACTIVE: readyState=${audio.readyState}, paused=${audio.paused}, currentTime=${audio.currentTime.toFixed(2)}, targetTime=${clampedLocalTime.toFixed(2)}, volume=${audio.volume}`);
+        
         // Seek if time difference is too large (drift correction)
         if (audio.readyState >= 2 && Math.abs(audio.currentTime - clampedLocalTime) > 0.1) {
           audio.currentTime = clampedLocalTime;
+          console.log(`[Audio] ${item.id} SEEK to ${clampedLocalTime.toFixed(2)}s`);
         }
         
         // Play if not already playing
         if (audio.paused && audio.readyState >= 2) {
-          audio.play().catch((e) => {
+          console.log(`[Audio] ${item.id} calling PLAY...`);
+          audio.play().then(() => {
+            console.log(`[Audio] ${item.id} PLAY SUCCESS!`);
+          }).catch((e) => {
             // Log autoplay errors for debugging
-            console.warn(`[Audio] Play failed for ${item.id}:`, e.message);
+            console.error(`[Audio] ${item.id} PLAY FAILED:`, e.message, e);
           });
+        } else if (audio.paused && audio.readyState < 2) {
+          console.warn(`[Audio] ${item.id} NOT READY: readyState=${audio.readyState} (need >= 2)`);
         }
       } else {
         // Pause if not active, outside trim bounds, or not playing
         if (!audio.paused) {
           audio.pause();
+          console.log(`[Audio] ${item.id} PAUSED (effectiveActive=${effectiveActive}, shouldPlay=${shouldPlay})`);
         }
       }
     });
