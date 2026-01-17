@@ -283,10 +283,13 @@ export function CanvasPreviewPro({
       (item.type === 'video' && !item.muted) || item.type === 'audio'
     );
     
+    console.log(`[CanvasPreviewPro] Audio setup: ${audioItems.length} items need audio`, audioItems.map(i => ({ id: i.id, type: i.type, url: i.url?.substring(0, 50), volume: i.volume, muted: i.muted })));
+    
     audioItems.forEach(item => {
       let audio = audioElementsRef.current.get(item.id);
+      const needsNewElement = !audio || audio.src !== item.url;
       
-      if (!audio || audio.src !== item.url) {
+      if (needsNewElement) {
         audio = document.createElement('audio');
         audio.src = item.url;
         audio.crossOrigin = 'anonymous';
@@ -301,21 +304,29 @@ export function CanvasPreviewPro({
         audio.muted = item.muted || false;
         
         // Handle load errors gracefully
-        audio.onerror = () => {
-          console.warn(`Failed to load audio for ${item.id}: ${item.url}`);
+        audio.onerror = (e) => {
+          console.error(`[CanvasPreviewPro] Audio load ERROR for ${item.id}: ${item.url}`, e);
         };
         
         audio.onloadedmetadata = () => {
-          console.log(`Audio loaded for ${item.id}: duration=${audio!.duration.toFixed(2)}s`);
+          console.log(`[CanvasPreviewPro] Audio loaded for ${item.id}: duration=${audio!.duration.toFixed(2)}s, volume=${audio!.volume}`);
         };
-      } else {
+        
+        audio.oncanplay = () => {
+          console.log(`[CanvasPreviewPro] Audio canplay for ${item.id}`);
+        };
+        
+        console.log(`[CanvasPreviewPro] Created audio element for ${item.id} (${item.type}): ${item.url?.substring(0, 80)}`);
+      } else if (audio) {
         // Update volume/mute on existing element
         const volume = (item.volume !== undefined ? item.volume : 100) / 100;
         audio.volume = Math.max(0, Math.min(1, volume));
         audio.muted = item.muted || false;
       }
       
-      newAudioElements.set(item.id, audio);
+      if (audio) {
+        newAudioElements.set(item.id, audio);
+      }
     });
     
     // Cleanup old audio elements that are no longer in the timeline
@@ -482,12 +493,22 @@ export function CanvasPreviewPro({
   const syncAudioToTime = useCallback((time: number, shouldPlay: boolean) => {
     const audioElements = audioElementsRef.current;
     
+    // Log audio sync call
+    console.log(`[CanvasPreviewPro] syncAudioToTime: time=${time.toFixed(2)}s, shouldPlay=${shouldPlay}, audioElements=${audioElements.size}`);
+    
     items.forEach(item => {
       if (item.type !== 'video' && item.type !== 'audio') return;
       if (item.type === 'video' && item.muted) return;
       
       const audio = audioElements.get(item.id);
-      if (!audio || !isFinite(audio.duration)) return;
+      if (!audio) {
+        console.warn(`[CanvasPreviewPro] No audio element for ${item.id}`);
+        return;
+      }
+      if (!isFinite(audio.duration)) {
+        console.warn(`[CanvasPreviewPro] Audio ${item.id} not loaded yet (duration=${audio.duration})`);
+        return;
+      }
       
       const timeInClip = time - item.startTime;
       const isActive = timeInClip >= 0 && timeInClip < item.duration;
