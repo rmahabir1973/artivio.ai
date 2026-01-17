@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { WebGLCompositor, WebGLLayer } from '@/lib/webgl-compositor';
 import { WorkerManager, VideoMetadata } from '@/lib/worker-manager';
 import { cn } from '@/lib/utils';
@@ -274,6 +274,14 @@ export function CanvasPreviewPro({
     };
   }, [items]);
 
+  // Create a stable key from item IDs and URLs to prevent excessive re-runs
+  const audioItemsKey = useMemo(() => {
+    return items
+      .filter(item => (item.type === 'video' && !item.muted) || item.type === 'audio')
+      .map(item => `${item.id}:${item.url}`)
+      .join('|');
+  }, [items]);
+
   // Load and manage audio elements for video clips and audio tracks
   useEffect(() => {
     const newAudioElements = new Map<string, HTMLAudioElement>();
@@ -283,7 +291,17 @@ export function CanvasPreviewPro({
       (item.type === 'video' && !item.muted) || item.type === 'audio'
     );
     
-    console.log(`[CanvasPreviewPro] Audio setup: ${audioItems.length} items need audio`, audioItems.map(i => ({ id: i.id, type: i.type, url: i.url?.substring(0, 50), volume: i.volume, muted: i.muted })));
+    // Only log on actual changes
+    console.log(`[CanvasPreviewPro] Audio setup: ${audioItems.length} items need audio`);
+    
+    // Create a hidden container for audio elements (required for proper loading in some browsers)
+    let audioContainer = document.getElementById('canvas-preview-audio-container');
+    if (!audioContainer) {
+      audioContainer = document.createElement('div');
+      audioContainer.id = 'canvas-preview-audio-container';
+      audioContainer.style.display = 'none';
+      document.body.appendChild(audioContainer);
+    }
     
     audioItems.forEach(item => {
       let audio = audioElementsRef.current.get(item.id);
@@ -291,6 +309,7 @@ export function CanvasPreviewPro({
       
       if (needsNewElement) {
         audio = document.createElement('audio');
+        audio.id = `audio-${item.id}`;
         audio.src = item.url;
         audio.crossOrigin = 'anonymous';
         audio.preload = 'auto';
@@ -305,18 +324,28 @@ export function CanvasPreviewPro({
         
         // Handle load errors gracefully
         audio.onerror = (e) => {
-          console.error(`[CanvasPreviewPro] Audio load ERROR for ${item.id}: ${item.url}`, e);
+          console.error(`[Audio] Load ERROR for ${item.id}`, e);
         };
         
         audio.onloadedmetadata = () => {
-          console.log(`[CanvasPreviewPro] Audio loaded for ${item.id}: duration=${audio!.duration.toFixed(2)}s, volume=${audio!.volume}`);
+          console.log(`[Audio] ${item.id}: metadata loaded, duration=${audio!.duration.toFixed(2)}s`);
         };
         
         audio.oncanplay = () => {
-          console.log(`[CanvasPreviewPro] Audio canplay for ${item.id}`);
+          console.log(`[Audio] ${item.id}: canplay (readyState=${audio!.readyState})`);
         };
         
-        console.log(`[CanvasPreviewPro] Created audio element for ${item.id} (${item.type}): ${item.url?.substring(0, 80)}`);
+        audio.oncanplaythrough = () => {
+          console.log(`[Audio] ${item.id}: canplaythrough - READY TO PLAY`);
+        };
+        
+        // Add to DOM container (required for proper loading)
+        audioContainer.appendChild(audio);
+        
+        // Explicitly trigger load
+        audio.load();
+        
+        console.log(`[Audio] Created element for ${item.id}: ${item.url?.substring(0, 60)}...`);
       } else if (audio) {
         // Update volume/mute on existing element
         const volume = (item.volume !== undefined ? item.volume : 100) / 100;
@@ -334,6 +363,7 @@ export function CanvasPreviewPro({
       if (!newAudioElements.has(id)) {
         audio.pause();
         audio.src = '';
+        audio.remove(); // Remove from DOM
       }
     });
     
@@ -345,7 +375,7 @@ export function CanvasPreviewPro({
         audio.pause();
       });
     };
-  }, [items]);
+  }, [audioItemsKey]); // Use stable key instead of items array
 
   // Layer provider callback - called synchronously by compositor before each render
   const buildLayers = useCallback((time: number): WebGLLayer[] => {
@@ -492,9 +522,6 @@ export function CanvasPreviewPro({
   // Audio sync helper - syncs all audio elements to the given time
   const syncAudioToTime = useCallback((time: number, shouldPlay: boolean) => {
     const audioElements = audioElementsRef.current;
-    
-    // Log audio sync call
-    console.log(`[CanvasPreviewPro] syncAudioToTime: time=${time.toFixed(2)}s, shouldPlay=${shouldPlay}, audioElements=${audioElements.size}`);
     
     items.forEach(item => {
       if (item.type !== 'video' && item.type !== 'audio') return;

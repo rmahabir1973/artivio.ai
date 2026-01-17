@@ -1,0 +1,91 @@
+
+index-BbyoufSC.js:1677 [CanvasPreviewPro] Audio a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768676624110_89olsikvx not loaded yet (duration=NaN)
+
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] *** NEW WORKER v18-imagebitmap-fix ***
+index-BbyoufSC.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768676624110_89olsikvx NOT READY: readyState=1 (need >= 2)
+index-BbyoufSC.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768676624110_89olsikvx NOT READY: readyState=1 (need >= 2)
+27
+index-BbyoufSC.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768676624110_89olsikvx NOT READY: readyState=1 (need >= 2)
+(anonymous)	@	index-BbyoufSC.js:1677
+(anonymous)	@	index-BbyoufSC.js:1677
+(anonymous)	@	index-BbyoufSC.js:1677
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+requestAnimationFrame		
+Yce.animate	@	index-BbyoufSC.js:1454
+index-BbyoufSC.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768676624110_89olsikvx NOT READY: readyState=1 (need >= 2)
+(anonymous)	@	index-BbyoufSC.js:1677
+(anonymous)	@	index-BbyoufSC.js:1677
+(anonymous)	@	index-BbyoufSC.js:1677
+seek	@	index-BbyoufSC.js:1677
+(anonymous)	@	index-BbyoufSC.js:1677
+JA	@	index-BbyoufSC.js:40
+Gg	@	index-BbyoufSC.js:40
+L$	@	index-BbyoufSC.js:40
+Tm	@	index-BbyoufSC.js:38
+mve	@	index-BbyoufSC.js:40
+nf	@	index-BbyoufSC.js:40
+YX	@	index-BbyoufSC.js:40
+S	@	index-BbyoufSC.js:25
+L	@	index-BbyoufSC.js:25
