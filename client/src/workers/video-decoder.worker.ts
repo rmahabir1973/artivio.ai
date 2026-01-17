@@ -59,7 +59,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v10-wait-queue ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v11-decode-before-ready ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -441,19 +441,21 @@ class VideoDecoderWorker {
         throw new Error('No video chunks extracted');
       }
 
-      // Mark as ready
-      videoState.isReady = true;
       console.log(`[VideoDecoderWorker] ${videoId}: Video loaded successfully with ${chunks.length} chunks`);
 
-      // Send loaded message
+      // CRITICAL: Decode initial frames BEFORE marking as ready
+      // This ensures frames are cached before playback starts
+      await this.decodeFirstKeyframe(videoId, metadata);
+      
+      // NOW mark as ready - after initial frames are decoded
+      videoState.isReady = true;
+
+      // Send loaded message LAST - this triggers playback on main thread
       this.sendMessage({
         type: 'loaded',
         videoId,
         metadata,
       });
-
-      // Decode first keyframe for preview
-      await this.decodeFirstKeyframe(videoId);
 
     } catch (error) {
       console.error(`[VideoDecoderWorker] ${videoId} load error:`, error);
@@ -473,22 +475,14 @@ class VideoDecoderWorker {
    * Decode initial frames for immediate preview
    * Decodes first keyframe + some following frames for smoother start
    * Uses Promise-based tracking to prevent stuck states
+   * Called BEFORE isReady is set, so we check decoder directly
    */
-  private async decodeFirstKeyframe(videoId: string): Promise<void> {
+  private async decodeFirstKeyframe(videoId: string, metadata: VideoMetadata): Promise<void> {
     const video = this.videos.get(videoId);
-    if (!video?.isReady || !video.decoder || video.chunks.length === 0) {
-      this.debug('INIT_SKIP', `${videoId.slice(0,8)} not ready`);
+    // Note: Can't check isReady here since we're called before it's set
+    if (!video?.decoder || video.chunks.length === 0) {
+      this.debug('INIT_SKIP', `${videoId.slice(0,8)} no decoder or chunks`);
       return;
-    }
-
-    // If there's already a decode task running, wait for it (don't block indefinitely)
-    if (video.currentDecodeTask) {
-      this.debug('INIT_WAIT', `${videoId.slice(0,8)} waiting for previous task`);
-      try {
-        await Promise.race([video.currentDecodeTask, new Promise(r => setTimeout(r, 100))]);
-      } catch (e) {
-        // Ignore - just continue
-      }
     }
 
     // Create the decode task as a Promise
