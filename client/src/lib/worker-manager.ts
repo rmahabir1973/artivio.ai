@@ -4,11 +4,18 @@
  * Manages communication between main thread and workers
  */
 
+// Use dynamic worker imports with cache-busting to ensure fresh code loads
+// Version must be updated when worker code changes significantly
+const WORKER_VERSION = '2025-01-17-v2';
+
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
 
 // Limit frame cache to prevent memory exhaustion (~10 seconds at 30fps per video)
 const MAX_FRAMES_PER_VIDEO = 300;
+
+// Log worker version for debugging
+console.log(`[WorkerManager] Initializing with worker version: ${WORKER_VERSION}`);
 
 export interface VideoMetadata {
   duration: number;

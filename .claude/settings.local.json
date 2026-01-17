@@ -10,7 +10,8 @@
       "Bash(npm install:*)",
       "WebSearch",
       "WebFetch(domain:w3c.github.io)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(ls:*)"
     ]
   }
 }
