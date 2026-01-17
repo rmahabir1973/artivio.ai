@@ -3456,28 +3456,6 @@ export default function VideoEditor() {
                         </div>
                       </div>
 
-                      {/* Shape transitions */}
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Shape Effects</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <DraggableTransition type="circleopen" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Circle Open" />
-                          <DraggableTransition type="circleclose" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Circle Close" />
-                          <DraggableTransition type="radial" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Radial" />
-                          <DraggableTransition type="pixelize" icon={<Layers className="h-4 w-4 text-muted-foreground" />} label="Pixelize" />
-                        </div>
-                      </div>
-
-                      {/* Diagonal transitions */}
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Other Effects</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <DraggableTransition type="diagtl" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal TL" />
-                          <DraggableTransition type="diagtr" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal TR" />
-                          <DraggableTransition type="diagbl" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal BL" />
-                          <DraggableTransition type="diagbr" icon={<Shuffle className="h-4 w-4 text-muted-foreground" />} label="Diagonal BR" />
-                        </div>
-                      </div>
-
                       {/* Active transitions list */}
                       {(enhancements.clipTransitions.length > 0 || enhancements.crossLayerTransitions.length > 0) && (
                         <div className="mt-4 space-y-2">

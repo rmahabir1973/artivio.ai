@@ -27,7 +27,6 @@ const TRANSITION_OPTIONS: { value: TransitionType; label: string; category: stri
   { value: 'dissolve', label: 'Dissolve', category: 'Fade' },
   { value: 'fadeblack', label: 'Fade Black', category: 'Fade' },
   { value: 'fadewhite', label: 'Fade White', category: 'Fade' },
-  { value: 'fadegrays', label: 'Fade Grays', category: 'Fade' },
   { value: 'wipeleft', label: 'Wipe Left', category: 'Wipe' },
   { value: 'wiperight', label: 'Wipe Right', category: 'Wipe' },
   { value: 'wipeup', label: 'Wipe Up', category: 'Wipe' },
@@ -36,16 +35,6 @@ const TRANSITION_OPTIONS: { value: TransitionType; label: string; category: stri
   { value: 'slideright', label: 'Slide Right', category: 'Slide' },
   { value: 'slideup', label: 'Slide Up', category: 'Slide' },
   { value: 'slidedown', label: 'Slide Down', category: 'Slide' },
-  { value: 'circleopen', label: 'Circle Open', category: 'Shape' },
-  { value: 'circleclose', label: 'Circle Close', category: 'Shape' },
-  { value: 'circlecrop', label: 'Circle Crop', category: 'Shape' },
-  { value: 'rectcrop', label: 'Rect Crop', category: 'Shape' },
-  { value: 'radial', label: 'Radial', category: 'Shape' },
-  { value: 'pixelize', label: 'Pixelize', category: 'Shape' },
-  { value: 'diagtl', label: 'Diagonal TL', category: 'Diagonal' },
-  { value: 'diagtr', label: 'Diagonal TR', category: 'Diagonal' },
-  { value: 'diagbl', label: 'Diagonal BL', category: 'Diagonal' },
-  { value: 'diagbr', label: 'Diagonal BR', category: 'Diagonal' },
 ];
 
 export function TransitionEditDialog({

@@ -364,6 +364,8 @@ function CrossLayerTransitionZone({
     { value: 'wipedown', label: 'Wipe Down' },
     { value: 'slideleft', label: 'Slide Left' },
     { value: 'slideright', label: 'Slide Right' },
+    { value: 'slideup', label: 'Slide Up' },
+    { value: 'slidedown', label: 'Slide Down' },
   ];
   
   return (

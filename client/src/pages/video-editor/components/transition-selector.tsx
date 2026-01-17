@@ -32,10 +32,9 @@ export interface TransitionSelectorProps {
 export const TRANSITION_OPTIONS = [
   { value: 'none', label: 'None', category: 'basic' },
   { value: 'fade', label: 'Fade', category: 'basic' },
+  { value: 'dissolve', label: 'Dissolve', category: 'basic' },
   { value: 'fadeblack', label: 'Fade to Black', category: 'fade' },
   { value: 'fadewhite', label: 'Fade to White', category: 'fade' },
-  { value: 'fadefast', label: 'Fade Fast', category: 'fade' },
-  { value: 'fadeslow', label: 'Fade Slow', category: 'fade' },
   { value: 'wipeleft', label: 'Wipe Left', category: 'wipe' },
   { value: 'wiperight', label: 'Wipe Right', category: 'wipe' },
   { value: 'wipeup', label: 'Wipe Up', category: 'wipe' },
@@ -44,14 +43,6 @@ export const TRANSITION_OPTIONS = [
   { value: 'slideright', label: 'Slide Right', category: 'slide' },
   { value: 'slideup', label: 'Slide Up', category: 'slide' },
   { value: 'slidedown', label: 'Slide Down', category: 'slide' },
-  { value: 'circlecrop', label: 'Circle Crop', category: 'shape' },
-  { value: 'rectcrop', label: 'Rectangle Crop', category: 'shape' },
-  { value: 'circleopen', label: 'Circle Open', category: 'shape' },
-  { value: 'circleclose', label: 'Circle Close', category: 'shape' },
-  { value: 'dissolve', label: 'Dissolve', category: 'blend' },
-  { value: 'pixelize', label: 'Pixelize', category: 'effect' },
-  { value: 'radial', label: 'Radial', category: 'shape' },
-  { value: 'distance', label: 'Distance', category: 'effect' },
 ] as const;
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -59,9 +50,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   fade: 'Fade Effects',
   wipe: 'Wipe Effects',
   slide: 'Slide Effects',
-  shape: 'Shape Effects',
-  blend: 'Blend Effects',
-  effect: 'Special Effects',
 };
 
 export function TransitionSelector({

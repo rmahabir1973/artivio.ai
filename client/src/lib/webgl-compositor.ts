@@ -335,6 +335,25 @@ export class WebGLCompositor {
             vec2 fromCoord = v_texCoord + vec2(u_progress, 0.0);
             color = texture(u_textureFrom, fromCoord);
           }
+        } else if (u_transitionType == 10) {
+          // Slide Up: new clip slides in from the bottom
+          float slidePos = 1.0 - u_progress;
+          if (v_texCoord.y > slidePos) {
+            vec2 toCoord = v_texCoord - vec2(0.0, slidePos);
+            color = texture(u_textureTo, toCoord);
+          } else {
+            vec2 fromCoord = v_texCoord + vec2(0.0, u_progress);
+            color = texture(u_textureFrom, fromCoord);
+          }
+        } else if (u_transitionType == 11) {
+          // Slide Down: new clip slides in from the top
+          if (v_texCoord.y < u_progress) {
+            vec2 toCoord = v_texCoord + vec2(0.0, 1.0 - u_progress);
+            color = texture(u_textureTo, toCoord);
+          } else {
+            vec2 fromCoord = v_texCoord - vec2(0.0, u_progress);
+            color = texture(u_textureFrom, fromCoord);
+          }
         } else {
           // Default: simple fade
           color = mix(colorFrom, colorTo, u_progress);
@@ -560,6 +579,8 @@ export class WebGLCompositor {
       case 'fadewhite': return 7;
       case 'slideleft': return 8;
       case 'slideright': return 9;
+      case 'slideup': return 10;
+      case 'slidedown': return 11;
       default: return 0; // Default to fade
     }
   }
