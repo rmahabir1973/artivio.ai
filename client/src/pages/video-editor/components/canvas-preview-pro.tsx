@@ -356,7 +356,13 @@ export function CanvasPreviewPro({
     compositor.setLayers(layers, true);
   }, [buildLayers, currentTime]);
 
+  // Track if we've started playback to avoid repeated play() calls
+  const isPlayingRef = useRef(false);
+  const startTimeRef = useRef(0);
+  
   // Sync playback state - use layer provider for synchronous layer updates
+  // CRITICAL: Do NOT include currentTime in deps - compositor manages its own time during playback
+  // Including currentTime would cause play() to be called on every frame update, breaking playback
   useEffect(() => {
     if (!compositorRef.current || !workerManagerRef.current) return;
 
@@ -364,39 +370,53 @@ export function CanvasPreviewPro({
     const compositor = compositorRef.current;
 
     if (isPlaying) {
-      // Reset frame counter for new playback session
-      frameCounterRef.current = 0;
-
-      // Pre-buffer frames before starting playback
-      const videoItems = items
-        .filter(item => item.type === 'video')
-        .map(item => ({
-          id: item.id,
-          startTime: item.startTime,
-          duration: item.duration,
-          trim: item.trim,
-          speed: item.speed,
-        }));
+      // Only do full setup if we're transitioning from paused to playing
+      const wasPlaying = isPlayingRef.current;
+      isPlayingRef.current = true;
       
-      if (videoItems.length > 0) {
-        workerManager.bufferFrames(currentTime, videoItems);
+      if (!wasPlaying) {
+        // Reset frame counter for new playback session
+        frameCounterRef.current = 0;
+        startTimeRef.current = currentTime;
+
+        // Pre-buffer frames before starting playback
+        const videoItems = items
+          .filter(item => item.type === 'video')
+          .map(item => ({
+            id: item.id,
+            startTime: item.startTime,
+            duration: item.duration,
+            trim: item.trim,
+            speed: item.speed,
+          }));
+        
+        if (videoItems.length > 0) {
+          workerManager.bufferFrames(startTimeRef.current, videoItems);
+        }
+
+        // Set up layer provider for synchronous layer updates
+        compositor.setLayerProvider(buildLayers);
+        
+        // Set up time callback to notify parent
+        compositor.setOnTimeUpdate(time => {
+          onTimeUpdateRef.current?.(time);
+        });
+
+        // Seek compositor to current position before starting
+        compositor.seek(startTimeRef.current);
+        
+        // Start playback (compositor manages its own RAF loop)
+        // Note: Audio is not played in real-time mode - use Server Preview for audio
+        compositor.play();
+        
+        console.log(`[CanvasPreviewPro] Started playback at ${startTimeRef.current.toFixed(2)}s`);
       }
-
-      // Set up layer provider for synchronous layer updates
-      compositor.setLayerProvider(buildLayers);
-      
-      // Set up time callback to notify parent
-      compositor.setOnTimeUpdate(time => {
-        onTimeUpdateRef.current?.(time);
-      });
-
-      // Seek compositor to current position before starting
-      compositor.seek(currentTime);
-      
-      // Start playback (compositor manages its own RAF loop)
-      // Note: Audio is not played in real-time mode - use Server Preview for audio
-      compositor.play();
+      // If already playing, just update the layer provider (items may have changed)
+      else {
+        compositor.setLayerProvider(buildLayers);
+      }
     } else {
+      isPlayingRef.current = false;
       compositor.pause();
 
       // Clear layer provider when paused
@@ -409,7 +429,7 @@ export function CanvasPreviewPro({
         compositorRef.current.setLayerProvider(undefined);
       }
     };
-  }, [isPlaying, buildLayers, items, currentTime]);
+  }, [isPlaying, buildLayers, items]); // REMOVED currentTime from deps!
 
   // Sync current time (seeking)
   useEffect(() => {
