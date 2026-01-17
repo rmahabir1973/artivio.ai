@@ -6,7 +6,7 @@
 
 // Use dynamic worker imports with cache-busting to ensure fresh code loads
 // Version must be updated when worker code changes significantly
-const WORKER_VERSION = '2025-01-17-v2';
+const WORKER_VERSION = '2025-01-17-v3-debug';
 
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
@@ -79,11 +79,16 @@ export class WorkerManager {
    * Handle messages from video decoder worker
    */
   private handleDecoderMessage(event: MessageEvent): void {
-    const { type, videoId, frame, timestamp, metadata, error, progress } = event.data;
+    const { type, videoId, frame, timestamp, metadata, error, progress, tag, message } = event.data;
 
     switch (type) {
       case 'ready':
         console.log('Video decoder worker ready');
+        break;
+
+      case 'debug':
+        // Debug messages from worker - log with special prefix
+        console.log(`[WORKER:${tag}] ${message}`);
         break;
 
       case 'loading':
@@ -275,18 +280,26 @@ export class WorkerManager {
   getFrame(videoId: string, time: number): VideoFrame | null {
     const cache = this.frameCache.get(videoId);
     if (!cache || cache.size === 0) {
+      // Log cache miss periodically
+      if (Math.floor(time) !== Math.floor(this._lastCacheMissLogTime || -1)) {
+        console.log(`[WorkerManager] getFrame: ${videoId.slice(0,8)} t=${time.toFixed(2)} NO CACHE (empty)`);
+        this._lastCacheMissLogTime = time;
+      }
       return null;
     }
 
     // Match resolution used in cache storage (30fps = 0.033s per key)
     const timeKey = Math.round(time * 30);
     let frame = cache.get(timeKey);
+    let foundKey = timeKey;
 
     // If exact match not found, try nearby keys (within ~0.1s = 3 keys at 30fps)
     if (!frame) {
       for (let offset = 1; offset <= 3; offset++) {
-        frame = cache.get(timeKey - offset) || cache.get(timeKey + offset);
-        if (frame) break;
+        frame = cache.get(timeKey - offset);
+        if (frame) { foundKey = timeKey - offset; break; }
+        frame = cache.get(timeKey + offset);
+        if (frame) { foundKey = timeKey + offset; break; }
       }
     }
 
@@ -306,12 +319,22 @@ export class WorkerManager {
       // Use closest frame if within 1 second (30 time keys at 30fps resolution)
       if (closestKey >= 0 && closestDistance <= 30) {
         frame = cache.get(closestKey);
+        foundKey = closestKey;
       }
+    }
+
+    // Log cache status periodically
+    if (Math.floor(time) !== Math.floor(this._lastGetFrameLogTime || -1)) {
+      const keys = Array.from(cache.keys());
+      const minKey = Math.min(...keys);
+      const maxKey = Math.max(...keys);
+      console.log(`[WorkerManager] getFrame: ${videoId.slice(0,8)} t=${time.toFixed(2)} key=${timeKey} cache=[${minKey}-${maxKey}] size=${cache.size} found=${!!frame}${frame ? ' at ' + foundKey : ''}`);
+      this._lastGetFrameLogTime = time;
     }
 
     return frame || null;
   }
-  
+
   private _lastGetFrameLogTime?: number;
   private _lastCacheMissLogTime?: number;
 

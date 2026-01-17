@@ -68,11 +68,17 @@ class VideoDecoderWorker {
     }
   }
 
+  // Send debug message to main thread (since worker console may not be visible)
+  private debug(tag: string, ...args: any[]): void {
+    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    this.sendMessage({ type: 'debug', tag, message: msg });
+  }
+
   private async handleMessage(event: MessageEvent<DecoderMessage>): Promise<void> {
     const { type, videoId, url, time, items } = event.data;
 
-    // Unconditional log to verify worker receives ALL messages
-    console.warn(`[VideoDecoderWorker] *** MESSAGE RECEIVED *** type=${type}, videoId=${videoId}, time=${time}`);
+    // Send debug to main thread (since worker console may not be visible)
+    this.debug('MSG_RECV', `type=${type} videoId=${videoId?.slice(0,8)} time=${time?.toFixed(2)} items=${items?.length}`);
 
     try {
       switch (type) {
@@ -195,20 +201,21 @@ class VideoDecoderWorker {
   private handleFrameOutput(videoId: string, frame: VideoFrame): void {
     const video = this.videos.get(videoId);
     if (!video) {
+      this.debug('FRAME_DROP', `${videoId.slice(0,8)} no video state`);
       frame.close();
       return;
     }
 
     // Validate frame
     if (frame.displayWidth === 0 || frame.displayHeight === 0) {
-      console.warn(`[VideoDecoderWorker] ${videoId}: Received invalid frame`);
+      this.debug('FRAME_DROP', `${videoId.slice(0,8)} invalid frame dims`);
       frame.close();
       return;
     }
 
     // Check decoder state
     if (!video.decoder || video.decoder.state !== 'configured') {
-      console.warn(`[VideoDecoderWorker] ${videoId}: Decoder not ready for frame output`);
+      this.debug('FRAME_DROP', `${videoId.slice(0,8)} decoder state=${video.decoder?.state}`);
       frame.close();
       return;
     }
@@ -226,7 +233,7 @@ class VideoDecoderWorker {
 
       video.pendingFrames--;
     } catch (error) {
-      console.error(`[VideoDecoderWorker] ${videoId}: Failed to send frame:`, error);
+      this.debug('FRAME_DROP', `${videoId.slice(0,8)} send error: ${error}`);
       frame.close();
       video.pendingFrames--;
     }
@@ -466,6 +473,7 @@ class VideoDecoderWorker {
   private async decodeFirstKeyframe(videoId: string): Promise<void> {
     const video = this.videos.get(videoId);
     if (!video?.isReady || !video.decoder || video.chunks.length === 0) {
+      this.debug('INIT_SKIP', `${videoId.slice(0,8)} not ready`);
       return;
     }
 
@@ -475,26 +483,33 @@ class VideoDecoderWorker {
       // Find first keyframe index
       const keyframeIndex = video.chunks.findIndex(chunk => chunk.type === 'key');
       if (keyframeIndex === -1) {
-        console.warn(`[VideoDecoderWorker] ${videoId}: No keyframe found`);
+        this.debug('INIT_SKIP', `${videoId.slice(0,8)} no keyframe found`);
         video.isDecoding = false;
         return;
       }
 
-      console.log(`[VideoDecoderWorker] ${videoId}: Decoding initial frames for preview`);
+      this.debug('INIT_START', `${videoId.slice(0,8)} keyframeIdx=${keyframeIndex} chunks=${video.chunks.length}`);
 
       // Decode first 30 frames (about 1 second at 30fps) for initial buffer
       const framesToDecode = Math.min(30, video.chunks.length - keyframeIndex);
       let lastIndex = keyframeIndex - 1;
       let lastTimestamp = -1;
+      let decodedCount = 0;
 
       for (let i = keyframeIndex; i < keyframeIndex + framesToDecode; i++) {
-        if (video.decoder.state !== 'configured') break;
+        if (video.decoder.state !== 'configured') {
+          this.debug('INIT_BREAK', `${videoId.slice(0,8)} decoder state=${video.decoder.state} at frame ${i}`);
+          break;
+        }
 
         const chunk = video.chunks[i];
         video.decoder.decode(chunk);
         lastIndex = i;
         lastTimestamp = chunk.timestamp / 1_000_000;
+        decodedCount++;
       }
+
+      this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s decoderState=${video.decoder.state}`);
 
       if (video.decoder.state === 'configured') {
         await video.decoder.flush();
@@ -503,10 +518,12 @@ class VideoDecoderWorker {
         video.lastDecodedIndex = lastIndex;
         video.lastDecodedTimestamp = lastTimestamp;
 
-        console.log(`[VideoDecoderWorker] ${videoId}: Initial decode complete, ${framesToDecode} frames, up to ${lastTimestamp.toFixed(2)}s`);
+        this.debug('INIT_DONE', `${videoId.slice(0,8)} flushed, lastIdx=${lastIndex} lastTs=${lastTimestamp.toFixed(2)}s`);
+      } else {
+        this.debug('INIT_NOFLUSH', `${videoId.slice(0,8)} decoder state=${video.decoder.state}, NOT flushing`);
       }
     } catch (error) {
-      console.warn(`[VideoDecoderWorker] ${videoId}: Failed to decode initial frames:`, error);
+      this.debug('INIT_ERROR', `${videoId.slice(0,8)} ${error}`);
     } finally {
       video.isDecoding = false;
     }
@@ -519,13 +536,13 @@ class VideoDecoderWorker {
   private async seekVideo(videoId: string, time: number): Promise<void> {
     const video = this.videos.get(videoId);
     if (!video?.isReady || !video.decoder || !video.metadata || video.chunks.length === 0) {
-      console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Not ready - isReady=${video?.isReady}, hasDecoder=${!!video?.decoder}, chunks=${video?.chunks?.length || 0}`);
+      this.debug('SEEK_SKIP', `${videoId.slice(0,8)} not ready: isReady=${video?.isReady} decoder=${!!video?.decoder} chunks=${video?.chunks?.length || 0}`);
       return;
     }
 
     // Prevent concurrent decode operations
     if (video.isDecoding) {
-      console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Already decoding, skipping`);
+      this.debug('SEEK_SKIP', `${videoId.slice(0,8)} already decoding`);
       return;
     }
 
@@ -538,7 +555,7 @@ class VideoDecoderWorker {
       if (lastDecodedUs > targetTimestamp + 1_000_000) {
         // Only log occasionally to avoid spam
         if (Math.floor(time) !== Math.floor(video._lastSkipLogTime || -1)) {
-          console.log(`[VideoDecoderWorker] seekVideo(${videoId}, ${time.toFixed(2)}): Already decoded to ${video.lastDecodedTimestamp.toFixed(2)}s, skipping`);
+          this.debug('SEEK_AHEAD', `${videoId.slice(0,8)} target=${time.toFixed(2)} lastDecoded=${video.lastDecodedTimestamp.toFixed(2)} (skipping - already ahead)`);
           video._lastSkipLogTime = time;
         }
         return;
@@ -620,10 +637,10 @@ class VideoDecoderWorker {
         // Update tracking
         video.lastDecodedIndex = lastIndex;
         video.lastDecodedTimestamp = lastTimestamp;
-        
-        console.log(`[VideoDecoderWorker] seekVideo(${videoId}): Decoded ${decodedCount} frames, now at index ${lastIndex}/${video.chunks.length}, timestamp ${lastTimestamp.toFixed(2)}s`);
+
+        this.debug('SEEK_DONE', `${videoId.slice(0,8)} decoded=${decodedCount} idx=${lastIndex}/${video.chunks.length} ts=${lastTimestamp.toFixed(2)}s`);
       } else {
-        console.log(`[VideoDecoderWorker] seekVideo(${videoId}): No frames decoded, decoderState=${video.decoder.state}, count=${decodedCount}`);
+        this.debug('SEEK_NONE', `${videoId.slice(0,8)} decoded=0 state=${video.decoder.state}`);
       }
 
       this.sendMessage({ type: 'seeked', videoId, time, success: true });
@@ -657,10 +674,10 @@ class VideoDecoderWorker {
       speed?: number;
     }>
   ): Promise<void> {
-    // Log once per second
+    // Log once per second (with debug to main thread)
     const shouldLog = Math.floor(time) !== Math.floor(this._lastBufferLogTime || -1);
     if (shouldLog) {
-      console.log(`[VideoDecoderWorker] bufferFrames(${time.toFixed(2)}s) for ${items.length} items`);
+      this.debug('BUFFER', `time=${time.toFixed(2)}s items=${items.length}`);
       this._lastBufferLogTime = time;
     }
 
@@ -668,7 +685,7 @@ class VideoDecoderWorker {
       const video = this.videos.get(item.id);
       if (!video?.isReady) {
         if (shouldLog) {
-          console.log(`[VideoDecoderWorker] bufferFrames: ${item.id} not ready (isReady=${video?.isReady}, hasVideo=${!!video})`);
+          this.debug('BUFFER_SKIP', `${item.id.slice(0,8)} not ready isReady=${video?.isReady}`);
         }
         return;
       }
@@ -676,7 +693,7 @@ class VideoDecoderWorker {
       const timeInClip = time - item.startTime;
       if (timeInClip < -1 || timeInClip > item.duration + 1) {
         if (shouldLog) {
-          console.log(`[VideoDecoderWorker] bufferFrames: ${item.id} out of range (timeInClip=${timeInClip.toFixed(2)}, startTime=${item.startTime}, duration=${item.duration})`);
+          this.debug('BUFFER_SKIP', `${item.id.slice(0,8)} out of range timeInClip=${timeInClip.toFixed(2)}`);
         }
         return;
       }
@@ -686,7 +703,7 @@ class VideoDecoderWorker {
       const localTime = trimStart + (timeInClip * speed);
 
       if (shouldLog) {
-        console.log(`[VideoDecoderWorker] bufferFrames: Calling seekVideo for ${item.id} at localTime=${localTime.toFixed(2)}s`);
+        this.debug('BUFFER_SEEK', `${item.id.slice(0,8)} localTime=${localTime.toFixed(2)}s`);
       }
       await this.seekVideo(item.id, localTime);
     });
