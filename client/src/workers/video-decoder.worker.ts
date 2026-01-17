@@ -2,7 +2,7 @@
  * Video Decoder Web Worker
  * Based on W3C WebCodecs samples: https://github.com/w3c/webcodecs/tree/main/samples/video-decode-display
  * Uses MP4Box.js for demuxing and WebCodecs VideoDecoder for hardware-accelerated decoding
- * BUILD_TIMESTAMP: 2025-01-17T04:35:00Z - v14-continuous-decode
+ * BUILD_TIMESTAMP: 2025-01-17T04:45:00Z - v15-time-aware-eviction
  */
 
 // @ts-ignore - MP4Box types not available
@@ -62,7 +62,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v14-continuous-decode ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v15-time-aware-eviction ***');
     this.sendMessage({ type: 'ready' });
   }
 

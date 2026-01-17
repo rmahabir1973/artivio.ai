@@ -6,13 +6,16 @@
 
 // Use dynamic worker imports with cache-busting to ensure fresh code loads
 // Version must be updated when worker code changes significantly
-const WORKER_VERSION = '2025-01-17T0435-v14-continuous-decode';
+const WORKER_VERSION = '2025-01-17T0445-v15-time-aware-eviction';
 
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
 
 // Limit frame cache to prevent memory exhaustion (~10 seconds at 30fps per video)
 const MAX_FRAMES_PER_VIDEO = 300;
+
+// Track current playback time per video for time-aware cache eviction
+// This ensures we don't evict frames we haven't played yet
 
 // Log worker version for debugging
 console.log(`[WorkerManager] Initializing with worker version: ${WORKER_VERSION}`);
@@ -47,6 +50,7 @@ export class WorkerManager {
 
   // Frame cache for quick access
   private frameCache: Map<string, Map<number, VideoFrame>> = new Map();
+  private currentPlaybackTimeKey: Map<string, number> = new Map(); // Track playback position per video
 
   constructor(config: WorkerManagerConfig = {}) {
     this.config = config;
@@ -125,15 +129,39 @@ export class WorkerManager {
           oldFrame.close();
         }
 
-        // Evict oldest frames if over limit (FIFO eviction)
+        // TIME-AWARE EVICTION: Only evict frames BEFORE current playback position
+        // This ensures we keep future frames that we haven't played yet
+        const currentTimeKey = this.currentPlaybackTimeKey.get(videoId) || 0;
+        
         while (cache.size >= MAX_FRAMES_PER_VIDEO) {
-          const firstKey = cache.keys().next().value;
-          if (firstKey !== undefined) {
-            const evictFrame = cache.get(firstKey);
+          // Find the oldest frame that's BEFORE current playback time
+          let evictKey: number | undefined = undefined;
+          let oldestKey = Infinity;
+          
+          for (const key of cache.keys()) {
+            // Only evict frames that are at least 1 second (30 frames) behind playback
+            if (key < currentTimeKey - 30 && key < oldestKey) {
+              oldestKey = key;
+              evictKey = key;
+            }
+          }
+          
+          if (evictKey !== undefined) {
+            const evictFrame = cache.get(evictKey);
             if (evictFrame) evictFrame.close();
-            cache.delete(firstKey);
+            cache.delete(evictKey);
           } else {
-            break;
+            // No old frames to evict - we have to evict future frames (emergency)
+            // This shouldn't happen normally with proper buffer sizing
+            const firstKey = cache.keys().next().value;
+            if (firstKey !== undefined) {
+              console.warn(`[WorkerManager] EMERGENCY EVICT: future frame key=${firstKey} currentTime=${currentTimeKey}`);
+              const evictFrame = cache.get(firstKey);
+              if (evictFrame) evictFrame.close();
+              cache.delete(firstKey);
+            } else {
+              break;
+            }
           }
         }
 
@@ -284,6 +312,14 @@ export class WorkerManager {
    */
   getFrame(videoId: string, time: number): VideoFrame | null {
     const cache = this.frameCache.get(videoId);
+    
+    // Match resolution used in cache storage (30fps = 0.033s per key)
+    const timeKey = Math.round(time * 30);
+    
+    // CRITICAL: Track current playback position for time-aware cache eviction
+    // This tells the cache which frames are safe to evict (those behind playback)
+    this.currentPlaybackTimeKey.set(videoId, timeKey);
+    
     if (!cache || cache.size === 0) {
       // Log cache miss periodically
       if (Math.floor(time) !== Math.floor(this._lastCacheMissLogTime || -1)) {
@@ -292,9 +328,6 @@ export class WorkerManager {
       }
       return null;
     }
-
-    // Match resolution used in cache storage (30fps = 0.033s per key)
-    const timeKey = Math.round(time * 30);
     let frame = cache.get(timeKey);
     let foundKey = timeKey;
 

@@ -1,0 +1,186 @@
+// decoder-worker.js
+class VideoDecoderWorker {
+    constructor() {
+        this.videoDecoder = null;
+        this.audioDecoder = null;
+        this.isPlaying = false;
+        this.frameQueue = [];
+        this.audioQueue = [];
+        this.videoTrack = null;
+        this.audioTrack = null;
+        
+        this.setupMessageHandler();
+    }
+    
+    setupMessageHandler() {
+        self.onmessage = async (e) => {
+            const { type, data, config } = e.data;
+            
+            switch(type) {
+                case 'decode':
+                    await this.initDecoders(data, config);
+                    break;
+                case 'play':
+                    this.isPlaying = true;
+                    this.startDecoding();
+                    break;
+                case 'pause':
+                    this.isPlaying = false;
+                    break;
+                case 'stop':
+                    this.isPlaying = false;
+                    this.reset();
+                    break;
+            }
+        };
+    }
+    
+    async initDecoders(arrayBuffer, config) {
+        try {
+            // In a real implementation, you would parse the video container
+            // and extract codec information. For simplicity, we'll assume
+            // we know the codec.
+            
+            // Initialize VideoDecoder
+            this.videoDecoder = new VideoDecoder({
+                output: (frame) => this.handleVideoFrame(frame),
+                error: (e) => this.handleError('VideoDecoder', e)
+            });
+            
+            // Initialize AudioDecoder
+            this.audioDecoder = new AudioDecoder({
+                output: (data) => this.handleAudioData(data),
+                error: (e) => this.handleError('AudioDecoder', e)
+            });
+            
+            // Configure decoders (simplified - real config depends on video source)
+            const videoConfig = {
+                codec: config?.codec || 'vp8',
+                codedWidth: 1920,
+                codedHeight: 1080,
+                hardwareAcceleration: config?.hardwareAcceleration || 'prefer-hardware'
+            };
+            
+            this.videoDecoder.configure(videoConfig);
+            
+            // Start processing
+            this.processVideoData(arrayBuffer);
+            
+        } catch (error) {
+            this.sendError(error);
+        }
+    }
+    
+    async processVideoData(arrayBuffer) {
+        // This is a simplified example. In reality, you would:
+        // 1. Parse the container format (MP4, WebM, etc.)
+        // 2. Extract video and audio chunks
+        // 3. Feed chunks to the appropriate decoder
+        
+        // For demonstration, we'll create a synthetic video stream
+        this.generateTestFrames();
+    }
+    
+    generateTestFrames() {
+        // Generate test frames for demonstration
+        let frameCount = 0;
+        
+        const generateFrame = () => {
+            if (!this.isPlaying) return;
+            
+            // Create a simple test frame
+            const width = 1920;
+            const height = 1080;
+            
+            // In real usage, you would decode actual video frames
+            const frameData = new Uint8Array(width * height * 4);
+            
+            // Simple animation effect
+            for (let i = 0; i < frameData.length; i += 4) {
+                frameData[i] = (frameCount + i) % 255;     // R
+                frameData[i + 1] = (frameCount * 2 + i) % 255; // G
+                frameData[i + 2] = (frameCount * 3 + i) % 255; // B
+                frameData[i + 3] = 255; // A
+            }
+            
+            // Send frame to main thread
+            self.postMessage({
+                type: 'frame-decoded',
+                data: {
+                    data: frameData,
+                    width: width,
+                    height: height,
+                    timestamp: frameCount * (1000 / 30) // 30fps
+                }
+            });
+            
+            frameCount++;
+            
+            if (this.isPlaying) {
+                setTimeout(generateFrame, 1000 / 30); // 30 FPS
+            }
+        };
+        
+        generateFrame();
+    }
+    
+    handleVideoFrame(frame) {
+        // Process video frame
+        const bitmap = frame.createImageBitmap();
+        
+        // Send to main thread
+        self.postMessage({
+            type: 'frame-decoded',
+            data: {
+                bitmap: bitmap,
+                timestamp: frame.timestamp,
+                duration: frame.duration
+            }
+        }, [bitmap]);
+        
+        frame.close();
+    }
+    
+    handleAudioData(data) {
+        // Process audio data
+        self.postMessage({
+            type: 'audio-decoded',
+            data: data
+        });
+        
+        data.close();
+    }
+    
+    startDecoding() {
+        // Start the decoding process
+        this.isPlaying = true;
+    }
+    
+    reset() {
+        if (this.videoDecoder) {
+            this.videoDecoder.close();
+            this.videoDecoder = null;
+        }
+        if (this.audioDecoder) {
+            this.audioDecoder.close();
+            this.audioDecoder = null;
+        }
+        this.frameQueue = [];
+        this.audioQueue = [];
+    }
+    
+    handleError(source, error) {
+        console.error(`${source} error:`, error);
+        this.sendError(error);
+    }
+    
+    sendError(error) {
+        self.postMessage({
+            type: 'error',
+            data: error.message
+        });
+    }
+}
+
+// Initialize worker
+new VideoDecoderWorker();

@@ -1,0 +1,174 @@
+// main.js
+class VideoEditor {
+    constructor() {
+        this.videoDecoder = null;
+        this.videoEncoder = null;
+        this.audioDecoder = null;
+        this.audioEncoder = null;
+        
+        this.workers = {
+            decoder: null,
+            processor: null,
+            preview: null
+        };
+        
+        this.isPlaying = false;
+        this.frameQueue = [];
+        this.maxQueueSize = 10;
+        
+        this.init();
+    }
+    
+    async init() {
+        // Check for browser support
+        if (!this.checkSupport()) {
+            console.error('Required APIs not supported');
+            return;
+        }
+        
+        // Initialize workers
+        await this.initWorkers();
+        
+        // Setup UI
+        this.setupUI();
+    }
+    
+    checkSupport() {
+        return (
+            'VideoDecoder' in window &&
+            'VideoEncoder' in window &&
+            'AudioDecoder' in window &&
+            'AudioEncoder' in window &&
+            'WebGL2RenderingContext' in window &&
+            'Worker' in window
+        );
+    }
+    
+    async initWorkers() {
+        // Initialize decoder worker
+        this.workers.decoder = new Worker('decoder-worker.js', { type: 'module' });
+        
+        // Initialize processor worker (Wasm + WebGL)
+        this.workers.processor = new Worker('processor-worker.js', { type: 'module' });
+        
+        // Initialize preview worker
+        this.workers.preview = new Worker('preview-worker.js', { type: 'module' });
+        
+        // Set up message handlers
+        this.setupWorkerMessageHandlers();
+        
+        // Initialize processor with WebGL context
+        const offscreenCanvas = document.createElement('canvas').transferControlToOffscreen();
+        this.workers.processor.postMessage({
+            type: 'init',
+            canvas: offscreenCanvas,
+            width: 1920,
+            height: 1080
+        }, [offscreenCanvas]);
+    }
+    
+    setupWorkerMessageHandlers() {
+        // Handle messages from decoder worker
+        this.workers.decoder.onmessage = (e) => {
+            const { type, data } = e.data;
+            
+            switch(type) {
+                case 'frame-decoded':
+                    this.handleDecodedFrame(data);
+                    break;
+                case 'audio-decoded':
+                    this.handleDecodedAudio(data);
+                    break;
+                case 'error':
+                    console.error('Decoder error:', data);
+                    break;
+            }
+        };
+        
+        // Handle messages from processor worker
+        this.workers.processor.onmessage = (e) => {
+            const { type, data } = e.data;
+            
+            switch(type) {
+                case 'frame-processed':
+                    this.handleProcessedFrame(data);
+                    break;
+                case 'webgl-ready':
+                    console.log('WebGL processor ready');
+                    break;
+                case 'error':
+                    console.error('Processor error:', data);
+                    break;
+            }
+        };
+    }
+    
+    async loadVideo(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Send video data to decoder worker
+        this.workers.decoder.postMessage({
+            type: 'decode',
+            data: arrayBuffer,
+            config: {
+                codec: 'vp8',
+                hardwareAcceleration: 'prefer-hardware',
+                optimizeForLatency: true
+            }
+        }, [arrayBuffer]);
+    }
+    
+    handleDecodedFrame(frame) {
+        // Send frame to processor worker
+        this.workers.processor.postMessage({
+            type: 'process-frame',
+            frame: frame,
+            timestamp: performance.now()
+        });
+    }
+    
+    handleProcessedFrame(processedData) {
+        // Send to preview worker for display
+        this.workers.preview.postMessage({
+            type: 'display-frame',
+            data: processedData
+        });
+    }
+    
+    setupUI() {
+        // Setup video upload
+        const fileInput = document.getElementById('video-input');
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.loadVideo(file);
+            }
+        });
+        
+        // Setup playback controls
+        document.getElementById('play').addEventListener('click', () => this.play());
+        document.getElementById('pause').addEventListener('click', () => this.pause());
+        document.getElementById('stop').addEventListener('click', () => this.stop());
+    }
+    
+    play() {
+        this.isPlaying = true;
+        this.workers.decoder.postMessage({ type: 'play' });
+    }
+    
+    pause() {
+        this.isPlaying = false;
+        this.workers.decoder.postMessage({ type: 'pause' });
+    }
+    
+    stop() {
+        this.isPlaying = false;
+        this.workers.decoder.postMessage({ type: 'stop' });
+        this.frameQueue = [];
+    }
+}
+
+// Initialize editor when page loads
+window.addEventListener('DOMContentLoaded', () => {
+    window.videoEditor = new VideoEditor();
+});
