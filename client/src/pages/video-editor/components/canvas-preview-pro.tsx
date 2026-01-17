@@ -9,11 +9,21 @@ import { Loader2, Cpu } from 'lucide-react';
 // WebAudio API causes errors when used with high-frequency WebGL RAF loops.
 // Audio playback should use Server Preview mode which uses native video elements.
 
+// Cross-layer transition definition (matches store type)
+interface CrossLayerTransition {
+  id: string;
+  fromClipId: string;
+  toClipId: string;
+  type: string;
+  durationSeconds: number;
+}
+
 interface CanvasPreviewProProps {
   items: MultiTrackTimelineItem[];
   currentTime: number;
   isPlaying: boolean;
   onTimeUpdate?: (time: number) => void;
+  crossLayerTransitions?: CrossLayerTransition[];
   width?: number;
   height?: number;
   className?: string;
@@ -28,6 +38,7 @@ export function CanvasPreviewPro({
   currentTime,
   isPlaying,
   onTimeUpdate,
+  crossLayerTransitions = [],
   width = 1920,
   height = 1080,
   className,
@@ -329,6 +340,56 @@ export function CanvasPreviewPro({
         return layer;
       });
 
+    // Add cross-layer transition info to layers
+    // Find active transitions for the current time
+    for (const transition of crossLayerTransitions) {
+      const fromItem = items.find(i => i.id === transition.fromClipId);
+      const toItem = items.find(i => i.id === transition.toClipId);
+      
+      if (!fromItem || !toItem) continue;
+      
+      // Calculate overlap region
+      const fromEnd = fromItem.startTime + fromItem.duration;
+      const toStart = toItem.startTime;
+      
+      // Check if we're currently in the transition zone
+      const overlapStart = Math.max(fromItem.startTime, toStart);
+      const overlapEnd = Math.min(fromEnd, toStart + toItem.duration);
+      
+      if (time >= overlapStart && time < overlapEnd) {
+        // We're in the overlap zone - calculate transition progress
+        const transitionDuration = transition.durationSeconds || (overlapEnd - overlapStart);
+        
+        // Guard against division by zero
+        if (transitionDuration <= 0) continue;
+        
+        const transitionStart = overlapEnd - transitionDuration;
+        
+        if (time >= transitionStart && time < overlapEnd) {
+          const progress = (time - transitionStart) / transitionDuration;
+          
+          // Find corresponding layers and add transition info
+          const fromLayer = layers.find(l => l.id === transition.fromClipId);
+          const toLayer = layers.find(l => l.id === transition.toClipId);
+          
+          if (fromLayer && toLayer) {
+            fromLayer.crossTransition = {
+              type: transition.type as 'fade' | 'dissolve' | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown',
+              progress: Math.max(0, Math.min(1, progress)),
+              otherLayerId: transition.toClipId,
+              isSource: true,
+            };
+            toLayer.crossTransition = {
+              type: transition.type as 'fade' | 'dissolve' | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown',
+              progress: Math.max(0, Math.min(1, progress)),
+              otherLayerId: transition.fromClipId,
+              isSource: false,
+            };
+          }
+        }
+      }
+    }
+
     // Buffer frames more aggressively if any are missing, otherwise every 10 frames
     frameCounterRef.current++;
     const shouldBuffer = hasAnyMissingFrame || (frameCounterRef.current % 10 === 0);
@@ -341,7 +402,7 @@ export function CanvasPreviewPro({
     }
 
     return layers;
-  }, [items]);
+  }, [items, crossLayerTransitions]);
 
   // Render frame for seeking (when not playing) - reuses buildLayers for consistency
   const renderFrame = useCallback(() => {

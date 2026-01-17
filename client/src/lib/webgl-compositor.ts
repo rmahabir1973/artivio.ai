@@ -34,10 +34,18 @@ export interface WebGLLayer {
     hue?: number;
   };
 
-  // Transition properties
+  // Transition properties (within single layer - fade in/out)
   transition?: {
     type: 'fade' | 'dissolve' | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown';
     duration: number;
+  };
+
+  // Cross-layer transition (blend with another layer)
+  crossTransition?: {
+    type: 'fade' | 'dissolve' | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown';
+    progress: number; // 0-1, how far through the transition
+    otherLayerId: string; // The layer to blend with
+    isSource: boolean; // true = this is the outgoing layer, false = incoming
   };
 }
 
@@ -59,6 +67,7 @@ export class WebGLCompositor {
   // Shader programs
   private basicProgram: WebGLProgram | null = null;
   private effectsProgram: WebGLProgram | null = null;
+  private transitionProgram: WebGLProgram | null = null;
 
   // WebGL resources
   private textures: Map<string, WebGLTexture> = new Map();
@@ -241,20 +250,72 @@ export class WebGLCompositor {
       }
     `;
 
+    // Transition fragment shader - blends two textures with various transition effects
+    const transitionFragmentShaderSource = `#version 300 es
+      precision highp float;
+
+      in vec2 v_texCoord;
+      out vec4 outColor;
+
+      uniform sampler2D u_textureFrom;  // Outgoing clip
+      uniform sampler2D u_textureTo;    // Incoming clip  
+      uniform float u_progress;          // 0-1 transition progress
+      uniform int u_transitionType;      // 0=fade, 1=dissolve, 2=wipeLeft, 3=wipeRight, 4=wipeUp, 5=wipeDown
+      uniform float u_opacity;
+
+      // Simple hash for dissolve effect
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+      }
+
+      void main() {
+        vec4 colorFrom = texture(u_textureFrom, v_texCoord);
+        vec4 colorTo = texture(u_textureTo, v_texCoord);
+        
+        float mixFactor = u_progress;
+        
+        if (u_transitionType == 0) {
+          // Fade: simple linear blend
+          mixFactor = u_progress;
+        } else if (u_transitionType == 1) {
+          // Dissolve: random pixel threshold
+          float threshold = hash(v_texCoord * 100.0);
+          mixFactor = step(threshold, u_progress);
+        } else if (u_transitionType == 2) {
+          // Wipe Left: reveal from right
+          mixFactor = step(1.0 - v_texCoord.x, u_progress);
+        } else if (u_transitionType == 3) {
+          // Wipe Right: reveal from left  
+          mixFactor = step(v_texCoord.x, u_progress);
+        } else if (u_transitionType == 4) {
+          // Wipe Up: reveal from bottom
+          mixFactor = step(1.0 - v_texCoord.y, u_progress);
+        } else if (u_transitionType == 5) {
+          // Wipe Down: reveal from top
+          mixFactor = step(v_texCoord.y, u_progress);
+        }
+        
+        vec4 color = mix(colorFrom, colorTo, mixFactor);
+        outColor = vec4(color.rgb, color.a * u_opacity);
+      }
+    `;
+
     // Compile shaders
     const vertexShader = this.compileShader(gl.VERTEX_SHADER, vertexShaderSource);
     const basicFragmentShader = this.compileShader(gl.FRAGMENT_SHADER, basicFragmentShaderSource);
     const effectsFragmentShader = this.compileShader(gl.FRAGMENT_SHADER, effectsFragmentShaderSource);
+    const transitionFragmentShader = this.compileShader(gl.FRAGMENT_SHADER, transitionFragmentShaderSource);
 
-    if (!vertexShader || !basicFragmentShader || !effectsFragmentShader) {
+    if (!vertexShader || !basicFragmentShader || !effectsFragmentShader || !transitionFragmentShader) {
       throw new Error('Failed to compile shaders');
     }
 
     // Create programs
     this.basicProgram = this.createProgram(vertexShader, basicFragmentShader);
     this.effectsProgram = this.createProgram(vertexShader, effectsFragmentShader);
+    this.transitionProgram = this.createProgram(vertexShader, transitionFragmentShader);
 
-    if (!this.basicProgram || !this.effectsProgram) {
+    if (!this.basicProgram || !this.effectsProgram || !this.transitionProgram) {
       throw new Error('Failed to create shader programs');
     }
   }
@@ -410,12 +471,143 @@ export class WebGLCompositor {
     const sortedLayers = this.getSortedLayers();
     const activeLayers = sortedLayers.filter(layer => this.isLayerActive(layer));
 
-    // Render each layer
+    // Track which layers have been rendered via transition (to skip duplicate rendering)
+    const renderedViaTransition = new Set<string>();
+
+    // Find and render cross-layer transitions first
     for (const layer of activeLayers) {
-      if (layer.type === 'video' || layer.type === 'image') {
+      if ((layer.type === 'video' || layer.type === 'image') && 
+          layer.crossTransition && 
+          layer.crossTransition.isSource && 
+          !renderedViaTransition.has(layer.id)) {
+        // Find the other layer in the transition
+        const otherLayer = activeLayers.find(l => l.id === layer.crossTransition!.otherLayerId);
+        if (otherLayer && otherLayer.frame) {
+          this.renderTransition(layer, otherLayer, layer.crossTransition);
+          renderedViaTransition.add(layer.id);
+          renderedViaTransition.add(otherLayer.id);
+        }
+      }
+    }
+
+    // Render remaining layers normally
+    for (const layer of activeLayers) {
+      if ((layer.type === 'video' || layer.type === 'image') && 
+          !renderedViaTransition.has(layer.id)) {
         this.renderLayer(layer);
       }
     }
+  }
+
+  /**
+   * Get transition type enum value for shader
+   */
+  private getTransitionTypeValue(type: string): number {
+    switch (type) {
+      case 'fade': return 0;
+      case 'dissolve': return 1;
+      case 'wipeLeft': return 2;
+      case 'wipeRight': return 3;
+      case 'wipeUp': return 4;
+      case 'wipeDown': return 5;
+      default: return 0; // Default to fade
+    }
+  }
+
+  /**
+   * Render a cross-layer transition using the transition shader
+   */
+  private renderTransition(
+    fromLayer: WebGLLayer, 
+    toLayer: WebGLLayer, 
+    transition: NonNullable<WebGLLayer['crossTransition']>
+  ): void {
+    const gl = this.gl;
+    if (!fromLayer.frame || !toLayer.frame || !this.transitionProgram) return;
+
+    gl.useProgram(this.transitionProgram);
+
+    // Setup textures for both layers
+    // Texture unit 0: From layer (outgoing)
+    let fromTexture = this.textures.get(fromLayer.id);
+    if (!fromTexture) {
+      const newTexture = gl.createTexture();
+      if (!newTexture) return;
+      fromTexture = newTexture;
+      this.textures.set(fromLayer.id, fromTexture);
+    }
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, fromTexture);
+    const lastFromFrame = this.lastUploadedFrames.get(fromLayer.id);
+    if (fromLayer.frame !== lastFromFrame) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fromLayer.frame);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this.lastUploadedFrames.set(fromLayer.id, fromLayer.frame);
+    }
+
+    // Texture unit 1: To layer (incoming)
+    let toTexture = this.textures.get(toLayer.id);
+    if (!toTexture) {
+      const newTexture = gl.createTexture();
+      if (!newTexture) return;
+      toTexture = newTexture;
+      this.textures.set(toLayer.id, toTexture);
+    }
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, toTexture);
+    const lastToFrame = this.lastUploadedFrames.get(toLayer.id);
+    if (toLayer.frame !== lastToFrame) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, toLayer.frame);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this.lastUploadedFrames.set(toLayer.id, toLayer.frame);
+    }
+
+    // Set uniforms
+    const textureFromLoc = gl.getUniformLocation(this.transitionProgram, 'u_textureFrom');
+    gl.uniform1i(textureFromLoc, 0);
+    
+    const textureToLoc = gl.getUniformLocation(this.transitionProgram, 'u_textureTo');
+    gl.uniform1i(textureToLoc, 1);
+
+    const progressLoc = gl.getUniformLocation(this.transitionProgram, 'u_progress');
+    gl.uniform1f(progressLoc, transition.progress);
+
+    const typeLoc = gl.getUniformLocation(this.transitionProgram, 'u_transitionType');
+    gl.uniform1i(typeLoc, this.getTransitionTypeValue(transition.type));
+
+    const opacityLoc = gl.getUniformLocation(this.transitionProgram, 'u_opacity');
+    gl.uniform1f(opacityLoc, 1.0);
+
+    // Setup vertex positions
+    const positionLoc = gl.getAttribLocation(this.transitionProgram, 'a_position');
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.enableVertexAttribArray(positionLoc);
+    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+    // Setup texture coordinates
+    const texCoordLoc = gl.getAttribLocation(this.transitionProgram, 'a_texCoord');
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
+    gl.enableVertexAttribArray(texCoordLoc);
+    gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
+
+    // Set transformation matrix (use full canvas for transitions)
+    const matrixLoc = gl.getUniformLocation(this.transitionProgram, 'u_matrix');
+    const matrix = this.createTransformMatrix(fromLayer); // Use from layer's position
+    gl.uniformMatrix4fv(matrixLoc, false, matrix);
+
+    // Draw
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    
+    // Reset to texture unit 0
+    gl.activeTexture(gl.TEXTURE0);
   }
 
   /**

@@ -4175,6 +4175,7 @@ export default function VideoEditor() {
                 currentTime={timelineCurrentTime}
                 isPlaying={isTimelinePlaying}
                 onTimeUpdate={setTimelineCurrentTime}
+                crossLayerTransitions={enhancements.crossLayerTransitions}
                 className="flex-1"
               />
             ) : (

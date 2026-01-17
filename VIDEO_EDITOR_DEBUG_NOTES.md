@@ -118,3 +118,58 @@ If you see `[WorkerManager] getFrame: ... found=false` with a small cache range,
 2. Analyze console output to identify which scenario matches
 3. Implement targeted fix based on findings
 4. Test fix and iterate if needed
+
+---
+
+## Cross-Layer Transitions Implementation (2025-01-17)
+
+### Overview
+Implemented WebGL shader-based real-time cross-layer transitions for the live preview. This enables fade, dissolve, and wipe effects between overlapping clips on different tracks.
+
+### Architecture
+
+#### Data Flow
+1. User creates cross-layer transitions in timeline UI
+2. Transitions stored in `enhancements.crossLayerTransitions` 
+3. Passed via: `video-editor.tsx` → `CanvasPreview` → `CanvasPreviewPro`
+4. `buildLayers()` detects active transitions and adds `crossTransition` metadata to layers
+5. WebGL compositor's `renderTransition()` renders blended frames using shader
+
+#### Key Files Modified
+- `client/src/pages/video-editor/components/canvas-preview-pro.tsx`:
+  - Added `crossLayerTransitions` prop to component
+  - Updated `buildLayers()` to detect overlaps and calculate transition progress
+  - Adds `crossTransition` object to layers: `{ type, progress, otherLayerId, isSource }`
+  
+- `client/src/pages/video-editor/components/canvas-preview.tsx`:
+  - Added `crossLayerTransitions` prop and passes to CanvasPreviewPro
+
+- `client/src/pages/video-editor.tsx`:
+  - Passes `enhancements.crossLayerTransitions` to CanvasPreview component
+
+- `client/src/lib/webgl-compositor.ts` (already implemented):
+  - Transition shader with `u_textureFrom`/`u_textureTo` blending
+  - `renderTransition()` function for cross-layer effects
+  - Transition types: fade(0), dissolve(1), wipeLeft(2), wipeRight(3), wipeUp(4), wipeDown(5)
+
+### Transition Progress Calculation
+```typescript
+// Overlap detection
+const overlapStart = Math.max(fromItem.startTime, toItem.startTime);
+const overlapEnd = Math.min(fromEnd, toStart + toItem.duration);
+
+// Progress: 0 at transition start → 1 at transition end
+const transitionDuration = transition.durationSeconds || (overlapEnd - overlapStart);
+const transitionStart = overlapEnd - transitionDuration;
+const progress = (time - transitionStart) / transitionDuration;
+```
+
+### WebGL Transition Shader Types
+| Type | ID | Effect |
+|------|------|--------|
+| fade | 0 | Simple linear alpha blend |
+| dissolve | 1 | Noise-based dissolve pattern |
+| wipeLeft | 2 | Horizontal wipe left-to-right |
+| wipeRight | 3 | Horizontal wipe right-to-left |
+| wipeUp | 4 | Vertical wipe bottom-to-top |
+| wipeDown | 5 | Vertical wipe top-to-bottom |
