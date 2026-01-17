@@ -2,7 +2,7 @@
  * Video Decoder Web Worker
  * Based on W3C WebCodecs samples: https://github.com/w3c/webcodecs/tree/main/samples/video-decode-display
  * Uses MP4Box.js for demuxing and WebCodecs VideoDecoder for hardware-accelerated decoding
- * BUILD_TIMESTAMP: 2025-01-17T04:20:00Z - v13-fix-seek-ahead
+ * BUILD_TIMESTAMP: 2025-01-17T04:35:00Z - v14-continuous-decode
  */
 
 // @ts-ignore - MP4Box types not available
@@ -62,7 +62,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v13-fix-seek-ahead ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v14-continuous-decode ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -538,33 +538,18 @@ class VideoDecoderWorker {
         decodedCount++;
       }
 
-      // Update tracking IMMEDIATELY after decode (before flush)
+      // Update tracking IMMEDIATELY after decode
       video.lastDecodedIndex = lastIndex;
       video.lastDecodedTimestamp = lastTimestamp;
 
       this.debug('INIT_DECODED', `${videoId.slice(0,8)} count=${decodedCount} lastTs=${lastTimestamp.toFixed(2)}s queueSize=${video.decoder.decodeQueueSize}`);
 
-      // CRITICAL: Call flush() to force all pending frames out of the decoder
-      // WebCodecs holds B-frames waiting for future reference frames
-      // Without flush(), frames stay stuck in the queue indefinitely
-      if (video.decoder.state === 'configured') {
-        await video.decoder.flush();
-        this.debug('INIT_FLUSHED', `${videoId.slice(0,8)} flush complete, queueSize=${video.decoder.decodeQueueSize}`);
-        
-        // After flush, decoder is still configured and can continue decoding
-        // We need to re-decode starting from a keyframe for continuous playback
-        // Find the next keyframe after our initial batch
-        const nextKeyframeIdx = video.chunks.findIndex((chunk, idx) => 
-          idx > lastIndex && chunk.type === 'key'
-        );
-        
-        if (nextKeyframeIdx !== -1) {
-          video.nextKeyframeIndex = nextKeyframeIdx;
-          this.debug('INIT_NEXT_KEY', `${videoId.slice(0,8)} nextKeyframe at idx=${nextKeyframeIdx}`);
-        }
-      }
+      // DON'T flush() - we want continuous decoding
+      // The decoder will output frames asynchronously via the callback
+      // Flushing would force all frames out but is unnecessary for streaming playback
+      // Instead, we'll continue decoding on demand via bufferFrames/seekVideo
       
-      this.debug('INIT_DONE', `${videoId.slice(0,8)} ready for playback`);
+      this.debug('INIT_DONE', `${videoId.slice(0,8)} ready for playback, will continue decoding on demand`);
     } catch (error) {
       this.debug('INIT_ERROR', `${videoId.slice(0,8)} ${error}`);
     }
@@ -583,25 +568,19 @@ class VideoDecoderWorker {
 
     const targetTimestamp = time * 1_000_000; // Convert to microseconds
 
-    // CRITICAL: If we have a nextKeyframeIndex set (after flush), we MUST decode from it
-    // Don't skip - flush() clears decoder's reference frames, so we need new keyframe
-    const mustDecodeFromKeyframe = video.nextKeyframeIndex !== undefined && video.nextKeyframeIndex > 0;
-
-    // Check if we already have frames decoded past this point (skip unnecessary work)
-    // If target is within our already-decoded range, skip decoding
-    // BUT: Don't skip if we need to decode from a new keyframe after flush
-    if (!mustDecodeFromKeyframe && video.lastDecodedTimestamp >= 0 && video.lastDecodedTimestamp > time) {
-      // We've already decoded past the target - no need to decode more
-      // Only decode more if we're approaching the end of our buffer (within 0.5s)
-      const bufferRemaining = video.lastDecodedTimestamp - time;
-      if (bufferRemaining > 0.5) {
-        // Plenty of buffer remaining, skip decoding
-        if (Math.floor(time) !== Math.floor(video._lastAheadLogTime || -1)) {
-          this.debug('SEEK_AHEAD', `${videoId.slice(0,8)} target=${time.toFixed(2)}s lastDecoded=${video.lastDecodedTimestamp.toFixed(2)}s buffer=${bufferRemaining.toFixed(2)}s`);
-          video._lastAheadLogTime = time;
-        }
-        return;
+    // Check if we need to decode more frames
+    // Decode when: buffer < 2 seconds ahead of current time
+    // This ensures smooth continuous playback
+    const bufferAhead = video.lastDecodedTimestamp - time;
+    const needsMoreFrames = video.lastDecodedTimestamp < 0 || bufferAhead < 2.0;
+    
+    if (!needsMoreFrames) {
+      // Plenty of buffer, skip decoding (log once per second)
+      if (Math.floor(time) !== Math.floor(video._lastAheadLogTime || -1)) {
+        this.debug('SEEK_BUFFERED', `${videoId.slice(0,8)} t=${time.toFixed(2)}s decoded=${video.lastDecodedTimestamp.toFixed(2)}s buffer=${bufferAhead.toFixed(2)}s`);
+        video._lastAheadLogTime = time;
       }
+      return;
     }
 
     // If there's a decode task running, don't block - just skip this call
@@ -647,26 +626,24 @@ class VideoDecoderWorker {
         video.lastDecodedTimestamp = -1;
       }
 
-      // Determine start index
+      // Determine start index - continue from where we left off
       let startIndex: number;
 
-      // If we have a next keyframe set from initial decode (after flush), use it
-      if (video.nextKeyframeIndex !== undefined && video.nextKeyframeIndex > 0) {
-        startIndex = video.nextKeyframeIndex;
-        video.nextKeyframeIndex = undefined; // Clear it after using
-        this.debug('SEEK_FROM_KEY', `${videoId.slice(0,8)} starting from keyframe at idx=${startIndex}`);
-      } else if (video.lastDecodedIndex >= 0 && video.lastDecodedIndex < video.chunks.length - 1) {
+      if (video.lastDecodedIndex >= 0 && video.lastDecodedIndex < video.chunks.length - 1) {
         // Continue from where we left off
         startIndex = video.lastDecodedIndex + 1;
+        this.debug('SEEK_CONTINUE', `${videoId.slice(0,8)} continuing from idx=${startIndex}`);
       } else if (video.lastDecodedIndex < 0) {
-        // Start from beginning (keyframe)
+        // Start from beginning (find first keyframe)
         startIndex = 0;
         const keyframeIndex = video.chunks.findIndex(chunk => chunk.type === 'key');
         if (keyframeIndex >= 0) {
           startIndex = keyframeIndex;
         }
+        this.debug('SEEK_START', `${videoId.slice(0,8)} starting from keyframe at idx=${startIndex}`);
       } else {
         // Already decoded everything
+        this.debug('SEEK_COMPLETE', `${videoId.slice(0,8)} all chunks decoded`);
         return;
       }
 
