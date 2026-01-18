@@ -6,7 +6,7 @@
 
 // Use dynamic worker imports with cache-busting to ensure fresh code loads
 // Version must be updated when worker code changes significantly
-const WORKER_VERSION = '2025-01-17T0600-v18-imagebitmap-fix';
+const WORKER_VERSION = '2025-01-18T1800-v21-prefetch-transitions';
 
 import VideoDecoderWorker from '@/workers/video-decoder.worker?worker';
 import FFmpegWorker from '@/workers/ffmpeg.worker?worker';
@@ -353,6 +353,7 @@ export class WorkerManager {
       duration: number;
       trim?: { start: number; end: number };
       speed?: number;
+      prefetchTime?: number; // Target time into clip for pre-buffering transitions
     }>
   ): void {
     // Log every 30th call (roughly every second at 30fps)

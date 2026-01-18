@@ -2,7 +2,7 @@
  * Video Decoder Web Worker
  * Based on W3C WebCodecs samples: https://github.com/w3c/webcodecs/tree/main/samples/video-decode-display
  * Uses MP4Box.js for demuxing and WebCodecs VideoDecoder for hardware-accelerated decoding
- * BUILD_TIMESTAMP: 2025-01-18T16:00:00Z - v19-increased-buffer
+ * BUILD_TIMESTAMP: 2025-01-18T18:00:00Z - v21-prefetch-transitions
  */
 
 // @ts-ignore - MP4Box types not available
@@ -63,7 +63,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v19-increased-buffer ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v21-prefetch-transitions ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -761,6 +761,7 @@ class VideoDecoderWorker {
       duration: number;
       trim?: { start: number; end: number };
       speed?: number;
+      prefetchTime?: number; // Target time into clip for pre-buffering transitions
     }>
   ): Promise<void> {
     // Log once per second (with debug to main thread)
@@ -789,16 +790,28 @@ class VideoDecoderWorker {
       }
 
       const timeInClip = time - item.startTime;
-      if (timeInClip < -1 || timeInClip > item.duration + 1) {
-        if (shouldLog || earlyLog) {
-          this.debug('BUFFER_SKIP', `${item.id.slice(0,8)} out of range timeInClip=${timeInClip.toFixed(2)}`);
+      // Skip range check if prefetchTime is provided (explicit pre-buffering for transitions)
+      // Otherwise allow 3-second lookahead for regular pre-buffering
+      if (item.prefetchTime === undefined) {
+        if (timeInClip < -3 || timeInClip > item.duration + 1) {
+          if (shouldLog || earlyLog) {
+            this.debug('BUFFER_SKIP', `${item.id.slice(0,8)} out of range timeInClip=${timeInClip.toFixed(2)}`);
+          }
+          return;
         }
-        return;
       }
 
       const speed = item.speed || 1;
       const trimStart = item.trim?.start || 0;
-      const localTime = trimStart + (timeInClip * speed);
+      // For pre-buffered clips (timeInClip < 0), use prefetchTime if provided
+      // prefetchTime specifies how far into the clip to pre-decode for transitions
+      let localTime: number;
+      if (timeInClip < 0) {
+        // Use prefetchTime for transition pre-buffering, otherwise start from beginning
+        localTime = item.prefetchTime !== undefined ? item.prefetchTime : trimStart;
+      } else {
+        localTime = trimStart + (timeInClip * speed);
+      }
 
       if (shouldLog || earlyLog) {
         this.debug('BUFFER_SEEK', `${item.id.slice(0,8)} localTime=${localTime.toFixed(2)}s lastDecoded=${video.lastDecodedTimestamp.toFixed(2)}s`);

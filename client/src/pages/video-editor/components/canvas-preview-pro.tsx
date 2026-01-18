@@ -558,15 +558,101 @@ export function CanvasPreviewPro({
       }
     }
 
+    // PRE-BUFFER: Include clips involved in upcoming cross-layer transitions
+    // Look ahead based on transition duration + margin to pre-buffer target clips
+    const LOOKAHEAD_MARGIN = 1.0; // Extra seconds beyond transition duration
+    const preBufferItems: Array<{
+      id: string;
+      startTime: number;
+      duration: number;
+      trim?: { start: number; end: number };
+      speed?: number;
+      prefetchTime?: number; // How far into the clip to pre-decode
+    }> = [];
+    
+    for (const transition of crossLayerTransitions) {
+      const fromItem = items.find(i => i.id === transition.fromClipId);
+      const toItem = items.find(i => i.id === transition.toClipId);
+      if (!fromItem || !toItem) continue;
+      
+      const transitionDuration = transition.durationSeconds || 1.0;
+      const lookaheadSeconds = transitionDuration + LOOKAHEAD_MARGIN;
+      
+      // Calculate when the transition overlap starts
+      const fromEnd = fromItem.startTime + fromItem.duration;
+      const toStart = toItem.startTime;
+      const overlapStart = Math.max(fromItem.startTime, toStart);
+      const overlapEnd = Math.min(fromEnd, toStart + toItem.duration);
+      
+      // Guard: Skip if no valid overlap exists
+      if (overlapEnd <= overlapStart) continue;
+      
+      const transitionStart = Math.max(overlapStart, overlapEnd - transitionDuration);
+      
+      // Pre-buffer toItem if transition is approaching
+      if (toItem.type === 'video') {
+        const timeUntilTransition = transitionStart - time;
+        if (timeUntilTransition > 0 && timeUntilTransition <= lookaheadSeconds) {
+          // Only add if not already in videoItems
+          if (!videoItems.some(v => v.id === toItem.id)) {
+            // Calculate how far into toItem to pre-decode (cover the overlap + buffer)
+            // overlap portion = (overlapEnd - toStart) in timeline time
+            const overlapIntoToClip = Math.max(0, overlapEnd - toStart);
+            const trimStart = toItem.trim?.start || 0;
+            const trimEnd = toItem.trim?.end || toItem.duration;
+            const speed = toItem.speed || 1;
+            
+            // prefetchTime in LOCAL source time (not timeline time)
+            // Timeline time = source time / speed, so source time = timeline time * speed
+            // We need to decode frames covering the overlap in source time
+            let prefetchTime = trimStart + (overlapIntoToClip * speed) + 1.0; // +1s buffer in source time
+            
+            // Clamp to valid trim range
+            prefetchTime = Math.min(prefetchTime, trimEnd);
+            prefetchTime = Math.max(prefetchTime, trimStart);
+            
+            preBufferItems.push({
+              id: toItem.id,
+              startTime: toItem.startTime,
+              duration: toItem.duration,
+              trim: toItem.trim,
+              speed: toItem.speed,
+              prefetchTime,
+            });
+          }
+        }
+      }
+      
+      // Also pre-buffer fromItem if it's cold (e.g., user scrubbed near transition)
+      if (fromItem.type === 'video') {
+        const timeInFromClip = time - fromItem.startTime;
+        // If we're near the end of fromItem and it's not being buffered
+        if (timeInFromClip >= 0 && timeInFromClip < fromItem.duration) {
+          if (!videoItems.some(v => v.id === fromItem.id)) {
+            preBufferItems.push({
+              id: fromItem.id,
+              startTime: fromItem.startTime,
+              duration: fromItem.duration,
+              trim: fromItem.trim,
+              speed: fromItem.speed,
+            });
+          }
+        }
+      }
+    }
+    
+    // Combine active items with pre-buffer items
+    const allBufferItems = [...videoItems, ...preBufferItems];
+
     // Buffer frames more aggressively if any are missing, otherwise every 10 frames
     frameCounterRef.current++;
-    const shouldBuffer = hasAnyMissingFrame || (frameCounterRef.current % 10 === 0);
-    if (shouldBuffer && videoItems.length > 0) {
+    const shouldBuffer = hasAnyMissingFrame || preBufferItems.length > 0 || (frameCounterRef.current % 10 === 0);
+    if (shouldBuffer && allBufferItems.length > 0) {
       // Log occasionally to avoid spam
-      if (frameCounterRef.current % 30 === 0) {
-        console.log(`[buildLayers] time=${time.toFixed(2)}s, hasAnyMissingFrame=${hasAnyMissingFrame}, videoItems=${videoItems.length}`);
+      if (frameCounterRef.current % 30 === 0 || preBufferItems.length > 0) {
+        console.log(`[buildLayers] time=${time.toFixed(2)}s, hasAnyMissingFrame=${hasAnyMissingFrame}, videoItems=${videoItems.length}, preBuffer=${preBufferItems.length}`);
       }
-      workerManager.bufferFrames(time, videoItems);
+      workerManager.bufferFrames(time, allBufferItems);
     }
 
     return layers;
