@@ -1,5 +1,34 @@
 # Video Editor Playback Debug Session - 2025-01-17
 
+## LATEST UPDATE - 2025-01-18: Video Preloading & Buffer Monitoring
+
+### Video Preloading Architecture (CapCut-style)
+Videos are now fully fetched into memory before decoding to eliminate network latency during playback:
+
+1. **Blob URL Propagation**: Worker fetches entire video, creates blob URL from memory, and sends to main thread
+2. **Audio from Memory**: Audio elements use preloaded blob URLs instead of streaming from S3
+3. **Buffer Health Monitoring**: Real-time 🟢/🔴 indicators showing cache depth and buffer-ahead time
+
+### Key Console Logs to Watch
+| Log Pattern | Meaning |
+|-------------|---------|
+| `[PRELOAD] Fetched video (X.XXmb)` | Video fetched into memory in worker |
+| `[BLOB URL] videoId → Audio will play from local memory` | Audio element using preloaded blob |
+| `[BUFFER] 🟢 videoId: X frames, Y.Xs ahead` | Buffer healthy (≥0.5s ahead) |
+| `[BUFFER] 🔴 videoId: X frames, Y.Xs ahead ⚠️ LOW BUFFER` | Decode starvation risk |
+
+### Memory Management
+- Blob URLs are revoked on video destroy to prevent memory leaks
+- `destroyVideo()` revokes individual blob URL
+- `destroy()` revokes all blob URLs and clears map
+
+### Files Changed
+- `video-decoder.worker.ts`: Preload video into memory, send blob URL
+- `worker-manager.ts`: Store blob URLs, provide `getBlobUrl()` and `getBufferStats()` methods
+- `canvas-preview-pro.tsx`: Use blob URLs for audio, timestamp-based buffer logging
+
+---
+
 ## RESOLVED - 2025-01-18
 
 ### Fixes Applied:
