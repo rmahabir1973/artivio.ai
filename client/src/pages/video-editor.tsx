@@ -98,7 +98,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { VideoProject } from "@shared/schema";
-import { EditorSidebar, CanvasPreview, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline } from "./video-editor/components";
+import { EditorSidebar, CanvasPreview, TimelineTrack, DraggableMediaItem, MultiTrackTimeline, TextOverlayEditor, TextOverlayRenderer, DraggableTransition, TransitionDropZone, TransitionEditDialog, PropertiesPanel, AdvancedTimeline, StockMediaPanel } from "./video-editor/components";
 import type { EditorCategory, MultiTrackTimelineItem, DroppedMediaItem } from "./video-editor/components";
 import { useTextOverlay, DEFAULT_TEXT_OVERLAY } from "@/hooks/useTextOverlay";
 
@@ -3328,6 +3328,51 @@ export default function VideoEditor() {
                         </>
                       )}
                     </div>
+                  )}
+
+                  {/* Stock Media Category Content */}
+                  {activeCategory === 'stock' && (
+                    <StockMediaPanel 
+                      onAddVideo={(video: { id: string; url: string; thumbnailUrl: string; title: string; source: string; duration: number }) => {
+                        const newClip: VideoClip = {
+                          id: `stock_${video.id}_${Date.now()}`,
+                          url: video.url,
+                          thumbnailUrl: video.thumbnailUrl,
+                          prompt: video.title || `Stock Video from ${video.source}`,
+                          createdAt: new Date().toISOString(),
+                          type: 'video',
+                        };
+                        setOrderedClips(prev => [...prev, newClip]);
+                        // Set clip settings with duration if available
+                        if (video.duration) {
+                          setClipSettings(prev => {
+                            const newMap = new Map(prev);
+                            newMap.set(newClip.id, {
+                              clipId: newClip.id,
+                              muted: false,
+                              volume: 1,
+                              speed: 1.0,
+                              originalDuration: video.duration,
+                            });
+                            return newMap;
+                          });
+                        }
+                        toast({ title: "Video Added", description: "Stock video added to timeline" });
+                      }}
+                      onAddAudio={(audio: { id: string; url: string; title: string; source: string; duration: number }) => {
+                        // Add as background audio track
+                        setEnhancements(prev => ({
+                          ...prev,
+                          audioTrack: {
+                            audioUrl: audio.url,
+                            volume: 1.0,
+                            type: 'sfx' as const,
+                            name: audio.title || 'Stock Audio',
+                          },
+                        }));
+                        toast({ title: "Audio Added", description: "Stock audio added as background track" });
+                      }}
+                    />
                   )}
 
                   {/* Transitions Category Content - Drag & Drop */}

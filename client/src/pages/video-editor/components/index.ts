@@ -20,3 +20,4 @@ export type { PropertiesPanelProps } from './properties-panel';
 export { AdvancedTimeline } from './advanced-timeline';
 export type { AdvancedTimelineProps } from './advanced-timeline';
 export { CanvasPreview } from './canvas-preview';
+export { StockMediaPanel } from './stock-media-panel';

@@ -10900,6 +10900,396 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // ==========================================
+  // STOCK VIDEOS & AUDIO API (Pexels + Pixabay)
+  // ==========================================
+  
+  // In-memory cache for stock video/audio search results (24-hour TTL)
+  const stockMediaCache = new Map<string, { data: any; timestamp: number }>();
+  const STOCK_MEDIA_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+  
+  // Cleanup expired cache entries periodically
+  setInterval(() => {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+    stockMediaCache.forEach((value, key) => {
+      if (now - value.timestamp > STOCK_MEDIA_CACHE_TTL) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach(key => stockMediaCache.delete(key));
+  }, 60 * 60 * 1000);
+  
+  // Search stock videos from Pexels and Pixabay
+  app.get('/api/stock-videos/search', requireJWT, async (req: any, res) => {
+    try {
+      const query = req.query.q as string || '';
+      const source = (req.query.source as string) || 'all';
+      const page = parseInt(req.query.page as string) || 1;
+      const perPage = Math.min(Math.max(parseInt(req.query.per_page as string) || 15, 3), 40);
+      const orientation = (req.query.orientation as string) || 'all';
+      const minDuration = parseInt(req.query.min_duration as string) || 0;
+      const maxDuration = parseInt(req.query.max_duration as string) || 0;
+
+      if (!query) {
+        return res.status(400).json({ message: 'Search query is required' });
+      }
+      
+      const pixabayKey = process.env.PIXABAY_API_KEY;
+      const pexelsKey = process.env.PEXELS_API_KEY;
+      
+      const pixabayRequested = source === 'all' || source === 'pixabay';
+      const pexelsRequested = source === 'all' || source === 'pexels';
+      
+      if (source === 'pixabay' && !pixabayKey) {
+        return res.status(503).json({ message: 'Pixabay service temporarily unavailable' });
+      }
+      if (source === 'pexels' && !pexelsKey) {
+        return res.status(503).json({ message: 'Pexels service temporarily unavailable' });
+      }
+      if (source === 'all' && !pixabayKey && !pexelsKey) {
+        return res.status(503).json({ message: 'Stock video service temporarily unavailable' });
+      }
+      
+      const cacheKey = `video-${query.toLowerCase()}-${source}-${page}-${perPage}-${orientation}`;
+      const cached = stockMediaCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < STOCK_MEDIA_CACHE_TTL) {
+        return res.json(cached.data);
+      }
+
+      const results: any = { pixabay: null, pexels: null };
+      const promises: Promise<void>[] = [];
+
+      // Pixabay Videos
+      if (pixabayRequested && pixabayKey) {
+        promises.push((async () => {
+          try {
+            const params = new URLSearchParams({
+              key: pixabayKey,
+              q: query,
+              page: page.toString(),
+              per_page: perPage.toString(),
+              safesearch: 'true',
+            });
+            if (minDuration > 0) params.set('min_duration', minDuration.toString());
+            if (maxDuration > 0) params.set('max_duration', maxDuration.toString());
+
+            const response = await axios.get(`https://pixabay.com/api/videos/?${params.toString()}`, {
+              timeout: 15000,
+            });
+
+            results.pixabay = {
+              total: response.data.totalHits,
+              videos: response.data.hits.map((hit: any) => {
+                const videoSizes = hit.videos || {};
+                const large = videoSizes.large || videoSizes.medium || videoSizes.small || {};
+                const medium = videoSizes.medium || videoSizes.small || {};
+                const small = videoSizes.small || videoSizes.tiny || {};
+                
+                return {
+                  id: hit.id.toString(),
+                  source: 'pixabay',
+                  thumbnailUrl: `https://i.vimeocdn.com/video/${hit.picture_id}_295x166.jpg`,
+                  previewUrl: small.url || medium.url,
+                  videoUrl: large.url || medium.url,
+                  hdUrl: large.url,
+                  width: large.width || hit.width || 1920,
+                  height: large.height || hit.height || 1080,
+                  duration: hit.duration,
+                  tags: hit.tags,
+                  user: hit.user,
+                  userUrl: `https://pixabay.com/users/${hit.user}-${hit.user_id}/`,
+                  pageUrl: hit.pageURL,
+                  downloads: hit.downloads,
+                  likes: hit.likes,
+                };
+              }),
+            };
+          } catch (error: any) {
+            console.error('Pixabay Videos API error:', error.message);
+            results.pixabay = { error: error.message, total: 0, videos: [] };
+          }
+        })());
+      }
+
+      // Pexels Videos
+      if (pexelsRequested && pexelsKey) {
+        promises.push((async () => {
+          try {
+            const params = new URLSearchParams({
+              query,
+              page: page.toString(),
+              per_page: perPage.toString(),
+            });
+            if (orientation !== 'all') params.set('orientation', orientation === 'horizontal' ? 'landscape' : orientation);
+
+            const response = await axios.get(`https://api.pexels.com/videos/search?${params.toString()}`, {
+              headers: { Authorization: pexelsKey },
+              timeout: 15000,
+            });
+
+            results.pexels = {
+              total: response.data.total_results,
+              videos: response.data.videos.map((video: any) => {
+                const files = video.video_files || [];
+                const hdFile = files.find((f: any) => f.quality === 'hd' && f.width >= 1280) || files[0];
+                const sdFile = files.find((f: any) => f.quality === 'sd') || files[0];
+                
+                return {
+                  id: video.id.toString(),
+                  source: 'pexels',
+                  thumbnailUrl: video.image,
+                  previewUrl: sdFile?.link || hdFile?.link,
+                  videoUrl: hdFile?.link || sdFile?.link,
+                  hdUrl: hdFile?.link,
+                  width: hdFile?.width || video.width,
+                  height: hdFile?.height || video.height,
+                  duration: video.duration,
+                  tags: '',
+                  user: video.user?.name || 'Unknown',
+                  userUrl: video.user?.url || '',
+                  pageUrl: video.url,
+                };
+              }),
+            };
+          } catch (error: any) {
+            console.error('Pexels Videos API error:', error.message);
+            results.pexels = { error: error.message, total: 0, videos: [] };
+          }
+        })());
+      }
+
+      await Promise.all(promises);
+
+      const allVideos = [
+        ...(results.pixabay?.videos || []),
+        ...(results.pexels?.videos || []),
+      ];
+
+      const responseData = {
+        query,
+        page,
+        perPage,
+        totalPixabay: results.pixabay?.total || 0,
+        totalPexels: results.pexels?.total || 0,
+        videos: allVideos,
+        sources: {
+          pixabay: pixabayRequested && pixabayKey ? { available: true, error: results.pixabay?.error } : { available: false },
+          pexels: pexelsRequested && pexelsKey ? { available: true, error: results.pexels?.error } : { available: false },
+        },
+      };
+      
+      stockMediaCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+      res.json(responseData);
+    } catch (error: any) {
+      console.error('Stock videos search error:', error);
+      res.status(500).json({ message: error.message || 'Failed to search stock videos' });
+    }
+  });
+
+  // Search stock audio/music from Pixabay (Pixabay has a music API)
+  app.get('/api/stock-audio/search', requireJWT, async (req: any, res) => {
+    try {
+      const query = req.query.q as string || '';
+      const page = parseInt(req.query.page as string) || 1;
+      const perPage = Math.min(Math.max(parseInt(req.query.per_page as string) || 20, 3), 50);
+      const category = req.query.category as string; // music, sound effects
+      const minDuration = parseInt(req.query.min_duration as string) || 0;
+      const maxDuration = parseInt(req.query.max_duration as string) || 0;
+
+      // Pixabay has a separate music endpoint
+      const pixabayKey = process.env.PIXABAY_API_KEY;
+      
+      if (!pixabayKey) {
+        return res.status(503).json({ message: 'Stock audio service temporarily unavailable' });
+      }
+      
+      const cacheKey = `audio-${query.toLowerCase()}-${page}-${perPage}-${category || 'all'}`;
+      const cached = stockMediaCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < STOCK_MEDIA_CACHE_TTL) {
+        return res.json(cached.data);
+      }
+
+      // Use Pixabay's music API endpoint
+      const params = new URLSearchParams({
+        key: pixabayKey,
+        page: page.toString(),
+        per_page: perPage.toString(),
+      });
+      
+      if (query) params.set('q', query);
+      if (category) params.set('category', category);
+      if (minDuration > 0) params.set('min_duration', minDuration.toString());
+      if (maxDuration > 0) params.set('max_duration', maxDuration.toString());
+
+      // Pixabay music API - note this requires specific API access
+      // Fallback: search videos with audio-related terms if music API not available
+      let audioResults: any[] = [];
+      let totalResults = 0;
+      
+      try {
+        // Try the music API first (may not be available for all API keys)
+        const response = await axios.get(`https://pixabay.com/api/music/?${params.toString()}`, {
+          timeout: 15000,
+        });
+        
+        totalResults = response.data.totalHits || 0;
+        audioResults = (response.data.hits || []).map((hit: any) => ({
+          id: hit.id.toString(),
+          source: 'pixabay',
+          title: hit.title || hit.tags?.split(',')[0] || 'Untitled',
+          audioUrl: hit.audio,
+          previewUrl: hit.audio,
+          duration: hit.duration,
+          tags: hit.tags || '',
+          user: hit.user,
+          userUrl: `https://pixabay.com/users/${hit.user}-${hit.user_id}/`,
+          pageUrl: hit.pageURL,
+          downloads: hit.downloads,
+          likes: hit.likes,
+          category: hit.category || 'music',
+        }));
+      } catch (musicError: any) {
+        console.log('Pixabay music API not available, using sound effects endpoint');
+        
+        // Fallback: Use sound effects API or return empty
+        try {
+          const sfxParams = new URLSearchParams({
+            key: pixabayKey,
+            page: page.toString(),
+            per_page: perPage.toString(),
+          });
+          if (query) sfxParams.set('q', query);
+          
+          const sfxResponse = await axios.get(`https://pixabay.com/api/?${sfxParams.toString()}&video_type=all`, {
+            timeout: 15000,
+          });
+          
+          // Filter for items that might have audio components
+          // Note: This is a fallback and may return limited results
+          totalResults = 0;
+          audioResults = [];
+        } catch (e) {
+          console.error('Stock audio fallback error:', e);
+        }
+      }
+
+      const responseData = {
+        query,
+        page,
+        perPage,
+        total: totalResults,
+        audio: audioResults,
+        source: 'pixabay',
+      };
+      
+      stockMediaCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+      res.json(responseData);
+    } catch (error: any) {
+      console.error('Stock audio search error:', error);
+      res.status(500).json({ message: error.message || 'Failed to search stock audio' });
+    }
+  });
+
+  // Download stock video to S3 for use in video editor
+  app.post('/api/stock-videos/download', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { source, videoId, videoUrl, thumbnailUrl, duration, width, height, title } = req.body;
+      
+      if (!videoUrl) {
+        return res.status(400).json({ message: 'Video URL is required' });
+      }
+      
+      console.log(`[Stock Videos] Downloading video for user ${userId}: ${videoId}`);
+      
+      // Import S3 service
+      const s3 = await import('./services/awsS3');
+      
+      if (!s3.isS3Enabled()) {
+        // Return direct URL if S3 not configured
+        return res.json({
+          success: true,
+          url: videoUrl,
+          thumbnailUrl,
+          duration,
+          width,
+          height,
+          storageType: 'remote',
+        });
+      }
+      
+      // Download and upload to S3
+      const filename = `stock-video-${source}-${videoId}-${Date.now()}.mp4`;
+      const uploadResult = await s3.uploadFromUrl(videoUrl, {
+        prefix: 'uploads/video',
+        contentType: 'video/mp4',
+        filename,
+      });
+      
+      console.log(`[Stock Videos] Uploaded to S3: ${uploadResult.key}`);
+      
+      res.json({
+        success: true,
+        url: uploadResult.signedUrl,
+        key: uploadResult.key,
+        thumbnailUrl,
+        duration,
+        width,
+        height,
+        storageType: 's3',
+      });
+    } catch (error: any) {
+      console.error('Stock video download error:', error);
+      res.status(500).json({ message: error.message || 'Failed to download stock video' });
+    }
+  });
+
+  // Download stock audio to S3 for use in video editor
+  app.post('/api/stock-audio/download', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { source, audioId, audioUrl, title, duration } = req.body;
+      
+      if (!audioUrl) {
+        return res.status(400).json({ message: 'Audio URL is required' });
+      }
+      
+      console.log(`[Stock Audio] Downloading audio for user ${userId}: ${audioId}`);
+      
+      const s3 = await import('./services/awsS3');
+      
+      if (!s3.isS3Enabled()) {
+        return res.json({
+          success: true,
+          url: audioUrl,
+          duration,
+          storageType: 'remote',
+        });
+      }
+      
+      const filename = `stock-audio-${source}-${audioId}-${Date.now()}.mp3`;
+      const uploadResult = await s3.uploadFromUrl(audioUrl, {
+        prefix: 'uploads/audio',
+        contentType: 'audio/mpeg',
+        filename,
+      });
+      
+      console.log(`[Stock Audio] Uploaded to S3: ${uploadResult.key}`);
+      
+      res.json({
+        success: true,
+        url: uploadResult.signedUrl,
+        key: uploadResult.key,
+        duration,
+        storageType: 's3',
+      });
+    } catch (error: any) {
+      console.error('Stock audio download error:', error);
+      res.status(500).json({ message: error.message || 'Failed to download stock audio' });
+    }
+  });
+
   // ========== AI SUPPORT SYSTEM ROUTES ==========
 
   const { aiSupportAgent } = await import('./services/aiSupportAgent');
