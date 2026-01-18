@@ -1,0 +1,499 @@
+[WorkerManager] Initializing with worker version: 2025-01-17T0600-v18-imagebitmap-fix
+index-CuDtkS_r.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-CuDtkS_r.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-CuDtkS_r.js:993 [AUTH] Initializing auth
+index-CuDtkS_r.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-CuDtkS_r.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated Object
+index-CuDtkS_r.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-CuDtkS_r.js:1677 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T034748Z&X-Amz-Expires=604800&X-Amz-Signature=15c7eec4863547e8bfa0132f45fbfdc8b417ee2ce4dfa8538d6fa0f02fb2f320&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-CuDtkS_r.js:1677 [CanvasPreviewPro] Audio setup: 1 items need audio
+index-CuDtkS_r.js:1677 [Audio] Created element for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: https://artivio-video-exports.s3.us-east-1.amazonaws.com/vid...
+index-CuDtkS_r.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023 still loading...
+(anonymous) @ index-CuDtkS_r.js:1677
+index-CuDtkS_r.js:1454 Video decoder worker ready
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=load videoId=a2b0507d time=undefined items=undefined
+index-CuDtkS_r.js:1677 Loading a2b0507d: 0%
+index-CuDtkS_r.js:1677 [CanvasPreviewPro] Loading video a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a5a658b7-1c89-4b75-99d4-a926455786ef-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T034748Z&X-Amz-Expires=604800&X-Amz-Signature=801c15b80a8048e7e1e2b0865c73b66f11f4684ec53f9a4bb0faeca67aac187f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-CuDtkS_r.js:1677 [CanvasPreviewPro] Audio setup: 2 items need audio
+index-CuDtkS_r.js:1677 [Audio] Created element for a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: https://artivio-video-exports.s3.us-east-1.amazonaws.com/vid...
+index-CuDtkS_r.js:1677  [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023 still loading...
+(anonymous) @ index-CuDtkS_r.js:1677
+index-CuDtkS_r.js:1677  [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5 still loading...
+(anonymous) @ index-CuDtkS_r.js:1677
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=load videoId=a5a658b7 time=undefined items=undefined
+index-CuDtkS_r.js:1677 Loading a5a658b7: 0%
+index-CuDtkS_r.js:1677 Loading a2b0507d: 50%
+index-CuDtkS_r.js:1677 Loading a2b0507d: 75%
+index-CuDtkS_r.js:1454 [WORKER:INIT_START] a2b0507d keyframeIdx=0 chunks=192
+index-CuDtkS_r.js:1454 [WORKER:INIT_DECODED] a2b0507d count=30 lastTs=1.42s queueSize=30
+index-CuDtkS_r.js:1454 [WORKER:INIT_DONE] a2b0507d ready for playback, will continue decoding on demand
+index-CuDtkS_r.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023 Object
+index-CuDtkS_r.js:1677 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: 8s
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: metadata loaded, duration=8.00s
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=1.00s key=30 cacheSize=22
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: canplay (readyState=4)
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: canplaythrough - READY TO PLAY
+index-CuDtkS_r.js:1677 Loading a5a658b7: 50%
+index-CuDtkS_r.js:1677 Loading a5a658b7: 75%
+index-CuDtkS_r.js:1454 [WORKER:INIT_START] a5a658b7 keyframeIdx=0 chunks=192
+index-CuDtkS_r.js:1454 [WORKER:INIT_DECODED] a5a658b7 count=30 lastTs=1.42s queueSize=30
+index-CuDtkS_r.js:1454 [WORKER:INIT_DONE] a5a658b7 ready for playback, will continue decoding on demand
+index-CuDtkS_r.js:1454 [WorkerManager] Video loaded: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5 Object
+index-CuDtkS_r.js:1677 [DURATION] Loaded video clip a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: 8s
+index-CuDtkS_r.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: metadata loaded, duration=8.00s
+index-CuDtkS_r.js:1677 [Frame] a5a658b7: 0.13s (caching)
+index-CuDtkS_r.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: canplay (readyState=4)
+index-CuDtkS_r.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: canplaythrough - READY TO PLAY
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=1.00s key=30 cacheSize=22
+index-CuDtkS_r.js:1677 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5 Object
+index-CuDtkS_r.js:1677 [DRAG] handleDragEnd: Object
+index-CuDtkS_r.js:1677 [DRAG] Clip drag: Object
+index-CuDtkS_r.js:1677 [DRAG] Updated clip position: Object
+index-CuDtkS_r.js:1677 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5 Object
+index-CuDtkS_r.js:1677 [DRAG] handleDragEnd: Object
+index-CuDtkS_r.js:1677 [DRAG] Clip drag: Object
+index-CuDtkS_r.js:1677 [DRAG] Updated clip position: Object
+index-CuDtkS_r.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+index-CuDtkS_r.js:1677 [Audio Sync] time=0.0s, audioElements=2
+index-CuDtkS_r.js:1677 [Audio] a2b0507d calling PLAY...
+index-CuDtkS_r.js:1677 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-CuDtkS_r.js:1677 [WebGLCompositor] Starting animation loop
+index-CuDtkS_r.js:1677 [CanvasPreviewPro] Started playback with audio at 0.00s
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-36] size=28 found=true at 2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[a2b0507d:ready=true,idx=29, a5a658b7:ready=true,idx=29]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=1.42s
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: PLAY EVENT started
+index-CuDtkS_r.js:1677 [Audio] a2b0507d PLAY SUCCESS!
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=30
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=40 idx=69/192 ts=3.08s
+index-CuDtkS_r.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-5.07
+index-CuDtkS_r.js:1677 [Frame] a2b0507d: 1.38s (caching)
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=0.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=0.03 key=1 cache=[2-59] size=46 found=true at 2
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=2.00s key=60 cacheSize=46
+index-CuDtkS_r.js:1677 [Frame] a2b0507d: 2.63s (caching)
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.29 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=0.29s items=2 videos=[a2b0507d:ready=true,idx=69, a5a658b7:ready=true,idx=29]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.29s lastDecoded=3.08s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.29s output=2.88s submitted=3.08s buffer=2.58s
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-4.78
+index-CuDtkS_r.js:1677 [Audio] a2b0507d SEEK 0.43s (drift=-0.40s)
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: canplay (readyState=4)
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: canplaythrough - READY TO PLAY
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.63 items=2
+index-CuDtkS_r.js:1677 [buildLayers] time=0.96s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.96 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=70
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=93/192 ts=4.08s
+index-CuDtkS_r.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=3.00s key=90 cacheSize=70
+index-CuDtkS_r.js:1677 [Frame] a2b0507d: 3.88s (caching)
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=1.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=1.03 key=31 cache=[2-116] size=92 found=true at 31
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.29 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=1.29s items=2 videos=[a2b0507d:ready=true,idx=93, a5a658b7:ready=true,idx=29]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=1.29s lastDecoded=4.08s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=1.29s output=3.88s submitted=4.08s buffer=2.58s
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-3.78
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.63 items=2
+index-CuDtkS_r.js:1677 [buildLayers] time=1.96s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.96 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=94
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=117/192 ts=5.08s
+index-CuDtkS_r.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=4.00s key=120 cacheSize=94
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=2.00s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=2.00 key=60 cache=[2-146] size=116 found=true at 60
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=2.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1677 [Audio Sync] time=2.1s, audioElements=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.29 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=2.29s items=2 videos=[a2b0507d:ready=true,idx=117, a5a658b7:ready=true,idx=29]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=2.29s lastDecoded=5.08s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=2.29s output=4.88s submitted=5.08s buffer=2.58s
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-2.78
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.63 items=2
+index-CuDtkS_r.js:1677 [buildLayers] time=2.96s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.96 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=118
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=141/192 ts=6.08s
+index-CuDtkS_r.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=5.00s key=150 cacheSize=118
+index-CuDtkS_r.js:1677 [Frame] a2b0507d: 5.13s (caching)
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=3.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=3.03 key=91 cache=[2-176] size=140 found=true at 91
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.29 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=3.29s items=2 videos=[a2b0507d:ready=true,idx=141, a5a658b7:ready=true,idx=29]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=3.29s lastDecoded=6.08s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=3.29s output=5.88s submitted=6.08s buffer=2.58s
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-1.78
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.63 items=2
+index-CuDtkS_r.js:1677 [buildLayers] time=3.96s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.96 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=142
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=165/192 ts=7.08s
+index-CuDtkS_r.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=6.00s key=180 cacheSize=142
+index-CuDtkS_r.js:1677 [Frame] a2b0507d: 6.38s (caching)
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=4.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=4.03 key=121 cache=[2-206] size=164 found=true at 121
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.29 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=4.29s items=2 videos=[a2b0507d:ready=true,idx=165, a5a658b7:ready=true,idx=29]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=4.29s lastDecoded=7.08s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=4.29s output=6.88s submitted=7.08s buffer=2.58s
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=-0.78s lastDecoded=1.42s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=30
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=20 idx=49/192 ts=2.25s
+index-CuDtkS_r.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5
+index-CuDtkS_r.js:1677 [Frame] a5a658b7: 1.96s (caching)
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=2.00s key=60 cacheSize=46
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.63 items=2
+index-CuDtkS_r.js:1677 [buildLayers] time=4.97s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.97 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=166
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=189/192 ts=8.04s
+index-CuDtkS_r.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=7.00s key=210 cacheSize=166
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=5.00s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=5.00 key=150 cache=[2-234] size=186 found=true at 150
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=5.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.03 key=1 cache=[2-61] size=48 found=true at 2
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=5.13 key=154 cache=[2-236] size=188 found=true at 154
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.06 key=2 cache=[2-61] size=48 found=true at 2
+index-CuDtkS_r.js:1677 [Audio] a5a658b7 calling PLAY...
+index-CuDtkS_r.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: PLAY EVENT started
+index-CuDtkS_r.js:1677 [Audio] a5a658b7 PLAY SUCCESS!
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=5.17 key=155 cache=[2-236] size=188 found=true at 155
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.09 key=3 cache=[2-61] size=48 found=true at 2
+ [WorkerManager] getFrame: a2b0507d t=5.20 key=156 cache=[2-236] size=188 found=true at 156
+ [WorkerManager] getFrame: a5a658b7 t=0.12 key=4 cache=[2-61] size=48 found=true at 4
+ [WorkerManager] getFrame: a2b0507d t=5.23 key=157 cache=[2-236] size=188 found=true at 156
+ [WorkerManager] getFrame: a5a658b7 t=0.16 key=5 cache=[2-61] size=48 found=true at 5
+ [WorkerManager] getFrame: a2b0507d t=5.26 key=158 cache=[2-236] size=188 found=true at 158
+ [WorkerManager] getFrame: a5a658b7 t=0.19 key=6 cache=[2-61] size=48 found=true at 6
+ [WorkerManager] getFrame: a2b0507d t=5.30 key=159 cache=[2-236] size=188 found=true at 159
+ [WorkerManager] getFrame: a5a658b7 t=0.23 key=7 cache=[2-61] size=48 found=true at 6
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.30 items=2
+ [WORKER:BUFFER] time=5.30s items=2 videos=[a2b0507d:ready=true,idx=189, a5a658b7:ready=true,idx=49]
+ [WORKER:BUFFER_SEEK] a2b0507d localTime=5.30s lastDecoded=8.04s
+ [WORKER:SEEK_BUFFERED] a2b0507d t=5.30s output=7.88s submitted=8.04s buffer=2.58s
+ [WORKER:BUFFER_SEEK] a5a658b7 localTime=0.23s lastDecoded=2.25s
+ [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=50
+ [WORKER:SEEK_DONE] a5a658b7 decoded=24 idx=73/192 ts=3.25s
+ Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5
+ [Frame] a5a658b7: 2.21s (caching)
+ [WorkerManager] getFrame: a2b0507d t=5.33 key=160 cache=[2-236] size=188 found=true at 160
+ [WorkerManager] getFrame: a5a658b7 t=0.26 key=8 cache=[2-86] size=68 found=true at 8
+ [WorkerManager] FRAME CACHED: a5a658b7 ts=3.00s key=90 cacheSize=70
+ [WorkerManager] getFrame: a2b0507d t=5.37 key=161 cache=[2-236] size=188 found=true at 161
+ [WorkerManager] getFrame: a5a658b7 t=0.29 key=9 cache=[2-91] size=72 found=true at 9
+ [WorkerManager] getFrame: a2b0507d t=5.46 key=164 cache=[2-236] size=188 found=true at 164
+ [WorkerManager] getFrame: a5a658b7 t=0.39 key=12 cache=[2-91] size=72 found=true at 12
+ [WorkerManager] getFrame: a2b0507d t=5.50 key=165 cache=[2-236] size=188 found=true at 165
+ [WorkerManager] getFrame: a5a658b7 t=0.43 key=13 cache=[2-91] size=72 found=true at 12
+ [WorkerManager] getFrame: a2b0507d t=5.53 key=166 cache=[2-236] size=188 found=true at 166
+ [WorkerManager] getFrame: a5a658b7 t=0.46 key=14 cache=[2-91] size=72 found=true at 14
+ [WorkerManager] getFrame: a2b0507d t=5.57 key=167 cache=[2-236] size=188 found=true at 167
+ [WorkerManager] getFrame: a5a658b7 t=0.49 key=15 cache=[2-91] size=72 found=true at 15
+ [Audio] a5a658b7 SEEK 0.49s (drift=-0.36s)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: canplaythrough - READY TO PLAY
+ [WorkerManager] getFrame: a2b0507d t=5.60 key=168 cache=[2-236] size=188 found=true at 167
+ [WorkerManager] getFrame: a5a658b7 t=0.52 key=16 cache=[2-91] size=72 found=true at 16
+ [WorkerManager] getFrame: a2b0507d t=5.63 key=169 cache=[2-236] size=188 found=true at 169
+ [WorkerManager] getFrame: a5a658b7 t=0.56 key=17 cache=[2-91] size=72 found=true at 17
+ [WorkerManager] getFrame: a2b0507d t=5.66 key=170 cache=[2-236] size=188 found=true at 170
+ [WorkerManager] getFrame: a5a658b7 t=0.59 key=18 cache=[2-91] size=72 found=true at 17
+ [WorkerManager] getFrame: a2b0507d t=5.70 key=171 cache=[2-236] size=188 found=true at 171
+ [WorkerManager] getFrame: a5a658b7 t=0.63 key=19 cache=[2-91] size=72 found=true at 19
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.70 items=2
+ [WORKER:SEEK_BUFFERED] a5a658b7 t=0.63s output=3.04s submitted=3.25s buffer=2.42s
+ [WorkerManager] getFrame: a2b0507d t=5.73 key=172 cache=[2-236] size=188 found=true at 171
+ [WorkerManager] getFrame: a5a658b7 t=0.66 key=20 cache=[2-91] size=72 found=true at 20
+ [WorkerManager] getFrame: a2b0507d t=5.77 key=173 cache=[2-236] size=188 found=true at 173
+ [WorkerManager] getFrame: a5a658b7 t=0.69 key=21 cache=[2-91] size=72 found=true at 21
+ [WorkerManager] getFrame: a2b0507d t=5.80 key=174 cache=[2-236] size=188 found=true at 174
+ [WorkerManager] getFrame: a5a658b7 t=0.72 key=22 cache=[2-91] size=72 found=true at 21
+ [WorkerManager] getFrame: a2b0507d t=5.83 key=175 cache=[2-236] size=188 found=true at 175
+ [WorkerManager] getFrame: a5a658b7 t=0.76 key=23 cache=[2-91] size=72 found=true at 23
+ [WorkerManager] getFrame: a2b0507d t=5.86 key=176 cache=[2-236] size=188 found=true at 176
+ [WorkerManager] getFrame: a5a658b7 t=0.79 key=24 cache=[2-91] size=72 found=true at 24
+ [WorkerManager] getFrame: a2b0507d t=5.90 key=177 cache=[2-236] size=188 found=true at 177
+ [WorkerManager] getFrame: a5a658b7 t=0.83 key=25 cache=[2-91] size=72 found=true at 25
+ [WorkerManager] getFrame: a2b0507d t=5.93 key=178 cache=[2-236] size=188 found=true at 177
+ [WorkerManager] getFrame: a5a658b7 t=0.86 key=26 cache=[2-91] size=72 found=true at 26
+ [WorkerManager] getFrame: a2b0507d t=5.97 key=179 cache=[2-236] size=188 found=true at 179
+ [WorkerManager] getFrame: a5a658b7 t=0.89 key=27 cache=[2-91] size=72 found=true at 27
+ [WorkerManager] getFrame: a2b0507d t=6.00 key=180 cache=[2-236] size=188 found=true at 180
+ [WorkerManager] getFrame: a5a658b7 t=0.92 key=28 cache=[2-91] size=72 found=true at 27
+ [WebGLCompositor] animate: time=6.03s, hasLayerProvider=true
+ [WorkerManager] getFrame: a2b0507d t=6.03 key=181 cache=[2-236] size=188 found=true at 181
+ [WorkerManager] getFrame: a5a658b7 t=0.96 key=29 cache=[2-91] size=72 found=true at 29
+ [buildLayers] time=6.03s, hasAnyMissingFrame=false, videoItems=2
+ [WorkerManager] bufferFrames called at time 6.03s for 2 items, worker=true
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.03 items=2
+ [WORKER:BUFFER] time=6.03s items=2 videos=[a2b0507d:ready=true,idx=189, a5a658b7:ready=true,idx=73]
+ [WORKER:BUFFER_SEEK] a2b0507d localTime=6.03s lastDecoded=8.04s
+ [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=190
+ [WORKER:SEEK_DONE] a2b0507d decoded=2 idx=191/192 ts=8.00s
+ Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023
+ [WORKER:BUFFER_SEEK] a5a658b7 localTime=0.96s lastDecoded=3.25s
+ [WorkerManager] getFrame: a2b0507d t=6.06 key=182 cache=[2-239] size=190 found=true at 182
+ [WorkerManager] getFrame: a5a658b7 t=0.99 key=30 cache=[2-91] size=72 found=true at 30
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.10 key=183 cache=[2-239] size=190 found=true at 182
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.03 key=31 cache=[2-91] size=72 found=true at 31
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.13 key=184 cache=[2-239] size=190 found=true at 184
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.06 key=32 cache=[2-91] size=72 found=true at 32
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.17 key=185 cache=[2-239] size=190 found=true at 185
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.09 key=33 cache=[2-91] size=72 found=true at 32
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.20 key=186 cache=[2-239] size=190 found=true at 186
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.12 key=34 cache=[2-91] size=72 found=true at 34
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.23 key=187 cache=[2-239] size=190 found=true at 186
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.16 key=35 cache=[2-91] size=72 found=true at 35
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.26 key=188 cache=[2-239] size=190 found=true at 188
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.19 key=36 cache=[2-91] size=72 found=true at 36
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.30 key=189 cache=[2-239] size=190 found=true at 189
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.23 key=37 cache=[2-91] size=72 found=true at 36
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.33 key=190 cache=[2-239] size=190 found=true at 190
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.26 key=38 cache=[2-91] size=72 found=true at 38
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.37 key=191 cache=[2-239] size=190 found=true at 191
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.29 key=39 cache=[2-91] size=72 found=true at 39
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.37 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=74
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=28 idx=101/192 ts=4.42s
+index-CuDtkS_r.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5
+index-CuDtkS_r.js:1677 [Frame] a5a658b7: 3.38s (caching)
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.40 key=192 cache=[2-239] size=190 found=true at 192
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.32 key=40 cache=[2-109] size=86 found=true at 40
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=4.00s key=120 cacheSize=94
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.43 key=193 cache=[2-239] size=190 found=true at 192
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.36 key=41 cache=[2-126] size=100 found=true at 41
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.49 key=195 cache=[2-239] size=190 found=true at 195
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.41 key=42 cache=[2-126] size=100 found=true at 42
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.52 key=196 cache=[2-239] size=190 found=true at 196
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.44 key=43 cache=[2-126] size=100 found=true at 42
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.66 key=200 cache=[2-239] size=190 found=true at 200
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.58 key=47 cache=[2-126] size=100 found=true at 47
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.66 key=200 cache=[2-239] size=190 found=true at 200
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.59 key=48 cache=[2-126] size=100 found=true at 47
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.70 key=201 cache=[2-239] size=190 found=true at 201
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.63 key=49 cache=[2-126] size=100 found=true at 49
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.73 key=202 cache=[2-239] size=190 found=true at 201
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.66 key=50 cache=[2-126] size=100 found=true at 50
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.77 key=203 cache=[2-239] size=190 found=true at 203
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.69 key=51 cache=[2-126] size=100 found=true at 51
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.80 key=204 cache=[2-239] size=190 found=true at 204
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.72 key=52 cache=[2-126] size=100 found=true at 51
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.80 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=1.72s output=4.21s submitted=4.42s buffer=2.49s
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.83 key=205 cache=[2-239] size=190 found=true at 205
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.76 key=53 cache=[2-126] size=100 found=true at 53
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=6.86 key=206 cache=[2-239] size=190 found=true at 206
+ [WorkerManager] getFrame: a5a658b7 t=1.79 key=54 cache=[2-126] size=100 found=true at 54
+ [WorkerManager] getFrame: a2b0507d t=6.90 key=207 cache=[2-239] size=190 found=true at 207
+ [WorkerManager] getFrame: a5a658b7 t=1.83 key=55 cache=[2-126] size=100 found=true at 55
+ [WorkerManager] getFrame: a2b0507d t=6.93 key=208 cache=[2-239] size=190 found=true at 207
+ [WorkerManager] getFrame: a5a658b7 t=1.86 key=56 cache=[2-126] size=100 found=true at 56
+ [WorkerManager] getFrame: a2b0507d t=6.97 key=209 cache=[2-239] size=190 found=true at 209
+ [WorkerManager] getFrame: a5a658b7 t=1.89 key=57 cache=[2-126] size=100 found=true at 57
+ [WorkerManager] getFrame: a2b0507d t=7.00 key=210 cache=[2-239] size=190 found=true at 210
+ [WorkerManager] getFrame: a5a658b7 t=1.92 key=58 cache=[2-126] size=100 found=true at 57
+ [WebGLCompositor] animate: time=7.03s, hasLayerProvider=true
+ [WorkerManager] getFrame: a2b0507d t=7.03 key=211 cache=[2-239] size=190 found=true at 211
+ [WorkerManager] getFrame: a5a658b7 t=1.96 key=59 cache=[2-126] size=100 found=true at 59
+ [WorkerManager] getFrame: a2b0507d t=7.06 key=212 cache=[2-239] size=190 found=true at 212
+ [WorkerManager] getFrame: a5a658b7 t=1.99 key=60 cache=[2-126] size=100 found=true at 60
+ [WorkerManager] getFrame: a2b0507d t=7.10 key=213 cache=[2-239] size=190 found=true at 212
+ [WorkerManager] getFrame: a5a658b7 t=2.03 key=61 cache=[2-126] size=100 found=true at 61
+ [WorkerManager] getFrame: a2b0507d t=7.13 key=214 cache=[2-239] size=190 found=true at 214
+ [WorkerManager] getFrame: a5a658b7 t=2.06 key=62 cache=[2-126] size=100 found=true at 62
+ [buildLayers] time=7.13s, hasAnyMissingFrame=false, videoItems=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.13 items=2
+ [WORKER:BUFFER] time=7.13s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=101]
+ [WORKER:BUFFER_SEEK] a2b0507d localTime=7.13s lastDecoded=8.00s
+ [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+ [WORKER:BUFFER_SEEK] a5a658b7 localTime=2.06s lastDecoded=4.42s
+ [WORKER:SEEK_BUFFERED] a5a658b7 t=2.06s output=4.21s submitted=4.42s buffer=2.15s
+ [WorkerManager] getFrame: a2b0507d t=7.17 key=215 cache=[2-239] size=190 found=true at 215
+ [WorkerManager] getFrame: a5a658b7 t=2.09 key=63 cache=[2-126] size=100 found=true at 62
+ [WorkerManager] getFrame: a2b0507d t=7.20 key=216 cache=[2-239] size=190 found=true at 216
+ [WorkerManager] getFrame: a5a658b7 t=2.12 key=64 cache=[2-126] size=100 found=true at 64
+ [WorkerManager] getFrame: a2b0507d t=7.23 key=217 cache=[2-239] size=190 found=true at 216
+ [WorkerManager] getFrame: a5a658b7 t=2.16 key=65 cache=[2-126] size=100 found=true at 65
+ [WorkerManager] getFrame: a2b0507d t=7.26 key=218 cache=[2-239] size=190 found=true at 218
+ [WorkerManager] getFrame: a5a658b7 t=2.19 key=66 cache=[2-126] size=100 found=true at 66
+ [WorkerManager] getFrame: a2b0507d t=7.30 key=219 cache=[2-239] size=190 found=true at 219
+ [WorkerManager] getFrame: a5a658b7 t=2.23 key=67 cache=[2-126] size=100 found=true at 66
+ [WorkerManager] getFrame: a2b0507d t=7.33 key=220 cache=[2-239] size=190 found=true at 220
+ [WorkerManager] getFrame: a5a658b7 t=2.26 key=68 cache=[2-126] size=100 found=true at 68
+ [WorkerManager] getFrame: a2b0507d t=7.37 key=221 cache=[2-239] size=190 found=true at 221
+ [WorkerManager] getFrame: a5a658b7 t=2.29 key=69 cache=[2-126] size=100 found=true at 69
+ [WorkerManager] getFrame: a2b0507d t=7.40 key=222 cache=[2-239] size=190 found=true at 222
+ [WorkerManager] getFrame: a5a658b7 t=2.32 key=70 cache=[2-126] size=100 found=true at 70
+ [WorkerManager] getFrame: a2b0507d t=7.43 key=223 cache=[2-239] size=190 found=true at 222
+ [WorkerManager] getFrame: a5a658b7 t=2.36 key=71 cache=[2-126] size=100 found=true at 71
+ [WorkerManager] getFrame: a2b0507d t=7.46 key=224 cache=[2-239] size=190 found=true at 224
+ [WorkerManager] getFrame: a5a658b7 t=2.39 key=72 cache=[2-126] size=100 found=true at 72
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.46 items=2
+ [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+ [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=102
+ [WORKER:SEEK_DONE] a5a658b7 decoded=24 idx=125/192 ts=5.42s
+ Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5
+ [Frame] a5a658b7: 4.63s (caching)
+ [WorkerManager] getFrame: a2b0507d t=7.50 key=225 cache=[2-239] size=190 found=true at 225
+ [WorkerManager] getFrame: a5a658b7 t=2.43 key=73 cache=[2-145] size=115 found=true at 72
+ [WorkerManager] FRAME CACHED: a5a658b7 ts=5.00s key=150 cacheSize=118
+ [WorkerManager] getFrame: a2b0507d t=7.53 key=226 cache=[2-239] size=190 found=true at 226
+ [WorkerManager] getFrame: a5a658b7 t=2.46 key=74 cache=[2-156] size=124 found=true at 74
+ [WorkerManager] getFrame: a2b0507d t=7.57 key=227 cache=[2-239] size=190 found=true at 227
+ [WorkerManager] getFrame: a5a658b7 t=2.49 key=75 cache=[2-156] size=124 found=true at 75
+ [WorkerManager] getFrame: a2b0507d t=7.61 key=228 cache=[2-239] size=190 found=true at 227
+ [WorkerManager] getFrame: a5a658b7 t=2.54 key=76 cache=[2-156] size=124 found=true at 76
+ [WorkerManager] getFrame: a2b0507d t=7.63 key=229 cache=[2-239] size=190 found=true at 229
+ [WorkerManager] getFrame: a5a658b7 t=2.56 key=77 cache=[2-156] size=124 found=true at 77
+ [WorkerManager] getFrame: a2b0507d t=7.66 key=230 cache=[2-239] size=190 found=true at 230
+ [WorkerManager] getFrame: a5a658b7 t=2.59 key=78 cache=[2-156] size=124 found=true at 77
+ [WorkerManager] getFrame: a2b0507d t=7.70 key=231 cache=[2-239] size=190 found=true at 231
+ [WorkerManager] getFrame: a5a658b7 t=2.62 key=79 cache=[2-156] size=124 found=true at 79
+ [WorkerManager] getFrame: a2b0507d t=7.73 key=232 cache=[2-239] size=190 found=true at 231
+ [WorkerManager] getFrame: a5a658b7 t=2.66 key=80 cache=[2-156] size=124 found=true at 80
+ [WorkerManager] getFrame: a2b0507d t=7.76 key=233 cache=[2-239] size=190 found=true at 233
+ [WorkerManager] getFrame: a5a658b7 t=2.69 key=81 cache=[2-156] size=124 found=true at 81
+ [WorkerManager] getFrame: a2b0507d t=7.80 key=234 cache=[2-239] size=190 found=true at 234
+ [WorkerManager] getFrame: a5a658b7 t=2.72 key=82 cache=[2-156] size=124 found=true at 81
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.80 items=2
+ [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+ [WorkerManager] getFrame: a2b0507d t=7.83 key=235 cache=[2-239] size=190 found=true at 235
+ [WorkerManager] getFrame: a5a658b7 t=2.76 key=83 cache=[2-156] size=124 found=true at 83
+ [WorkerManager] getFrame: a2b0507d t=7.86 key=236 cache=[2-239] size=190 found=true at 236
+ [WorkerManager] getFrame: a5a658b7 t=2.79 key=84 cache=[2-156] size=124 found=true at 84
+ [WorkerManager] getFrame: a2b0507d t=7.90 key=237 cache=[2-239] size=190 found=true at 237
+ [WorkerManager] getFrame: a5a658b7 t=2.82 key=85 cache=[2-156] size=124 found=true at 85
+ [WorkerManager] getFrame: a2b0507d t=7.93 key=238 cache=[2-239] size=190 found=true at 237
+ [WorkerManager] getFrame: a5a658b7 t=2.86 key=86 cache=[2-156] size=124 found=true at 86
+ [WorkerManager] getFrame: a2b0507d t=7.97 key=239 cache=[2-239] size=190 found=true at 239
+ [WorkerManager] getFrame: a5a658b7 t=2.89 key=87 cache=[2-156] size=124 found=true at 87
+ [WorkerManager] getFrame: a2b0507d t=8.00 key=240 cache=[2-239] size=190 found=true at 239
+ [WorkerManager] getFrame: a5a658b7 t=2.92 key=88 cache=[2-156] size=124 found=true at 87
+ [WebGLCompositor] animate: time=8.03s, hasLayerProvider=true
+ [WorkerManager] getFrame: a5a658b7 t=3.02 key=91 cache=[2-156] size=124 found=true at 91
+ [buildLayers] time=8.13s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1677 [Audio Sync] time=8.1s, audioElements=2
+index-CuDtkS_r.js:1677 [Audio] a2b0507d PAUSED
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.13 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=8.13s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=125]
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: PAUSED EVENT (currentTime=8.00)
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=8.13s lastDecoded=8.00s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=3.06s lastDecoded=5.42s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=3.06s output=5.21s submitted=5.42s buffer=2.15s
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.46 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=126
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=24 idx=149/192 ts=6.42s
+index-CuDtkS_r.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5
+index-CuDtkS_r.js:1677 [Frame] a5a658b7: 5.88s (caching)
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=6.00s key=180 cacheSize=142
+index-CuDtkS_r.js:1677 [Audio] a5a658b7 PAUSED
+index-CuDtkS_r.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: PAUSED EVENT (currentTime=3.53)
+index-CuDtkS_r.js:1677 [Audio] a5a658b7 calling PLAY...
+index-CuDtkS_r.js:1677 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-CuDtkS_r.js:1677 [WebGLCompositor] Starting animation loop
+index-CuDtkS_r.js:1677 [CanvasPreviewPro] Started playback with audio at 8.53s
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.53 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-CuDtkS_r.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: PLAY EVENT started
+index-CuDtkS_r.js:1677 [Audio] a5a658b7 PLAY SUCCESS!
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.83 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=9.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=4.02 key=121 cache=[2-186] size=148 found=true at 121
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.16 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=9.16s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=149]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=9.16
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=4.09s lastDecoded=6.42s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=4.09s output=6.21s submitted=6.42s buffer=2.12s
+index-CuDtkS_r.js:1677 [buildLayers] time=9.49s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.49 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=150
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=28 idx=177/192 ts=7.46s
+index-CuDtkS_r.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5
+index-CuDtkS_r.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=7.00s key=210 cacheSize=166
+index-CuDtkS_r.js:1677 [Frame] a5a658b7: 7.13s (caching)
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.92 items=2
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=10.03s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=5.02 key=151 cache=[2-221] size=176 found=true at 151
+index-CuDtkS_r.js:1677 [Audio Sync] time=10.2s, audioElements=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.26 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=10.26s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=177]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=10.26
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=5.18s lastDecoded=7.46s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=5.18s output=7.38s submitted=7.46s buffer=2.19s
+index-CuDtkS_r.js:1677 [buildLayers] time=10.59s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.59 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=178
+index-CuDtkS_r.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=14 idx=191/192 ts=8.04s
+index-CuDtkS_r.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.92 items=2
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=11.02s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=6.02 key=181 cache=[2-239] size=190 found=true at 181
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.26 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=11.26s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=11.26
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=6.18s lastDecoded=8.04s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CuDtkS_r.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-CuDtkS_r.js:1677 [buildLayers] time=11.59s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.59 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.92 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CuDtkS_r.js:1454 [WebGLCompositor] animate: time=12.02s, hasLayerProvider=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a5a658b7 t=7.02 key=211 cache=[2-239] size=190 found=true at 211
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=12.25 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=12.25s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=12.25
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=7.18s lastDecoded=8.04s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CuDtkS_r.js:1677 [buildLayers] time=12.59s, hasAnyMissingFrame=false, videoItems=2
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=12.59 items=2
+index-CuDtkS_r.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-CuDtkS_r.js:1677 [Audio Sync] time=0.0s, audioElements=2
+index-CuDtkS_r.js:1677 [Audio] a2b0507d SEEK 0.00s (drift=8.00s)
+index-CuDtkS_r.js:1677  [Audio] a2b0507d NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-CuDtkS_r.js:1677
+(anonymous) @ index-CuDtkS_r.js:1677
+(anonymous) @ index-CuDtkS_r.js:1677
+seek @ index-CuDtkS_r.js:1677
+(anonymous) @ index-CuDtkS_r.js:1677
+JA @ index-CuDtkS_r.js:40
+Gg @ index-CuDtkS_r.js:40
+L$ @ index-CuDtkS_r.js:40
+Tm @ index-CuDtkS_r.js:38
+mve @ index-CuDtkS_r.js:40
+nf @ index-CuDtkS_r.js:40
+YX @ index-CuDtkS_r.js:40
+S @ index-CuDtkS_r.js:25
+L @ index-CuDtkS_r.js:25
+index-CuDtkS_r.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+index-CuDtkS_r.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-239] size=190 found=true at 2
+index-CuDtkS_r.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+index-CuDtkS_r.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768708070925_oq3tt0pi5: PAUSED EVENT (currentTime=8.00)
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=seek videoId=a2b0507d time=0.00 items=undefined
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-5.07
+index-CuDtkS_r.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-CuDtkS_r.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-CuDtkS_r.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-CuDtkS_r.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-5.07
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: canplay (readyState=4)
+index-CuDtkS_r.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768708070359_57j0kt023: canplaythrough - READY TO PLAY

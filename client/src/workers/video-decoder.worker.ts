@@ -175,6 +175,20 @@ class VideoDecoderWorker {
             return;
           }
 
+          // Log hardware acceleration status for debugging
+          const hwAccel = support.config?.hardwareAcceleration || 'unknown';
+          const effectiveCodec = support.config?.codec || config.codec;
+          this.debug('HW_ACCEL', `${videoId.slice(0,8)} hw=${hwAccel} codec=${effectiveCodec} ${support.config?.codedWidth}x${support.config?.codedHeight}`);
+          
+          // Send hardware acceleration status to main thread
+          this.sendMessage({
+            type: 'hwAccelStatus',
+            videoId,
+            hardwareAcceleration: hwAccel,
+            codec: effectiveCodec,
+            supported: support.supported
+          });
+
           const decoder = new VideoDecoder({
             output: (frame: VideoFrame) => {
               this.handleFrameOutput(videoId, frame);

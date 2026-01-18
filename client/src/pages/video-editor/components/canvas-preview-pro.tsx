@@ -52,6 +52,7 @@ export function CanvasPreviewPro({
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const frameCounterRef = useRef(0); // Explicit frame counter for buffer cadence
   const lastAudioSyncTimeRef = useRef<number>(0); // Track last audio sync to avoid drift
+  const audioStartedRef = useRef(false); // Track if audio has been started (delayed until first frame)
 
   const [isReady, setIsReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; total: number }>({
@@ -694,6 +695,7 @@ export function CanvasPreviewPro({
         frameCounterRef.current = 0;
         startTimeRef.current = currentTime;
         lastAudioSyncTimeRef.current = currentTime;
+        audioStartedRef.current = false; // Reset audio started flag
 
         // Pre-buffer frames before starting playback
         const videoItems = items
@@ -714,8 +716,19 @@ export function CanvasPreviewPro({
         compositor.setLayerProvider(buildLayers);
         
         // Set up time callback to notify parent AND sync audio
+        // CRITICAL: Audio starts on FIRST frame, not immediately
+        // This prevents the ~0.4s drift from audio starting before video is ready
         compositor.setOnTimeUpdate(time => {
           onTimeUpdateRef.current?.(time);
+          
+          // Start audio on first frame to prevent initial drift
+          if (!audioStartedRef.current) {
+            audioStartedRef.current = true;
+            lastAudioSyncTimeRef.current = time;
+            syncAudioToTime(time, true);
+            console.log(`[CanvasPreviewPro] Audio started on first frame at ${time.toFixed(2)}s`);
+            return;
+          }
           
           // Sync audio periodically (every 0.4s - less frequent = smoother playback)
           // Audio sync now uses playback rate adjustment for small drifts, so frequent checks aren't needed
@@ -728,13 +741,13 @@ export function CanvasPreviewPro({
         // Seek compositor to current position before starting
         compositor.seek(startTimeRef.current);
         
-        // Start audio playback at current position
-        syncAudioToTime(startTimeRef.current, true);
+        // DON'T start audio immediately - wait for first frame callback above
+        // This prevents the ~0.4s drift from audio starting before video decoder is ready
         
         // Start playback (compositor manages its own RAF loop)
         compositor.play();
         
-        console.log(`[CanvasPreviewPro] Started playback with audio at ${startTimeRef.current.toFixed(2)}s`);
+        console.log(`[CanvasPreviewPro] Started playback, audio will start on first frame`);
       }
       // If already playing, just update the layer provider (items may have changed)
       else {

@@ -110,6 +110,15 @@ export class WorkerManager {
         console.log(`[WORKER:${tag}] ${message}`);
         break;
 
+      case 'hwAccelStatus':
+        // Hardware acceleration status from worker
+        const hwAccel = event.data.hardwareAcceleration || 'unknown';
+        const codec = event.data.codec || 'unknown';
+        const isHardware = hwAccel === 'prefer-hardware';
+        console.log(`%c[WorkerManager] HW ACCEL: ${videoId?.slice(0,8)} → ${isHardware ? '🟢 GPU' : '🔴 CPU'} (${hwAccel}) codec=${codec}`, 
+          isHardware ? 'color: green; font-weight: bold' : 'color: red; font-weight: bold');
+        break;
+
       case 'loading':
         this.config.onProgress?.(videoId, progress || 0);
         break;
