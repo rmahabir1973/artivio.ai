@@ -452,6 +452,20 @@ class VideoDecoderWorker {
       videoState.chunks = chunks;
       this.sendMessage({ type: 'loading', videoId, progress: 75 });
 
+      // Create a blob URL from the fetched data for audio playback
+      // This eliminates network latency during audio playback - audio will play from local memory
+      const videoBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
+      const blobUrl = URL.createObjectURL(videoBlob);
+      
+      // Send blob URL to main thread for audio elements
+      this.sendMessage({
+        type: 'blobUrl',
+        videoId,
+        blobUrl,
+      });
+      
+      this.debug('BLOB_CREATED', `${videoId.slice(0,8)} blobUrl created, size=${(arrayBuffer.byteLength / 1024 / 1024).toFixed(2)}MB`);
+
       // Initialize decoder
       console.log(`[VideoDecoderWorker] ${videoId}: Initializing decoder...`);
       const decoder = await this.initializeDecoder(videoId, metadata, description);

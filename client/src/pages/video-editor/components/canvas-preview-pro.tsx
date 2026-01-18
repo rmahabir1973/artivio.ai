@@ -52,6 +52,7 @@ export function CanvasPreviewPro({
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const frameCounterRef = useRef(0); // Explicit frame counter for buffer cadence
   const lastAudioSyncTimeRef = useRef<number>(0); // Track last audio sync to avoid drift
+  const lastBufferLogTimeRef = useRef<number>(0); // Track last buffer health log to avoid spam
   const audioStartedRef = useRef(false); // Track if audio has been started (delayed until first frame)
 
   const [isReady, setIsReady] = useState(false);
@@ -315,12 +316,24 @@ export function CanvasPreviewPro({
     
     audioItems.forEach(item => {
       let audio = audioElementsRef.current.get(item.id);
-      const needsNewElement = !audio || audio.src !== item.url;
+      
+      // For video items, try to use the preloaded blob URL for instant playback from memory
+      // This eliminates network latency during audio playback
+      let audioUrl = item.url;
+      if (item.type === 'video' && workerManagerRef.current) {
+        const blobUrl = workerManagerRef.current.getBlobUrl(item.id);
+        if (blobUrl) {
+          audioUrl = blobUrl;
+          console.log(`%c[Audio] ${item.id.substring(0, 8)}: Using preloaded blob URL for audio (from memory)`, 'color: cyan');
+        }
+      }
+      
+      const needsNewElement = !audio || audio.src !== audioUrl;
       
       if (needsNewElement) {
         audio = document.createElement('audio');
         audio.id = `audio-${item.id}`;
-        audio.src = item.url;
+        audio.src = audioUrl;
         audio.crossOrigin = 'anonymous';
         audio.preload = 'auto';
         audio.loop = false;
@@ -740,6 +753,19 @@ export function CanvasPreviewPro({
           if (Math.abs(time - lastAudioSyncTimeRef.current) > 0.4) {
             lastAudioSyncTimeRef.current = time;
             syncAudioToTime(time, true);
+          }
+          
+          // Buffer depth monitoring - log every 2 seconds using timestamp ref (not modulo)
+          const now = performance.now();
+          if (!lastBufferLogTimeRef.current || now - lastBufferLogTimeRef.current > 2000) {
+            lastBufferLogTimeRef.current = now;
+            const videoItems = items.filter(item => item.type === 'video');
+            videoItems.forEach(item => {
+              const stats = workerManager.getBufferStats(item.id, time - item.startTime);
+              const healthIcon = stats.isHealthy ? '🟢' : '🔴';
+              console.log(`%c[BUFFER] ${healthIcon} ${item.id.substring(0,8)}: ${stats.cacheSize} frames, ${stats.bufferAhead.toFixed(1)}s ahead${!stats.isHealthy ? ' ⚠️ LOW BUFFER' : ''}`,
+                stats.isHealthy ? 'color: green' : 'color: red; font-weight: bold');
+            });
           }
         });
 

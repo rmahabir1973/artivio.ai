@@ -52,6 +52,10 @@ export class WorkerManager {
   // VideoFrames hold onto decoder's internal buffer pool - must be closed immediately after conversion
   private frameCache: Map<string, Map<number, ImageBitmap>> = new Map();
   private currentPlaybackTimeKey: Map<string, number> = new Map(); // Track playback position per video
+  
+  // Blob URLs for preloaded videos - used for audio playback from local memory
+  // This eliminates network latency during audio playback
+  private blobUrls: Map<string, string> = new Map();
 
   constructor(config: WorkerManagerConfig = {}) {
     this.config = config;
@@ -126,9 +130,20 @@ export class WorkerManager {
       case 'loaded':
         console.log(`[WorkerManager] Video loaded: ${videoId}`, metadata);
         this.loadedVideos.add(videoId);
+        this.loadingVideos.delete(videoId);
         if (metadata) {
           this.videoMetadata.set(videoId, metadata);
           this.config.onMetadata?.(videoId, metadata);
+        }
+        break;
+
+      case 'blobUrl':
+        // Store blob URL for audio playback from local memory
+        const blobUrl = event.data.blobUrl;
+        if (blobUrl && videoId) {
+          this.blobUrls.set(videoId, blobUrl);
+          console.log(`%c[WorkerManager] BLOB URL: ${videoId?.slice(0,8)} → Audio will play from local memory`, 
+            'color: cyan; font-weight: bold');
         }
         break;
 
@@ -445,6 +460,50 @@ export class WorkerManager {
   }
 
   /**
+   * Get blob URL for video (for audio playback from local memory)
+   * Returns null if video hasn't been preloaded yet
+   */
+  getBlobUrl(videoId: string): string | null {
+    return this.blobUrls.get(videoId) || null;
+  }
+
+  /**
+   * Get buffer depth stats for monitoring playback health
+   * Returns info about cached frames and decode status
+   */
+  getBufferStats(videoId: string, currentTime: number): {
+    cacheSize: number;
+    cachedRange: { min: number; max: number } | null;
+    bufferAhead: number;
+    isHealthy: boolean;
+  } {
+    const cache = this.frameCache.get(videoId);
+    const currentTimeKey = Math.round(currentTime * 30);
+    
+    if (!cache || cache.size === 0) {
+      return { cacheSize: 0, cachedRange: null, bufferAhead: 0, isHealthy: false };
+    }
+    
+    const keys = Array.from(cache.keys());
+    const minKey = Math.min(...keys);
+    const maxKey = Math.max(...keys);
+    
+    // Calculate how many frames are ahead of current playback
+    const framesAhead = keys.filter(k => k > currentTimeKey).length;
+    const bufferAhead = framesAhead / 30; // Convert to seconds
+    
+    // Consider buffer healthy if we have at least 0.5 seconds ahead
+    const isHealthy = bufferAhead >= 0.5;
+    
+    return {
+      cacheSize: cache.size,
+      cachedRange: { min: minKey / 30, max: maxKey / 30 },
+      bufferAhead,
+      isHealthy
+    };
+  }
+
+  /**
    * Apply effect to video using FFmpeg (lazy-loads FFmpeg worker)
    */
   applyEffect(
@@ -507,6 +566,14 @@ export class WorkerManager {
     }
     this.frameCache.delete(videoId);
 
+    // Revoke blob URL to prevent memory leak
+    const blobUrl = this.blobUrls.get(videoId);
+    if (blobUrl) {
+      URL.revokeObjectURL(blobUrl);
+      console.log(`[WorkerManager] Revoked blob URL for ${videoId.slice(0,8)}`);
+    }
+    this.blobUrls.delete(videoId);
+
     this.loadedVideos.delete(videoId);
     this.videoMetadata.delete(videoId);
   }
@@ -522,6 +589,13 @@ export class WorkerManager {
     });
     this.frameCache.clear();
 
+    // Revoke all blob URLs to prevent memory leaks
+    this.blobUrls.forEach((url, videoId) => {
+      URL.revokeObjectURL(url);
+      console.log(`[WorkerManager] Revoked blob URL for ${videoId.slice(0,8)}`);
+    });
+    this.blobUrls.clear();
+
     // Terminate workers
     this.videoDecoderWorker?.terminate();
     this.ffmpegWorker?.terminate();
@@ -531,6 +605,7 @@ export class WorkerManager {
 
     this.loadedVideos.clear();
     this.videoMetadata.clear();
+    this.loadingVideos.clear();
   }
 
   /**
