@@ -81,11 +81,21 @@ class VideoDecoderWorker {
     this.sendMessage({ type: 'debug', tag, message: msg });
   }
 
+  // Throttling for per-frame logs
+  private lastMsgRecvLogTime = 0;
+  private lastBufferLogTime = 0;
+
   private async handleMessage(event: MessageEvent<DecoderMessage>): Promise<void> {
     const { type, videoId, url, time, items } = event.data;
 
-    // Send debug to main thread (since worker console may not be visible)
-    this.debug('MSG_RECV', `type=${type} videoId=${videoId?.slice(0,8)} time=${time?.toFixed(2)} items=${items?.length}`);
+    // Throttle MSG_RECV debug log to once per second (was every frame = 30+ per second)
+    const now = performance.now();
+    if (type !== 'load' && type !== 'destroy' && now - this.lastMsgRecvLogTime < 1000) {
+      // Skip logging for high-frequency messages
+    } else {
+      this.lastMsgRecvLogTime = now;
+      this.debug('MSG_RECV', `type=${type} videoId=${videoId?.slice(0,8)} time=${time?.toFixed(2)} items=${items?.length}`);
+    }
 
     try {
       switch (type) {

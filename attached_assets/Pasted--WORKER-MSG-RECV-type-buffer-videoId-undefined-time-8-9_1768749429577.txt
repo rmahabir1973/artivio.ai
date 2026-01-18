@@ -1,0 +1,163 @@
+[WORKER:MSG_RECV] type=buffer videoId=undefined time=8.99 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WebGLCompositor] animate: time=9.02s, hasLayerProvider=true
+index-1dj99nZP.js:1454 [WorkerManager] bufferFrames called at time 9.02s for 3 items, worker=true
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.02 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:BUFFER] time=9.02s items=3 videos=[ff55d5ae:ready=true,idx=299, 3549897f:ready=true,idx=191, 4334c4f2:ready=undefined,idx=undefined]
+index-1dj99nZP.js:1454 [WORKER:BUFFER_SKIP] ff55d5ae out of range timeInClip=9.02
+index-1dj99nZP.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=6.25s lastDecoded=8.00s
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+index-1dj99nZP.js:1454 [WORKER:BUFFER_SKIP] 4334c4f2 not ready isReady=undefined exists=false
+9index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.06 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.09 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1677 [Audio] 3549897f SEEK 6.35s (drift=-0.44s)
+index-1dj99nZP.js:1677  [Audio] 3549897f NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-1dj99nZP.js:1677
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.13 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768749255913_q2uh21sb4: canplay (readyState=4)
+index-1dj99nZP.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768749255913_q2uh21sb4: canplaythrough - READY TO PLAY
+5index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.16 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+9index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.19 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.22 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+8index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.26 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.29 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+8index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WorkerManager] getFrame: 4334c4f2 t=3.03 NO CACHE (empty)
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.33 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+8index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.36 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+9index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.39 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.42 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+9index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1677 [buildLayers] time=9.46s, hasAnyMissingFrame=true, videoItems=3
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.46 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.49 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+9index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.53 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1677 [Audio] 3549897f SEEK 6.78s (drift=-0.43s)
+index-1dj99nZP.js:1677  [Audio] 3549897f NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-1dj99nZP.js:1677
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.56 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+5index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768749255913_q2uh21sb4: canplay (readyState=4)
+index-1dj99nZP.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768749255913_q2uh21sb4: canplaythrough - READY TO PLAY
+2index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.59 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+8index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.62 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+9index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.66 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.69 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+11index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.73 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+8index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.76 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+9index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WorkerManager] getFrame: 3549897f t=7.02 key=211 cache=[2-239] size=190 found=true at 211
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.79 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+5index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.82 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.86 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+8index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.89 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+8index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.93 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+7index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.96 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+6index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1677 [Audio] 3549897f SEEK 7.22s (drift=-0.44s)
+index-1dj99nZP.js:1677  [Audio] 3549897f NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-1dj99nZP.js:1677
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.99 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+5index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WebGLCompositor] animate: time=10.02s, hasLayerProvider=true
+index-1dj99nZP.js:1454 [WorkerManager] bufferFrames called at time 10.02s for 3 items, worker=true
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.02 items=3
+index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:BUFFER] time=10.02s items=3 videos=[ff55d5ae:ready=true,idx=299, 3549897f:ready=true,idx=191, 4334c4f2:ready=undefined,idx=undefined]
+index-1dj99nZP.js:1454 [WORKER:BUFFER_SKIP] ff55d5ae out of range timeInClip=10.02
+index-1dj99nZP.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=7.25s lastDecoded=8.00s
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+index-1dj99nZP.js:1454 [WORKER:BUFFER_SKIP] 4334c4f2 not ready isReady=undefined exists=false
+6index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768749255913_q2uh21sb4: canplay (readyState=4)
+index-1dj99nZP.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768749255913_q2uh21sb4: canplaythrough - READY TO PLAY
+2index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.06 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+5index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.09 items=3
+index-1dj99nZP.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+631index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+1997index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
+index-1dj99nZP.js:993 [AUTH] ✓ User data refreshed (credits updated)
+5679index-1dj99nZP.js:1677 [CanvasPreviewPro] Skipping 4334c4f2-c147-44af-9f55-5813878f8569_1768749350808_kcm4nbqqm (max retries exceeded or in cooldown)
