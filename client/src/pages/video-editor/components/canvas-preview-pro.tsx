@@ -381,7 +381,10 @@ export function CanvasPreviewPro({
     audioElementsRef.current.forEach((audio, id) => {
       if (!newAudioElements.has(id)) {
         audio.pause();
-        audio.src = '';
+        // Don't set src = '' as it triggers Firefox "Invalid URI" errors
+        // Instead, remove src attribute entirely
+        audio.removeAttribute('src');
+        audio.load(); // Reset the audio element state
         audio.remove(); // Remove from DOM
       }
     });
@@ -402,7 +405,9 @@ export function CanvasPreviewPro({
       // Pause and cleanup all audio elements on unmount
       audioElementsRef.current.forEach(audio => {
         audio.pause();
-        audio.src = '';
+        // Don't set src = '' as it triggers Firefox "Invalid URI" errors
+        audio.removeAttribute('src');
+        audio.load();
         audio.remove();
       });
       audioElementsRef.current.clear();
