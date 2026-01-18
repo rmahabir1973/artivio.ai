@@ -495,8 +495,8 @@ export class WorkerManager {
     const framesAhead = keys.filter(k => k > currentTimeKey).length;
     const bufferAhead = framesAhead / 30; // Convert to seconds
     
-    // Consider buffer healthy if we have at least 0.5 seconds ahead
-    const isHealthy = bufferAhead >= 0.5;
+    // Consider buffer healthy if we have at least 1.5 seconds ahead (increased from 0.5s for slower connections)
+    const isHealthy = bufferAhead >= 1.5;
     
     return {
       cacheSize: cache.size,

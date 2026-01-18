@@ -2,7 +2,7 @@
  * Video Decoder Web Worker
  * Based on W3C WebCodecs samples: https://github.com/w3c/webcodecs/tree/main/samples/video-decode-display
  * Uses MP4Box.js for demuxing and WebCodecs VideoDecoder for hardware-accelerated decoding
- * BUILD_TIMESTAMP: 2025-01-17T06:00:00Z - v18-imagebitmap-fix
+ * BUILD_TIMESTAMP: 2025-01-18T16:00:00Z - v19-increased-buffer
  */
 
 // @ts-ignore - MP4Box types not available
@@ -63,7 +63,7 @@ class VideoDecoderWorker {
 
   constructor() {
     self.addEventListener('message', this.handleMessage.bind(this));
-    console.warn('[VideoDecoderWorker] *** NEW WORKER v18-imagebitmap-fix ***');
+    console.warn('[VideoDecoderWorker] *** NEW WORKER v19-increased-buffer ***');
     this.sendMessage({ type: 'ready' });
   }
 
@@ -564,8 +564,9 @@ class VideoDecoderWorker {
 
       this.debug('INIT_START', `${videoId.slice(0,8)} keyframeIdx=${keyframeIndex} chunks=${video.chunks.length}`);
 
-      // Decode first 30 frames (about 1 second at 30fps) for initial buffer
-      const framesToDecode = Math.min(30, video.chunks.length - keyframeIndex);
+      // Decode first 90 frames (about 3 seconds at 30fps) for initial buffer
+      // Increased from 30 frames to improve playback on slower connections
+      const framesToDecode = Math.min(90, video.chunks.length - keyframeIndex);
       let lastIndex = keyframeIndex - 1;
       let lastTimestamp = -1;
       let decodedCount = 0;
@@ -617,7 +618,8 @@ class VideoDecoderWorker {
     // The decoder queues frames internally - they're not available until output callback fires
     const actualBuffer = video.lastOutputTimestamp; // What we actually have
     const bufferAhead = actualBuffer - time;
-    const needsMoreFrames = actualBuffer < 0 || bufferAhead < 2.0;
+    // Target 3 seconds of buffer ahead (increased from 2.0 for slower connections)
+    const needsMoreFrames = actualBuffer < 0 || bufferAhead < 3.0;
     
     if (!needsMoreFrames) {
       // Plenty of buffer, skip decoding (log once per second)
