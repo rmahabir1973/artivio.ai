@@ -1,0 +1,1579 @@
+[WorkerManager] Initializing with worker version: 2025-01-17T0600-v18-imagebitmap-fix
+index-DhaUmHvD.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-DhaUmHvD.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-DhaUmHvD.js:993 [AUTH] Initializing auth
+index-DhaUmHvD.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+js?id=G-CZTBEZMW26:222 Fetch failed loading: POST "https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je61e1v9234443866za200zd9234443866&_p=1768701519901&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1748807065.1768694360&ul=en-us&sr=971x811&uaa=&uab=64&uafvl=Google%2520Chrome%3B143.0.7499.193%7CChromium%3B143.0.7499.193%7CNot%2520A(Brand%3B24.0.0.0&uamb=1&uam=Nexus%205&uap=Android&uapv=6.0&uaw=0&are=1&frm=0&pscdl=noapi&_eu=AAAAAAQ&_s=1&tag_exp=103116026~103200004~104527906~104528501~104684208~104684211~105391252~115938466~115938468~116744866~117041588&sid=1768701518&sct=3&seg=1&dl=https%3A%2F%2Fartivio.ai%2Fvideo-editor&dr=https%3A%2F%2Fartivio.ai%2F&dt=Artivio%20AI%20-%20AI%20Content%20Generation%20Platform&en=page_view&_ee=1&tfd=1344".
+bd @ js?id=G-CZTBEZMW26:222
+zl @ js?id=G-CZTBEZMW26:376
+aO @ js?id=G-CZTBEZMW26:859
+k.flush @ js?id=G-CZTBEZMW26:867
+k.Pb @ js?id=G-CZTBEZMW26:864
+k.add @ js?id=G-CZTBEZMW26:866
+k.jn @ js?id=G-CZTBEZMW26:883
+k.Nr @ js?id=G-CZTBEZMW26:883
+(anonymous) @ js?id=G-CZTBEZMW26:881
+Tl @ js?id=G-CZTBEZMW26:387
+Tn @ js?id=G-CZTBEZMW26:407
+(anonymous) @ js?id=G-CZTBEZMW26:881
+c @ js?id=G-CZTBEZMW26:812
+WJ @ js?id=G-CZTBEZMW26:812
+k.Mr @ js?id=G-CZTBEZMW26:881
+b @ js?id=G-CZTBEZMW26:891
+v @ js?id=G-CZTBEZMW26:433
+bm @ js?id=G-CZTBEZMW26:389
+aq @ js?id=G-CZTBEZMW26:433
+$p.flush @ js?id=G-CZTBEZMW26:437
+$p.push @ js?id=G-CZTBEZMW26:435
+Rp @ js?id=G-CZTBEZMW26:429
+fB.event @ js?id=G-CZTBEZMW26:677
+BB @ js?id=G-CZTBEZMW26:683
+EB.b.push @ js?id=G-CZTBEZMW26:689
+xB @ js?id=G-CZTBEZMW26:690
+FB @ js?id=G-CZTBEZMW26:690
+nI @ js?id=G-CZTBEZMW26:792
+iI @ js?id=G-CZTBEZMW26:791
+(anonymous) @ js?id=G-CZTBEZMW26:795
+setTimeout
+Uc @ js?id=G-CZTBEZMW26:218
+qI @ js?id=G-CZTBEZMW26:795
+(anonymous) @ js?id=G-CZTBEZMW26:309
+k.apply @ js?id=G-CZTBEZMW26:234
+$a @ js?id=G-CZTBEZMW26:196
+zd.evaluate @ js?id=G-CZTBEZMW26:236
+Ud @ js?id=G-CZTBEZMW26:251
+k.apply @ js?id=G-CZTBEZMW26:234
+$a @ js?id=G-CZTBEZMW26:196
+Ya @ js?id=G-CZTBEZMW26:195
+(anonymous) @ js?id=G-CZTBEZMW26:258
+k.apply @ js?id=G-CZTBEZMW26:234
+$a @ js?id=G-CZTBEZMW26:196
+k.Kp @ js?id=G-CZTBEZMW26:198
+gf @ js?id=G-CZTBEZMW26:269
+(anonymous) @ js?id=G-CZTBEZMW26:708
+hg @ js?id=G-CZTBEZMW26:284
+e @ js?id=G-CZTBEZMW26:654
+kA @ js?id=G-CZTBEZMW26:655
+oA @ js?id=G-CZTBEZMW26:660
+BB @ js?id=G-CZTBEZMW26:684
+DB @ js?id=G-CZTBEZMW26:686
+setTimeout
+Uc @ js?id=G-CZTBEZMW26:218
+EB @ js?id=G-CZTBEZMW26:689
+Jm @ js?id=G-CZTBEZMW26:968
+(anonymous) @ js?id=G-CZTBEZMW26:972
+c @ js?id=G-CZTBEZMW26:970
+(anonymous) @ js?id=G-CZTBEZMW26:972
+(anonymous) @ js?id=G-CZTBEZMW26:972
+(anonymous) @ js?id=G-CZTBEZMW26:974
+index-DhaUmHvD.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated {hasToken: true, hasUser: true, userId: '49729939'}
+33Fetch finished loading: GET "<URL>".
+index-DhaUmHvD.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-DhaUmHvD.js:1677 [VIDEO-EDITOR] Session restored from localStorage
+[Violation] Forced reflow while executing JavaScript took 41ms
+index-DhaUmHvD.js:1677 [CanvasPreviewPro] Loading video ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-ff55d5ae-9d1e-4421-b334-adaaaf79c3bf.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T010142Z&X-Amz-Expires=604800&X-Amz-Signature=5b349bc967aec78b163db2e4888368e4231aca4a1aba96ab7d06da4f6da2b4d7&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-DhaUmHvD.js:1677 [CanvasPreviewPro] Audio setup: 2 items need audio
+index-DhaUmHvD.js:1677 [Audio] Created element for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: https://artivio-video-exports.s3.us-east-1.amazonaws.com/vid...
+index-DhaUmHvD.js:1677 [Audio] Created element for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: https://artivio-video-exports.s3.us-east-1.amazonaws.com/vid...
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng still loading...
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+JA @ index-DhaUmHvD.js:40
+Gg @ index-DhaUmHvD.js:40
+L$ @ index-DhaUmHvD.js:40
+Tm @ index-DhaUmHvD.js:38
+mve @ index-DhaUmHvD.js:40
+nf @ index-DhaUmHvD.js:40
+YX @ index-DhaUmHvD.js:40
+S @ index-DhaUmHvD.js:25
+L @ index-DhaUmHvD.js:25Understand this warning
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v still loading...
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+JA @ index-DhaUmHvD.js:40
+Gg @ index-DhaUmHvD.js:40
+L$ @ index-DhaUmHvD.js:40
+Tm @ index-DhaUmHvD.js:38
+mve @ index-DhaUmHvD.js:40
+nf @ index-DhaUmHvD.js:40
+YX @ index-DhaUmHvD.js:40
+S @ index-DhaUmHvD.js:25
+L @ index-DhaUmHvD.js:25Understand this warning
+55[Violation] 'message' handler took <N>ms
+index-DhaUmHvD.js:1677 [CanvasPreviewPro] Loading video 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/3549897f-64ce-4518-b9f4-dcc559461afa-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T010142Z&X-Amz-Expires=604800&X-Amz-Signature=81a76e7be2c88adaf762fe77aad534845808d45b3840a0f043fa4df0c1d74570&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Worker initialized
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] *** NEW WORKER v18-imagebitmap-fix ***
+Yl @ video-decoder.worker-BCbVqjxq.js:1
+(anonymous) @ video-decoder.worker-BCbVqjxq.js:1
+(anonymous) @ video-decoder.worker-BCbVqjxq.js:1Understand this warning
+index-DhaUmHvD.js:1454 FFmpeg worker ready
+index-DhaUmHvD.js:1454 Video decoder worker ready
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-exports/optimized-ff55d5ae-9d1e-4421-b334-adaaaf79c3bf.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T010142Z&X-Amz-Expires=604800&X-Amz-Signature=5b349bc967aec78b163db2e4888368e4231aca4a1aba96ab7d06da4f6da2b4d7&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/3549897f-64ce-4518-b9f4-dcc559461afa-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T010142Z&X-Amz-Expires=604800&X-Amz-Signature=81a76e7be2c88adaf762fe77aad534845808d45b3840a0f043fa4df0c1d74570&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-DhaUmHvD.js:1454 Initializing FFmpeg WASM...
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=load videoId=ff55d5ae time=undefined items=undefined
+index-DhaUmHvD.js:1677 Loading ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: 0%
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=load videoId=3549897f time=undefined items=undefined
+index-DhaUmHvD.js:1677 Loading 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: 0%
+5Fetch finished loading: GET "<URL>".
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: metadata loaded, duration=10.10s
+index-DhaUmHvD.js:1677 [DURATION] Loaded video clip ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: 10.1s
+index-DhaUmHvD.js:1677 Loading ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: 50%
+index-DhaUmHvD.js:1677 [DURATION] Loaded video clip 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: 8s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: Found track - 1280x720, codec: avc1.64001f, duration: 10.101s, track timescale: 15360
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: Codec description extracted, 46 bytes
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: Received 300 samples (total now: 300)
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: All 300 samples extracted
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: Initializing decoder...
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: Video loaded successfully with 300 chunks
+index-DhaUmHvD.js:1677 Loading ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: 75%
+index-DhaUmHvD.js:1454 [WORKER:INIT_START] ff55d5ae keyframeIdx=0 chunks=300
+index-DhaUmHvD.js:1454 [WORKER:INIT_DECODED] ff55d5ae count=30 lastTs=1.07s queueSize=30
+index-DhaUmHvD.js:1454 [WORKER:INIT_DONE] ff55d5ae ready for playback, will continue decoding on demand
+index-DhaUmHvD.js:1454 [WorkerManager] Video loaded: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng {duration: 10.101, width: 1280, height: 720, frameRate: 29.7000297000297, hasVideo: true, …}
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: metadata loaded, duration=8.00s
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.233333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.3
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.366666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.466666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.533333
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: Found track - 1280x720, codec: avc1.64001f, duration: 8s, track timescale: 12288
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: Codec description extracted, 46 bytes
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: Received 192 samples (total now: 192)
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: All 192 samples extracted
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: Initializing decoder...
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: Video loaded successfully with 192 chunks
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.633333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.766666
+index-DhaUmHvD.js:1677 Loading 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: 50%
+index-DhaUmHvD.js:1677 Loading 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: 75%
+index-DhaUmHvD.js:1454 [WORKER:INIT_START] 3549897f keyframeIdx=0 chunks=192
+index-DhaUmHvD.js:1454 [WORKER:INIT_DECODED] 3549897f count=30 lastTs=1.38s queueSize=30
+index-DhaUmHvD.js:1454 [WORKER:INIT_DONE] 3549897f ready for playback, will continue decoding on demand
+index-DhaUmHvD.js:1454 [WorkerManager] Video loaded: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v {duration: 8, width: 1280, height: 720, frameRate: 24, hasVideo: true, …}
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.866666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.9
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.083333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.125
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.166666
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Initialization failed: Error: failed to import ffmpeg-core.js
+(anonymous) @ ffmpeg.worker-CZr_Gk2J.js:1
+await in (anonymous)
+initialize @ ffmpeg.worker-CZr_Gk2J.js:1
+handleMessage @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+ffmpeg.worker-CZr_Gk2J.js:1 [FFmpegWorker] Task undefined failed: Error: failed to import ffmpeg-core.js
+handleMessage @ ffmpeg.worker-CZr_Gk2J.js:1Understand this error
+index-DhaUmHvD.js:1454 FFmpeg error: Error: failed to import ffmpeg-core.js
+handleFFmpegMessage @ index-DhaUmHvD.js:1454Understand this error
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.208333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.25
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplay (readyState=4)
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.291666
+shared-c4942301eb10ece437f4db5c4ea98f1f.js:1 Fetch finished loading: POST "https://r.stripe.com/b".
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+e @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+c @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+setTimeout
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+Promise.then
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+e @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+value @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+e @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+8438 @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+e @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+(anonymous) @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+e.O @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+(anonymous) @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+(anonymous) @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+shared-c4942301eb10ece437f4db5c4ea98f1f.js:1 Fetch finished loading: POST "https://r.stripe.com/b".
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+e @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+c @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+setTimeout
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+Promise.then
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+log @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+log @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+e @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+8438 @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+e @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+(anonymous) @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+e.O @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+(anonymous) @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+(anonymous) @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.333333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.375
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.416666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.933333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 0.966666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.458333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.5
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.541666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.583333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.625
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.666666
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplay (readyState=3)
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.708333
+out-4.5.45.js:1 XHR finished loading: POST "https://m.stripe.com/6".
+(anonymous) @ out-4.5.45.js:1
+i @ out-4.5.45.js:1
+s @ out-4.5.45.js:1
+(anonymous) @ out-4.5.45.js:1
+(anonymous) @ out-4.5.45.js:1
+Promise.then
+S @ out-4.5.45.js:1
+y @ out-4.5.45.js:1
+E @ out-4.5.45.js:1
+e.onload @ inner.html:1
+script
+(anonymous) @ inner.html:1
+(anonymous) @ inner.html:1
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.75
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.791666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.875
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.916666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 0.958333
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: 3549897f ts=1.00s key=30 cacheSize=22
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.041666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.083333
+index-DhaUmHvD.js:1677 [VIDEO-EDITOR] Session auto-saved to localStorage
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.125
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.166666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.208333
+js?id=G-CZTBEZMW26:222 Fetch failed loading: POST "https://www.google-analytics.com/g/collect?v=2&tid=G-CZTBEZMW26&gtm=45je61e1v9234443866za200zd9234443866&_p=1768701519901&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1748807065.1768694360&ul=en-us&sr=971x811&uaa=&uab=64&uafvl=Google%2520Chrome%3B143.0.7499.193%7CChromium%3B143.0.7499.193%7CNot%2520A(Brand%3B24.0.0.0&uamb=1&uam=Nexus%205&uap=Android&uapv=6.0&uaw=0&are=1&frm=0&pscdl=noapi&_eu=AEAAAAQ&_s=2&tag_exp=103116026~103200004~104527906~104528501~104684208~104684211~105391252~115938466~115938468~116744866~117041588&sid=1768701518&sct=3&seg=1&dl=https%3A%2F%2Fartivio.ai%2Fvideo-editor&dr=https%3A%2F%2Fartivio.ai%2F&dt=Artivio%20AI%20-%20AI%20Content%20Generation%20Platform&en=scroll&epn.percent_scrolled=90&tfd=7288".
+bd @ js?id=G-CZTBEZMW26:222
+zl @ js?id=G-CZTBEZMW26:376
+aO @ js?id=G-CZTBEZMW26:859
+k.flush @ js?id=G-CZTBEZMW26:867
+(anonymous) @ js?id=G-CZTBEZMW26:864
+setTimeout
+k.Pb @ js?id=G-CZTBEZMW26:864
+k.add @ js?id=G-CZTBEZMW26:866
+k.jn @ js?id=G-CZTBEZMW26:883
+k.Nr @ js?id=G-CZTBEZMW26:883
+(anonymous) @ js?id=G-CZTBEZMW26:881
+Tl @ js?id=G-CZTBEZMW26:387
+Tn @ js?id=G-CZTBEZMW26:407
+(anonymous) @ js?id=G-CZTBEZMW26:881
+c @ js?id=G-CZTBEZMW26:812
+WJ @ js?id=G-CZTBEZMW26:812
+k.Mr @ js?id=G-CZTBEZMW26:881
+b @ js?id=G-CZTBEZMW26:891
+v @ js?id=G-CZTBEZMW26:433
+bm @ js?id=G-CZTBEZMW26:389
+aq @ js?id=G-CZTBEZMW26:433
+$p.flush @ js?id=G-CZTBEZMW26:437
+$p.push @ js?id=G-CZTBEZMW26:435
+Rp @ js?id=G-CZTBEZMW26:429
+fB.event @ js?id=G-CZTBEZMW26:677
+BB @ js?id=G-CZTBEZMW26:683
+EB.b.push @ js?id=G-CZTBEZMW26:689
+xB @ js?id=G-CZTBEZMW26:690
+FB @ js?id=G-CZTBEZMW26:690
+nI @ js?id=G-CZTBEZMW26:792
+iI @ js?id=G-CZTBEZMW26:791
+(anonymous) @ js?id=G-CZTBEZMW26:795
+setTimeout
+Uc @ js?id=G-CZTBEZMW26:218
+qI @ js?id=G-CZTBEZMW26:795
+(anonymous) @ js?id=G-CZTBEZMW26:309
+k.apply @ js?id=G-CZTBEZMW26:234
+$a @ js?id=G-CZTBEZMW26:196
+zd.evaluate @ js?id=G-CZTBEZMW26:236
+Ud @ js?id=G-CZTBEZMW26:251
+k.apply @ js?id=G-CZTBEZMW26:234
+$a @ js?id=G-CZTBEZMW26:196
+Ya @ js?id=G-CZTBEZMW26:195
+(anonymous) @ js?id=G-CZTBEZMW26:258
+k.apply @ js?id=G-CZTBEZMW26:234
+$a @ js?id=G-CZTBEZMW26:196
+k.Kp @ js?id=G-CZTBEZMW26:198
+gf @ js?id=G-CZTBEZMW26:269
+(anonymous) @ js?id=G-CZTBEZMW26:708
+hg @ js?id=G-CZTBEZMW26:284
+e @ js?id=G-CZTBEZMW26:654
+kA @ js?id=G-CZTBEZMW26:655
+oA @ js?id=G-CZTBEZMW26:660
+BB @ js?id=G-CZTBEZMW26:684
+DB @ js?id=G-CZTBEZMW26:686
+setTimeout
+Uc @ js?id=G-CZTBEZMW26:218
+EB @ js?id=G-CZTBEZMW26:689
+Jm @ js?id=G-CZTBEZMW26:968
+(anonymous) @ js?id=G-CZTBEZMW26:972
+c @ js?id=G-CZTBEZMW26:970
+(anonymous) @ js?id=G-CZTBEZMW26:972
+(anonymous) @ js?id=G-CZTBEZMW26:972
+(anonymous) @ js?id=G-CZTBEZMW26:974
+shared-c4942301eb10ece437f4db5c4ea98f1f.js:1 Fetch finished loading: POST "https://r.stripe.com/b".
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+e @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+c @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+7index-DhaUmHvD.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-DhaUmHvD.js:1677 [VIDEO-EDITOR] Session auto-saved to localStorage
+3index-DhaUmHvD.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-DhaUmHvD.js:1677 [VIDEO-EDITOR] Session auto-saved to localStorage
+3index-DhaUmHvD.js:993 [AUTH] ✓ User data refreshed (credits updated)
+shared-c4942301eb10ece437f4db5c4ea98f1f.js:1 Fetch finished loading: POST "https://r.stripe.com/b".
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+e @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+c @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+setTimeout
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+(anonymous) @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+value @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+log @ shared-c4942301eb10ece437f4db5c4ea98f1f.js:1
+log @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+Se @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+(anonymous) @ controller-with-preconnect-4649275a94eb4ec4554b22f79260a062.js:1
+index-DhaUmHvD.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=2
+index-DhaUmHvD.js:1677 [Audio Sync] time=0.00s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng ACTIVE: readyState=4, paused=true, currentTime=0.00, targetTime=0.00, volume=1
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng calling PLAY...
+index-DhaUmHvD.js:1677 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-DhaUmHvD.js:1677 [WebGLCompositor] Starting animation loop
+index-DhaUmHvD.js:1677 [CanvasPreviewPro] Started playback with audio at 0.00s
+index-DhaUmHvD.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=0.00 key=0 cache=[2-29] size=28 found=true at 2
+index-DhaUmHvD.js:1454 [WebGLCompositor] animate: time=0.02s, hasLayerProvider=true
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=0.02 key=0 cache=[2-29] size=28 found=true at 2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: PLAY EVENT started
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng PLAY SUCCESS!
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[ff55d5ae:ready=true,idx=29, 3549897f:ready=true,idx=29]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] ff55d5ae localTime=0.00s lastDecoded=1.07s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=30
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] ff55d5ae decoded=60 idx=89/300 ts=3.07s
+index-DhaUmHvD.js:1454 Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] 3549897f out of range timeInClip=-6.85
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=1.00s key=30 cacheSize=28
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.033333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.233333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.3
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.366666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.466666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.533333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.633333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.766666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.866666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.9
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=1.09 key=33 cache=[2-57] size=56 found=true at 33
+index-DhaUmHvD.js:1677 [Audio Sync] time=1.09s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng ACTIVE: readyState=4, paused=false, currentTime=0.00, targetTime=1.09, volume=1
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng SEEK to 1.09s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=1.138600000000035, items=2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.933333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 1.966666
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.14 items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=1.14s items=2 videos=[ff55d5ae:ready=true,idx=89, 3549897f:ready=true,idx=29]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] ff55d5ae localTime=1.14s lastDecoded=3.07s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=90
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] ff55d5ae decoded=33 idx=122/300 ts=4.17s
+index-DhaUmHvD.js:1454 Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] 3549897f out of range timeInClip=-5.71
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=2.00s key=60 cacheSize=58
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.033333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.233333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.3
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.366666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.466666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.533333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.566666
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=2.52 key=76 cache=[2-77] size=76 found=true at 76
+index-DhaUmHvD.js:1677 [Audio Sync] time=2.52s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng ACTIVE: readyState=4, paused=false, currentTime=2.32, targetTime=2.52, volume=1
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng SEEK to 2.52s
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplay (readyState=1)
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.633333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.766666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.866666
+index-DhaUmHvD.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.9
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.933333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 2.966666
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=3.00s key=90 cacheSize=88
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.033333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.233333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.266666
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=4.08 key=122 cache=[2-98] size=97 found=true at 98
+index-DhaUmHvD.js:1677 [Audio Sync] time=4.08s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng ACTIVE: readyState=4, paused=false, currentTime=3.86, targetTime=4.08, volume=1
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng SEEK to 4.08s
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.3
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.366666
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplay (readyState=1)
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=4.119600000000035, items=2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.466666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.5
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.12 items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=4.12s items=2 videos=[ff55d5ae:ready=true,idx=122, 3549897f:ready=true,idx=29]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] ff55d5ae localTime=4.12s lastDecoded=4.17s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=123
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] ff55d5ae decoded=87 idx=209/300 ts=7.13s
+index-DhaUmHvD.js:1454 Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] 3549897f out of range timeInClip=-2.73
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.533333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.633333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.766666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.866666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.9
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplay (readyState=4)
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.933333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 3.966666
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=5.93 key=178 cache=[2-119] size=118 found=false
+index-DhaUmHvD.js:1677 [Audio Sync] time=5.93s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng ACTIVE: readyState=4, paused=false, currentTime=5.75, targetTime=5.93, volume=1
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=5.929499999999999, items=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng SEEK to 5.93s
+index-DhaUmHvD.js:1677 [VIDEO-EDITOR] Session auto-saved to localStorage
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.93 items=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=5.936700000000011, items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=5.93s items=2 videos=[ff55d5ae:ready=true,idx=209, 3549897f:ready=true,idx=29]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] ff55d5ae localTime=5.93s lastDecoded=7.13s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=210
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] ff55d5ae decoded=54 idx=263/300 ts=8.93s
+index-DhaUmHvD.js:1454 Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=-0.92s lastDecoded=1.38s
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.94 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=264
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] ff55d5ae decoded=4 idx=267/300 ts=9.07s
+index-DhaUmHvD.js:1454 Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=4.00s key=120 cacheSize=118
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.033333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.066666
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=5.968499999999999, items=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.97 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=268
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] ff55d5ae decoded=1 idx=268/300 ts=9.00s
+index-DhaUmHvD.js:1454 Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+ [WebGLCompositor] animate: time=6.02s, hasLayerProvider=true
+ [WorkerManager] getFrame: ff55d5ae t=6.02 key=181 cache=[2-122] size=121 found=false
+ [WorkerManager] bufferFrames called at time 6.02s for 2 items, worker=true
+ [VideoDecoderWorker] Received buffer message: time=6.023100000000034, items=2
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.1
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.133333
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.166666
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.02 items=2
+ [WORKER:BUFFER] time=6.02s items=2 videos=[ff55d5ae:ready=true,idx=268, 3549897f:ready=true,idx=29]
+ [WORKER:BUFFER_SEEK] ff55d5ae localTime=6.02s lastDecoded=9.00s
+ [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=269
+ [WORKER:SEEK_DONE] ff55d5ae decoded=2 idx=270/300 ts=9.03s
+ Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+ [WORKER:BUFFER_SEEK] 3549897f localTime=-0.83s lastDecoded=1.38s
+ [VideoDecoderWorker] Received buffer message: time=6.038499999999999, items=2
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.04 items=2
+ [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=271
+ [WORKER:SEEK_DONE] ff55d5ae decoded=1 idx=271/300 ts=9.20s
+ Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.233333
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.266666
+ [VideoDecoderWorker] Received buffer message: time=6.077700000000011, items=2
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.3
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.333333
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.366666
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.4
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.433333
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.466666
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.5
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.533333
+ Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.566666
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.08 items=2
+ [WorkerManager] getFrame: ff55d5ae t=7.38 key=221 cache=[2-137] size=136 found=false
+ [WorkerManager] getFrame: 3549897f t=0.53 key=16 cache=[2-36] size=28 found=true at 16
+ [buildLayers] time=7.38s, hasAnyMissingFrame=true, videoItems=2
+ [VideoDecoderWorker] Received buffer message: time=7.382799999999987, items=2
+ [Audio Sync] time=7.38s, shouldPlay=true, audioElements=2
+ [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng ACTIVE: readyState=4, paused=false, currentTime=7.15, targetTime=7.38, volume=1
+ [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng SEEK to 7.38s
+ [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v ACTIVE: readyState=4, paused=true, currentTime=0.00, targetTime=0.53, volume=1
+ [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v SEEK to 0.53s
+ [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454Understand this warning
+ [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=272
+ [WORKER:SEEK_DONE] ff55d5ae decoded=1 idx=272/300 ts=9.13s
+ Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+ [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=30
+ [WORKER:SEEK_DONE] 3549897f decoded=23 idx=52/192 ts=2.38s
+ Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.25
+ [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplay (readyState=1)
+ [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplaythrough - READY TO PLAY
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.291666
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.333333
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.375
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.416666
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.458333
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.5
+ Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.541666
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.38 items=2
+ [WORKER:BUFFER] time=7.38s items=2 videos=[ff55d5ae:ready=true,idx=272, 3549897f:ready=true,idx=52]
+ [WORKER:BUFFER_SEEK] ff55d5ae localTime=7.38s lastDecoded=9.13s
+ [WORKER:SEEK_CONTINUE] ff55d5ae continuing from idx=273
+ [WORKER:SEEK_DONE] ff55d5ae decoded=27 idx=299/300 ts=10.03s
+ Video seeked: ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng
+ [WORKER:BUFFER_SEEK] 3549897f localTime=0.53s lastDecoded=2.38s
+ [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=53
+ [WORKER:SEEK_DONE] 3549897f decoded=28 idx=80/192 ts=3.54s
+ Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.583333
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=7.41 key=222 cache=[2-137] size=136 found=false
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=0.55 key=17 cache=[2-47] size=37 found=true at 17
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=7.4069000000000225, items=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.41 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_COMPLETE] ff55d5ae all chunks decoded
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=81
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=4 idx=84/192 ts=3.71s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=7.45 key=224 cache=[2-137] size=136 found=false
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=0.60 key=18 cache=[2-47] size=37 found=true at 17
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=7.454200000000011, items=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.45 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_COMPLETE] ff55d5ae all chunks decoded
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=85
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=1 idx=85/192 ts=3.63s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.633333
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=7.50 key=225 cache=[2-139] size=138 found=false
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=0.65 key=19 cache=[2-47] size=37 found=true at 19
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=7.499900000000022, items=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.50 items=2
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: ff55d5ae t=7.54 key=226 cache=[2-139] size=138 found=false
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=0.69 key=21 cache=[2-47] size=37 found=true at 21
+index-DhaUmHvD.js:1454 [WORKER:SEEK_COMPLETE] ff55d5ae all chunks decoded
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=86
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=2 idx=87/192 ts=3.67s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.766666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.866666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.625
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.666666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.708333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.75
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.791666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.875
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.916666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 1.958333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.9
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.933333
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=1.77 key=53 cache=[2-59] size=46 found=true at 53
+index-DhaUmHvD.js:1677 [Audio Sync] time=8.63s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng PAUSED (effectiveActive=false, shouldPlay=true)
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v ACTIVE: readyState=4, paused=true, currentTime=0.53, targetTime=1.77, volume=1
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v SEEK to 1.77s
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454Understand this warning
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=7.539799999999987, items=2
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplay (readyState=1)
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplay (readyState=4)
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1677 [Audio] ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng: PAUSED EVENT (currentTime=8.36)
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.54 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_COMPLETE] ff55d5ae all chunks decoded
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=88
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=1 idx=88/192 ts=3.88s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 4.966666
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=5.00s key=150 cacheSize=148
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.033333
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: 3549897f ts=2.00s key=60 cacheSize=46
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.233333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.041666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.083333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.125
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.166666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.208333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.25
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.291666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.3
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=2.84 key=85 cache=[2-70] size=55 found=true at 70
+index-DhaUmHvD.js:1677 [Audio Sync] time=9.70s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v ACTIVE: readyState=4, paused=true, currentTime=1.77, targetTime=2.84, volume=1
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v SEEK to 2.84s
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454Understand this warning
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplay (readyState=1)
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=9.695999999999998, items=2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.333333
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.70 items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=9.70s items=2 videos=[ff55d5ae:ready=true,idx=299, 3549897f:ready=true,idx=88]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] ff55d5ae out of range timeInClip=9.70
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=2.84s lastDecoded=3.88s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=89
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=50 idx=138/192 ts=5.96s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.375
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.366666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.466666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.416666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.533333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.6
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.458333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.5
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.541666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.583333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.625
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.666666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.708333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.633333
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=3.91 key=117 cache=[2-81] size=64 found=false
+index-DhaUmHvD.js:1677 [Audio Sync] time=10.76s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v ACTIVE: readyState=1, paused=true, currentTime=2.84, targetTime=3.91, volume=1
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454Understand this warning
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=10.764999999999997, items=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.76 items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=10.76s items=2 videos=[ff55d5ae:ready=true,idx=299, 3549897f:ready=true,idx=138]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] ff55d5ae out of range timeInClip=10.76
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=3.91s lastDecoded=5.96s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=139
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=10.790700000000008, items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=24 idx=162/192 ts=6.96s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.79 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=163
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=4 idx=166/192 ts=7.13s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=10.82990000000002, items=2
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.75
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.83 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=167
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=1 idx=167/192 ts=7.04s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.666666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.791666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.766666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.8
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=10.838100000000031, items=2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.866666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.9
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.875
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.916666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 2.958333
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: 3549897f ts=3.00s key=90 cacheSize=70
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.041666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.083333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.933333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.125
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=4.90 key=147 cache=[2-94] size=74 found=false
+index-DhaUmHvD.js:1677 [Audio Sync] time=11.75s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v ACTIVE: readyState=1, paused=true, currentTime=2.84, targetTime=4.90, volume=1
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454Understand this warning
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.84 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=168
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=1 idx=168/192 ts=7.00s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=11.753799999999984, items=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=11.786700000000007, items=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=11.80260000000003, items=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.75 items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=11.75s items=2 videos=[ff55d5ae:ready=true,idx=299, 3549897f:ready=true,idx=168]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] ff55d5ae out of range timeInClip=11.75
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=4.90s lastDecoded=7.00s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=169
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=18 idx=186/192 ts=7.96s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.79 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=187
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=4 idx=190/192 ts=8.04s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.80 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_CONTINUE] 3549897f continuing from idx=191
+index-DhaUmHvD.js:1454 [WORKER:SEEK_DONE] 3549897f decoded=1 idx=191/192 ts=8.00s
+index-DhaUmHvD.js:1454 Video seeked: 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 5.966666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.166666
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=11.841200000000008, items=2
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=6.00s key=180 cacheSize=178
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.033333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.2
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.208333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.25
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.291666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.333333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.375
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.416666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.458333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.233333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.3
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.5
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.541666
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=6.38 key=191 cache=[2-106] size=84 found=false
+index-DhaUmHvD.js:1677 [Audio Sync] time=13.23s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v ACTIVE: readyState=4, paused=true, currentTime=2.84, targetTime=6.38, volume=1
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v SEEK to 6.38s
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454Understand this warning
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.84 items=2
+index-DhaUmHvD.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.366666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.4
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.583333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.466666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.5
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=13.234400000000019, items=2
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.625
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.666666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.708333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.75
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.791666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.533333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.6
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.875
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.916666
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplay (readyState=1)
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1454 [WorkerManager] getFrame: 3549897f t=7.42 key=223 cache=[2-117] size=93 found=false
+index-DhaUmHvD.js:1677 [Audio Sync] time=14.27s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v ACTIVE: readyState=1, paused=true, currentTime=6.38, targetTime=7.42, volume=1
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+(anonymous) @ index-DhaUmHvD.js:1677
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454
+requestAnimationFrame
+Yce.animate @ index-DhaUmHvD.js:1454Understand this warning
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=14.271400000000018, items=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=13.23 items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=13.23s items=2 videos=[ff55d5ae:ready=true,idx=299, 3549897f:ready=true,idx=191]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] ff55d5ae out of range timeInClip=13.23
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=6.38s lastDecoded=8.00s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.633333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.7
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 3.958333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.733333
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: 3549897f ts=4.00s key=120 cacheSize=94
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.041666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.083333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.125
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.766666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.8
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.208333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.866666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.9
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.25
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.291666
+index-DhaUmHvD.js:1677 [Audio Sync] time=15.26s, shouldPlay=true, audioElements=2
+index-DhaUmHvD.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=14.27 items=2
+index-DhaUmHvD.js:1454 [WORKER:BUFFER] time=14.27s items=2 videos=[ff55d5ae:ready=true,idx=299, 3549897f:ready=true,idx=191]
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SKIP] ff55d5ae out of range timeInClip=14.27
+index-DhaUmHvD.js:1454 [WORKER:BUFFER_SEEK] 3549897f localTime=7.42s lastDecoded=8.00s
+index-DhaUmHvD.js:1454 [WORKER:SEEK_COMPLETE] 3549897f all chunks decoded
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplay (readyState=4)
+index-DhaUmHvD.js:1677 [Audio] 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v: canplaythrough - READY TO PLAY
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.933333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 6.966666
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=7.00s key=210 cacheSize=208
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.033333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.1
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.2
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.375
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.416666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.458333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.5
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.541666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.583333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.625
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.233333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.708333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.3
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.333333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.366666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.466666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.5
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.75
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.791666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.875
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.916666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 4.958333
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: 3549897f ts=5.00s key=150 cacheSize=118
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.041666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.533333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.083333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.633333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.733333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.125
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.766666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.8
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.166666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.208333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.25
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.291666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.333333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.375
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.416666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.458333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.866666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.9
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.933333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 7.966666
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=8.00s key=240 cacheSize=238
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.033333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.066666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.1
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.541666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.583333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.625
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.133333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.666666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.708333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.75
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.791666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.2
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.233333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.3
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.333333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.875
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.366666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.916666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.4
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.433333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.466666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 5.958333
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: 3549897f ts=6.00s key=180 cacheSize=142
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.041666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.533333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.083333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.633333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.125
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.166666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.208333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.25
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.666666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.291666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.7
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.766666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.333333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.375
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.416666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.458333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.866666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.5
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.541666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.583333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.9
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.933333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.625
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 8.966666
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: ff55d5ae ts=9.00s key=270 cacheSize=268
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.033333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.066666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.708333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.75
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.791666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.1
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.133333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.166666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.875
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.916666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 6.958333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.2
+index-DhaUmHvD.js:1454 [WorkerManager] FRAME CACHED: 3549897f ts=7.00s key=210 cacheSize=166
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.041666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.233333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.266666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.3
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.083333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.333333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.125
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.366666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.166666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.4
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.208333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.433333
+index-DhaUmHvD.js:1677 [VIDEO-EDITOR] Session auto-saved to localStorage
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.466666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.25
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.533333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.566666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.6
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.633333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.291666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.333333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.375
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.416666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.458333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.5
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.666666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.541666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.7
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.583333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.733333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.766666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.625
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.8
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.833333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.866666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.9
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.666666
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.933333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.708333
+index-DhaUmHvD.js:1677 Frame received for ff55d5ae-9d1e-4421-b334-adaaaf79c3bf_1768699612995_475c3ewng at 9.966666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.75
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.791666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.833333
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.875
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.916666
+index-DhaUmHvD.js:1677 Frame received for 3549897f-64ce-4518-b9f4-dcc559461afa_1768699614441_hkw26cl1v at 7.958333

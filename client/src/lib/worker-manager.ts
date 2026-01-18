@@ -62,22 +62,36 @@ export class WorkerManager {
    * Initialize workers
    */
   private initialize(): void {
-    // Create video decoder worker
+    // Create video decoder worker (required for live preview)
     this.videoDecoderWorker = new VideoDecoderWorker();
     this.videoDecoderWorker.addEventListener('message', this.handleDecoderMessage.bind(this));
     this.videoDecoderWorker.addEventListener('error', (error) => {
       console.error('Video decoder worker error:', error);
     });
 
-    // Create FFmpeg worker
-    this.ffmpegWorker = new FFmpegWorker();
-    this.ffmpegWorker.addEventListener('message', this.handleFFmpegMessage.bind(this));
-    this.ffmpegWorker.addEventListener('error', (error) => {
-      console.error('FFmpeg worker error:', error);
-    });
+    // NOTE: FFmpeg worker is NOT initialized here to avoid startup errors
+    // It will be lazy-initialized only when needed for effects/processing
+    // Live preview uses WebCodecs via video-decoder worker, not FFmpeg
+  }
 
-    // Initialize FFmpeg worker
-    this.ffmpegWorker.postMessage({ type: 'init' });
+  /**
+   * Lazily initialize FFmpeg worker (only when needed)
+   */
+  private initFFmpegWorker(): Worker | null {
+    if (this.ffmpegWorker) return this.ffmpegWorker;
+    
+    try {
+      this.ffmpegWorker = new FFmpegWorker();
+      this.ffmpegWorker.addEventListener('message', this.handleFFmpegMessage.bind(this));
+      this.ffmpegWorker.addEventListener('error', (error) => {
+        console.error('FFmpeg worker error:', error);
+      });
+      this.ffmpegWorker.postMessage({ type: 'init' });
+      return this.ffmpegWorker;
+    } catch (err) {
+      console.warn('[WorkerManager] FFmpeg worker not available:', err);
+      return null;
+    }
   }
 
   /**
@@ -422,7 +436,7 @@ export class WorkerManager {
   }
 
   /**
-   * Apply effect to video using FFmpeg
+   * Apply effect to video using FFmpeg (lazy-loads FFmpeg worker)
    */
   applyEffect(
     taskId: string,
@@ -432,7 +446,8 @@ export class WorkerManager {
       params: Record<string, number>;
     }
   ): void {
-    this.ffmpegWorker?.postMessage({
+    const worker = this.initFFmpegWorker();
+    worker?.postMessage({
       type: 'apply-effect',
       taskId,
       inputUrl,
@@ -441,10 +456,11 @@ export class WorkerManager {
   }
 
   /**
-   * Extract frame using FFmpeg
+   * Extract frame using FFmpeg (lazy-loads FFmpeg worker)
    */
   extractFrame(taskId: string, inputUrl: string, time: number): void {
-    this.ffmpegWorker?.postMessage({
+    const worker = this.initFFmpegWorker();
+    worker?.postMessage({
       type: 'extract-frame',
       taskId,
       inputUrl,
@@ -453,10 +469,11 @@ export class WorkerManager {
   }
 
   /**
-   * Process video using FFmpeg
+   * Process video using FFmpeg (lazy-loads FFmpeg worker)
    */
   processVideo(taskId: string, inputUrl: string, outputFormat: string): void {
-    this.ffmpegWorker?.postMessage({
+    const worker = this.initFFmpegWorker();
+    worker?.postMessage({
       type: 'process',
       taskId,
       inputUrl,

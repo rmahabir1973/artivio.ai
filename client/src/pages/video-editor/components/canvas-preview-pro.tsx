@@ -48,6 +48,7 @@ export function CanvasPreviewPro({
   const workerManagerRef = useRef<WorkerManager | null>(null);
   const imageElementsRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const audioWarningsRef = useRef<Set<string>>(new Set()); // Track audio loading warnings
   const onTimeUpdateRef = useRef(onTimeUpdate);
   const frameCounterRef = useRef(0); // Explicit frame counter for buffer cadence
   const lastAudioSyncTimeRef = useRef<number>(0); // Track last audio sync to avoid drift
@@ -89,16 +90,24 @@ export function CanvasPreviewPro({
       compositorRef.current = compositor;
 
       // Initialize worker manager
+      let frameLogCounter = 0;
       const workerManager = new WorkerManager({
         onFrame: (videoId, frame, timestamp) => {
-          // Frame received from worker - will be used in render loop
-          console.log(`Frame received for ${videoId} at ${timestamp}`);
+          // Frame received from worker - log sparingly to avoid performance impact
+          // Only log every 30th frame (~1/sec) to reduce console spam
+          frameLogCounter++;
+          if (frameLogCounter % 30 === 0) {
+            console.log(`[Frame] ${videoId.substring(0, 8)}: ${timestamp.toFixed(2)}s (caching)`);
+          }
         },
         onMetadata: (videoId, metadata) => {
           setVideoMetadata(prev => new Map(prev).set(videoId, metadata));
         },
         onProgress: (videoId, progress) => {
-          console.log(`Loading ${videoId}: ${progress}%`);
+          // Only log at 0%, 50%, 75% to reduce spam
+          if (progress === 0 || progress === 50 || progress === 75) {
+            console.log(`Loading ${videoId.substring(0, 8)}: ${progress}%`);
+          }
         },
         onError: (videoId, error) => {
           console.error(`Error loading ${videoId}:`, error);
@@ -378,13 +387,32 @@ export function CanvasPreviewPro({
     
     audioElementsRef.current = newAudioElements;
     
-    return () => {
-      // Pause all audio on unmount
-      newAudioElements.forEach(audio => {
-        audio.pause();
-      });
-    };
+    // Clear warning state for new items so they get checked again
+    audioWarningsRef.current.clear();
+    
+    // NOTE: Do NOT pause audio in cleanup here - that disrupts playback when new videos are added
+    // Audio pausing is handled by syncAudioToTime when shouldPlay=false
+    // Unmount cleanup is handled by a separate effect below
   }, [audioItemsKey]); // Use stable key instead of items array
+
+  // Cleanup audio elements on component unmount (separate from setup effect)
+  useEffect(() => {
+    return () => {
+      // Pause and cleanup all audio elements on unmount
+      audioElementsRef.current.forEach(audio => {
+        audio.pause();
+        audio.src = '';
+        audio.remove();
+      });
+      audioElementsRef.current.clear();
+      
+      // Remove audio container from DOM
+      const container = document.getElementById('canvas-preview-audio-container');
+      if (container) {
+        container.remove();
+      }
+    };
+  }, []); // Empty deps - only runs on unmount
 
   // Layer provider callback - called synchronously by compositor before each render
   const buildLayers = useCallback((time: number): WebGLLayer[] => {
@@ -528,16 +556,13 @@ export function CanvasPreviewPro({
     compositor.setLayers(layers, true);
   }, [buildLayers, currentTime]);
 
-  // Track which audio elements we've already warned about
-  const audioWarningsRef = useRef<Set<string>>(new Set());
-
   // Audio sync helper - syncs all audio elements to the given time
   const syncAudioToTime = useCallback((time: number, shouldPlay: boolean) => {
     const audioElements = audioElementsRef.current;
     
-    // Log when starting playback
-    if (shouldPlay) {
-      console.log(`[Audio Sync] time=${time.toFixed(2)}s, shouldPlay=true, audioElements=${audioElements.size}`);
+    // Log sync sparingly - only every 2 seconds during playback
+    if (shouldPlay && Math.floor(time) % 2 === 0 && Math.floor(time * 4) % 4 === 0) {
+      console.log(`[Audio Sync] time=${time.toFixed(1)}s, audioElements=${audioElements.size}`);
     }
     
     items.forEach(item => {
@@ -599,31 +624,29 @@ export function CanvasPreviewPro({
         // Clamp localTime to valid range
         const clampedLocalTime = Math.max(trimStart, Math.min(localTime, trimEnd - 0.05));
         
-        console.log(`[Audio] ${item.id} ACTIVE: readyState=${audio.readyState}, paused=${audio.paused}, currentTime=${audio.currentTime.toFixed(2)}, targetTime=${clampedLocalTime.toFixed(2)}, volume=${audio.volume}`);
-        
         // Seek if time difference is too large (drift correction)
         if (audio.readyState >= 2 && Math.abs(audio.currentTime - clampedLocalTime) > 0.1) {
           audio.currentTime = clampedLocalTime;
-          console.log(`[Audio] ${item.id} SEEK to ${clampedLocalTime.toFixed(2)}s`);
+          console.log(`[Audio] ${item.id.substring(0, 8)} SEEK to ${clampedLocalTime.toFixed(2)}s`);
         }
         
         // Play if not already playing
         if (audio.paused && audio.readyState >= 2) {
-          console.log(`[Audio] ${item.id} calling PLAY...`);
+          console.log(`[Audio] ${item.id.substring(0, 8)} calling PLAY...`);
           audio.play().then(() => {
-            console.log(`[Audio] ${item.id} PLAY SUCCESS!`);
+            console.log(`[Audio] ${item.id.substring(0, 8)} PLAY SUCCESS!`);
           }).catch((e) => {
             // Log autoplay errors for debugging
-            console.error(`[Audio] ${item.id} PLAY FAILED:`, e.message, e);
+            console.error(`[Audio] ${item.id.substring(0, 8)} PLAY FAILED:`, e.message, e);
           });
         } else if (audio.paused && audio.readyState < 2) {
-          console.warn(`[Audio] ${item.id} NOT READY: readyState=${audio.readyState} (need >= 2)`);
+          console.warn(`[Audio] ${item.id.substring(0, 8)} NOT READY: readyState=${audio.readyState} (need >= 2)`);
         }
       } else {
         // Pause if not active, outside trim bounds, or not playing
         if (!audio.paused) {
           audio.pause();
-          console.log(`[Audio] ${item.id} PAUSED (effectiveActive=${effectiveActive}, shouldPlay=${shouldPlay})`);
+          console.log(`[Audio] ${item.id.substring(0, 8)} PAUSED`);
         }
       }
     });

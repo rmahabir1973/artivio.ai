@@ -1,6 +1,19 @@
 # Video Editor Playback Debug Session - 2025-01-17
 
-## Problem Summary
+## RESOLVED - 2025-01-18
+
+### Fixes Applied:
+1. **FFmpeg Worker Error Fixed**: Made FFmpeg worker lazy-loaded (only initializes when applyEffect/extractFrame/processVideo is called) to eliminate startup initialization errors
+2. **Multi-Video Audio Fixed**: Fixed audio disruption when adding new videos by removing cleanup that paused audio during item updates - unmount cleanup now in separate effect
+3. **Performance Improvements**: Reduced console logging from ~30 logs/sec/video to ~1 log/sec; throttled audio sync and frame logging
+
+### Key Changes:
+- `worker-manager.ts`: FFmpeg worker uses lazy initialization via `ensureFFmpegWorkerReady()` 
+- `canvas-preview-pro.tsx`: Separate unmount cleanup effect for audio, throttled logging throughout
+
+---
+
+## Original Problem Summary (Resolved)
 Video editor plays clips for about 1 second, then freezes and goes black. This happens for multiple clips on the timeline.
 
 ## Initial Observations from User's Console Logs
