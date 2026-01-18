@@ -624,10 +624,29 @@ export function CanvasPreviewPro({
         // Clamp localTime to valid range
         const clampedLocalTime = Math.max(trimStart, Math.min(localTime, trimEnd - 0.05));
         
-        // Seek if time difference is too large (drift correction)
-        if (audio.readyState >= 2 && Math.abs(audio.currentTime - clampedLocalTime) > 0.1) {
-          audio.currentTime = clampedLocalTime;
-          console.log(`[Audio] ${item.id.substring(0, 8)} SEEK to ${clampedLocalTime.toFixed(2)}s`);
+        if (audio.readyState >= 2) {
+          const drift = audio.currentTime - clampedLocalTime;
+          const absDrift = Math.abs(drift);
+          
+          // For large drift (> 0.3s), seek directly - this is faster than rate adjustment
+          if (absDrift > 0.3) {
+            audio.currentTime = clampedLocalTime;
+            audio.playbackRate = clampedSpeed; // Reset to normal speed
+            console.log(`[Audio] ${item.id.substring(0, 8)} SEEK ${clampedLocalTime.toFixed(2)}s (drift=${drift.toFixed(2)}s)`);
+          } 
+          // For medium drift (0.05-0.3s), use playback rate adjustment instead of seeking
+          // This is much smoother than seeking every time
+          else if (absDrift > 0.05) {
+            // Audio is ahead - slow down slightly; Audio is behind - speed up slightly
+            const correctionRate = drift > 0 
+              ? Math.max(0.9, clampedSpeed - 0.1) // Slow down
+              : Math.min(1.1, clampedSpeed + 0.1); // Speed up
+            audio.playbackRate = correctionRate;
+          }
+          // For small drift (< 0.05s), just use normal playback rate - close enough
+          else {
+            audio.playbackRate = clampedSpeed;
+          }
         }
         
         // Play if not already playing
@@ -698,8 +717,9 @@ export function CanvasPreviewPro({
         compositor.setOnTimeUpdate(time => {
           onTimeUpdateRef.current?.(time);
           
-          // Sync audio periodically (every 0.25s to avoid too many seeks)
-          if (Math.abs(time - lastAudioSyncTimeRef.current) > 0.25) {
+          // Sync audio periodically (every 0.4s - less frequent = smoother playback)
+          // Audio sync now uses playback rate adjustment for small drifts, so frequent checks aren't needed
+          if (Math.abs(time - lastAudioSyncTimeRef.current) > 0.4) {
             lastAudioSyncTimeRef.current = time;
             syncAudioToTime(time, true);
           }

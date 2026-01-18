@@ -163,6 +163,7 @@ class VideoDecoderWorker {
         codedWidth: metadata.width,
         codedHeight: metadata.height,
         optimizeForLatency: true,
+        hardwareAcceleration: 'prefer-hardware', // Use GPU for faster decoding
         description,
       };
 

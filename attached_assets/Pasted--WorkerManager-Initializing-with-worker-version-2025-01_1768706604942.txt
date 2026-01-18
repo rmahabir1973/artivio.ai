@@ -1,0 +1,794 @@
+[WorkerManager] Initializing with worker version: 2025-01-17T0600-v18-imagebitmap-fix
+index-Dp48W74o.js:48 [AUTH BRIDGE] Initializing auth bridge before React render
+index-Dp48W74o.js:48 [AUTH BRIDGE] ✓ Auth bridge initialized
+index-Dp48W74o.js:993 [AUTH] Initializing auth
+index-Dp48W74o.js:993 [AUTH] Bootstrap flow - attempting to hydrate from refresh cookies
+index-Dp48W74o.js:993 [AUTH] ✓ Bootstrap successful - auth state hydrated Object
+index-Dp48W74o.js:48 [AUTH BRIDGE] Access token updated: eyJhbGciOiJIUzI1NiIs...
+index-Dp48W74o.js:1677 [CanvasPreviewPro] Loading video a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T032057Z&X-Amz-Expires=604800&X-Amz-Signature=50a115d9a6abfb2097b3923c2fefa7a2e6c309b2de4dc8616075d9ad37b45e4f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-Dp48W74o.js:1677 [CanvasPreviewPro] Audio setup: 1 items need audio
+index-Dp48W74o.js:1677 [Audio] Created element for a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: https://artivio-video-exports.s3.us-east-1.amazonaws.com/vid...
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6 still loading...
+(anonymous) @ index-Dp48W74o.js:1677Understand this warning
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] *** NEW WORKER v18-imagebitmap-fix ***
+Yl @ video-decoder.worker-BCbVqjxq.js:1Understand this warning
+index-Dp48W74o.js:1454 Video decoder worker ready
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=load videoId=a2b0507d time=undefined items=undefined
+index-Dp48W74o.js:1677 Loading a2b0507d: 0%
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a2b0507d-a5ca-4f9a-ba18-055fd7aacaec-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T032057Z&X-Amz-Expires=604800&X-Amz-Signature=50a115d9a6abfb2097b3923c2fefa7a2e6c309b2de4dc8616075d9ad37b45e4f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-Dp48W74o.js:1677 [VIDEO-EDITOR] Session auto-saved to localStorage
+index-Dp48W74o.js:1677 [CanvasPreviewPro] Loading video a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a5a658b7-1c89-4b75-99d4-a926455786ef-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T032057Z&X-Amz-Expires=604800&X-Amz-Signature=d1a1e5ea3c3aa3876624a196f45996ac15ff33379b0c1ba8199f36388e7c0456&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-Dp48W74o.js:1677 [CanvasPreviewPro] Audio setup: 2 items need audio
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: Fetching video from https://artivio-video-exports.s3.us-east-1.amazonaws.com/video-generations/a5a658b7-1c89-4b75-99d4-a926455786ef-0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAVAXDTFL5NY6I2OLN%2F20260118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260118T032057Z&X-Amz-Expires=604800&X-Amz-Signature=d1a1e5ea3c3aa3876624a196f45996ac15ff33379b0c1ba8199f36388e7c0456&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject
+index-Dp48W74o.js:1677 [Audio] Created element for a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: https://artivio-video-exports.s3.us-east-1.amazonaws.com/vid...
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6 still loading...
+(anonymous) @ index-Dp48W74o.js:1677Understand this warning
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0 still loading...
+(anonymous) @ index-Dp48W74o.js:1677Understand this warning
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=load videoId=a5a658b7 time=undefined items=undefined
+index-Dp48W74o.js:1677 Loading a5a658b7: 0%
+index-Dp48W74o.js:1677 Loading a2b0507d: 50%
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: Found track - 1280x720, codec: avc1.64001f, duration: 8s, track timescale: 12288
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: Codec description extracted, 46 bytes
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: Received 192 samples (total now: 192)
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: All 192 samples extracted
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: Initializing decoder...
+index-Dp48W74o.js:1677 Loading a2b0507d: 75%
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: Video loaded successfully with 192 chunks
+index-Dp48W74o.js:1454 [WORKER:INIT_START] a2b0507d keyframeIdx=0 chunks=192
+index-Dp48W74o.js:1454 [WORKER:INIT_DECODED] a2b0507d count=30 lastTs=1.42s queueSize=30
+index-Dp48W74o.js:1454 [WORKER:INIT_DONE] a2b0507d ready for playback, will continue decoding on demand
+index-Dp48W74o.js:1454 [WorkerManager] Video loaded: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6 Object
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=1.00s key=30 cacheSize=22
+index-Dp48W74o.js:1677 [DURATION] Loaded video clip a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: 8s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: metadata loaded, duration=8.00s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=3)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: metadata loaded, duration=8.00s
+index-Dp48W74o.js:1677 [DURATION] Loaded video clip a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: 8s
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 Loading a5a658b7: 50%
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: Found track - 1280x720, codec: avc1.64001f, duration: 8s, track timescale: 12288
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: Codec description extracted, 46 bytes
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: Received 192 samples (total now: 192)
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: All 192 samples extracted
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: Initializing decoder...
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: Video loaded successfully with 192 chunks
+index-Dp48W74o.js:1677 Loading a5a658b7: 75%
+index-Dp48W74o.js:1454 [WORKER:INIT_START] a5a658b7 keyframeIdx=0 chunks=192
+index-Dp48W74o.js:1454 [WORKER:INIT_DECODED] a5a658b7 count=30 lastTs=1.42s queueSize=30
+index-Dp48W74o.js:1454 [WORKER:INIT_DONE] a5a658b7 ready for playback, will continue decoding on demand
+index-Dp48W74o.js:1454 [WorkerManager] Video loaded: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0 Object
+index-Dp48W74o.js:1677 [Frame] a5a658b7: 0.13s (caching)
+index-Dp48W74o.js:1677 [DRAG START] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6 Object
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=1.00s key=30 cacheSize=22
+index-Dp48W74o.js:1677 [DRAG] handleDragEnd: Object
+index-Dp48W74o.js:1677 [DRAG] Clip drag: Object
+index-Dp48W74o.js:1677 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0 Object
+index-Dp48W74o.js:1677 [DRAG] handleDragEnd: Object
+index-Dp48W74o.js:1677 [DRAG] Clip drag: Object
+index-Dp48W74o.js:1677 [DRAG] Updated clip position: Object
+index-Dp48W74o.js:1677 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0 Object
+index-Dp48W74o.js:1677 [DRAG] handleDragEnd: Object
+index-Dp48W74o.js:1677 [DRAG] Clip drag: Object
+index-Dp48W74o.js:1677 [DRAG] Updated clip position: Object
+index-Dp48W74o.js:1677 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0 Object
+index-Dp48W74o.js:1677 [DRAG] handleDragEnd: Object
+index-Dp48W74o.js:1677 [DRAG] Clip drag: Object
+index-Dp48W74o.js:1677 [DRAG] Updated clip position: Object
+index-Dp48W74o.js:1677 [DRAG START] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0 Object
+index-Dp48W74o.js:1677 [DRAG] handleDragEnd: Object
+index-Dp48W74o.js:1677 [DRAG] Clip drag: Object
+index-Dp48W74o.js:1677 [DRAG] Updated clip position: Object
+index-Dp48W74o.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=2
+index-Dp48W74o.js:1677 [Audio Sync] time=0.0s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d calling PLAY...
+index-Dp48W74o.js:1677 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-Dp48W74o.js:1677 [WebGLCompositor] Starting animation loop
+index-Dp48W74o.js:1677 [CanvasPreviewPro] Started playback with audio at 0.00s
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-36] size=28 found=true at 2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[a2b0507d:ready=true,idx=29, a5a658b7:ready=true,idx=29]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=1.42s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: PLAY EVENT started
+index-Dp48W74o.js:1677 [Audio] a2b0507d PLAY SUCCESS!
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=30
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=40 idx=69/192 ts=3.08s
+index-Dp48W74o.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-6.47
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=0.02s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=0.02 key=1 cache=[2-39] size=30 found=true at 2
+index-Dp48W74o.js:1677 [Frame] a2b0507d: 1.38s (caching)
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=2.00s key=60 cacheSize=46
+index-Dp48W74o.js:1677 [Frame] a2b0507d: 2.63s (caching)
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 0.29s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0.2928700000000026, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.29 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=0.29s items=2 videos=[a2b0507d:ready=true,idx=69, a5a658b7:ready=true,idx=29]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.29s lastDecoded=3.08s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.29s output=2.88s submitted=3.08s buffer=2.58s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-6.17
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 0.55s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0.6288700000000027, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.63 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 0.81s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [buildLayers] time=0.96s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0.9574700000000012, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.96 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=70
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=93/192 ts=4.08s
+index-Dp48W74o.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=3.00s key=90 cacheSize=70
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=1.01s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=1.01 key=30 cache=[2-110] size=87 found=true at 30
+index-Dp48W74o.js:1677 [Frame] a2b0507d: 3.88s (caching)
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.09s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=1.2907699999999966, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.29 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=1.29s items=2 videos=[a2b0507d:ready=true,idx=93, a5a658b7:ready=true,idx=29]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=1.29s lastDecoded=4.08s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=1.29s output=3.88s submitted=4.08s buffer=2.58s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-5.18
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.39s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=1.606370000000002, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.61 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.66s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [buildLayers] time=1.95s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=1.9541699999999977, items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.95s
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.95 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=94
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=117/192 ts=5.08s
+index-Dp48W74o.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=4.00s key=120 cacheSize=94
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=2.02s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=2.02 key=61 cache=[2-140] size=111 found=true at 61
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio Sync] time=2.2s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 2.21s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=2.2784700000000004, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.28 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=2.28s items=2 videos=[a2b0507d:ready=true,idx=117, a5a658b7:ready=true,idx=29]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=2.28s lastDecoded=5.08s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=2.28s output=4.88s submitted=5.08s buffer=2.60s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-4.19
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 2.49s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=2.6182699999999963, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.62 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 2.79s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [buildLayers] time=2.95s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=2.9491699999999974, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.95 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=118
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=141/192 ts=6.08s
+index-Dp48W74o.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=5.00s key=150 cacheSize=118
+index-Dp48W74o.js:1677 [Frame] a2b0507d: 5.13s (caching)
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=3.02s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=3.02 key=91 cache=[2-176] size=140 found=true at 91
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.05s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=3.28247, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.28 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=3.28s items=2 videos=[a2b0507d:ready=true,idx=141, a5a658b7:ready=true,idx=29]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=3.28s lastDecoded=6.08s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=3.28s output=5.88s submitted=6.08s buffer=2.59s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-3.18
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.31s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.56s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=3.6056699999999964, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.61 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.82s
+index-Dp48W74o.js:1677 [buildLayers] time=3.95s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=3.9478700000000013, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.95 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=142
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=165/192 ts=7.08s
+index-Dp48W74o.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=6.00s key=180 cacheSize=142
+index-Dp48W74o.js:1677 [Frame] a2b0507d: 6.38s (caching)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=4.02s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=4.02 key=121 cache=[2-199] size=158 found=true at 121
+index-Dp48W74o.js:1677 [Audio Sync] time=4.1s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 4.09s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=4.28047, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.28 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=4.28s items=2 videos=[a2b0507d:ready=true,idx=165, a5a658b7:ready=true,idx=29]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=4.28s lastDecoded=7.08s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=4.28s output=6.88s submitted=7.08s buffer=2.59s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-2.19
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 4.35s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=4.612970000000001, items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 4.61s
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.61 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 4.88s
+index-Dp48W74o.js:1677 [buildLayers] time=4.95s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=4.950769999999998, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.95 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=166
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=24 idx=189/192 ts=8.04s
+index-Dp48W74o.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a2b0507d ts=7.00s key=210 cacheSize=166
+index-Dp48W74o.js:1677 [Frame] a2b0507d: 7.63s (caching)
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=5.02s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=5.02 key=151 cache=[2-233] size=185 found=true at 151
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=5.281970000000001, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.28 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=5.28s items=2 videos=[a2b0507d:ready=true,idx=189, a5a658b7:ready=true,idx=29]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=5.28s lastDecoded=8.04s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=5.28s output=7.88s submitted=8.04s buffer=2.59s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-1.18
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 5.42s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=5.615569999999999, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.62 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 5.69s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [buildLayers] time=5.96s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=5.955570000000001, items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 5.96s
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=5.96 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a2b0507d continuing from idx=190
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a2b0507d decoded=2 idx=191/192 ts=8.00s
+index-Dp48W74o.js:1454 Video seeked: a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=30
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=28 idx=57/192 ts=2.58s
+index-Dp48W74o.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=6.01s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.01 key=180 cache=[2-239] size=190 found=true at 180
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=2.00s key=60 cacheSize=46
+index-Dp48W74o.js:1677 [Frame] a5a658b7: 2.13s (caching)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio Sync] time=6.2s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 6.23s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=6.278870000000003, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.28 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=6.28s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=57]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=6.28s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=-0.19s lastDecoded=2.58s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.01 key=0 cache=[2-71] size=56 found=true at 2
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.53 key=196 cache=[2-239] size=190 found=true at 196
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.06 key=2 cache=[2-71] size=56 found=true at 2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 6.53s
+index-Dp48W74o.js:1677 [Audio] a5a658b7 calling PLAY...
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: PLAY EVENT started
+index-Dp48W74o.js:1677 [Audio] a5a658b7 PLAY SUCCESS!
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.55 key=197 cache=[2-239] size=190 found=true at 197
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.08 key=3 cache=[2-71] size=56 found=true at 2
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.64 key=199 cache=[2-239] size=190 found=true at 199
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.17 key=5 cache=[2-71] size=56 found=true at 5
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.69 key=201 cache=[2-239] size=190 found=true at 201
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.22 key=7 cache=[2-71] size=56 found=true at 6
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=6.688870000000002, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=6.69 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=0.22s output=2.38s submitted=2.58s buffer=2.15s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.71 key=201 cache=[2-239] size=190 found=true at 201
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.25 key=7 cache=[2-71] size=56 found=true at 6
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.76 key=203 cache=[2-239] size=190 found=true at 203
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.30 key=9 cache=[2-71] size=56 found=true at 9
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.79 key=204 cache=[2-239] size=190 found=true at 204
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.32 key=10 cache=[2-71] size=56 found=true at 10
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 6.79s
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 0.32s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.81 key=204 cache=[2-239] size=190 found=true at 204
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.34 key=10 cache=[2-71] size=56 found=true at 10
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.86 key=206 cache=[2-239] size=190 found=true at 206
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.39 key=12 cache=[2-71] size=56 found=true at 12
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.88 key=207 cache=[2-239] size=190 found=true at 207
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.42 key=13 cache=[2-71] size=56 found=true at 12
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.91 key=207 cache=[2-239] size=190 found=true at 207
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.44 key=13 cache=[2-71] size=56 found=true at 12
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.96 key=209 cache=[2-239] size=190 found=true at 209
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.49 key=15 cache=[2-71] size=56 found=true at 15
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=6.98 key=209 cache=[2-239] size=190 found=true at 209
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.51 key=15 cache=[2-71] size=56 found=true at 15
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=7.01s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.01 key=210 cache=[2-239] size=190 found=true at 210
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.54 key=16 cache=[2-71] size=56 found=true at 16
+index-Dp48W74o.js:1677 [buildLayers] time=7.01s, hasAnyMissingFrame=false, videoItems=2
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 7.01s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=7.005769999999998, items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.01 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=7.01s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=57]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=7.01s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=0.54s lastDecoded=2.58s
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=58
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=24 idx=81/192 ts=3.58s
+index-Dp48W74o.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=3.00s key=90 cacheSize=70
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.06 key=212 cache=[2-239] size=190 found=true at 212
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.59 key=18 cache=[2-94] size=74 found=true at 17
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 7.06s
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 0.59s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.08 key=212 cache=[2-239] size=190 found=true at 212
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.61 key=18 cache=[2-96] size=76 found=true at 17
+index-Dp48W74o.js:1677 [Frame] a5a658b7: 3.38s (caching)
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.13 key=214 cache=[2-239] size=190 found=true at 214
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.66 key=20 cache=[2-101] size=80 found=true at 20
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.15 key=214 cache=[2-239] size=190 found=true at 214
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.68 key=20 cache=[2-101] size=80 found=true at 20
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.17 key=215 cache=[2-239] size=190 found=true at 215
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.71 key=21 cache=[2-101] size=80 found=true at 21
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.22 key=217 cache=[2-239] size=190 found=true at 216
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.76 key=23 cache=[2-101] size=80 found=true at 23
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.25 key=217 cache=[2-239] size=190 found=true at 216
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.78 key=23 cache=[2-101] size=80 found=true at 23
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.27 key=218 cache=[2-239] size=190 found=true at 218
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.81 key=24 cache=[2-101] size=80 found=true at 24
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.31 key=219 cache=[2-239] size=190 found=true at 219
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.84 key=25 cache=[2-101] size=80 found=true at 25
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 0.84s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.35 key=221 cache=[2-239] size=190 found=true at 221
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.89 key=27 cache=[2-101] size=80 found=true at 27
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=7.3533700000000035, items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.35 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.38 key=221 cache=[2-239] size=190 found=true at 221
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.91 key=27 cache=[2-101] size=80 found=true at 27
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.43 key=223 cache=[2-239] size=190 found=true at 222
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.96 key=29 cache=[2-101] size=80 found=true at 29
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.45 key=223 cache=[2-239] size=190 found=true at 222
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=0.98 key=29 cache=[2-101] size=80 found=true at 29
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.47 key=224 cache=[2-239] size=190 found=true at 224
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.01 key=30 cache=[2-101] size=80 found=true at 30
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.52 key=226 cache=[2-239] size=190 found=true at 226
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.06 key=32 cache=[2-101] size=80 found=true at 32
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.55 key=226 cache=[2-239] size=190 found=true at 226
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.08 key=32 cache=[2-101] size=80 found=true at 32
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.57 key=227 cache=[2-239] size=190 found=true at 227
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.11 key=33 cache=[2-101] size=80 found=true at 32
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 7.57s
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 1.11s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.62 key=229 cache=[2-239] size=190 found=true at 229
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.15 key=35 cache=[2-101] size=80 found=true at 35
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.64 key=229 cache=[2-239] size=190 found=true at 229
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.18 key=35 cache=[2-101] size=80 found=true at 35
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.70 key=231 cache=[2-239] size=190 found=true at 231
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.23 key=37 cache=[2-101] size=80 found=true at 36
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=7.69507, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=7.70 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=1.23s output=3.38s submitted=3.58s buffer=2.15s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.72 key=232 cache=[2-239] size=190 found=true at 231
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.25 key=38 cache=[2-101] size=80 found=true at 38
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.74 key=232 cache=[2-239] size=190 found=true at 231
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.28 key=38 cache=[2-101] size=80 found=true at 38
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.79 key=234 cache=[2-239] size=190 found=true at 234
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.33 key=40 cache=[2-101] size=80 found=true at 40
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.82 key=235 cache=[2-239] size=190 found=true at 235
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.35 key=41 cache=[2-101] size=80 found=true at 41
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.84 key=235 cache=[2-239] size=190 found=true at 235
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.38 key=41 cache=[2-101] size=80 found=true at 41
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 7.84s
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 1.38s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.89 key=237 cache=[2-239] size=190 found=true at 237
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.42 key=43 cache=[2-101] size=80 found=true at 42
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.91 key=237 cache=[2-239] size=190 found=true at 237
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.44 key=43 cache=[2-101] size=80 found=true at 42
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.96 key=239 cache=[2-239] size=190 found=true at 239
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.49 key=45 cache=[2-101] size=80 found=true at 45
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=7.98 key=239 cache=[2-239] size=190 found=true at 239
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=1.52 key=45 cache=[2-101] size=80 found=true at 45
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=8.01s, hasLayerProvider=true
+index-Dp48W74o.js:1677 [buildLayers] time=8.01s, hasAnyMissingFrame=false, videoItems=2
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 8.01s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=8.006269999999999, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.01 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=8.01s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=81]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=8.01s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=1.54s lastDecoded=3.58s
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=82
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=24 idx=105/192 ts=4.58s
+index-Dp48W74o.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=4.00s key=120 cacheSize=94
+index-Dp48W74o.js:1677 [Audio Sync] time=8.1s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d PAUSED
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 1.64s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: PAUSED EVENT (currentTime=7.84)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=8.34927, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.35 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 1.91s
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=2.02 key=61 cache=[2-131] size=104 found=true at 61
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 2.19s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=8.679870000000005, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=8.68 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a2b0507d all chunks decoded
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=2.21s output=4.38s submitted=4.58s buffer=2.16s
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 2.46s
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=9.02s, hasLayerProvider=true
+index-Dp48W74o.js:1677 [buildLayers] time=9.02s, hasAnyMissingFrame=false, videoItems=2
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 9.02s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=9.02207, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.02 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=9.02s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=105]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=9.02
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=2.56s lastDecoded=4.58s
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=106
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=24 idx=129/192 ts=5.58s
+index-Dp48W74o.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0
+index-Dp48W74o.js:1677 [Frame] a5a658b7: 4.63s (caching)
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=5.00s key=150 cacheSize=118
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 2.71s
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=9.343269999999995, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.34 items=2
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 2.98s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=3.02 key=91 cache=[2-161] size=128 found=true at 91
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=9.685669999999995, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=9.69 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a5a658b7 t=3.22s output=5.38s submitted=5.58s buffer=2.16s
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 3.24s
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 3.52s
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=10.01s, hasLayerProvider=true
+index-Dp48W74o.js:1677 [buildLayers] time=10.01s, hasAnyMissingFrame=false, videoItems=2
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 10.01s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=10.008669999999995, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.01 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=10.01s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=129]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=10.01
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=3.54s lastDecoded=5.58s
+index-Dp48W74o.js:1454 [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=130
+index-Dp48W74o.js:1454 [WORKER:SEEK_DONE] a5a658b7 decoded=24 idx=153/192 ts=6.58s
+index-Dp48W74o.js:1454 Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0
+index-Dp48W74o.js:1677 [Frame] a5a658b7: 5.88s (caching)
+index-Dp48W74o.js:1454 [WorkerManager] FRAME CACHED: a5a658b7 ts=6.00s key=180 cacheSize=142
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 3.79s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=10.351369999999998, items=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.35 items=2
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+ [WorkerManager] getFrame: a5a658b7 t=4.01 key=120 cache=[2-191] size=152 found=true at 120
+ [Audio] a5a658b7 SEEK to 4.06s
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+ [VideoDecoderWorker] Received buffer message: time=10.671669999999992, items=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=10.67 items=2
+ [WORKER:SEEK_BUFFERED] a5a658b7 t=4.21s output=6.38s submitted=6.58s buffer=2.17s
+ [Audio] a5a658b7 SEEK to 4.33s
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+ [WebGLCompositor] animate: time=11.03s, hasLayerProvider=true
+ [buildLayers] time=11.03s, hasAnyMissingFrame=false, videoItems=2
+ [WorkerManager] bufferFrames called at time 11.03s for 2 items, worker=true
+ [VideoDecoderWorker] Received buffer message: time=11.026369999999993, items=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.03 items=2
+ [WORKER:BUFFER] time=11.03s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=153]
+ [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=11.03
+ [WORKER:BUFFER_SEEK] a5a658b7 localTime=4.56s lastDecoded=6.58s
+ [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=154
+ [WORKER:SEEK_DONE] a5a658b7 decoded=26 idx=179/192 ts=7.67s
+ Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0
+ [Audio] a5a658b7 SEEK to 4.58s
+ [WorkerManager] FRAME CACHED: a5a658b7 ts=7.00s key=210 cacheSize=166
+ [Frame] a5a658b7: 7.13s (caching)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+ [Audio] a5a658b7 SEEK to 4.85s
+ [VideoDecoderWorker] Received buffer message: time=11.338869999999991, items=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.34 items=2
+ [WorkerManager] getFrame: a5a658b7 t=5.01 key=150 cache=[2-224] size=178 found=true at 150
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+ [Audio] a5a658b7 SEEK to 5.11s
+ [VideoDecoderWorker] Received buffer message: time=11.671669999999985, items=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=11.67 items=2
+ [WORKER:SEEK_BUFFERED] a5a658b7 t=5.21s output=7.46s submitted=7.67s buffer=2.25s
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+ [Audio] a5a658b7 SEEK to 5.38s
+ [WebGLCompositor] animate: time=12.01s, hasLayerProvider=true
+ [buildLayers] time=12.01s, hasAnyMissingFrame=false, videoItems=2
+ [WorkerManager] bufferFrames called at time 12.01s for 2 items, worker=true
+ [VideoDecoderWorker] Received buffer message: time=12.008669999999984, items=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=12.01 items=2
+ [WORKER:BUFFER] time=12.01s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=179]
+ [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=12.01
+ [WORKER:BUFFER_SEEK] a5a658b7 localTime=5.54s lastDecoded=7.67s
+ [WORKER:SEEK_CONTINUE] a5a658b7 continuing from idx=180
+ [WORKER:SEEK_DONE] a5a658b7 decoded=12 idx=191/192 ts=8.04s
+ Video seeked: a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+ [Audio Sync] time=12.1s, audioElements=2
+ [Audio] a5a658b7 SEEK to 5.64s
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+ [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=12.348869999999987, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=12.35 items=2
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 5.92s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=6.02 key=180 cache=[2-239] size=190 found=true at 180
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 6.18s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=12.692569999999982, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=12.69 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 6.44s
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=13.01s, hasLayerProvider=true
+index-Dp48W74o.js:1677 [buildLayers] time=13.01s, hasAnyMissingFrame=false, videoItems=2
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 13.01s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=13.007869999999986, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=13.01 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=13.01s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=13.01
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=6.54s lastDecoded=8.04s
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 6.71s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=13.34886999999999, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=13.35 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 6.99s
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=7.02 key=211 cache=[2-239] size=190 found=true at 211
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=13.679469999999988, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=13.68 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 7.26s
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=14.02s, hasLayerProvider=true
+index-Dp48W74o.js:1677 [buildLayers] time=14.02s, hasAnyMissingFrame=false, videoItems=2
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 14.02s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=14.021669999999984, items=2
+index-Dp48W74o.js:1677 [Audio Sync] time=14.0s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 7.56s
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=14.02 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=14.02s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=14.02
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=7.56s lastDecoded=8.04s
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 SEEK to 7.82s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=14.361669999999982, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=14.36 items=2
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a5a658b7 PAUSED
+index-Dp48W74o.js:1677 [Audio Sync] time=0.0s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 0.00s
+index-Dp48W74o.js:1677 [Audio] a2b0507d NOT READY: readyState=1 (need >= 2)
+(anonymous) @ index-Dp48W74o.js:1677Understand this warning
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-239] size=190 found=true at 2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=2
+index-Dp48W74o.js:1677 [Audio] a5a658b7-1c89-4b75-99d4-a926455786ef_1768706462455_qpzan2fi0: PAUSED EVENT (currentTime=7.83)
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=seek videoId=a2b0507d time=0.00 items=undefined
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-6.47
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WorkerManager] bufferFrames called at time 0.00s for 2 items, worker=true
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=0, items=2
+index-Dp48W74o.js:1677 [Audio Sync] time=0.0s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d calling PLAY...
+index-Dp48W74o.js:1677 [WebGLCompositor] play() called, isPlaying= false hasLayerProvider= true
+index-Dp48W74o.js:1677 [WebGLCompositor] Starting animation loop
+index-Dp48W74o.js:1677 [CanvasPreviewPro] Started playback with audio at 0.00s
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=0.00s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=0.00 key=0 cache=[2-239] size=190 found=true at 2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.00 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=0.00s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=0.00s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=0.00s output=7.96s submitted=8.00s buffer=7.96s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-6.47
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: PLAY EVENT started
+ [Audio] a2b0507d PLAY SUCCESS!
+ [WebGLCompositor] animate: time=0.02s, hasLayerProvider=true
+ [WorkerManager] getFrame: a2b0507d t=0.02 key=1 cache=[2-239] size=190 found=true at 2
+ [VideoDecoderWorker] Received buffer message: time=0.29509999999999853, items=2
+ [Audio] a2b0507d SEEK to 0.30s
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.30 items=2
+ [WORKER:BUFFER] time=0.30s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+ [WORKER:BUFFER_SEEK] a2b0507d localTime=0.30s lastDecoded=8.00s
+ [WORKER:SEEK_BUFFERED] a2b0507d t=0.30s output=7.96s submitted=8.00s buffer=7.66s
+ [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-6.17
+ [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+ [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+ [Audio] a2b0507d SEEK to 0.56s
+ [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+ [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+ [VideoDecoderWorker] Received buffer message: time=0.6132000000000043, items=2
+ [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.61 items=2
+ [Audio] a2b0507d SEEK to 0.83s
+ [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+ [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+ [buildLayers] time=0.95s, hasAnyMissingFrame=false, videoItems=2
+ [VideoDecoderWorker] Received buffer message: time=0.9515999999999984, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=0.95 items=2
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=1.03s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=1.03 key=31 cache=[2-239] size=190 found=true at 31
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.13s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+ [VideoDecoderWorker] Received buffer message: time=1.2973000000000028, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.30 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=1.30s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=1.30s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=1.30s output=7.96s submitted=8.00s buffer=6.66s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-5.17
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.40s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=1.6160999999999983, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.62 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.66s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [buildLayers] time=1.96s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=1.9613000000000025, items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 1.96s
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=1.96 items=2
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=2.01s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=2.01 key=60 cache=[2-239] size=190 found=true at 60
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio Sync] time=2.2s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 2.21s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=2.2884000000000007, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.29 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=2.29s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=2.29s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=2.29s output=7.96s submitted=8.00s buffer=5.67s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-4.18
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 2.48s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=2.6319000000000004, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.63 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 2.76s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [buildLayers] time=2.95s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=2.9543999999999997, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=2.95 items=2
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=3.03s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=3.03 key=91 cache=[2-239] size=190 found=true at 91
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.03s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=3.2933999999999997, items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.29s
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.29 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=3.29s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=3.29s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=3.29s output=7.96s submitted=8.00s buffer=4.66s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-3.17
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.56s
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=3.630300000000001, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.63 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 3.83s
+index-Dp48W74o.js:1677 [buildLayers] time=3.95s, hasAnyMissingFrame=false, videoItems=2
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=3.9479999999999977, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=3.95 items=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+index-Dp48W74o.js:1454 [WebGLCompositor] animate: time=4.02s, hasLayerProvider=true
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a2b0507d t=4.02 key=121 cache=[2-239] size=190 found=true at 121
+index-Dp48W74o.js:1677 [Audio Sync] time=4.1s, audioElements=2
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 4.10s
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=4.290399999999999, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=4.29 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=4.29s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a2b0507d localTime=4.29s lastDecoded=8.00s
+index-Dp48W74o.js:1454 [WORKER:SEEK_BUFFERED] a2b0507d t=4.29s output=7.96s submitted=8.00s buffer=3.67s
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a5a658b7 out of range timeInClip=-2.18
+index-Dp48W74o.js:1677 [Audio] a2b0507d SEEK to 4.36s
+index-Dp48W74o.js:1677 [Audio] a2b0507d PAUSED
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: PAUSED EVENT (currentTime=4.36)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplay (readyState=4)
+index-Dp48W74o.js:1677 [Audio] a2b0507d-a5ca-4f9a-ba18-055fd7aacaec_1768706460825_4wetodou6: canplaythrough - READY TO PLAY
+2index-Dp48W74o.js:993 [AUTH] ✓ User data refreshed (credits updated)
+index-Dp48W74o.js:1454 [WorkerManager] getFrame: a5a658b7 t=8.00 key=240 cache=[2-239] size=190 found=true at 239
+video-decoder.worker-BCbVqjxq.js:1 [VideoDecoderWorker] Received buffer message: time=14.466668090820313, items=2
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=seek videoId=a5a658b7 time=8.00 items=undefined
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:1454 [WORKER:MSG_RECV] type=buffer videoId=undefined time=14.47 items=2
+index-Dp48W74o.js:1454 [WORKER:BUFFER] time=14.47s items=2 videos=[a2b0507d:ready=true,idx=191, a5a658b7:ready=true,idx=191]
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SKIP] a2b0507d out of range timeInClip=14.47
+index-Dp48W74o.js:1454 [WORKER:BUFFER_SEEK] a5a658b7 localTime=8.00s lastDecoded=8.04s
+index-Dp48W74o.js:1454 [WORKER:SEEK_COMPLETE] a5a658b7 all chunks decoded
+index-Dp48W74o.js:993 [AUTH] ✓ User data refreshed (credits updated)
