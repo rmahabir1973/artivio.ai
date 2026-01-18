@@ -38,6 +38,7 @@ import {
   Plus,
   Minus,
   GripVertical,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface VideoClip {
@@ -106,7 +107,6 @@ interface AdvancedTimelineProps {
   audioTracks: AudioTrack[];
   getClipSettings: (clipId: string) => ClipSettingsLocal;
   clipTransitions: ClipTransitionLocal[];
-  crossLayerTransitions?: CrossLayerTransitionLocal[];
   onClipSelect: (clip: VideoClip, index: number) => void;
   onClipRemove: (clipId: string) => void;
   onClipReorder: (fromIndex: number, toIndex: number) => void;
@@ -116,9 +116,7 @@ interface AdvancedTimelineProps {
   onMediaDrop?: (trackId: string, media: DroppedMediaData, dropTimeSeconds: number) => void;
   onTransitionEdit: (index: number) => void;
   onTransitionRemove: (index: number) => void;
-  onCrossLayerTransitionAdd?: (fromClipId: string, toClipId: string, type: string, durationSeconds: number) => void;
-  onCrossLayerTransitionEdit?: (transitionId: string, type: string, durationSeconds: number) => void;
-  onCrossLayerTransitionRemove?: (transitionId: string) => void;
+  onCrossLayerTransitionAttempt?: () => void; // Called when user tries to create cross-layer transition
   onAudioRemove: (trackId: string) => void;
   onAudioUpdate?: (trackId: string, updates: Partial<AudioTrack>) => void;
   onAudioSplit?: (trackId: string, splitTimeInTrack: number) => void;
@@ -294,29 +292,22 @@ interface CrossLayerOverlap {
   transition?: CrossLayerTransitionLocal;
 }
 
+// Cross-layer transition zones now only show a warning - cross-layer transitions are not supported
 function CrossLayerTransitionZone({
   overlap,
   pixelsPerSecond,
   trackHeight,
   trackConfig,
-  onAddTransition,
-  onEditTransition,
-  onRemoveTransition,
+  onCrossLayerAttempt,
   isDraggingClip,
 }: {
   overlap: CrossLayerOverlap;
   pixelsPerSecond: number;
   trackHeight: number;
   trackConfig: Array<{ id: string }>;
-  onAddTransition?: (fromClipId: string, toClipId: string, type: string, durationSeconds: number) => void;
-  onEditTransition?: (transitionId: string, type: string, durationSeconds: number) => void;
-  onRemoveTransition?: (transitionId: string) => void;
+  onCrossLayerAttempt?: () => void;
   isDraggingClip?: boolean;
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedType, setSelectedType] = useState(overlap.transition?.type || 'fade');
-  const [duration, setDuration] = useState(overlap.transition?.durationSeconds || 1.0);
-  
   const overlapDuration = overlap.overlapEnd - overlap.overlapStart;
   const left = overlap.overlapStart * pixelsPerSecond;
   const width = Math.max(overlapDuration * pixelsPerSecond, 30);
@@ -328,145 +319,46 @@ function CrossLayerTransitionZone({
   const spanHeight = (bottomTrackIndex - topTrackIndex + 1) * trackHeight;
   const topOffset = topTrackIndex * trackHeight;
   
-  const hasTransition = !!overlap.transition;
-  
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (hasTransition) {
-      setIsEditing(true);
-    } else if (onAddTransition) {
-      onAddTransition(overlap.fromClipId, overlap.toClipId, 'fade', Math.min(overlapDuration, 1.0));
-    }
+    // Show warning that cross-layer transitions are not supported
+    onCrossLayerAttempt?.();
   };
   
-  const handleSave = () => {
-    if (overlap.transition && onEditTransition) {
-      onEditTransition(overlap.transition.id, selectedType, duration);
-    }
-    setIsEditing(false);
-  };
-  
-  const handleRemove = () => {
-    if (overlap.transition && onRemoveTransition) {
-      onRemoveTransition(overlap.transition.id);
-    }
-    setIsEditing(false);
-  };
-  
-  const transitionTypes = [
-    { value: 'fade', label: 'Fade' },
-    { value: 'dissolve', label: 'Dissolve' },
-    { value: 'fadeblack', label: 'Fade Black' },
-    { value: 'fadewhite', label: 'Fade White' },
-    { value: 'wipeleft', label: 'Wipe Left' },
-    { value: 'wiperight', label: 'Wipe Right' },
-    { value: 'wipeup', label: 'Wipe Up' },
-    { value: 'wipedown', label: 'Wipe Down' },
-    { value: 'slideleft', label: 'Slide Left' },
-    { value: 'slideright', label: 'Slide Right' },
-    { value: 'slideup', label: 'Slide Up' },
-    { value: 'slidedown', label: 'Slide Down' },
-  ];
-  
+  // Cross-layer transitions are not supported - show a subtle warning zone only
   return (
-    <>
-      <div
-        className={cn(
-          "absolute z-20 transition-all border-2 border-dashed rounded-sm pointer-events-none",
-          isDraggingClip
-            ? "opacity-30"
-            : "opacity-100",
-          hasTransition
-            ? "bg-yellow-500/20 border-yellow-500/60"
-            : "bg-primary/10 border-primary/30"
-        )}
-        style={{
-          left: `${left}px`,
-          width: `${width}px`,
-          top: `${topOffset}px`,
-          height: `${spanHeight}px`,
-        }}
-        data-testid={`cross-layer-zone-${overlap.fromClipId}-${overlap.toClipId}`}
-      >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <button
-            onClick={handleClick}
-            className="pointer-events-auto cursor-pointer"
-            disabled={isDraggingClip}
-          >
-            {hasTransition ? (
-              <Badge className="text-[9px] px-1.5 py-0.5 gap-0.5 bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-400 shadow-md">
-                <Sparkles className="h-2.5 w-2.5" />
-                {overlap.transition?.type}
-              </Badge>
-            ) : (
-              <div className="flex flex-col items-center gap-0.5 opacity-60 hover:opacity-100">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-[8px] text-primary font-medium">Add Effect</span>
-              </div>
-            )}
-          </button>
-        </div>
-      </div>
-      
-      {isEditing && hasTransition && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
-          onClick={() => setIsEditing(false)}
-        >
-          <div 
-            className="bg-background border rounded-lg p-4 shadow-xl min-w-[280px]"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Edit Cross-Layer Transition
-            </h3>
-            
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Effect Type</label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full h-8 px-2 text-sm bg-muted border rounded"
-                  data-testid="select-transition-type"
-                >
-                  {transitionTypes.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Duration: {duration.toFixed(1)}s (max: {overlapDuration.toFixed(1)}s)
-                </label>
-                <input
-                  type="range"
-                  min={0.1}
-                  max={Math.max(0.1, overlapDuration)}
-                  step={0.1}
-                  value={duration}
-                  onChange={(e) => setDuration(parseFloat(e.target.value))}
-                  className="w-full"
-                  data-testid="slider-transition-duration"
-                />
-              </div>
-              
-              <div className="flex gap-2 pt-2">
-                <Button size="sm" onClick={handleSave} className="flex-1" data-testid="button-save-transition">
-                  Save
-                </Button>
-                <Button size="sm" variant="destructive" onClick={handleRemove} data-testid="button-remove-transition">
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div
+      className={cn(
+        "absolute z-20 transition-all border-2 border-dashed rounded-sm pointer-events-none",
+        isDraggingClip
+          ? "opacity-20"
+          : "opacity-40 hover:opacity-70",
+        "bg-orange-500/10 border-orange-500/30"
       )}
-    </>
+      style={{
+        left: `${left}px`,
+        width: `${width}px`,
+        top: `${topOffset}px`,
+        height: `${spanHeight}px`,
+      }}
+      data-testid={`cross-layer-zone-${overlap.fromClipId}-${overlap.toClipId}`}
+    >
+      <div className="absolute inset-0 flex items-center justify-center">
+        <button
+          onClick={handleClick}
+          className="pointer-events-auto cursor-pointer"
+          disabled={isDraggingClip}
+          title="Cross-layer transitions are not supported. Move clips to the same layer for transitions."
+        >
+          <div className="flex flex-col items-center gap-0.5 opacity-60 hover:opacity-100">
+            <AlertTriangle className="h-3 w-3 text-orange-500" />
+            <span className="text-[7px] text-orange-500 font-medium text-center leading-tight">
+              No cross-layer
+            </span>
+          </div>
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1096,7 +988,6 @@ export function AdvancedTimeline({
   audioTracks,
   getClipSettings,
   clipTransitions,
-  crossLayerTransitions = [],
   onClipSelect,
   onClipRemove,
   onClipReorder,
@@ -1106,9 +997,7 @@ export function AdvancedTimeline({
   onMediaDrop,
   onTransitionEdit,
   onTransitionRemove,
-  onCrossLayerTransitionAdd,
-  onCrossLayerTransitionEdit,
-  onCrossLayerTransitionRemove,
+  onCrossLayerTransitionAttempt,
   onAudioRemove,
   onAudioUpdate,
   onAudioSplit,
@@ -1288,6 +1177,8 @@ export function AdvancedTimeline({
     });
   }, [clips, getClipSettings, clipTransitions, pixelsPerSecond, snapEnabled, layerCount]);
 
+  // Note: Cross-layer transitions have been removed - only sequential transitions are supported
+  // Cross-layer overlaps are detected only to show a warning when user attempts to add transitions there
   const crossLayerOverlaps = useMemo((): CrossLayerOverlap[] => {
     const overlaps: CrossLayerOverlap[] = [];
     
@@ -1315,10 +1206,6 @@ export function AdvancedTimeline({
           const fromTrackId = fromClip.trackId || 'layer-1';
           const toTrackId = toClip.trackId || 'layer-1';
           
-          const existingTransition = crossLayerTransitions.find(
-            t => t.fromClipId === fromClip.id && t.toClipId === toClip.id
-          );
-          
           overlaps.push({
             fromClipId: fromClip.id,
             toClipId: toClip.id,
@@ -1326,14 +1213,14 @@ export function AdvancedTimeline({
             toTrackId,
             overlapStart,
             overlapEnd,
-            transition: existingTransition,
+            transition: undefined, // Cross-layer transitions not supported
           });
         }
       }
     }
     
     return overlaps;
-  }, [clipPositions, crossLayerTransitions]);
+  }, [clipPositions]);
 
   const handleClipSelect = useCallback((clip: VideoClip, index: number, addToSelection: boolean) => {
     if (addToSelection) {
@@ -1753,7 +1640,7 @@ export function AdvancedTimeline({
                   );
                 })}
 
-                {/* Cross-layer transition zones - rendered at overlapping clip regions */}
+                {/* Cross-layer overlap zones - show warning that cross-layer transitions are not supported */}
                 {crossLayerOverlaps.map((overlap) => (
                   <CrossLayerTransitionZone
                     key={`cross-${overlap.fromClipId}-${overlap.toClipId}`}
@@ -1761,9 +1648,7 @@ export function AdvancedTimeline({
                     pixelsPerSecond={pixelsPerSecond}
                     trackHeight={TRACK_HEIGHT}
                     trackConfig={trackConfig}
-                    onAddTransition={onCrossLayerTransitionAdd}
-                    onEditTransition={onCrossLayerTransitionEdit}
-                    onRemoveTransition={onCrossLayerTransitionRemove}
+                    onCrossLayerAttempt={onCrossLayerTransitionAttempt}
                     isDraggingClip={isDraggingClip}
                   />
                 ))}

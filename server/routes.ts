@@ -8407,7 +8407,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         clips: normalizedClips,
         enhancements: enhancements || undefined,
         multiTrackTimeline: req.body.multiTrackTimeline || undefined,
-        crossLayerTransitions: enhancements?.crossLayerTransitions || undefined,
+        // Note: Cross-layer transitions removed - only sequential transitions are supported
         callbackUrl: `${getBaseUrl()}/api/video-editor/callback/${jobId}`,
       };
       
@@ -8643,7 +8643,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
       if (isMultiTrack) {
         // Multi-track mode: send timeline items directly (VPS extracts clips from timeline)
         vpsPayload.multiTrackTimeline = multiTrackTimeline;
-        vpsPayload.crossLayerTransitions = enhancements?.crossLayerTransitions || undefined;
+        // Note: Cross-layer transitions removed - only sequential transitions are supported
         // VPS handles clip extraction from multiTrackTimeline - no redundant clips array needed
       } else {
         // Single-track mode: normalize clips

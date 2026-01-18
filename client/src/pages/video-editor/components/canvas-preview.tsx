@@ -11,21 +11,13 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { CanvasPreviewWebCodecs } from './canvas-preview-webcodecs';
 import { CanvasPreviewPro } from './canvas-preview-pro';
 
-// Cross-layer transition definition
-interface CrossLayerTransition {
-  id: string;
-  fromClipId: string;
-  toClipId: string;
-  type: string;
-  durationSeconds: number;
-}
+// Note: Cross-layer transitions have been removed - only sequential transitions are supported
 
 interface CanvasPreviewProps {
   items: MultiTrackTimelineItem[];
   currentTime: number;
   isPlaying: boolean;
   onTimeUpdate?: (time: number) => void;
-  crossLayerTransitions?: CrossLayerTransition[];
   width?: number;
   height?: number;
   className?: string;
@@ -36,7 +28,6 @@ export function CanvasPreview({
   currentTime,
   isPlaying,
   onTimeUpdate,
-  crossLayerTransitions = [],
   width = 1920,
   height = 1080,
   className,
@@ -54,7 +45,6 @@ export function CanvasPreview({
         currentTime={currentTime}
         isPlaying={isPlaying}
         onTimeUpdate={onTimeUpdate}
-        crossLayerTransitions={crossLayerTransitions}
         width={width}
         height={height}
         className={className}

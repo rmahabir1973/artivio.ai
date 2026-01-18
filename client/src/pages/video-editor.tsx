@@ -164,20 +164,13 @@ interface ClipTransitionLocal {
   trackId?: string; // Which layer this transition belongs to
 }
 
-// Cross-layer transition state (for transitions between clips on different layers)
-interface CrossLayerTransitionLocal {
-  id: string;
-  fromClipId: string;
-  toClipId: string;
-  type: string;
-  durationSeconds: number;
-}
+// Note: Cross-layer transitions have been removed due to complexity and reliability issues
+// Only sequential (same-layer) transitions are supported for reliable export
 
 interface EnhancementsState {
   transitionMode: 'none' | 'crossfade' | 'perClip';
   transitionDuration: number;
-  clipTransitions: ClipTransitionLocal[]; // Per-clip transitions
-  crossLayerTransitions: CrossLayerTransitionLocal[]; // Cross-layer transitions
+  clipTransitions: ClipTransitionLocal[]; // Per-clip transitions (sequential only)
   fadeIn: boolean;
   fadeOut: boolean;
   fadeDuration: number; // seconds
@@ -615,7 +608,6 @@ export default function VideoEditor() {
     transitionMode: 'none',
     transitionDuration: 1.0,
     clipTransitions: [],
-    crossLayerTransitions: [],
     fadeIn: false,
     fadeOut: false,
     fadeDuration: 0.5,
@@ -1053,8 +1045,6 @@ export default function VideoEditor() {
             fadeIn: enhancements.fadeIn,
             fadeOut: enhancements.fadeOut,
             fadeDuration: enhancements.fadeDuration,
-            // Include cross-layer transitions for VPS processing
-            crossLayerTransitions: enhancements.crossLayerTransitions,
             // Include background music for audio mixing (full object to match export)
             backgroundMusic: enhancements.backgroundMusic,
             // Include audio track (voice/TTS) for audio mixing (full object to match export)
@@ -1869,16 +1859,6 @@ export default function VideoEditor() {
           fadeOutSeconds: track.fadeOutSeconds ?? 0,
           volume: 1.0,
         })) : undefined,
-        // Cross-layer transitions for multi-track mode
-        crossLayerTransitions: enhancements.crossLayerTransitions.length > 0 
-          ? enhancements.crossLayerTransitions.map(t => ({
-              id: t.id,
-              fromClipId: t.fromClipId,
-              toClipId: t.toClipId,
-              type: t.type,
-              durationSeconds: t.durationSeconds,
-            }))
-          : undefined,
       };
 
       const response = await apiRequest("POST", "/api/video-editor/export", { 
@@ -2551,56 +2531,13 @@ export default function VideoEditor() {
     return enhancements.clipTransitions.find(t => t.afterClipIndex === position);
   }, [enhancements.clipTransitions]);
 
-  // Cross-layer transition handlers
-  const handleCrossLayerTransitionAdd = useCallback((fromClipId: string, toClipId: string, type: string, durationSeconds: number) => {
-    const newTransition: CrossLayerTransitionLocal = {
-      id: `clt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      fromClipId,
-      toClipId,
-      type,
-      durationSeconds,
-    };
-
-    setEnhancements(prev => ({
-      ...prev,
-      crossLayerTransitions: [
-        ...prev.crossLayerTransitions.filter(t => !(t.fromClipId === fromClipId && t.toClipId === toClipId)),
-        newTransition,
-      ],
-    }));
-    setPreviewStatus('stale');
-
+  // Cross-layer transitions have been removed - only sequential transitions are supported
+  // Show a warning when user attempts cross-layer transition
+  const handleCrossLayerTransitionAttempt = useCallback(() => {
     toast({
-      title: "Cross-Layer Transition Added",
-      description: `${type.charAt(0).toUpperCase() + type.slice(1)} effect applied between layers`,
-    });
-  }, [toast]);
-
-  const handleCrossLayerTransitionEdit = useCallback((transitionId: string, type: string, durationSeconds: number) => {
-    setEnhancements(prev => ({
-      ...prev,
-      crossLayerTransitions: prev.crossLayerTransitions.map(t =>
-        t.id === transitionId ? { ...t, type, durationSeconds } : t
-      ),
-    }));
-    setPreviewStatus('stale');
-
-    toast({
-      title: "Cross-Layer Transition Updated",
-      description: `Effect updated to ${type} (${durationSeconds.toFixed(1)}s)`,
-    });
-  }, [toast]);
-
-  const handleCrossLayerTransitionRemove = useCallback((transitionId: string) => {
-    setEnhancements(prev => ({
-      ...prev,
-      crossLayerTransitions: prev.crossLayerTransitions.filter(t => t.id !== transitionId),
-    }));
-    setPreviewStatus('stale');
-
-    toast({
-      title: "Cross-Layer Transition Removed",
-      description: "Effect between layers has been removed",
+      title: "Cross-Layer Transitions Not Supported",
+      description: "Transitions only work between sequential clips on the same layer. Move clips to the same layer for transitions.",
+      variant: "destructive",
     });
   }, [toast]);
 
@@ -2723,7 +2660,6 @@ export default function VideoEditor() {
       transitionMode: 'none',
       transitionDuration: 1.0,
       clipTransitions: [],
-      crossLayerTransitions: [],
       fadeIn: false,
       fadeOut: false,
       fadeDuration: 0.5,
@@ -3442,11 +3378,10 @@ export default function VideoEditor() {
                         </div>
                       </div>
 
-                      {/* Active transitions list */}
-                      {(enhancements.clipTransitions.length > 0 || enhancements.crossLayerTransitions.length > 0) && (
+                      {/* Active transitions list - sequential only */}
+                      {enhancements.clipTransitions.length > 0 && (
                         <div className="mt-4 space-y-2">
                           <p className="text-xs font-medium text-muted-foreground">Active Transitions</p>
-                          {/* Same-layer transitions */}
                           {enhancements.clipTransitions
                             .sort((a, b) => a.afterClipIndex - b.afterClipIndex)
                             .map((transition) => (
@@ -3480,37 +3415,13 @@ export default function VideoEditor() {
                                 </div>
                               </div>
                             ))}
-                          {/* Cross-layer transitions */}
-                          {enhancements.crossLayerTransitions.map((transition) => {
-                            const fromClip = orderedClips.find(c => c.id === transition.fromClipId);
-                            const toClip = orderedClips.find(c => c.id === transition.toClipId);
-                            const fromIndex = fromClip ? orderedClips.indexOf(fromClip) + 1 : '?';
-                            const toIndex = toClip ? orderedClips.indexOf(toClip) + 1 : '?';
-                            return (
-                              <div key={transition.id} className="p-2 border border-purple-500/30 bg-purple-500/5 rounded-md flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                  <Layers className="h-3 w-3 text-purple-500" />
-                                  <span className="text-xs">
-                                    Clip {fromIndex} ↔ Clip {toIndex}
-                                  </span>
-                                  <Badge variant="secondary" className="text-[10px] bg-purple-500/20">{transition.type}</Badge>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-destructive"
-                                    onClick={() => handleCrossLayerTransitionRemove(transition.id)}
-                                    data-testid={`remove-cross-transition-${transition.id}`}
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
                         </div>
                       )}
+                      
+                      {/* Note about cross-layer transitions */}
+                      <p className="text-xs text-muted-foreground mt-4 p-2 bg-muted/50 rounded-md">
+                        Transitions work between sequential clips on the same layer. Drag a transition between two adjacent clips.
+                      </p>
                     </div>
                   )}
 
@@ -4111,7 +4022,6 @@ export default function VideoEditor() {
                 currentTime={timelineCurrentTime}
                 isPlaying={isTimelinePlaying}
                 onTimeUpdate={setTimelineCurrentTime}
-                crossLayerTransitions={enhancements.crossLayerTransitions}
                 className="flex-1"
               />
             ) : (
@@ -4319,10 +4229,7 @@ export default function VideoEditor() {
               onTimeChange={setTimelineCurrentTime}
               onPlayPause={handleTimelinePlayPause}
               isPlaying={isTimelinePlaying}
-              crossLayerTransitions={enhancements.crossLayerTransitions}
-              onCrossLayerTransitionAdd={handleCrossLayerTransitionAdd}
-              onCrossLayerTransitionEdit={handleCrossLayerTransitionEdit}
-              onCrossLayerTransitionRemove={handleCrossLayerTransitionRemove}
+              onCrossLayerTransitionAttempt={handleCrossLayerTransitionAttempt}
               isDraggingClip={!!(activeDragData && (activeDragData.type === 'clip' || activeDragData.type === 'audio'))}
               zoom={timelineZoom}
               onZoomChange={setTimelineZoom}

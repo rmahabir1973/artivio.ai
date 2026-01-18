@@ -1,6 +1,6 @@
 /**
  * VPS Video Processor - server.js
- * FFmpeg 8.0.1 Advanced Video Processing Server with Cross-Layer Transitions
+ * FFmpeg 8.0.1 Advanced Video Processing Server
  * Updated: January 2026
  * 
  * Full feature support for:
@@ -9,7 +9,10 @@
  * - Aspect ratio conversion (16:9, 9:16, 1:1)
  * - Global effects (fade in/out, watermark, text overlays)
  * - Multi-track timeline with layer-based rendering
- * - Cross-layer transitions (xfade between clips on different tracks)
+ * - Sequential transitions between clips (xfade/acrossfade)
+ * 
+ * Note: Cross-layer transitions have been removed for reliability.
+ * Only sequential transitions between consecutive clips on the same layer are supported.
  * 
  * Deploy to: ~/video-processor/server.js on your VPS
  * Run with: pm2 start server.js --name video-processor
@@ -24,18 +27,6 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-
-// Cross-layer transitions support with error handling
-let crossLayerTransitions;
-try {
-  crossLayerTransitions = require('./crossLayerTransitions');
-  console.log('✓ Cross-layer transitions module loaded');
-} catch (error) {
-  console.warn('⚠️ Cross-layer transitions module not found:', error.message);
-  crossLayerTransitions = { 
-    processCrossLayerTransitions: () => null
-  };
-}
 
 const app = express();
 app.use(cors());
@@ -93,7 +84,7 @@ console.log(`  S3 Bucket:     ${S3_BUCKET}`);
 console.log(`  AWS Region:    ${process.env.AWS_REGION}`);
 console.log(`  Callback:      ${CALLBACK_SECRET ? 'Configured ✓' : 'Not configured ⚠️'}`);
 console.log(`  Whisper:       ${OPENAI_API_KEY ? 'Enabled ✓' : 'Disabled'}`);
-console.log(`  Cross-layer:   ${crossLayerTransitions.processCrossLayerTransitions ? 'Enabled ✓' : 'Disabled ⚠️'}`);
+console.log(`  Transitions:   Sequential (xfade) ✓`);
 console.log('----------------------------------------------------------------------------------');
 
 // Verify FFmpeg on startup
@@ -151,11 +142,10 @@ app.get('/health', (req, res) => {
       ffmpeg: FFMPEG_PATH,
       version: version,
       activeJobs: jobs.size,
-      crossLayerEnabled: !!crossLayerTransitions.processCrossLayerTransitions,
       features: [
         'per-clip-fades', 'per-clip-volume', 'per-clip-speed', 'audio-mixing',
         'background-music', 'aspect-ratio', 'watermarks', 'text-overlays',
-        'xfade-transitions', 'cross-layer-transitions', 'multi-track-timeline'
+        'sequential-transitions', 'xfade', 'multi-track-timeline'
       ]
     });
   } catch (error) {
@@ -184,7 +174,6 @@ app.post('/process', async (req, res) => {
       enhancements, 
       videoSettings,
       multiTrackTimeline,
-      crossLayerTransitions: crossLayerTransitionsData,
       callbackUrl 
     } = req.body;
     
@@ -194,12 +183,15 @@ app.post('/process', async (req, res) => {
     
     const outputFormat = videoSettings?.format || 'mp4';
     
+    // Count sequential transitions
+    const seqTransitions = clips.filter(c => c.transitionAfter).length + (enhancements?.clipTransitions?.length || 0);
+    
     console.log(`\n[${jobId}] ------------------------------------------------------------`);
     console.log(`[${jobId}] New job received`);
     console.log(`[${jobId}]   Clips: ${clips.length}`);
     console.log(`[${jobId}]   Format: ${outputFormat}`);
     console.log(`[${jobId}]   Multi-track: ${multiTrackTimeline ? 'Yes' : 'No'}`);
-    console.log(`[${jobId}]   Cross-layer Transitions: ${crossLayerTransitionsData?.length || 0}`);
+    console.log(`[${jobId}]   Sequential Transitions: ${seqTransitions}`);
     console.log(`[${jobId}] ------------------------------------------------------------\n`);
     
     jobs.set(jobId, {
@@ -211,7 +203,7 @@ app.post('/process', async (req, res) => {
     
     res.json({ status: 'processing', jobId, message: 'Video processing started' });
     
-    processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, crossLayerTransitionsData, callbackUrl);
+    processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, callbackUrl);
     
   } catch (error) {
     console.error(`[${jobId}] Process error:`, error);
@@ -224,7 +216,7 @@ app.post('/process', async (req, res) => {
 // VIDEO PROCESSING PIPELINE
 // ============================================================================
 
-async function processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, crossLayerTransitionsData, callbackUrl) {
+async function processVideo(jobId, jobDir, clips, enhancements, videoSettings, multiTrackTimeline, callbackUrl) {
   const outputFormat = videoSettings?.format || 'mp4';
   
   try {
@@ -261,7 +253,6 @@ async function processVideo(jobId, jobDir, clips, enhancements, videoSettings, m
       videoSettings, 
       audioAssets,
       multiTrackTimeline,
-      crossLayerTransitionsData,
       clips,
       outputPath,
       jobId
@@ -546,7 +537,6 @@ function buildAdvancedFFmpegCommand(
   videoSettings, 
   audioAssets, 
   multiTrackTimeline,
-  crossLayerTransitionsData,
   originalClips,
   outputPath, 
   jobId
@@ -581,62 +571,11 @@ function buildAdvancedFFmpegCommand(
   }
   
   // ============================================
-  // CROSS-LAYER TRANSITIONS PROCESSING
+  // BUILD FILTER COMPLEX (Sequential Transitions)
   // ============================================
-  let crossLayerResult = null;
-  let useCrossLayerMode = false;
-  
-  if (crossLayerTransitionsData && crossLayerTransitionsData.length > 0 && multiTrackTimeline) {
-    console.log(`[${jobId}] [CrossLayer] Processing ${crossLayerTransitionsData.length} cross-layer transition(s)`);
-    
-    const downloadedClips = localClips.map((clip, i) => ({
-      id: clip.id || `clip_${i}`,
-      localPath: clip.localPath,
-      index: i,
-      hasAudio: clip.hasAudio || false,
-      actualDuration: clip.actualDuration || 5
-    }));
-    
-    try {
-      const payload = {
-        clips: originalClips,
-        multiTrackTimeline,
-        crossLayerTransitions: crossLayerTransitionsData,
-        enhancements,
-        videoSettings,
-        localClips: downloadedClips
-      };
-      
-      crossLayerResult = crossLayerTransitions.processCrossLayerTransitions(payload, downloadedClips);
-      
-      if (crossLayerResult && crossLayerResult.filterComplex) {
-        console.log(`[${jobId}] [CrossLayer] Generated filter complex successfully`);
-        useCrossLayerMode = true;
-      } else {
-        console.warn(`[${jobId}] [CrossLayer] No filter complex generated`);
-      }
-    } catch (error) {
-      console.error(`[${jobId}] [CrossLayer] Error:`, error.message);
-    }
-  }
-  
-  // ============================================
-  // BUILD FILTER COMPLEX
-  // ============================================
-  let filterComplex, videoOutput, audioOutput;
-  
-  if (useCrossLayerMode && crossLayerResult) {
-    console.log(`[${jobId}] Using cross-layer transition mode`);
-    filterComplex = crossLayerResult.filterComplex;
-    videoOutput = crossLayerResult.videoOutput || '[outv]';
-    audioOutput = crossLayerResult.audioOutput || '[outa]';
-  } else {
-    console.log(`[${jobId}] Using standard processing mode`);
-    const filterGraph = buildFilterGraph(localClips, enhancements, videoSettings, audioAssets, inputMap, jobId);
-    filterComplex = filterGraph.filterComplex;
-    videoOutput = filterGraph.videoOutput;
-    audioOutput = filterGraph.audioOutput;
-  }
+  console.log(`[${jobId}] Building filter graph with sequential transition support`);
+  const filterGraph = buildFilterGraph(localClips, enhancements, videoSettings, audioAssets, inputMap, jobId);
+  const { filterComplex, videoOutput, audioOutput } = filterGraph;
   
   if (filterComplex) {
     args.push('-filter_complex', filterComplex);
@@ -792,6 +731,12 @@ function buildFilterGraph(clips, enhancements, videoSettings, audioAssets, input
       audioFilters.push('aresample=async=1:first_pts=0');
       audioFilters.push('aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo');
       
+      // Ensure audio duration matches video duration for acrossfade alignment
+      // apad extends short audio, atrim cuts to exact duration, asetpts resets timeline
+      audioFilters.push(`apad=whole_dur=${adjustedDuration.toFixed(3)}`);
+      audioFilters.push(`atrim=start=0:duration=${adjustedDuration.toFixed(3)}`);
+      audioFilters.push('asetpts=PTS-STARTPTS');
+      
       const audioLabel = `a${i}`;
       filterSteps.push(`[${idx}:a]${audioFilters.join(',')}[${audioLabel}]`);
       audioStreams.push(`[${audioLabel}]`);
@@ -824,17 +769,140 @@ function buildFilterGraph(clips, enhancements, videoSettings, audioAssets, input
   let finalVideoLabel = '';
   let finalAudioLabel = '';
   
+  // Check for sequential transitions (transitionAfter on clips or enhancements.clipTransitions)
+  const clipTransitions = enhancements?.clipTransitions || [];
+  const hasSequentialTransitions = clips.some((c, i) => c.transitionAfter && i < clips.length - 1) || clipTransitions.length > 0;
+  
+  // Normalize transition type: convert camelCase to lowercase for FFmpeg
+  // Apply camelCase splitting BEFORE lowercasing (wipeLeft -> wipe left -> wipeleft)
+  const getXfadeTransition = (type) => {
+    if (!type) return 'fade';
+    // First split camelCase, then lowercase the result
+    const normalized = type.replace(/([a-z])([A-Z])/g, '$1$2').toLowerCase();
+    const typeMap = {
+      'fade': 'fade',
+      'dissolve': 'dissolve',
+      'fadeblack': 'fadeblack',
+      'fadewhite': 'fadewhite',
+      'wipeleft': 'wipeleft',
+      'wiperight': 'wiperight',
+      'wipeup': 'wipeup',
+      'wipedown': 'wipedown',
+      'slideleft': 'slideleft',
+      'slideright': 'slideright',
+      'slideup': 'slideup',
+      'slidedown': 'slidedown',
+    };
+    return typeMap[normalized] || 'fade';
+  };
+  
+  // Calculate clip durations for timing
+  const clipDurations = clips.map((clip, i) => {
+    const speed = clip.speed ?? 1;
+    const displayDuration = clip.isImage ? (clip.displayDuration ?? 5) : null;
+    let dur = displayDuration || clip.actualDuration || 5;
+    if (clip.trimStartSeconds) dur -= clip.trimStartSeconds;
+    if (clip.trimEndSeconds && clip.trimEndSeconds < dur) dur = clip.trimEndSeconds - (clip.trimStartSeconds || 0);
+    return Math.max(dur / speed, 0.1);
+  });
+  
   if (clips.length > 1) {
-    filterSteps.push(`${videoStreams.join('')}concat=n=${clips.length}:v=1:a=0[concat_video]`);
-    finalVideoLabel = '[concat_video]';
-    
-    if (audioStreams.length === clips.length) {
+    if (hasSequentialTransitions) {
+      // Use xfade for sequential transitions
+      // IMPORTANT: FFmpeg xfade offset is relative to the OUTPUT stream timeline,
+      // which accumulates as we chain xfade filters
+      console.log(`[${jobId}] Processing sequential transitions with xfade`);
+      
+      let currentVideoLabel = videoStreams[0];
+      let currentAudioLabel = audioStreams[0];
+      
+      // Track cumulative timeline for xfade offset calculation
+      // After first xfade, the output stream duration = clip1 + clip2 - transitionDuration
+      // So next offset = (cumulative output duration) when next clip should start fading in
+      let cumulativeOutputDuration = clipDurations[0];
+      let totalTransitionOverlap = 0;
+      
+      for (let i = 0; i < clips.length - 1; i++) {
+        // Get transition from clip or clipTransitions array
+        const clipTransition = clipTransitions.find(t => t.afterClipIndex === i);
+        const transitionType = clips[i].transitionAfter?.type || clipTransition?.type || null;
+        let transitionDuration = clips[i].transitionAfter?.duration || clipTransition?.durationSeconds || 0;
+        
+        if (transitionType && transitionDuration > 0) {
+          // Clamp transition duration to prevent negative offsets
+          // Transition cannot be longer than the shorter of the two clips minus a small margin
+          const maxTransition = Math.min(clipDurations[i], clipDurations[i + 1]) - 0.1;
+          
+          // If clips are too short for any transition, skip transition and concat instead
+          if (maxTransition <= 0.1) {
+            console.warn(`[${jobId}] Clips too short for transition ${i}, falling back to concat`);
+            // Fall through to concat handling below
+            const concatVideoLabel = `cv${i}`;
+            filterSteps.push(`${currentVideoLabel}${videoStreams[i + 1]}concat=n=2:v=1:a=0[${concatVideoLabel}]`);
+            currentVideoLabel = `[${concatVideoLabel}]`;
+            
+            const concatAudioLabel = `ca${i}`;
+            filterSteps.push(`${currentAudioLabel}${audioStreams[i + 1]}concat=n=2:v=0:a=1[${concatAudioLabel}]`);
+            currentAudioLabel = `[${concatAudioLabel}]`;
+            
+            cumulativeOutputDuration += clipDurations[i + 1];
+            continue;
+          }
+          
+          if (transitionDuration > maxTransition) {
+            console.warn(`[${jobId}] Transition ${i} duration ${transitionDuration}s exceeds max ${maxTransition.toFixed(2)}s, clamping`);
+            transitionDuration = maxTransition;
+          }
+          
+          // Apply xfade transition
+          const xfadeType = getXfadeTransition(transitionType);
+          
+          // For first xfade: offset = clip1_duration - transitionDuration
+          // For subsequent: offset is relative to the current concatenated stream length
+          // After xfade, output = previous_output + next_clip - transition_overlap
+          const offset = cumulativeOutputDuration - transitionDuration;
+          const safeOffset = Math.max(offset, 0.1);
+          
+          const videoXfadeLabel = `xv${i}`;
+          filterSteps.push(`${currentVideoLabel}${videoStreams[i + 1]}xfade=transition=${xfadeType}:duration=${transitionDuration.toFixed(3)}:offset=${safeOffset.toFixed(3)}[${videoXfadeLabel}]`);
+          currentVideoLabel = `[${videoXfadeLabel}]`;
+          
+          // Apply audio crossfade - both streams should be padded to same duration
+          // acrossfade works on the audio at the transition point
+          const audioXfadeLabel = `xa${i}`;
+          filterSteps.push(`${currentAudioLabel}${audioStreams[i + 1]}acrossfade=d=${transitionDuration.toFixed(3)}:c1=tri:c2=tri[${audioXfadeLabel}]`);
+          currentAudioLabel = `[${audioXfadeLabel}]`;
+          
+          // Update cumulative output duration: add next clip, subtract transition overlap
+          cumulativeOutputDuration = cumulativeOutputDuration + clipDurations[i + 1] - transitionDuration;
+          totalTransitionOverlap += transitionDuration;
+        } else {
+          // No transition - use concat for this pair
+          const concatVideoLabel = `cv${i}`;
+          filterSteps.push(`${currentVideoLabel}${videoStreams[i + 1]}concat=n=2:v=1:a=0[${concatVideoLabel}]`);
+          currentVideoLabel = `[${concatVideoLabel}]`;
+          
+          const concatAudioLabel = `ca${i}`;
+          filterSteps.push(`${currentAudioLabel}${audioStreams[i + 1]}concat=n=2:v=0:a=1[${concatAudioLabel}]`);
+          currentAudioLabel = `[${concatAudioLabel}]`;
+          
+          // Cumulative output grows by next clip duration (no overlap)
+          cumulativeOutputDuration += clipDurations[i + 1];
+        }
+      }
+      
+      finalVideoLabel = currentVideoLabel;
+      finalAudioLabel = currentAudioLabel;
+      
+      // Update totalDuration to account for transition overlaps
+      totalDuration = cumulativeOutputDuration;
+    } else {
+      // No transitions - use simple concat
+      filterSteps.push(`${videoStreams.join('')}concat=n=${clips.length}:v=1:a=0[concat_video]`);
+      finalVideoLabel = '[concat_video]';
+      
       filterSteps.push(`${audioStreams.join('')}concat=n=${clips.length}:v=0:a=1[concat_audio]`);
       finalAudioLabel = '[concat_audio]';
-    } else if (audioStreams.length === 1) {
-      finalAudioLabel = audioStreams[0];
-    } else {
-      finalAudioLabel = '[silent_fallback]';
     }
   } else {
     finalVideoLabel = videoStreams[0];

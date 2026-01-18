@@ -50,6 +50,8 @@ export interface TimelineTransition {
   durationSeconds: number;
 }
 
+// Note: Cross-layer transitions have been removed - only sequential transitions are supported
+// This interface is kept for type compatibility but is no longer used
 export interface CrossLayerTransition {
   id: string;
   fromClipId: string;
