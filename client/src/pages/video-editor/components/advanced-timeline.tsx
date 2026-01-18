@@ -39,6 +39,10 @@ import {
   Minus,
   GripVertical,
   AlertTriangle,
+  Maximize2,
+  Undo2,
+  Redo2,
+  Clipboard,
 } from 'lucide-react';
 
 interface VideoClip {
@@ -113,6 +117,7 @@ interface AdvancedTimelineProps {
   onClipDuplicate?: (clip: VideoClip, afterIndex: number) => void;
   onClipSplit?: (clipId: string, splitTimeInClip: number) => void;
   onClipTrackChange?: (clipId: string, newTrackId: string) => void;
+  onExtractAudio?: (clip: VideoClip) => void;
   onMediaDrop?: (trackId: string, media: DroppedMediaData, dropTimeSeconds: number) => void;
   onTransitionEdit: (index: number) => void;
   onTransitionRemove: (index: number) => void;
@@ -134,12 +139,93 @@ interface AdvancedTimelineProps {
   isDraggingClip?: boolean; // True when a clip/audio is being dragged
   zoom?: number; // External zoom control
   onZoomChange?: (zoom: number) => void; // Callback when zoom changes
+  // Undo/Redo callbacks
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  // Copy/Paste callbacks
+  onClipCopy?: (clipIds: string[]) => void;
+  onClipPaste?: () => void;
+  hasClipboard?: boolean;
+  // Audio track selection
+  onAudioSelect?: (track: AudioTrack | null) => void;
 }
 
 const TRACK_HEIGHT = 48;
 const MIN_CLIP_WIDTH = 40;
 const PIXELS_PER_SECOND_BASE = 100;
 const MAX_LAYERS = 10;
+
+// Audio waveform visualization component - generates a pseudo-waveform pattern
+function AudioWaveform({ audioUrl, width, height, color }: {
+  audioUrl: string;
+  width: number;
+  height: number;
+  color: string;
+}) {
+  // Generate consistent pseudo-waveform based on URL hash
+  const waveformData = useMemo(() => {
+    // Simple hash function to generate consistent waveform from URL
+    let hash = 0;
+    for (let i = 0; i < audioUrl.length; i++) {
+      hash = ((hash << 5) - hash) + audioUrl.charCodeAt(i);
+      hash = hash & hash;
+    }
+    
+    // Generate waveform bars
+    const barCount = Math.max(10, Math.floor(width / 3));
+    const bars: number[] = [];
+    
+    // Use seeded random for consistent results
+    let seed = Math.abs(hash);
+    for (let i = 0; i < barCount; i++) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      const rand = (seed / 0x7fffffff);
+      // Create a wave-like pattern with some randomness
+      const wave = Math.sin(i * 0.15) * 0.3 + 0.4;
+      const randomFactor = rand * 0.5;
+      bars.push(Math.max(0.1, Math.min(0.95, wave + randomFactor)));
+    }
+    return bars;
+  }, [audioUrl, width]);
+
+  if (width <= 0 || height <= 0) return null;
+
+  const barWidth = Math.max(1, (width / waveformData.length) * 0.6);
+  const barGap = (width / waveformData.length) * 0.4;
+
+  return (
+    <div 
+      className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none opacity-40"
+      style={{ left: 4, right: 4 }}
+    >
+      <svg 
+        width={width} 
+        height={height} 
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+      >
+        {waveformData.map((amplitude, i) => {
+          const barHeight = amplitude * height;
+          const x = i * (barWidth + barGap);
+          const y = (height - barHeight) / 2;
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={y}
+              width={barWidth}
+              height={barHeight}
+              fill={color}
+              rx={barWidth / 2}
+            />
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
 interface TrackConfig {
   id: string;
@@ -395,6 +481,7 @@ interface TimelineClipProps {
   onTrimChange: (clipId: string, trimStart: number, trimEnd: number) => void;
   onSplit?: (clip: VideoClip, index: number, splitTimeInClip: number) => void;
   onTrackChange?: (clipId: string, newTrackId: string) => void;
+  onExtractAudio?: (clip: VideoClip) => void;
   availableTrackIds: string[];
   currentTime: number;
 }
@@ -409,6 +496,7 @@ function TimelineClipItem({
   onDuplicate,
   onTrimChange,
   onSplit,
+  onExtractAudio,
   availableTrackIds,
   currentTime,
 }: TimelineClipProps) {
@@ -583,6 +671,15 @@ function TimelineClipItem({
           >
             <Scissors className="h-4 w-4 mr-2" />
             Split at Playhead
+          </ContextMenuItem>
+        )}
+        {onExtractAudio && clip.type === 'video' && (
+          <ContextMenuItem 
+            onClick={() => onExtractAudio(clip)}
+            data-testid="context-extract-audio"
+          >
+            <Music className="h-4 w-4 mr-2" />
+            Extract Audio to Track
           </ContextMenuItem>
         )}
         {onTrackChange && availableTrackIds.length > 1 && (
@@ -773,8 +870,16 @@ function AudioTrackItem({
             />
           )}
 
+          {/* Waveform visualization background */}
+          <AudioWaveform 
+            audioUrl={track.url} 
+            width={width - 8} 
+            height={TRACK_HEIGHT - 16} 
+            color={track.type === 'music' ? '#22c55e' : track.type === 'voice' ? '#a855f7' : '#f97316'}
+          />
+
           {/* Content */}
-          <div className="flex items-center gap-1 overflow-hidden flex-1 ml-2">
+          <div className="flex items-center gap-1 overflow-hidden flex-1 ml-2 z-10">
             {track.type === 'music' ? (
               <Music className={cn("h-3 w-3 shrink-0", iconColor)} />
             ) : track.type === 'voice' ? (
@@ -994,6 +1099,7 @@ export function AdvancedTimeline({
   onClipDuplicate,
   onClipSplit,
   onClipTrackChange,
+  onExtractAudio,
   onMediaDrop,
   onTransitionEdit,
   onTransitionRemove,
@@ -1015,6 +1121,14 @@ export function AdvancedTimeline({
   isDraggingClip = false,
   zoom: externalZoom,
   onZoomChange,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  onClipCopy,
+  onClipPaste,
+  hasClipboard = false,
+  onAudioSelect,
 }: AdvancedTimelineProps) {
   const [internalZoom, setInternalZoom] = useState(1);
   const zoom = externalZoom ?? internalZoom;
@@ -1024,6 +1138,7 @@ export function AdvancedTimeline({
     onZoomChange?.(resolvedZoom);
   };
   const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set());
+  const [selectedAudioIds, setSelectedAudioIds] = useState<Set<string>>(new Set());
   const [layerCount, setLayerCount] = useState(1); // Start with 1 layer
   const [trackVisibility, setTrackVisibility] = useState<Record<string, boolean>>({});
   const [trackLocked, setTrackLocked] = useState<Record<string, boolean>>({});
@@ -1223,6 +1338,10 @@ export function AdvancedTimeline({
   }, [clipPositions]);
 
   const handleClipSelect = useCallback((clip: VideoClip, index: number, addToSelection: boolean) => {
+    // Clear audio selection when selecting a clip
+    setSelectedAudioIds(new Set());
+    onAudioSelect?.(null);
+    
     if (addToSelection) {
       setSelectedClipIds(prev => {
         const newSet = new Set(prev);
@@ -1237,7 +1356,7 @@ export function AdvancedTimeline({
       setSelectedClipIds(new Set([clip.id]));
     }
     onClipSelect(clip, index);
-  }, [onClipSelect]);
+  }, [onClipSelect, onAudioSelect]);
 
   const handleDuplicate = useCallback((clip: VideoClip, index: number) => {
     if (onClipDuplicate) {
@@ -1294,8 +1413,12 @@ export function AdvancedTimeline({
         case 'Delete':
         case 'Backspace':
           e.preventDefault();
+          // Delete selected video clips
           selectedClipIds.forEach(id => onClipRemove(id));
+          // Also delete selected audio tracks
+          selectedAudioIds.forEach(id => onAudioRemove(id));
           setSelectedClipIds(new Set());
+          setSelectedAudioIds(new Set());
           break;
         case 'ArrowLeft':
           e.preventDefault();
@@ -1309,17 +1432,54 @@ export function AdvancedTimeline({
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             setSelectedClipIds(new Set(clips.map(c => c.id)));
+            setSelectedAudioIds(new Set(audioTracks.map(a => a.id)));
+          }
+          break;
+        case 'z':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (e.shiftKey) {
+              // Ctrl+Shift+Z = Redo
+              onRedo?.();
+            } else {
+              // Ctrl+Z = Undo
+              onUndo?.();
+            }
+          }
+          break;
+        case 'y':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            // Ctrl+Y = Redo
+            onRedo?.();
+          }
+          break;
+        case 'c':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            // Ctrl+C = Copy selected clips
+            if (selectedClipIds.size > 0 && onClipCopy) {
+              onClipCopy(Array.from(selectedClipIds));
+            }
+          }
+          break;
+        case 'v':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            // Ctrl+V = Paste clips
+            onClipPaste?.();
           }
           break;
         case 'Escape':
           setSelectedClipIds(new Set());
+          setSelectedAudioIds(new Set());
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onPlayPause, onTimeChange, currentTime, effectiveDuration, selectedClipIds, onClipRemove, clips]);
+  }, [onPlayPause, onTimeChange, currentTime, effectiveDuration, selectedClipIds, selectedAudioIds, onClipRemove, onAudioRemove, clips, audioTracks, onUndo, onRedo, onClipCopy, onClipPaste]);
 
   return (
     <div className={cn("flex flex-col bg-background h-full", className)} data-testid="advanced-timeline">
@@ -1370,6 +1530,29 @@ export function AdvancedTimeline({
           <span className="text-xs text-muted-foreground w-10 text-center">
             {Math.round(zoom * 100)}%
           </span>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => {
+                  // Fit to view: calculate zoom to fit entire timeline in view
+                  if (scrollContainerRef.current && effectiveDuration > 0) {
+                    const containerWidth = scrollContainerRef.current.clientWidth - 20; // padding
+                    const requiredWidth = effectiveDuration * PIXELS_PER_SECOND_BASE;
+                    const fitZoom = Math.max(0.25, Math.min(3, containerWidth / requiredWidth));
+                    setZoom(fitZoom);
+                  }
+                }}
+                data-testid="button-fit-view"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Fit to View</TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="h-5 w-px bg-border" />
@@ -1389,6 +1572,43 @@ export function AdvancedTimeline({
           </TooltipTrigger>
           <TooltipContent>Magnetic Snapping</TooltipContent>
         </Tooltip>
+
+        {/* Undo/Redo buttons */}
+        <div className="h-5 w-px bg-border" />
+        
+        <div className="flex items-center gap-0.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={onUndo}
+                disabled={!canUndo}
+                data-testid="button-undo"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={onRedo}
+                disabled={!canRedo}
+                data-testid="button-redo"
+              >
+                <Redo2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Redo (Ctrl+Y)</TooltipContent>
+          </Tooltip>
+        </div>
 
         <div className="flex-1" />
 
@@ -1559,6 +1779,7 @@ export function AdvancedTimeline({
                               onTrimChange={handleTrimChange}
                               onSplit={handleSplit}
                               onTrackChange={onClipTrackChange}
+                              onExtractAudio={onExtractAudio}
                               availableTrackIds={trackConfig.map(c => c.id)}
                               currentTime={currentTime}
                             />
@@ -1632,6 +1853,13 @@ export function AdvancedTimeline({
                                 onUpdate={onAudioUpdate}
                                 onSplit={onAudioSplit}
                                 availableTrackIds={trackConfig.map(c => c.id)}
+                                isSelected={selectedAudioIds.has(track.id)}
+                                onSelect={(trackId) => {
+                                  setSelectedAudioIds(new Set([trackId]));
+                                  setSelectedClipIds(new Set()); // Deselect clips when selecting audio
+                                  const selectedTrack = audioTracks.find(t => t.id === trackId);
+                                  onAudioSelect?.(selectedTrack || null);
+                                }}
                               />
                             ))}
                         </>

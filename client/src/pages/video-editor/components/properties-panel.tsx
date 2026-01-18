@@ -74,12 +74,29 @@ interface EnhancementsState {
   captions: any[];
 }
 
+interface AudioTrack {
+  id: string;
+  url: string;
+  name: string;
+  duration?: number;
+  positionSeconds?: number;
+  volume: number;
+  type: 'music' | 'voice' | 'sfx';
+  trackId?: string;
+  speed?: number;
+  trimStartSeconds?: number;
+  trimEndSeconds?: number;
+  fadeOutSeconds?: number;
+}
+
 interface PropertiesPanelProps {
   selectedClip: { clip: VideoClip; index: number } | null;
+  selectedAudioTrack: AudioTrack | null;
   clipSettings: ClipSettingsLocal | null;
   enhancements: EnhancementsState;
   onClipSettingsChange: (updates: Partial<ClipSettingsLocal>) => void;
   onEnhancementsChange: (updates: Partial<EnhancementsState>) => void;
+  onAudioTrackChange?: (trackId: string, updates: Partial<AudioTrack>) => void;
   onMuteToggle: () => void;
   totalDuration: number;
   clipCount: number;
@@ -128,16 +145,140 @@ function PropertySection({
 
 export function PropertiesPanel({
   selectedClip,
+  selectedAudioTrack,
   clipSettings,
   enhancements,
   onClipSettingsChange,
   onEnhancementsChange,
+  onAudioTrackChange,
   onMuteToggle,
   totalDuration,
   clipCount,
   className,
 }: PropertiesPanelProps) {
   const [activeTab, setActiveTab] = useState<'video' | 'audio' | 'effects'>('video');
+
+  // Render audio track properties panel when an audio track is selected
+  if (selectedAudioTrack && !selectedClip) {
+    return (
+      <div className={cn("h-full flex flex-col", className)} data-testid="properties-panel-audio">
+        <div className="p-3 border-b">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <Music className="h-4 w-4 text-primary" />
+            Audio Track
+          </h3>
+          <p className="text-xs text-muted-foreground truncate mt-1">{selectedAudioTrack.name}</p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <PropertySection title="Audio Info" icon={Music}>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Type</span>
+                <span className="font-medium capitalize">{selectedAudioTrack.type === 'voice' ? 'Voice/TTS' : selectedAudioTrack.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Duration</span>
+                <span className="font-medium">{formatDuration(selectedAudioTrack.duration ?? 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Position</span>
+                <span className="font-medium">{formatDuration(selectedAudioTrack.positionSeconds ?? 0)}</span>
+              </div>
+            </div>
+          </PropertySection>
+
+          <PropertySection title="Volume" icon={Volume2}>
+            <div className="space-y-2">
+              <Label className="text-xs flex justify-between">
+                Volume Level
+                <span className="text-muted-foreground">
+                  {Math.round(selectedAudioTrack.volume * 100)}%
+                </span>
+              </Label>
+              <Slider
+                value={[selectedAudioTrack.volume]}
+                min={0}
+                max={1}
+                step={0.05}
+                onValueChange={([v]) => 
+                  onAudioTrackChange?.(selectedAudioTrack.id, { volume: v })
+                }
+                data-testid="slider-audio-volume"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>0%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </PropertySection>
+
+          <PropertySection title="Speed" icon={Gauge}>
+            <div className="space-y-2">
+              <Label className="text-xs flex justify-between">
+                Playback Speed
+                <span className="text-muted-foreground">{selectedAudioTrack.speed ?? 1}x</span>
+              </Label>
+              <Slider
+                value={[selectedAudioTrack.speed ?? 1]}
+                min={0.5}
+                max={2}
+                step={0.25}
+                onValueChange={([v]) =>
+                  onAudioTrackChange?.(selectedAudioTrack.id, { speed: v })
+                }
+                data-testid="slider-audio-speed"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>0.5x (Slow)</span>
+                <span>2x (Fast)</span>
+              </div>
+            </div>
+          </PropertySection>
+
+          <PropertySection title="Timing" icon={Clock}>
+            <div className="space-y-2">
+              <Label className="text-xs flex justify-between">
+                Timeline Position
+                <span className="text-muted-foreground">
+                  {formatDuration(selectedAudioTrack.positionSeconds ?? 0)}
+                </span>
+              </Label>
+              <Slider
+                value={[selectedAudioTrack.positionSeconds ?? 0]}
+                min={0}
+                max={Math.max(totalDuration - (selectedAudioTrack.duration ?? 0), 0)}
+                step={0.1}
+                onValueChange={([v]) =>
+                  onAudioTrackChange?.(selectedAudioTrack.id, { positionSeconds: v })
+                }
+                data-testid="slider-audio-position"
+              />
+            </div>
+          </PropertySection>
+        </div>
+
+        <div className="border-t p-3 space-y-3">
+          <PropertySection title="Project Info" icon={Settings} defaultOpen>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Clips</span>
+                <span className="font-medium">{clipCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Duration</span>
+                <span className="font-medium">{formatDuration(totalDuration)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Aspect Ratio</span>
+                <span className="font-medium">{enhancements.aspectRatio}</span>
+              </div>
+            </div>
+          </PropertySection>
+        </div>
+      </div>
+    );
+  }
 
   if (!selectedClip) {
     return (
@@ -542,4 +683,4 @@ function formatDuration(seconds: number): string {
   return `${secs}.${ms}s`;
 }
 
-export type { ClipSettingsLocal, VideoClip, EnhancementsState, PropertiesPanelProps };
+export type { ClipSettingsLocal, VideoClip, EnhancementsState, PropertiesPanelProps, AudioTrack };

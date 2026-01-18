@@ -652,8 +652,110 @@ export default function VideoEditor() {
   // Confirmation dialog state for destructive actions
   const [showResetConfirmDialog, setShowResetConfirmDialog] = useState(false);
 
+  // Undo/Redo history management
+  interface EditorHistoryEntry {
+    orderedClips: VideoClip[];
+    clipSettings: Map<string, ClipSettingsLocal>;
+    enhancements: EnhancementsState;
+    audioTracks: typeof audioTracks;
+  }
+  const historyRef = useRef<EditorHistoryEntry[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+  const MAX_HISTORY = 50;
+
+  // Push current state to history (call before making changes)
+  const pushHistory = useCallback(() => {
+    const entry: EditorHistoryEntry = {
+      orderedClips: JSON.parse(JSON.stringify(orderedClips)),
+      clipSettings: new Map(clipSettings),
+      enhancements: JSON.parse(JSON.stringify(enhancements)),
+      audioTracks: JSON.parse(JSON.stringify(audioTracks)),
+    };
+    
+    // Truncate any redo history after current index
+    historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+    historyRef.current.push(entry);
+    
+    // Limit history size
+    if (historyRef.current.length > MAX_HISTORY) {
+      historyRef.current.shift();
+    }
+    historyIndexRef.current = historyRef.current.length - 1;
+  }, [orderedClips, clipSettings, enhancements, audioTracks]);
+
+  const canUndo = historyIndexRef.current > 0;
+  const canRedo = historyIndexRef.current < historyRef.current.length - 1;
+
+  const handleUndo = useCallback(() => {
+    if (historyIndexRef.current > 0) {
+      historyIndexRef.current--;
+      const entry = historyRef.current[historyIndexRef.current];
+      setOrderedClips(entry.orderedClips);
+      setClipSettings(new Map(entry.clipSettings));
+      setEnhancements(entry.enhancements);
+      setAudioTracks(entry.audioTracks);
+      toast({ title: "Undo", description: "Reverted to previous state" });
+    }
+  }, [toast]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      historyIndexRef.current++;
+      const entry = historyRef.current[historyIndexRef.current];
+      setOrderedClips(entry.orderedClips);
+      setClipSettings(new Map(entry.clipSettings));
+      setEnhancements(entry.enhancements);
+      setAudioTracks(entry.audioTracks);
+      toast({ title: "Redo", description: "Restored next state" });
+    }
+  }, [toast]);
+
+  // Clipboard for copy/paste
+  const [clipboardClips, setClipboardClips] = useState<{
+    clips: VideoClip[];
+    settings: Map<string, ClipSettingsLocal>;
+  } | null>(null);
+
+  const handleClipCopy = useCallback((clipIds: string[]) => {
+    const clipsToCopy = orderedClips.filter(c => clipIds.includes(c.id));
+    const settingsMap = new Map<string, ClipSettingsLocal>();
+    clipIds.forEach(id => {
+      const settings = clipSettings.get(id);
+      if (settings) {
+        settingsMap.set(id, settings);
+      }
+    });
+    setClipboardClips({ clips: clipsToCopy, settings: settingsMap });
+    toast({ title: "Copied", description: `${clipsToCopy.length} clip(s) copied to clipboard` });
+  }, [orderedClips, clipSettings, toast]);
+
+  const handleClipPaste = useCallback(() => {
+    if (!clipboardClips || clipboardClips.clips.length === 0) return;
+    
+    pushHistory();
+    
+    const newClips: VideoClip[] = [];
+    const newSettings = new Map(clipSettings);
+    
+    clipboardClips.clips.forEach((clip) => {
+      const newId = `${clip.id}-paste-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+      const newClip = { ...clip, id: newId };
+      newClips.push(newClip);
+      
+      const originalSettings = clipboardClips.settings.get(clip.id);
+      if (originalSettings) {
+        newSettings.set(newId, { ...originalSettings, clipId: newId });
+      }
+    });
+    
+    setOrderedClips(prev => [...prev, ...newClips]);
+    setClipSettings(newSettings);
+    toast({ title: "Pasted", description: `${newClips.length} clip(s) added to timeline` });
+  }, [clipboardClips, clipSettings, pushHistory, toast]);
+
   // CapCut-style layout state
   const [selectedClip, setSelectedClip] = useState<{ clip: VideoClip; index: number } | null>(null);
+  const [selectedAudioTrack, setSelectedAudioTrack] = useState<typeof audioTracks[0] | null>(null);
   const [timelineCurrentTime, setTimelineCurrentTime] = useState(0);
   const [isTimelinePlaying, setIsTimelinePlaying] = useState(false);
   const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(true);
@@ -2788,11 +2890,13 @@ export default function VideoEditor() {
 
   // Handle removing clip from timeline
   const removeClipFromTimeline = useCallback((clipId: string) => {
+    pushHistory();
     setOrderedClips(prev => prev.filter(c => c.id !== clipId));
-  }, []);
+  }, [pushHistory]);
 
   // Handle removing audio track from timeline
   const removeAudioTrack = useCallback((trackId: string) => {
+    pushHistory();
     // Get the track being removed
     const removedTrack = audioTracks.find(t => t.id === trackId);
 
@@ -2824,7 +2928,7 @@ export default function VideoEditor() {
       title: "Audio Removed",
       description: "Audio track removed from timeline",
     });
-  }, [audioTracks, toast]);
+  }, [audioTracks, toast, pushHistory]);
 
   // ==========================================
   // Keyboard shortcuts
@@ -3942,7 +4046,21 @@ export default function VideoEditor() {
                         )}
 
                         {exportProgress > 0 && exportProgress < 100 && (
-                          <Progress value={exportProgress} className="h-2" />
+                          <div className="space-y-2">
+                            <Progress value={exportProgress} className="h-2" />
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground flex items-center gap-1.5">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                {exportProgress < 15 ? 'Preparing export...' :
+                                 exportProgress < 30 ? 'Uploading to VPS...' :
+                                 exportProgress < 50 ? 'Downloading source files...' :
+                                 exportProgress < 70 ? 'Processing video...' :
+                                 exportProgress < 90 ? 'Encoding output...' :
+                                 'Finalizing...'}
+                              </span>
+                              <span className="font-medium">{exportProgress}%</span>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -4094,6 +4212,7 @@ export default function VideoEditor() {
             <div className="w-72 border-l bg-background shrink-0" data-testid="properties-panel-container">
               <PropertiesPanel
                 selectedClip={selectedClip}
+                selectedAudioTrack={selectedAudioTrack}
                 clipSettings={selectedClip ? getClipSettings(selectedClip.clip.id) : null}
                 enhancements={enhancements}
                 onClipSettingsChange={(updates) => {
@@ -4102,6 +4221,11 @@ export default function VideoEditor() {
                   }
                 }}
                 onEnhancementsChange={(updates) => setEnhancements(prev => ({ ...prev, ...updates }))}
+                onAudioTrackChange={(trackId, updates) => {
+                  setAudioTracks(prev => prev.map(t => 
+                    t.id === trackId ? { ...t, ...updates } : t
+                  ));
+                }}
                 onMuteToggle={() => {
                   if (selectedClip) {
                     toggleClipMute(selectedClip.clip.id);
@@ -4124,6 +4248,7 @@ export default function VideoEditor() {
               clipTransitions={enhancements.clipTransitions}
               onClipSelect={(clip, index) => {
                 setSelectedClip({ clip, index });
+                setSelectedAudioTrack(null); // Clear audio selection when selecting clip
               }}
               onClipRemove={removeClipFromTimeline}
               onClipReorder={(fromIndex, toIndex) => {
@@ -4209,6 +4334,72 @@ export default function VideoEditor() {
                 ));
                 toast({ title: "Clip Moved", description: `Clip moved to ${newTrackId.replace('-', ' ').replace('layer', 'Layer')}` });
               }}
+              onExtractAudio={async (clip) => {
+                if (clip.type !== 'video') {
+                  toast({ 
+                    title: "Cannot Extract Audio", 
+                    description: "Audio can only be extracted from video clips", 
+                    variant: "destructive" 
+                  });
+                  return;
+                }
+                
+                toast({ 
+                  title: "Extracting Audio", 
+                  description: "Processing audio from video...",
+                });
+                
+                try {
+                  // Use clip.url (normalized) or clip.sourceUrl (original) - some clips may only have one
+                  const videoUrl = clip.url || clip.sourceUrl;
+                  if (!videoUrl) {
+                    throw new Error('No video URL available for this clip');
+                  }
+                  
+                  const response = await fetchWithAuth('/api/video-editor/extract-audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ videoUrl, clipId: clip.id }),
+                  });
+                  
+                  if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to extract audio');
+                  }
+                  
+                  const { audioUrl, duration, name } = await response.json();
+                  
+                  // Find the clip's position to place audio at the same timeline position
+                  const clipSettings = getClipSettings(clip.id);
+                  const clipPosition = clipSettings?.positionSeconds ?? 0;
+                  
+                  // Add extracted audio as a new audio track
+                  const newTrack = {
+                    id: `extracted-${clip.id}-${Date.now()}`,
+                    url: audioUrl,
+                    name: name || `Audio from ${clip.prompt.substring(0, 20)}...`,
+                    type: 'voice' as const,
+                    volume: 1.0,
+                    trackId: 'layer-2', // Place on layer 2 by default
+                    positionSeconds: clipPosition,
+                    duration: duration,
+                  };
+                  
+                  setAudioTracks(prev => [...prev, newTrack]);
+                  
+                  toast({ 
+                    title: "Audio Extracted", 
+                    description: "Audio track has been added to the timeline" 
+                  });
+                } catch (error: any) {
+                  console.error('Audio extraction error:', error);
+                  toast({ 
+                    title: "Extraction Failed", 
+                    description: error.message || "Failed to extract audio from video",
+                    variant: "destructive" 
+                  });
+                }
+              }}
               onTransitionEdit={handleTransitionEdit}
               onTransitionRemove={handleTransitionRemove}
               onAudioRemove={removeAudioTrack}
@@ -4278,6 +4469,19 @@ export default function VideoEditor() {
               isDraggingClip={!!(activeDragData && (activeDragData.type === 'clip' || activeDragData.type === 'audio'))}
               zoom={timelineZoom}
               onZoomChange={setTimelineZoom}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onClipCopy={handleClipCopy}
+              onClipPaste={handleClipPaste}
+              hasClipboard={!!clipboardClips && clipboardClips.clips.length > 0}
+              onAudioSelect={(track) => {
+                setSelectedAudioTrack(track);
+                if (track) {
+                  setSelectedClip(null); // Clear clip selection when selecting audio
+                }
+              }}
               className="flex-1"
             />
           </div>

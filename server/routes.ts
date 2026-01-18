@@ -8758,6 +8758,73 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
+  // Extract audio from video clip via VPS FFmpeg processing
+  app.post('/api/video-editor/extract-audio', requireJWT, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { videoUrl, clipId } = req.body;
+      
+      if (!videoUrl) {
+        return res.status(400).json({ error: "Video URL is required" });
+      }
+      
+      const vpsUrl = process.env.VPS_VIDEO_PROCESSOR_URL;
+      if (!vpsUrl) {
+        console.error('[Video Editor] VPS_VIDEO_PROCESSOR_URL not configured');
+        return res.status(500).json({ error: "Audio extraction service not configured" });
+      }
+      
+      // Extract base URL from VPS URL and add the audio extraction endpoint
+      const vpsBaseUrl = vpsUrl.replace('/api/process', '');
+      const extractAudioUrl = `${vpsBaseUrl}/api/extract-audio`;
+      
+      console.log(`[Video Editor] Extracting audio from video for user ${userId}`);
+      console.log(`[Video Editor] Source URL: ${videoUrl.substring(0, 100)}...`);
+      
+      // Call VPS audio extraction endpoint
+      const vpsResponse = await fetch(extractAudioUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoUrl,
+          clipId,
+          userId,
+          outputBucket: process.env.S3_BUCKET || 'artivio-video-exports',
+        }),
+      });
+      
+      if (!vpsResponse.ok) {
+        const errorText = await vpsResponse.text();
+        console.error(`[Video Editor] VPS audio extraction error (${vpsResponse.status}):`, errorText);
+        
+        // Fallback: Return a placeholder for now if VPS doesn't support this endpoint yet
+        if (vpsResponse.status === 404) {
+          // VPS endpoint not implemented yet - return informative error
+          return res.status(501).json({ 
+            error: "Audio extraction feature is coming soon. This feature requires VPS update." 
+          });
+        }
+        
+        return res.status(500).json({ 
+          error: `Audio extraction failed: ${vpsResponse.status}` 
+        });
+      }
+      
+      const result = await vpsResponse.json();
+      console.log(`[Video Editor] Audio extracted successfully:`, result);
+      
+      res.json({
+        audioUrl: result.audioUrl,
+        duration: result.duration,
+        name: result.name || `Extracted audio`,
+      });
+      
+    } catch (error: any) {
+      console.error('[Video Editor] Audio extraction error:', error);
+      res.status(500).json({ error: error.message || "Failed to extract audio" });
+    }
+  });
+
   // VPS callback for async export completion
   // Security: Validate callback with shared secret from VPS
   app.post('/api/video-editor/callback/:jobId', async (req: any, res) => {
