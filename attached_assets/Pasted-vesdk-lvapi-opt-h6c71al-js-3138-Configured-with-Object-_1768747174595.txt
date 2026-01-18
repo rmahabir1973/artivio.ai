@@ -1,0 +1,62 @@
+vesdk-lvapi-opt.h6c71al.js:3138 Configured with  Object
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 667 Cost  0.2399999499320984 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 667 Cost  0.19999998807907104 
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 12 7
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 11 7
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 59 7
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 49 7
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 50 7
+vesdk-lvapi-opt.h6c71al.js:3138 Render to texture for  667
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 17 10
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 667 Cost  0.29500001668930054 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 667 Cost  0.08000004291534424 
+vesdk-lvapi-opt.h6c71al.js:3138 Configured with  Object
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 871 Cost  0.04999995231628418 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 871 Cost  0.050000011920928955 
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 15 7
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 871 Cost  0.2200000286102295 
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 22 7
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 13 7
+vesdk-lvapi-opt.h6c71al.js:3138 Render to texture for  871
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 2 10
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 871 Cost  0.1549999713897705 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 871 Cost  0.18000000715255737 
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/1f074100-7955-469a-8752-a90d20f2b822, file size:5818596, 0x2d27f30
+vesdk-lvapi-opt.h6c71al.js:3138 [js] close handle:0x2d27f30
+vesdk-lvapi-opt.h6c71al.js:3138 delete context, handle:47349552
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/1f074100-7955-469a-8752-a90d20f2b822, file size:5818596, 0x2e31de0
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/1f074100-7955-469a-8752-a90d20f2b822, file size:5818596, 0x5354f50
+vesdk-lvapi-opt.h6c71al.js:3138 Configured with  Object
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 9 7
+vesdk-lvapi-opt.h6c71al.js:3138 Decoder closed  918
+vesdk-lvapi-opt.h6c71al.js:3138 [js] close handle:0x5354f50
+vesdk-lvapi-opt.h6c71al.js:3138 delete context, handle:87379792
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/89907515-273c-42da-8ad0-c2e76c202e4d, file size:5818596, 0x2d55ee0
+vesdk-lvapi-opt.h6c71al.js:3138 [js] close handle:0x2d55ee0
+vesdk-lvapi-opt.h6c71al.js:3138 delete context, handle:47537888
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/89907515-273c-42da-8ad0-c2e76c202e4d, file size:5818596, 0x360a720
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/89907515-273c-42da-8ad0-c2e76c202e4d, file size:5818596, 0x48f1420
+vesdk-lvapi-opt.h6c71al.js:3138 [js] close handle:0x48f1420
+vesdk-lvapi-opt.h6c71al.js:3138 delete context, handle:76485664
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/89907515-273c-42da-8ad0-c2e76c202e4d, file size:5818596, 0x2cdae70
+vesdk-lvapi-opt.h6c71al.js:3138 [js] close handle:0x2cdae70
+vesdk-lvapi-opt.h6c71al.js:3138 delete context, handle:47033968
+vesdk-lvapi-opt.h6c71al.js:3138 Decoder closed  667
+vesdk-lvapi-opt.h6c71al.js:3138 Configured with  Object
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.12000000476837158 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.10500001907348633 
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 21 7
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.2149999737739563 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.08499997854232788 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.05500000715255737 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.06000000238418579 
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 10 7
+vesdk-lvapi-opt.h6c71al.js:3138 [js] open url blob:https://www.capcut.com/89907515-273c-42da-8ad0-c2e76c202e4d, file size:5818596, 0x49f8800
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 13 7
+vesdk-lvapi-opt.h6c71al.js:3138 Render to texture for  940
+vesdk-lvapi-opt.h6c71al.js:3138 FPS: 22 10
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.19999998807907104 
+vesdk-lvapi-opt.h6c71al.js:3138 Flush done with reset 940 Cost  0.07999998331069946 
+8XHR finished loading: POST "<URL>".
+6XHR finished loading: GET "<URL>".
+vesdk-lvapi-opt.h6c71al.js:3138 Decoder closed  2
