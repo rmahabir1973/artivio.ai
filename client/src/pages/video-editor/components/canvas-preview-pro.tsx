@@ -62,6 +62,10 @@ export function CanvasPreviewPro({
   });
   const [videoMetadata, setVideoMetadata] = useState<Map<string, VideoMetadata>>(new Map());
   
+  // Track blob URL availability to trigger audio element updates when blob URLs become ready
+  // This is incremented when a blob URL becomes available, causing audio elements to refresh
+  const [blobUrlVersion, setBlobUrlVersion] = useState(0);
+  
   // Track failed video loads with retry info - keyed by URL to reset when URL changes
   const failedVideosRef = useRef<Map<string, { attempts: number; lastAttempt: number; url: string }>>(new Map());
   const MAX_RETRY_ATTEMPTS = 3;
@@ -113,6 +117,12 @@ export function CanvasPreviewPro({
         },
         onError: (videoId, error) => {
           console.error(`Error loading ${videoId}:`, error);
+        },
+        onBlobUrl: (videoId, blobUrl) => {
+          // Blob URL is now available - trigger audio element refresh
+          // This ensures audio elements get updated to use the local blob URL
+          console.log(`[CanvasPreviewPro] Blob URL ready for ${videoId.substring(0, 8)}, refreshing audio elements`);
+          setBlobUrlVersion(v => v + 1);
         },
       });
 
@@ -226,9 +236,9 @@ export function CanvasPreviewPro({
           continue;
         }
 
-        // Check retry limits
+        // Check retry limits (throttle this log - only once per video per 10 seconds)
         if (!shouldAttemptLoad(item.id, absoluteUrl)) {
-          console.log(`[CanvasPreviewPro] Skipping ${item.id} (max retries exceeded or in cooldown)`);
+          // Don't log every time - this spams the console during playback
           loaded++;
           if (isMounted) setLoadingProgress({ loaded, total: videoItems.length });
           continue;
@@ -410,7 +420,7 @@ export function CanvasPreviewPro({
     // NOTE: Do NOT pause audio in cleanup here - that disrupts playback when new videos are added
     // Audio pausing is handled by syncAudioToTime when shouldPlay=false
     // Unmount cleanup is handled by a separate effect below
-  }, [audioItemsKey]); // Use stable key instead of items array
+  }, [audioItemsKey, blobUrlVersion]); // Re-run when blob URLs become available
 
   // Cleanup audio elements on component unmount (separate from setup effect)
   useEffect(() => {

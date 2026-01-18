@@ -34,6 +34,7 @@ export interface WorkerManagerConfig {
   onMetadata?: (videoId: string, metadata: VideoMetadata) => void;
   onProgress?: (videoId: string, progress: number) => void;
   onError?: (videoId: string, error: string) => void;
+  onBlobUrl?: (videoId: string, blobUrl: string) => void;
 }
 
 /**
@@ -144,6 +145,8 @@ export class WorkerManager {
           this.blobUrls.set(videoId, blobUrl);
           console.log(`%c[WorkerManager] BLOB URL: ${videoId?.slice(0,8)} → Audio will play from local memory`, 
             'color: cyan; font-weight: bold');
+          // Notify listeners so audio elements can be updated
+          this.config.onBlobUrl?.(videoId, blobUrl);
         }
         break;
 

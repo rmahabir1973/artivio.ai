@@ -112,7 +112,7 @@ class VideoDecoderWorker {
           break;
 
         case 'buffer':
-          console.log(`[VideoDecoderWorker] Received buffer message: time=${time}, items=${items?.length}`);
+          // Don't log every buffer message - happens every frame (~30/sec)
           if (time !== undefined && items) {
             await this.bufferFrames(time, items);
           }
@@ -687,8 +687,7 @@ class VideoDecoderWorker {
         }
         this.debug('SEEK_START', `${videoId.slice(0,8)} starting from keyframe at idx=${startIndex}`);
       } else {
-        // Already decoded everything
-        this.debug('SEEK_COMPLETE', `${videoId.slice(0,8)} all chunks decoded`);
+        // Already decoded everything - don't log, this happens every frame
         return;
       }
 
