@@ -210,8 +210,6 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
 
   return (
     <div className="space-y-3" data-testid="stock-media-panel">
-      <p className="text-sm text-muted-foreground">Search free stock videos from Pexels/Pixabay and sounds from Freesound</p>
-      
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'videos' | 'audio')}>
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="videos" className="gap-1" data-testid="tab-stock-videos">
@@ -483,13 +481,13 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {audio.pageUrl && (
                         <a
                           href={audio.pageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-muted"
+                          className="p-1.5 rounded hover:bg-muted"
                           title="View on Freesound"
                         >
                           <ExternalLink className="h-3 w-3 text-muted-foreground" />
@@ -497,16 +495,19 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                       )}
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        variant="secondary"
+                        className="h-7 text-xs gap-1 px-2"
                         onClick={() => downloadAudioMutation.mutate(audio)}
                         disabled={downloadAudioMutation.isPending}
                         data-testid={`button-add-stock-audio-${audio.id}`}
                       >
                         {downloadAudioMutation.isPending ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <Plus className="h-3.5 w-3.5" />
+                          <>
+                            <Plus className="h-3 w-3" />
+                            Add
+                          </>
                         )}
                       </Button>
                     </div>
