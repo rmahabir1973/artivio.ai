@@ -306,6 +306,18 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                             {formatDuration(video.duration)}
                           </span>
                         </div>
+                        {video.userUrl && (
+                          <a
+                            href={video.userUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] text-white/70 hover:text-white truncate max-w-[60px]"
+                            onClick={(e) => e.stopPropagation()}
+                            title={`By ${video.user}`}
+                          >
+                            {video.user}
+                          </a>
+                        )}
                       </div>
                     </div>
 
@@ -353,6 +365,30 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                   </Button>
                 </div>
               )}
+
+              <div className="mt-3 pt-2 border-t text-center">
+                <p className="text-[9px] text-muted-foreground">
+                  Videos from{' '}
+                  <a 
+                    href="https://pixabay.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    Pixabay
+                  </a>
+                  {' '}and{' '}
+                  <a 
+                    href="https://pexels.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    Pexels
+                  </a>
+                  . Free for commercial use, attribution appreciated.
+                </p>
+              </div>
             </ScrollArea>
           )}
         </TabsContent>
