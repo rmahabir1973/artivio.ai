@@ -11154,91 +11154,79 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
     }
   });
 
-  // Search stock audio/music from Pixabay (Pixabay has a music API)
+  // Search stock audio/sounds from Freesound.org API
   app.get('/api/stock-audio/search', requireJWT, async (req: any, res) => {
     try {
       const query = req.query.q as string || '';
       const page = parseInt(req.query.page as string) || 1;
-      const perPage = Math.min(Math.max(parseInt(req.query.per_page as string) || 20, 3), 50);
-      const category = req.query.category as string; // music, sound effects
-      const minDuration = parseInt(req.query.min_duration as string) || 0;
-      const maxDuration = parseInt(req.query.max_duration as string) || 0;
+      const perPage = Math.min(Math.max(parseInt(req.query.per_page as string) || 15, 3), 50);
+      const filter = req.query.filter as string; // optional filter string
+      const minDuration = parseFloat(req.query.min_duration as string) || 0;
+      const maxDuration = parseFloat(req.query.max_duration as string) || 0;
 
-      // Pixabay has a separate music endpoint
-      const pixabayKey = process.env.PIXABAY_API_KEY;
+      // Freesound API credentials
+      const freesoundApiKey = process.env.FREESOUND_API_KEY;
       
-      if (!pixabayKey) {
+      if (!freesoundApiKey) {
         return res.status(503).json({ message: 'Stock audio service temporarily unavailable' });
       }
       
-      const cacheKey = `audio-${query.toLowerCase()}-${page}-${perPage}-${category || 'all'}`;
+      const cacheKey = `freesound-${query.toLowerCase()}-${page}-${perPage}`;
       const cached = stockMediaCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < STOCK_MEDIA_CACHE_TTL) {
         return res.json(cached.data);
       }
 
-      // Use Pixabay's music API endpoint
+      // Build Freesound search URL
+      // Freesound uses 1-indexed pages but page_size for results per page
       const params = new URLSearchParams({
-        key: pixabayKey,
+        token: freesoundApiKey,
         page: page.toString(),
-        per_page: perPage.toString(),
+        page_size: perPage.toString(),
+        fields: 'id,name,description,duration,previews,tags,username,license,avg_rating,num_downloads',
+        sort: 'rating_desc', // Sort by rating for quality results
       });
       
-      if (query) params.set('q', query);
-      if (category) params.set('category', category);
-      if (minDuration > 0) params.set('min_duration', minDuration.toString());
-      if (maxDuration > 0) params.set('max_duration', maxDuration.toString());
+      if (query) params.set('query', query);
+      
+      // Add duration filter if specified
+      let filterParts: string[] = [];
+      if (minDuration > 0) filterParts.push(`duration:[${minDuration} TO *]`);
+      if (maxDuration > 0) filterParts.push(`duration:[* TO ${maxDuration}]`);
+      if (filter) filterParts.push(filter);
+      if (filterParts.length > 0) {
+        params.set('filter', filterParts.join(' '));
+      }
 
-      // Pixabay music API - note this requires specific API access
-      // Fallback: search videos with audio-related terms if music API not available
       let audioResults: any[] = [];
       let totalResults = 0;
       
       try {
-        // Try the music API first (may not be available for all API keys)
-        const response = await axios.get(`https://pixabay.com/api/music/?${params.toString()}`, {
+        const response = await axios.get(`https://freesound.org/apiv2/search/text/?${params.toString()}`, {
           timeout: 15000,
         });
         
-        totalResults = response.data.totalHits || 0;
-        audioResults = (response.data.hits || []).map((hit: any) => ({
-          id: hit.id.toString(),
-          source: 'pixabay',
-          title: hit.title || hit.tags?.split(',')[0] || 'Untitled',
-          audioUrl: hit.audio,
-          previewUrl: hit.audio,
-          duration: hit.duration,
-          tags: hit.tags || '',
-          user: hit.user,
-          userUrl: `https://pixabay.com/users/${hit.user}-${hit.user_id}/`,
-          pageUrl: hit.pageURL,
-          downloads: hit.downloads,
-          likes: hit.likes,
-          category: hit.category || 'music',
+        totalResults = response.data.count || 0;
+        audioResults = (response.data.results || []).map((sound: any) => ({
+          id: sound.id.toString(),
+          source: 'freesound',
+          title: sound.name || 'Untitled Sound',
+          description: sound.description?.substring(0, 100) || '',
+          audioUrl: sound.previews?.['preview-hq-mp3'] || sound.previews?.['preview-lq-mp3'] || '',
+          previewUrl: sound.previews?.['preview-lq-mp3'] || sound.previews?.['preview-hq-mp3'] || '',
+          duration: Math.round(sound.duration || 0),
+          tags: Array.isArray(sound.tags) ? sound.tags.join(', ') : (sound.tags || ''),
+          user: sound.username || 'Unknown',
+          userUrl: `https://freesound.org/people/${sound.username}/`,
+          pageUrl: `https://freesound.org/s/${sound.id}/`,
+          license: sound.license || '',
+          rating: sound.avg_rating || 0,
+          downloads: sound.num_downloads || 0,
+          category: 'sound',
         }));
-      } catch (musicError: any) {
-        console.log('Pixabay music API not available, using sound effects endpoint');
-        
-        // Fallback: Use sound effects API or return empty
-        try {
-          const sfxParams = new URLSearchParams({
-            key: pixabayKey,
-            page: page.toString(),
-            per_page: perPage.toString(),
-          });
-          if (query) sfxParams.set('q', query);
-          
-          const sfxResponse = await axios.get(`https://pixabay.com/api/?${sfxParams.toString()}&video_type=all`, {
-            timeout: 15000,
-          });
-          
-          // Filter for items that might have audio components
-          // Note: This is a fallback and may return limited results
-          totalResults = 0;
-          audioResults = [];
-        } catch (e) {
-          console.error('Stock audio fallback error:', e);
-        }
+      } catch (freesoundError: any) {
+        console.error('Freesound API error:', freesoundError.response?.data || freesoundError.message);
+        return res.status(500).json({ message: 'Failed to search Freesound' });
       }
 
       const responseData = {
@@ -11247,7 +11235,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         perPage,
         total: totalResults,
         audio: audioResults,
-        source: 'pixabay',
+        source: 'freesound',
       };
       
       stockMediaCache.set(cacheKey, { data: responseData, timestamp: Date.now() });

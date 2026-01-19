@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Video, Music, Plus, Loader2, Play, Clock, Download } from "lucide-react";
+import { Search, Video, Music, Plus, Loader2, Play, Pause, Clock, Download, Star, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StockVideo {
@@ -29,14 +29,19 @@ interface StockVideo {
 
 interface StockAudio {
   id: string;
-  source: 'pixabay';
+  source: 'freesound' | 'pixabay';
   title: string;
+  description?: string;
   audioUrl: string;
   previewUrl: string;
   duration: number;
   tags: string;
   user: string;
   userUrl: string;
+  pageUrl?: string;
+  license?: string;
+  rating?: number;
+  downloads?: number;
   category: string;
 }
 
@@ -55,6 +60,27 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
   const [videoPage, setVideoPage] = useState(1);
   const [audioPage, setAudioPage] = useState(1);
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  const handleAudioPreview = useCallback((audio: StockAudio) => {
+    if (playingAudioId === audio.id) {
+      audioElement?.pause();
+      setPlayingAudioId(null);
+      setAudioElement(null);
+    } else {
+      audioElement?.pause();
+      const newAudio = new Audio(audio.previewUrl);
+      newAudio.volume = 0.5;
+      newAudio.onended = () => {
+        setPlayingAudioId(null);
+        setAudioElement(null);
+      };
+      newAudio.play().catch(console.error);
+      setPlayingAudioId(audio.id);
+      setAudioElement(newAudio);
+    }
+  }, [playingAudioId, audioElement]);
 
   const { data: videoResults, isLoading: videosLoading, isFetching: videosFetching } = useQuery({
     queryKey: ['/api/stock-videos/search', videoSearchTerm, videoPage],
@@ -165,7 +191,7 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
 
   return (
     <div className="space-y-3" data-testid="stock-media-panel">
-      <p className="text-sm text-muted-foreground">Search free stock videos and audio from Pexels & Pixabay</p>
+      <p className="text-sm text-muted-foreground">Search free stock videos from Pexels/Pixabay and sounds from Freesound</p>
       
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'videos' | 'audio')}>
         <TabsList className="w-full grid grid-cols-2">
@@ -350,8 +376,8 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
 
           {audioSearchTerm && !audioLoading && audioTracks.length === 0 && (
             <div className="text-center py-6 text-muted-foreground">
-              <p className="text-xs">No audio found for "{audioSearchTerm}"</p>
-              <p className="text-[10px] text-muted-foreground/70 mt-1">Note: Pixabay music API requires specific access</p>
+              <p className="text-xs">No sounds found for "{audioSearchTerm}"</p>
+              <p className="text-[10px] text-muted-foreground/70 mt-1">Try different keywords like: nature, music, ambient</p>
             </div>
           )}
 
@@ -364,36 +390,96 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                     className="flex items-center gap-2 p-2 rounded-md border bg-muted/30 hover:bg-muted/50 transition-colors group"
                     data-testid={`stock-audio-${audio.id}`}
                   >
-                    <div className="flex-shrink-0 w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
-                      <Music className="h-4 w-4 text-primary" />
-                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={cn(
+                        "flex-shrink-0 w-8 h-8 rounded-full",
+                        playingAudioId === audio.id ? "bg-primary text-primary-foreground" : "bg-primary/10"
+                      )}
+                      onClick={() => handleAudioPreview(audio)}
+                      data-testid={`button-preview-audio-${audio.id}`}
+                    >
+                      {playingAudioId === audio.id ? (
+                        <Pause className="h-3.5 w-3.5" />
+                      ) : (
+                        <Play className="h-3.5 w-3.5 ml-0.5" />
+                      )}
+                    </Button>
                     
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate">{audio.title}</p>
                       <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <span>{formatDuration(audio.duration)}</span>
+                        <span className="flex items-center gap-0.5">
+                          <Clock className="h-2.5 w-2.5" />
+                          {formatDuration(audio.duration)}
+                        </span>
                         <span>•</span>
-                        <span>{audio.user}</span>
+                        <span className="truncate">{audio.user}</span>
+                        {audio.rating && audio.rating > 3 && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-0.5 text-amber-500">
+                              <Star className="h-2.5 w-2.5 fill-current" />
+                              {audio.rating.toFixed(1)}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                     
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => downloadAudioMutation.mutate(audio)}
-                      disabled={downloadAudioMutation.isPending}
-                      data-testid={`button-add-stock-audio-${audio.id}`}
-                    >
-                      {downloadAudioMutation.isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Plus className="h-3.5 w-3.5" />
+                    <div className="flex items-center gap-1">
+                      {audio.pageUrl && (
+                        <a
+                          href={audio.pageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-muted"
+                          title="View on Freesound"
+                        >
+                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        </a>
                       )}
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => downloadAudioMutation.mutate(audio)}
+                        disabled={downloadAudioMutation.isPending}
+                        data-testid={`button-add-stock-audio-${audio.id}`}
+                      >
+                        {downloadAudioMutation.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Plus className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
+
+              {audioResults?.total && audioResults.total > 15 && (
+                <div className="flex justify-center gap-2 mt-3 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAudioPage(p => Math.max(1, p - 1))}
+                    disabled={audioPage === 1 || audioFetching}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-xs text-muted-foreground self-center">Page {audioPage}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAudioPage(p => p + 1)}
+                    disabled={audioTracks.length < 15 || audioFetching}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </ScrollArea>
           )}
         </TabsContent>
