@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
@@ -61,26 +61,45 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
   const [audioPage, setAudioPage] = useState(1);
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Cleanup audio on unmount or tab change
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Stop audio when switching to videos tab
+  useEffect(() => {
+    if (activeTab === 'videos' && audioRef.current) {
+      audioRef.current.pause();
+      setPlayingAudioId(null);
+    }
+  }, [activeTab]);
 
   const handleAudioPreview = useCallback((audio: StockAudio) => {
     if (playingAudioId === audio.id) {
-      audioElement?.pause();
+      audioRef.current?.pause();
       setPlayingAudioId(null);
-      setAudioElement(null);
     } else {
-      audioElement?.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
       const newAudio = new Audio(audio.previewUrl);
       newAudio.volume = 0.5;
       newAudio.onended = () => {
         setPlayingAudioId(null);
-        setAudioElement(null);
       };
       newAudio.play().catch(console.error);
+      audioRef.current = newAudio;
       setPlayingAudioId(audio.id);
-      setAudioElement(newAudio);
     }
-  }, [playingAudioId, audioElement]);
+  }, [playingAudioId]);
 
   const { data: videoResults, isLoading: videosLoading, isFetching: videosFetching } = useQuery({
     queryKey: ['/api/stock-videos/search', videoSearchTerm, videoPage],
@@ -480,6 +499,21 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                   </Button>
                 </div>
               )}
+
+              <div className="mt-3 pt-2 border-t text-center">
+                <p className="text-[9px] text-muted-foreground">
+                  Sounds from{' '}
+                  <a 
+                    href="https://freesound.org" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    Freesound.org
+                  </a>
+                  {' '}(Creative Commons). Click the link icon to view attribution.
+                </p>
+              </div>
             </ScrollArea>
           )}
         </TabsContent>

@@ -11171,7 +11171,7 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
         return res.status(503).json({ message: 'Stock audio service temporarily unavailable' });
       }
       
-      const cacheKey = `freesound-${query.toLowerCase()}-${page}-${perPage}`;
+      const cacheKey = `freesound-${query.toLowerCase()}-${page}-${perPage}-${minDuration}-${maxDuration}-${filter || ''}`;
       const cached = stockMediaCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < STOCK_MEDIA_CACHE_TTL) {
         return res.json(cached.data);
