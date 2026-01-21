@@ -12,7 +12,8 @@
       "WebFetch(domain:w3c.github.io)",
       "WebFetch(domain:github.com)",
       "Bash(ls:*)",
-      "Bash(npm run check:*)"
+      "Bash(npm run check:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

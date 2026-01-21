@@ -178,6 +178,7 @@ export interface IStorage {
   getUserGenerations(userId: string): Promise<Generation[]>;
   getRecentGenerations(userId: string, limit?: number): Promise<Generation[]>;
   getUserGenerationsPage(userId: string, limit: number, cursor?: { createdAt: Date; id: string }, typeFilter?: string, completedOnly?: boolean): Promise<{ items: Generation[]; nextCursor: { createdAt: Date; id: string } | null }>;
+  getUserGenerationsWithOffset(userId: string, limit: number, offset: number, typeFilter?: string, completedOnly?: boolean): Promise<{ generations: Generation[]; total: number }>;
   getGenerationsByCollection(collectionId: string): Promise<Generation[]>;
   deleteGeneration(id: string): Promise<void>;
   getUserStats(userId: string): Promise<{
@@ -973,6 +974,46 @@ export class DatabaseStorage implements IStorage {
       : null;
 
     return { items, nextCursor };
+  }
+
+  async getUserGenerationsWithOffset(
+    userId: string,
+    limit: number,
+    offset: number,
+    typeFilter?: string,
+    completedOnly?: boolean
+  ): Promise<{ generations: Generation[]; total: number }> {
+    // Build conditions array for the where clause
+    const conditions: any[] = [eq(generations.userId, userId)];
+
+    // When completedOnly is true, only return completed generations with a result URL
+    if (completedOnly) {
+      conditions.push(eq(generations.status, 'completed'));
+      conditions.push(isNotNull(generations.resultUrl));
+    }
+
+    // Add type filter condition if provided
+    if (typeFilter && typeFilter !== 'all') {
+      conditions.push(eq(generations.type, typeFilter));
+    }
+
+    // Get total count for pagination
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(generations)
+      .where(and(...conditions));
+    const total = Number(countResult[0]?.count ?? 0);
+
+    // Get paginated results
+    const results = await db
+      .select()
+      .from(generations)
+      .where(and(...conditions))
+      .orderBy(desc(generations.createdAt), desc(generations.id))
+      .limit(limit)
+      .offset(offset);
+
+    return { generations: results, total };
   }
 
   async getGenerationsByCollection(collectionId: string): Promise<Generation[]> {

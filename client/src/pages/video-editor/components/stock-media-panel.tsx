@@ -168,15 +168,19 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
           duration: audio.duration,
         }),
       });
-      return response.json();
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to download audio');
+      }
+      return { ...data, audio };
     },
-    onSuccess: (data, audio) => {
+    onSuccess: (data) => {
       onAddAudio({
-        id: audio.id,
+        id: data.audio.id,
         url: data.url,
-        title: audio.title,
-        source: audio.source,
-        duration: audio.duration,
+        title: data.audio.title,
+        source: data.audio.source,
+        duration: data.audio.duration,
       });
     },
     onError: (error: any) => {
@@ -439,74 +443,62 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                 {audioTracks.map((audio: StockAudio) => (
                   <div
                     key={`${audio.source}-${audio.id}`}
-                    className="flex items-center gap-2 p-2 rounded-md border bg-muted/30 hover:bg-muted/50 transition-colors group"
+                    className="flex items-center gap-1.5 p-1.5 rounded-md border bg-muted/30 hover:bg-muted/50 transition-colors group"
                     data-testid={`stock-audio-${audio.id}`}
                   >
                     <Button
                       size="icon"
                       variant="ghost"
                       className={cn(
-                        "flex-shrink-0 w-8 h-8 rounded-full",
+                        "flex-shrink-0 w-7 h-7 rounded-full",
                         playingAudioId === audio.id ? "bg-primary text-primary-foreground" : "bg-primary/10"
                       )}
                       onClick={() => handleAudioPreview(audio)}
                       data-testid={`button-preview-audio-${audio.id}`}
                     >
                       {playingAudioId === audio.id ? (
-                        <Pause className="h-3.5 w-3.5" />
+                        <Pause className="h-3 w-3" />
                       ) : (
-                        <Play className="h-3.5 w-3.5 ml-0.5" />
+                        <Play className="h-3 w-3 ml-0.5" />
                       )}
                     </Button>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{audio.title}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <span className="flex items-center gap-0.5">
-                          <Clock className="h-2.5 w-2.5" />
+
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <p className="text-[11px] font-medium truncate">{audio.title}</p>
+                      <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                        <span className="flex items-center gap-0.5 flex-shrink-0">
+                          <Clock className="h-2 w-2" />
                           {formatDuration(audio.duration)}
                         </span>
-                        <span>•</span>
-                        <span className="truncate">{audio.user}</span>
-                        {audio.rating && audio.rating > 3 && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-0.5 text-amber-500">
-                              <Star className="h-2.5 w-2.5 fill-current" />
-                              {audio.rating.toFixed(1)}
-                            </span>
-                          </>
-                        )}
+                        <span className="truncate">• {audio.user}</span>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-1 flex-shrink-0">
+
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
                       {audio.pageUrl && (
                         <a
                           href={audio.pageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded hover:bg-muted"
+                          className="p-1 rounded hover:bg-muted"
                           title="View on Freesound"
                         >
-                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                          <ExternalLink className="h-2.5 w-2.5 text-muted-foreground" />
                         </a>
                       )}
                       <Button
-                        size="sm"
+                        size="icon"
                         variant="secondary"
-                        className="h-7 text-xs gap-1 px-2"
+                        className="h-6 w-6"
                         onClick={() => downloadAudioMutation.mutate(audio)}
                         disabled={downloadAudioMutation.isPending}
                         data-testid={`button-add-stock-audio-${audio.id}`}
+                        title="Add to timeline"
                       >
                         {downloadAudioMutation.isPending ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
-                          <>
-                            <Plus className="h-3 w-3" />
-                            Add
-                          </>
+                          <Plus className="h-3 w-3" />
                         )}
                       </Button>
                     </div>
@@ -515,19 +507,21 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
               </div>
 
               {audioResults?.total && audioResults.total > 15 && (
-                <div className="flex justify-center gap-2 mt-3 pt-2 border-t">
+                <div className="flex justify-center items-center gap-1.5 mt-2 pt-2 border-t">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => setAudioPage(p => Math.max(1, p - 1))}
                     disabled={audioPage === 1 || audioFetching}
                   >
-                    Previous
+                    Prev
                   </Button>
-                  <span className="text-xs text-muted-foreground self-center">Page {audioPage}</span>
+                  <span className="text-[10px] text-muted-foreground">{audioPage}</span>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => setAudioPage(p => p + 1)}
                     disabled={audioTracks.length < 15 || audioFetching}
                   >

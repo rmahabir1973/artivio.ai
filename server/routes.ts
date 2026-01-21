@@ -3585,20 +3585,47 @@ Respond naturally and helpfully. Keep responses concise but informative.`;
           : null;
         
         return res.json({ items: refreshedItems, nextCursor: encodedCursor });
+      } else if (req.query.offset !== undefined) {
+        // Offset-based pagination with filtering (used by video-joiner-express)
+        const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+        const statusFilter = req.query.status as string | undefined;
+        const startTime = Date.now();
+
+        console.log(`[/api/generations] Offset-based query: offset=${offset}, limit=${limit}, type=${typeFilter}, status=${statusFilter}`);
+
+        // Get filtered generations with offset pagination
+        const { generations, total } = await storage.getUserGenerationsWithOffset(
+          userId,
+          limit,
+          offset,
+          typeFilter,
+          statusFilter === 'completed'
+        );
+        const queryTime = Date.now() - startTime;
+
+        console.log(`[/api/generations] Offset query completed in ${queryTime}ms, found ${generations.length} of ${total} total`);
+
+        // Apply timeout check
+        applyTimeoutCheck(generations);
+
+        // Refresh expired S3 URLs
+        const refreshedGenerations = await refreshGenerationsUrls(generations);
+
+        return res.json({ generations: refreshedGenerations, total });
       } else {
         // Legacy array format for backward compatibility
         const startTime = Date.now();
         const generations = await storage.getRecentGenerations(userId, limit);
         const queryTime = Date.now() - startTime;
-        
+
         console.log(`[/api/generations] Array query completed in ${queryTime}ms, found ${generations.length} generations`);
-        
+
         // Apply timeout check
         applyTimeoutCheck(generations);
-        
+
         // Refresh expired S3 URLs to ensure user content is always accessible
         const refreshedGenerations = await refreshGenerationsUrls(generations);
-        
+
         return res.json(refreshedGenerations);
       }
     } catch (error) {
