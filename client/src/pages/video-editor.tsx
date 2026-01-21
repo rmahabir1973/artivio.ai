@@ -3464,17 +3464,37 @@ export default function VideoEditor() {
                         toast({ title: "Video Added", description: "Stock video added to timeline" });
                       }}
                       onAddAudio={(audio: { id: string; url: string; title: string; source: string; duration: number }) => {
-                        // Add as background audio track
-                        setEnhancements(prev => ({
-                          ...prev,
-                          audioTrack: {
-                            audioUrl: audio.url,
-                            volume: 1.0,
-                            type: 'sfx' as const,
-                            name: audio.title || 'Stock Audio',
-                          },
-                        }));
-                        toast({ title: "Audio Added", description: "Stock audio added as background track" });
+                        // Find an available layer for the audio track
+                        const usedLayers = new Set(audioTracks.map(t => t.trackId || 'layer-1'));
+                        orderedClips.forEach(c => usedLayers.add(c.trackId || 'layer-1'));
+
+                        let targetLayer = 'layer-2'; // Default to layer-2 for audio
+                        const layerOptions = ['layer-2', 'layer-3', 'layer-4', 'layer-5', 'layer-1'];
+                        for (const layer of layerOptions) {
+                          if (!usedLayers.has(layer)) {
+                            targetLayer = layer;
+                            break;
+                          }
+                        }
+
+                        const trackId = `stock_audio_${audio.id}_${Date.now()}`;
+                        setAudioTracks(prev => [...prev, {
+                          id: trackId,
+                          url: audio.url,
+                          name: audio.title || 'Stock Audio',
+                          type: 'sfx',
+                          volume: 1.0,
+                          trackId: targetLayer,
+                          positionSeconds: 0,
+                        }]);
+
+                        // Initialize settings for duration tracking
+                        updateClipSettings(trackId, { originalDuration: audio.duration || 30 });
+
+                        toast({
+                          title: "Audio Added",
+                          description: `Stock audio added to Layer ${targetLayer.split('-')[1]}. Drag to reposition.`
+                        });
                       }}
                     />
                   )}

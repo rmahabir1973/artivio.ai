@@ -4,7 +4,6 @@ import { fetchWithAuth } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -265,8 +264,8 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
           )}
 
           {videos.length > 0 && (
-            <ScrollArea className="h-[400px]">
-              <div className="grid grid-cols-2 gap-2 pr-3">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
                 {videos.map((video: StockVideo) => (
                   <div
                     key={`${video.source}-${video.id}`}
@@ -387,7 +386,7 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                   . Free for commercial use, attribution appreciated.
                 </p>
               </div>
-            </ScrollArea>
+            </div>
           )}
         </TabsContent>
 
@@ -435,8 +434,8 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
           )}
 
           {audioTracks.length > 0 && (
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-2 pr-3">
+            <div className="space-y-3">
+              <div className="space-y-2">
                 {audioTracks.map((audio: StockAudio) => (
                   <div
                     key={`${audio.source}-${audio.id}`}
@@ -551,7 +550,7 @@ export function StockMediaPanel({ onAddVideo, onAddAudio }: StockMediaPanelProps
                   {' '}(Creative Commons). Click the link icon to view attribution.
                 </p>
               </div>
-            </ScrollArea>
+            </div>
           )}
         </TabsContent>
       </Tabs>

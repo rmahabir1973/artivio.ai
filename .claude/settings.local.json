@@ -11,7 +11,8 @@
       "WebSearch",
       "WebFetch(domain:w3c.github.io)",
       "WebFetch(domain:github.com)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run check:*)"
     ]
   }
 }
