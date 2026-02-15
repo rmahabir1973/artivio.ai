@@ -1,4 +1,4 @@
-  GNU nano 7.2                                                                          vite.config.ts
+ GNU nano 7.2                                                                          vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
