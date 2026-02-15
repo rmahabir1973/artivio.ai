@@ -1,32 +1,28 @@
- GNU nano 7.2                                                                          vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    // Removed Replit-specific plugins
-  ],
+  plugins: [react()],
+  
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    sourcemap: false,
+    rollupOptions: {
+      input: path.resolve(__dirname, 'index.html')
+    }
+  },
+  
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
+      '@': path.resolve(__dirname, './src')
+    }
   },
-  root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
+  
   server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
-    },
-  },
+    port: 5173,
+    strictPort: false,
+    host: true
+  }
 });
-
-
-
